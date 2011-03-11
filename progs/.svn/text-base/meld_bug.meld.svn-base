@@ -1,0 +1,7 @@
+
+type fact(addr, int).
+type other(addr, int, int).
+
+fact(A, B + 50) :-
+	other(A, B, Y),
+	B + 50 < Y.

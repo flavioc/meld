@@ -1,0 +1,8 @@
+
+type persistent per_tuple(catom).
+type facta(catom).
+type factb(catom).
+
+per_tuple(A).
+
+facta(A), factb(A) :- per_tuple(A).

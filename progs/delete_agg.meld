@@ -1,0 +1,10 @@
+
+type factA(addr).
+type agg(addr, sum int).
+
+agg(A, 1).
+agg(A, 2).
+
+factA(A) :- agg(A, 3).
+
+delete(A, agg) :- agg(A, 3), factA(A).

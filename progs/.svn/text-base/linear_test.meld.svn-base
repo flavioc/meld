@@ -1,0 +1,7 @@
+
+type linear factA(node).
+type factB(node).
+
+!factA(A).
+
+!factA(A), factB(A) :- !factA(A).

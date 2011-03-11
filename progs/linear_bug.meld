@@ -1,0 +1,11 @@
+
+type linear factA(addr).
+type linear factB(addr).
+//type linear factC(addr).
+//type linear factD(addr).
+
+!factA(A).
+
+!factA(A), !factB(A) :- !factA(A).
+
+//!factC(A), !factD(B) :- !factD(A), edge(A, B).

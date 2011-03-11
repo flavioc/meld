@@ -1,0 +1,40 @@
+
+type linear pluggedIn(node, node).
+type linear unplugged(node).
+type linear load(node, float).
+type persistent sink(node, float).
+type persistent source(node, float).
+
+//extern int generate_random(int).
+const MAX_ITERATIONS = 20.
+
+!pluggedIn(Sink, Source), !load(Source, C + Val) :-
+	!unplugged(Sink),
+	edge(Sink, Source),
+	sink(Sink, Val),
+	!load(Source, C),
+	source(Source, Capacity),
+	C + Val <= Capacity.
+
+terminate(A) :-
+   proved(A, pluggedIn) > MAX_ITERATIONS.
+
+/*
+!pluggedIn(Sink, NewSource),
+!load(OldSource, OldSourceAmt - Amt), !load(NewSource, NewSourceAmt + Amt) :-
+   sink(Sink, Amt),
+   
+   edge(Sink, OldSource),
+   !pluggedIn(Sink, OldSource),
+   source(OldSource, OldCapacity),
+   !load(OldSource, OldSourceAmt),
+   
+   edge(Sink, NewSource),
+   !load(NewSource, NewSourceAmt),
+   source(NewSource, NewCapacity),
+   
+   OldSource != NewSource,
+   (OldCapacity - OldSourceAmt) < (NewCapacity - (Amt + NewSourceAmt)),
+   NewSourceAmt + Amt <= NewCapacity.
+   
+*/

@@ -1,0 +1,12 @@
+
+type agg(addr, int, first int).
+type fact(addr, int).
+
+fact(A, V) :-
+	agg(A, _, V).
+
+agg(A, 1, 1) :-
+	agg(A, 1, 2).
+
+agg(A, 1, 2) :-
+	edge(B, A).

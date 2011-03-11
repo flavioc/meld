@@ -1,0 +1,14 @@
+
+type linear total(node, int).
+type linear fact(node, int set).
+
+extern int set set_insert_int(int set, int).
+extern int set empty_set().
+
+!total(A, 100).
+!fact(A, empty_set()).
+
+!total(A, T - 1), !fact(A, set_insert_int(S, T)) :-
+	!total(A, T),
+	T > 0,
+	!fact(A, S).

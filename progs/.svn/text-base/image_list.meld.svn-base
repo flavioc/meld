@@ -1,0 +1,38 @@
+
+/* potential and belief arity depend on number of colors */
+
+type persistent potential(node, float list).
+type belief(node, int, sum float list).
+type newBelief(node, int, float list).
+type cavity(node, node, int, float list).
+type edgeVal(node, node, int, float list).
+
+extern float list sumLists(float list, float list).
+extern float list normalizeList(float list).
+extern float list minusLists(float list, float list).
+extern float list convolve(float list).
+extern float list damp(float list, float list).
+
+extern int nodeID(node).
+
+belief(A, X + 1, V) :-
+  edge(B, A),
+	edgeVal(B, A, X, V),
+	X <= 0.
+
+newBelief(A, X, normalizeList(sumLists(V, P))) :-
+	belief(A, X, V),
+	potential(A, P).
+
+cavity(A, B, I, normalizeList(minusLists(Total, In))) :-
+	newBelief(A, I, Total),
+	Before = I - 1,
+	edge(B, A),
+	edgeVal(B, A, Before, In).
+
+edgeVal(A, B, I, damp(normalizeList(convolve(Cav)), Out)) :-
+	cavity(A, B, I, Cav),
+	Before = I - 1,
+	edge(A, B),
+	edgeVal(A, B, Before, Out).
+

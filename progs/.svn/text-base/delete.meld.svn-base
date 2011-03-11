@@ -1,0 +1,11 @@
+
+type factA(addr).
+type factB(addr).
+type factC(addr).
+
+factA(A).
+factB(A).
+
+delete(A, factA) :- factA(A), factB(A).
+
+factC(A) :- factA(A).

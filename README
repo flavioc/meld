@@ -1,0 +1,10 @@
+0. Install google-perftools
+
+1. Change program in config.h
+
+2. Compile with make
+
+3. Run the program, for example, pagerank:
+
+./meld -c configs/pageranks.txt -t 1
+

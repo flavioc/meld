@@ -1,0 +1,32 @@
+
+type adjValues(node, set_union float).
+type linear value(node, float).
+type depth(node, first int).
+
+extern float bpfn(float set).
+
+delay(!value(Y, V), resend), adjValues(X, S) :-
+	edge(X, Y), !value(Y, V).
+
+// schedule(Y, resend, -1) :- value(Y, _).
+
+!value(X, V) :- !value(X, _),
+	adjValues(X, S), V = bpfn(S).
+
+depth(X, 0) :-
+	delta(V; value(X, V)) > SPLASH_DELTA.
+
+depth(X, D + 1) :-
+	delta(Y, D),
+	edge(X, Y),
+	delta(V; value(X, V)) > SPLASH_DIFF.
+
+schedule(A, resend, P) :- depth(A, P).
+schedule(A, 
+
+
+
+
+
+
+

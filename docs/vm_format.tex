@@ -1,0 +1,219 @@
+\documentclass{article}
+\oddsidemargin  0   in
+\evensidemargin 0   in
+\topmargin     -0.5 in
+\textwidth      6.5 in
+\textheight     9   in
+
+
+\newenvironment{byte}%
+{\begin{tabular}{|c|c|c|c|c|c|c|c|}\hline}%
+{\hline\end{tabular}}%
+
+\begin{document}
+
+\newcommand{\inst}[3]{#1&\byte#2\\\endbyte&{\it #3}\\}
+\newcommand{\op}[2]{\ensuremath{#1}&\byte#2\\\endbyte\\}
+\newcommand{\val}[3]{#1&\byte#2\\\endbyte&{\it #3}\\}
+
+
+A VM program consists of a single byte dictating the number of distinct tuples,
+followed by one byte with the offset for each \emph{tuple descriptor}, followed by
+the tuple descriptors, and, finally, the list of instructions that represent the
+routines for processing each tuple.
+
+A tuple descriptor consists of a 2 byte short indicating the offset into the
+VM at which the tuple processing function begins, followed by 1 byte giving the
+size of the tuple (in bytes), followed by 1 byte describing the tuple's properties and then
+1 byte indicating the aggregate's type (what aggregate and which field, high and low nibble,
+respectively), if any. Next there is a byte indicating the tuples order
+of processing for stratification.
+Next, there is one byte indicating the tuple's number of fields and a byte with the number of delta tuples.
+These 7 bytes are followed by a sequence bytes, one for each argument, indicating the type of the tuple's
+argument. Following this sequence, there may be
+a sequence of 2 byte shorts for the delta tuples, where the first byte gives the id of the
+delta tuple and the second byte indicates the delta field.
+
+\begin{tabular}{lll}
+INSTRUCTION & BYTE FORMAT & ARGS\\
+\hline
+\\
+\inst{IF}    {0&1&1&r&r&r&r&r \\\hline
+j&j&j&j&j&j&j&j \\\hline j&j&j&j&j&j&j&j} {reg, jump\_offset}
+& if {\it reg} != 0 then process until ELSE and then jump.\\
+& if {\it reg} = 0 then jump to ELSE \\
+& (note: IFs may be nested) \\
+\\
+\inst{ELSE}  {0&0&0&0&0&0&1&0} {---}
+& a marker for if blocks\\
+\\
+\inst{ITER}  {1&0&1&0&X&X&X&X\\\hline X&i&i&i&i&i&i&i \\\hline
+j&j&j&j&j&j&j&j \\\hline j&j&j&j&j&j&j&j} {id, jump\_offset, matchlist}
+& iterates over all the tuples of type {\it id} that match\\
+& according to the following {\it matchlist}.\\
+& after all matching facts have been processed, use \\
+& {\it jump\_offset} to jump to the next instruction\\
+\\
+\inst{NEXT}  {0&0&0&0&0&0&0&1} {---}
+& return to iter and process next matching fact\\
+\\
+\inst{SEND}  {0&0&0&0&1&0&r$_1$&r$_1$\\\hline r$_1$&r$_1$&r$_1$&r$_2$&r$_2$&r$_2$&r$_2$&r$_2$\\\hline X&X&v$_1$&v$_2$&v$_3$&v$_4$&v$_5$&v$_6$} {reg$_1$, reg$_2$, val}
+& sends the tuple in {\it reg$_1$} along the path in {\it reg$_2$}\\
+& if {\it reg$_1$ = reg$_2$} then the tuple is stored locally\\
+& waits for {\it val} time before transmitting\\
+\\
+\inst{REMOVE} {1&0&0&r&r&r&r&r} {reg}
+& delete tuple stored in reg from database\\
+\\
+\inst{OP}    {1&1&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$\\\hline
+v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&r&r\\\hline
+r&r&r&o&o&o&o&o} {val$_1$, val$_2$, reg, op}
+& sets {\it reg} = {\it val$_1$ op val$_2$}\\
+\\
+\inst{MOVE}  {0&0&1&1&v$_1$&v$_1$&v$_1$&v$_1$\\\hline v$_1$&v$_1$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$} {val$_1$, val$_2$}
+& copies {\it val$_1$} to {\it val$_2$}\\
+\\
+\inst{ALLOC} {0&1&0&i&i&i&i&i\\\hline i&i&v&v&v&v&v&v} {id, val}
+& allocates a tuple of type {\it id} and stores it in {\it val}\\
+\\
+\inst{RETURN}{0&0&0&0&0&0&0&0} {---}
+& finished processing the tuple - return\\
+\\
+\inst{CALL}  {0&0&1&0&i&i&i&i\\\hline i&i&i&r&r&r&r&r\\\hline a&a&a&a&a&X&X&X} {id, reg, args}
+& call external function number {\it id} with {\it args} and store\\
+&the result in {\it reg}\\
+\\
+\end{tabular}
+
+\begin{tabular}{lll}
+OP & BYTE FORMAT\\
+\hline
+\\
+\op{float\neq}{0&0&0&0&0}
+\op{int\neq}{0&0&0&0&1}
+\op{float=}{0&0&0&1&0}
+\op{int=}{0&0&0&1&1}
+\op{float<}{0&0&1&0&0}
+\op{int<}{0&0&1&0&1}
+\op{float\leq}{0&0&1&1&0}
+\op{int\leq}{0&0&1&1&1}
+\op{float>}{0&1&0&0&0}
+\op{int>}{0&1&0&0&1}
+\op{float\geq}{0&1&0&1&0}
+\op{int\geq}{0&1&0&1&1}
+\op{float\%}{0&1&1&0&0}
+\op{int\%}{0&1&1&0&1}
+\op{float+}{0&1&1&1&0}
+\op{int+}{0&1&1&1&1}
+\op{float-}{1&0&0&0&0}
+\op{int-}{1&0&0&0&1}
+\op{float*}{1&0&0&1&0}
+\op{int*}{1&0&0&1&1}
+\op{float\div}{1&0&1&0&0}
+\op{int\div}{1&0&1&0&1}
+\end{tabular}
+\vspace{0.3in}\\
+
+\begin{tabular}{lll}
+VALUE & BYTE FORMAT & ARGS\\
+\hline
+\\
+\val{REG}   {1&r&r&r&r&r} {reg}
+\\
+\val{TUPLE} {0&1&1&1&1&1} {---}
+& refers to the tuple currently being processed\\
+\\
+\val{HOST\_ID}   {0&0&0&0&1&1} {---}
+& refers to the node currently being processed\\
+\\
+\val{INT}   {0&0&0&0&0&1} {int}
+& the next 4 bytes after the current instruction\\
+& are an immediate integer to which this refers\\
+\\
+\val{FLOAT} {0&0&0&0&0&0} {float}
+& the next 4 bytes after the current instruction\\
+& are an immediate float to which this refers\\
+\\
+\val{FIELD} {0&0&0&0&1&0} {}
+& the next two bytes after the current instruction\\
+& indicate a field of a register in the following format:\\
+\val{}{X&X&X&X&f&f&f&f\\\hline X&X&X&r&r&r&r&r} {field, reg}
+& with {\it reg} indicating a register with a tuple value\\
+& and {\it field} indicating the tuple's field number. \\
+\end{tabular}
+\vspace{0.3in}\\
+
+\begin{tabular}{lll}
+ARGS & BYTE FORMAT\\
+\hline
+\\
+\val{VALUE}   {X&X&v&v&v&v&v&v} {value}
+\end{tabular}
+\vspace{0.3in}\\
+
+\begin{tabular}{lll}
+MATCHLIST & BYTE FORMAT\\
+\hline
+\\
+\val{MATCHLIST}   {f&f&f&f&f&f&f&f\\\hline m&m&v&v&v&v&v&v} {field, marker, value}
+& requires that the tuple's field {\it field} match {\it value}\\
+& mm=11 if the match list is empty and mm=01 for the last \\
+& entry in the list.\\
+\end{tabular}\\
+
+\vspace{0.3in}
+
+\begin{tabular}{lll}
+AGGREGATE & BYTE FORMAT\\
+\hline
+\\
+\op{none}{0&0&0&0}
+\op{first}{0&0&0&1}
+\op{int\ max}{0&0&1&0}
+\op{int\ min}{0&0&1&1}
+\op{int\ sum}{0&1&0&0}
+\op{float\ max}{0&1&0&1}
+\op{float\ min}{0&1&1&0}
+\op{float\ sum}{0&1&1&1}
+\op{int\ set\_union}{1&0&0&0}
+\op{float\ set\_union}{1&0&0&1}
+\op{int\ list\ sum}{1&0&1&0}
+\op{float\ list\ sum}{1&0&1&1}
+\end{tabular}
+
+\vspace{0.3in}
+
+\begin{tabular}{lll}
+TYPE & BYTE FORMAT\\
+\hline
+\\
+\op{int}{0&0&0&0}
+\op{float}{0&0&0&1}
+\op{addr}{0&0&1&0}
+\op{int\ list}{0&0&1&1}
+\op{float\ list}{0&1&0&0}
+\op{addr\ list}{0&1&0&1}
+\op{int\ set}{0&1&1&0}
+\op{float\ set}{0&1&1&1}
+\op{type}{1&0&0&0}
+\end{tabular}
+\vspace{0.3in}\\
+
+\begin{tabular}{lll}
+PROPERTY & BYTE POSITION\\
+\hline
+\\
+\op{aggregate}{1}
+\op{persistent}{2}
+\op{linear}{3}
+\op{delete}{4}
+\op{schedule}{5}
+\end{tabular}
+\vspace{0.3in}\\
+
+\clearpage
+\noindent
+NOTES:\\
+All offsets and lengths are given in bytes.
+\end{document}
+
