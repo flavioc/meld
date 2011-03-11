@@ -236,7 +236,7 @@ static inline
 pcounter advance(pcounter pc)
 {
 	if (SEND(pc)) {
-		int count = 3;
+		int count = SEND_BASE;
 		
 		if (VAL_IS_FLOAT(SEND_ARG1(pc)))
       count += sizeof(meld_float);
@@ -1224,7 +1224,7 @@ eval_loop: /* for jump instructions */
 #endif
 			return RET_NEXT;
 		} else if (SEND(pc)) {
-			pcounter old_pc = pc+3;
+			pcounter old_pc = pc + SEND_BASE;
 			Register send_reg = reg[SEND_MSG(pc)];
 			Register send_rt = reg[SEND_RT(pc)];
 
@@ -1731,7 +1731,16 @@ print_program_code(void)
 				char msg = SEND_MSG(pc);
 				char rt = SEND_RT(pc);
 
-				printf("SEND reg %d TO reg %d IN %dms\n", VAL_REG(msg), VAL_REG(rt), SEND_DELAY(pc + 3));
+				printf("SEND reg %d TO reg %d IN ", VAL_REG(msg), VAL_REG(rt));
+
+				char delay = SEND_DELAY(pc);
+				pcounter m = pc + SEND_BASE;
+
+				if(VAL_IS_INT(delay)) {
+					printf("%d", *(int *)m);
+				}
+
+				printf("ms\n");
 			} else if(ITER(pc)) {
 				printf("ITERATE OVER %s MATCHING", TYPE_NAME(ITER_TYPE(pc)));
 

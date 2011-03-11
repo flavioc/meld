@@ -23,8 +23,7 @@ the tuple descriptors, and, finally, the list of instructions that represent the
 routines for processing each tuple.
 
 A tuple descriptor consists of a 2 byte short indicating the offset into the
-VM at which the tuple processing function begins, followed by 1 byte giving the
-size of the tuple (in bytes), followed by 1 byte describing the tuple's properties and then
+VM at which the tuple processing function begins, followed by 1 byte describing the tuple's properties and then
 1 byte indicating the aggregate's type (what aggregate and which field, high and low nibble,
 respectively), if any. Next there is a byte indicating the tuples order
 of processing for stratification.
@@ -38,7 +37,8 @@ delta tuple and the second byte indicates the delta field.
 INSTRUCTION & BYTE FORMAT & ARGS\\
 \hline
 \\
-\inst{IF}    {0&1&1&r&r&r&r&r \\\hline
+\inst{IF}    {0&1&1&X&X&X&X&X \\\hline
+X&X&X&r&r&r&r&r \\\hline
 j&j&j&j&j&j&j&j \\\hline j&j&j&j&j&j&j&j} {reg, jump\_offset}
 & if {\it reg} != 0 then process until ELSE and then jump.\\
 & if {\it reg} = 0 then jump to ELSE \\
