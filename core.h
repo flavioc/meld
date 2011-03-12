@@ -39,12 +39,10 @@
 #define ITER_MATCH_VAL(x)   (((*(const unsigned char*)((x)+1))&0x3f))
 #define REMOVE_REG(x) ((*(const unsigned char*)(x))&0x1f)
 
-#define SEND_MSG(x)   ((((*(const unsigned char*)(x))&0x3) << 3) | \
-                      (((*(const unsigned char*)((x)+1))&0xe0) >> 5))
-#define SEND_RT(x)    ((*(const unsigned char*)((x)+1))&0x1f)
-#define SEND_DELAY(x) (*(const unsigned char *)((x)+2))
-#define SEND_ARG1(x)  ((*((const unsigned char*)(x)+2)) & 0x3f)
-#define SEND_BASE 3
+#define SEND_MSG(x)    ((*(const unsigned char*)((x)+1)) & 0x1f)
+#define SEND_RT(x)    ((*(const unsigned char*)((x)+2)) & 0x1f)
+#define SEND_DELAY(x) (*(const unsigned char *)((x)+3) & 0x3f)
+#define SEND_BASE 4
 
 #define OP_ARG1(x)    (((*(const unsigned char*)(x)) & 0x3f))
 #define OP_ARG2(x)    (((*(const unsigned char*)((x)+1)) & 0xfc) >> 2)

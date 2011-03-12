@@ -57,7 +57,10 @@ j&j&j&j&j&j&j&j \\\hline j&j&j&j&j&j&j&j} {id, jump\_offset, matchlist}
 \inst{NEXT}  {0&0&0&0&0&0&0&1} {---}
 & return to iter and process next matching fact\\
 \\
-\inst{SEND}  {0&0&0&0&1&0&r$_1$&r$_1$\\\hline r$_1$&r$_1$&r$_1$&r$_2$&r$_2$&r$_2$&r$_2$&r$_2$\\\hline X&X&v$_1$&v$_2$&v$_3$&v$_4$&v$_5$&v$_6$} {reg$_1$, reg$_2$, val}
+\inst{SEND}  {0&0&0&0&1&0&X&X\\\hline
+X&X&X&r$_1$&r$_1$&r$_1$&r$_1$&r$_1$\\\hline
+X&X&X&r$_2$&r$_2$&r$_2$&r$_2$&r$_2$\\\hline
+X&X&v$_1$&v$_2$&v$_3$&v$_4$&v$_5$&v$_6$} {reg$_1$, reg$_2$, val}
 & sends the tuple in {\it reg$_1$} along the path in {\it reg$_2$}\\
 & if {\it reg$_1$ = reg$_2$} then the tuple is stored locally\\
 & waits for {\it val} time before transmitting\\

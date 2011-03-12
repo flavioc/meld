@@ -238,13 +238,13 @@ pcounter advance(pcounter pc)
 	if (SEND(pc)) {
 		int count = SEND_BASE;
 		
-		if (VAL_IS_FLOAT(SEND_ARG1(pc)))
+		if (VAL_IS_FLOAT(SEND_DELAY(pc)))
       count += sizeof(meld_float);
-    else if (VAL_IS_INT(SEND_ARG1(pc)))
+    else if (VAL_IS_INT(SEND_DELAY(pc)))
       count += sizeof(meld_int);
-    else if (VAL_IS_FIELD(SEND_ARG1(pc)))
+    else if (VAL_IS_FIELD(SEND_DELAY(pc)))
       count += 2;
-		else if (VAL_IS_REVERSE(SEND_ARG1(pc)))
+		else if (VAL_IS_REVERSE(SEND_DELAY(pc)))
 			count += 2;
 		else {
 			assert(0);
