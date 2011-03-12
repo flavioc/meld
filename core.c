@@ -254,7 +254,7 @@ pcounter advance(pcounter pc)
 		return pc+count;
 	}
 	else if(OP(pc)) {
-		int count = 3;
+		int count = OP_BASE;
 
     /* check v1 */
 		if (VAL_IS_FLOAT(OP_ARG1(pc)))
@@ -291,7 +291,7 @@ pcounter advance(pcounter pc)
 		return pc+count;
 	}
 	else if(MOVE(pc)) {
-		int count = 2;
+		int count = MOVE_BASE;
 		
 		/* move src */
 		if (VAL_IS_FLOAT(MOVE_SRC(pc)))
@@ -329,7 +329,7 @@ pcounter advance(pcounter pc)
 			exit(1);
 		}
 
-		return pc+count;
+		return pc + count;
 	}
 	else if(ITER(pc)) {
     
@@ -364,7 +364,7 @@ pcounter advance(pcounter pc)
 
 		return pc;
 	} else if (ALLOC(pc)) {
-		int count = 2;
+		int count = ALLOC_BASE;
 
 		if (VAL_IS_INT(ALLOC_DST(pc)))
 			count += sizeof(meld_int);
@@ -389,7 +389,7 @@ pcounter advance(pcounter pc)
 		int numArgs = CALL_ARGS(pc);
 		int i;
 		
-		for (i = 0, pc+=2; i < numArgs; i++, pc++) {
+		for (i = 0, pc += CALL_BASE; i < numArgs; i++, pc++) {
 			if (VAL_IS_FLOAT(CALL_VAL(pc)))
         pc += sizeof(meld_float);
 			else if (VAL_IS_INT(CALL_VAL(pc)))
@@ -1251,7 +1251,7 @@ eval_loop: /* for jump instructions */
 			}	
 		} else if (OP(pc)) {
 
-			pcounter old_pc = pc+3;
+			pcounter old_pc = pc + OP_BASE;
 			
 #ifdef DEBUG_INSTRS
 			printf("OP to %d\n", OP_DST(pc));
@@ -1292,7 +1292,7 @@ eval_loop: /* for jump instructions */
       }
 
 		} else if (MOVE(pc)) {
-			pcounter old_pc = pc+2;
+			pcounter old_pc = pc + MOVE_BASE;
 
 #ifdef DEBUG_INSTRS
 			{
@@ -1346,7 +1346,7 @@ eval_loop: /* for jump instructions */
 
 		} else if (ALLOC(pc)) {       /************* ALLOC **************/
 		  
-			pcounter old_pc = pc+2;
+			pcounter old_pc = pc + ALLOC_BASE;
       tuple_t *dst;
       
 #if defined(DEBUG_INSTRS) || defined(DEBUG_ALLOCS)
@@ -1372,7 +1372,7 @@ eval_loop: /* for jump instructions */
 #endif
         
 			int i;
-			pcounter old_pc = pc+2;
+			pcounter old_pc = pc + CALL_BASE;
 			for (i = 0; i < CALL_ARGS(pc); i++) {
 				unsigned char value = CALL_VAL(old_pc);
 				old_pc++;
@@ -1607,7 +1607,7 @@ print_program_code(void)
 			} else if(MOVE(pc)) {
 				char src = MOVE_SRC(pc);
 				char dst = MOVE_DST(pc);
-				pcounter m = pc + 2;
+				pcounter m = pc + MOVE_BASE;
 
 				printf("MOVE ");
 
@@ -1641,7 +1641,7 @@ print_program_code(void)
 				printf("ALLOC %s TO ", TYPE_NAME(type));
 
 				char dst = ALLOC_DST(pc);
-				pcounter a = pc + 2;
+				pcounter a = pc + ALLOC_BASE;
 
 				if(VAL_IS_REG(dst))
 					printf("reg %d", VAL_REG(dst));
@@ -1651,7 +1651,7 @@ print_program_code(void)
 				printf("\n");
 			} else if(OP(pc)) {
 				printf("SET ");
-				pcounter m = pc + 3;
+				pcounter m = pc + OP_BASE;
 
 				printf("reg %d", OP_DST(pc));
 
@@ -1785,7 +1785,7 @@ print_program_code(void)
 				printf("CALL func(%d):%d TO %d = (", CALL_ID(pc), args, CALL_DST(pc));
 
 				int i;
-				pcounter m = pc + 2;
+				pcounter m = pc + CALL_BASE;
 				for(i = 0; i < args; ++i) {
 					char v = CALL_VAL(m);
 					++m;

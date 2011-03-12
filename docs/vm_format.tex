@@ -68,21 +68,29 @@ X&X&v$_1$&v$_2$&v$_3$&v$_4$&v$_5$&v$_6$} {reg$_1$, reg$_2$, val}
 \inst{REMOVE} {1&0&0&r&r&r&r&r} {reg}
 & delete tuple stored in reg from database\\
 \\
-\inst{OP}    {1&1&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$\\\hline
-v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&r&r\\\hline
-r&r&r&o&o&o&o&o} {val$_1$, val$_2$, reg, op}
+\inst{OP}    {1&1&X&X&X&X&X&X\\\hline
+X&X&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$\\\hline
+X&X&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$\\\hline
+X&X&X&r&r&r&r&r\\\hline
+X&X&X&o&o&o&o&o} {val$_1$, val$_2$, reg, op}
 & sets {\it reg} = {\it val$_1$ op val$_2$}\\
 \\
-\inst{MOVE}  {0&0&1&1&v$_1$&v$_1$&v$_1$&v$_1$\\\hline v$_1$&v$_1$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$} {val$_1$, val$_2$}
+\inst{MOVE}  {0&0&1&1&X&X&X&X\\\hline
+X&X&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$\\\hline
+X&X&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$} {val$_1$, val$_2$}
 & copies {\it val$_1$} to {\it val$_2$}\\
 \\
-\inst{ALLOC} {0&1&0&i&i&i&i&i\\\hline i&i&v&v&v&v&v&v} {id, val}
+\inst{ALLOC} {0&1&0&X&X&X&X&X\\\hline
+X&i&i&i&i&i&i&i\\\hline
+X&X&v&v&v&v&v&v} {id, val}
 & allocates a tuple of type {\it id} and stores it in {\it val}\\
 \\
 \inst{RETURN}{0&0&0&0&0&0&0&0} {---}
 & finished processing the tuple - return\\
 \\
-\inst{CALL}  {0&0&1&0&i&i&i&i\\\hline i&i&i&r&r&r&r&r\\\hline a&a&a&a&a&X&X&X} {id, reg, args}
+\inst{CALL}  {0&0&1&0&X&X&X&X\\\hline
+X&i&i&i&i&i&i&i\\\hline
+X&X&X&r&r&r&r&r} {id, reg, args}
 & call external function number {\it id} with {\it args} and store\\
 &the result in {\it reg}\\
 \\
