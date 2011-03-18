@@ -129,6 +129,11 @@ void list_int_push_tail(List *list, meld_int data)
 	list_push_tail(list, (list_element)&data);
 }
 
+void list_int_pop_head(List *list)
+{
+	list_pop_head(list);
+}
+
 void list_node_push_head(List *list, void *data)
 {
 	list_push_head(list, (list_element)&data);
@@ -239,20 +244,23 @@ int list_equal(List *list1, List *list2)
 	return 1; /* they are equal! */
 }
 
-void list_print(List *list)
+void list_print(List *list, FILE *out)
 {
-	list_iterator it = list_get_iterator(list);
+	if(list == NULL) {
+		fprintf(out, "LIST(NULL:0):[]");
+	} else {
+		list_iterator it = list_get_iterator(list);
 
-	printf("LIST %p with %d nodes:\n", list, list->total);
+		fprintf(out, "LIST(%p:%d):[", list, list->total);
 
-	printf("\t");
-	while (list_iterator_has_next(it)) {
-    list->descriptor->print_fn(list_iterator_data(it));
-		it = list_iterator_next(it);
-		if (list_iterator_has_next(it))
-			printf(" ");
+		while (list_iterator_has_next(it)) {
+			list->descriptor->print_fn(list_iterator_data(it), out);
+			it = list_iterator_next(it);
+			if (list_iterator_has_next(it))
+				fprintf(out, ", ");
+		}
+		fprintf(out, "]");
 	}
-	printf("\n");
 }
 
 void list_reverse_first(List *list)
@@ -279,9 +287,9 @@ List* list_copy(List *list)
 }
 
 static void
-print_int_list_elem(list_element data)
+print_int_list_elem(list_element data, FILE *out)
 {
-  printf("%d", MELD_INT(data));
+  fprintf(out, "%d", MELD_INT(data));
 }
 
 static bool
@@ -291,9 +299,9 @@ equal_int_list_elem(list_element el1, list_element el2)
 }
 
 static void
-print_float_list_elem(list_element data)
+print_float_list_elem(list_element data, FILE *out)
 {
-  printf("%f", MELD_FLOAT(data));
+  fprintf(out, "%f", MELD_FLOAT(data));
 }
 
 static bool
@@ -303,13 +311,13 @@ equal_float_list_elem(list_element el1, list_element el2)
 }
 
 static void
-print_node_list_elem(list_element data)
+print_node_list_elem(list_element data, FILE *out)
 {
 #ifdef PARALLEL_MACHINE
-	printf(NODE_FORMAT, MELD_NODE(data)->order);
-  printf(" %p", MELD_NODE(data));
+	fprintf(out, NODE_FORMAT, MELD_NODE(data)->order);
+  fprintf(out, " %p", MELD_NODE(data));
 #else
-	printf(NODE_FORMAT, MELD_NODE(data)->id);
+	fprintf(out, NODE_FORMAT, MELD_NODE(data)->id);
 #endif
 }
 

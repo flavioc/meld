@@ -738,6 +738,7 @@ void vm_init(void)
   
   print_program_info();
 	print_program_code();
+	//exit(0);
 }
 
 void vm_threads_init(void)

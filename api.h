@@ -8,6 +8,7 @@
 
 typedef int32_t meld_int;
 typedef float meld_float;
+typedef meld_int meld_bool;
 typedef short tuple_type;
 typedef void* tuple_t;
 typedef void* anything;
@@ -25,6 +26,7 @@ typedef Register meld_return;
 
 #define MELD_INT(x)   (*(meld_int *)(x))
 #define MELD_FLOAT(x) (*(meld_float *)(x))
+#define MELD_BOOL(x)	(*(meld_bool *)(x))
 #define MELD_NODE(x)  (*(Node **)(x))
 #define MELD_NODE_ID(x) (*(NodeID *)(x))
 #define MELD_SET(x) (*(Set **)(x))

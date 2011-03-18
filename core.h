@@ -13,21 +13,38 @@
 #define TUPLE_ALLOC_CHECKS 1
 
 /* macros */
-#define IF(x)     (((*(const unsigned char*)(x))&0xe0) == 0x60)
-#define ELSE(x)   ((*(const unsigned char*)(x)) == 0x02)
-#define ITER(x)   (((*(const unsigned char*)(x))&0xff) == 0xa0)
-#define NEXT(x)   ((*(const unsigned char*)(x)) == 0x01)
-#define SEND(x)   (((*(const unsigned char*)(x))&0xfc) == 0x08)
-#define REMOVE(x) (((*(const unsigned char*)(x))&0xe0) == 0x80)
-#define OP(x)     (((*(const unsigned char*)(x))&0xc0) == 0xc0)
-#define MOVE(x)   (((*(const unsigned char*)(x))&0xf0) == 0x30)
-#define ALLOC(x)  (((*(const unsigned char*)(x))&0xe0) == 0x40)
-#define RETURN(x) ((*(const unsigned char*)(x)) == 0x00)
-#define CALL(x)   (((*(const unsigned char*)(x)) & 0xf0) == 0x20)
+#define RETURN_INSTR		0x00
+#define NEXT_INSTR			0x01
+#define ELSE_INSTR 			0x02
+#define TEST_NIL_INSTR	0x03
+#define CONS_INSTR			0x04
+#define HEAD_INSTR			0x05
+#define TAIL_INSTR			0x06
+#define NOT_INSTR				0x07
+#define SEND_INSTR 			0x08
+#define CALL_INSTR			0x20
+#define MOVE_INSTR			0x30
+#define ALLOC_INSTR			0x40
+#define IF_INSTR 				0x60
+#define MOVE_NIL_INSTR	0x70
+#define REMOVE_INSTR 		0x80
+#define ITER_INSTR			0xa0
+#define OP_INSTR				0xc0
+
+#define GET_INSTR_VAL(x, off)	(*((unsigned char *)(x)+(off)) & 0x3f)
+#define GET_JUMP(x, off) (*(unsigned short*)((const unsigned char*)(x)+(off)))
 
 #define IF_REG(x)     ((*((const unsigned char*)(x)+1))&0x1f)
-#define IF_JUMP(x)    (*(unsigned short*)((const unsigned char*)(x)+2))
+#define IF_JUMP(x)    GET_JUMP(x, 2)
 #define IF_BASE       4
+
+#define TEST_NIL_OP(x)	GET_INSTR_VAL(x, 1)
+#define TEST_NIL_DST(x)	GET_INSTR_VAL(x, 2)
+#define TEST_NIL_BASE 3
+
+#define NOT_OP(x)				GET_INSTR_VAL(x, 1)
+#define NOT_DST(x) 			GET_INSTR_VAL(x, 2)
+#define NOT_BASE 3
 
 #define ITER_TYPE(x)  ((*(const unsigned char*)((x)+1))&0x7f)
 #define ITER_JUMP(x)  (*(unsigned short*)((const unsigned char*)((x)+2)))
@@ -39,23 +56,39 @@
 #define ITER_MATCH_VAL(x)   (((*(const unsigned char*)((x)+1))&0x3f))
 #define REMOVE_REG(x) ((*(const unsigned char*)(x))&0x1f)
 
-#define SEND_MSG(x)    ((*(const unsigned char*)((x)+1)) & 0x1f)
+#define SEND_MSG(x)   ((*(const unsigned char*)((x)+1)) & 0x1f)
 #define SEND_RT(x)    ((*(const unsigned char*)((x)+2)) & 0x1f)
-#define SEND_DELAY(x) (*(const unsigned char *)((x)+3) & 0x3f)
-#define SEND_BASE 4
+#define SEND_DELAY(x) GET_INSTR_VAL(x, 3)
+#define SEND_BASE 		4
 
-#define OP_ARG1(x)    ((*(const unsigned char*)((x)+1)) & 0x3f)
-#define OP_ARG2(x)    ((*(const unsigned char*)((x)+2)) & 0x3f)
-#define OP_DST(x)     ((*(const unsigned char*)((x)+3)) & 0x1f)
+#define OP_ARG1(x)    GET_INSTR_VAL(x, 1)
+#define OP_ARG2(x)    GET_INSTR_VAL(x, 2)
+#define OP_DST(x)     GET_INSTR_VAL(x, 3)
 #define OP_OP(x)      ((*(const unsigned char*)((x)+4)) & 0x1f)
-#define OP_BASE		5
+#define OP_BASE				5
 
-#define MOVE_SRC(x)   (((*(const unsigned char*)((x)+1))&0x3f))
-#define MOVE_DST(x)   (((*(const unsigned char*)((x)+2))&0x3f))
-#define MOVE_BASE 3
+#define CONS_HEAD(x)	GET_INSTR_VAL(x, 1)
+#define CONS_TAIL(x)	GET_INSTR_VAL(x, 2)
+#define CONS_DST(x)		GET_INSTR_VAL(x, 3)
+#define CONS_BASE 		4
+
+#define HEAD_CONS(x)	GET_INSTR_VAL(x, 1)
+#define HEAD_DST(x)		GET_INSTR_VAL(x, 2)
+#define HEAD_BASE 3
+
+#define TAIL_CONS(x)	GET_INSTR_VAL(x, 1)
+#define TAIL_DST(x)		GET_INSTR_VAL(x, 2)
+#define TAIL_BASE 3
+
+#define MOVE_SRC(x)   GET_INSTR_VAL(x, 1)
+#define MOVE_DST(x)   GET_INSTR_VAL(x, 2)
+#define MOVE_BASE 		3
+
+#define MOVE_NIL_DST(x)	GET_INSTR_VAL(x, 1)
+#define MOVE_NIL_BASE 2
 
 #define ALLOC_TYPE(x) ((*(const unsigned char *)((x)+1))&0x7f)
-#define ALLOC_DST(x)  ((*(const unsigned char *)((x)+2))&0x3f)
+#define ALLOC_DST(x)  GET_INSTR_VAL(x, 2)
 #define ALLOC_BASE 3
 
 #define CALL_VAL(x)   (*(const unsigned char *)(x))
@@ -90,6 +123,7 @@
 #define OP_DIVI       0x15
 #define OP_NEQA       0x16
 #define OP_EQA        0x17
+#define OP_EQLINT			0x18
 
 #define VAL_IS_REG(x)   (((const unsigned char)(x)) & 0x20)
 #define VAL_IS_TUPLE(x) (((const unsigned char)(x)) == 0x1f)
@@ -97,7 +131,10 @@
 #define VAL_IS_INT(x)   (((const unsigned char)(x)) == 0x01)
 #define VAL_IS_FIELD(x) (((const unsigned char)(x)) == 0x02)
 #define VAL_IS_HOST(x)  (((const unsigned char)(x)) == 0x03)
-#define VAL_IS_REVERSE(x) (((const unsigned char)(x)) == 0x04)
+#define VAL_IS_NIL(x)		(((const unsigned char)(x)) == 0x04)
+
+#define NIL_LIST 				NULL
+#define IS_NIL_LIST(x)	((x) == NIL_LIST)
 
 #define VAL_REG(x) (((const unsigned char)(x)) & 0x1f)
 #define VAL_FIELD_NUM(x) ((*(const unsigned char *)(x)) & 0xff)
@@ -269,10 +306,10 @@ tuple_pentry *p_dequeue(tuple_pqueue *q);
 void p_enqueue(tuple_pqueue *q, meld_int priority, tuple_t tuple,
 		void *rt, record_type isNew);
 
+pcounter instruction_print(pcounter pc, bool recurse);
+void instruction_list_print(pcounter pc, pcounter until);
 void print_program_info(void);
 void print_program_code(void);
-
-bool type_has_code(tuple_type type);
 
 extern tuple_type TYPE_INIT;
 extern tuple_type TYPE_EDGE;

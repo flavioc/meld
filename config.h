@@ -18,7 +18,7 @@
 //#define DO_GC 1
 
 /* comment to disable statistics */
-#define STATISTICS 1
+// #define STATISTICS 1
 
 /* COMPLEX_PARTITION uses a partition scheme where the nodes
 	 are partitioned among threads by selecting the next available

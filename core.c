@@ -17,6 +17,7 @@
 //#define DEBUG_ALLOCS
 //#define DEBUG_PROVED_TUPLES
 
+static void *nil_value[1] = {NIL_LIST};
 static unsigned char **deltas = NULL;
 int *delta_sizes = NULL;
 unsigned char *arguments = NULL;
@@ -235,180 +236,332 @@ void init_consts(void)
 static inline
 pcounter advance(pcounter pc)
 {
-	if (SEND(pc)) {
-		int count = SEND_BASE;
+	switch(*pc) {
+		case SEND_INSTR: {
+			int count = SEND_BASE;
 		
-		if (VAL_IS_FLOAT(SEND_DELAY(pc)))
-      count += sizeof(meld_float);
-    else if (VAL_IS_INT(SEND_DELAY(pc)))
-      count += sizeof(meld_int);
-    else if (VAL_IS_FIELD(SEND_DELAY(pc)))
-      count += 2;
-		else if (VAL_IS_REVERSE(SEND_DELAY(pc)))
-			count += 2;
-		else {
-			assert(0);
-			exit(1);
-		}
-
-		return pc+count;
-	}
-	else if(OP(pc)) {
-		int count = OP_BASE;
-
-    /* check v1 */
-		if (VAL_IS_FLOAT(OP_ARG1(pc)))
-			count += sizeof(meld_float);
-		else if (VAL_IS_INT(OP_ARG1(pc)))
-  		count += sizeof(meld_int);
-		else if (VAL_IS_FIELD(OP_ARG1(pc)))
-			count += 2;
-		else if (VAL_IS_REVERSE(OP_ARG1(pc)))
-			count += 2;
-		else if (VAL_IS_REG(OP_ARG1(pc)))
-		  {} /* do nothing */
-		else {
-			assert(0);
-			exit(1);
-		}
-			
-		/* check v2 */
-		if (VAL_IS_FLOAT(OP_ARG2(pc)))
-			count += sizeof(meld_float);
-	  else if (VAL_IS_INT(OP_ARG2(pc)))
-			count += sizeof(meld_int);
-		else if (VAL_IS_FIELD(OP_ARG2(pc)))
-			count += 2;
-		else if (VAL_IS_REVERSE(OP_ARG2(pc)))
-			count += 2;
-	  else if (VAL_IS_REG(OP_ARG2(pc)))
-	    {} /* do nothing */
-		else {
-			assert(0);
-			exit(1);
-		}
-
-		return pc+count;
-	}
-	else if(MOVE(pc)) {
-		int count = MOVE_BASE;
-		
-		/* move src */
-		if (VAL_IS_FLOAT(MOVE_SRC(pc)))
-			count += sizeof(meld_float);
-		else if (VAL_IS_INT(MOVE_SRC(pc)))
-  		count += sizeof(meld_int);
-  	else if (VAL_IS_FIELD(MOVE_SRC(pc)))
-  		count += 2;
-		else if (VAL_IS_REVERSE(MOVE_SRC(pc)))
-			count += 2;
-		else if (VAL_IS_TUPLE(MOVE_SRC(pc)))
-			{} /* nothing */
-		else if(VAL_IS_REG(MOVE_SRC(pc)))
-			{} /* nothing */
-		else if(VAL_IS_HOST(MOVE_SRC(pc)))
-			{} /* nothing */
-		else {
-			assert(0);
-			exit(1);
-		}
-  		
-  	/* move dst */
-		if (VAL_IS_FLOAT(MOVE_DST(pc)))
-			count += sizeof(meld_float);
-	  else if (VAL_IS_INT(MOVE_DST(pc)))
-			count += sizeof(meld_int);
-		else if (VAL_IS_FIELD(MOVE_DST(pc)))
-			count += 2;
-		else if (VAL_IS_REVERSE(MOVE_DST(pc)))
-			count += 2;
-		else if (VAL_IS_REG(MOVE_DST(pc)))
-			{} /* nothing */
-		else {
-			assert(0);
-			exit(1);
-		}
-
-		return pc + count;
-	}
-	else if(ITER(pc)) {
-    
-    pc += ITER_BASE;
-    
-    if(ITER_MATCH_NONE(pc))
-      pc += 2;
-    else {
-      pcounter old;
-      while(1) {
-        old = pc;
-
-			  if (VAL_IS_FLOAT(ITER_MATCH_VAL(pc)))
-				  pc += sizeof(meld_float);
-			  else if (VAL_IS_INT(ITER_MATCH_VAL(pc)))
-				  pc += sizeof(meld_int);
-			  else if (VAL_IS_FIELD(ITER_MATCH_VAL(pc)))
-				  pc += 2;
-				else if (VAL_IS_REVERSE(ITER_MATCH_VAL(pc)))
-					pc += 2;
-				else {
-					assert(0);
-					exit(1);
-				}
-
-        pc += 2;
-
-        if(ITER_MATCH_END(old))
-          break;
-      }
-    }
-
-		return pc;
-	} else if (ALLOC(pc)) {
-		int count = ALLOC_BASE;
-
-		if (VAL_IS_INT(ALLOC_DST(pc)))
-			count += sizeof(meld_int);
-		else if	(VAL_IS_FLOAT(ALLOC_DST(pc)))
-			count += sizeof(meld_float);
-		else if (VAL_IS_FIELD(ALLOC_DST(pc)))
-			count += 2;
-		else if (VAL_IS_REG(ALLOC_DST(pc)))
-			{} /* nothing */
-		else if (VAL_IS_REVERSE(ALLOC_DST(pc))) {
-			count += 2;
-			assert(0);
-			exit(1);
-		} else {
-			assert(0);
-			exit(1);
-		}
-
-		return pc+count;
-	}
-	else if (CALL(pc)) {
-		int numArgs = CALL_ARGS(pc);
-		int i;
-		
-		for (i = 0, pc += CALL_BASE; i < numArgs; i++, pc++) {
-			if (VAL_IS_FLOAT(CALL_VAL(pc)))
-        pc += sizeof(meld_float);
-			else if (VAL_IS_INT(CALL_VAL(pc)))
-				pc += sizeof(meld_int);
-			else if (VAL_IS_FIELD(CALL_VAL(pc)))
-				pc += 2;
-			else if (VAL_IS_REVERSE(CALL_VAL(pc))) {
-				pc += 2;
+			if (VAL_IS_FLOAT(SEND_DELAY(pc)))
+				count += sizeof(meld_float);
+			else if (VAL_IS_INT(SEND_DELAY(pc)))
+				count += sizeof(meld_int);
+			else if (VAL_IS_FIELD(SEND_DELAY(pc)))
+				count += 2;
+			else {
 				assert(0);
 				exit(1);
 			}
+
+			return pc+count;
 		}
-		return pc;
-	}
-	else if (IF(pc)) {
-		return pc+IF_BASE;
-	}
-	else {
-		return pc+1;
+		case OP_INSTR: {
+			int count = OP_BASE;
+
+			/* check v1 */
+			if (VAL_IS_FLOAT(OP_ARG1(pc)))
+				count += sizeof(meld_float);
+			else if (VAL_IS_INT(OP_ARG1(pc)))
+				count += sizeof(meld_int);
+			else if (VAL_IS_FIELD(OP_ARG1(pc)))
+				count += 2;
+			else if(VAL_IS_NIL(OP_ARG1(pc)))
+				{} /* do nothing */
+			else if (VAL_IS_REG(OP_ARG1(pc)))
+				{} /* do nothing */
+			else {
+				assert(0);
+				exit(1);
+			}
+				
+			/* check v2 */
+			if (VAL_IS_FLOAT(OP_ARG2(pc)))
+				count += sizeof(meld_float);
+			else if (VAL_IS_INT(OP_ARG2(pc)))
+				count += sizeof(meld_int);
+			else if (VAL_IS_FIELD(OP_ARG2(pc)))
+				count += 2;
+			else if (VAL_IS_REG(OP_ARG2(pc)))
+				{} /* do nothing */
+			else if(VAL_IS_NIL(OP_ARG2(pc)))
+				{} /* do nothing */
+			else {
+				assert(0);
+				exit(1);
+			}
+
+			/* check dst */
+			if (VAL_IS_REG(OP_DST(pc)))
+				{}
+			else if(VAL_IS_FIELD(OP_DST(pc)))
+				count += 2;
+			else {
+				assert(0);
+				exit(1);
+			}
+
+			return pc+count;
+		}
+		case MOVE_INSTR: {
+			int count = MOVE_BASE;
+			
+			/* move src */
+			if (VAL_IS_FLOAT(MOVE_SRC(pc)))
+				count += sizeof(meld_float);
+			else if (VAL_IS_INT(MOVE_SRC(pc)))
+				count += sizeof(meld_int);
+			else if (VAL_IS_FIELD(MOVE_SRC(pc)))
+				count += 2;
+			else if (VAL_IS_TUPLE(MOVE_SRC(pc)))
+				{} /* nothing */
+			else if(VAL_IS_REG(MOVE_SRC(pc)))
+				{} /* nothing */
+			else if(VAL_IS_NIL(MOVE_SRC(pc)))
+				{} /* do nothing */
+			else if(VAL_IS_HOST(MOVE_SRC(pc)))
+				{} /* nothing */
+			else {
+				assert(0);
+				exit(1);
+			}
+				
+			/* move dst */
+			if (VAL_IS_FIELD(MOVE_DST(pc)))
+				count += 2;
+			else if (VAL_IS_REG(MOVE_DST(pc)))
+				{} /* nothing */
+			else {
+				assert(0);
+				exit(1);
+			}
+
+			return pc + count;
+		}
+		case ITER_INSTR: {
+			pc += ITER_BASE;
+			
+			if(ITER_MATCH_NONE(pc))
+				pc += 2;
+			else {
+				pcounter old;
+				while(1) {
+					old = pc;
+
+					if (VAL_IS_FLOAT(ITER_MATCH_VAL(pc)))
+						pc += sizeof(meld_float);
+					else if (VAL_IS_INT(ITER_MATCH_VAL(pc)))
+						pc += sizeof(meld_int);
+					else if (VAL_IS_FIELD(ITER_MATCH_VAL(pc)))
+						pc += 2;
+					else {
+						assert(0);
+						exit(1);
+					}
+
+					pc += 2;
+
+					if(ITER_MATCH_END(old))
+						break;
+				}
+			}
+
+			return pc;
+		}
+		case ALLOC_INSTR: {
+			int count = ALLOC_BASE;
+
+			if (VAL_IS_INT(ALLOC_DST(pc)))
+				count += sizeof(meld_int);
+			else if	(VAL_IS_FLOAT(ALLOC_DST(pc)))
+				count += sizeof(meld_float);
+			else if (VAL_IS_FIELD(ALLOC_DST(pc)))
+				count += 2;
+			else if (VAL_IS_REG(ALLOC_DST(pc)))
+				{} /* nothing */
+			else {
+				assert(0);
+				exit(1);
+			}
+
+			return pc+count;
+		}
+		case CALL_INSTR: {
+			int numArgs = CALL_ARGS(pc);
+			int i;
+			
+			for (i = 0, pc += CALL_BASE; i < numArgs; i++, pc++) {
+				if (VAL_IS_FLOAT(CALL_VAL(pc)))
+					pc += sizeof(meld_float);
+				else if (VAL_IS_INT(CALL_VAL(pc)))
+					pc += sizeof(meld_int);
+				else if (VAL_IS_FIELD(CALL_VAL(pc)))
+					pc += 2;
+			}
+			return pc;
+		}
+		case IF_INSTR:
+			return pc + IF_BASE;
+		case MOVE_NIL_INSTR: {
+			int count = MOVE_NIL_BASE;
+
+			if (VAL_IS_FIELD(MOVE_NIL_DST(pc)))
+				count += 2;
+			else if (VAL_IS_REG(MOVE_NIL_DST(pc)))
+				{} /* nothing */
+			else {
+				assert(0);
+				exit(1);
+			}
+
+			return pc + count;
+		}
+		case TEST_NIL_INSTR: {
+			int count = TEST_NIL_BASE;
+
+			if(VAL_IS_FIELD(TEST_NIL_OP(pc)))
+				count += 2;
+			else if(VAL_IS_REG(TEST_NIL_OP(pc)))
+				{}
+			else if(VAL_IS_NIL(TEST_NIL_OP(pc)))
+				{}
+			else {
+				assert(0);
+				exit(1);
+			}
+
+			if (VAL_IS_FIELD(TEST_NIL_DST(pc)))
+				count += 2;
+			else if (VAL_IS_REG(TEST_NIL_DST(pc)))
+				{}
+			else {
+				assert(0);
+				exit(1);
+			}
+
+			return pc + count;
+		}
+		case CONS_INSTR: {
+			int count = CONS_BASE;
+
+			/* check head */
+			if(VAL_IS_FIELD(CONS_HEAD(pc)))
+				count += 2;
+			else if(VAL_IS_REG(CONS_HEAD(pc)))
+				{}
+			else if(VAL_IS_INT(CONS_HEAD(pc)))
+				count += sizeof(meld_int);
+			else if(VAL_IS_FLOAT(CONS_HEAD(pc)))
+				count += sizeof(meld_float);
+			else if(VAL_IS_HOST(CONS_HEAD(pc)))
+				{}
+			else if(VAL_IS_TUPLE(CONS_HEAD(pc)))
+				{}
+			else {
+				assert(0);
+				exit(1);
+			}
+
+			/* check tail */
+			if(VAL_IS_FIELD(CONS_TAIL(pc)))
+				count += 2;
+			else if(VAL_IS_REG(CONS_TAIL(pc)))
+				{}
+			else if(VAL_IS_NIL(CONS_TAIL(pc)))
+				{}
+			else {
+				assert(0);
+				exit(1);
+			}
+
+			/* check dst */
+			if (VAL_IS_FIELD(CONS_DST(pc)))
+				count += 2;
+			else if(VAL_IS_REG(CONS_DST(pc)))
+				{}
+			else {
+				assert(0);
+				exit(1);
+			}
+
+			return pc + count;
+		}
+		case HEAD_INSTR: {
+			int count = HEAD_BASE;
+
+			/* check cons */
+			if(VAL_IS_FIELD(HEAD_CONS(pc)))
+				count += 2;
+			else if(VAL_IS_REG(HEAD_CONS(pc)))
+				{}
+			else {
+				assert(0);
+				exit(1);
+			}
+
+			/* check dst */
+			if (VAL_IS_FIELD(HEAD_DST(pc)))
+				count += 2;
+			else if(VAL_IS_REG(HEAD_DST(pc)))
+				{}
+			else {
+				assert(0);
+				exit(1);
+			}
+
+			return pc + count;
+		}
+		case TAIL_INSTR: {
+			int count = TAIL_BASE;
+
+			/* check cons */
+			if(VAL_IS_FIELD(TAIL_CONS(pc)))
+				count += 2;
+			else if(VAL_IS_REG(TAIL_CONS(pc)))
+				{}
+			else {
+				assert(0);
+				exit(1);
+			}
+
+			/* check dst */
+			if (VAL_IS_FIELD(TAIL_DST(pc)))
+				count += 2;
+			else if(VAL_IS_REG(TAIL_DST(pc)))
+				{}
+			else {
+				assert(0);
+				exit(1);
+			}
+
+			return pc + count;
+		}
+		case NOT_INSTR: {
+			int count = NOT_BASE;
+
+			if(VAL_IS_REG(NOT_OP(pc)))
+				{}
+			else {
+				assert(0);
+				exit(1);
+			}
+
+			if(VAL_IS_REG(NOT_DST(pc)))
+				{}
+			else if(VAL_IS_FIELD(NOT_DST(pc)))
+				count += 2;
+			else {
+				assert(0);
+				exit(1);
+			}
+
+			return pc + count;
+		}
+		case RETURN_INSTR:
+			return pc + 1;
+		case NEXT_INSTR:
+			return pc + 1;
+		default:
+			assert(0);
+			exit(1);
+			return pc+1;
 	}
 }
 
@@ -438,6 +591,8 @@ anything eval_dst(const unsigned char value,
     assert(0);
 	} else if(VAL_IS_HOST(value)) {
     assert(0);
+	} else if(VAL_IS_NIL(value)) {
+		assert(0);
   } else {
 		assert(0 /* invalid value */ );
 	}
@@ -453,6 +608,8 @@ anything eval(const unsigned char value, tuple_t tuple,
 	  return (anything)&(reg[VAL_REG(value)]);
 	} else if (VAL_IS_TUPLE(value)) {
 		return (anything)tuple;
+	} else if (VAL_IS_NIL(value)) {
+		return (anything)nil_value;
 	} else if (VAL_IS_FIELD(value)) {
 		const unsigned char reg_index = VAL_FIELD_REG(*pc);
 		const unsigned char field_num = VAL_FIELD_NUM(*pc);
@@ -470,25 +627,6 @@ anything eval(const unsigned char value, tuple_t tuple,
     *pc = *pc + sizeof(meld_float);
 	
     return ret;
-	} else if (VAL_IS_REVERSE(value)) {
-		const int reg_index = VAL_FIELD_REG(*pc);
-		const int field_num = VAL_FIELD_NUM(*pc);
-		tuple_t tuple = (tuple_t)reg[reg_index];
-
-		(*pc) += 2;
-
-#ifdef PARALLEL_MACHINE
-		List *route = MELD_LIST(GET_TUPLE_FIELD(tuple, field_num));
-		List *clone = list_copy(route);
-
-		list_reverse_first(clone);
-
-		thread_self()->reverse_list = clone;
-    
-    return (anything)&thread_self()->reverse_list;
-#else
-		return GET_TUPLE_FIELD(tuple, field_num);
-#endif /* PARALLEL_MACHINE */
   } else {
 		assert(0 /* invalid value */ );
 	}
@@ -1094,147 +1232,122 @@ int tuple_process(tuple_t tuple, pcounter pc, ref_count isNew, Register *reg)
 {
   for (; ; pc = advance(pc)) {
 eval_loop: /* for jump instructions */
-		if (RETURN(pc)) {
-#ifdef DEBUG_INSTRS
-        printf("RETURN\n");
-#endif
-			return RET_RET;
-		}
-
-		/* perform an instruction */
-		if (IF(pc)) {
-#ifdef DEBUG_INSTRS
-        printf("IF reg %d ", IF_REG(pc));
-#endif
-			if (!reg[IF_REG(pc)]) {
-#ifdef DEBUG_INSTRS
-          printf("no\n");
-#endif
-				pc += IF_JUMP(pc);
-				goto eval_loop;
-			}
-
-#ifdef DEBUG_INSTRS
-			printf("yes\n");
-#endif
-		} else if (ELSE(pc)) {
-			fprintf(stderr, "ELSE NOT IMPLEMENTED YET!\n");
-			assert(0);
-		} else if (ITER(pc)) {
-
-			const tuple_type type = ITER_TYPE(pc);
-			int i, length;
-      tuple_t *list;
-			pcounter jump = pc + ITER_JUMP(pc);
-      int size = TYPE_SIZE(type);
-			
-			/* produce a random ordering for all tuples of the appropriate type */
-			
-			if(TYPE_IS_PERSISTENT(type) && !TYPE_IS_AGG(type)) {
-			  /* persistent aggregate types not supported */
-        persistent_set *persistent = &PERSISTENT[type];
-        
-        length = persistent->current;
-        list = meld_malloc(sizeof(tuple_t) * length);
-
-        for(i = 0; i < length; i++) {
-          int j = random() % (i + 1);
-          
-          list[i] = list[j];
-          list[j] = persistent->array + i * size;
-        }
-		  } else {
-		    /* non-persistent type */
-  			tuple_entry *entry = TUPLES[type].head;
-		    
-		    length = queue_length(&TUPLES[ITER_TYPE(pc)]);
-		    list = meld_malloc(sizeof(tuple_t) * length);
-		    
-			  for (i = 0; i < length; i++) {
-				  int j = random() % (i+1);
-
-				  list[i] = list[j];
-				  list[j] = entry->tuple;
-
-				  entry = entry->next;
-			  }
-		  }
-			
-#ifdef DEBUG_INSTRS
-        printf("ITER %s len=%d\n", tuple_names[type], length);
-#endif
-
-      if(length == 0) {
-        /* no need to execute any further code, just jump! */
-        pc = jump;
-  			goto eval_loop;
-      }
-
-			/* iterate over all tuples of the appropriate type */
-      tuple_t next_tuple;
-      
-			for (i = 0; i < length; i++) {
-				next_tuple = list[i];
-
-				bool matched = 1;
-				pcounter tmppc;
-
-        tmppc = pc + ITER_BASE;
-
-        if(!ITER_MATCH_NONE(tmppc)) {
-				  /* check to see if it matches */
-          while (1) {
-            pcounter old_pc = tmppc + 2;
-					  const unsigned char fieldnum = ITER_MATCH_FIELD(tmppc);
-					  const unsigned char type_size = TYPE_ARG_SIZE(type, fieldnum);
-
-            field_t field = GET_TUPLE_FIELD(next_tuple, fieldnum);
-            anything val = eval(ITER_MATCH_VAL(tmppc), &tuple, &old_pc, reg);
-            
-            matched = matched && (memcmp(field, val, type_size) == 0);
-
-            if(ITER_MATCH_END(tmppc))
-              break;
-
-            tmppc = old_pc;
-          }
+		instruction_print(pc, false);
+		switch(*pc) {
+			case RETURN_INSTR:
+				return RET_RET;
+			case IF_INSTR:
+				if (!reg[IF_REG(pc)]) {
+					pc += IF_JUMP(pc);
+					goto eval_loop;
 				}
+				break;
+			case ELSE_INSTR:
+				fprintf(stderr, "ELSE NOT IMPLEMENTED YET!\n");
+				assert(0);
+				break;
+			case ITER_INSTR: {
+				const tuple_type type = ITER_TYPE(pc);
+				int i, length;
+				tuple_t *list;
+				pcounter jump = pc + ITER_JUMP(pc);
+				int size = TYPE_SIZE(type);
+			
+				/* produce a random ordering for all tuples of the appropriate type */
+			
+				if(TYPE_IS_PERSISTENT(type) && !TYPE_IS_AGG(type)) {
+					/* persistent aggregate types not supported */
+					persistent_set *persistent = &PERSISTENT[type];
+        
+					length = persistent->current;
+					list = meld_malloc(sizeof(tuple_t) * length);
 
-#ifdef DEBUG_INSTRS
-				printf("MATCHED: %d %d\n", matched, length);
-#endif
+					for(i = 0; i < length; i++) {
+						int j = random() % (i + 1);
           
-				if (matched) {
-					if (RET_RET == tuple_process(next_tuple, advance(pc), isNew, reg)) {
-						meld_free(list);
-						return RET_RET;
+						list[i] = list[j];
+						list[j] = persistent->array + i * size;
+					}
+				} else {
+					/* non-persistent type */
+					tuple_entry *entry = TUPLES[type].head;
+		    
+					length = queue_length(&TUPLES[ITER_TYPE(pc)]);
+					list = meld_malloc(sizeof(tuple_t) * length);
+		    
+					for (i = 0; i < length; i++) {
+						int j = random() % (i+1);
+
+						list[i] = list[j];
+						list[j] = entry->tuple;
+
+						entry = entry->next;
 					}
 				}
+			
+				if(length == 0) {
+					/* no need to execute any further code, just jump! */
+					pc = jump;
+					goto eval_loop;
+				}
+
+				/* iterate over all tuples of the appropriate type */
+				tuple_t next_tuple;
+      
+				for (i = 0; i < length; i++) {
+					next_tuple = list[i];
+
+					bool matched = 1;
+					pcounter tmppc;
+
+					tmppc = pc + ITER_BASE;
+
+					if(!ITER_MATCH_NONE(tmppc)) {
+						/* check to see if it matches */
+						while (1) {
+							pcounter old_pc = tmppc + 2;
+							const unsigned char fieldnum = ITER_MATCH_FIELD(tmppc);
+							const unsigned char type_size = TYPE_ARG_SIZE(type, fieldnum);
+
+							field_t field = GET_TUPLE_FIELD(next_tuple, fieldnum);
+							anything val = eval(ITER_MATCH_VAL(tmppc), &tuple, &old_pc, reg);
+            
+							matched = matched && (memcmp(field, val, type_size) == 0);
+
+							if(ITER_MATCH_END(tmppc))
+								break;
+
+							tmppc = old_pc;
+						}
+					}
+
+					if (matched) {
+						if (RET_RET == tuple_process(next_tuple, advance(pc), isNew, reg)) {
+							meld_free(list);
+							return RET_RET;
+						}
+					}
+				}
+
+				meld_free(list);
+
+				/* advance the pc to the end of the loop */
+				pc = jump;
+				goto eval_loop;
 			}
-
-			meld_free(list);
-
-			/* advance the pc to the end of the loop */
-			pc = jump;
-			goto eval_loop;
-
-		} else if (NEXT(pc)) {
-#ifdef DEBUG_INSTRS
-        printf("NEXT\n");
-#endif
+			break;
+		case NEXT_INSTR:
 			return RET_NEXT;
-		} else if (SEND(pc)) {
-			pcounter old_pc = pc + SEND_BASE;
-			Register send_reg = reg[SEND_MSG(pc)];
-			Register send_rt = reg[SEND_RT(pc)];
+		case SEND_INSTR: {
+				pcounter old_pc = pc + SEND_BASE;
+				Register send_reg = reg[SEND_MSG(pc)];
+				Register send_rt = reg[SEND_RT(pc)];
 
-#ifdef DEBUG_INSTRS
-			printf("SEND\n");
-#endif
-
-			tuple_send((tuple_t)send_reg, (void*)send_rt,
-			    MELD_INT(eval(SEND_DELAY(pc), &tuple, &old_pc, reg)), isNew);
-		} else if (REMOVE(pc)) {
+				tuple_send((tuple_t)send_reg, (void*)send_rt,
+						MELD_INT(eval(SEND_DELAY(pc), &tuple, &old_pc, reg)), isNew);
+				 }
+			break;
+		case REMOVE_INSTR:
 			if (isNew > 0) {
         int reg_remove = REMOVE_REG(pc);
 				tuple_t tuple = (tuple_t)reg[reg_remove];
@@ -1249,158 +1362,236 @@ eval_loop: /* for jump instructions */
 					stats_consumed_linear(type);
 #endif
 			}	
-		} else if (OP(pc)) {
+			break;
+		case OP_INSTR: {
+				pcounter old_pc = pc + OP_BASE;
+				
+				Register *arg1, *arg2, *dest;
+				
+				arg1 = eval(OP_ARG1(pc), &tuple, &old_pc, reg);
+				arg2 = eval(OP_ARG2(pc), &tuple, &old_pc, reg);
+				dest = eval(OP_DST(pc), &tuple, &old_pc, reg);
+				
+				switch(OP_OP(pc)) {
+					case OP_NEQI: *dest = (MELD_INT(arg1) != MELD_INT(arg2)); break;
+					case OP_EQI: *dest = (MELD_INT(arg1) == MELD_INT(arg2)); break;
+					case OP_LESSI: *dest = (MELD_INT(arg1) < MELD_INT(arg2)); break;
+					case OP_LESSEQI: *dest = (MELD_INT(arg1) <= MELD_INT(arg2)); break;
+					case OP_GREATERI: *dest = (MELD_INT(arg1) > MELD_INT(arg2)); break;
+					case OP_GREATEREQI: *dest = (MELD_INT(arg1) >= MELD_INT(arg2)); break;
+					case OP_MODI: MELD_INT(dest) = (MELD_INT(arg1) % MELD_INT(arg2)); break;
+					case OP_PLUSI: MELD_INT(dest) = (MELD_INT(arg1) + MELD_INT(arg2)); break;
+					case OP_MINUSI: MELD_INT(dest) = (MELD_INT(arg1) - MELD_INT(arg2)); break;
+					case OP_TIMESI: MELD_INT(dest) = (MELD_INT(arg1) * MELD_INT(arg2)); break;
+					case OP_DIVI: MELD_INT(dest) = (MELD_INT(arg1) / MELD_INT(arg2)); break;
+					case OP_NEQF: *dest = (MELD_FLOAT(arg1) != MELD_FLOAT(arg2)); break;
+					case OP_EQF: *dest = (MELD_FLOAT(arg1) == MELD_FLOAT(arg2)); break;
+					case OP_LESSF: *dest = (MELD_FLOAT(arg1) < MELD_FLOAT(arg2)); break;
+					case OP_LESSEQF: *dest = (MELD_FLOAT(arg1) <= MELD_FLOAT(arg2)); break;
+					case OP_GREATERF: *dest = (MELD_FLOAT(arg1) > MELD_FLOAT(arg2)); break;
+					case OP_GREATEREQF: *dest = (MELD_FLOAT(arg1) >= MELD_FLOAT(arg2)); break;
+					case OP_MODF: MELD_FLOAT(dest) = fmod(MELD_FLOAT(arg1), MELD_FLOAT(arg2)); break;
+					case OP_PLUSF: MELD_FLOAT(dest) = (MELD_FLOAT(arg1) + MELD_FLOAT(arg2)); break;
+					case OP_MINUSF: MELD_FLOAT(dest) = (MELD_FLOAT(arg1) - MELD_FLOAT(arg2)); break;
+					case OP_TIMESF: MELD_FLOAT(dest) = (MELD_FLOAT(arg1) * MELD_FLOAT(arg2)); break;
+					case OP_DIVF: MELD_FLOAT(dest) = (MELD_FLOAT(arg1) / MELD_FLOAT(arg2)); break;
+					case OP_NEQA: *dest = (MELD_PTR(arg1) != MELD_PTR(arg2)); break;
+					case OP_EQA: *dest = (MELD_PTR(arg1) == MELD_PTR(arg2)); break;
+				}
+			 }
+			 break;
+		case MOVE_INSTR: {
+				pcounter old_pc = pc + MOVE_BASE;
+				size_t size = 0;
 
-			pcounter old_pc = pc + OP_BASE;
-			
-#ifdef DEBUG_INSTRS
-			printf("OP to %d\n", OP_DST(pc));
-#endif
+				anything src = eval(MOVE_SRC(pc), &tuple, &old_pc, reg);
+				anything dst = eval_dst(MOVE_DST(pc), &old_pc, reg, &size);
 
-      Register *arg1, *arg2;
-      
-      arg1 = eval(OP_ARG1(pc), &tuple, &old_pc, reg);
-      arg2 = eval(OP_ARG2(pc), &tuple, &old_pc, reg);
-      
-      Register *dest = reg + OP_DST(pc);
-      
-      switch(OP_OP(pc)) {
-        case OP_NEQI: *dest = (MELD_INT(arg1) != MELD_INT(arg2)); break;
-        case OP_EQI: *dest = (MELD_INT(arg1) == MELD_INT(arg2)); break;
-        case OP_LESSI: *dest = (MELD_INT(arg1) < MELD_INT(arg2)); break;
-        case OP_LESSEQI: *dest = (MELD_INT(arg1) <= MELD_INT(arg2)); break;
-        case OP_GREATERI: *dest = (MELD_INT(arg1) > MELD_INT(arg2)); break;
-        case OP_GREATEREQI: *dest = (MELD_INT(arg1) >= MELD_INT(arg2)); break;
-        case OP_MODI: MELD_INT(dest) = (MELD_INT(arg1) % MELD_INT(arg2)); break;
-        case OP_PLUSI: MELD_INT(dest) = (MELD_INT(arg1) + MELD_INT(arg2)); break;
-        case OP_MINUSI: MELD_INT(dest) = (MELD_INT(arg1) - MELD_INT(arg2)); break;
-        case OP_TIMESI: MELD_INT(dest) = (MELD_INT(arg1) * MELD_INT(arg2)); break;
-        case OP_DIVI: MELD_INT(dest) = (MELD_INT(arg1) / MELD_INT(arg2)); break;
-        case OP_NEQF: *dest = (MELD_FLOAT(arg1) != MELD_FLOAT(arg2)); break;
-        case OP_EQF: *dest = (MELD_FLOAT(arg1) == MELD_FLOAT(arg2)); break;
-        case OP_LESSF: *dest = (MELD_FLOAT(arg1) < MELD_FLOAT(arg2)); break;
-        case OP_LESSEQF: *dest = (MELD_FLOAT(arg1) <= MELD_FLOAT(arg2)); break;
-        case OP_GREATERF: *dest = (MELD_FLOAT(arg1) > MELD_FLOAT(arg2)); break;
-        case OP_GREATEREQF: *dest = (MELD_FLOAT(arg1) >= MELD_FLOAT(arg2)); break;
-        case OP_MODF: MELD_FLOAT(dest) = fmod(MELD_FLOAT(arg1), MELD_FLOAT(arg2)); break;
-        case OP_PLUSF: MELD_FLOAT(dest) = (MELD_FLOAT(arg1) + MELD_FLOAT(arg2)); break;
-        case OP_MINUSF: MELD_FLOAT(dest) = (MELD_FLOAT(arg1) - MELD_FLOAT(arg2)); break;
-        case OP_TIMESF: MELD_FLOAT(dest) = (MELD_FLOAT(arg1) * MELD_FLOAT(arg2)); break;
-        case OP_DIVF: MELD_FLOAT(dest) = (MELD_FLOAT(arg1) / MELD_FLOAT(arg2)); break;
-        case OP_NEQA: *dest = (MELD_PTR(arg1) != MELD_PTR(arg2)); break;
-        case OP_EQA: *dest = (MELD_PTR(arg1) == MELD_PTR(arg2)); break;
-      }
+				memcpy(dst, src, size);
+			 }
+			break;
+		case MOVE_NIL_INSTR: {
+				char dst = MOVE_NIL_DST(pc);
 
-		} else if (MOVE(pc)) {
-			pcounter old_pc = pc + MOVE_BASE;
+				if(VAL_IS_REG(dst)) {
+					reg[VAL_REG(dst)] = (Register)NIL_LIST;
+				} else if(VAL_IS_FIELD(dst)) {
+					int reg_num = VAL_FIELD_REG(pc + MOVE_NIL_BASE);
+					int field = VAL_FIELD_NUM(pc + MOVE_NIL_BASE);
 
-#ifdef DEBUG_INSTRS
-			{
-				char src = MOVE_SRC(pc);
-				char dst = MOVE_DST(pc);
+					tuple_t tuple = (tuple_t)reg[reg_num];
 
-        printf("MOVE ");
-        if(VAL_IS_TUPLE(src))
-          printf("tuple");
-        else if(VAL_IS_REG(src))
-          printf("reg %d", VAL_REG(src));
-        else if(VAL_IS_HOST(src))
-          printf("host");
-        else if(VAL_IS_FIELD(src))
-          printf("FIELD");
-        else if(VAL_IS_INT(src))
-          printf("INT");
-        else if(VAL_IS_FLOAT(src))
-          printf("float");
-				else if(VAL_IS_REVERSE(src))
-					printf("reverse");
-        else printf("??");
-
-        printf(" ");
-
-        if(VAL_IS_TUPLE(dst))
-          printf("tuple");
-        else if(VAL_IS_REG(dst))
-          printf("reg %d", VAL_REG(dst));
-        else if(VAL_IS_HOST(dst))
-          printf("host");
-        else if(VAL_IS_FIELD(dst))
-          printf("FIELD");
-        else if(VAL_IS_INT(dst))
-          printf("INT");
-        else if(VAL_IS_FLOAT(dst))
-          printf("float");
-				else if(VAL_IS_REVERSE(dst))
-					printf("reverse");
-        else printf("??");
-
-				printf("\n");
+					SET_TUPLE_FIELD(tuple, field, nil_value);
+				}
+			 }
+			break;
+		case ALLOC_INSTR: {
+				pcounter old_pc = pc + ALLOC_BASE;
+				tuple_t *dst = eval(ALLOC_DST(pc), &tuple, &old_pc, reg);
+				
+				*dst = ALLOC_TUPLE(TYPE_SIZE(ALLOC_TYPE(pc)));
+				memset(*dst, 0, TYPE_SIZE(ALLOC_TYPE(pc)));
+				TUPLE_TYPE(*dst) = ALLOC_TYPE(pc);
 			}
-#endif
-			size_t size = 0;
+			break;
+		case CALL_INSTR: {
+				Register *dst = &reg[CALL_DST(pc)];
+				anything args[CALL_ARGS(pc)];
+				int i;
 
-			anything src = eval(MOVE_SRC(pc), &tuple, &old_pc, reg);
-			anything dst = eval_dst(MOVE_DST(pc), &old_pc, reg, &size);
+				assert(CALL_ARGS(pc) <= 5);
 
-			memcpy(dst, src, size);
+				pcounter old_pc = pc + CALL_BASE;
+				for (i = 0; i < CALL_ARGS(pc); i++) {
+					unsigned char value = CALL_VAL(old_pc);
+					old_pc++;
+					args[i] = eval(value, &tuple, &old_pc, reg);
+				}
 
-		} else if (ALLOC(pc)) {       /************* ALLOC **************/
-		  
-			pcounter old_pc = pc + ALLOC_BASE;
-      tuple_t *dst;
-      
-#if defined(DEBUG_INSTRS) || defined(DEBUG_ALLOCS)
-      {
-        tuple_type type = ALLOC_TYPE(pc);
-        printf("ALLOC %s\n", tuple_names[type]);
-      }
-#endif
+				switch (CALL_ARGS(pc)) {
+					default:
+						break;
+					case 0:
+						CALL_FUNC(pc)(dst);
+						break;
+					case 1:
+						CALL_FUNC(pc)(dst, args[0]);
+						break;
+					case 2:
+						CALL_FUNC(pc)(dst, args[0], args[1]);
+						break;
+					case 3:
+						CALL_FUNC(pc)(dst, args[0], args[1], args[2]);
+						break;
+					case 4:
+						CALL_FUNC(pc)(dst, args[0], args[1], args[2], args[3]);
+						break;
+					case 5:
+						CALL_FUNC(pc)(dst, args[0], args[1], args[2], args[3], args[4]);
+						break;
+				}
+		 }
+		break;
+		case CONS_INSTR: {
+				pcounter old_pc = pc + CONS_BASE;
+				
+				meld_int head = MELD_INT(eval(CONS_HEAD(pc), &tuple, &old_pc, reg));
+				List *tail = MELD_LIST(eval(CONS_TAIL(pc), &tuple, &old_pc, reg));
 
-			dst = eval(ALLOC_DST(pc), &tuple, &old_pc, reg);
-			
-			*dst = ALLOC_TUPLE(TYPE_SIZE(ALLOC_TYPE(pc)));
-      memset(*dst, 0, TYPE_SIZE(ALLOC_TYPE(pc)));
-			TUPLE_TYPE(*dst) = ALLOC_TYPE(pc);
-    } else if (CALL(pc)) {
-		 	Register *dst = &reg[CALL_DST(pc)];
-			anything args[CALL_ARGS(pc)];
+				if(IS_NIL_LIST(tail)) {
+					printf("NIL LIST\n");
+					tail = list_int_create();
+				} else {
+					tail = list_copy(tail);
+				}
 
-			assert(CALL_ARGS(pc) <= 5);
+				list_int_push_head(tail, head);
 
-#ifdef DEBUG_INSTRS
-      printf("CALL %d (%d)\n", CALL_ID(pc), CALL_ARGS(pc));
-#endif
-        
-			int i;
-			pcounter old_pc = pc + CALL_BASE;
-			for (i = 0; i < CALL_ARGS(pc); i++) {
-				unsigned char value = CALL_VAL(old_pc);
-				old_pc++;
-				args[i] = eval(value, &tuple, &old_pc, reg);
+				char dst = CONS_DST(pc);
+
+				if(VAL_IS_REG(dst)) {
+					reg[VAL_REG(dst)] = (Register)tail;
+				} else if(VAL_IS_FIELD(dst)) {
+					const int reg_num = VAL_FIELD_REG(old_pc);
+					const int field = VAL_FIELD_NUM(old_pc);
+
+					tuple_t tuple = (tuple_t)reg[reg_num];
+
+					SET_TUPLE_FIELD(tuple, field, &tail);
+				}
+		 }
+	  break;
+		case HEAD_INSTR: {
+				pcounter old_pc = pc + HEAD_BASE;
+
+				List *list = MELD_LIST(eval(HEAD_CONS(pc), &tuple, &old_pc, reg));
+
+				char dst = HEAD_DST(pc);
+				list_iterator it = list_get_iterator(list);
+				meld_int head = list_iterator_int(it);
+
+				if(VAL_IS_REG(dst)) {
+					MELD_INT(reg + VAL_REG(dst)) = head;
+				} else {
+					const int reg_num = VAL_FIELD_REG(old_pc);
+					const int field = VAL_FIELD_NUM(old_pc);
+
+					tuple_t tuple = (tuple_t)reg[reg_num];
+
+					SET_TUPLE_FIELD(tuple, field, &head);
+				}
+		 }
+		break;
+		case TAIL_INSTR: {
+				pcounter old_pc = pc + TAIL_BASE;
+
+				List *list = MELD_LIST(eval(TAIL_CONS(pc), &tuple, &old_pc, reg));
+				List *new_list = list_copy(list);
+
+				list_int_pop_head(new_list);
+
+				char dst = TAIL_DST(pc);
+
+				if(VAL_IS_REG(dst)) {
+					MELD_LIST(reg + VAL_REG(dst)) = new_list;
+				} else {
+					const int reg_num = VAL_FIELD_REG(old_pc);
+					const int field = VAL_FIELD_NUM(old_pc);
+
+					tuple_t tuple = (tuple_t)reg[reg_num];
+
+					SET_TUPLE_FIELD(tuple, field, &new_list);
+				}
+		 }
+		break;
+		case TEST_NIL_INSTR: {
+			pcounter old_pc = pc + TEST_NIL_BASE;
+
+			List *list = MELD_LIST(eval(TEST_NIL_OP(pc), &tuple, &old_pc, reg));
+
+			meld_bool put = IS_NIL_LIST(list) || list_total(list) == 0 ? 1 : 0;
+
+			printf("PUT : %d\n", put);
+			char dst = TEST_NIL_DST(pc);
+
+			if(VAL_IS_REG(dst))
+				MELD_BOOL(reg + VAL_REG(dst)) = put;
+			else {
+				const int reg_num = VAL_FIELD_REG(old_pc);
+				const int field = VAL_FIELD_NUM(old_pc);
+
+				tuple_t tuple = (tuple_t)reg[reg_num];
+
+				SET_TUPLE_FIELD(tuple, field, &put);
 			}
+		}
+		break;
+		case NOT_INSTR: {
+			pcounter old_pc = pc + NOT_BASE;
 
-			switch (CALL_ARGS(pc)) {
-				default:
-					break;
-				case 0:
-					CALL_FUNC(pc)(dst);
-					break;
-				case 1:
-					CALL_FUNC(pc)(dst, args[0]);
-					break;
-				case 2:
-					CALL_FUNC(pc)(dst, args[0], args[1]);
-					break;
-				case 3:
-					CALL_FUNC(pc)(dst, args[0], args[1], args[2]);
-					break;
-				case 4:
-					CALL_FUNC(pc)(dst, args[0], args[1], args[2], args[3]);
-					break;
-				case 5:
-					CALL_FUNC(pc)(dst, args[0], args[1], args[2], args[3], args[4]);
-					break;
+			meld_bool cur = MELD_BOOL(eval(NOT_OP(pc), &tuple, &old_pc, reg));
+
+			// invert
+			cur = (cur ? 0 : 1);
+
+			printf("NEW CUR : %d\n", cur);
+			char dst = NOT_DST(pc);
+
+			if(VAL_IS_REG(dst))
+				MELD_BOOL(reg + VAL_REG(dst)) = cur;
+			else {
+				const int reg_num = VAL_FIELD_REG(old_pc);
+				const int field = VAL_FIELD_NUM(old_pc);
+
+				tuple_t tuple = (tuple_t)reg[reg_num];
+
+				SET_TUPLE_FIELD(tuple, field, &cur);
 			}
+		}
+		break;
+		default:
+			printf("SOMETHINGS WRONG!\n");
+			break;
 		}	
 	}
 	
@@ -1430,10 +1621,12 @@ tuple_print(tuple_t tuple, FILE *fp)
 			case FIELD_ADDR:
 				fprintf(fp, "%p", MELD_PTR(field));
 				break;
-			case FIELD_LIST_INT:
-				fprintf(fp, "list_int[%d][%p]", list_total(MELD_LIST(field)),
-						MELD_LIST(field));
+			case FIELD_LIST_INT: {
+				List* list = MELD_LIST(field);
+
+				list_print(list, fp);
 				break;
+			 }
 			case FIELD_LIST_FLOAT:
 				fprintf(fp, "list_float[%d][%p]", list_total(MELD_LIST(field)),
 						MELD_LIST(field));
@@ -1582,6 +1775,241 @@ print_program_info(void)
 	}
 }
 
+static void
+instruction_value_print(char v, pcounter *pm)
+{
+	if(VAL_IS_TUPLE(v))
+		printf("tuple");
+	else if(VAL_IS_REG(v))
+		printf("reg %d", VAL_REG(v));
+	else if(VAL_IS_HOST(v))
+		printf("host");
+	else if(VAL_IS_NIL(v))
+		printf("nil");
+	else if(VAL_IS_FIELD(v)) {
+		printf("%d.%d", VAL_FIELD_REG(*pm), VAL_FIELD_NUM(*pm));
+		*pm = *pm + 2;
+	} else if(VAL_IS_INT(v)) {
+		printf("%d", *(meld_int *)*pm);
+		*pm = *pm + sizeof(meld_int);
+	} else if(VAL_IS_FLOAT(v)) {
+		printf("%f", *(meld_float *)*pm);
+		*pm = *pm + sizeof(meld_float);
+	}
+}
+
+pcounter
+instruction_print(pcounter pc, bool recurse)
+{
+	switch(*pc) {
+		case RETURN_INSTR:
+			printf("RETURN\n");
+			break;
+		case IF_INSTR: {
+				printf("IF (reg %d) THEN\n", IF_REG(pc));
+				if(recurse) {
+					pcounter next = pc + IF_JUMP(pc);
+					instruction_list_print(advance(pc), next);
+					printf("ENDIF\n");
+					return next;
+				}
+			}
+			break;
+		case TEST_NIL_INSTR: {
+				printf("TEST-NIL ");
+				pcounter m = pc + TEST_NIL_BASE;
+
+				instruction_value_print(TEST_NIL_OP(pc), &m);
+				printf(" TO ");
+				instruction_value_print(TEST_NIL_DST(pc), &m);
+				printf("\n");
+			}
+			break;
+		case MOVE_INSTR: {
+				pcounter m = pc + MOVE_BASE;
+
+				printf("MOVE ");
+				instruction_value_print(MOVE_SRC(pc), &m);
+				printf(" TO ");
+				instruction_value_print(MOVE_DST(pc), &m);
+				printf("\n");
+		 }
+		break;
+	case MOVE_NIL_INSTR: {
+			pcounter m = pc + MOVE_NIL_BASE;
+
+			printf("MOVE-NIL ");
+			instruction_value_print(MOVE_NIL_DST(pc), &m);
+			printf("\n");
+		 }
+		break;
+	case ALLOC_INSTR: {
+			pcounter m = pc + ALLOC_BASE;
+
+			printf("ALLOC %s TO ", TYPE_NAME(ALLOC_TYPE(pc)));
+			instruction_value_print(ALLOC_DST(pc), &m);
+			printf("\n");
+		}
+		break;
+	case OP_INSTR: {
+			pcounter m = pc + OP_BASE;
+
+			printf("OP ");
+			instruction_value_print(OP_ARG1(pc), &m);
+			printf(" ");
+
+			switch(OP_OP(pc)) {
+				case OP_NEQI: printf("INT NOT EQUAL"); break;
+				case OP_EQI: printf("INT EQUAL"); break;
+				case OP_LESSI: printf("INT LESSER"); break;
+				case OP_LESSEQI: printf("INT LESSER EQUAL"); break;
+				case OP_GREATERI: printf("INT GREATER"); break;
+				case OP_GREATEREQI: printf("INT GREATER EQUAL"); break;
+				case OP_MODI: printf("INT MOD"); break;
+				case OP_PLUSI: printf("INT PLUS"); break;
+				case OP_MINUSI: printf("INT MINUS"); break;
+				case OP_TIMESI: printf("INT TIMES"); break;
+				case OP_DIVI: printf("INT DIV"); break;
+				case OP_NEQF: printf("FLOAT NOT EQUAL"); break;
+				case OP_EQF: printf("FLOAT EQUAL"); break;
+				case OP_LESSF: printf("FLOAT LESSER"); break;
+				case OP_LESSEQF: printf("FLOAT LESSER EQUAL"); break;
+				case OP_GREATERF: printf("FLOAT GREATER"); break;
+				case OP_GREATEREQF: printf("FLOAT GREATER EQUAL"); break;
+				case OP_MODF: printf("FLOAT MOD"); break;
+				case OP_PLUSF: printf("FLOAT PLUS"); break;
+				case OP_MINUSF: printf("FLOAT MINUS"); break;
+				case OP_TIMESF: printf("FLOAT TIMES"); break;
+				case OP_DIVF: printf("FLOAT DIV"); break;
+				case OP_NEQA: printf("ADDR NOT EQUAL"); break;
+				case OP_EQA: printf("ADDR EQUAL"); break;
+				case OP_EQLINT: printf("LIST INT EQUAL"); break;
+			}
+
+			printf(" ");
+			instruction_value_print(OP_ARG2(pc), &m);
+			printf(" TO ");
+			instruction_value_print(OP_DST(pc), &m);
+			printf("\n");
+		 }
+		break;
+	case SEND_INSTR: {
+			char msg = SEND_MSG(pc);
+			char rt = SEND_RT(pc);
+
+			printf("SEND reg %d TO reg %d IN ", VAL_REG(msg), VAL_REG(rt));
+
+			pcounter m = pc + SEND_BASE;
+
+			instruction_value_print(SEND_DELAY(pc), &m);
+			printf("ms\n");
+		}
+		break;
+	case ITER_INSTR: {
+			printf("ITERATE OVER %s MATCHING", TYPE_NAME(ITER_TYPE(pc)));
+
+			pcounter m = pc + 4;
+
+			if(!ITER_MATCH_NONE(m)) {
+				while(1) {
+					pcounter start = m;
+					char fieldnum = ITER_MATCH_FIELD(m);
+					char v = ITER_MATCH_VAL(m);
+					m += 2;
+
+					printf("\n");
+					printf("  (match).%d=", fieldnum);
+					instruction_value_print(v, &m);
+
+					if(ITER_MATCH_END(start))
+						break;
+				}
+			}
+
+			printf("\n");
+		}
+		break;
+	case NEXT_INSTR:
+		printf("NEXT\n");
+		break;
+	case CALL_INSTR: {
+			const int args = CALL_ARGS(pc);
+
+			printf("CALL func(%d):%d TO %d = (", CALL_ID(pc), args, CALL_DST(pc));
+
+			int i;
+			pcounter m = pc + CALL_BASE;
+			for(i = 0; i < args; ++i) {
+				char v = CALL_VAL(m);
+				++m;
+
+				instruction_value_print(v, &m);
+
+				if(i < args - 1)
+					printf(", ");
+			}
+
+			printf(")\n");
+		}
+		break;
+	case CONS_INSTR: {
+			pcounter m = pc + CONS_BASE;
+
+			printf("CONS (");
+			instruction_value_print(CONS_HEAD(pc), &m);
+			printf("::");
+			instruction_value_print(CONS_TAIL(pc), &m);
+			printf(") TO ");
+			instruction_value_print(CONS_DST(pc), &m);
+			printf("\n");
+		}
+		break;
+	case HEAD_INSTR: {
+			pcounter m = pc + HEAD_BASE;
+
+			printf("HEAD ");
+			instruction_value_print(HEAD_CONS(pc), &m);
+			printf(" TO ");
+			instruction_value_print(HEAD_DST(pc), &m);
+			printf("\n");
+	 }
+	 break;
+	case TAIL_INSTR: {
+			pcounter m = pc + TAIL_BASE;
+
+			printf("TAIL ");
+			instruction_value_print(TAIL_CONS(pc), &m);
+			printf(" TO ");
+			instruction_value_print(TAIL_DST(pc), &m);
+			printf("\n");
+		}
+		break;
+	case NOT_INSTR: {
+			pcounter m = pc + NOT_BASE;
+
+			printf("NOT ");
+			instruction_value_print(NOT_OP(pc), &m);
+			printf(" TO ");
+			instruction_value_print(NOT_DST(pc), &m);
+			printf("\n");
+		}
+	 break;
+	default:
+		assert(0);
+		exit(1);
+	}
+
+	return advance(pc);
+}
+
+void
+instruction_list_print(pcounter pc, pcounter until)
+{
+	for (; pc < until; ) {
+		pc = instruction_print(pc, true);
+	}
+}
+
 void
 print_program_code(void)
 {
@@ -1599,230 +2027,8 @@ print_program_code(void)
 			next = TYPE_START(i+1);
 		}
 
-		for (; pc < next; pc = advance(pc)) {
-			if (RETURN(pc)) {
-				printf("RETURN\n");
-			} else if(IF(pc)) {
-				printf("IF (%d) THEN\n", IF_REG(pc));
-			} else if(MOVE(pc)) {
-				char src = MOVE_SRC(pc);
-				char dst = MOVE_DST(pc);
-				pcounter m = pc + MOVE_BASE;
-
-				printf("MOVE ");
-
-        if(VAL_IS_TUPLE(src))
-          printf("tuple");
-        else if(VAL_IS_REG(src))
-          printf("reg %d", VAL_REG(src));
-        else if(VAL_IS_HOST(src))
-          printf("host");
-        else if(VAL_IS_FIELD(src)) {
-					printf("%d.%d", VAL_FIELD_REG(m), VAL_FIELD_NUM(m));
-					m = m + 2;
-				} else if(VAL_IS_INT(src)) {
-          printf("%d", *(int *)m);
-					m += sizeof(int);
-				} else if(VAL_IS_FLOAT(src)) {
-					printf("%f", *(float *)m);
-					m += sizeof(float);
-				}
-
-        printf(" TO ");
-
-        if(VAL_IS_REG(dst))
-          printf("reg %d", VAL_REG(dst));
-        else if(VAL_IS_FIELD(dst))
-					printf("%d.%d", VAL_FIELD_REG(m), VAL_FIELD_NUM(m));
-
-				printf("\n");
-			} else if(ALLOC(pc)) {
-				tuple_type type = ALLOC_TYPE(pc);
-				printf("ALLOC %s TO ", TYPE_NAME(type));
-
-				char dst = ALLOC_DST(pc);
-				pcounter a = pc + ALLOC_BASE;
-
-				if(VAL_IS_REG(dst))
-					printf("reg %d", VAL_REG(dst));
-				else if(VAL_IS_FIELD(dst))
-					printf("%d.%d", VAL_FIELD_REG(a), VAL_FIELD_NUM(a));
-
-				printf("\n");
-			} else if(OP(pc)) {
-				printf("SET ");
-				pcounter m = pc + OP_BASE;
-
-				printf("reg %d", OP_DST(pc));
-
-				printf(" TO ");
-
-				char arg1 = OP_ARG1(pc);
-				char arg2 = OP_ARG2(pc);
-
-        if(VAL_IS_TUPLE(arg1))
-          printf("tuple");
-        else if(VAL_IS_REG(arg1))
-          printf("reg %d", VAL_REG(arg1));
-        else if(VAL_IS_HOST(arg1))
-          printf("host");
-        else if(VAL_IS_FIELD(arg1)) {
-					printf("%d.%d", VAL_FIELD_REG(m), VAL_FIELD_NUM(m));
-					m += 2;
-				} else if(VAL_IS_INT(arg1)) {
-          printf("%d", *(int *)m);
-					m += sizeof(int);
-				} else if(VAL_IS_FLOAT(arg1)) {
-					printf("%f", *(float *)m);
-					m += sizeof(float);
-				}
-
-				printf(" ");
-
-				switch(OP_OP(pc)) {
-					case OP_NEQI: printf("INT NOT EQUAL"); break;
-					case OP_EQI: printf("INT EQUAL"); break;
-					case OP_LESSI: printf("INT LESSER"); break;
-					case OP_LESSEQI: printf("INT LESSER EQUAL"); break;
-					case OP_GREATERI: printf("INT GREATER"); break;
-					case OP_GREATEREQI: printf("INT GREATER EQUAL"); break;
-					case OP_MODI: printf("INT MOD"); break;
-					case OP_PLUSI: printf("INT PLUS"); break;
-					case OP_MINUSI: printf("INT MINUS"); break;
-					case OP_TIMESI: printf("INT TIMES"); break;
-					case OP_DIVI: printf("INT DIV"); break;
-					case OP_NEQF: printf("FLOAT NOT EQUAL"); break;
-					case OP_EQF: printf("FLOAT EQUAL"); break;
-					case OP_LESSF: printf("FLOAT LESSER"); break;
-					case OP_LESSEQF: printf("FLOAT LESSER EQUAL"); break;
-					case OP_GREATERF: printf("FLOAT GREATER"); break;
-					case OP_GREATEREQF: printf("FLOAT GREATER EQUAL"); break;
-					case OP_MODF: printf("FLOAT MOD"); break;
-					case OP_PLUSF: printf("FLOAT PLUS"); break;
-					case OP_MINUSF: printf("FLOAT MINUS"); break;
-					case OP_TIMESF: printf("FLOAT TIMES"); break;
-					case OP_DIVF: printf("FLOAT DIV"); break;
-					case OP_NEQA: printf("ADDR NOT EQUAL"); break;
-					case OP_EQA: printf("ADDR EQUAL"); break;
-				}
-
-				printf(" ");
-
-        if(VAL_IS_TUPLE(arg2))
-          printf("tuple");
-        else if(VAL_IS_REG(arg2))
-          printf("reg %d", VAL_REG(arg2));
-        else if(VAL_IS_HOST(arg2))
-          printf("host");
-        else if(VAL_IS_FIELD(arg2)) {
-					printf("%d.%d", VAL_FIELD_REG(m), VAL_FIELD_NUM(m));
-					m += 2;
-				} else if(VAL_IS_INT(arg2)) {
-          printf("%d", *(int *)m);
-					m += sizeof(int);
-				} else if(VAL_IS_FLOAT(arg2)) {
-					printf("%f", *(float *)m);
-					m += sizeof(float);
-				}
-
-				printf("\n");
-			
-			} else if(SEND(pc)) {
-				char msg = SEND_MSG(pc);
-				char rt = SEND_RT(pc);
-
-				printf("SEND reg %d TO reg %d IN ", VAL_REG(msg), VAL_REG(rt));
-
-				char delay = SEND_DELAY(pc);
-				pcounter m = pc + SEND_BASE;
-
-				if(VAL_IS_INT(delay)) {
-					printf("%d", *(int *)m);
-				}
-
-				printf("ms\n");
-			} else if(ITER(pc)) {
-				printf("ITERATE OVER %s MATCHING", TYPE_NAME(ITER_TYPE(pc)));
-
-				pcounter m = pc + 4;
-
-				if(!ITER_MATCH_NONE(m)) {
-					while(1) {
-						pcounter start = m;
-					  char fieldnum = ITER_MATCH_FIELD(m);
-						char v = ITER_MATCH_VAL(m);
-						m += 2;
-
-						printf("\n");
-						printf("  (match).%d=", fieldnum);
-
-						if(VAL_IS_REG(v))
-							printf("reg %d", VAL_REG(v));
-						else if(VAL_IS_HOST(v))
-							printf("host");
-						else if(VAL_IS_FIELD(v)) {
-							printf("%d.%d", VAL_FIELD_REG(m), VAL_FIELD_NUM(m));
-							m += 2;
-						} else if(VAL_IS_INT(v)) {
-							printf("%d", *(int *)m);
-							m += sizeof(int);
-						} else if(VAL_IS_FLOAT(v)) {
-							printf("%f", *(float *)m);
-							m += sizeof(float);
-						}
-
-						if(ITER_MATCH_END(start))
-							break;
-					}
-				}
-
-				printf("\n");
-			} else if(NEXT(pc)) {
-				printf("NEXT\n");
-			} else if(CALL(pc)) {
-				int args = CALL_ARGS(pc);
-
-				printf("CALL func(%d):%d TO %d = (", CALL_ID(pc), args, CALL_DST(pc));
-
-				int i;
-				pcounter m = pc + CALL_BASE;
-				for(i = 0; i < args; ++i) {
-					char v = CALL_VAL(m);
-					++m;
-
-					if(VAL_IS_TUPLE(v))
-						printf("tuple");
-					else if(VAL_IS_REG(v))
-						printf("reg %d", VAL_REG(v));
-					else if(VAL_IS_HOST(v))
-						printf("host");
-					else if(VAL_IS_FIELD(v)) {
-						printf("%d.%d", VAL_FIELD_REG(m), VAL_FIELD_NUM(m));
-						m += 2;
-					} else if(VAL_IS_INT(v)) {
-						printf("%d", *(int *)m);
-						m += sizeof(int);
-					} else if(VAL_IS_FLOAT(v)) {
-						printf("%f", *(float *)m);
-						m += sizeof(float);
-					}
-
-					if(i < args - 1)
-						printf(", ");
-				}
-
-				printf(")\n");
-			} else {
-				printf("OTHER\n");
-			}
-		}
+		instruction_list_print(pc, next);
 
 		printf("\n");
 	}
-}
-
-bool
-type_has_code(tuple_type type)
-{
-	return !RETURN(TYPE_START(type));
 }

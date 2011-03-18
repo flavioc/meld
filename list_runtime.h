@@ -3,6 +3,7 @@
 #define LIST_RUNTIME_H
 
 #include <stddef.h>
+#include <stdio.h>
 
 #include "api.h"
 #include "allocator_defs.h"
@@ -12,7 +13,7 @@ typedef void* list_element;
 #define LIST_NEXT(node) (*(void**)(node))
 #define LIST_DATA(node) ((void*)((unsigned char*)(node) + sizeof(void*)))
 
-typedef void (*list_print_fn)(list_element);
+typedef void (*list_print_fn)(list_element, FILE*);
 typedef bool (*list_equal_fn)(list_element, list_element);
 
 typedef struct _list_descriptor
@@ -44,7 +45,7 @@ void list_free(List *list);
 
 int list_equal(List *list1, List *list2);
 
-void list_print(List *list);
+void list_print(List *list, FILE *out);
 
 void list_reverse_first(List *list);
 
@@ -93,6 +94,7 @@ list_element list_iterator_data(list_iterator iterator)
 
 void list_int_push_head(List *list, meld_int data);
 void list_int_push_tail(List *list, meld_int data);
+void list_int_pop_head(List *list);
 
 void list_float_push_head(List *list, meld_float data);
 void list_float_push_tail(List *list, meld_float data);
