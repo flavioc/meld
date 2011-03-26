@@ -4,7 +4,7 @@
 
 #include "config.h"
 
-void err(char* prompt, ...);
+void err(const char* prompt, ...);
 int number_cpus(void);
 
 int random_int(int max);

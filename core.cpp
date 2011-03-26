@@ -87,7 +87,7 @@ queue_dequeue_pos(tuple_queue *queue, tuple_entry **pos)
 tuple_entry*
 queue_enqueue(tuple_queue *queue, tuple_t tuple, record_type isNew)
 {
-  tuple_entry *entry = meld_malloc(sizeof(tuple_entry));
+  tuple_entry *entry = (tuple_entry *)meld_malloc(sizeof(tuple_entry));
   
   entry->tuple = tuple;
   entry->records = isNew;
@@ -101,7 +101,7 @@ queue_enqueue(tuple_queue *queue, tuple_t tuple, record_type isNew)
 tuple_t
 queue_dequeue(tuple_queue *queue, ref_count *isNew)
 {
-  tuple_entry *entry = queue_pop_tuple(queue);
+  tuple_entry *entry = (tuple_entry *)queue_pop_tuple(queue);
 
   tuple_t tuple = entry->tuple;
 
@@ -128,7 +128,7 @@ void
 p_enqueue(tuple_pqueue *queue, meld_int priority, tuple_t tuple,
 		void *rt, record_type isNew)
 {
-  tuple_pentry *entry = meld_malloc(sizeof(tuple_pentry));
+  tuple_pentry *entry = (tuple_pentry *)meld_malloc(sizeof(tuple_pentry));
 
   entry->tuple = tuple;
   entry->records = isNew;
@@ -139,7 +139,8 @@ p_enqueue(tuple_pqueue *queue, meld_int priority, tuple_t tuple,
   for (spot = &(queue->queue);
        *spot != NULL &&
          (*spot)->priority < priority;
-    spot = &((*spot)->next));
+    spot = &((*spot)->next))  {
+  }
 
   entry->next = *spot;
   *spot = entry;
@@ -170,7 +171,7 @@ init_fields(void)
     total += TYPE_NOARGS(i) * 2;
 	}
   
-  arguments = meld_malloc(total);
+  arguments = (unsigned char*)meld_malloc(total);
   unsigned char *start = arguments + 2*NUM_TYPES;
   unsigned char offset, size;
   
@@ -738,7 +739,7 @@ bool aggregate_accumulate(aggregate_type agg_type, anything acc, anything obj, i
    }
 
 	assert(0);
-	while(1);
+	while(1) {}
 }
 
 static inline bool
@@ -792,7 +793,7 @@ aggregate_changed(aggregate_type agg_type, anything v1, anything v2)
   }
 
 	assert(0);
-	while(1);
+	while(1) {}
 }
 
 static inline void
@@ -865,7 +866,7 @@ aggregate_seed(aggregate_type agg_type, anything acc, anything start, int count,
 	}
 
 	assert(0);
-	while(1);
+	while(1) {}
 }
 
 static inline void
@@ -1035,7 +1036,7 @@ void tuple_do_handle(tuple_type type,	tuple_t tuple, ref_count isNew, Register *
     }
     
     for(i = 0; i < persistent->current; ++i) {
-      tuple_t stored_tuple = persistent->array + i * size;
+      tuple_t stored_tuple = (tuple_t)((unsigned char*)persistent->array + i * size);
       
       if(memcmp(stored_tuple, tuple, size) == 0) {
         FREE_TUPLE(tuple);
@@ -1053,7 +1054,7 @@ void tuple_do_handle(tuple_type type,	tuple_t tuple, ref_count isNew, Register *
       persistent->array = meld_realloc(persistent->array, size * persistent->total);
     }
     
-    memcpy(persistent->array + persistent->current * size, tuple, size);
+    memcpy((unsigned char*)persistent->array + persistent->current * size, tuple, size);
     ++persistent->current;
     
     tuple_process(tuple, TYPE_START(type), isNew, reg);
@@ -1107,7 +1108,11 @@ void tuple_do_handle(tuple_type type,	tuple_t tuple, ref_count isNew, Register *
 			return;
 		}
 
-    queue_enqueue(queue, tuple, (record_type) isNew);
+      record_type rec;
+      
+      rec.count = isNew;
+      
+      queue_enqueue(queue, tuple, rec);
 
 		if(TYPE_IS_LINEAR(type) && DELTA_WITH(type))
 			process_deltas(tuple, type, reg);
@@ -1190,7 +1195,9 @@ void tuple_do_handle(tuple_type type,	tuple_t tuple, ref_count isNew, Register *
 			return;
 		}
 
-    queue_enqueue(agg_queue, tuple, (record_type) isNew);
+      record_type rec;
+      rec.count = isNew;
+      queue_enqueue(agg_queue, tuple, rec);
 		aggregate_recalc(cur, reg, type, type_aggregate, false);
 		
 		return;
@@ -1207,16 +1214,22 @@ void tuple_do_handle(tuple_type type,	tuple_t tuple, ref_count isNew, Register *
 	memcpy(tuple_cpy, tuple, TYPE_SIZE(type));
 
   /* create aggregate queue */
-  tuple_queue *agg_queue = meld_malloc(sizeof(tuple_queue));
+  tuple_queue *agg_queue = (tuple_queue *)meld_malloc(sizeof(tuple_queue));
   
   queue_init(agg_queue);
   
-  queue_enqueue(agg_queue, tuple, (record_type) isNew);
-	tuple_entry *entry =
-	  queue_enqueue(&TUPLES[type], tuple_cpy, (record_type)agg_queue);
+  record_type rec_tuple;
+  rec_tuple.count = isNew;
+ 
+  queue_enqueue(agg_queue, tuple, rec_tuple);
+  
+  record_type rec_queue;
+  rec_queue.agg_queue = agg_queue;
+  
+  tuple_entry *entry = queue_enqueue(&TUPLES[type], tuple_cpy, rec_queue);
 
-	aggregate_recalc(entry, reg, type, type_aggregate, true);
-	tuple_process(tuple, TYPE_START(type), isNew, reg);
+  aggregate_recalc(entry, reg, type, type_aggregate, true);
+  tuple_process(tuple, TYPE_START(type), isNew, reg);
 }
 
 int
@@ -1225,7 +1238,8 @@ queue_length (tuple_queue *queue)
 	int i;
   tuple_entry *entry = queue->head;
   
-	for (i = 0; entry != NULL; entry = entry->next, i++);
+	for (i = 0; entry != NULL; entry = entry->next, i++)
+	{}
 
 	return i;
 }
@@ -1264,20 +1278,20 @@ eval_loop: /* for jump instructions */
 					persistent_set *persistent = &PERSISTENT[type];
         
 					length = persistent->current;
-					list = meld_malloc(sizeof(tuple_t) * length);
+					list = (tuple_t *)meld_malloc(sizeof(tuple_t) * length);
 
 					for(i = 0; i < length; i++) {
 						int j = random() % (i + 1);
           
 						list[i] = list[j];
-						list[j] = persistent->array + i * size;
+						list[j] = (tuple_t)((unsigned char *)persistent->array + i * size);
 					}
 				} else {
 					/* non-persistent type */
 					tuple_entry *entry = TUPLES[type].head;
 		    
 					length = queue_length(&TUPLES[ITER_TYPE(pc)]);
-					list = meld_malloc(sizeof(tuple_t) * length);
+					list = (tuple_t *)meld_malloc(sizeof(tuple_t) * length);
 		    
 					for (i = 0; i < length; i++) {
 						int j = random() % (i+1);
@@ -1372,9 +1386,9 @@ eval_loop: /* for jump instructions */
 				
 				Register *arg1, *arg2, *dest;
 				
-				arg1 = eval(OP_ARG1(pc), &tuple, &old_pc, reg);
-				arg2 = eval(OP_ARG2(pc), &tuple, &old_pc, reg);
-				dest = eval(OP_DST(pc), &tuple, &old_pc, reg);
+				arg1 = (Register*)eval(OP_ARG1(pc), &tuple, &old_pc, reg);
+				arg2 = (Register*)eval(OP_ARG2(pc), &tuple, &old_pc, reg);
+				dest = (Register*)eval(OP_DST(pc), &tuple, &old_pc, reg);
 				
 				switch(OP_OP(pc)) {
 					case OP_NEQI: *dest = (MELD_INT(arg1) != MELD_INT(arg2)); break;
@@ -1431,7 +1445,7 @@ eval_loop: /* for jump instructions */
 			break;
 		case ALLOC_INSTR: {
 				pcounter old_pc = pc + ALLOC_BASE;
-				tuple_t *dst = eval(ALLOC_DST(pc), &tuple, &old_pc, reg);
+				tuple_t *dst = (tuple_t *)eval(ALLOC_DST(pc), &tuple, &old_pc, reg);
 				
 				*dst = ALLOC_TUPLE(TYPE_SIZE(ALLOC_TYPE(pc)));
 				memset(*dst, 0, TYPE_SIZE(ALLOC_TYPE(pc)));
@@ -1684,7 +1698,7 @@ void facts_dump(void)
 
 			int j;
 			for(j = 0; j < persistent->current; ++j) {
-				tuple_t tuple = persistent->array + j * size;
+				tuple_t tuple = (tuple_t)((unsigned char*)persistent->array + j * size);
 
 				fprintf(stderr, " ");
 				tuple_print(tuple, stderr);

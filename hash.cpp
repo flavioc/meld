@@ -51,7 +51,7 @@ hash_table_insert(HashTable *hash, hash_table_element elem)
   while (NEXT_FIELD(bucket)) {
     ++total;
 
-    bucket = NEXT_FIELD(bucket);
+    bucket = (void**)NEXT_FIELD(bucket);
   }
   
   NEXT_FIELD(bucket) = elem;
@@ -67,13 +67,13 @@ hash_table_insert(HashTable *hash, hash_table_element elem)
     /* reinsert everything again */
     int i;
     for(i = 0; i < hash->number_buckets; ++i) {
-      hash_table_element *iter_bucket = NEXT_FIELD(hash->buckets + i);
+      hash_table_element *iter_bucket = (hash_table_element*)NEXT_FIELD(hash->buckets + i);
       
       while (iter_bucket) {
         /* insert this element */
 
         hash_table_element elem = (hash_table_element)iter_bucket;
-        hash_table_element *next = NEXT_FIELD(iter_bucket);
+        hash_table_element *next = (hash_table_element*)NEXT_FIELD(iter_bucket);
         
         index = HASH_INDEX(next_size, INDEX_FIELD(elem));
         hash_table_element *bucket = new_buckets + index;
@@ -97,13 +97,13 @@ hash_table_element
 hash_table_get(HashTable *hash, NodeID index)
 {
   NodeID hash_index = HASH_INDEX(hash->number_buckets, index);
-  hash_table_element *bucket = NEXT_FIELD(hash->buckets + hash_index);
+  hash_table_element *bucket = (hash_table_element*)NEXT_FIELD(hash->buckets + hash_index);
   
   while (bucket) {
     if (INDEX_FIELD(bucket) == index)
       return bucket;
     
-    bucket = NEXT_FIELD(bucket);
+    bucket = (hash_table_element*)NEXT_FIELD(bucket);
   }
   
   return NULL;
@@ -114,7 +114,7 @@ hash_table_iterate(HashTable *hash, HashTableIterateFunction fn, void *data)
 {
 	int i;
 	for(i = 0; i < hash->number_buckets; ++i) {
-		hash_table_element *iterBucket = NEXT_FIELD(hash->buckets + i);
+		hash_table_element *iterBucket = (hash_table_element*)NEXT_FIELD(hash->buckets + i);
 
 		while (iterBucket) {
         /* insert this element */
@@ -124,7 +124,7 @@ hash_table_iterate(HashTable *hash, HashTableIterateFunction fn, void *data)
 				if(!fn(elem, data))
 					return; /* return if fn returned false */
 
-        iterBucket = NEXT_FIELD(iterBucket);
+        iterBucket = (hash_table_element*)NEXT_FIELD(iterBucket);
 		}
 	}
 }

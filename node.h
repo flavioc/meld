@@ -155,7 +155,7 @@ Node* nodes_create(NodeID id)
 static inline
 Node* nodes_get(NodeID id)
 {
-	return hash_table_get(HASH_NODES, id);
+	return (Node*)hash_table_get(HASH_NODES, id);
 }
 
 static inline

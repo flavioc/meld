@@ -143,7 +143,7 @@ program_read(const char *filename)
     return 0;
   }
   
-  meld_prog = malloc(buf.st_size);
+  meld_prog = (unsigned char*)malloc(buf.st_size);
   if(meld_prog == NULL) {
     fclose(fp);
     return 0;

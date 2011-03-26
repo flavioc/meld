@@ -48,13 +48,13 @@ allocator_threads_init(void)
 	pthread_barrier_init(&gc_sweep_barrier, NULL, NUM_THREADS);
 	pthread_barrier_init(&gc_final_barrier, NULL, NUM_THREADS);
 	
-  alloc.list = meld_malloc(sizeof(allocator_list_queue)*NUM_THREADS);
+  alloc.list = (allocator_list_queue*)meld_malloc(sizeof(allocator_list_queue)*NUM_THREADS);
   memset(alloc.list, 0, sizeof(allocator_list_queue)*NUM_THREADS);
-  alloc.set = meld_malloc(sizeof(allocator_set_queue)*NUM_THREADS);
+  alloc.set = (allocator_set_queue*)meld_malloc(sizeof(allocator_set_queue)*NUM_THREADS);
   memset(alloc.set, 0, sizeof(allocator_set_queue)*NUM_THREADS);
   
-  alloc.list_mutex = meld_malloc(sizeof(pthread_mutex_t)*NUM_THREADS);
-  alloc.set_mutex = meld_malloc(sizeof(pthread_mutex_t)*NUM_THREADS);
+  alloc.list_mutex = (pthread_mutex_t*)meld_malloc(sizeof(pthread_mutex_t)*NUM_THREADS);
+  alloc.set_mutex = (pthread_mutex_t*)meld_malloc(sizeof(pthread_mutex_t)*NUM_THREADS);
   
   int i;
   for(i = 0; i < NUM_THREADS; ++i) {
@@ -92,18 +92,18 @@ decrement_set_count(const int total)
 List*
 allocator_allocate_list(void)
 {
-	List *ret = meld_malloc(sizeof(List));
+	List *ret = (List*)meld_malloc(sizeof(List));
 	
-  const int pos = random_int(NUM_THREADS);
-  allocator_list_queue *queue = &alloc.list[pos];
+   const int pos = random_int(NUM_THREADS);
+   allocator_list_queue *queue = &alloc.list[pos];
 
 	pthread_mutex_lock(&alloc.list_mutex[pos]);
 
-  GC_SET_NEXT(ret, queue->head);
+   GC_SET_NEXT(ret, queue->head);
   
 	if(queue->head == NULL)
 		queue->tail = ret;
-  queue->head = ret;
+   queue->head = ret;
 
 	pthread_mutex_unlock(&alloc.list_mutex[pos]);
 
@@ -117,7 +117,7 @@ allocator_allocate_list(void)
 Set*
 allocator_allocate_set(void)
 {
-  Set *ret = meld_malloc(sizeof(Set));
+  Set *ret = (Set*)meld_malloc(sizeof(Set));
   
   const int pos = random_int(NUM_THREADS);
   
@@ -182,7 +182,7 @@ node_mark(Node *node, bool do_lists, bool do_sets)
 			int j;
 
 			for(j = 0; j < persistent->current; ++j) {
-				tuple_t tuple = persistent->array + j * size;
+				tuple_t tuple = (tuple_t)((unsigned char*)persistent->array + j * size);
 
 				tuple_mark(i, tuple, do_lists, do_sets);
 			}

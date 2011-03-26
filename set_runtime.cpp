@@ -31,7 +31,7 @@ set_create(set_descriptor *descriptor)
 }
 
 #define ALLOC_AND_SET(set, data, next, dest)                                        \
-	dest = meld_malloc(set->descriptor->size_elem + sizeof(void*));                   \
+	dest = (unsigned char*)meld_malloc(set->descriptor->size_elem + sizeof(void*));                   \
 	memcpy(dest, data, set->descriptor->size_elem);                                   \
   *((void**)((unsigned char *)(dest) + set->descriptor->size_elem)) = next;         \
   set->nelems++
@@ -253,13 +253,13 @@ bool set_is_int(Set *set)
 void
 set_init_descriptors(void)
 {
-  int_descriptor = meld_malloc(sizeof(set_descriptor));
+  int_descriptor = (set_descriptor*)meld_malloc(sizeof(set_descriptor));
   int_descriptor->size_elem = sizeof(int);
   int_descriptor->print_fn = print_int_value;
   int_descriptor->cmp_fn = compare_int_values;
   int_descriptor->equal_fn = equal_int_values;
   
-  float_descriptor = meld_malloc(sizeof(set_descriptor));
+  float_descriptor = (set_descriptor*)meld_malloc(sizeof(set_descriptor));
   float_descriptor->size_elem = sizeof(float);
   float_descriptor->print_fn = print_float_value;
   float_descriptor->cmp_fn = compare_float_values;

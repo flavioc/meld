@@ -330,17 +330,17 @@ equal_node_list_elem(list_element el1, list_element el2)
 void
 list_init_descriptors(void)
 {
-  int_descriptor = meld_malloc(sizeof(list_descriptor));
+  int_descriptor = (list_descriptor*)meld_malloc(sizeof(list_descriptor));
   int_descriptor->size_elem = sizeof(meld_int);
   int_descriptor->print_fn = print_int_list_elem;
   int_descriptor->equal_fn = equal_int_list_elem;
   
-  float_descriptor = meld_malloc(sizeof(list_descriptor));
+  float_descriptor = (list_descriptor*)meld_malloc(sizeof(list_descriptor));
   float_descriptor->size_elem = sizeof(meld_float);
   float_descriptor->print_fn = print_float_list_elem;
   float_descriptor->equal_fn = equal_float_list_elem;
 
-	node_descriptor = meld_malloc(sizeof(list_descriptor));
+	node_descriptor = (list_descriptor*)meld_malloc(sizeof(list_descriptor));
 	node_descriptor->size_elem = sizeof(void*);
 	node_descriptor->print_fn = print_node_list_elem;
 	node_descriptor->equal_fn = equal_node_list_elem;

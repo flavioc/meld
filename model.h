@@ -4,7 +4,7 @@
 #include "thread.h"
 #include "stats.h"
 
-extern inline Thread* thread_self(void);
+extern Thread* thread_self(void);
 
 static inline Node*
 thread_node(void)

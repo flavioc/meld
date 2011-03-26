@@ -14,7 +14,7 @@
 char* progname = NULL;
 
 void
-err(char* prompt, ...)
+err(const char* prompt, ...)
 {
   va_list ap;
   va_start(ap,prompt);

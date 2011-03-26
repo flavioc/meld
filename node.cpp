@@ -44,7 +44,7 @@ node_has_neighbor(Node *src, Node *nei)
 	for( ; block_list_iterator_has_next(it) ;
 			it = block_list_iterator_next(it))
 	{
-		Node *n = block_list_iterator_data(it);
+		Node *n = (Node*)block_list_iterator_data(it);
 
 		if(n == nei)
 			return true;
@@ -68,13 +68,13 @@ node_first_tuples_add(Node *node, tuple_t tuple)
 void
 node_init(Node *node)
 {
-	node->tuples = meld_calloc(num_types, sizeof(tuple_queue));
-	node->oldTuples = meld_calloc(num_types, sizeof(tuple_t));
-  node->persistent = meld_calloc(num_types, sizeof(persistent_set));
+	node->tuples = (tuple_queue*)meld_calloc(num_types, sizeof(tuple_queue));
+	node->oldTuples = (void**)meld_calloc(num_types, sizeof(tuple_t));
+  node->persistent = (persistent_set*)meld_calloc(num_types, sizeof(persistent_set));
 #ifdef USE_STRAT_QUEUE
   node->newStratTuples = meld_calloc(1, sizeof(tuple_pqueue));
 #endif
-  node->proved = meld_calloc(num_types, sizeof(meld_int));
+  node->proved = (meld_int*)meld_calloc(num_types, sizeof(meld_int));
 	node->state = NODE_READY;
   queue_init(&node->queueFacts);
 }

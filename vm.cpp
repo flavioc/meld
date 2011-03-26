@@ -53,10 +53,9 @@ static pthread_barrier_t tuples_barrier;
 //#define THREAD_DEBUG 1
 
 /* I want to know who am I ... */
-inline
 Thread* thread_self(void)
 {
-  return pthread_getspecific(thread_key);
+  return static_cast<Thread*>(pthread_getspecific(thread_key));
 }
 
 static inline
@@ -76,7 +75,7 @@ bool node_strat_queue_is_empty(Node *node)
 void
 node_do_enqueue(Node *node, tuple_t tuple, int count)
 {
-  tuple_entry *entry = meld_malloc(sizeof(tuple_entry));
+  tuple_entry *entry = (tuple_entry *)meld_malloc(sizeof(tuple_entry));
   
   entry->tuple = tuple;
   entry->records.count = count;
@@ -103,7 +102,7 @@ node_do_dequeue(Node *node, ref_count *count)
   tuple_entry *entry;
   
   pthread_mutex_lock(&node->queueMutex);
-  entry = queue_pop_tuple(&node->queueFacts);
+  entry = (tuple_entry *)queue_pop_tuple(&node->queueFacts);
   pthread_mutex_unlock(&node->queueMutex);
   
   if (entry == NULL)
@@ -273,6 +272,7 @@ tuple_build_edge(Node *p1, Node *p2)
 	SET_TUPLE_FIELD(tuple, 1, &route);
 #else
 	SET_TUPLE_FIELD(tuple, 0, &p2->id);
+	(void)p1;
 #endif
 
 	return tuple;

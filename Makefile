@@ -13,6 +13,7 @@ WARNINGS = -Wall -Wextra
 TCMALLOC = #-ltcmalloc
 
 CFLAGS = $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS)
+CXXFLAGS = $(CFLAGS)
 LDFLAGS = $(PROFILING) $(LIBRARY_DIRS) -lm -lpthread $(TCMALLOC) -m32
 
 OBJS = utils.o extern_functions.o vm.o \
@@ -24,32 +25,33 @@ OBJS = utils.o extern_functions.o vm.o \
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
+	$(CXX) $(CXXFLAGS) $(OBJS) -o $(TARGET)
 
-list_runtime.o: list_runtime.c list_runtime.h
+list_runtime.o: list_runtime.cpp list_runtime.h
 
-allocator.o: allocator.c allocator.h
+allocator.o: allocator.cpp allocator.h
 
-node.o: node.c node.h list.o
+node.o: node.cpp node.h list.o
 
-vm.o: vm.c core.h defs.h api.h \
-		extern_functions.h extern_functions.c \
+vm.o: vm.cpp core.h defs.h api.h \
+		extern_functions.h extern_functions.cpp \
 		vm.h node.h thread.h list.o
 
-meld.o: meld.c lib/image.c lib/pagerank.c lib/walkgrid.c lib/connectivity.c lib/shortest_path.c thread.o
+meld.o: meld.cpp thread.o
 
-thread.o: thread.c thread.h node.h
+thread.o: thread.cpp thread.h node.h
 
-partition.o: thread.h partition.h partition.c list.o
+partition.o: thread.h partition.h partition.cpp list.o
 
-list.o: list.c list.h
+list.o: list.cpp list.h
 
-set_runtime.o: set_runtime.c set_runtime.h
+set_runtime.o: set_runtime.cpp set_runtime.h
 
-core.o: model.h api.h defs.h core.c core.h
+core.o: model.h api.h defs.h core.cpp core.h
 
-stats.o: stats.c stats.h
+stats.o: stats.cpp stats.h
 
-extern_functions.o: extern_functions.c extern_functions.h
+extern_functions.o: extern_functions.cpp extern_functions.h
 
 clean:
 	rm -f $(TARGET) *.o
