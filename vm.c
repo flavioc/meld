@@ -20,6 +20,7 @@
 #include "stats.h"
 #include "allocator.h"
 
+#if 0
 #ifdef PAGERANK
 #include "progs/pagerank.bb"
 #elif WALKGRID
@@ -34,6 +35,7 @@
 #include "progs/set_gc_test.bb"
 #elif MELD_OTHER
 #include "base.bb"
+#endif
 #endif
 
 static pthread_key_t thread_key = 0;
@@ -633,7 +635,7 @@ void tuple_handle(tuple_t tuple, ref_count isNew, Register *reg)
     
     FREE_TUPLE(tuple);
     
-    //printf("DELETE TYPE: %s\n", tuple_names[delete_type]);
+    //printf("DELETE TYPE: %s\n", tuple_names(delete_type));
     
     if(TYPE_IS_PERSISTENT(type)) {
       fprintf(stderr, "meld: cannot delete persistent types\n");
@@ -737,8 +739,8 @@ void vm_init(void)
 #endif
   
   print_program_info();
+  printf("\n");
 	print_program_code();
-	//exit(0);
 }
 
 void vm_threads_init(void)

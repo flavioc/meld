@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <math.h>
+#include <sys/stat.h>
 
 #include "config.h"
 
@@ -26,25 +27,12 @@ help(void)
 {
   fprintf(stderr, "meld: execute meld program\n");
   fprintf(stderr, "\t-f <name>:\tmeld program\n");
-  fprintf(stderr, "\t-c <name>:\tfile with configuration\n");
   fprintf(stderr, "\t-t <threads>:\tnumber of threads\n");
 
   exit(EXIT_SUCCESS);
 }
 
-#ifdef PAGERANK
-#include "lib/pagerank.c"
-#elif WALKGRID
-#include "lib/walkgrid.c"
-#elif SHORTEST_PATH
-#include "lib/shortest_path.c"
-#elif CONNECTIVITY
-#include "lib/connectivity.c"
-#elif BELIEF_PROPAGATION
-#include "lib/image.c"
-#elif SET_GC_TEST
-#include "lib/set_gc_test.c"
-#elif MELD_OTHER
+
 static void
 config_read(const char* file)
 {
@@ -62,7 +50,6 @@ config_read(const char* file)
 	node_add_neighbor(n2, n3);
 	node_add_neighbor(n3, n1);
 }
-#endif
 
 static void*
 thread_launch(void *data)
@@ -142,36 +129,54 @@ threads_launch(void)
   }
 }
 
+static bool
+program_read(const char *filename)
+{
+  FILE *fp = fopen(filename, "rb");
+  
+  if(fp == NULL)
+    return 0;
+    
+  struct stat buf;
+  if(-1 == fstat(fileno(fp), &buf)) {
+    fclose(fp);
+    return 0;
+  }
+  
+  meld_prog = malloc(buf.st_size);
+  if(meld_prog == NULL) {
+    fclose(fp);
+    return 0;
+  }
+  
+  if(buf.st_size != fread(meld_prog, sizeof(byte), buf.st_size, fp)) {
+    free(meld_prog);
+    fclose(fp);
+    return 0;
+  }
+  
+  fclose(fp);
+  
+  return 1;
+}
+
 int
 main(int argc, char **argv)
 {
-  vm_init();
-  
   bool has_program = false;
   bool has_threads = false;
-  char *config = NULL;
+  char *program = NULL;
 
   progname = *argv++;
   --argc;
 
   while (argc > 0 && (argv[0][0] == '-')) {
     switch(argv[0][1]) {
-    case 'c': {
-        if (config != NULL || argc < 2)
-          help();
-
-        config = argv[1];
-
-        argc--; argv++;
-      }
-      break;
     case 'f': {
         if (has_program || argc < 2)
           help();
 
-        const char *program = argv[1];
-
-        (void)program;
+        program = argv[1];
 
         has_program = true;
         argc--; argv++;
@@ -195,21 +200,26 @@ main(int argc, char **argv)
     argc--; argv++;
   }
 
-  if (config == NULL)
+  if (program == NULL)
     help();
 
   if (!has_threads)
     NUM_THREADS = number_cpus();
     
+  if(!program_read(program))
+    help();
+    
   if (NUM_THREADS < 1)
     NUM_THREADS = 1;
+
+  vm_init();
     
   /* we now know the number of threads in the system */
   vm_threads_init();
   
 	/* read the graph from the file and initiate nodes */
   nodes_init();
-	config_read(config);
+	config_read(NULL);
 
   threads_setup();
   threads_launch();

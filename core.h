@@ -96,8 +96,8 @@
 #define CALL_DST(x)   ((*(const unsigned char *)((x)+2)) & 0x1f)
 #define CALL_BASE 3
 
-#define CALL_ARGS(x)  (extern_functs_args[CALL_ID(x)])
-#define CALL_FUNC(x)  (extern_functs[CALL_ID(x)])
+#define CALL_ARGS(x)  0 // (extern_functs_args[CALL_ID(x)])
+#define CALL_FUNC(x)  NULL // (extern_functs[CALL_ID(x)])
 
 #define OP_NEQF       0x0
 #define OP_NEQI       0x1
@@ -140,27 +140,32 @@
 #define VAL_FIELD_NUM(x) ((*(const unsigned char *)(x)) & 0xff)
 #define VAL_FIELD_REG(x) ((*(const unsigned char *)((x)+1)) & 0x1f)
 
-#define TYPE_DESCRIPTOR_SIZE 7
+#define TYPE_DESCRIPTOR_BASE_SIZE 9
+#define TYPE_DESCRIPTOR_SIZE 73
 #define DELTA_SIZE 2
 #define TYPE_FIELD_TYPE unsigned char
 #define TYPE_FIELD_SIZE sizeof(TYPE_FIELD_TYPE)
+#define TYPE_ARGS_MAX_SIZE 32
+#define TYPE_NAME_MAX_SIZE 32
 
 #define TUPLE_TYPE(x)   (*(TYPE_FIELD_TYPE *)(x))
 #define TUPLE_FIELD(x,off)  ((anything)(((unsigned char*)(x)) + TYPE_FIELD_SIZE + (off)))
 
-#define TYPE_OFFSET(x)     (meld_prog[1 + (x)])
+#define TYPE_OFFSET(x)     (1 + (x)*TYPE_DESCRIPTOR_SIZE)
 #define TYPE_DESCRIPTOR(x) ((unsigned char *)(meld_prog + TYPE_OFFSET(x)))
 
-#define TYPE_PROPERTIES(x) (*(TYPE_DESCRIPTOR(x) + 2))
-#define TYPE_AGGREGATE(x)  (*(TYPE_DESCRIPTOR(x) + 3))
-#define TYPE_NOARGS(x)     (*(TYPE_DESCRIPTOR(x) + 5))
-#define TYPE_STRATIFICATION_ROUND(x) (*(TYPE_DESCRIPTOR(x)+4))
+#define TYPE_PROPERTIES(x) (*(TYPE_DESCRIPTOR(x) + 4))
+#define TYPE_AGGREGATE(x)  (*(TYPE_DESCRIPTOR(x) + 5))
+#define TYPE_NOARGS(x)     (*(TYPE_DESCRIPTOR(x) + 7))
+#define TYPE_STRATIFICATION_ROUND(x) (*(TYPE_DESCRIPTOR(x)+6))
+#define TYPE_NODELTAS(x)   (*(TYPE_DESCRIPTOR(x) + 8))
+#define TYPE_CODE_OFFSET(x)	(*(unsigned short*)(TYPE_DESCRIPTOR(x) + 0))
+#define TYPE_CODE_SIZE(x)		(*(unsigned short*)(TYPE_DESCRIPTOR(x) + 2))
 #define TYPE_IS_STRATIFIED(x) (TYPE_STRATIFICATION_ROUND(x) > 0)
-#define TYPE_ARGS_DESC(x)  ((unsigned char*)(TYPE_DESCRIPTOR(x)+TYPE_DESCRIPTOR_SIZE))
-#define TYPE_NODELTAS(x)   (*(TYPE_DESCRIPTOR(x) + 6))
+#define TYPE_ARGS_DESC(x)  ((unsigned char*)(TYPE_DESCRIPTOR(x)+TYPE_DESCRIPTOR_BASE_SIZE))
 #define TYPE_DELTAS(x)     (TYPE_ARGS_DESC(x) + 1*TYPE_NOARGS(x))
-#define TYPE_START(x)      ((unsigned char*)(meld_prog + *(unsigned short *)TYPE_DESCRIPTOR(x)))
-#define TYPE_NAME(x)       (tuple_names[x])
+#define TYPE_START(x)      ((unsigned char*)(meld_prog + TYPE_CODE_OFFSET(x)))
+#define TYPE_NAME(x)				((const char*)(TYPE_ARGS_DESC(x) + TYPE_ARGS_MAX_SIZE))
 #define TYPE_ARG_DESC(x, f) ((unsigned char *)(TYPE_ARGS_DESC(x)+1*(f)))
 #define TYPE_ARG_TYPE(x, f) ((unsigned char)(*TYPE_ARG_DESC(x, f)))
 
@@ -232,12 +237,10 @@
 #define RET_RET 0
 #define RET_NEXT 1
 
-extern const unsigned char meld_prog[];
-extern const unsigned int size_meld_prog;
-typedef Register (*extern_funct_type)();
-extern extern_funct_type extern_functs[];
-extern int extern_functs_args[];
-extern char *tuple_names[];
+extern unsigned char *meld_prog;
+//typedef Register (*extern_funct_type)();
+//extern extern_funct_type extern_functs[];
+//extern int extern_functs_args[];
 extern unsigned char *arguments;
 extern int *delta_sizes;
 
@@ -256,7 +259,7 @@ tuple_alloc(tuple_type type)
 	TUPLE_TYPE(tuple) = type;
 	
 #ifdef TUPLE_ALLOC_DEBUG
-  printf("New %s(%d) tuple\n", tuple_names[type], type);
+  printf("New %s(%d) tuple\n", TYPE_NAME(type), type);
 #endif
 #ifdef STATISTICS
   stats_tuples_allocated(type);

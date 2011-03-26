@@ -17,6 +17,8 @@
 //#define DEBUG_ALLOCS
 //#define DEBUG_PROVED_TUPLES
 
+unsigned char *meld_prog = NULL;
+
 static void *nil_value[1] = {NIL_LIST};
 static unsigned char **deltas = NULL;
 int *delta_sizes = NULL;
@@ -1005,7 +1007,7 @@ void tuple_do_handle(tuple_type type,	tuple_t tuple, ref_count isNew, Register *
     PROVED[type] += (meld_int)isNew;
     tuple_t proved = tuple_build_proved(type, PROVED[type]);
 #ifdef DEBUG_PROVED_TUPLES
-    printf("New proved for tuple %s: %d\n", tuple_names[type], PROVED[type]);
+    printf("New proved for tuple %s: %d\n", TYPE_NAME(type), PROVED[type]);
 #endif
     PUSH_NEW_TUPLE(proved);
   } else if(type == TYPE_PROVED) {
@@ -1232,7 +1234,9 @@ int tuple_process(tuple_t tuple, pcounter pc, ref_count isNew, Register *reg)
 {
   for (; ; pc = advance(pc)) {
 eval_loop: /* for jump instructions */
+#ifdef DEBUG_INSTRS
 		instruction_print(pc, false);
+#endif
 		switch(*pc) {
 			case RETURN_INSTR:
 				return RET_RET;
@@ -1434,7 +1438,9 @@ eval_loop: /* for jump instructions */
 				TUPLE_TYPE(*dst) = ALLOC_TYPE(pc);
 			}
 			break;
-		case CALL_INSTR: {
+		case CALL_INSTR:
+#if 0
+			{
 				Register *dst = &reg[CALL_DST(pc)];
 				anything args[CALL_ARGS(pc)];
 				int i;
@@ -1471,6 +1477,7 @@ eval_loop: /* for jump instructions */
 						break;
 				}
 		 }
+#endif
 		break;
 		case CONS_INSTR: {
 				pcounter old_pc = pc + CONS_BASE;
@@ -1478,12 +1485,10 @@ eval_loop: /* for jump instructions */
 				meld_int head = MELD_INT(eval(CONS_HEAD(pc), &tuple, &old_pc, reg));
 				List *tail = MELD_LIST(eval(CONS_TAIL(pc), &tuple, &old_pc, reg));
 
-				if(IS_NIL_LIST(tail)) {
-					printf("NIL LIST\n");
+				if(IS_NIL_LIST(tail))
 					tail = list_int_create();
-				} else {
+				else
 					tail = list_copy(tail);
-				}
 
 				list_int_push_head(tail, head);
 
@@ -1551,7 +1556,6 @@ eval_loop: /* for jump instructions */
 
 			meld_bool put = IS_NIL_LIST(list) || list_total(list) == 0 ? 1 : 0;
 
-			printf("PUT : %d\n", put);
 			char dst = TEST_NIL_DST(pc);
 
 			if(VAL_IS_REG(dst))
@@ -1574,7 +1578,6 @@ eval_loop: /* for jump instructions */
 			// invert
 			cur = (cur ? 0 : 1);
 
-			printf("NEW CUR : %d\n", cur);
 			char dst = NOT_DST(pc);
 
 			if(VAL_IS_REG(dst))
@@ -1670,10 +1673,10 @@ void facts_dump(void)
 
 	for (i = 0; i < NUM_TYPES; i++) {
 		/* don't print artificial tuple types */
-		if (tuple_names[i][0] == '_')
+		if (TYPE_NAME(i)[0] == '_')
 			continue;
 
-		fprintf(stderr, "tuple %s (type %d)\n", tuple_names[i], i);
+		fprintf(stderr, "tuple %s (type %d)\n", TYPE_NAME(i), i);
 
 		if(TYPE_IS_PERSISTENT(i)) {
 			persistent_set *persistent = &PERSISTENT[type];
@@ -1701,10 +1704,12 @@ void facts_dump(void)
 void
 print_program_info(void)
 {
+	printf("%d\n", TYPE_DESCRIPTOR_SIZE + TYPE_ARGS_MAX_SIZE);
   /* print program info */
 	tuple_type i;
 	for(i = 0; i < NUM_TYPES; ++i) {
-    printf("TUPLE (%s:%d)\t", tuple_names[i], TYPE_SIZE(i));
+
+    printf("TUPLE (%s:%d)\t", TYPE_NAME(i), TYPE_SIZE(i));
     
     printf("[");
 
@@ -2016,19 +2021,9 @@ print_program_code(void)
 	tuple_type i;
 
 	for(i = 0; i < NUM_TYPES; ++i) {
-		printf("PROCESS %s:\n", TYPE_NAME(i));
-
-		pcounter pc = TYPE_START(i);
-		pcounter next;
-
-		if(i == NUM_TYPES-1) {
-			next = meld_prog + size_meld_prog;
-		} else {
-			next = TYPE_START(i+1);
-		}
-
-		instruction_list_print(pc, next);
-
+		printf("PROCESS %s (offset:%d;size:%d):\n", TYPE_NAME(i),
+					TYPE_CODE_OFFSET(i), TYPE_CODE_SIZE(i));
+		instruction_list_print(TYPE_START(i), TYPE_START(i) + TYPE_CODE_SIZE(i));
 		printf("\n");
 	}
 }
