@@ -1,10 +1,12 @@
 #include <iostream>
 #include <algorithm>
 #include <functional>
+#include <cmath>
 
 #include "vm/exec.hpp"
 #include "vm/tuple.hpp"
 #include "db/tuple.hpp"
+#include "process/process.hpp"
 
 using namespace vm;
 using namespace vm::instr;
@@ -26,8 +28,8 @@ static inline addr_val
 get_node_addr(pcounter& m, state& state)
 {
    const node_id id((node_id)pcounter_addr(m));
-   cout << "LOOKING FOR NODE " << id << "\n";
-   const node *node(state.db->find_node(id));
+   //cout << "LOOKING FOR NODE " << id << "\n";
+   const node *node(state.DATABASE->find_node(id));
    
    pcounter_move_addr(&m);
    
@@ -38,7 +40,7 @@ static inline addr_val
 get_node_addr(const pcounter& m, state& state)
 {
    const node_id id((node_id)pcounter_addr(m));
-   const node *node(state.db->find_node(id));
+   const node *node(state.DATABASE->find_node(id));
    
    return (addr_val)node->real_id();
 }
@@ -188,7 +190,7 @@ execute_alloc(const pcounter& pc, state& state)
    
    if(val_is_reg(dest)) {
       const reg_num reg(val_reg(dest));
-      tuple *tuple(state.prog->new_tuple(id));
+      tuple *tuple(state.PROGRAM->new_tuple(id));
       
       state.set_tuple(reg, tuple);
    } else
@@ -204,14 +206,14 @@ execute_send(const pcounter& pc, state& state)
    tuple *tuple(state.get_tuple(msg));
    simple_tuple *stuple(new simple_tuple(tuple, state.count));
    
-   cout << "SEND TUPLE: " << *tuple << endl;
+   //cout << "SEND TUPLE: " << *tuple << endl;
    
-   if((addr_val)tuple == (addr_val)node_dest) {
-      // send to self
-      state.node->enqueue_tuple(stuple);
-   } else {
-      node_dest->enqueue_tuple(stuple);
-   }
+   if((addr_val)tuple == (addr_val)node_dest)
+      node_dest = state.node; // send to self
+   
+   process::process *proc(state::MACHINE->find_owner(node_dest));
+   
+   proc->enqueue_work(node_dest, stuple);
 }
 
 template <typename T>
@@ -711,7 +713,7 @@ execute(pcounter pc, state& state)
 {
    for(; ; pc = advance(pc))
    {
-      instr_print_simple(pc, state.prog, cout);
+      //instr_print_simple(pc, state.PROGRAM, cout);
       
 eval_loop:
       

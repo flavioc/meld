@@ -6,6 +6,9 @@ using namespace db;
 using namespace std;
 using namespace vm;
 
+namespace db
+{
+
 database::database(ifstream& fp)
 {
    int_val num_nodes;
@@ -18,6 +21,8 @@ database::database(ifstream& fp)
       
       add_node(id); 
    }
+   
+   cout << *this << endl;
 }
 
 node*
@@ -31,24 +36,6 @@ database::find_node(const node_id id) const
       return it->second;
 }
 
-bool
-database::add_edge(const node_id id1, const node_id id2)
-{
-   node *node1(find_node(id1));
-   
-   if(node1 == NULL)
-      return false;
-      
-   node *node2(find_node(id2));
-   
-   if(node2 == NULL)
-      return false;
-      
-   node1->add_edge(node2);
-   
-   return true;
-}
-
 node*
 database::add_node(const node_id id)
 {
@@ -60,4 +47,37 @@ database::add_node(const node_id id)
    }
    
    return ret;
+}
+
+void
+database::print_db(ostream& cout) const
+{
+   for(map_nodes::const_iterator it(nodes.begin());
+      it != nodes.end(); ++it)
+   {
+      cout << *(it->second) << endl;
+   }
+}
+
+void
+database::print(ostream& cout) const
+{
+   cout << "{";
+   for(map_nodes::const_iterator it(nodes.begin());
+      it != nodes.end();
+      ++it)
+   {
+      if(it != nodes.begin())
+         cout << ", ";
+      cout << it->first;
+   }
+   cout << "}";
+}
+
+ostream& operator<<(ostream& cout, const database& db)
+{
+   db.print(cout);
+   return cout;
+}
+
 }

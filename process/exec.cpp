@@ -3,17 +3,33 @@
 
 #include "process/exec.hpp"
 #include "vm/program.hpp"
+#include "vm/state.hpp"
+#include "process/process.hpp"
 
 using namespace process;
 using namespace db;
 using namespace std;
 using namespace vm;
+using namespace boost;
 
 namespace process
 {
+   
+process*
+machine::find_owner(const node* node) const
+{
+   const node_id id(node->get_id());
+   
+   for(size_t i = 0; i < process_list.size(); ++i) {
+      if(process_list[i]->owns_node(id))
+         return process_list[i];
+   }
+   
+   return NULL;
+}
 
-static void
-distribute_nodes_over_processes(vector<process*> process_list, database *db)
+void
+machine::distribute_nodes(database *db)
 {
    const size_t total(db->num_nodes());
    const size_t num_procs(process_list.size());
@@ -37,25 +53,51 @@ distribute_nodes_over_processes(vector<process*> process_list, database *db)
 }
 
 void
-execute_file(const string& filename, const size_t num_threads)
+machine::start(void)
 {
-   process::PROGRAM = new program(filename);
-   process::DATABASE = process::PROGRAM->get_database();
+   for(size_t i = 1; i < num_threads; ++i)
+      process_list[i]->start();
+   process_list[0]->start();
+}
+
+void
+machine::process_is_active(void)
+{
+   mutex::scoped_lock lock(active_mutex);
    
-   //process::PROGRAM->print_byte_code(cout);
+   ++threads_active;
+}
+
+void
+machine::process_is_inactive(void)
+{
+   mutex::scoped_lock lock(active_mutex);
    
-   vector<process*> process_list;
+   --threads_active;
+   
+   if(threads_active == 0) {
+      cout << "PROGRAM ENDED" << endl;
+      state::DATABASE->print_db(cout);
+      exit(EXIT_SUCCESS);
+   }
+}
+
+machine::machine(const string& file, const size_t th):
+   filename(file), num_threads(th), threads_active(th)
+{
+   state::PROGRAM = new program(filename);
+   state::DATABASE = state::PROGRAM->get_database();
+   state::MACHINE = this;
+   
    process_list.resize(num_threads);
    
-   for(size_t i = 0; i < num_threads; ++i) {
+   for(size_t i = 0; i < num_threads; ++i)
       process_list[i] = new process((process_id)i);
-   }
 
-   distribute_nodes_over_processes(process_list, process::DATABASE);
+   distribute_nodes(state::DATABASE);
    
-   for(size_t i = 0; i < num_threads; ++i) {
-      process_list[i]->start();
-   }
+   for(size_t i = 0; i < num_threads; ++i)
+      cout << *process_list[i] << endl;
 }
 
 }

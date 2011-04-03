@@ -4,6 +4,7 @@
 
 #include <map>
 #include <fstream>
+#include <ostream>
 
 #include "db/node.hpp"
 
@@ -30,12 +31,16 @@ public:
    
    node* find_node(const node_id) const;
    
-   bool add_edge(const node_id, const node_id);
-   
    node* add_node(const node_id);
+   
+   void print_db(std::ostream& cout) const;
+   
+   void print(std::ostream&) const;
    
    explicit database(std::ifstream&);
 };
+
+std::ostream& operator<<(std::ostream&, const database&);
    
 }
 

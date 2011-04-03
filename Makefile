@@ -14,7 +14,7 @@ TCMALLOC = #-ltcmalloc
 
 CFLAGS = $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS)
 CXXFLAGS = $(CFLAGS)
-LDFLAGS = $(PROFILING) $(LIBRARY_DIRS) -lm -lpthread $(TCMALLOC) -m32
+LDFLAGS = $(PROFILING) $(LIBRARY_DIRS) -lm -lpthread $(TCMALLOC) -m32 -lboost_thread-mt
 
 OBJS = meld.o utils/utils.o \
 			 vm/program.o \
@@ -29,7 +29,7 @@ OBJS = meld.o utils/utils.o \
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) $(OBJS) -o $(TARGET)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) -o $(TARGET)
 
 meld.o: meld.cpp utils/utils.hpp
 

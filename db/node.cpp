@@ -10,36 +10,6 @@ using namespace std;
 
 namespace db
 {
-   
-void
-node::add_edge(node *node)
-{
-   edges.push_back(node);
-}
-
-void
-node::enqueue_tuple(simple_tuple* tuple)
-{
-   queue_mutex.lock();
-   
-   queue.push_back(tuple);
-   
-   queue_mutex.unlock();
-}
-
-simple_tuple*
-node::dequeue_tuple(void)
-{
-   queue_mutex.lock();
-   
-   simple_tuple *ret(queue.front());
-   
-   queue.pop_front();
-   
-   queue_mutex.unlock();
-   
-   return ret;
-}
 
 node::stuple_list&
 node::get_storage(const vm::predicate_id& id)
@@ -85,7 +55,7 @@ node::add_tuple(tuple *tuple, ref_count many)
       return false;
    } else {
       
-      cout << "add tuple " << *tuple << endl;
+      //cout << "add tuple " << *tuple << endl;
       list.push_back(new simple_tuple(tuple, many));
       return true;
    }

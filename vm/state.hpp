@@ -7,6 +7,7 @@
 #include "db/database.hpp"
 #include "vm/program.hpp"
 #include "vm/instr.hpp"
+#include "process/exec.hpp"
 
 namespace vm {
 
@@ -24,8 +25,10 @@ public:
    vm::tuple *tuple;
    db::node *node;
    ref_count count;
-   program *prog;
-   db::database *db;
+   
+   static program *PROGRAM;
+   static db::database *DATABASE;
+   static process::machine *MACHINE;
    
 #define define_get(WHAT, RET, BODY) \
    inline RET get_ ## WHAT (const reg_num& num) const { BODY; }

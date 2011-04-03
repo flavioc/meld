@@ -13,6 +13,7 @@
 #include "utils/utils.hpp"
 
 using namespace utils;
+using namespace process;
 
 static void
 help(void)
@@ -72,7 +73,9 @@ main(int argc, char **argv)
   if (!has_threads)
     num_threads = number_cpus();
     
- process::execute_file(program, num_threads);
+ machine mac(program, num_threads);
+ 
+ mac.start();
  
   /* not reached */
   return EXIT_SUCCESS;
