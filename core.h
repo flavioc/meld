@@ -51,9 +51,9 @@
 #define ITER_MATCH_END(x)   (((*(const unsigned char*)((x)+1))&0xc0) == 0x40)
 #define ITER_MATCH_NONE(x)  (((*(const unsigned char*)((x)+1))&0xc0) == 0xc0)
 #define ITER_MATCH_FIELD(x)   (*(const unsigned char*)(x))
+#define ITER_MATCH_VAL(x)   (((*(const unsigned char*)((x)+1))&0x3f))
 #define ITER_BASE     4
 
-#define ITER_MATCH_VAL(x)   (((*(const unsigned char*)((x)+1))&0x3f))
 #define REMOVE_REG(x) ((*(const unsigned char*)(x))&0x1f)
 
 #define SEND_MSG(x)   ((*(const unsigned char*)((x)+1)) & 0x1f)
@@ -67,18 +67,18 @@
 #define OP_OP(x)      ((*(const unsigned char*)((x)+4)) & 0x1f)
 #define OP_BASE				5
 
-#define CONS_HEAD(x)	GET_INSTR_VAL(x, 1)
-#define CONS_TAIL(x)	GET_INSTR_VAL(x, 2)
-#define CONS_DST(x)		GET_INSTR_VAL(x, 3)
-#define CONS_BASE 		4
+#define CONS_HEAD(x)	GET_INSTR_VAL(x, 2)
+#define CONS_TAIL(x)	GET_INSTR_VAL(x, 3)
+#define CONS_DST(x)		GET_INSTR_VAL(x, 4)
+#define CONS_BASE 		5
 
-#define HEAD_CONS(x)	GET_INSTR_VAL(x, 1)
-#define HEAD_DST(x)		GET_INSTR_VAL(x, 2)
-#define HEAD_BASE 3
+#define HEAD_CONS(x)	GET_INSTR_VAL(x, 2)
+#define HEAD_DST(x)		GET_INSTR_VAL(x, 3)
+#define HEAD_BASE 4
 
-#define TAIL_CONS(x)	GET_INSTR_VAL(x, 1)
-#define TAIL_DST(x)		GET_INSTR_VAL(x, 2)
-#define TAIL_BASE 3
+#define TAIL_CONS(x)	GET_INSTR_VAL(x, 2)
+#define TAIL_DST(x)		GET_INSTR_VAL(x, 3)
+#define TAIL_BASE 4
 
 #define MOVE_SRC(x)   GET_INSTR_VAL(x, 1)
 #define MOVE_DST(x)   GET_INSTR_VAL(x, 2)
@@ -154,13 +154,13 @@
 #define TYPE_OFFSET(x)     (1 + (x)*TYPE_DESCRIPTOR_SIZE)
 #define TYPE_DESCRIPTOR(x) ((unsigned char *)(meld_prog + TYPE_OFFSET(x)))
 
-#define TYPE_PROPERTIES(x) (*(TYPE_DESCRIPTOR(x) + 4))
-#define TYPE_AGGREGATE(x)  (*(TYPE_DESCRIPTOR(x) + 5))
-#define TYPE_NOARGS(x)     (*(TYPE_DESCRIPTOR(x) + 7))
-#define TYPE_STRATIFICATION_ROUND(x) (*(TYPE_DESCRIPTOR(x)+6))
-#define TYPE_NODELTAS(x)   (*(TYPE_DESCRIPTOR(x) + 8))
 #define TYPE_CODE_OFFSET(x)	(*(unsigned short*)(TYPE_DESCRIPTOR(x) + 0))
 #define TYPE_CODE_SIZE(x)		(*(unsigned short*)(TYPE_DESCRIPTOR(x) + 2))
+#define TYPE_PROPERTIES(x) (*(TYPE_DESCRIPTOR(x) + 4))
+#define TYPE_AGGREGATE(x)  (*(TYPE_DESCRIPTOR(x) + 5))
+#define TYPE_STRATIFICATION_ROUND(x) (*(TYPE_DESCRIPTOR(x)+6))
+#define TYPE_NOARGS(x)     (*(TYPE_DESCRIPTOR(x) + 7))
+#define TYPE_NODELTAS(x)   (*(TYPE_DESCRIPTOR(x) + 8))
 #define TYPE_IS_STRATIFIED(x) (TYPE_STRATIFICATION_ROUND(x) > 0)
 #define TYPE_ARGS_DESC(x)  ((unsigned char*)(TYPE_DESCRIPTOR(x)+TYPE_DESCRIPTOR_BASE_SIZE))
 #define TYPE_DELTAS(x)     (TYPE_ARGS_DESC(x) + 1*TYPE_NOARGS(x))
@@ -308,11 +308,6 @@ p_peek(tuple_pqueue *q)
 tuple_pentry *p_dequeue(tuple_pqueue *q);
 void p_enqueue(tuple_pqueue *q, meld_int priority, tuple_t tuple,
 		void *rt, record_type isNew);
-
-pcounter instruction_print(pcounter pc, bool recurse);
-void instruction_list_print(pcounter pc, pcounter until);
-void print_program_info(void);
-void print_program_code(void);
 
 extern tuple_type TYPE_INIT;
 extern tuple_type TYPE_EDGE;

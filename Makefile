@@ -16,45 +16,47 @@ CFLAGS = $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS)
 CXXFLAGS = $(CFLAGS)
 LDFLAGS = $(PROFILING) $(LIBRARY_DIRS) -lm -lpthread $(TCMALLOC) -m32
 
-OBJS = utils.o extern_functions.o vm.o \
-			 meld.o list.o barrier.o hash.o set_runtime.o \
-			 partition.o thread.o node.o \
-			 list_runtime.o core.o \
-			 stats.o allocator.o
+OBJS = meld.o utils.o \
+			 vm/program.o \
+			 vm/predicate.o vm/types.o \
+			 vm/instr.o db/node.o \
+			 db/tuple.o db/database.o \
+			 process/process.o \
+			 process/exec.o \
+			 vm/state.o \
+			 vm/tuple.o vm/exec.o
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $(TARGET)
 
-list_runtime.o: list_runtime.cpp list_runtime.h
+meld.o: meld.cpp
 
-allocator.o: allocator.cpp allocator.h
+utils.o: utils.cpp utils.hpp
 
-node.o: node.cpp node.h list.o
+vm/instr.o: vm/instr.cpp vm/instr.hpp
 
-vm.o: vm.cpp core.h defs.h api.h \
-		extern_functions.h extern_functions.cpp \
-		vm.h node.h thread.h list.o
+db/tuple.o: db/tuple.cpp db/tuple.hpp
 
-meld.o: meld.cpp thread.o
+db/node.o: db/node.cpp db/node.hpp
 
-thread.o: thread.cpp thread.h node.h
+db/database.o: db/database.cpp db/database.hpp
 
-partition.o: thread.h partition.h partition.cpp list.o
+process/process.o: process/process.cpp process/process.hpp
 
-list.o: list.cpp list.h
+process/exec.o: process/exec.hpp process/exec.cpp
 
-set_runtime.o: set_runtime.cpp set_runtime.h
+vm/state.o: vm/state.cpp vm/state.hpp
 
-core.o: model.h api.h defs.h core.cpp core.h
+vm/tuple.o: vm/tuple.cpp vm/tuple.hpp
 
-stats.o: stats.cpp stats.h
+vm/program.o: vm/program.cpp vm/program.hpp
 
-extern_functions.o: extern_functions.cpp extern_functions.h
+vm/exec.o: vm/exec.cpp vm/exec.hpp
 
 clean:
-	rm -f $(TARGET) *.o
+	rm -f $(TARGET) *.o vm/*.o db/*.o process/*.o
 
 re: clean all
 

@@ -1,0 +1,256 @@
+
+#include "vm/predicate.hpp"
+#include "vm/instr.hpp"
+#include "vm/program.hpp"
+#include "utils.hpp"
+
+using namespace std;
+using namespace vm;
+
+namespace vm {
+   
+namespace instr {
+   
+string
+op_string(const instr_op op)
+{
+   switch(op) {
+		case OP_NEQI: return string("INT NOT EQUAL");
+		case OP_EQI: return string("INT EQUAL"); 
+		case OP_LESSI: return string("INT LESSER"); 
+		case OP_LESSEQI: return string("INT LESSER EQUAL"); 
+		case OP_GREATERI: return string("INT GREATER"); 
+		case OP_GREATEREQI: return string("INT GREATER EQUAL"); 
+		case OP_MODI: return string("INT MOD"); 
+		case OP_PLUSI: return string("INT PLUS"); 
+		case OP_MINUSI: return string("INT MINUS"); 
+		case OP_TIMESI: return string("INT TIMES"); 
+		case OP_DIVI: return string("INT DIV"); 
+		case OP_NEQF: return string("FLOAT NOT EQUAL"); 
+		case OP_EQF: return string("FLOAT EQUAL"); 
+		case OP_LESSF: return string("FLOAT LESSER"); 
+		case OP_LESSEQF: return string("FLOAT LESSER EQUAL"); 
+		case OP_GREATERF: return string("FLOAT GREATER"); 
+		case OP_GREATEREQF: return string("FLOAT GREATER EQUAL"); 
+		case OP_MODF: return string("FLOAT MOD"); 
+		case OP_PLUSF: return string("FLOAT PLUS"); 
+		case OP_MINUSF: return string("FLOAT MINUS"); 
+		case OP_TIMESF: return string("FLOAT TIMES"); 
+		case OP_DIVF: return string("FLOAT DIV"); 
+		case OP_NEQA: return string("ADDR NOT EQUAL"); 
+		case OP_EQA: return string("ADDR EQUAL"); 
+		case OP_EQLINT: return string("LIST INT EQUAL"); 
+	}
+	
+   return string("");
+}
+
+string
+val_string(const instr_val v, pcounter *pm)
+{
+   if(val_is_tuple(v))
+      return string("tuple");
+   else if(val_is_reg(v))
+      return string("reg ") + number_to_string((int)val_reg(v));
+   else if(val_is_host(v))
+      return string("host");
+   else if(val_is_nil(v))
+      return string("nil");
+   else if(val_is_field(v)) {
+      const string ret(number_to_string((int)val_field_reg(*pm)) +
+         string(".") + number_to_string((int)val_field_num(*pm)));
+      pcounter_move_field(pm);
+      return ret;
+   } else if(val_is_int(v)) {
+      const string ret(number_to_string(pcounter_int(*pm)));
+      pcounter_move_int(pm);
+      return ret;
+   } else if(val_is_float(v)) {
+      const string ret(number_to_string(pcounter_float(*pm)));
+      pcounter_move_float(pm);
+      return ret;
+   } else if(val_is_addr(v)) {
+      const string ret(string("addr(") + number_to_string((int_val)pcounter_addr(*pm)) + ")");
+      pcounter_move_addr(pm);
+      return ret;
+   }
+   
+   return string("");
+}
+
+}
+
+using namespace vm::instr;
+
+pcounter
+instr_print(pcounter pc, const bool recurse, const program *prog, ostream& cout)
+{
+   switch(fetch(pc)) {
+      case RETURN_INSTR:
+         cout << "RETURN" << endl;
+			break;
+	   case IF_INSTR: {
+            cout << "IF (reg " << (int)if_reg(pc) << ") THEN" << endl;
+				if(recurse) {
+               pcounter cont = instrs_print(advance(pc), if_jump(pc) - (advance(pc) - pc),
+                                       prog, cout);
+               cout << "ENDIF" << endl;
+					return cont;
+				}
+			}
+			break;
+		case TEST_NIL_INSTR: {
+				pcounter m = pc + TEST_NIL_BASE;
+            const string op(val_string(test_nil_op(pc), &m));
+            const string dest(val_string(test_nil_dest(pc), &m));
+
+            cout << "TEST-NIL " << op << " TO " << dest << endl;
+			}
+			break;
+      case MOVE_INSTR: {
+				pcounter m = pc + MOVE_BASE;
+            const string from(val_string(move_from(pc), &m));
+            const string to(val_string(move_to(pc), &m));
+
+            cout << "MOVE " << from << " TO " << to << endl;
+		   }
+		   break;
+   	case MOVE_NIL_INSTR: {
+   			pcounter m = pc + MOVE_NIL_BASE;
+
+            cout << "MOVE-NIL TO "
+                 << val_string(move_nil_dest(pc), &m)
+                 << endl;
+   		}
+   		break;
+   	case ALLOC_INSTR: {
+   			pcounter m = pc + ALLOC_BASE;
+
+            cout << "ALLOC " << prog->get_predicate(alloc_predicate(pc))->get_name()
+                 << " TO " << val_string(alloc_dest(pc), &m)
+                 << endl;
+   		}
+   		break;
+   	case OP_INSTR: {
+   			pcounter m = pc + OP_BASE;
+            const string arg1(val_string(op_arg1(pc), &m));
+            const string arg2(val_string(op_arg2(pc), &m));
+            const string dest(val_string(op_dest(pc), &m));
+
+            cout << "OP " << arg1 << " " << op_string(op_op(pc))
+                 << " " << arg2 << " TO " << dest
+                 << endl;
+   		 }
+   		break;
+      case SEND_INSTR: {
+            pcounter m = pc + SEND_BASE;
+            
+            cout << "SEND reg " << (int)send_msg(pc)
+                 << " TO reg " << (int)send_dest(pc)
+                 << " IN " << val_string(send_delay(pc), &m)
+                 << "ms" << endl;
+   		}
+   		break;
+   	case ITER_INSTR: {
+            pcounter m = pc + ITER_BASE;
+            
+            cout << "ITERATE OVER " << prog->get_predicate(iter_predicate(pc))->get_name()
+                 << " MATCHING";
+            
+            if(!iter_match_none(m)) {
+               while (true) {
+                  iter_match match = m;
+                  
+                  m += iter_match_size;
+                  
+                  cout << endl << "  (match)." << iter_match_field(match)
+                       << "=" << val_string(iter_match_val(match), &m);
+                  if(iter_match_end(match))
+                     break;
+               }
+            }
+            
+            cout << endl;
+   		}
+   		break;
+   	case NEXT_INSTR:
+         cout << "NEXT" << endl;
+         break;
+   	case CALL_INSTR: {
+            pcounter m = pc + CALL_BASE;
+         
+   	      cout << "CALL func(" << call_extern_id(pc) << "):"
+   	           << call_num_args(pc) << " TO reg "
+                 << call_dest(pc) << " = (";
+            
+            for(size_t i = 0; i < call_num_args(pc); ++i) {
+               if(i != 0)
+                  cout << ", ";
+               
+               ++m;
+               cout << val_string(call_val(m-1), &m);
+            }
+            cout << ")" << endl;
+   		}
+   		break;
+   	case CONS_INSTR: {
+   			pcounter m = pc + CONS_BASE;
+            const string head(val_string(cons_head(pc), &m));
+            const string tail(val_string(cons_tail(pc), &m));
+            const string dest(val_string(cons_dest(pc), &m));
+   			
+            cout << "CONS (" << head << "::" << tail << ") TO " << dest << endl;
+   		}
+   		break;
+   	case HEAD_INSTR: {
+   			pcounter m = pc + HEAD_BASE;
+            const string cons(val_string(head_cons(pc), &m));
+            const string dest(val_string(head_dest(pc), &m));
+
+            cout << "HEAD " << cons << " TO " << dest << endl;
+   	   }
+   	   break;
+    	case TAIL_INSTR: {
+    			pcounter m = pc + TAIL_BASE;
+            const string cons(val_string(tail_cons(pc), &m));
+            const string dest(val_string(tail_dest(pc), &m));
+    			
+            cout << "TAIL " << cons << " TO " << dest << endl;
+    		}
+    		break;
+    	case NOT_INSTR: {
+    			pcounter m = pc + NOT_BASE;
+            const string op(val_string(not_op(pc), &m));
+            const string dest(val_string(not_dest(pc), &m));
+
+            cout << "NOT " << op << " TO " << dest << endl;
+    		}
+    	   break;
+    	case REMOVE_INSTR:
+    	case ELSE_INSTR:
+         throw malformed_instr_error("unknown instruction code");
+	}
+	
+   return advance(pc);
+}
+
+pcounter
+instr_print_simple(pcounter pc, const program *prog, ostream& cout)
+{
+   return instr_print(pc, false, prog, cout);
+}
+ 
+byte_code
+instrs_print(byte_code code, const size_t len, const program* prog, ostream& cout)
+{
+   pcounter pc = code;
+   pcounter until = code + len;
+   
+	for (; pc < until; ) {
+		pc = instr_print(pc, true, prog, cout);
+	}
+	
+   return until;
+}
+  
+}

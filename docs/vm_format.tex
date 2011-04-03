@@ -17,21 +17,24 @@
 \newcommand{\val}[3]{#1&\byte#2\\\endbyte&{\it #3}\\}
 
 
-A VM program consists of a single byte dictating the number of distinct tuples,
-followed by one byte with the offset for each \emph{tuple descriptor}, followed by
-the tuple descriptors, and, finally, the list of instructions that represent the
-routines for processing each tuple.
+A VM program starts with a byte indicating the number of predicates $P$ in the
+program. Next, there are three main components:
 
-A tuple descriptor consists of a 2 byte short indicating the offset into the
-VM at which the tuple processing function begins, followed by 1 byte describing the tuple's properties and then
-1 byte indicating the aggregate's type (what aggregate and which field, high and low nibble,
-respectively), if any. Next there is a byte indicating the tuples order
-of processing for stratification.
-Next, there is one byte indicating the tuple's number of fields and a byte with the number of delta tuples.
-These 7 bytes are followed by a sequence bytes, one for each argument, indicating the type of the tuple's
-argument. Following this sequence, there may be
-a sequence of 2 byte shorts for the delta tuples, where the first byte gives the id of the
-delta tuple and the second byte indicates the delta field.
+\begin{itemize}
+	\item An unsigned integer indicating the number $N$ of nodes to instantiate, followed by $N$ unsigned integers corresponding to the node IDs.
+	\item A set of $P$ \emph{predicate descriptors}, with 69 bytes each.
+	\item A set of $P$ byte-code instructions, one for each predicate.
+\end{itemize}
+
+A predicate descriptor consists of the following fields:
+\begin{itemize}
+	\item A short integer indicating the size, in bytes, of the corresponding byte-code instructions.
+	\item 1 byte describing the predicate's properties.
+	\item 1 byte indicating the aggregate's type, if any. The high nibble if the aggregate type and the low nibble the aggregate field.
+	\item A byte indicating the predicate's number of fields $F$.
+	\item 32 bytes with information about the fields' types. Actually, only $F$ bytes are used, and the remaining bytes are zeroes.
+	\item 32 bytes containing the predicate's name representing as a string. As before, unnused bytes are left as zeroes.
+\end{itemize}
 
 \begin{tabular}{lll}
 INSTRUCTION & BYTE FORMAT & ARGS\\
@@ -116,20 +119,26 @@ INSTRUCTION & BYTE FORMAT & ARGS\\
 &the result in {\it reg}\\
 \\
 \inst{CONS}    {0&0&0&0&0&1&0&0\\\hline
+0&0&0&0&0&0&$t$&$t$\\\hline
 0&0&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$\\\hline
 0&0&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$\\\hline
 0&0&v$_3$&v$_3$&v$_3$&v$_3$&v$_3$&v$_3$} {val$_1$, val$_2$, val$_3$}
 & sets {\it val$_3$} = {\it val$_1$ :: val$_2$}\\
+& $t$ is the list type (00 = int, 01 = float, 02 = addr) \\
 \\
 \inst{HEAD}    {0&0&0&0&0&1&0&1\\\hline
+0&0&0&0&0&0&$t$&$t$\\\hline
 0&0&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$\\\hline
 0&0&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$} {val$_1$, val$_2$}
 & sets {\it val$_2$} = {\it head val$_1$}\\
+& $t$ is the list type (00 = int, 01 = float, 02 = addr) \\
 \\
 \inst{TAIL}    {0&0&0&0&0&1&1&0\\\hline
+0&0&0&0&0&0&$t$&$t$\\\hline
 0&0&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$\\\hline
 0&0&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$} {val$_1$, val$_2$}
 & sets {\it val$_2$} = {\it tail val$_1$}\\
+& $t$ is the list type (00 = int, 01 = float, 02 = addr) \\
 \\
 \end{tabular}
 
@@ -161,7 +170,6 @@ OP & BYTE FORMAT\\
 \op{int\div}{1&0&1&0&1}
 \op{addr\neq}{1&0&1&1&0}
 \op{addr=}{1&0&1&1&1}
-\op{int\ list\ =}{1&1&0&0&0}
 \end{tabular}
 \vspace{0.3in}\\
 
@@ -187,6 +195,10 @@ VALUE & BYTE FORMAT & ARGS\\
 \val{FLOAT} {0&0&0&0&0&0} {float}
 & the next 4 bytes after the current instruction\\
 & are an immediate float to which this refers\\
+\\
+\val{ADDR}   {0&0&0&1&0&1} {addr}
+& the next 4 bytes after the current instruction\\
+& are the address to which this refers\\
 \\
 \val{FIELD} {0&0&0&0&1&0} {}
 & the next two bytes after the current instruction\\
