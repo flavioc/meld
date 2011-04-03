@@ -10,7 +10,9 @@
 
 #include "process/exec.hpp"
 #include "runtime/list.hpp"
-#include "utils.hpp"
+#include "utils/utils.hpp"
+
+using namespace utils;
 
 static void
 help(void)

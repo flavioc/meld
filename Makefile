@@ -16,7 +16,7 @@ CFLAGS = $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS)
 CXXFLAGS = $(CFLAGS)
 LDFLAGS = $(PROFILING) $(LIBRARY_DIRS) -lm -lpthread $(TCMALLOC) -m32
 
-OBJS = meld.o utils.o \
+OBJS = meld.o utils/utils.o \
 			 vm/program.o \
 			 vm/predicate.o vm/types.o \
 			 vm/instr.o db/node.o \
@@ -31,9 +31,9 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $(TARGET)
 
-meld.o: meld.cpp
+meld.o: meld.cpp utils/utils.hpp
 
-utils.o: utils.cpp utils.hpp
+utils/utils.o: utils/utils.cpp utils/utils.hpp
 
 vm/instr.o: vm/instr.cpp vm/instr.hpp
 

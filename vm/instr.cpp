@@ -2,10 +2,11 @@
 #include "vm/predicate.hpp"
 #include "vm/instr.hpp"
 #include "vm/program.hpp"
-#include "utils.hpp"
+#include "utils/utils.hpp"
 
 using namespace std;
 using namespace vm;
+using namespace utils;
 
 namespace vm {
    
