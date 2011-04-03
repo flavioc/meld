@@ -45,7 +45,8 @@ db/database.o: db/database.cpp db/database.hpp
 
 process/process.o: process/process.cpp process/process.hpp
 
-process/exec.o: process/exec.hpp process/exec.cpp
+process/exec.o: process/exec.hpp process/exec.cpp \
+									vm/state.hpp
 
 vm/state.o: vm/state.cpp vm/state.hpp
 

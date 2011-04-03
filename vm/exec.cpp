@@ -680,6 +680,7 @@ execute_tail(pcounter& pc, state& state)
       case FIELD_LIST_ADDR: implement_tail(addr_list);
       default: throw vm_exec_error("unknown list type in tail");
    }
+#undef implement_tail
 }
 
 static inline void
