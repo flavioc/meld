@@ -9,11 +9,11 @@ PROFILING = #-pg
 
 OPTIMIZATIONS = -O2 -m32
 DEBUG = -g
-WARNINGS = -Wall -Wextra
+WARNINGS = -Wall
 TCMALLOC = #-ltcmalloc
 
 CFLAGS = $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS)
-CXXFLAGS = $(CFLAGS)
+CXXFLAGS = $(CFLAGS) -std=c++0x
 LDFLAGS = $(PROFILING) $(LIBRARY_DIRS) -lm -lpthread $(TCMALLOC) -m32 -lboost_thread-mt
 
 OBJS = meld.o utils/utils.o \

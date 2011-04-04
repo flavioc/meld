@@ -8,6 +8,7 @@
 #include <vector>
 #include <utility>
 
+#include "vm/tuple.hpp"
 #include "vm/predicate.hpp"
 #include "db/tuple.hpp"
 
@@ -43,7 +44,7 @@ public:
    inline node_id real_id(void) const { return (node_id)this; }
    inline node_id get_id(void) const { return id; }
    
-   bool add_tuple(vm::tuple *, vm::ref_count);
+   bool add_tuple(vm::tuple*, vm::ref_count);
    delete_info delete_tuple(vm::tuple *, vm::ref_count);
    
    void commit_delete(const delete_info&);

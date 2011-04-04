@@ -5,14 +5,14 @@
 #include "db/node.hpp"
 
 using namespace db;
-using namespace vm;
 using namespace std;
+using namespace vm;
 
 namespace db
 {
 
 node::stuple_list&
-node::get_storage(const vm::predicate_id& id)
+node::get_storage(const predicate_id& id)
 {
    stuple_map::iterator it(tuples.find(id));
    
@@ -25,7 +25,7 @@ node::get_storage(const vm::predicate_id& id)
 }
 
 static inline simple_tuple*
-look_for_stuple(const node::stuple_list& list, tuple *tuple)
+look_for_stuple(const node::stuple_list& list, vm::tuple *tpl)
 {
    for(node::stuple_list::const_iterator it(list.begin());
       it != list.end();
@@ -33,7 +33,7 @@ look_for_stuple(const node::stuple_list& list, tuple *tuple)
    {
       stuple *stuple(*it);
       
-      if(*(stuple->get_tuple()) == *tuple)
+      if(*(stuple->get_tuple()) == *tpl)
          return (simple_tuple*)stuple;
    }
    
@@ -41,28 +41,27 @@ look_for_stuple(const node::stuple_list& list, tuple *tuple)
 }
 
 bool
-node::add_tuple(tuple *tuple, ref_count many)
+node::add_tuple(vm::tuple *tpl, ref_count many)
 {  
-   predicate_id id(tuple->get_predicate()->get_id());
+   predicate_id id(tpl->get_predicate()->get_id());
    stuple_list& list(get_storage(id));
    
-   simple_tuple *found(look_for_stuple(list, tuple));
+   simple_tuple *found(look_for_stuple(list, tpl));
    
    if(found != NULL) {
-      cout << "FOUND tuple " << *tuple << endl;
+      cout << "FOUND tuple " << *tpl << endl;
       cout << *this << endl;
       found->inc_count(many);
       return false;
    } else {
-      
       //cout << "add tuple " << *tuple << endl;
-      list.push_back(new simple_tuple(tuple, many));
+      list.push_back(new simple_tuple(tpl, many));
       return true;
    }
 }
 
 node::delete_info
-node::delete_tuple(tuple *tuple, ref_count many)
+node::delete_tuple(vm::tuple *tuple, ref_count many)
 {
    predicate_id id(tuple->get_predicate()->get_id());
    stuple_list& list(get_storage(id));
@@ -97,7 +96,7 @@ void
 node::commit_delete(const delete_info& info)
 {
    stuple* stuple(*(info.it));
-   tuple *tuple(stuple->get_tuple());
+   vm::tuple *tuple(stuple->get_tuple());
    
    info.list->erase(info.it);
    

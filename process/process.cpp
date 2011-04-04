@@ -44,7 +44,7 @@ process::add_node(node *node)
 void
 process::do_work(node *node, simple_tuple *stuple)
 {
-   tuple *tuple = stuple->get_tuple();
+   vm::tuple *tuple = stuple->get_tuple();
    ref_count count = stuple->get_count();
 
    //cout << "Process " << *stuple << endl;
@@ -115,7 +115,7 @@ process::loop(void)
    {
       node *cur_node(*it);
       
-      enqueue_work(cur_node, simple_tuple::create_new(new tuple(init_pred)));
+      enqueue_work(cur_node, simple_tuple::create_new(new vm::tuple(init_pred)));
    }
    
    while(true) {
@@ -132,8 +132,10 @@ process::start(void)
    if(get_id() == 0) {
       thread = new boost::thread();
       loop();
-   } else
-      thread = new boost::thread(bind(&process::loop, this));
+   } else {
+      auto fun = [this] (void) -> void { this->loop(); };
+      thread = new boost::thread(fun);//bind(&process::loop, this));
+   }
 }
 
 process::process(const process_id& _id):

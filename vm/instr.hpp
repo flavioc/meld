@@ -236,7 +236,7 @@ template <instr_argument_type type>
 static inline size_t arg_size(instr_val v);
 
 template <>
-static inline size_t arg_size<ARGUMENT_ANYTHING>(instr_val v)
+size_t arg_size<ARGUMENT_ANYTHING>(instr_val v)
 {
    if(val_is_float(v))
       return float_size;
@@ -261,7 +261,7 @@ static inline size_t arg_size<ARGUMENT_ANYTHING>(instr_val v)
 }
 
 template <>
-static inline size_t arg_size<ARGUMENT_ANYTHING_NOT_NIL>(instr_val v)
+size_t arg_size<ARGUMENT_ANYTHING_NOT_NIL>(instr_val v)
 {
    if(val_is_float(v))
       return float_size;
@@ -283,7 +283,7 @@ static inline size_t arg_size<ARGUMENT_ANYTHING_NOT_NIL>(instr_val v)
 }
 
 template <>
-static inline size_t arg_size<ARGUMENT_INT>(instr_val v)
+size_t arg_size<ARGUMENT_INT>(instr_val v)
 {
    if(val_is_int(v))
       return int_size;
@@ -292,7 +292,7 @@ static inline size_t arg_size<ARGUMENT_INT>(instr_val v)
 }
 
 template <>
-static inline size_t arg_size<ARGUMENT_WRITABLE>(instr_val v)
+size_t arg_size<ARGUMENT_WRITABLE>(instr_val v)
 {
    if(val_is_reg(v))
       return 0;
@@ -303,7 +303,7 @@ static inline size_t arg_size<ARGUMENT_WRITABLE>(instr_val v)
 }
 
 template <>
-static inline size_t arg_size<ARGUMENT_LIST>(instr_val v)
+size_t arg_size<ARGUMENT_LIST>(instr_val v)
 {
    if(val_is_reg(v))
       return 0;
@@ -316,7 +316,7 @@ static inline size_t arg_size<ARGUMENT_LIST>(instr_val v)
 }
 
 template <>
-static inline size_t arg_size<ARGUMENT_NON_LIST>(instr_val v)
+size_t arg_size<ARGUMENT_NON_LIST>(instr_val v)
 {
    if(val_is_float(v))
       return float_size;
@@ -335,7 +335,7 @@ static inline size_t arg_size<ARGUMENT_NON_LIST>(instr_val v)
 }
 
 template <>
-static inline size_t arg_size<ARGUMENT_BOOL>(instr_val v)
+size_t arg_size<ARGUMENT_BOOL>(instr_val v)
 {
    if(val_is_reg(v))
       return 0;

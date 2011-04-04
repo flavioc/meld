@@ -28,55 +28,55 @@ help(void)
 int
 main(int argc, char **argv)
 {
-  bool has_program = false;
-  bool has_threads = false;
-  char *program = NULL;
-	char *progname;
-	size_t num_threads = 0;
+   bool has_program = false;
+   bool has_threads = false;
+   char *program = NULL;
+   char *progname;
+   size_t num_threads = 0;
 
-  progname = *argv++;
-  --argc;
+   progname = *argv++;
+   --argc;
 
-  while (argc > 0 && (argv[0][0] == '-')) {
-    switch(argv[0][1]) {
-    case 'f': {
-        if (has_program || argc < 2)
-          help();
+   while (argc > 0 && (argv[0][0] == '-')) {
+      switch(argv[0][1]) {
+         case 'f': {
+            if (has_program || argc < 2)
+               help();
 
-        program = argv[1];
+            program = argv[1];
 
-        has_program = true;
-        argc--; argv++;
+            has_program = true;
+            argc--; argv++;
+         }
+         break;
+         case 't': {
+            if (has_threads || argc < 2)
+               help();
+
+            num_threads = (size_t)atoi(argv[1]);
+
+            has_threads = true;
+            argc--; argv++;
+         }
+         break;
+         default:
+            help();
       }
-      break;
-    case 't': {
-        if (has_threads || argc < 2)
-          help();
-
-        num_threads = (size_t)atoi(argv[1]);
-
-        has_threads = true;
-        argc--; argv++;
-      }
-      break;
-    default:
-      help();
-    }
 
     /* advance */
-    argc--; argv++;
-  }
+      argc--; argv++;
+   }
 
-  if (program == NULL)
-    help();
+   if (program == NULL)
+      help();
 
-  if (!has_threads)
-    num_threads = number_cpus();
-    
- machine mac(program, num_threads);
- 
- mac.start();
- 
+   if (!has_threads)
+      num_threads = number_cpus();
+
+   machine mac(program, num_threads);
+
+   mac.start();
+
   /* not reached */
-  return EXIT_SUCCESS;
+   return EXIT_SUCCESS;
 }

@@ -52,8 +52,7 @@ database::add_node(const node_id id)
 void
 database::print_db(ostream& cout) const
 {
-   for(map_nodes::const_iterator it(nodes.begin());
-      it != nodes.end(); ++it)
+   for(auto it(nodes.begin()); it != nodes.end(); ++it)
    {
       cout << *(it->second) << endl;
    }

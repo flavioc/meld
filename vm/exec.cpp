@@ -219,7 +219,7 @@ execute_send(const pcounter& pc, state& state)
 template <typename T>
 static inline T get_op_function(const instr_val& val, pcounter& m, state& state);
 
-template <> static inline
+template <>
 float_val get_op_function<float_val>(const instr_val& val, pcounter& m, state& state)
 {
    if(val_is_float(val)) {
@@ -239,7 +239,7 @@ float_val get_op_function<float_val>(const instr_val& val, pcounter& m, state& s
       throw vm_exec_error("invalid float for float op");
 }
 
-template <> static inline
+template <>
 int_val get_op_function<int_val>(const instr_val& val, pcounter& m, state& state)
 {
    if(val_is_int(val)) {
@@ -259,7 +259,7 @@ int_val get_op_function<int_val>(const instr_val& val, pcounter& m, state& state
       throw vm_exec_error("invalid int for int op");
 }
 
-template <> static inline
+template <>
 addr_val get_op_function<addr_val>(const instr_val& val, pcounter& m, state& state)
 {
    if(val_is_host(val))
@@ -279,7 +279,7 @@ addr_val get_op_function<addr_val>(const instr_val& val, pcounter& m, state& sta
       throw vm_exec_error("invalid addr for addr op");
 }
 
-template <> static inline
+template <>
 int_list* get_op_function<int_list*>(const instr_val& val, pcounter& m, state& state)
 {
    if(val_is_reg(val))
@@ -297,7 +297,7 @@ int_list* get_op_function<int_list*>(const instr_val& val, pcounter& m, state& s
       throw vm_exec_error("unable to get an int list");
 }
 
-template <> static inline
+template <>
 float_list* get_op_function<float_list*>(const instr_val& val, pcounter& m, state& state)
 {
    if(val_is_reg(val))
@@ -315,7 +315,7 @@ float_list* get_op_function<float_list*>(const instr_val& val, pcounter& m, stat
       throw vm_exec_error("unable to get a float list");
 }
 
-template <> static inline
+template <>
 addr_list* get_op_function<addr_list*>(const instr_val& val, pcounter& m, state& state)
 {
    if(val_is_reg(val))
@@ -338,7 +338,7 @@ static inline void set_op_function(const pcounter& m,
    const instr_val& dest, T val, state& state);
 
 template <>
-static inline void set_op_function<bool_val>(const pcounter& m, const instr_val& dest,
+void set_op_function<bool_val>(const pcounter& m, const instr_val& dest,
    bool_val val, state& state)
 {
    (void)m;
@@ -352,7 +352,7 @@ static inline void set_op_function<bool_val>(const pcounter& m, const instr_val&
 }
 
 template <>
-static inline void set_op_function<int_val>(const pcounter& m, const instr_val& dest,
+void set_op_function<int_val>(const pcounter& m, const instr_val& dest,
    int_val val, state& state)
 {
    if(val_is_reg(dest))
@@ -367,7 +367,7 @@ static inline void set_op_function<int_val>(const pcounter& m, const instr_val& 
 }
 
 template <>
-static inline void set_op_function<float_val>(const pcounter& m, const instr_val& dest,
+void set_op_function<float_val>(const pcounter& m, const instr_val& dest,
    float_val val, state& state)
 {
    if(val_is_reg(dest))
@@ -382,7 +382,7 @@ static inline void set_op_function<float_val>(const pcounter& m, const instr_val
 }
 
 template <>
-static inline void set_op_function<addr_val>(const pcounter& m, const instr_val& dest,
+void set_op_function<addr_val>(const pcounter& m, const instr_val& dest,
    addr_val val, state& state)
 {
    if(val_is_reg(dest))
@@ -397,7 +397,7 @@ static inline void set_op_function<addr_val>(const pcounter& m, const instr_val&
 }
 
 template <>
-static inline void set_op_function<int_list*>(const pcounter& m, const instr_val& dest,
+void set_op_function<int_list*>(const pcounter& m, const instr_val& dest,
    int_list* val, state& state)
 {
    if(val_is_reg(dest))
@@ -412,7 +412,7 @@ static inline void set_op_function<int_list*>(const pcounter& m, const instr_val
 }
 
 template <>
-static inline void set_op_function<float_list*>(const pcounter& m, const instr_val& dest,
+void set_op_function<float_list*>(const pcounter& m, const instr_val& dest,
    float_list* val, state& state)
 {
    if(val_is_reg(dest))
@@ -427,7 +427,7 @@ static inline void set_op_function<float_list*>(const pcounter& m, const instr_v
 }
 
 template <>
-static inline void set_op_function<addr_list*>(const pcounter& m, const instr_val& dest,
+void set_op_function<addr_list*>(const pcounter& m, const instr_val& dest,
    addr_list* val, state& state)
 {
    if(val_is_reg(dest))
@@ -440,7 +440,6 @@ static inline void set_op_function<addr_list*>(const pcounter& m, const instr_va
    } else
       throw vm_exec_error("invalid destination for addr list value");
 }
-
 
 static inline void
 execute_op(const pcounter& pc, state& state)
