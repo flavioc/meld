@@ -3,10 +3,12 @@
 
 #include "vm/tuple.hpp"
 #include "db/node.hpp"
+#include "utils/utils.hpp"
 
 using namespace vm;
 using namespace std;
 using namespace runtime;
+using namespace utils;
 
 namespace vm
 {
@@ -41,9 +43,12 @@ tuple::operator==(const tuple& other) const
             if(!addr_list::equal(get_addr_list(i), other.get_addr_list(i)))
                return false;
             break;
-         default:
+         case FIELD_ADDR:
             if(get_addr(i) != other.get_addr(i))
                return false;
+            break;
+         default:
+            throw type_error("Unrecognized field type " + number_to_string(i));
       }
    }
    
@@ -85,8 +90,7 @@ tuple::print(ostream& cout) const
             cout << get_addr(i);
             break;
          default:
-            assert(0);
-            exit(EXIT_FAILURE); // XXX
+            throw type_error("Unrecognized field type " + number_to_string(i));
       }
    }
    

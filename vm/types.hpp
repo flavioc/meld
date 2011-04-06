@@ -3,6 +3,7 @@
 
 #include <cstring>
 #include <string>
+#include <stdexcept>
 
 namespace vm {
    
@@ -36,6 +37,14 @@ enum aggregate_type {
 size_t field_type_size(field_type type);
 std::string field_type_string(field_type type);
 std::string aggregate_type_string(aggregate_type type);
+
+class type_error : public std::runtime_error {
+ public:
+    explicit type_error(const std::string& msg) :
+         std::runtime_error(msg)
+    {}
+};
+
 }
 
 #endif

@@ -3,6 +3,7 @@
 #define PROCESS_HPP
 
 #include <list>
+#include <stdexcept>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition.hpp>
@@ -68,6 +69,13 @@ public:
 };
 
 std::ostream& operator<<(std::ostream&, const process&);
+
+class process_exec_error : public std::runtime_error {
+ public:
+    explicit process_exec_error(const std::string& msg) :
+         std::runtime_error(msg)
+    {}
+};
 
 }
 

@@ -9,6 +9,9 @@
 #include "vm/instr.hpp"
 #include "process/exec.hpp"
 
+// forward declaration
+namespace process { class process; }
+
 namespace vm {
 
 class state
@@ -25,6 +28,7 @@ public:
    vm::tuple *tuple;
    db::node *node;
    ref_count count;
+   process::process *proc;
    
    static program *PROGRAM;
    static db::database *DATABASE;
@@ -66,7 +70,10 @@ public:
       regs[reg_to] = regs[reg_from];
    }
    
-   explicit state(void) {}
+   explicit state(process::process *_proc):
+      proc(_proc)
+   {
+   }
 };
 
 }

@@ -185,16 +185,9 @@ execute_move(const pcounter& pc, state& state)
 static inline void
 execute_alloc(const pcounter& pc, state& state)
 {
-   const predicate_id id(alloc_predicate(pc));
-   const instr_val dest(alloc_dest(pc)); // XXX: I think this should be always a register
-   
-   if(val_is_reg(dest)) {
-      const reg_num reg(val_reg(dest));
-      tuple *tuple(state.PROGRAM->new_tuple(id));
+   tuple *tuple(state.PROGRAM->new_tuple(alloc_predicate(pc)));
       
-      state.set_tuple(reg, tuple);
-   } else
-      throw vm_exec_error("invalid alloc target");
+   state.set_tuple(alloc_reg(pc), tuple);
 }
 
 static inline void

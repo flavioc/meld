@@ -22,7 +22,7 @@ const size_t int_size = sizeof(int_val);
 const size_t float_size = sizeof(float_val);
 const size_t addr_size = sizeof(addr_val);
 
-const size_t SEND_BASE = 4;
+const size_t SEND_BASE = 3;
 const size_t OP_BASE = 5;
 const size_t MOVE_BASE = 3;
 const size_t ITER_BASE = 4;
@@ -139,7 +139,6 @@ inline size_t if_jump(pcounter pc) { return jump_get(pc, 2); }
 
 inline reg_num send_msg(pcounter pc) { return reg_get(pc, 1); }
 inline reg_num send_dest(pcounter pc) { return reg_get(pc, 2); }
-inline instr_val send_delay(pcounter pc) { return val_get(pc, 3); }
 
 /* OP a op b TO c */
 
@@ -167,7 +166,7 @@ inline field_num iter_match_field(iter_match m) { return (field_num)*m; }
 /* ALLOC pred to reg */
 
 inline predicate_id alloc_predicate(pcounter pc) { return predicate_get(pc, 1); }
-inline instr_val alloc_dest(pcounter pc) { return val_get(pc, 2); }
+inline reg_num alloc_reg(pcounter pc) { return reg_get(pc, 2); }
 
 /* CALL */
 
@@ -387,8 +386,7 @@ advance(pcounter pc)
 {
 	switch(fetch(pc)) {
 		case SEND_INSTR:
-		   return pc + SEND_BASE
-                   + arg_size<ARGUMENT_INT>(send_delay(pc));
+         return pc + SEND_BASE;
                    
       case OP_INSTR:
          return pc + OP_BASE
@@ -406,8 +404,7 @@ advance(pcounter pc)
                    + iter_matches_size(pc + ITER_BASE);
                    
       case ALLOC_INSTR:
-         return pc + ALLOC_BASE
-                   + arg_size<ARGUMENT_WRITABLE>(alloc_dest(pc)); // XXX: should be always a register
+         return pc + ALLOC_BASE;
                    
       case CALL_INSTR:
          return pc + CALL_BASE

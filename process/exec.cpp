@@ -33,22 +33,35 @@ machine::distribute_nodes(database *db)
 {
    const size_t total(db->num_nodes());
    const size_t num_procs(process_list.size());
-   const size_t nodes_per_proc((total + num_procs/2) / num_procs);
+   
+   if(total < num_procs)
+      throw process_exec_error("Number of nodes is less than the number of threads");
+   
+   const size_t nodes_per_proc(total / num_procs);
    size_t num_nodes = nodes_per_proc;
    size_t cur_proc = 0;
+   auto it(db->nodes_begin());
+   auto end(db->nodes_end());
    
-   for(database::map_nodes::const_iterator it(db->nodes_begin());
-         it != db->nodes_end();
-         it++)
-   {
+   for(; it != end && cur_proc < num_procs;
+         ++it)
+   {  
+      process_list[cur_proc]->add_node(it->second);
+      
+      --num_nodes;
+   
       if(num_nodes == 0) {
          num_nodes = nodes_per_proc;
          ++cur_proc;
       }
+   }
+   
+   if(it != end) {
+      // put remaining nodes on last process
+      --cur_proc;
       
-      process_list[cur_proc]->add_node(it->second);
-      
-      --num_nodes;
+      for(; it != end; ++it)
+         process_list[cur_proc]->add_node(it->second);
    }
 }
 
@@ -88,6 +101,9 @@ machine::machine(const string& file, const size_t th):
    state::PROGRAM = new program(filename);
    state::DATABASE = state::PROGRAM->get_database();
    state::MACHINE = this;
+   
+   //state::PROGRAM->print_bytecode(cout);
+   //exit(0);
    
    process_list.resize(num_threads);
    

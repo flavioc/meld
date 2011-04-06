@@ -124,13 +124,10 @@ instr_print(pcounter pc, const bool recurse, const program *prog, ostream& cout)
                  << endl;
    		}
    		break;
-   	case ALLOC_INSTR: {
-   			pcounter m = pc + ALLOC_BASE;
-
-            cout << "ALLOC " << prog->get_predicate(alloc_predicate(pc))->get_name()
-                 << " TO " << val_string(alloc_dest(pc), &m)
-                 << endl;
-   		}
+   	case ALLOC_INSTR:
+         cout << "ALLOC " << prog->get_predicate(alloc_predicate(pc))->get_name()
+              << " TO reg " << (int)alloc_reg(pc)
+              << endl;
    		break;
    	case OP_INSTR: {
    			pcounter m = pc + OP_BASE;
@@ -143,14 +140,10 @@ instr_print(pcounter pc, const bool recurse, const program *prog, ostream& cout)
                  << endl;
    		 }
    		break;
-      case SEND_INSTR: {
-            pcounter m = pc + SEND_BASE;
-            
-            cout << "SEND reg " << (int)send_msg(pc)
-                 << " TO reg " << (int)send_dest(pc)
-                 << " IN " << val_string(send_delay(pc), &m)
-                 << "ms" << endl;
-   		}
+      case SEND_INSTR:
+         cout << "SEND reg " << (int)send_msg(pc)
+              << " TO reg " << (int)send_dest(pc)
+              << endl;
    		break;
    	case ITER_INSTR: {
             pcounter m = pc + ITER_BASE;

@@ -4,9 +4,11 @@
 
 #include "vm/types.hpp"
 #include "vm/defs.hpp"
+#include "utils/utils.hpp"
 
 using namespace vm;
 using namespace std;
+using namespace utils;
 
 namespace vm {
    
@@ -23,12 +25,12 @@ field_type_size(field_type type)
       case FIELD_LIST_INT:
       case FIELD_LIST_FLOAT:
       case FIELD_LIST_ADDR:
+         return sizeof(addr_val);
+      
       case FIELD_SET_INT:
       case FIELD_SET_FLOAT:
-         return sizeof(addr_val);
-      default: // XXX
-         assert(0);
-         exit(EXIT_FAILURE);
+      default:
+         throw type_error("Unrecognized field type " + number_to_string(type));
    }
    
    return 0;

@@ -132,14 +132,13 @@ process::start(void)
    if(get_id() == 0) {
       thread = new boost::thread();
       loop();
-   } else {
-      auto fun = [this] (void) -> void { this->loop(); };
-      thread = new boost::thread(fun);//bind(&process::loop, this));
-   }
+   } else
+      thread = new boost::thread(bind(&process::loop, this));
 }
 
 process::process(const process_id& _id):
    nodes_interval(NULL), thread(NULL), id(_id),
+   state(this),
    process_state(PROCESS_ACTIVE)
 {
 }

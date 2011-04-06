@@ -62,11 +62,9 @@ j&j&j&j&j&j&j&j \\\hline j&j&j&j&j&j&j&j} {id, jump\_offset, matchlist}
 \\
 \inst{SEND}  {0&0&0&0&1&0&0&0\\\hline
 0&0&0&r$_1$&r$_1$&r$_1$&r$_1$&r$_1$\\\hline
-0&0&0&r$_2$&r$_2$&r$_2$&r$_2$&r$_2$\\\hline
-0&0&v$_1$&v$_2$&v$_3$&v$_4$&v$_5$&v$_6$} {reg$_1$, reg$_2$, val}
+0&0&0&r$_2$&r$_2$&r$_2$&r$_2$&r$_2$} {reg$_1$, reg$_2$}
 & sends the tuple in {\it reg$_1$} along the path in {\it reg$_2$}\\
 & if {\it reg$_1$ = reg$_2$} then the tuple is stored locally\\
-& waits for {\it val} time before transmitting\\
 \\
 \inst{REMOVE} {1&0&0&r&r&r&r&r} {reg}
 & delete tuple stored in reg from database\\
