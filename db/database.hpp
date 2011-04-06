@@ -5,6 +5,7 @@
 #include <map>
 #include <fstream>
 #include <ostream>
+#include <unordered_map>
 
 #include "db/node.hpp"
 
@@ -15,11 +16,14 @@ class database
 {
 public:
    
+   typedef std::unordered_map<node_id, node_id> map_translate;
+   
    typedef std::map<node_id, node*> map_nodes;
    
 private:
    
    map_nodes nodes;
+   map_translate translation;
    
 public:
    
@@ -31,7 +35,7 @@ public:
    
    node* find_node(const node_id) const;
    
-   node* add_node(const node_id);
+   node* add_node(const node_id, const node_id);
    
    void print_db(std::ostream& cout) const;
    

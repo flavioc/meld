@@ -10,8 +10,9 @@
 
 namespace process
 {
-   
-   class process;
+
+// forward declaration   
+class process;
 
 class machine
 {
@@ -20,6 +21,7 @@ private:
    const std::string filename;
    const size_t num_threads;
    size_t threads_active;
+   size_t nodes_per_proc;
    
    boost::mutex active_mutex;
    

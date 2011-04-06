@@ -21,7 +21,7 @@ A VM program starts with a byte indicating the number of predicates $P$ in the
 program. Next, there are three main components:
 
 \begin{itemize}
-	\item An unsigned integer indicating the number $N$ of nodes to instantiate, followed by $N$ unsigned integers corresponding to the node IDs.
+	\item An unsigned integer indicating the number $N$ of nodes to instantiate, followed by $2N$ unsigned integers corresponding to one pair of unsigned integers one for node. The first value is the node ID to use during execution and the second one the ID given by the user.
 	\item A set of $P$ \emph{predicate descriptors}, with 69 bytes each.
 	\item A set of $P$ byte-code instructions, one for each predicate.
 \end{itemize}

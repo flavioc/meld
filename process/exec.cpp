@@ -19,13 +19,9 @@ process*
 machine::find_owner(const node* node) const
 {
    const node_id id(node->get_id());
+   const process_id proc(min(id / nodes_per_proc, process_list.size()-1));
    
-   for(size_t i = 0; i < process_list.size(); ++i) {
-      if(process_list[i]->owns_node(id))
-         return process_list[i];
-   }
-   
-   return NULL;
+   return process_list[proc];
 }
 
 void
@@ -37,7 +33,7 @@ machine::distribute_nodes(database *db)
    if(total < num_procs)
       throw process_exec_error("Number of nodes is less than the number of threads");
    
-   const size_t nodes_per_proc(total / num_procs);
+   nodes_per_proc = total / num_procs;
    size_t num_nodes = nodes_per_proc;
    size_t cur_proc = 0;
    auto it(db->nodes_begin());

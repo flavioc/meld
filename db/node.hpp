@@ -32,6 +32,7 @@ public:
 private:
    
 	node_id id;
+   node_id translation;
 	
    typedef std::map<vm::predicate_id, stuple_list> stuple_map;
 	
@@ -53,7 +54,10 @@ public:
    
    void print(std::ostream&) const;
    
-   explicit node(const node_id _id): id(_id) {}
+   explicit node(const node_id _id, const node_id _trans):
+      id(_id), translation(_trans)
+   {
+   }
 
 };
 

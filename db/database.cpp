@@ -12,14 +12,17 @@ namespace db
 database::database(ifstream& fp)
 {
    int_val num_nodes;
-   node_id id;
+   node_id fake_id;
+   node_id real_id;
    
    fp.read((char*)&num_nodes, sizeof(int_val));
    
    for(int_val i = 0; i < num_nodes; ++i) {
-      fp.read((char*)&id, sizeof(node_id));
+      fp.read((char*)&fake_id, sizeof(node_id));
+      fp.read((char*)&real_id, sizeof(node_id));
       
-      add_node(id); 
+      translation[fake_id] = real_id;
+      add_node(fake_id, real_id); 
    }
    
    cout << *this << endl;
@@ -37,12 +40,12 @@ database::find_node(const node_id id) const
 }
 
 node*
-database::add_node(const node_id id)
+database::add_node(const node_id id, const node_id trans)
 {
    node *ret(find_node(id));
    
    if(ret == NULL) {
-      ret = new node(id);
+      ret = new node(id, trans);
       nodes[id] = ret;
    }
    
