@@ -1,10 +1,10 @@
-0. Install google-perftools
 
-1. Change program in config.h
+Dependencies:
+	- Boost
+	- G++ 4.6
 
-2. Compile with make
+Installation:
+	- use make
 
-3. Run the program, for example, pagerank:
-
-./meld -c configs/pageranks.txt -t 1
-
+Execution:
+	./meld -f app.m

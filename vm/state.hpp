@@ -4,13 +4,20 @@
 
 #include "vm/tuple.hpp"
 #include "db/node.hpp"
-#include "db/database.hpp"
 #include "vm/program.hpp"
 #include "vm/instr.hpp"
-#include "process/exec.hpp"
 
 // forward declaration
-namespace process { class process; }
+namespace process {
+   class process;
+   class remote;
+   class machine;
+   class router;
+}
+
+namespace db {
+   class database;
+}
 
 namespace vm {
 
@@ -33,6 +40,8 @@ public:
    static program *PROGRAM;
    static db::database *DATABASE;
    static process::machine *MACHINE;
+   static process::remote *REMOTE;
+   static process::router *ROUTER;
    
 #define define_get(WHAT, RET, BODY) \
    inline RET get_ ## WHAT (const reg_num& num) const { BODY; }
@@ -57,9 +66,9 @@ public:
    define_set(int, const int_val&, *(int_val*)(regs + num) = val);
    define_set(addr, const addr_val&, *(addr_val*)(regs + num) = val);
    define_set(bool, const bool_val&, set_int(num, val ? 1 : 0));
-   define_set(int_list, runtime::int_list*, set_addr(num, val));
-   define_set(float_list, runtime::float_list*, set_addr(num, val));
-   define_set(addr_list, runtime::addr_list*, set_addr(num, val));
+   define_set(int_list, runtime::int_list*, set_addr(num, (addr_val)val));
+   define_set(float_list, runtime::float_list*, set_addr(num, (addr_val)val));
+   define_set(addr_list, runtime::addr_list*, set_addr(num, (addr_val)val));
    define_set(tuple, vm::tuple*, set_addr(num, (addr_val)val));
    
 #undef define_set

@@ -50,7 +50,6 @@ node::add_tuple(vm::tuple *tpl, ref_count many)
    
    if(found != NULL) {
       cout << "FOUND tuple " << *tpl << endl;
-      cout << *this << endl;
       found->inc_count(many);
       return false;
    } else {
@@ -126,10 +125,24 @@ node::match_predicate(const predicate_id id) const
    return ret;
 }
 
+node::~node(void)
+{
+   for(stuple_map::iterator it(tuples.begin()); it != tuples.end(); ++it) {
+      stuple_list& list(it->second);
+      
+      for(stuple_list::iterator it2(list.begin()); it2 != list.end(); ++it2) {
+         stuple *stpl(*it2);
+         delete stpl->get_tuple();
+         delete stpl;
+      }
+   }
+}
+
 void
 node::print(ostream& cout) const
 {
-   cout << "--> node " << get_id() << " (" << (addr_val)real_id() << ") <--" << endl;
+   cout << "--> node " << get_translated_id() << "/" << get_id()
+        << " (" << (addr_val)real_id() << ") <--" << endl;
    
    for(stuple_map::const_iterator it(tuples.begin());
       it != tuples.end();

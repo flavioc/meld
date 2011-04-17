@@ -2,6 +2,9 @@
 #define VM_TUPLE_HPP
 
 #include <ostream>
+#include <boost/serialization/serialization.hpp>
+#include <boost/mpi/packed_iarchive.hpp>
+#include <boost/mpi/packed_oarchive.hpp>
 
 #include "vm/defs.hpp"
 #include "vm/predicate.hpp"
@@ -20,8 +23,15 @@ private:
 		addr_val addr_field;
 	} tuple_field;
 
-	const predicate* pred;
+	predicate* pred;
    tuple_field *fields;
+   
+   friend class boost::serialization::access;
+   
+   void save(boost::mpi::packed_oarchive&, const unsigned int) const;    
+   void load(boost::mpi::packed_iarchive&, const unsigned int);
+   
+   BOOST_SERIALIZATION_SPLIT_MEMBER()
 
 public:
    
@@ -34,9 +44,9 @@ public:
    define_set(float, const float_val&, fields[field].float_field = val);
    define_set(addr, const addr_val&, fields[field].addr_field = val);
    define_set(bool, const bool_val&, set_int(field, val ? 1 : 0));
-   define_set(int_list, runtime::int_list*, set_addr(field, val); runtime::int_list::inc_refs(val));
-   define_set(float_list, runtime::float_list*, set_addr(field, val); runtime::float_list::inc_refs(val));
-   define_set(addr_list, runtime::addr_list*, set_addr(field, val); runtime::addr_list::inc_refs(val));
+   define_set(int_list, runtime::int_list*, set_addr(field, (addr_val)val); runtime::int_list::inc_refs(val));
+   define_set(float_list, runtime::float_list*, set_addr(field, (addr_val)val); runtime::float_list::inc_refs(val));
+   define_set(addr_list, runtime::addr_list*, set_addr(field, (addr_val)val); runtime::addr_list::inc_refs(val));
    
    inline void set_nil(const field_num& field) { set_addr(field, NULL); }
 #undef define_set
@@ -66,6 +76,7 @@ public:
    
    void print(std::ostream&) const;
    
+   explicit tuple(void); // only used for serialization!
 	explicit tuple(const predicate* pred);
 	
    ~tuple(void);

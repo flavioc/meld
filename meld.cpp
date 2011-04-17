@@ -8,12 +8,17 @@
 
 #include "config.h"
 
-#include "process/exec.hpp"
+#include "process/machine.hpp"
 #include "runtime/list.hpp"
 #include "utils/utils.hpp"
+#include "process/router.hpp"
 
 using namespace utils;
 using namespace process;
+
+static size_t num_threads = 0;
+static char *program = NULL;
+static char *progname = NULL;
 
 static void
 help(void)
@@ -25,37 +30,28 @@ help(void)
   exit(EXIT_SUCCESS);
 }
 
-int
-main(int argc, char **argv)
+static void
+read_arguments(int argc, char **argv)
 {
-   bool has_program = false;
-   bool has_threads = false;
-   char *program = NULL;
-   char *progname;
-   size_t num_threads = 0;
-
    progname = *argv++;
    --argc;
 
    while (argc > 0 && (argv[0][0] == '-')) {
       switch(argv[0][1]) {
          case 'f': {
-            if (has_program || argc < 2)
+            if (program != NULL || argc < 2)
                help();
 
             program = argv[1];
 
-            has_program = true;
             argc--; argv++;
          }
          break;
          case 't': {
-            if (has_threads || argc < 2)
+            if (num_threads > 0 || argc < 2)
                help();
 
             num_threads = (size_t)atoi(argv[1]);
-
-            has_threads = true;
             argc--; argv++;
          }
          break;
@@ -63,20 +59,27 @@ main(int argc, char **argv)
             help();
       }
 
-    /* advance */
+      /* advance */
       argc--; argv++;
    }
+}
+
+int
+main(int argc, char **argv)
+{
+   read_arguments(argc, argv);
 
    if (program == NULL)
       help();
 
-   if (!has_threads)
+   if (num_threads == 0)
       num_threads = number_cpus();
-
-   machine mac(program, num_threads);
+   
+   router rout(num_threads, argc, argv);
+   
+   machine mac(program, rout, num_threads);
 
    mac.start();
 
-  /* not reached */
    return EXIT_SUCCESS;
 }

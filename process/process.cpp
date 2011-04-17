@@ -4,6 +4,7 @@
 
 #include "process/process.hpp"
 #include "vm/exec.hpp"
+#include "process/machine.hpp"
 
 using namespace db;
 using namespace vm;
@@ -15,9 +16,10 @@ namespace process {
    
 program *process::PROGRAM = NULL;
 database *process::DATABASE = NULL;
+mutex process::remote_mutex;
 
 void
-process::enqueue_work(node* node, simple_tuple* stpl)
+process::enqueue_work(node* node, const simple_tuple* stpl)
 {
    mutex::scoped_lock lock(mutex);
    
@@ -27,8 +29,6 @@ process::enqueue_work(node* node, simple_tuple* stpl)
    }
    
    queue.push_back(pair_node_tuple(node, stpl));
-   
-   condition.notify_one();
 }
 
 void
@@ -36,19 +36,33 @@ process::add_node(node *node)
 {
    nodes.push_back(node);
    if(nodes_interval == NULL)
-      nodes_interval = new interval<node_id>(node->get_id(), node->get_id());
+      nodes_interval = new interval<node::node_id>(node->get_id(), node->get_id());
    else
       nodes_interval->update(node->get_id());
 }
 
 void
-process::do_work(node *node, simple_tuple *stuple)
+process::fetch_work(void)
 {
+   if(state::ROUTER->use_mpi()) {
+      message *msg;
+      
+      while((msg = state::ROUTER->recv_attempt(get_id()))) {
+         enqueue_work(state::DATABASE->find_node(msg->id), msg->data);
+         
+         delete msg;
+      }
+   }
+}
+
+void
+process::do_work(node *node, const simple_tuple *_stuple)
+{
+   auto_ptr<const simple_tuple> stuple(_stuple);
    vm::tuple *tuple = stuple->get_tuple();
    ref_count count = stuple->get_count();
 
    //cout << "Process " << *stuple << endl;
-   delete stuple;
       
    if(count == 0)
       return;
@@ -81,28 +95,89 @@ process::do_work(node *node, simple_tuple *stuple)
    }
 }
 
-process::pair_node_tuple
-process::get_work(void)
+void
+process::update_remotes(void)
 {
-   mutex::scoped_lock lock(mutex);
-   
+   if(state::ROUTER->use_mpi() && get_id() == 0) {
+      remote_mutex.lock();
+      state::ROUTER->fetch_updates();
+      remote_mutex.unlock();
+   }
+}
+
+bool
+process::busy_wait(void)
+{  
    while(queue.empty()) {
+      
+      if(get_id() == 0) {
+         update_remotes();
+      
+         if(state::MACHINE->finished() && state::ROUTER->finished()) {
+         
+            // wait a bit before making a good decision
+            boost::this_thread::sleep(boost::posix_time::millisec(25));
+         
+            fetch_work();
+         
+            if(!queue.empty())
+               return true;
+            
+            update_remotes();
+            
+            if(state::MACHINE->finished() && state::ROUTER->finished()) {
+               state::MACHINE->mark_finished();
+               printf("ENDING HERE %d\n", remote::self->get_rank());
+               return false;
+            }
+         }
+      } else if(state::MACHINE->marked_finished())
+         return false;
+         
+      thread->yield();
+      
+      //boost::this_thread::sleep(boost::posix_time::millisec(10));
+      
+      fetch_work();
+   }
+   
+   return true;
+}
+
+bool
+process::get_work(process::pair_node_tuple& work)
+{
+   fetch_work();
+   
+   if(queue.empty()) {
+      mutex.lock();
+      
       if(process_state == PROCESS_ACTIVE) {
          process_state = PROCESS_INACTIVE;
          state::MACHINE->process_is_inactive();
       }
-      condition.wait(lock);
+      
+      mutex.unlock();
+    
+      if(!busy_wait())
+         return false;
+      
+      mutex.lock();
+         
       if(process_state == PROCESS_INACTIVE) {
          state::MACHINE->process_is_active();
          process_state = PROCESS_ACTIVE;
       }
-   }
+   } else
+      mutex.lock();
    
-   pair_node_tuple work(queue.front());
+   work = queue.front();
    
    queue.pop_front();
    
-   return work;
+   mutex.unlock();
+   
+   return true;
 }
    
 void
@@ -118,12 +193,21 @@ process::loop(void)
       enqueue_work(cur_node, simple_tuple::create_new(new vm::tuple(init_pred)));
    }
    
-   while(true) {
-      pair_node_tuple p(get_work());
+   pair_node_tuple work;
+   
+   while(get_work(work))
+      do_work(work.first, work.second);
+   
+   if(state::ROUTER->use_mpi()) {
+      ended = true;
       
-      do_work(p.first, p.second);
+      if(get_id() == 0) {
+         while(!state::MACHINE->all_ended())
+         {}
+         
+         state::ROUTER->finish();
+      }
    }
-   // NEVER REACHED
 }
 
 void
@@ -139,8 +223,15 @@ process::start(void)
 process::process(const process_id& _id):
    nodes_interval(NULL), thread(NULL), id(_id),
    state(this),
-   process_state(PROCESS_ACTIVE)
+   process_state(PROCESS_ACTIVE),
+   ended(false)
 {
+}
+
+process::~process(void)
+{
+   delete nodes_interval;
+   delete thread;
 }
 
 void

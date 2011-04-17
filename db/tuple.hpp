@@ -5,6 +5,9 @@
 #include <vector>
 #include <ostream>
 #include <list>
+#include <boost/serialization/serialization.hpp>
+#include <boost/mpi/packed_iarchive.hpp>
+#include <boost/mpi/packed_oarchive.hpp>
 
 #include "vm/defs.hpp"
 #include "vm/predicate.hpp"
@@ -27,6 +30,8 @@ public:
    explicit stuple(vm::tuple *_tuple):
       data(_tuple)
    {}
+   
+   explicit stuple(void) {} // for serialization purposes
 };
 
 class aggregate_tuple: public stuple
@@ -47,6 +52,13 @@ private:
    
    vm::ref_count count;
    
+   friend class boost::serialization::access;
+   
+   void save(boost::mpi::packed_oarchive&, const unsigned int) const;
+   void load(boost::mpi::packed_iarchive&, const unsigned int);
+   
+   BOOST_SERIALIZATION_SPLIT_MEMBER()
+   
 public:
    
    void print(std::ostream&) const;
@@ -64,6 +76,10 @@ public:
    explicit simple_tuple(vm::tuple *tuple, const vm::ref_count _count):
       stuple(tuple), count(_count)
    {}
+   
+   explicit simple_tuple(void) {} // for serialization purposes
+   
+   ~simple_tuple(void);
 };
 
 std::ostream& operator<<(std::ostream&, const stuple&);

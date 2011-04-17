@@ -1,35 +1,70 @@
 
 #include "vm/defs.hpp"
 #include "db/database.hpp"
+#include "process/router.hpp"
 
 using namespace db;
 using namespace std;
 using namespace vm;
+using namespace process;
 
 namespace db
 {
+   
+size_t database::nodes_total = 0;
 
-database::database(ifstream& fp)
+database::database(ifstream& fp, router& rout)
 {
+   static const size_t node_size(sizeof(node::node_id) * 2);
+   
    int_val num_nodes;
-   node_id fake_id;
-   node_id real_id;
+   node::node_id fake_id;
+   node::node_id real_id;
    
    fp.read((char*)&num_nodes, sizeof(int_val));
    
-   for(int_val i = 0; i < num_nodes; ++i) {
-      fp.read((char*)&fake_id, sizeof(node_id));
-      fp.read((char*)&real_id, sizeof(node_id));
+   nodes_total = num_nodes;
+   
+   rout.set_nodes_total(nodes_total); // can throw database_error
+   
+   const size_t nodes_to_skip(remote::self->get_nodes_base());
+   
+   if(nodes_to_skip > 0)
+      fp.seekg(node_size * nodes_to_skip, ios_base::cur);
+   
+   remote::rout(cout) << nodes_to_skip << " nodes to skip" << endl;
+   
+   size_t nodes_to_read = remote::self->get_total_nodes();
+      
+   remote::rout(cout) << nodes_to_read << " nodes to read" << endl;
+   
+   for(size_t i(0); i < nodes_to_read; ++i) {
+      fp.read((char*)&fake_id, sizeof(node::node_id));
+      fp.read((char*)&real_id, sizeof(node::node_id));
       
       translation[fake_id] = real_id;
       add_node(fake_id, real_id); 
    }
    
+   if(!remote::i_am_last_one()) {
+      const size_t nodes_left(nodes_total - (nodes_to_skip + nodes_to_read));
+      
+      if(nodes_left > 0)
+         fp.seekg(node_size * nodes_left, ios_base::cur);
+      remote::rout(cout) << "skip last " << nodes_left << " nodes" << endl;
+   }
+   
    cout << *this << endl;
 }
 
+database::~database(void)
+{
+   for(map_nodes::iterator it(nodes.begin()); it != nodes.end(); ++it)
+      delete it->second;
+}
+
 node*
-database::find_node(const node_id id) const
+database::find_node(const node::node_id id) const
 {
    map_nodes::const_iterator it(nodes.find(id));
    
@@ -40,7 +75,7 @@ database::find_node(const node_id id) const
 }
 
 node*
-database::add_node(const node_id id, const node_id trans)
+database::add_node(const node::node_id id, const node::node_id trans)
 {
    node *ret(find_node(id));
    
@@ -55,10 +90,8 @@ database::add_node(const node_id id, const node_id trans)
 void
 database::print_db(ostream& cout) const
 {
-   for(auto it(nodes.begin()); it != nodes.end(); ++it)
-   {
+   for(map_nodes::const_iterator it(nodes.begin()); it != nodes.end(); ++it)
       cout << *(it->second) << endl;
-   }
 }
 
 void

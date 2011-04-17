@@ -14,11 +14,11 @@
 
 namespace db {
 
-typedef unsigned long int node_id;
-
 class node
 {
 public:
+   
+   typedef unsigned long int node_id;
    
    typedef std::list<stuple*> stuple_list;
    typedef std::vector<vm::tuple*> tuple_vector;
@@ -44,6 +44,7 @@ public:
    
    inline node_id real_id(void) const { return (node_id)this; }
    inline node_id get_id(void) const { return id; }
+   inline node_id get_translated_id(void) const { return translation; }
    
    bool add_tuple(vm::tuple*, vm::ref_count);
    delete_info delete_tuple(vm::tuple *, vm::ref_count);
@@ -58,7 +59,8 @@ public:
       id(_id), translation(_trans)
    {
    }
-
+   
+   ~node(void);
 };
 
 std::ostream& operator<<(std::ostream&, const node&);

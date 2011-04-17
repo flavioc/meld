@@ -11,13 +11,15 @@ typedef unsigned short field_num;
 typedef uint32_t uint_val;
 typedef int32_t int_val;
 typedef float float_val;
-typedef void* addr_val;
+typedef unsigned long int addr_val;
 typedef bool bool_val;
 typedef unsigned char predicate_id;
 typedef short ref_count;
 typedef unsigned char byte_code_el;
 typedef byte_code_el* byte_code;
 typedef byte_code pcounter;
+
+static const addr_val null_addr_val = 0;
 
 }
 

@@ -12,6 +12,10 @@
 #include "vm/tuple.hpp"
 #include "db/database.hpp"
 
+namespace process {
+   class router;
+}
+
 namespace vm {
    
 class program
@@ -44,7 +48,9 @@ public:
    
    tuple* new_tuple(const predicate_id&) const;
    
-   explicit program(const std::string&);
+   explicit program(const std::string&, process::router&);
+   
+   ~program(void);
 };
 
 class load_file_error : public std::runtime_error {

@@ -11,5 +11,7 @@ namespace vm
 program *state::PROGRAM = NULL;
 database *state::DATABASE = NULL;
 machine *state::MACHINE = NULL;
+remote *state::REMOTE = NULL;
+router *state::ROUTER = NULL;
 
 }

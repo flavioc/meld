@@ -1,20 +1,22 @@
 
 OS = $(shell uname -s)
 
-INCLUDE_DIRS = -I. -Ilib/ -I/opt/local/include
+INCLUDE_DIRS = -I. -I/opt/local/include
 LIBRARY_DIRS = -L/opt/local/lib
 
 TARGET = meld
-PROFILING = #-pg
 
-OPTIMIZATIONS = -O2 -m32
+PROFILING = #-pg
+OPTIMIZATIONS = 
 DEBUG = -g
 WARNINGS = -Wall
-TCMALLOC = #-ltcmalloc
 
-CFLAGS = $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS)
-CXXFLAGS = $(CFLAGS) -std=c++0x
-LDFLAGS = $(PROFILING) $(LIBRARY_DIRS) -lm -lpthread $(TCMALLOC) -m32 -lboost_thread-mt
+CFLAGS = $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) -m32
+CXXFLAGS = $(CFLAGS) #-std=c++0x
+LIBRARIES = -lpthread -lm -lmpi -lmpi_cxx -lboost_thread-mt -lboost_mpi-mt -lboost_serialization-mt
+LDFLAGS = $(PROFILING) $(LIBRARY_DIRS) $(LIBRARIES)
+
+CXX = mpic++
 
 OBJS = meld.o utils/utils.o \
 			 vm/program.o \
@@ -22,16 +24,20 @@ OBJS = meld.o utils/utils.o \
 			 vm/instr.o db/node.o \
 			 db/tuple.o db/database.o \
 			 process/process.o \
-			 process/exec.o \
+			 process/machine.o \
+			 process/remote.o \
+			 process/router.o \
 			 vm/state.o \
-			 vm/tuple.o vm/exec.o
+			 vm/tuple.o vm/exec.o \
+			 process/message.o
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) -o $(TARGET)
 
-meld.o: meld.cpp utils/utils.hpp
+meld.o: meld.cpp utils/utils.hpp process/machine.hpp \
+				process/router.hpp
 
 utils/utils.o: utils/utils.cpp utils/utils.hpp
 
@@ -41,23 +47,38 @@ db/tuple.o: db/tuple.cpp db/tuple.hpp
 
 db/node.o: db/node.cpp db/node.hpp
 
-db/database.o: db/database.cpp db/database.hpp
+db/database.o: db/database.cpp db/database.hpp vm/instr.hpp
 
-process/process.o: process/process.cpp process/process.hpp
+process/process.o: process/process.cpp process/process.hpp vm/instr.hpp
 
-process/exec.o: process/exec.hpp process/exec.cpp \
-									vm/state.hpp
+process/machine.o: process/machine.hpp process/machine.cpp \
+									vm/state.hpp process/remote.hpp process/process.hpp \
+									vm/instr.hpp conf.hpp \
+									process/message.hpp
 
-vm/state.o: vm/state.cpp vm/state.hpp
+process/remote.o: process/remote.hpp process/remote.cpp	\
+									vm/instr.hpp conf.hpp
 
-vm/tuple.o: vm/tuple.cpp vm/tuple.hpp
+vm/state.o: vm/state.cpp vm/state.hpp	\
+						vm/instr.hpp
 
-vm/program.o: vm/program.cpp vm/program.hpp
+vm/tuple.o: vm/tuple.cpp vm/tuple.hpp	\
+						vm/instr.hpp runtime/list.hpp
 
-vm/exec.o: vm/exec.cpp vm/exec.hpp
+vm/program.o: vm/program.cpp vm/program.hpp vm/instr.hpp
+
+vm/exec.o: vm/exec.cpp vm/exec.hpp process/process.hpp	\
+						vm/instr.hpp
+
+process/router.o: process/router.hpp process/router.cpp \
+									process/remote.hpp \
+									process/message.hpp
+
+process/message.o: process/message.cpp process/message.hpp \
+									db/node.hpp db/tuple.hpp
 
 clean:
-	rm -f $(TARGET) *.o vm/*.o db/*.o process/*.o
+	rm -f $(TARGET) *.o vm/*.o db/*.o process/*.o runtime/*.o utils/*.o
 
 re: clean all
 

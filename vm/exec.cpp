@@ -7,6 +7,7 @@
 #include "vm/tuple.hpp"
 #include "db/tuple.hpp"
 #include "process/process.hpp"
+#include "process/machine.hpp"
 
 using namespace vm;
 using namespace vm::instr;
@@ -27,22 +28,17 @@ static inline return_type execute(pcounter, state&);
 static inline addr_val
 get_node_addr(pcounter& m, state& state)
 {
-   const node_id id((node_id)pcounter_addr(m));
-   //cout << "LOOKING FOR NODE " << id << "\n";
-   const node *node(state.DATABASE->find_node(id));
+   const addr_val ret(pcounter_addr(m));
    
    pcounter_move_addr(&m);
    
-   return (addr_val)node->real_id();
+   return ret;
 }
 
 static inline addr_val
 get_node_addr(const pcounter& m, state& state)
 {
-   const node_id id((node_id)pcounter_addr(m));
-   const node *node(state.DATABASE->find_node(id));
-   
-   return (addr_val)node->real_id();
+   return pcounter_addr(m);
 }
 
 static inline void
@@ -68,7 +64,7 @@ move_to_reg(const pcounter& m, state& state,
       }
       
    } else if(val_is_host(from))
-      state.set_addr(reg, (addr_val)state.node);
+      state.set_addr(reg, (addr_val)state.node->get_id());
    else if(val_is_addr(from))
       state.set_addr(reg, get_node_addr(m, state));
    else if(val_is_reg(from))
@@ -139,7 +135,7 @@ move_to_field(pcounter m, state& state, const instr_val& from)
       const field_num field(val_field_num(m));
       
       if(val_is_host(from))
-         tuple->set_addr(field, (addr_val)state.node);
+         tuple->set_addr(field, (addr_val)state.node->get_id());
       else if(val_is_reg(from)) {
          const reg_num reg(val_reg(from));
          
@@ -195,18 +191,15 @@ execute_send(const pcounter& pc, state& state)
 {
    const reg_num msg(send_msg(pc));
    const reg_num dest(send_dest(pc));
-   node* node_dest(state.get_node(dest));
+   const addr_val dest_val(state.get_addr(dest));
    tuple *tuple(state.get_tuple(msg));
-   simple_tuple *stuple(new simple_tuple(tuple, state.count));
+   const simple_tuple *stuple(new simple_tuple(tuple, state.count));
    
-   //cout << "SEND TUPLE: " << *tuple << endl;
-   
-   if((addr_val)tuple == (addr_val)node_dest)
-      node_dest = state.node; // send to self
-   
-   process::process *proc(state::MACHINE->find_owner(node_dest));
-   
-   proc->enqueue_work(node_dest, stuple);
+   if(dest_val == (addr_val)tuple)
+      // send to self
+      state.proc->enqueue_work(state.node, stuple);
+   else
+      state::MACHINE->route((node::node_id)dest_val, stuple);
 }
 
 template <typename T>
@@ -256,7 +249,7 @@ template <>
 addr_val get_op_function<addr_val>(const instr_val& val, pcounter& m, state& state)
 {
    if(val_is_host(val))
-      return (addr_val)state.node->real_id();
+      return (addr_val)state.node->get_id();
    else if(val_is_addr(val))
       return get_node_addr(m, state);
    else if(val_is_reg(val))
@@ -537,7 +530,7 @@ do_match(const tuple *tuple, const field_num& field, const instr_val& val,
    } else if(val_is_nil(val))
       throw vm_exec_error("match for NIL not implemented XXX");
    else if(val_is_host(val))
-      return tuple->get_addr(field) == (addr_val)state.node->real_id();
+      return tuple->get_addr(field) == (addr_val)state.node->get_id();
    else if(val_is_int(val)) {
       const int_val i(pcounter_int(pc));
       
@@ -651,7 +644,7 @@ execute_test_nil(pcounter pc, state& state)
    
    const addr_val val(get_op_function<addr_val>(op, pc, state));
    
-   set_op_function(pc, dest, val == NULL, state);
+   set_op_function(pc, dest, val == null_addr_val, state);
 }
 
 static inline void

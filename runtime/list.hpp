@@ -2,6 +2,9 @@
 #define LIST_HPP
 
 #include <iostream>
+#include <boost/serialization/serialization.hpp>
+#include <boost/mpi/packed_iarchive.hpp>
+#include <boost/mpi/packed_oarchive.hpp>
 
 #include "vm/defs.hpp"
 
@@ -24,6 +27,32 @@ private:
    typedef unsigned int ref_count;
    
    ref_count refs;
+   
+   friend class boost::serialization::access;
+   
+   enum list_serialize { END_LIST = 0, ANOTHER_LIST = 1 };
+   
+   void save(boost::mpi::packed_oarchive& ar, const unsigned int version) const
+   {
+      (void)version;
+      
+      bool more = true;
+      
+      ar & more;
+      ar & head;
+      
+      if(is_null(tail)) {
+         more = false;
+         ar & more;
+      } else
+         tail->save(ar, version);
+   }
+   
+   void load(boost::mpi::packed_iarchive& ar, const unsigned int version)
+   {  
+   }
+   
+   BOOST_SERIALIZATION_SPLIT_MEMBER()
    
 public:
    
@@ -70,6 +99,31 @@ public:
    static inline void inc_refs(list_ptr ls) {
       if(!is_null(ls))
          ls->inc_refs();
+   }
+   
+   static void save_list(boost::mpi::packed_oarchive& ar, const list_ptr ptr)
+   {
+      if(is_null(ptr)) {
+         bool more = false;
+         ar & more;
+      } else
+         ptr->save(ar, 0);
+   }
+   
+   static list_ptr load_list(boost::mpi::packed_iarchive& ar, const bool first = true)
+   {  
+      bool more;
+      
+      ar & more;
+      
+      if(!more)
+         return null_list();
+      
+      T head;
+      
+      ar & head;
+      
+      return new cons(load_list(ar, false), head); 
    }
    
    static inline void print(std::ostream& cout, list_ptr ls) {

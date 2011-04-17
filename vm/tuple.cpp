@@ -4,17 +4,24 @@
 #include "vm/tuple.hpp"
 #include "db/node.hpp"
 #include "utils/utils.hpp"
+#include "vm/state.hpp"
 
 using namespace vm;
 using namespace std;
 using namespace runtime;
 using namespace utils;
+using namespace boost;
 
 namespace vm
 {
    
 tuple::tuple(const predicate* _pred):
-   pred(_pred), fields(new tuple_field[pred->num_fields()])
+   pred((predicate*)_pred), fields(new tuple_field[pred->num_fields()])
+{
+}
+
+tuple::tuple(void):
+   pred(NULL), fields(NULL)
 {
 }
 
@@ -80,15 +87,11 @@ tuple::print(ostream& cout) const
          case FIELD_LIST_ADDR:
             addr_list::print(cout, get_addr_list(i));
             break;
-         case FIELD_ADDR: {
-               db::node* node((db::node*)get_addr(i));
-               cout << "@" << node->get_id();
-               break;
-            }
+         case FIELD_ADDR:
+            cout << "@" << get_addr(i);
+            break;
          case FIELD_SET_INT:
          case FIELD_SET_FLOAT:
-            cout << get_addr(i);
-            break;
          default:
             throw type_error("Unrecognized field type " + number_to_string(i));
       }
@@ -109,6 +112,94 @@ tuple::~tuple(void)
    }
    
    delete []fields;
+}
+
+void
+tuple::save(mpi::packed_oarchive & ar, const unsigned int version) const
+{
+   ar & get_predicate_id();
+   
+   for(field_num i(0); i < num_fields(); ++i) {
+      switch(get_field_type(i)) {
+         case FIELD_INT: {
+               int_val val(get_int(i));
+               ar & val;
+            }
+            break;
+         case FIELD_FLOAT: {
+               float_val val(get_float(i));
+               ar & val;
+            }
+            break;
+         case FIELD_ADDR: {
+               addr_val val(get_addr(i));
+               ar & val;
+            }
+            break;
+         case FIELD_LIST_INT:
+            int_list::save_list(ar, get_int_list(i));
+            break;
+         case FIELD_LIST_FLOAT:
+            float_list::save_list(ar, get_float_list(i));
+            break;
+         case FIELD_LIST_ADDR:
+            addr_list::save_list(ar, get_addr_list(i));
+            break;
+         default:
+            throw type_error("unsupported field number " + number_to_string(i));
+      }
+   }
+}
+    
+void
+tuple::load(mpi::packed_iarchive& ar, const unsigned int version)
+{
+   predicate_id pred_id;
+   
+   ar & pred_id;
+   
+   pred = state::PROGRAM->get_predicate(pred_id);
+   
+   if(fields)
+      delete []fields;
+      
+   fields = new tuple_field[pred->num_fields()];
+   
+   for(field_num i(0); i < num_fields(); ++i) {
+      switch(get_field_type(i)) {
+         case FIELD_INT: {
+               int_val val;
+               ar & val;
+               set_int(i, val);
+            }
+            break;
+         case FIELD_FLOAT: {
+               float_val val;
+               ar & val;
+               set_float(i, val);
+            }
+            break;
+         case FIELD_ADDR: {
+               addr_val val;
+               ar & val;
+               set_addr(i, val);
+            }
+            break;
+         case FIELD_LIST_INT:
+            set_int_list(i, int_list::load_list(ar));
+            break;
+         case FIELD_LIST_FLOAT:
+            set_float_list(i, float_list::load_list(ar));
+            break;
+         case FIELD_LIST_ADDR:
+            set_addr_list(i, addr_list::load_list(ar));
+            break;
+         case FIELD_SET_INT:
+         case FIELD_SET_FLOAT:
+         default:
+            throw type_error("unsupported field number " + number_to_string(i));
+      }
+   }
 }
 
 ostream& operator<<(ostream& cout, const tuple& tuple)
