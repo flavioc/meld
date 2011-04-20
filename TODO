@@ -2,6 +2,5 @@
 	- Goal is to limit use of external functions.
 - Implemented a distributed version using boost mpi
 - Add aggregates: a simple 'global synchronized' version will work fine for now
-- Nodes should be ordered by the compiler so that it is easy to distribute load over threads
 - 64 bits compatibility
 - ...

@@ -84,8 +84,8 @@ machine::start(void)
    for(size_t i(1); i < num_threads; ++i)
       process_list[i]->start();
    process_list[0]->start();
-   
-   state::DATABASE->print_db(cout);
+
+   //state::DATABASE->print_db(cout);
 }
 
 void
@@ -135,9 +135,6 @@ machine::machine(const string& file, router& _rout, const size_t th):
    proc_barrier = new barrier(num_threads);
    
    distribute_nodes(state::DATABASE);
-   
-   for(size_t i = 0; i < num_threads; ++i)
-      cout << *process_list[i] << endl;
 }
 
 machine::~machine(void)

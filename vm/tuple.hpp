@@ -35,6 +35,8 @@ private:
 
 public:
    
+   bool field_equal(const tuple&, const field_num) const;
+   
    bool operator==(const tuple&) const;
    
 #define define_set(NAME, TYPE, VAL) \
@@ -73,6 +75,8 @@ public:
    define_get(runtime::addr_list*, addr_list, (runtime::addr_list*)get_addr(field));
    
 #undef define_get
+
+   inline const bool is_aggregate(void) const { return pred->is_aggregate(); }
    
    void print(std::ostream&) const;
    

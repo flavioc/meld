@@ -83,6 +83,20 @@ val_string(const instr_val v, pcounter *pm)
 
 using namespace vm::instr;
 
+static inline void
+instrs_print_until_return_select(byte_code code, const program* prog, ostream& cout)
+{
+   pcounter pc = code;
+   pcounter new_pc;
+   
+	while (true) {
+		new_pc = instr_print(pc, true, prog, cout);
+		if(fetch(pc) == RETURN_SELECT_INSTR)
+         return;
+      pc = new_pc;
+	}
+}
+
 pcounter
 instr_print(pcounter pc, const bool recurse, const program *prog, ostream& cout)
 {
@@ -140,6 +154,15 @@ instr_print(pcounter pc, const bool recurse, const program *prog, ostream& cout)
                  << endl;
    		 }
    		break;
+   	case FLOAT_INSTR: {
+            pcounter m = pc + FLOAT_BASE;
+            const string op(val_string(float_op(pc), &m));
+            const string dest(val_string(float_dest(pc), &m));
+            
+   	      cout << "FLOAT " << op
+                 << " TO " << dest << endl;
+           }
+           break;
       case SEND_INSTR:
          cout << "SEND reg " << (int)send_msg(pc)
               << " TO reg " << (int)send_dest(pc)
@@ -220,6 +243,27 @@ instr_print(pcounter pc, const bool recurse, const program *prog, ostream& cout)
             cout << "NOT " << op << " TO " << dest << endl;
     		}
     	   break;
+    	case RETURN_SELECT_INSTR:
+         cout << "RETURN SELECT " << return_select_jump(pc) << endl;
+         break;
+      case SELECT_INSTR:
+         cout << "SELECT BY NODE" << endl;
+         if(recurse) {
+            const code_size_t elems(select_hash_size(pc));
+            const pcounter hash_start(select_hash_start(pc));
+            
+            for(size_t i(0); i < elems; ++i) {
+               cout << i << endl;
+               
+               const code_size_t hashed(select_hash(hash_start, i));
+               
+               if(hashed != 0)
+                  instrs_print_until_return_select(select_hash_code(hash_start, elems, hashed), prog, cout);
+            }
+            
+            return pc + select_size(pc);
+         }
+         break;
     	case REMOVE_INSTR:
     	case ELSE_INSTR:
          throw malformed_instr_error("unknown instruction code");
@@ -235,7 +279,7 @@ instr_print_simple(pcounter pc, const program *prog, ostream& cout)
 }
  
 byte_code
-instrs_print(byte_code code, const size_t len, const program* prog, ostream& cout)
+instrs_print(byte_code code, const code_size_t len, const program* prog, ostream& cout)
 {
    pcounter pc = code;
    pcounter until = code + len;

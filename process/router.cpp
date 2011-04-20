@@ -30,8 +30,10 @@ router::set_nodes_total(const size_t total)
    for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i)
       remote_list[i]->cache_values(world_size, nodes_per_remote);
       
+#if 0
    if(remote::i_am_last_one())
       printf("Nodes per machine %ld\n", nodes_per_remote);
+#endif
 }
 
 void

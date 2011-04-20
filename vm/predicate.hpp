@@ -41,6 +41,9 @@ public:
    
    inline bool is_aggregate(void) const { return agg_info != NULL; }
    
+   inline const field_num get_aggregate_field(void) const { return agg_info->field; }
+   inline const aggregate_type get_aggregate_type(void) const { return agg_info->type; }
+   
    inline predicate_id get_id(void) const { return id; }
    
    inline size_t num_fields(void) const { return types.size(); }
@@ -53,7 +56,7 @@ public:
    
    void print(std::ostream&) const;
    
-   static predicate* make_predicate_from_buf(unsigned char *buf, size_t *code_size);
+   static predicate* make_predicate_from_buf(unsigned char *buf, code_size_t *code_size);
 };
 
 std::ostream& operator<<(std::ostream&, const predicate&);

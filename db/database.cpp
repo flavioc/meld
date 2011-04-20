@@ -32,12 +32,8 @@ database::database(ifstream& fp, router *rout)
    if(nodes_to_skip > 0)
       fp.seekg(node_size * nodes_to_skip, ios_base::cur);
    
-   remote::rout(cout) << nodes_to_skip << " nodes to skip" << endl;
-   
    size_t nodes_to_read = remote::self->get_total_nodes();
       
-   remote::rout(cout) << nodes_to_read << " nodes to read" << endl;
-   
    for(size_t i(0); i < nodes_to_read; ++i) {
       fp.read((char*)&fake_id, sizeof(node::node_id));
       fp.read((char*)&real_id, sizeof(node::node_id));
@@ -53,8 +49,6 @@ database::database(ifstream& fp, router *rout)
          fp.seekg(node_size * nodes_left, ios_base::cur);
       remote::rout(cout) << "skip last " << nodes_left << " nodes" << endl;
    }
-   
-   cout << *this << endl;
 }
 
 database::~database(void)

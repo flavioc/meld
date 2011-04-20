@@ -3,7 +3,7 @@
 #include <sys/stat.h>
 #include <iostream>
 
-#include "program.hpp"
+#include "vm/program.hpp"
 #include "db/tuple.hpp"
 #include "vm/instr.hpp"
 #include "process/router.hpp"
@@ -16,11 +16,12 @@ using namespace process;
 
 namespace vm {
 
-static const size_t PREDICATE_DESCRIPTOR_BASE_SIZE = 5;
-static const size_t PREDICATE_DESCRIPTOR_SIZE = PREDICATE_DESCRIPTOR_BASE_SIZE +
-         PRED_ARGS_MAX + NAME_SIZE_MAX;
+static const size_t PREDICATE_DESCRIPTOR_BASE_SIZE = 3;
+static const size_t PREDICATE_DESCRIPTOR_SIZE = sizeof(code_size_t) +
+                                                PREDICATE_DESCRIPTOR_BASE_SIZE +
+                                                PRED_ARGS_MAX + NAME_SIZE_MAX;
 
-program::program(const string& filename, router& rout)
+program::program(const string& filename, router *rout)
 {
    ifstream fp(filename.c_str(), ios::in | ios::binary);
    
@@ -43,13 +44,11 @@ program::program(const string& filename, router& rout)
    
    // read predicate information
    for(size_t i(0); i < num_predicates; ++i) {
-      size_t size;
+      code_size_t size;
       fp.read(buf, PREDICATE_DESCRIPTOR_SIZE);
       
       predicates[i] = predicate::make_predicate_from_buf((unsigned char*)buf, &size);
       code_size[i] = size;
-      
-      cout << *predicates[i] << endl;
    }
    
    // read predicate code

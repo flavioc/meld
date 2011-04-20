@@ -26,38 +26,46 @@ tuple::tuple(void):
 }
 
 bool
+tuple::field_equal(const tuple& other, const field_num i) const
+{
+   switch(get_field_type(i)) {
+      case FIELD_INT:
+         if(get_int(i) != other.get_int(i))
+            return false;
+         break;
+      case FIELD_FLOAT:
+         if(get_float(i) != other.get_float(i))
+            return false;
+         break;
+      case FIELD_LIST_INT:
+         if(!int_list::equal(get_int_list(i), other.get_int_list(i)))
+            return false;
+         break;
+      case FIELD_LIST_FLOAT:
+         if(!float_list::equal(get_float_list(i), other.get_float_list(i)))
+            return false;
+         break;
+      case FIELD_LIST_ADDR:
+         if(!addr_list::equal(get_addr_list(i), other.get_addr_list(i)))
+            return false;
+         break;
+      case FIELD_ADDR:
+         if(get_addr(i) != other.get_addr(i))
+            return false;
+         break;
+      default:
+         throw type_error("Unrecognized field type " + number_to_string(i));
+   }
+   
+   return true;
+}
+
+bool
 tuple::operator==(const tuple& other) const
 {
-   for(field_num i = 0; i < num_fields(); ++i) {
-      switch(get_field_type(i)) {
-         case FIELD_INT:
-            if(get_int(i) != other.get_int(i))
-               return false;
-            break;
-         case FIELD_FLOAT:
-            if(get_float(i) != other.get_float(i))
-               return false;
-            break;
-         case FIELD_LIST_INT:
-            if(!int_list::equal(get_int_list(i), other.get_int_list(i)))
-               return false;
-            break;
-         case FIELD_LIST_FLOAT:
-            if(!float_list::equal(get_float_list(i), other.get_float_list(i)))
-               return false;
-            break;
-         case FIELD_LIST_ADDR:
-            if(!addr_list::equal(get_addr_list(i), other.get_addr_list(i)))
-               return false;
-            break;
-         case FIELD_ADDR:
-            if(get_addr(i) != other.get_addr(i))
-               return false;
-            break;
-         default:
-            throw type_error("Unrecognized field type " + number_to_string(i));
-      }
-   }
+   for(field_num i = 0; i < num_fields(); ++i)
+      if(!field_equal(other, i))
+         return false;
    
    return true;
 }

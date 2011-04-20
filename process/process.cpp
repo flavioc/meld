@@ -118,6 +118,7 @@ process::busy_wait(void)
 {  
    while(queue.empty()) {
       
+#if 0
       if(get_id() == 0) {
          update_remotes();
       
@@ -139,13 +140,11 @@ process::busy_wait(void)
                return false;
             }
          }
-      } else if(state::MACHINE->marked_finished())
+      } else
+#endif
+ if(state::MACHINE->finished())
          return false;
          
-      thread->yield();
-      
-      //boost::this_thread::sleep(boost::posix_time::millisec(10));
-      
       fetch_work();
    }
    
@@ -218,7 +217,7 @@ process::do_loop(void)
    
       if(state::ROUTER->use_mpi()) {
          ended = true;
-      
+
          if(get_id() == 0) {
             while(!state::MACHINE->all_ended())
                {}
@@ -228,6 +227,8 @@ process::do_loop(void)
          
          return;
       } else {
+         state::MACHINE->wait_aggregates();
+         
          generate_aggs();
          
          state::MACHINE->wait_aggregates();

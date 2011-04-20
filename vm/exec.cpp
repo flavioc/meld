@@ -20,6 +20,7 @@ namespace vm
    
 enum return_type {
    RETURN_OK,
+   RETURN_SELECT,
    RETURN_NEXT
 };
 
@@ -693,19 +694,46 @@ execute_head(pcounter& pc, state& state)
 #undef implement_head
 }
 
+static inline void
+execute_float(pcounter& pc, state& state)
+{
+   pcounter m = pc + FLOAT_BASE;
+   const instr_val op(float_op(pc));
+   const instr_val dest(float_dest(pc));
+   const int_val val(get_op_function<int_val>(op, m, state));
+   
+   set_op_function(m, dest, static_cast<float_val>(val), state);
+}
+
+static inline pcounter
+execute_select(pcounter pc, state& state)
+{
+   const pcounter hash_start(select_hash_start(pc));
+   const code_size_t hashed(select_hash(hash_start, state.node->get_id()));
+   
+   if(hashed == 0) // no specific code
+      return pc + select_size(pc);
+   else
+      return select_hash_code(hash_start, select_hash_size(pc), hashed);
+}
+
 static inline return_type
 execute(pcounter pc, state& state)
 {
    for(; ; pc = advance(pc))
    {
-      //instr_print_simple(pc, state.PROGRAM, cout);
-      
 eval_loop:
+
+      //instr_print_simple(pc, state.PROGRAM, cout);
       
       switch(fetch(pc)) {
          case RETURN_INSTR: return RETURN_OK;
          
          case NEXT_INSTR: return RETURN_NEXT;
+         
+         case RETURN_SELECT_INSTR:
+            pc += return_select_jump(pc);
+            goto eval_loop;
          
          case IF_INSTR:
             if(!state.get_reg(if_reg(pc))) {
@@ -770,6 +798,14 @@ eval_loop:
          case HEAD_INSTR:
             execute_head(pc, state);
             break;
+            
+         case FLOAT_INSTR:
+            execute_float(pc, state);
+            break;
+            
+         case SELECT_INSTR:
+            pc = execute_select(pc, state);
+            goto eval_loop;
             
          default: throw vm_exec_error("unsupported instruction");
       }

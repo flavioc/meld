@@ -129,6 +129,23 @@ agg_configuration::generate_sum_int(const field_num field)
 }
 
 tuple*
+agg_configuration::generate_sum_float(const field_num field)
+{
+   tuple_list::iterator it(values.begin());
+   float_val sum_val = 0;
+   tuple *ret(*it);
+   
+   for(; it != values.end(); ++it)
+      sum_val += (*it)->get_float(field);
+   
+   values.pop_front();
+   
+   ret->set_float(field, sum_val);
+   
+   return ret;
+}
+
+tuple*
 agg_configuration::generate(const aggregate_type typ, const field_num field)
 {
    switch(typ) {
@@ -144,6 +161,8 @@ agg_configuration::generate(const aggregate_type typ, const field_num field)
          return generate_min_int(field);
       case AGG_SUM_INT:
          return generate_sum_int(field);
+      case AGG_SUM_FLOAT:
+         return generate_sum_float(field);
    }
 
 #if 0

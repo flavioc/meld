@@ -118,7 +118,6 @@ node::add_agg_tuple(vm::tuple *tuple, const ref_count many)
       agg = it->second;
 
    agg->add_to_set(tuple, many);
-   cout << *agg << endl;
 }
 
 list<tuple*>

@@ -22,40 +22,46 @@ const size_t int_size = sizeof(int_val);
 const size_t float_size = sizeof(float_val);
 const size_t addr_size = sizeof(addr_val);
 
-const size_t SEND_BASE = 3;
-const size_t OP_BASE = 5;
-const size_t MOVE_BASE = 3;
-const size_t ITER_BASE = 4;
-const size_t ALLOC_BASE = 3;
-const size_t CALL_BASE = 3;
-const size_t IF_BASE = 4;
-const size_t MOVE_NIL_BASE = 2;
-const size_t TEST_NIL_BASE = 3;
-const size_t CONS_BASE = 5;
-const size_t HEAD_BASE = 4;
-const size_t TAIL_BASE = 4;
-const size_t NOT_BASE = 3;
-const size_t RETURN_BASE = 1;
-const size_t NEXT_BASE = 1;
+const size_t SEND_BASE           = 3;
+const size_t OP_BASE             = 5;
+const size_t MOVE_BASE           = 3;
+const size_t ITER_BASE           = 4;
+const size_t ALLOC_BASE          = 3;
+const size_t CALL_BASE           = 3;
+const size_t IF_BASE             = 4;
+const size_t MOVE_NIL_BASE       = 2;
+const size_t TEST_NIL_BASE       = 3;
+const size_t CONS_BASE           = 5;
+const size_t HEAD_BASE           = 4;
+const size_t TAIL_BASE           = 4;
+const size_t NOT_BASE            = 3;
+const size_t RETURN_BASE         = 1;
+const size_t NEXT_BASE           = 1;
+const size_t FLOAT_BASE          = 3;
+const size_t SELECT_BASE         = 9;
+const size_t RETURN_SELECT_BASE  = 5;
 
 enum instr_type {
-   RETURN_INSTR	=  0x00,
-   NEXT_INSTR		=  0x01,
-   ELSE_INSTR 		=  0x02,
-   TEST_NIL_INSTR	=  0x03,
-   CONS_INSTR		=  0x04,
-   HEAD_INSTR		=  0x05,
-   TAIL_INSTR		=  0x06,
-   NOT_INSTR		=  0x07,
-   SEND_INSTR 		=  0x08,
-   CALL_INSTR		=  0x20,
-   MOVE_INSTR		=  0x30,
-   ALLOC_INSTR		=  0x40,
-   IF_INSTR 		=  0x60,
-   MOVE_NIL_INSTR	=  0x70,
-   REMOVE_INSTR 	=  0x80,
-   ITER_INSTR		=  0xa0,
-   OP_INSTR			=  0xc0
+   RETURN_INSTR	      =  0x00,
+   NEXT_INSTR		      =  0x01,
+   ELSE_INSTR 		      =  0x02,
+   TEST_NIL_INSTR	      =  0x03,
+   CONS_INSTR		      =  0x04,
+   HEAD_INSTR		      =  0x05,
+   TAIL_INSTR		      =  0x06,
+   NOT_INSTR		      =  0x07,
+   SEND_INSTR 		      =  0x08,
+   FLOAT_INSTR          =  0x09,
+   SELECT_INSTR         =  0x0A,
+   RETURN_SELECT_INSTR  =  0x0B,
+   CALL_INSTR		      =  0x20,
+   MOVE_INSTR		      =  0x30,
+   ALLOC_INSTR		      =  0x40,
+   IF_INSTR 		      =  0x60,
+   MOVE_NIL_INSTR	      =  0x70,
+   REMOVE_INSTR 	      =  0x80,
+   ITER_INSTR		      =  0xa0,
+   OP_INSTR			      =  0xc0
 };
 
 enum instr_op {
@@ -113,6 +119,7 @@ inline field_num val_field_num(const pcounter x) { return *x & 0xff; }
 inline reg_num val_field_reg(const pcounter x) { return *(x + 1) & 0x1f; }
 
 inline int_val pcounter_int(pcounter pc) { return *(int_val *)pc; }
+inline code_size_t pcounter_code_size(pcounter pc) { return *(code_size_t *)pc; }
 inline float_val pcounter_float(pcounter pc) { return *(float_val *)pc; }
 inline addr_val pcounter_addr(pcounter pc) { return *(addr_val *)pc; }
 
@@ -124,7 +131,8 @@ inline void pcounter_move_addr(pcounter *pc) { *pc = *pc + addr_size; }
 
 /* common instruction functions */
 
-inline size_t jump_get(pcounter x, size_t off) { return (size_t)*(unsigned short*)(x + off); }
+/* XXX */
+inline code_offset_t jump_get(pcounter x, size_t off) { return (code_offset_t)*(unsigned short*)(x + off); }
 
 inline reg_num reg_get(pcounter x, size_t off) { return (reg_num)(*(x + off) & 0x1f); }
 inline instr_val val_get(pcounter x, size_t off) { return (instr_val)(*(x + off) & 0x3f); }
@@ -133,12 +141,17 @@ inline predicate_id predicate_get(pcounter x, size_t off) { return (predicate_id
 /* IF reg THEN ... ENDIF */
 
 inline reg_num if_reg(pcounter pc) { return reg_get(pc, 1); }
-inline size_t if_jump(pcounter pc) { return jump_get(pc, 2); }
+inline code_offset_t if_jump(pcounter pc) { return jump_get(pc, 2); }
 
 /* SEND a TO B */
 
 inline reg_num send_msg(pcounter pc) { return reg_get(pc, 1); }
 inline reg_num send_dest(pcounter pc) { return reg_get(pc, 2); }
+
+/* FLOAT a TO b */
+
+inline instr_val float_op(pcounter pc) { return val_get(pc, 1); }
+inline instr_val float_dest(pcounter pc) { return val_get(pc, 2); }
 
 /* OP a op b TO c */
 
@@ -219,6 +232,20 @@ inline instr_val tail_dest(pcounter pc) { return val_get(pc, 3); }
 inline instr_val not_op(pcounter pc) { return val_get(pc, 1); }
 inline instr_val not_dest(pcounter pc) { return val_get(pc, 2); }
 
+/* SELECT BY NODE ... */
+
+inline code_size_t select_size(pcounter pc) { return pcounter_code_size(pc + 1); }
+inline size_t select_hash_size(pcounter pc) { return (size_t)pcounter_code_size(pc + 1 + sizeof(code_size_t)); }
+inline pcounter select_hash_start(pcounter pc) { return pc + SELECT_BASE; }
+inline code_offset_t select_hash(pcounter hash_start, const addr_val val) { return pcounter_code_size(hash_start + sizeof(code_size_t)*val); }
+inline pcounter select_hash_code(pcounter hash_start, const size_t hash_size, const code_offset_t hashed) {
+   return hash_start + hash_size*sizeof(code_size_t) + hashed - 1;
+}
+
+/* RETURN SELECT */
+
+inline code_size_t return_select_jump(pcounter pc) { return pcounter_code_size(pc + 1); }
+
 /* advance function */
 
 enum instr_argument_type {
@@ -253,10 +280,8 @@ static inline size_t arg_size<ARGUMENT_ANYTHING>(instr_val v)
       return 0;
    else if(val_is_addr(v))
       return addr_size;
-   else {
-      printf("%d\n", v);
+   else
       throw malformed_instr_error("invalid instruction argument value");
-   }
 }
 
 template <>
@@ -286,6 +311,10 @@ static inline size_t arg_size<ARGUMENT_INT>(instr_val v)
 {
    if(val_is_int(v))
       return int_size;
+   else if(val_is_reg(v))
+      return 0;
+   else if(val_is_field(v))
+      return field_size;
    else
       throw malformed_instr_error("invalid instruction int value");
 }
@@ -388,6 +417,11 @@ advance(pcounter pc)
 		case SEND_INSTR:
          return pc + SEND_BASE;
                    
+      case FLOAT_INSTR:
+         return pc + FLOAT_BASE
+                   + arg_size<ARGUMENT_INT>(float_op(pc))
+                   + arg_size<ARGUMENT_WRITABLE>(float_dest(pc));
+                   
       case OP_INSTR:
          return pc + OP_BASE
                    + arg_size<ARGUMENT_ANYTHING>(op_arg1(pc))
@@ -449,6 +483,12 @@ advance(pcounter pc)
       case NEXT_INSTR:
          return pc + NEXT_BASE;
          
+      case RETURN_SELECT_INSTR:
+         return pc + RETURN_SELECT_BASE;
+         
+      case SELECT_INSTR:
+         return pc + SELECT_BASE + select_hash_size(pc)*sizeof(code_size_t);
+         
       case ELSE_INSTR:
       case REMOVE_INSTR:
       default:
@@ -464,7 +504,7 @@ std::string val_string(const instr_val, pcounter *);
 /* byte code print functions */
 pcounter instr_print(pcounter, const bool, const program *, std::ostream&);
 pcounter instr_print_simple(pcounter, const program *, std::ostream&);
-byte_code instrs_print(const byte_code, const size_t, const program*, std::ostream&);
+byte_code instrs_print(const byte_code, const code_size_t, const program*, std::ostream&);
 
 }
 

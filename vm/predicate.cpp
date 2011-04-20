@@ -13,15 +13,15 @@ namespace vm {
 predicate_id predicate::current_id = 0;
 
 predicate*
-predicate::make_predicate_from_buf(unsigned char *buf, size_t *code_size)
+predicate::make_predicate_from_buf(unsigned char *buf, code_size_t *code_size)
 {
    predicate *pred = new predicate();
    
    pred->id = current_id++;
 
    // get code size
-   *code_size = (size_t)*((unsigned short*)buf);
-   buf += sizeof(unsigned short);
+   *code_size = (code_size_t)*((code_size_t*)buf);
+   buf += sizeof(code_size_t);
    
    // get predicate properties
    unsigned char prop = buf[0];

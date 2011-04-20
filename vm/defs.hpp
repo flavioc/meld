@@ -17,6 +17,8 @@ typedef unsigned char predicate_id;
 typedef short ref_count;
 typedef unsigned char byte_code_el;
 typedef byte_code_el* byte_code;
+typedef uint32_t code_size_t;
+typedef code_size_t code_offset_t;
 typedef byte_code pcounter;
 
 static const addr_val null_addr_val = 0;

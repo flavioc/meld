@@ -31,7 +31,7 @@ OBJS = utils/utils.o \
 
 all: meld print
 
-meld: $(OBJS)
+meld: $(OBJS) meld.o
 	$(COMPILE) meld.o -o meld
 
 print: $(OBJS) print.o

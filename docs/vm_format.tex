@@ -146,6 +146,33 @@ INSTRUCTION & BYTE FORMAT & ARGS\\
 \end{tabular}
 
 \begin{tabular}{lll}
+INSTRUCTION & BYTE FORMAT & ARGS\\
+\hline
+\\
+\inst{SELECT}    {0&0&0&0&1&0&1&0} {size,hsize,htable,codeblocks}\\
+& this is a big instruction used to select a specific code \\
+& block for a node. it is followed by a 4-byte integer \\
+& indicating the $size$ of the whole instruction, then \\
+& a 4-byte integer indicating the \\
+& size $N$ of a simplified hash-table. $N$ represents\\
+& the number of nodes in the system for efficiency reasons. \\
+& Next, there is $N$*4-byte integers, where each integer\\
+& is the offset to a code block of the corresponding \\
+& node. The offsets start after the end of the hash\\
+& table. If the offset is 0, this node has no\\
+& associated code block, so it should use $size$ to\\
+& jump to the next instruction. If the offset is\\
+& positive, you should subtract one byte from it\\
+& and then jump to the code block. At the end of\\
+& each code block, there is a RETURN-SELECT. \\
+\\
+\inst{RETURN-SELECT} {0&0&0&0&1&0&1&1} {jump}\\
+& This instruction is followed by a 4-byte integer \\
+& with a jump offset to the next instruction. \\
+\\
+\end{tabular}
+
+\begin{tabular}{lll}
 OP & BYTE FORMAT\\
 \hline
 \\

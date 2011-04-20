@@ -21,10 +21,11 @@ namespace vm {
 class program
 {
 private:
+   
    std::vector<predicate*> predicates;
   
    std::vector<byte_code> code;
-   std::vector<size_t> code_size;
+   std::vector<code_size_t> code_size;
    
    db::database *db;
    
@@ -48,7 +49,7 @@ public:
    
    tuple* new_tuple(const predicate_id&) const;
    
-   explicit program(const std::string&, process::router&);
+   explicit program(const std::string&, process::router *);
    
    ~program(void);
 };

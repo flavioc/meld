@@ -1,17 +1,27 @@
 
-type route edge(node, node).
+include #pagerank.graph
+
 type pagerank(node, int, float).
 type calcRank(node, int, sum float).
 type numLinks(node, sum int).
 
 const damping = 0.85.
 const iterations = 4.
-const pages = 2.
+const pages = 3.
 
 numLinks(A, 0).
 numLinks(A, 1) :- edge(A, B).
 
 pagerank(A, 0, 1.0 / float(pages)).
+pagerank(A, I, V) :-
+	calcRank(A, I, T),
+	Before = I - 1,
+	pagerank(A, Before, VOld),
+	V = damping + (1.0 - damping) * T,
+	I <= iterations.
 
-edge(@1, @2).
+calcRank(A, I + 1, O / float(C)) :-
+	edge(B, A),
+	pagerank(B, I, O),
+	numLinks(B, C).
 

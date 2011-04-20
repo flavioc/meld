@@ -28,6 +28,7 @@ private:
    vm::tuple *generate_max_int(const vm::field_num);
    vm::tuple *generate_min_int(const vm::field_num);
    vm::tuple *generate_sum_int(const vm::field_num);
+   vm::tuple *generate_sum_float(const vm::field_num);
    
 public:
    
