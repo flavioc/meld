@@ -20,13 +20,13 @@ public:
    
    typedef unsigned long int node_id;
    
-   typedef std::list<stuple*> stuple_list;
+   typedef std::list<simple_tuple*> simple_tuple_list;
    typedef std::vector<vm::tuple*> tuple_vector;
    
    typedef struct {
       bool to_delete;
-      stuple_list *list;
-      stuple_list::iterator it;
+      simple_tuple_list *list;
+      simple_tuple_list::iterator it;
    } delete_info;
    
 private:
@@ -34,11 +34,13 @@ private:
 	node_id id;
    node_id translation;
 	
-   typedef std::map<vm::predicate_id, stuple_list> stuple_map;
+   typedef std::map<vm::predicate_id, simple_tuple_list> simple_tuple_map;
+   typedef std::map<vm::predicate_id, tuple_aggregate*> aggregate_map;
 	
-   stuple_map tuples;
+   simple_tuple_map tuples;
+   aggregate_map aggs;
    
-   stuple_list& get_storage(const vm::predicate_id&);
+   simple_tuple_list& get_storage(const vm::predicate_id&);
 	
 public:
    
@@ -48,8 +50,10 @@ public:
    
    bool add_tuple(vm::tuple*, vm::ref_count);
    delete_info delete_tuple(vm::tuple *, vm::ref_count);
-   
    void commit_delete(const delete_info&);
+   
+   void add_agg_tuple(vm::tuple*, const vm::ref_count);
+   std::list<vm::tuple*> generate_aggs(void);
    
    tuple_vector* match_predicate(const vm::predicate_id) const;
    

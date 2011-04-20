@@ -16,7 +16,11 @@
 namespace process
 {
    
-
+typedef struct {
+   db::node *work_node;
+   const db::simple_tuple *work_tpl;
+   bool agg;
+} work_unit;
 
 class process
 {
@@ -29,8 +33,7 @@ private:
    static boost::mutex remote_mutex;
    
    typedef std::list<db::node*> list_nodes;
-   typedef std::pair<db::node*, const db::simple_tuple*> pair_node_tuple;
-   typedef std::list<pair_node_tuple> work_queue;
+   typedef std::list<work_unit> work_queue;
    
    utils::interval<db::node::node_id> *nodes_interval;
    boost::thread *thread;
@@ -47,11 +50,15 @@ private:
    } process_state;
    
    bool ended;
+   bool agg_checked;
    
-   void do_work(db::node *, const db::simple_tuple *);
+   void generate_aggs(void);
+   void do_tuple_add(db::node *, vm::tuple *, const vm::ref_count);
+   void do_work(db::node *, const db::simple_tuple *, const bool ignore_agg = false);
    bool busy_wait(void);
-   bool get_work(pair_node_tuple&);
+   bool get_work(work_unit&);
    void fetch_work(void);
+   void do_loop(void);
    void loop(void);
    void update_remotes(void);
 
@@ -62,7 +69,7 @@ public:
    
    void add_node(db::node*);
    
-   void enqueue_work(db::node*, const db::simple_tuple*);
+   void enqueue_work(db::node*, const db::simple_tuple*, const bool is_agg = false);
    
    const process_id get_id(void) const { return id; }
    

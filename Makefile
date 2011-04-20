@@ -4,8 +4,6 @@ OS = $(shell uname -s)
 INCLUDE_DIRS = -I. -I/opt/local/include
 LIBRARY_DIRS = -L/opt/local/lib
 
-TARGET = meld
-
 PROFILING = #-pg
 OPTIMIZATIONS = 
 DEBUG = -g
@@ -15,10 +13,10 @@ CFLAGS = $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) -m32
 CXXFLAGS = $(CFLAGS) #-std=c++0x
 LIBRARIES = -lpthread -lm -lmpi -lmpi_cxx -lboost_thread-mt -lboost_mpi-mt -lboost_serialization-mt
 LDFLAGS = $(PROFILING) $(LIBRARY_DIRS) $(LIBRARIES)
-
 CXX = mpic++
+COMPILE = $(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS)
 
-OBJS = meld.o utils/utils.o \
+OBJS = utils/utils.o \
 			 vm/program.o \
 			 vm/predicate.o vm/types.o \
 			 vm/instr.o db/node.o \
@@ -31,13 +29,18 @@ OBJS = meld.o utils/utils.o \
 			 vm/tuple.o vm/exec.o \
 			 process/message.o
 
-all: $(TARGET)
+all: meld print
 
-$(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) -o $(TARGET)
+meld: $(OBJS)
+	$(COMPILE) meld.o -o meld
+
+print: $(OBJS) print.o
+	$(COMPILE) print.o -o print
 
 meld.o: meld.cpp utils/utils.hpp process/machine.hpp \
 				process/router.hpp
+
+print.o: print.cpp vm/program.hpp
 
 utils/utils.o: utils/utils.cpp utils/utils.hpp
 
@@ -47,7 +50,8 @@ db/tuple.o: db/tuple.cpp db/tuple.hpp
 
 db/node.o: db/node.cpp db/node.hpp
 
-db/database.o: db/database.cpp db/database.hpp vm/instr.hpp
+db/database.o: db/database.cpp db/database.hpp vm/instr.hpp \
+							db/node.hpp
 
 process/process.o: process/process.cpp process/process.hpp vm/instr.hpp
 

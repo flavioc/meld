@@ -13,7 +13,7 @@ namespace db
    
 size_t database::nodes_total = 0;
 
-database::database(ifstream& fp, router& rout)
+database::database(ifstream& fp, router *rout)
 {
    static const size_t node_size(sizeof(node::node_id) * 2);
    
@@ -25,7 +25,7 @@ database::database(ifstream& fp, router& rout)
    
    nodes_total = num_nodes;
    
-   rout.set_nodes_total(nodes_total); // can throw database_error
+   rout->set_nodes_total(nodes_total); // can throw database_error
    
    const size_t nodes_to_skip(remote::self->get_nodes_base());
    

@@ -12,6 +12,8 @@ def list_has(list, x):
 
 total = int(sys.argv[1])
 
+print "type route edge(node, node)."
+
 for i in range(total):
 	links = random.randint(1, int(total*0.75))
 	list = []
@@ -22,5 +24,5 @@ for i in range(total):
 		if not list_has(list, link):
 			list.append(link)
 	for link in list:
-		print str(i) + " " + str(link)
+		print "edge(@" + str(i) + ",@" + str(link) + ")."
 		

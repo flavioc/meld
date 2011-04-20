@@ -44,9 +44,11 @@ private:
    boost::mpi::environment *env;
    boost::mpi::communicator *world;
    
+   void base_constructor(const size_t, int, char **);
+   
 public:
    
-   inline const bool use_mpi(void) const { return USE_MPI && world_size > 0; }
+   inline const bool use_mpi(void) const { return USE_MPI && world_size > 1; }
    
    const bool finished(void) const;
    
@@ -65,6 +67,7 @@ public:
    remote* find_remote(const db::node::node_id) const;
    
    explicit router(const size_t, int, char**);
+   explicit router(void);
    
    ~router(void);
 };

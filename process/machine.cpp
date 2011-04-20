@@ -123,12 +123,9 @@ machine::machine(const string& file, router& _rout, const size_t th):
    filename(file), num_threads(th), threads_active(th), rout(_rout),
    is_finished(false)
 {  
-   state::PROGRAM = new program(filename, rout);
+   state::PROGRAM = new program(filename, &rout);
    state::DATABASE = state::PROGRAM->get_database();
    state::MACHINE = this;
-   
-   //state::PROGRAM->print_bytecode(cout);
-   //exit(0);
    
    process_list.resize(num_threads);
    
@@ -146,7 +143,7 @@ machine::machine(const string& file, router& _rout, const size_t th):
 machine::~machine(void)
 {   
    delete state::PROGRAM;
-   //delete proc_barrier;
+   delete proc_barrier;
    
    for(process::process_id i(0); i != num_threads; ++i)
       delete process_list[i];

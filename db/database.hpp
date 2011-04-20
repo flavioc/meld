@@ -48,7 +48,7 @@ public:
    
    void print(std::ostream&) const;
    
-   explicit database(std::ifstream&, process::router&);
+   explicit database(std::ifstream&, process::router *);
    
    ~database(void);
 };

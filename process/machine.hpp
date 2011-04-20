@@ -49,6 +49,8 @@ public:
    
    bool finished(void) const { return threads_active == 0; }
    
+   void wait_aggregates(void) { proc_barrier->wait(); }
+   
    bool all_ended(void);
    
    void mark_finished(void) { is_finished = true; }

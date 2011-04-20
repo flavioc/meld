@@ -138,6 +138,11 @@ INSTRUCTION & BYTE FORMAT & ARGS\\
 & sets {\it val$_2$} = {\it tail val$_1$}\\
 & $t$ is the list type (00 = int, 01 = float, 02 = addr) \\
 \\
+\inst{FLOAT}    {0&0&0&0&1&0&0&1\\\hline
+0&0&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$\\\hline
+0&0&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$} {val$_1$, val$_2$}
+& sets {\it val$_2$} = {\it (float)val$_1$}\\
+\\
 \end{tabular}
 
 \begin{tabular}{lll}

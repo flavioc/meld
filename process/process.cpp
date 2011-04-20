@@ -19,8 +19,10 @@ database *process::DATABASE = NULL;
 mutex process::remote_mutex;
 
 void
-process::enqueue_work(node* node, const simple_tuple* stpl)
+process::enqueue_work(node* node, const simple_tuple* stpl, const bool is_agg)
 {
+   work_unit work = {node, stpl, is_agg};
+   
    mutex::scoped_lock lock(mutex);
    
    if(queue.empty() && process_state == PROCESS_INACTIVE) {
@@ -28,7 +30,7 @@ process::enqueue_work(node* node, const simple_tuple* stpl)
       state::MACHINE->process_is_active();
    }
    
-   queue.push_back(pair_node_tuple(node, stpl));
+   queue.push_back(work);
 }
 
 void
@@ -56,29 +58,35 @@ process::fetch_work(void)
 }
 
 void
-process::do_work(node *node, const simple_tuple *_stuple)
+process::do_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
+{
+   const bool is_new(node->add_tuple(tuple, count));
+
+   if(is_new) {
+      // set vm state
+      state.tuple = tuple;
+      state.node = node;
+      state.count = count;
+      execute_bytecode(state.PROGRAM->get_bytecode(tuple->get_predicate_id()), state);
+   } else
+      delete tuple;
+}
+
+void
+process::do_work(node *node, const simple_tuple *_stuple, const bool ignore_agg)
 {
    auto_ptr<const simple_tuple> stuple(_stuple);
    vm::tuple *tuple = stuple->get_tuple();
    ref_count count = stuple->get_count();
-
-   //cout << "Process " << *stuple << endl;
       
    if(count == 0)
       return;
          
    if(count > 0) {
-      const bool is_new(node->add_tuple(tuple, count));
-         
-      if(is_new) {
-         // set vm state
-         state.tuple = tuple;
-         state.node = node;
-         state.count = count;
-         execute_bytecode(state.PROGRAM->get_bytecode(tuple->get_predicate_id()), state);
-      } else {
-         delete tuple;
-      }
+      if(tuple->is_aggregate() && !ignore_agg)
+         node->add_agg_tuple(tuple, count);
+      else
+         do_tuple_add(node, tuple, count);
    } else {
       const node::delete_info result(node->delete_tuple(tuple, -1*count));
          
@@ -145,7 +153,7 @@ process::busy_wait(void)
 }
 
 bool
-process::get_work(process::pair_node_tuple& work)
+process::get_work(work_unit& work)
 {
    fetch_work();
    
@@ -179,6 +187,56 @@ process::get_work(process::pair_node_tuple& work)
    
    return true;
 }
+
+void
+process::generate_aggs(void)
+{
+   for(list_nodes::iterator it(nodes.begin());
+      it != nodes.end();
+      ++it)
+   {
+      node *no(*it);
+      list<vm::tuple*> ls(no->generate_aggs());
+      
+      for(list<vm::tuple*>::iterator it2(ls.begin());
+         it2 != ls.end();
+         ++it2)
+      {
+         enqueue_work(no, simple_tuple::create_new(*it2), true);
+      }
+   }
+}
+
+void
+process::do_loop(void)
+{
+   work_unit work;
+
+   while(true) {
+      while(get_work(work))
+         do_work(work.work_node, work.work_tpl, work.agg);
+   
+      if(state::ROUTER->use_mpi()) {
+         ended = true;
+      
+         if(get_id() == 0) {
+            while(!state::MACHINE->all_ended())
+               {}
+         
+            state::ROUTER->finish();
+         }
+         
+         return;
+      } else {
+         generate_aggs();
+         
+         state::MACHINE->wait_aggregates();
+
+         if(state::MACHINE->finished())
+            return;
+      }
+   }
+}
    
 void
 process::loop(void)
@@ -193,21 +251,7 @@ process::loop(void)
       enqueue_work(cur_node, simple_tuple::create_new(new vm::tuple(init_pred)));
    }
    
-   pair_node_tuple work;
-   
-   while(get_work(work))
-      do_work(work.first, work.second);
-   
-   if(state::ROUTER->use_mpi()) {
-      ended = true;
-      
-      if(get_id() == 0) {
-         while(!state::MACHINE->all_ended())
-         {}
-         
-         state::ROUTER->finish();
-      }
-   }
+   do_loop();
 }
 
 void
@@ -224,7 +268,8 @@ process::process(const process_id& _id):
    nodes_interval(NULL), thread(NULL), id(_id),
    state(this),
    process_state(PROCESS_ACTIVE),
-   ended(false)
+   ended(false),
+   agg_checked(false)
 {
 }
 

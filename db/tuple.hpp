@@ -15,40 +15,65 @@
 
 namespace db
 {
-
-class stuple
-{
-protected:
-   vm::tuple *data;
-
-public:
    
-   inline vm::tuple* get_tuple(void) const { return data; }
-   
-   virtual void print(std::ostream&) const = 0;
-   
-   explicit stuple(vm::tuple *_tuple):
-      data(_tuple)
-   {}
-   
-   explicit stuple(void) {} // for serialization purposes
-};
-
-class aggregate_tuple: public stuple
+class agg_configuration
 {
 private:
-   std::list<vm::tuple*> values;
+   
+   typedef std::list<vm::tuple*> tuple_list;
+   
+   vm::ref_count count;
+   tuple_list values;
+   
+   vm::tuple *generate_max_int(const vm::field_num);
+   vm::tuple *generate_min_int(const vm::field_num);
+   vm::tuple *generate_sum_int(const vm::field_num);
    
 public:
    
    void print(std::ostream&) const;
    
-   explicit aggregate_tuple(vm::tuple *tuple): stuple(tuple) {}
+   vm::tuple *generate(const vm::aggregate_type, const vm::field_num);
+   
+   const bool test(vm::tuple *, const vm::field_num) const;
+   
+   void add_to_set(vm::tuple *, const vm::ref_count);
+   
+   explicit agg_configuration(void): count(0) {}
+   
+   ~agg_configuration(void);
 };
 
-class simple_tuple: public stuple
+std::ostream& operator<<(std::ostream&, const agg_configuration&);
+
+class tuple_aggregate
 {
 private:
+   
+   typedef std::list<agg_configuration*> agg_conf_list;
+   
+   const vm::predicate *pred;
+   agg_conf_list values;
+   
+public:
+   
+   void print(std::ostream&) const;
+   
+   std::list<vm::tuple*> generate(void);
+   
+   void add_to_set(vm::tuple *, const vm::ref_count);
+   
+   explicit tuple_aggregate(const vm::predicate *_pred): pred(_pred) {}
+   
+   ~tuple_aggregate(void);
+};
+
+std::ostream& operator<<(std::ostream&, const tuple_aggregate&);
+
+class simple_tuple
+{
+private:
+   vm::tuple *data;
    
    vm::ref_count count;
    
@@ -60,6 +85,8 @@ private:
    BOOST_SERIALIZATION_SPLIT_MEMBER()
    
 public:
+   
+   inline vm::tuple* get_tuple(void) const { return data; }
    
    void print(std::ostream&) const;
    
@@ -73,8 +100,8 @@ public:
    
    static simple_tuple* remove_new(vm::tuple *tuple) { return new simple_tuple(tuple, -1); }
    
-   explicit simple_tuple(vm::tuple *tuple, const vm::ref_count _count):
-      stuple(tuple), count(_count)
+   explicit simple_tuple(vm::tuple *_tuple, const vm::ref_count _count):
+      data(_tuple), count(_count)
    {}
    
    explicit simple_tuple(void) {} // for serialization purposes
@@ -82,7 +109,7 @@ public:
    ~simple_tuple(void);
 };
 
-std::ostream& operator<<(std::ostream&, const stuple&);
+std::ostream& operator<<(std::ostream&, const simple_tuple&);
 
 }
 

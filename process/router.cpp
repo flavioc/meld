@@ -114,9 +114,10 @@ router::finish(void)
    world->barrier();
 }
 
-router::router(const size_t num_threads, int argc, char **argv)
+void
+router::base_constructor(const size_t num_threads, int argc, char **argv)
 {
-   if(USE_MPI) {
+   if(USE_MPI && argv != NULL && argc > 0) {
       const int mpi_thread_support = MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
    
       if(mpi_thread_support != MPI_THREAD_MULTIPLE)
@@ -157,12 +158,22 @@ router::router(const size_t num_threads, int argc, char **argv)
       remote_states[i] = REMOTE_ACTIVE;
 }
 
+router::router(void)
+{
+   base_constructor(1, 0, NULL);
+}
+
+router::router(const size_t num_threads, int argc, char **argv)
+{
+   base_constructor(num_threads, argc, argv);
+}
+
 router::~router(void)
 {
    for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i)
       delete remote_list[i];
    
-   if(USE_MPI) {
+   if(USE_MPI && world && env) {
       delete world;
       delete env;
    
