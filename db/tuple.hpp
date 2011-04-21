@@ -12,18 +12,18 @@
 #include "vm/defs.hpp"
 #include "vm/predicate.hpp"
 #include "vm/tuple.hpp"
+#include "mem/allocator.hpp"
+#include "mem/base.hpp"
 
 namespace db
 {
    
-class agg_configuration
+class agg_configuration: public mem::base<agg_configuration>
 {
 private:
    
-   typedef std::list<vm::tuple*> tuple_list;
-   
    vm::ref_count count;
-   tuple_list values;
+   vm::tuple_list values;
    
    vm::tuple *generate_max_int(const vm::field_num);
    vm::tuple *generate_min_int(const vm::field_num);
@@ -47,11 +47,15 @@ public:
 
 std::ostream& operator<<(std::ostream&, const agg_configuration&);
 
-class tuple_aggregate
+class tuple_aggregate: public mem::base<tuple_aggregate>
 {
+public:
+   
+   typedef std::list<vm::tuple*, mem::allocator<vm::tuple*> > tuple_list;
+   
 private:
    
-   typedef std::list<agg_configuration*> agg_conf_list;
+   typedef std::list<agg_configuration*, mem::allocator<agg_configuration*> > agg_conf_list;
    
    const vm::predicate *pred;
    agg_conf_list values;
@@ -60,7 +64,7 @@ public:
    
    void print(std::ostream&) const;
    
-   std::list<vm::tuple*> generate(void);
+   tuple_list generate(void);
    
    void add_to_set(vm::tuple *, const vm::ref_count);
    
@@ -71,7 +75,7 @@ public:
 
 std::ostream& operator<<(std::ostream&, const tuple_aggregate&);
 
-class simple_tuple
+class simple_tuple: public mem::base<simple_tuple>
 {
 private:
    vm::tuple *data;

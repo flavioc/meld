@@ -230,12 +230,12 @@ tuple_aggregate::add_to_set(vm::tuple *tpl, const ref_count many)
    values.push_back(conf);
 }
 
-list<tuple*>
+tuple_aggregate::tuple_list
 tuple_aggregate::generate(void)
 {
    const aggregate_type typ(pred->get_aggregate_type());
    const field_num field(pred->get_aggregate_field());
-   list<tuple*> ls;
+   tuple_list ls;
    
    for(agg_conf_list::const_iterator it(values.begin());
       it != values.end();

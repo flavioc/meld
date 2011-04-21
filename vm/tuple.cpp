@@ -16,7 +16,7 @@ namespace vm
 {
    
 tuple::tuple(const predicate* _pred):
-   pred((predicate*)_pred), fields(new tuple_field[pred->num_fields()])
+   pred((predicate*)_pred), fields(allocator<tuple_field>().allocate(pred->num_fields())) 
 {
 }
 

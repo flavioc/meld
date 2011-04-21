@@ -5,7 +5,7 @@ INCLUDE_DIRS = -I. -I/opt/local/include
 LIBRARY_DIRS = -L/opt/local/lib
 
 PROFILING = #-pg
-OPTIMIZATIONS = 
+OPTIMIZATIONS = -O0
 DEBUG = -g
 WARNINGS = -Wall
 
@@ -27,7 +27,8 @@ OBJS = utils/utils.o \
 			 process/router.o \
 			 vm/state.o \
 			 vm/tuple.o vm/exec.o \
-			 process/message.o
+			 process/message.o \
+			 mem/thread.o
 
 all: meld print
 
@@ -72,7 +73,7 @@ vm/tuple.o: vm/tuple.cpp vm/tuple.hpp	\
 vm/program.o: vm/program.cpp vm/program.hpp vm/instr.hpp
 
 vm/exec.o: vm/exec.cpp vm/exec.hpp process/process.hpp	\
-						vm/instr.hpp
+						vm/instr.hpp db/node.hpp
 
 process/router.o: process/router.hpp process/router.cpp \
 									process/remote.hpp \
@@ -81,8 +82,12 @@ process/router.o: process/router.hpp process/router.cpp \
 process/message.o: process/message.cpp process/message.hpp \
 									db/node.hpp db/tuple.hpp
 
+mem/thread.o: mem/thread.cpp mem/thread.hpp \
+							mem/pool.hpp mem/chunkgroup.hpp \
+							mem/base.hpp mem/chunk.hpp
+
 clean:
-	rm -f $(TARGET) *.o vm/*.o db/*.o process/*.o runtime/*.o utils/*.o
+	rm -f $(TARGET) *.o vm/*.o db/*.o process/*.o runtime/*.o utils/*.o mem/*.o
 
 re: clean all
 

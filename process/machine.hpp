@@ -39,6 +39,8 @@ private:
    
    bool is_finished;
    
+   bool will_show_database;
+   
    void distribute_nodes(db::database *);
    
 public:
@@ -56,6 +58,8 @@ public:
    void mark_finished(void) { is_finished = true; }
    
    inline const bool marked_finished(void) { return is_finished; }
+   
+   void show_database(void) { will_show_database = true; }
    
    void route(const db::node::node_id, const db::simple_tuple*);
    

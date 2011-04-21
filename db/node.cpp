@@ -120,10 +120,10 @@ node::add_agg_tuple(vm::tuple *tuple, const ref_count many)
    agg->add_to_set(tuple, many);
 }
 
-list<tuple*>
+tuple_list
 node::generate_aggs(void)
 {
-   list<tuple*> ret;
+   tuple_list ret;
    
    for(aggregate_map::iterator it(aggs.begin());
       it != aggs.end();
@@ -131,7 +131,7 @@ node::generate_aggs(void)
    {
       tuple_aggregate *agg(it->second);
       
-      list<tuple*> ls(agg->generate());
+      tuple_list ls(agg->generate());
       
       ret.insert(ret.end(), ls.begin(), ls.end());
       

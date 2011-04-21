@@ -5,6 +5,7 @@
 #include "process/process.hpp"
 #include "vm/exec.hpp"
 #include "process/machine.hpp"
+#include "mem/thread.hpp"
 
 using namespace db;
 using namespace vm;
@@ -195,9 +196,9 @@ process::generate_aggs(void)
       ++it)
    {
       node *no(*it);
-      list<vm::tuple*> ls(no->generate_aggs());
-      
-      for(list<vm::tuple*>::iterator it2(ls.begin());
+      tuple_list ls(no->generate_aggs());
+
+      for(tuple_list::iterator it2(ls.begin());
          it2 != ls.end();
          ++it2)
       {
@@ -238,10 +239,14 @@ process::do_loop(void)
       }
    }
 }
-   
+
 void
 process::loop(void)
 {
+   // start process pool
+   mem::create_pool(get_id());
+   
+   // enqueue init tuple
    predicate *init_pred(state.PROGRAM->get_init_predicate());
    
    for(list_nodes::iterator it(nodes.begin());
