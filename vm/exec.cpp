@@ -752,7 +752,7 @@ eval_loop:
             goto eval_loop;
          
          case IF_INSTR:
-            if(!state.get_reg(if_reg(pc))) {
+            if(!state.get_bool(if_reg(pc))) {
                pc += if_jump(pc);
                goto eval_loop;
             }
