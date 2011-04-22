@@ -62,6 +62,8 @@ public:
    
    inline const bool marked_finished(void) { return is_finished; }
    
+   void notify_all(void);
+   
    void show_database(void) { will_show_database = true; }
    
    void route(const db::node::node_id, const db::simple_tuple*);

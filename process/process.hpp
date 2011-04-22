@@ -12,6 +12,7 @@
 #include "db/node.hpp"
 #include "db/database.hpp"
 #include "utils/interval.hpp"
+#include "process/queue.hpp"
 
 namespace process
 {
@@ -33,16 +34,20 @@ private:
    static boost::mutex remote_mutex;
    
    typedef std::list<db::node*> list_nodes;
-   typedef std::list<work_unit> work_queue;
    
    utils::interval<db::node::node_id> *nodes_interval;
    boost::thread *thread;
+   list_nodes nodes;
    process_id id;
    
+   char _pad1[64];
+   
    boost::mutex mutex;
-   list_nodes nodes;
-   vm::state state;
-   work_queue queue;
+   
+   wqueue<work_unit> queue_work;
+   //wqueue_free<work_unit> queue_buf;
+   
+   char _pad2[64];
    
    enum {
       PROCESS_ACTIVE,
@@ -51,6 +56,10 @@ private:
    
    bool ended;
    bool agg_checked;
+   
+   char _pad3[64];
+   
+   vm::state state;
    
    void generate_aggs(void);
    void do_tuple_add(db::node *, vm::tuple *, const vm::ref_count);
@@ -61,6 +70,8 @@ private:
    void do_loop(void);
    void loop(void);
    void update_remotes(void);
+   void make_active(void);
+   void make_inactive(void);
 
 public:
    

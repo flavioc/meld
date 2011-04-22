@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <boost/function.hpp>
+#include <boost/thread/tss.hpp>
 
 #include "process/process.hpp"
 #include "vm/exec.hpp"
@@ -18,31 +19,49 @@ namespace process {
 program *process::PROGRAM = NULL;
 database *process::DATABASE = NULL;
 mutex process::remote_mutex;
+static thread_specific_ptr<process> proc_ptr(NULL);
+
+#define MAKE_IT_STOP 1
 
 void
 process::enqueue_work(node* node, const simple_tuple* stpl, const bool is_agg)
 {
    work_unit work = {node, stpl, is_agg};
    
-   if(process_state == PROCESS_INACTIVE) {
-      mutex::scoped_lock lock(mutex);
-      if(process_state == PROCESS_INACTIVE) {
-         process_state = PROCESS_ACTIVE;
-         state::MACHINE->process_is_active();
-      }
-   }
+#ifdef MAKE_IT_STOP
+   make_active();
+#endif
    
    {
-      mutex::scoped_lock lock(mutex);
-      queue.push_back(work);
+      queue_work.push(work);
    }
 }
 
 bool
 process::busy_wait(void)
-{  
-   while(queue.empty()) {
+{
+   int cont(0);
+   
+   //boost::unique_lock<boost::mutex> lock(mutex);
+   
+   while(queue_work.empty()) {
+      boost::this_thread::sleep(boost::posix_time::millisec(10));
       
+      cont++;
+      
+      if(cont == 10) {
+         make_inactive();
+      }
+      
+#ifdef MAKE_IT_STOP
+      if(state::MACHINE->finished()) {
+         printf("FINISHED\n");
+         //state::MACHINE->notify_all();
+         return false;
+      }
+#endif
+
+      //cond.wait(lock);
 #ifdef COMPILE_MPI
       if(get_id() == 0) {
          update_remotes();
@@ -67,8 +86,6 @@ process::busy_wait(void)
          }
       } else
 #endif
- if(state::MACHINE->finished())
-         return false;
       
 #ifdef COMPILE_MPI   
       fetch_work();
@@ -78,6 +95,34 @@ process::busy_wait(void)
    return true;
 }
 
+void
+process::make_inactive(void)
+{
+   if(process_state == PROCESS_ACTIVE) {
+      mutex.lock();
+      if(process_state == PROCESS_ACTIVE) {
+         process_state = PROCESS_INACTIVE;
+         printf("Inactive\n");
+         state::MACHINE->process_is_inactive();
+      }
+      mutex.unlock();
+   }
+}
+
+void
+process::make_active(void)
+{
+   if(process_state == PROCESS_INACTIVE) {
+      mutex.lock();
+      if(process_state == PROCESS_INACTIVE) {
+         state::MACHINE->process_is_active();
+         process_state = PROCESS_ACTIVE;
+         printf("Active\n");
+      }
+      mutex.unlock();
+   }
+}
+
 bool
 process::get_work(work_unit& work)
 {
@@ -85,33 +130,16 @@ process::get_work(work_unit& work)
    fetch_work();
 #endif
    
-   if(queue.empty()) {
-      mutex.lock();
-
-      if(process_state == PROCESS_ACTIVE) {
-         process_state = PROCESS_INACTIVE;
-         state::MACHINE->process_is_inactive();
-      }
-      
-      mutex.unlock();
-    
+   if(queue_work.empty()) {
       if(!busy_wait())
          return false;
-      
-      mutex.lock();
-         
-      if(process_state == PROCESS_INACTIVE) {
-         state::MACHINE->process_is_active();
-         process_state = PROCESS_ACTIVE;
-      }
-   } else
-      mutex.lock();
+
+#ifdef MAKE_IT_STOP
+      make_active();
+#endif
+   }
    
-   work = queue.front();
-   
-   queue.pop_front();
-   
-   mutex.unlock();
+   work = queue_work.pop();
    
    return true;
 }
@@ -244,6 +272,7 @@ process::do_loop(void)
       } else
 #endif
       {
+         /*
          state::MACHINE->wait_aggregates();
          
          generate_aggs();
@@ -252,8 +281,13 @@ process::do_loop(void)
 
          if(state::MACHINE->finished())
             return;
+         */
       }
+      
+      break;
    }
+   
+   assert(queue_work.empty());
 }
 
 void
@@ -261,12 +295,14 @@ process::loop(void)
 {
    // start process pool
    mem::create_pool(get_id());
+   proc_ptr.reset(this);
    
    // enqueue init tuple
    predicate *init_pred(state.PROGRAM->get_init_predicate());
    
    for(list_nodes::iterator it(nodes.begin());
-      it != nodes.end(); ++it)
+      it != nodes.end();
+      ++it)
    {
       node *cur_node(*it);
       
@@ -288,10 +324,10 @@ process::start(void)
 
 process::process(const process_id& _id):
    nodes_interval(NULL), thread(NULL), id(_id),
-   state(this),
    process_state(PROCESS_ACTIVE),
    ended(false),
-   agg_checked(false)
+   agg_checked(false),
+   state(this)
 {
 }
 

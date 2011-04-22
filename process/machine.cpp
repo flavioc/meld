@@ -90,11 +90,18 @@ machine::start(void)
 }
 
 void
+machine::notify_all(void)
+{
+   for(size_t i(0); i < num_threads; ++i)
+      process_list[i]->notify();
+}
+
+void
 machine::process_is_active(void)
 {
    mutex::scoped_lock lock(active_mutex);
    
-   printf("Active\n");
+   //printf("Active\n");
    ++threads_active;
    
    if(threads_active == 1)
@@ -107,7 +114,7 @@ machine::process_is_inactive(void)
    mutex::scoped_lock lock(active_mutex);
    
    --threads_active;
-   printf("Inactive\n");
+   //printf("Inactive\n");
    
    if(threads_active == 0)
       state::ROUTER->update_status(router::REMOTE_IDLE);
