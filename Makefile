@@ -20,6 +20,13 @@ else
 	CXX = g++
 endif
 
+GCC_MINOR    := $(shell $(CXX) -v 2>&1 | \
+													grep " version " | cut -d' ' -f3  | cut -d'.' -f2)
+
+ifeq ($(GCC_MINOR),2)
+	CXXFLAGS += -DTEMPLATE_OPTIMIZERS=1
+endif
+
 LDFLAGS = $(PROFILING) $(LIBRARY_DIRS) $(LIBRARIES)
 COMPILE = $(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS)
 
