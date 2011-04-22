@@ -1,11 +1,16 @@
 #ifndef VM_TUPLE_HPP
 #define VM_TUPLE_HPP
 
+#include "conf.hpp"
+
 #include <ostream>
+#include <list>
+
+#ifdef COMPILE_MPI
 #include <boost/serialization/serialization.hpp>
 #include <boost/mpi/packed_iarchive.hpp>
 #include <boost/mpi/packed_oarchive.hpp>
-#include <list>
+#endif
 
 #include "vm/defs.hpp"
 #include "vm/predicate.hpp"
@@ -29,12 +34,14 @@ private:
 	predicate* pred;
    tuple_field *fields;
    
+#ifdef COMPILE_MPI
    friend class boost::serialization::access;
    
    void save(boost::mpi::packed_oarchive&, const unsigned int) const;    
    void load(boost::mpi::packed_iarchive&, const unsigned int);
    
    BOOST_SERIALIZATION_SPLIT_MEMBER()
+#endif
 
 public:
 

@@ -5,15 +5,22 @@ INCLUDE_DIRS = -I. -I/opt/local/include
 LIBRARY_DIRS = -L/opt/local/lib
 
 PROFILING = #-pg
-OPTIMIZATIONS = -O0
-DEBUG = -g
+OPTIMIZATIONS = -O3
+DEBUG = 
 WARNINGS = -Wall
 
 CFLAGS = $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) -m32
 CXXFLAGS = $(CFLAGS) #-std=c++0x
-LIBRARIES = -lpthread -lm -lmpi -lmpi_cxx -lboost_thread-mt -lboost_mpi-mt -lboost_serialization-mt
+LIBRARIES = -lpthread -lm -lboost_thread-mt
+
+ifneq ($(COMPILE_MPI),)
+	LIBRARIES += -lmpi -lmpi_cxx -lboost_serialization-mt -lboost_mpi-mt
+	CXX = mpic++
+else
+	CXX = g++
+endif
+
 LDFLAGS = $(PROFILING) $(LIBRARY_DIRS) $(LIBRARIES)
-CXX = mpic++
 COMPILE = $(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS)
 
 OBJS = utils/utils.o \

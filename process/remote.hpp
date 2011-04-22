@@ -2,13 +2,16 @@
 #ifndef PROCESS_REMOTE_HPP
 #define PROCESS_REMOTE_HPP
 
+#include "conf.hpp"
+
 #include <ostream>
+#ifdef COMPILE_MPI
 #include <boost/mpi.hpp>
+#endif
 #include <stdexcept>
 #include <vector>
 
 #include "process/process.hpp"
-#include "conf.hpp"
 #include "db/database.hpp"
 #include "db/node.hpp"
 

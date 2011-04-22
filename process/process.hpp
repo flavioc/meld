@@ -43,6 +43,7 @@ private:
    list_nodes nodes;
    vm::state state;
    work_queue queue;
+   volatile bool more_work;
    
    enum {
       PROCESS_ACTIVE,

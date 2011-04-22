@@ -2,9 +2,13 @@
 #ifndef PROCESS_ROUTER_HPP
 #define PROCESS_ROUTER_HPP
 
+#include "conf.hpp"
+
 #include <vector>
-#include <boost/mpi.hpp>
 #include <stdexcept>
+#ifdef COMPILE_MPI
+#include <boost/mpi.hpp>
+#endif
 
 #include "process/remote.hpp"
 #include "process/process.hpp"
@@ -41,9 +45,12 @@ private:
    
    size_t world_size;
    size_t nodes_per_remote;
+
+#ifdef COMPILE_MPI
    boost::mpi::environment *env;
    boost::mpi::communicator *world;
-   
+#endif
+
    void base_constructor(const size_t, int, char **);
    
 public:

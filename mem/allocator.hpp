@@ -4,9 +4,7 @@
 
 #include <limits>
 
-#include <typeinfo>
-#include <iostream>
-
+#include "conf.hpp"
 #include "mem/thread.hpp"
 
 namespace mem
@@ -46,19 +44,20 @@ public:
    inline const_pointer address(const_reference r) { return &r; }
    
    inline pointer allocate(size_type cnt,
-      typename std::allocator<void>::const_pointer = 0) {
-      //std::cout << "allocating " << typeid(T).name() << " size " << cnt << std::endl;
-      pool *pl(get_pool());
-      return reinterpret_cast<pointer>(pl->allocate(cnt * sizeof(T)));
-      //return reinterpret_cast<pointer>(::operator new(cnt * sizeof(T)));
+      typename std::allocator<void>::const_pointer = 0)
+   {
+      if(USE_ALLOCATOR)
+         return reinterpret_cast<pointer>(get_pool()->allocate(cnt * sizeof(T)));
+      else
+         return reinterpret_cast<pointer>(::operator new(cnt * sizeof(T)));
    }
    
-   inline void deallocate(pointer p, size_type cnt) {
-      pool *pl(get_pool());
-      
-      //std::cout << "deallocating " << p << " " << typeid(T).name() << " size " << cnt << std::endl;
-      //::operator delete(p);
-      pl->deallocate(p, cnt * sizeof(T));
+   inline void deallocate(pointer p, size_type cnt)
+   {
+      if(USE_ALLOCATOR)
+         get_pool()->deallocate(p, cnt * sizeof(T));
+      else
+         ::operator delete(p);
    }
    
    inline size_type max_size() const {

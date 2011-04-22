@@ -1,5 +1,4 @@
 #include <iostream>
-#include <boost/mpi.hpp>
 
 #include "process/machine.hpp"
 #include "vm/program.hpp"
@@ -95,6 +94,7 @@ machine::process_is_active(void)
 {
    mutex::scoped_lock lock(active_mutex);
    
+   printf("Active\n");
    ++threads_active;
    
    if(threads_active == 1)
@@ -107,6 +107,7 @@ machine::process_is_inactive(void)
    mutex::scoped_lock lock(active_mutex);
    
    --threads_active;
+   printf("Inactive\n");
    
    if(threads_active == 0)
       state::ROUTER->update_status(router::REMOTE_IDLE);

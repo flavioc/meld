@@ -2,18 +2,21 @@
 #ifndef PROCESS_MACHINE_HPP
 #define PROCESS_MACHINE_HPP
 
+#include "conf.hpp"
+
 #include <stdexcept>
 #include <string>
 #include <vector>
 #include <boost/thread/mutex.hpp>
-#include <boost/mpi.hpp>
 #include <boost/thread/barrier.hpp>
+#ifdef COMPILE_MPI
+#include <boost/mpi.hpp>
+#endif
 
 #include "db/database.hpp"
 #include "process/router.hpp"
 #include "db/tuple.hpp"
 #include "db/node.hpp"
-#include "conf.hpp"
 
 namespace process
 {

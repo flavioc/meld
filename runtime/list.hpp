@@ -1,10 +1,14 @@
 #ifndef LIST_HPP
 #define LIST_HPP
 
+#include "conf.hpp"
+
 #include <iostream>
+#ifdef COMPILE_MPI
 #include <boost/serialization/serialization.hpp>
 #include <boost/mpi/packed_iarchive.hpp>
 #include <boost/mpi/packed_oarchive.hpp>
+#endif
 
 #include "vm/defs.hpp"
 
@@ -28,6 +32,7 @@ private:
    
    ref_count refs;
    
+#ifdef COMPILE_MPI
    friend class boost::serialization::access;
    
    enum list_serialize { END_LIST = 0, ANOTHER_LIST = 1 };
@@ -53,7 +58,8 @@ private:
    }
    
    BOOST_SERIALIZATION_SPLIT_MEMBER()
-   
+#endif
+
 public:
    
    const T get_head(void) const { return head; }
@@ -101,6 +107,7 @@ public:
          ls->inc_refs();
    }
    
+#ifdef COMPILE_MPI
    static void save_list(boost::mpi::packed_oarchive& ar, const list_ptr ptr)
    {
       if(is_null(ptr)) {
@@ -125,6 +132,7 @@ public:
       
       return new cons(load_list(ar, false), head); 
    }
+#endif
    
    static inline void print(std::ostream& cout, list_ptr ls) {
       if(is_null(ls))

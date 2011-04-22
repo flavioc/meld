@@ -41,13 +41,15 @@ router::send(remote* rem, const process::process_id proc, const message& msg)
 {
    cout << "Sending to rem " << rem->get_rank() << " proc: " << proc << " TAG: " << get_thread_tag(proc) << ": ";
    cout << msg << endl;
-   
+#ifdef COMPILE_MPI
    world->send(rem->get_rank(), get_thread_tag(proc), msg);
+#endif
 }
 
 message*
 router::recv_attempt(const process::process_id proc)
 {
+#ifdef COMPILE_MPI
    mutex::scoped_lock l(mt);
    
    optional<mpi::status> stat(world->iprobe(mpi::any_source, get_thread_tag(proc)));
@@ -59,18 +61,23 @@ router::recv_attempt(const process::process_id proc)
       cout << "NEW MESSAGE " << *msg << endl;
       return msg;
    } else
+#endif
       return NULL;
 }
    
 remote*
 router::find_remote(const node::node_id id) const
 {
+#ifdef COMPILE_MPI
    if(!use_mpi())
       return remote::self;
       
    const remote::remote_id rem(min(id / nodes_per_remote, world_size-1));
 
    return remote_list[rem];
+#else
+   return remote::self;
+#endif
 }
 
 const bool
@@ -86,6 +93,7 @@ router::finished(void) const
 void
 router::fetch_updates(void)
 {
+#ifdef COMPILE_MPI
    optional<mpi::status> st;
    
    mutex::scoped_lock l(mt);
@@ -99,26 +107,32 @@ router::fetch_updates(void)
       
       cout << "RECEIVED STATE FROM " << stat.source() << ": " << state << endl;
    }
+#endif
 }
 
 void
 router::update_status(const remote_state state)
 {
+#ifdef COMPILE_MPI
    for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i)
       if(i != remote::self->get_rank())
          world->send(remote_list[i]->get_rank(), STATUS_TAG, state);
    remote_states[remote::self->get_rank()] = state;
+#endif
 }
 
 void
 router::finish(void)
 {
+#ifdef COMPILE_MPI
    world->barrier();
+#endif
 }
 
 void
 router::base_constructor(const size_t num_threads, int argc, char **argv)
 {
+#ifdef COMPILE_MPI
    if(USE_MPI && argv != NULL && argc > 0) {
       const int mpi_thread_support = MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
    
@@ -143,12 +157,16 @@ router::base_constructor(const size_t num_threads, int argc, char **argv)
       }
    
       state::REMOTE = remote::self = remote_list[world->rank()];
-   } else {
+   } else
+#endif
+   {
       world_size = 1;
       remote_list.resize(world_size);
       remote_list[0] = new remote(0, num_threads);
+#ifdef COMPILE_MPI
       env = NULL;
       world = NULL;
+#endif
       state::REMOTE = remote::self = remote_list[0];
    }
    
@@ -174,13 +192,15 @@ router::~router(void)
 {
    for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i)
       delete remote_list[i];
-   
+
+#ifdef COMPILE_MPI
    if(USE_MPI && world && env) {
       delete world;
       delete env;
    
       MPI::Finalize(); // must call this since MPI_Init_thread is not supported by boost
    }
+#endif
 }
 
 }

@@ -167,13 +167,15 @@ node::match_predicate(const predicate_id id) const
 
 node::~node(void)
 {
-   for(simple_tuple_map::iterator it(tuples.begin()); it != tuples.end(); ++it) {
-      simple_tuple_list& list(it->second);
+   if(!USE_ALLOCATOR) {
+      for(simple_tuple_map::iterator it(tuples.begin()); it != tuples.end(); ++it) {
+         simple_tuple_list& list(it->second);
       
-      for(simple_tuple_list::iterator it2(list.begin()); it2 != list.end(); ++it2) {
-         simple_tuple *stpl(*it2);
-         delete stpl->get_tuple();
-         delete stpl;
+         for(simple_tuple_list::iterator it2(list.begin()); it2 != list.end(); ++it2) {
+            simple_tuple *stpl(*it2);
+            delete stpl->get_tuple();
+            delete stpl;
+         }
       }
    }
 }

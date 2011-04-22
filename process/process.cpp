@@ -24,20 +24,106 @@ process::enqueue_work(node* node, const simple_tuple* stpl, const bool is_agg)
 {
    work_unit work = {node, stpl, is_agg};
    
-   mutex::scoped_lock lock(mutex);
-   
-   if(queue.empty() && process_state == PROCESS_INACTIVE) {
-      process_state = PROCESS_ACTIVE;
-      state::MACHINE->process_is_active();
+   if(process_state == PROCESS_INACTIVE) {
+      mutex::scoped_lock lock(mutex);
+      if(process_state == PROCESS_INACTIVE) {
+         process_state = PROCESS_ACTIVE;
+         state::MACHINE->process_is_active();
+      }
    }
    
-   queue.push_back(work);
+   {
+      mutex::scoped_lock lock(mutex);
+      more_work = true;
+      queue.push_back(work);
+   }
+}
+
+bool
+process::busy_wait(void)
+{  
+   while(!more_work) {
+      
+#ifdef COMPILE_MPI
+      if(get_id() == 0) {
+         update_remotes();
+      
+         if(state::MACHINE->finished() && state::ROUTER->finished()) {
+         
+            // wait a bit before making a good decision
+            boost::this_thread::sleep(boost::posix_time::millisec(25));
+         
+            fetch_work();
+         
+            if(!queue.empty())
+               return true;
+            
+            update_remotes();
+            
+            if(state::MACHINE->finished() && state::ROUTER->finished()) {
+               state::MACHINE->mark_finished();
+               printf("ENDING HERE %d\n", remote::self->get_rank());
+               return false;
+            }
+         }
+      } else
+#endif
+ if(state::MACHINE->finished())
+         return false;
+         
+      //fetch_work();
+   }
+   
+   return true;
+}
+
+bool
+process::get_work(work_unit& work)
+{
+#ifdef COMPILE_MPI
+   fetch_work();
+#endif
+   
+   if(!more_work) {
+      mutex.lock();
+
+      if(process_state == PROCESS_ACTIVE) {
+         process_state = PROCESS_INACTIVE;
+         state::MACHINE->process_is_inactive();
+      }
+      
+      mutex.unlock();
+    
+      if(!busy_wait())
+         return false;
+      
+      mutex.lock();
+         
+      if(process_state == PROCESS_INACTIVE) {
+         state::MACHINE->process_is_active();
+         process_state = PROCESS_ACTIVE;
+      }
+   } else
+      mutex.lock();
+   
+   work = queue.front();
+   
+   queue.pop_front();
+   
+   if(queue.empty()) {
+      more_work = false;
+   }
+   
+   mutex.unlock();
+   
+   return true;
 }
 
 void
 process::add_node(node *node)
 {
    nodes.push_back(node);
+   
    if(nodes_interval == NULL)
       nodes_interval = new interval<node::node_id>(node->get_id(), node->get_id());
    else
@@ -47,6 +133,7 @@ process::add_node(node *node)
 void
 process::fetch_work(void)
 {
+#ifdef COMPILE_MPI
    if(state::ROUTER->use_mpi()) {
       message *msg;
       
@@ -56,6 +143,7 @@ process::fetch_work(void)
          delete msg;
       }
    }
+#endif
 }
 
 void
@@ -107,85 +195,13 @@ process::do_work(node *node, const simple_tuple *_stuple, const bool ignore_agg)
 void
 process::update_remotes(void)
 {
+#ifdef COMPILE_MPI
    if(state::ROUTER->use_mpi() && get_id() == 0) {
       remote_mutex.lock();
       state::ROUTER->fetch_updates();
       remote_mutex.unlock();
    }
-}
-
-bool
-process::busy_wait(void)
-{  
-   while(queue.empty()) {
-      
-#if 0
-      if(get_id() == 0) {
-         update_remotes();
-      
-         if(state::MACHINE->finished() && state::ROUTER->finished()) {
-         
-            // wait a bit before making a good decision
-            boost::this_thread::sleep(boost::posix_time::millisec(25));
-         
-            fetch_work();
-         
-            if(!queue.empty())
-               return true;
-            
-            update_remotes();
-            
-            if(state::MACHINE->finished() && state::ROUTER->finished()) {
-               state::MACHINE->mark_finished();
-               printf("ENDING HERE %d\n", remote::self->get_rank());
-               return false;
-            }
-         }
-      } else
 #endif
- if(state::MACHINE->finished())
-         return false;
-         
-      fetch_work();
-   }
-   
-   return true;
-}
-
-bool
-process::get_work(work_unit& work)
-{
-   fetch_work();
-   
-   if(queue.empty()) {
-      mutex.lock();
-      
-      if(process_state == PROCESS_ACTIVE) {
-         process_state = PROCESS_INACTIVE;
-         state::MACHINE->process_is_inactive();
-      }
-      
-      mutex.unlock();
-    
-      if(!busy_wait())
-         return false;
-      
-      mutex.lock();
-         
-      if(process_state == PROCESS_INACTIVE) {
-         state::MACHINE->process_is_active();
-         process_state = PROCESS_ACTIVE;
-      }
-   } else
-      mutex.lock();
-   
-   work = queue.front();
-   
-   queue.pop_front();
-   
-   mutex.unlock();
-   
-   return true;
 }
 
 void
@@ -216,6 +232,7 @@ process::do_loop(void)
       while(get_work(work))
          do_work(work.work_node, work.work_tpl, work.agg);
    
+#ifdef COMPILE_MPI
       if(state::ROUTER->use_mpi()) {
          ended = true;
 
@@ -227,7 +244,9 @@ process::do_loop(void)
          }
          
          return;
-      } else {
+      } else
+#endif
+      {
          state::MACHINE->wait_aggregates();
          
          generate_aggs();
@@ -273,6 +292,7 @@ process::start(void)
 process::process(const process_id& _id):
    nodes_interval(NULL), thread(NULL), id(_id),
    state(this),
+   more_work(true),
    process_state(PROCESS_ACTIVE),
    ended(false),
    agg_checked(false)

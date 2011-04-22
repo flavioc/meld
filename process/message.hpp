@@ -2,9 +2,14 @@
 #ifndef PROCESS_MESSAGE_HPP
 #define PROCESS_MESSAGE_HPP
 
+#include "conf.hpp"
+
+#ifdef COMPILE_MPI
 #include <boost/serialization/serialization.hpp>
 #include <boost/mpi/packed_iarchive.hpp>
 #include <boost/mpi/packed_oarchive.hpp>
+#endif
+
 #include <ostream>
 
 #include "db/node.hpp"
@@ -16,7 +21,8 @@ namespace process
 class message
 {
 private:
-   
+
+#ifdef COMPILE_MPI
    friend class boost::serialization::access;
    
    inline void save(boost::mpi::packed_oarchive& ar, const unsigned int) const
@@ -34,7 +40,8 @@ private:
    }
    
    BOOST_SERIALIZATION_SPLIT_MEMBER()
-   
+#endif
+
 public:
    
    db::node::node_id id;

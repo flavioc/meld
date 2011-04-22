@@ -8,7 +8,8 @@ namespace mem
 class chunk
 {
 private:
-   static const size_t NUM_ELEMS = 128;
+   
+   static const size_t NUM_ELEMS = 64;
    
    unsigned char *cur;
    unsigned char *bottom;

@@ -122,6 +122,7 @@ tuple::~tuple(void)
    delete []fields;
 }
 
+#ifdef COMPILE_MPI
 void
 tuple::save(mpi::packed_oarchive & ar, const unsigned int version) const
 {
@@ -209,6 +210,7 @@ tuple::load(mpi::packed_iarchive& ar, const unsigned int version)
       }
    }
 }
+#endif
 
 ostream& operator<<(ostream& cout, const tuple& tuple)
 {

@@ -2,12 +2,17 @@
 #ifndef DB_TUPLE_HPP
 #define DB_TUPLE_HPP
 
+#include "conf.hpp"
+
 #include <vector>
 #include <ostream>
 #include <list>
+
+#ifdef COMPILE_MPI
 #include <boost/serialization/serialization.hpp>
 #include <boost/mpi/packed_iarchive.hpp>
 #include <boost/mpi/packed_oarchive.hpp>
+#endif
 
 #include "vm/defs.hpp"
 #include "vm/predicate.hpp"
@@ -82,12 +87,14 @@ private:
    
    vm::ref_count count;
    
+#ifdef COMPILE_MPI
    friend class boost::serialization::access;
    
    void save(boost::mpi::packed_oarchive&, const unsigned int) const;
    void load(boost::mpi::packed_iarchive&, const unsigned int);
    
    BOOST_SERIALIZATION_SPLIT_MEMBER()
+#endif
    
 public:
    

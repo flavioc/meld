@@ -9,7 +9,8 @@ using namespace boost;
 
 namespace db
 {
-   
+
+#ifdef COMPILE_MPI
 void
 simple_tuple::save(mpi::packed_oarchive& ar, const unsigned int version) const
 {
@@ -25,6 +26,7 @@ simple_tuple::load(mpi::packed_iarchive& ar, const unsigned int version)
    ar & *data;
    ar & count;
 }
+#endif
 
 simple_tuple::~simple_tuple(void)
 {
