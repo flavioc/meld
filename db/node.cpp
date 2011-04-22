@@ -49,7 +49,6 @@ node::add_tuple(vm::tuple *tpl, ref_count many)
    simple_tuple *found(look_for_simple_tuple(list, tpl));
    
    if(found != NULL) {
-      cout << "FOUND tuple " << *tpl << endl;
       found->inc_count(many);
       return false;
    } else {
@@ -184,7 +183,7 @@ void
 node::print(ostream& cout) const
 {
    cout << "--> node " << get_translated_id() << "/" << get_id()
-        << " (" << (addr_val)real_id() << ") <--" << endl;
+        << " (" << this << ") <--" << endl;
    
    for(simple_tuple_map::const_iterator it(tuples.begin());
       it != tuples.end();

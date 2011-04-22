@@ -34,7 +34,6 @@ process::enqueue_work(node* node, const simple_tuple* stpl, const bool is_agg)
    
    {
       mutex::scoped_lock lock(mutex);
-      more_work = true;
       queue.push_back(work);
    }
 }
@@ -42,7 +41,7 @@ process::enqueue_work(node* node, const simple_tuple* stpl, const bool is_agg)
 bool
 process::busy_wait(void)
 {  
-   while(!more_work) {
+   while(queue.empty()) {
       
 #ifdef COMPILE_MPI
       if(get_id() == 0) {
@@ -70,8 +69,10 @@ process::busy_wait(void)
 #endif
  if(state::MACHINE->finished())
          return false;
-         
-      //fetch_work();
+      
+#ifdef COMPILE_MPI   
+      fetch_work();
+#endif
    }
    
    return true;
@@ -84,7 +85,7 @@ process::get_work(work_unit& work)
    fetch_work();
 #endif
    
-   if(!more_work) {
+   if(queue.empty()) {
       mutex.lock();
 
       if(process_state == PROCESS_ACTIVE) {
@@ -109,10 +110,6 @@ process::get_work(work_unit& work)
    work = queue.front();
    
    queue.pop_front();
-   
-   if(queue.empty()) {
-      more_work = false;
-   }
    
    mutex.unlock();
    
@@ -292,7 +289,6 @@ process::start(void)
 process::process(const process_id& _id):
    nodes_interval(NULL), thread(NULL), id(_id),
    state(this),
-   more_work(true),
    process_state(PROCESS_ACTIVE),
    ended(false),
    agg_checked(false)

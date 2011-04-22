@@ -20,7 +20,7 @@ const size_t field_size = 2;
 const size_t iter_match_size = 2;
 const size_t int_size = sizeof(int_val);
 const size_t float_size = sizeof(float_val);
-const size_t addr_size = sizeof(addr_val);
+const size_t node_size = sizeof(node_val);
 
 const size_t SEND_BASE           = 3;
 const size_t OP_BASE             = 5;
@@ -112,7 +112,7 @@ inline bool val_is_int(const instr_val x) { return x == 0x01; }
 inline bool val_is_field(const instr_val x) { return x == 0x02; }
 inline bool val_is_host(const instr_val x) { return x == 0x03; }
 inline bool val_is_nil(const instr_val x) { return x == 0x04; }
-inline bool val_is_addr(const instr_val x) { return x == 0x05; }
+inline bool val_is_node(const instr_val x) { return x == 0x05; }
 
 inline reg_num val_reg(const instr_val x) { return x & 0x1f; }
 inline field_num val_field_num(const pcounter x) { return *x & 0xff; }
@@ -121,13 +121,13 @@ inline reg_num val_field_reg(const pcounter x) { return *(x + 1) & 0x1f; }
 inline int_val pcounter_int(pcounter pc) { return *(int_val *)pc; }
 inline code_size_t pcounter_code_size(pcounter pc) { return *(code_size_t *)pc; }
 inline float_val pcounter_float(pcounter pc) { return *(float_val *)pc; }
-inline addr_val pcounter_addr(pcounter pc) { return *(addr_val *)pc; }
+inline node_val pcounter_node(pcounter pc) { return *(node_val *)pc; }
 
 inline void pcounter_move_field(pcounter *pc) { *pc = *pc + field_size; }
 inline void pcounter_move_int(pcounter *pc) { *pc = *pc + int_size; }
 inline void pcounter_move_float(pcounter *pc) { *pc = *pc + float_size; }
 inline void pcounter_move_match(pcounter *pc) { *pc = *pc + iter_match_size; }
-inline void pcounter_move_addr(pcounter *pc) { *pc = *pc + addr_size; }
+inline void pcounter_move_node(pcounter *pc) { *pc = *pc + node_size; }
 
 /* common instruction functions */
 
@@ -205,7 +205,7 @@ inline field_type get_list_type(pcounter pc, size_t off) {
    switch(*(pc + off)) {
       case 0: return FIELD_LIST_INT;
       case 1: return FIELD_LIST_FLOAT;
-      case 2: return FIELD_LIST_ADDR;
+      case 2: return FIELD_LIST_NODE;
    }
    return FIELD_LIST_INT;
 }
@@ -237,7 +237,7 @@ inline instr_val not_dest(pcounter pc) { return val_get(pc, 2); }
 inline code_size_t select_size(pcounter pc) { return pcounter_code_size(pc + 1); }
 inline size_t select_hash_size(pcounter pc) { return (size_t)pcounter_code_size(pc + 1 + sizeof(code_size_t)); }
 inline pcounter select_hash_start(pcounter pc) { return pc + SELECT_BASE; }
-inline code_offset_t select_hash(pcounter hash_start, const addr_val val) { return pcounter_code_size(hash_start + sizeof(code_size_t)*val); }
+inline code_offset_t select_hash(pcounter hash_start, const node_val val) { return pcounter_code_size(hash_start + sizeof(code_size_t)*val); }
 inline pcounter select_hash_code(pcounter hash_start, const size_t hash_size, const code_offset_t hashed) {
    return hash_start + hash_size*sizeof(code_size_t) + hashed - 1;
 }
@@ -278,8 +278,8 @@ static inline size_t arg_size<ARGUMENT_ANYTHING>(instr_val v)
       return 0;
    else if(val_is_tuple(v))
       return 0;
-   else if(val_is_addr(v))
-      return addr_size;
+   else if(val_is_node(v))
+      return node_size;
    else
       throw malformed_instr_error("invalid instruction argument value");
 }
@@ -299,8 +299,8 @@ static inline size_t arg_size<ARGUMENT_ANYTHING_NOT_NIL>(instr_val v)
       return 0;
    else if(val_is_tuple(v))
       return 0;
-   else if(val_is_addr(v))
-      return addr_size;
+   else if(val_is_node(v))
+      return node_size;
    else {
       throw malformed_instr_error("invalid instruction argument value");
    }
@@ -356,8 +356,8 @@ static inline size_t arg_size<ARGUMENT_NON_LIST>(instr_val v)
       return 0;
    else if(val_is_host(v))
       return 0;
-   else if(val_is_addr(v))
-      return addr_size;
+   else if(val_is_node(v))
+      return node_size;
    else
       throw malformed_instr_error("invalid instruction non-list value");
 }

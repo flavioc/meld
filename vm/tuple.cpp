@@ -45,12 +45,12 @@ tuple::field_equal(const tuple& other, const field_num i) const
          if(!float_list::equal(get_float_list(i), other.get_float_list(i)))
             return false;
          break;
-      case FIELD_LIST_ADDR:
-         if(!addr_list::equal(get_addr_list(i), other.get_addr_list(i)))
+      case FIELD_LIST_NODE:
+         if(!node_list::equal(get_node_list(i), other.get_node_list(i)))
             return false;
          break;
-      case FIELD_ADDR:
-         if(get_addr(i) != other.get_addr(i))
+      case FIELD_NODE:
+         if(get_node(i) != other.get_node(i))
             return false;
          break;
       default:
@@ -92,14 +92,12 @@ tuple::print(ostream& cout) const
          case FIELD_LIST_FLOAT:
             float_list::print(cout, get_float_list(i));
             break;
-         case FIELD_LIST_ADDR:
-            addr_list::print(cout, get_addr_list(i));
+         case FIELD_LIST_NODE:
+            node_list::print(cout, get_node_list(i));
             break;
-         case FIELD_ADDR:
-            cout << "@" << get_addr(i);
+         case FIELD_NODE:
+            cout << "@" << get_node(i);
             break;
-         case FIELD_SET_INT:
-         case FIELD_SET_FLOAT:
          default:
             throw type_error("Unrecognized field type " + number_to_string(i));
       }
@@ -114,7 +112,7 @@ tuple::~tuple(void)
       switch(get_field_type(i)) {
          case FIELD_LIST_INT: int_list::dec_refs(get_int_list(i)); break;
          case FIELD_LIST_FLOAT: float_list::dec_refs(get_float_list(i)); break;
-         case FIELD_LIST_ADDR: addr_list::dec_refs(get_addr_list(i)); break;
+         case FIELD_LIST_NODE: node_list::dec_refs(get_node_list(i)); break;
          default: break;
       }
    }
@@ -140,8 +138,8 @@ tuple::save(mpi::packed_oarchive & ar, const unsigned int version) const
                ar & val;
             }
             break;
-         case FIELD_ADDR: {
-               addr_val val(get_addr(i));
+         case FIELD_NODE: {
+               node_val val(get_node(i));
                ar & val;
             }
             break;
@@ -151,8 +149,8 @@ tuple::save(mpi::packed_oarchive & ar, const unsigned int version) const
          case FIELD_LIST_FLOAT:
             float_list::save_list(ar, get_float_list(i));
             break;
-         case FIELD_LIST_ADDR:
-            addr_list::save_list(ar, get_addr_list(i));
+         case FIELD_LIST_NODE:
+            node_list::save_list(ar, get_node_list(i));
             break;
          default:
             throw type_error("unsupported field number " + number_to_string(i));
@@ -188,10 +186,10 @@ tuple::load(mpi::packed_iarchive& ar, const unsigned int version)
                set_float(i, val);
             }
             break;
-         case FIELD_ADDR: {
-               addr_val val;
+         case FIELD_NODE: {
+               node_val val;
                ar & val;
-               set_addr(i, val);
+               set_node(i, val);
             }
             break;
          case FIELD_LIST_INT:
@@ -200,11 +198,9 @@ tuple::load(mpi::packed_iarchive& ar, const unsigned int version)
          case FIELD_LIST_FLOAT:
             set_float_list(i, float_list::load_list(ar));
             break;
-         case FIELD_LIST_ADDR:
-            set_addr_list(i, addr_list::load_list(ar));
+         case FIELD_LIST_NODE:
+            set_node_list(i, node_list::load_list(ar));
             break;
-         case FIELD_SET_INT:
-         case FIELD_SET_FLOAT:
          default:
             throw type_error("unsupported field number " + number_to_string(i));
       }

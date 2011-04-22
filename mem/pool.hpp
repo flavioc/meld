@@ -15,7 +15,7 @@ class pool
 private:
    
    static const size_t ATOM_SIZE = 4;
-   static const size_t MAX_OBJECT = 64;
+   static const size_t MAX_OBJECT = 256;
    static const size_t MAX_OBJECT_SIZE = MAX_OBJECT * ATOM_SIZE;
    
    typedef std::vector<chunkgroup*> chunk_vector;
@@ -25,6 +25,10 @@ private:
    size_t get_group(const size_t size)
    {
       assert(size != 0);
+      if(size > MAX_OBJECT_SIZE) {
+         printf("%d\n", size);
+         exit(1);
+      }
       assert(size <= MAX_OBJECT_SIZE);
       
       assert(size % 4 == 0);

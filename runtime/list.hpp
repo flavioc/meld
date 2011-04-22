@@ -174,7 +174,7 @@ operator<<(std::ostream& cout, const cons<T>& ls)
 
 typedef cons<vm::int_val> int_list;
 typedef cons<vm::float_val> float_list;
-typedef cons<vm::addr_val> addr_list;
+typedef cons<vm::node_val> node_list;
 
 }
 

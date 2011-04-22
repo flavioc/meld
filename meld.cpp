@@ -27,7 +27,7 @@ help(void)
   fprintf(stderr, "meld: execute meld program\n");
   fprintf(stderr, "\t-f <name>:\tmeld program\n");
   fprintf(stderr, "\t-t <threads>:\tnumber of threads\n");
-  fprintf(stderr, "\t-s shows database");
+  fprintf(stderr, "\t-s shows database\n");
 
   exit(EXIT_SUCCESS);
 }

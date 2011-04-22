@@ -12,6 +12,7 @@
 #include "vm/predicate.hpp"
 #include "db/tuple.hpp"
 #include "mem/allocator.hpp"
+#include "vm/defs.hpp"
 
 namespace db {
 
@@ -19,7 +20,7 @@ class node
 {
 public:
    
-   typedef unsigned long int node_id;
+   typedef vm::node_val node_id;
    
    typedef std::list<simple_tuple*, mem::allocator<simple_tuple*> > simple_tuple_list;
    typedef std::vector<vm::tuple*, mem::allocator<vm::tuple*> > tuple_vector;
@@ -51,7 +52,6 @@ private:
 	
 public:
    
-   inline node_id real_id(void) const { return (node_id)this; }
    inline node_id get_id(void) const { return id; }
    inline node_id get_translated_id(void) const { return translation; }
    

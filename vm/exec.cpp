@@ -26,20 +26,20 @@ enum return_type {
 
 static inline return_type execute(pcounter, state&);
 
-static inline addr_val
-get_node_addr(pcounter& m, state& state)
+static inline node_val
+get_node_val(pcounter& m, state& state)
 {
-   const addr_val ret(pcounter_addr(m));
+   const node_val ret(pcounter_node(m));
    
-   pcounter_move_addr(&m);
+   pcounter_move_node(&m);
    
    return ret;
 }
 
-static inline addr_val
-get_node_addr(const pcounter& m, state& state)
+static inline node_val
+get_node_val(const pcounter& m, state& state)
 {
-   return pcounter_addr(m);
+   return pcounter_node(m);
 }
 
 static inline void
@@ -60,18 +60,18 @@ move_to_reg(const pcounter& m, state& state,
          case FIELD_FLOAT: state.set_int(reg, tuple->get_float(field)); break;
          case FIELD_LIST_INT: state.set_int_list(reg, tuple->get_int_list(field)); break;
          case FIELD_LIST_FLOAT: state.set_float_list(reg, tuple->get_float_list(field)); break;
-         case FIELD_LIST_ADDR: state.set_addr_list(reg, tuple->get_addr_list(field)); break;
-         default: state.set_addr(reg, tuple->get_addr(field)); break;
+         case FIELD_LIST_NODE: state.set_node_list(reg, tuple->get_node_list(field)); break;
+         case FIELD_NODE: state.set_node(reg, tuple->get_node(field)); break;
       }
       
    } else if(val_is_host(from))
-      state.set_addr(reg, (addr_val)state.node->get_id());
-   else if(val_is_addr(from))
-      state.set_addr(reg, get_node_addr(m, state));
+      state.set_node(reg, state.node->get_id());
+   else if(val_is_node(from))
+      state.set_node(reg, get_node_val(m, state));
    else if(val_is_reg(from))
       state.copy_reg(val_reg(from), reg);
    else if(val_is_tuple(from))
-      state.set_addr(reg, (addr_val)state.tuple);
+      state.set_tuple(reg, state.tuple);
    else {
       throw vm_exec_error("invalid move to reg");
    }
@@ -96,12 +96,12 @@ move_to_field(pcounter m, state& state, const instr_val& from)
       tuple *tuple(state.get_tuple(val_field_reg(m)));
       
       tuple->set_int(val_field_num(m), i);
-   } else if(val_is_addr(from)) {
-      const addr_val val(get_node_addr(m, state));
+   } else if(val_is_node(from)) {
+      const node_val val(get_node_val(m, state));
       
       tuple *tuple(state.get_tuple(val_field_reg(m)));
       
-      tuple->set_addr(val_field_num(m), val);
+      tuple->set_node(val_field_num(m), val);
    } else if(val_is_field(from)) {
       const tuple *from_tuple(state.get_tuple(val_field_reg(m)));
       const field_num from_field(val_field_num(m));
@@ -124,11 +124,11 @@ move_to_field(pcounter m, state& state, const instr_val& from)
          case FIELD_LIST_FLOAT:
             to_tuple->set_float_list(to_field, from_tuple->get_float_list(from_field));
             break;
-         case FIELD_LIST_ADDR:
-            to_tuple->set_addr_list(to_field, from_tuple->get_addr_list(from_field));
+         case FIELD_LIST_NODE:
+            to_tuple->set_node_list(to_field, from_tuple->get_node_list(from_field));
             break;
-         default:
-            to_tuple->set_addr(to_field, from_tuple->get_addr(from_field));
+         case FIELD_NODE:
+            to_tuple->set_node(to_field, from_tuple->get_node(from_field));
             break;
       }
    } else {
@@ -136,7 +136,7 @@ move_to_field(pcounter m, state& state, const instr_val& from)
       const field_num field(val_field_num(m));
       
       if(val_is_host(from))
-         tuple->set_addr(field, (addr_val)state.node->get_id());
+         tuple->set_node(field, state.node->get_id());
       else if(val_is_reg(from)) {
          const reg_num reg(val_reg(from));
          
@@ -147,8 +147,8 @@ move_to_field(pcounter m, state& state, const instr_val& from)
             case FIELD_FLOAT:
                tuple->set_float(field, state.get_float(reg));
                break;
-            case FIELD_ADDR:
-               tuple->set_addr(field, state.get_addr(reg));
+            case FIELD_NODE:
+               tuple->set_node(field, state.get_node(reg));
                break;
             case FIELD_LIST_INT:
                tuple->set_int_list(field, state.get_int_list(reg));
@@ -156,8 +156,8 @@ move_to_field(pcounter m, state& state, const instr_val& from)
             case FIELD_LIST_FLOAT:
                tuple->set_float_list(field, state.get_float_list(reg));
                break;
-            case FIELD_LIST_ADDR:
-               tuple->set_addr_list(field, state.get_addr_list(reg));
+            case FIELD_LIST_NODE:
+               tuple->set_node_list(field, state.get_node_list(reg));
                break;
             default: throw vm_exec_error("do not know how to move reg to this tuple field");
          }
@@ -192,11 +192,11 @@ execute_send(const pcounter& pc, state& state)
 {
    const reg_num msg(send_msg(pc));
    const reg_num dest(send_dest(pc));
-   const addr_val dest_val(state.get_addr(dest));
+   const node_val dest_val(state.get_node(dest));
    tuple *tuple(state.get_tuple(msg));
    const simple_tuple *stuple(new simple_tuple(tuple, state.count));
    
-   if(dest_val == (addr_val)tuple)
+   if(msg == dest)
       // send to self
       state.proc->enqueue_work(state.node, stuple);
    else
@@ -247,23 +247,39 @@ int_val get_op_function<int_val>(const instr_val& val, pcounter& m, state& state
 }
 
 template <>
-addr_val get_op_function<addr_val>(const instr_val& val, pcounter& m, state& state)
+node_val get_op_function<node_val>(const instr_val& val, pcounter& m, state& state)
 {
    if(val_is_host(val))
-      return (addr_val)state.node->get_id();
-   else if(val_is_addr(val))
-      return get_node_addr(m, state);
+      return state.node->get_id();
+   else if(val_is_node(val))
+      return get_node_val(m, state);
    else if(val_is_reg(val))
-      return state.get_addr(val_reg(val));
+      return state.get_node(val_reg(val));
    else if(val_is_field(val)) {
       const tuple *tuple(state.get_tuple(val_field_reg(m)));
       const field_num field(val_field_num(m));
       
       pcounter_move_field(&m);
       
-      return tuple->get_addr(field);
+      return tuple->get_node(field);
    } else
-      throw vm_exec_error("invalid addr for addr op");
+      throw vm_exec_error("invalid node for node op");
+}
+
+template <>
+ptr_val get_op_function<ptr_val>(const instr_val& val, pcounter& m, state& state)
+{
+   if(val_is_reg(val))
+      return state.get_ptr(val_reg(val));
+   else if(val_is_field(val)) {
+      const tuple *tuple(state.get_tuple(val_field_reg(m)));
+      const field_num field(val_field_num(m));
+      
+      pcounter_move_field(&m);
+      
+      return tuple->get_ptr(field);
+   } else
+      throw vm_exec_error("invalid ptr for ptr op");
 }
 
 template <>
@@ -303,19 +319,19 @@ float_list* get_op_function<float_list*>(const instr_val& val, pcounter& m, stat
 }
 
 template <>
-addr_list* get_op_function<addr_list*>(const instr_val& val, pcounter& m, state& state)
+node_list* get_op_function<node_list*>(const instr_val& val, pcounter& m, state& state)
 {
    if(val_is_reg(val))
-      return state.get_addr_list(val_reg(val));
+      return state.get_node_list(val_reg(val));
    else if(val_is_field(val)) {
       const tuple *tuple(state.get_tuple(val_field_reg(m)));
       const field_num field(val_field_num(m));
       
       pcounter_move_field(&m);
       
-      return tuple->get_addr_list(field);
+      return tuple->get_node_list(field);
    } else if(val_is_nil(val))
-      return addr_list::null_list();
+      return node_list::null_list();
    else
       throw vm_exec_error("unable to get an addr list");
 }
@@ -369,16 +385,16 @@ void set_op_function<float_val>(const pcounter& m, const instr_val& dest,
 }
 
 template <>
-void set_op_function<addr_val>(const pcounter& m, const instr_val& dest,
-   addr_val val, state& state)
+void set_op_function<node_val>(const pcounter& m, const instr_val& dest,
+   node_val val, state& state)
 {
    if(val_is_reg(dest))
-      state.set_addr(val_reg(dest), val);
+      state.set_node(val_reg(dest), val);
    else if(val_is_field(dest)) {
       tuple *tuple(state.get_tuple(val_field_reg(m)));
       const field_num field(val_field_num(m));
       
-      tuple->set_addr(field, val);
+      tuple->set_node(field, val);
    } else
       throw vm_exec_error("invalid destination for addr value");
 }
@@ -414,16 +430,16 @@ void set_op_function<float_list*>(const pcounter& m, const instr_val& dest,
 }
 
 template <>
-void set_op_function<addr_list*>(const pcounter& m, const instr_val& dest,
-   addr_list* val, state& state)
+void set_op_function<node_list*>(const pcounter& m, const instr_val& dest,
+   node_list* val, state& state)
 {
    if(val_is_reg(dest))
-      state.set_addr_list(val_reg(dest), val);
+      state.set_node_list(val_reg(dest), val);
    else if(val_is_field(dest)) {
       tuple *tuple(state.get_tuple(val_field_reg(m)));
       const field_num field(val_field_num(m));
       
-      tuple->set_addr_list(field, val);
+      tuple->set_node_list(field, val);
    } else
       throw vm_exec_error("invalid destination for addr list value");
 }
@@ -467,8 +483,8 @@ execute_op(const pcounter& pc, state& state)
       case OP_TIMESI: implement_operation(int_val, int_val, v1 * v2);
       case OP_DIVF: implement_operation(float_val, float_val, v1 / v2);
       case OP_DIVI: implement_operation(int_val, int_val, v1 / v2);
-      case OP_NEQA: implement_operation(addr_val, bool_val, v1 != v2);
-      case OP_EQA: implement_operation(addr_val, bool_val, v1 == v2);
+      case OP_NEQA: implement_operation(node_val, bool_val, v1 != v2);
+      case OP_EQA: implement_operation(node_val, bool_val, v1 == v2);
       case OP_EQLINT: throw vm_exec_error("OP_EQLINT must be removed");
    }
 #undef implement_operation
@@ -515,7 +531,7 @@ do_match(const tuple *tuple, const field_num& field, const instr_val& val,
       switch(tuple->get_field_type(field)) {
          case FIELD_INT: return tuple->get_int(field) == state.get_int(reg);
          case FIELD_FLOAT: return tuple->get_float(field) == state.get_float(reg);
-         default: return tuple->get_addr(field) == state.get_addr(reg);
+         case FIELD_NODE: return tuple->get_node(field) == state.get_node(reg);
       }
    } else if(val_is_field(val)) {
       const vm::tuple *tuple2(state.get_tuple(val_field_reg(pc)));
@@ -526,12 +542,12 @@ do_match(const tuple *tuple, const field_num& field, const instr_val& val,
       switch(tuple->get_field_type(field)) {
          case FIELD_INT: return tuple->get_int(field) == tuple2->get_int(field2);
          case FIELD_FLOAT: return tuple->get_float(field) == tuple2->get_float(field2);
-         default: return tuple->get_addr(field) == tuple2->get_addr(field2);
+         case FIELD_NODE: return tuple->get_node(field) == tuple2->get_node(field2);
       }
    } else if(val_is_nil(val))
       throw vm_exec_error("match for NIL not implemented XXX");
    else if(val_is_host(val))
-      return tuple->get_addr(field) == (addr_val)state.node->get_id();
+      return tuple->get_node(field) == state.node->get_id();
    else if(val_is_int(val)) {
       const int_val i(pcounter_int(pc));
       
@@ -629,7 +645,7 @@ execute_cons(pcounter pc, state& state)
    switch(cons_type(pc)) {
       case FIELD_LIST_INT: implement_cons(int_val, int_list);
       case FIELD_LIST_FLOAT: implement_cons(float_val, float_list);
-      case FIELD_LIST_ADDR: implement_cons(addr_val, addr_list);
+      case FIELD_LIST_NODE: implement_cons(node_val, node_list);
       default: break; // does not happen
    }
 #undef implement_cons
@@ -643,9 +659,9 @@ execute_test_nil(pcounter pc, state& state)
    
    pc += TEST_NIL_BASE;
    
-   const addr_val val(get_op_function<addr_val>(op, pc, state));
+   const ptr_val val(get_op_function<ptr_val>(op, pc, state));
    
-   set_op_function(pc, dest, val == null_addr_val, state);
+   set_op_function(pc, dest, val == null_ptr_val, state);
 }
 
 static inline void
@@ -665,7 +681,7 @@ execute_tail(pcounter& pc, state& state)
    switch(tail_type(pc)) {
       case FIELD_LIST_INT: implement_tail(int_list);
       case FIELD_LIST_FLOAT: implement_tail(float_list);
-      case FIELD_LIST_ADDR: implement_tail(addr_list);
+      case FIELD_LIST_NODE: implement_tail(node_list);
       default: throw vm_exec_error("unknown list type in tail");
    }
 #undef implement_tail
@@ -688,7 +704,7 @@ execute_head(pcounter& pc, state& state)
    switch(head_type(pc)) {
       case FIELD_LIST_INT: implement_head(int_list, int_val);
       case FIELD_LIST_FLOAT: implement_head(float_list, float_val);
-      case FIELD_LIST_ADDR: implement_head(addr_list, addr_val);
+      case FIELD_LIST_NODE: implement_head(node_list, node_val);
       default: throw vm_exec_error("unknown list type in head");
    }
 #undef implement_head

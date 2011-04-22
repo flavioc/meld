@@ -31,7 +31,7 @@ machine::route(const node::node_id id, const simple_tuple* stuple)
       
       assert(rout.use_mpi());
       
-      printf("On remote machine: %ld\n", id);
+      printf("On remote machine: %d\n", id);
       
       message msg(id, stuple);
       

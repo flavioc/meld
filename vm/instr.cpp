@@ -70,9 +70,9 @@ val_string(const instr_val v, pcounter *pm)
       const string ret(number_to_string(pcounter_float(*pm)));
       pcounter_move_float(pm);
       return ret;
-   } else if(val_is_addr(v)) {
-      const string ret(string("addr(") + number_to_string((int_val)pcounter_addr(*pm)) + ")");
-      pcounter_move_addr(pm);
+   } else if(val_is_node(v)) {
+      const string ret(string("@") + number_to_string(pcounter_node(*pm)));
+      pcounter_move_node(pm);
       return ret;
    }
    

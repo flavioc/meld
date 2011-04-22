@@ -49,13 +49,13 @@ public:
    define_get(reg, reg, return regs[num]);
    define_get(int, const int_val, return *(int_val*)(regs + num));
    define_get(float, const float_val, return *(float_val*)(regs + num));
-   define_get(addr, const addr_val, return *(addr_val*)(regs + num));
+   define_get(ptr, const ptr_val, return *(ptr_val*)(regs + num));
    define_get(bool, const bool_val, return get_int(num) ? true : false);
-   define_get(int_list, runtime::int_list*, return (runtime::int_list*)get_addr(num));
-   define_get(float_list, runtime::float_list*, return (runtime::float_list*)get_addr(num));
-   define_get(addr_list, runtime::addr_list*, return (runtime::addr_list*)get_addr(num));
-   define_get(tuple, vm::tuple*, return (vm::tuple*)get_addr(num));
-   define_get(node, db::node*, return (db::node*)get_addr(num));
+   define_get(int_list, runtime::int_list*, return (runtime::int_list*)get_ptr(num));
+   define_get(float_list, runtime::float_list*, return (runtime::float_list*)get_ptr(num));
+   define_get(node_list, runtime::node_list*, return (runtime::node_list*)get_ptr(num));
+   define_get(tuple, vm::tuple*, return (vm::tuple*)get_ptr(num));
+   define_get(node, vm::node_val, return *(node_val *)(regs + num));
    
 #undef define_get
 
@@ -64,16 +64,17 @@ public:
    
    define_set(float, const float_val&, *(float_val*)(regs + num) = val);
    define_set(int, const int_val&, *(int_val*)(regs + num) = val);
-   define_set(addr, const addr_val&, *(addr_val*)(regs + num) = val);
+   define_set(ptr, const ptr_val&, *(ptr_val*)(regs + num) = val);
    define_set(bool, const bool_val&, set_int(num, val ? 1 : 0));
-   define_set(int_list, runtime::int_list*, set_addr(num, (addr_val)val));
-   define_set(float_list, runtime::float_list*, set_addr(num, (addr_val)val));
-   define_set(addr_list, runtime::addr_list*, set_addr(num, (addr_val)val));
-   define_set(tuple, vm::tuple*, set_addr(num, (addr_val)val));
+   define_set(int_list, runtime::int_list*, set_ptr(num, (ptr_val)val));
+   define_set(float_list, runtime::float_list*, set_ptr(num, (ptr_val)val));
+   define_set(node_list, runtime::node_list*, set_ptr(num, (ptr_val)val));
+   define_set(tuple, vm::tuple*, set_ptr(num, (ptr_val)val));
+   define_set(node, const node_val, *(node_val*)(regs + num) = val);
    
 #undef define_set
    
-   inline void set_nil(const reg_num& num) { set_addr(num, NULL); }
+   inline void set_nil(const reg_num& num) { set_ptr(num, null_ptr_val); }
    
    inline void copy_reg(const reg_num& reg_from, const reg_num& reg_to) {
       regs[reg_to] = regs[reg_from];

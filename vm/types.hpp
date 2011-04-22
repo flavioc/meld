@@ -10,14 +10,10 @@ namespace vm {
 enum field_type {
    FIELD_INT = 0x0,
    FIELD_FLOAT = 0x1,
-   FIELD_ADDR = 0x2,
-   FIELD_OTHER = 0x2,
+   FIELD_NODE = 0x2,
    FIELD_LIST_INT = 0x3,
    FIELD_LIST_FLOAT = 0x4,
-   FIELD_LIST_ADDR = 0x5,
-   FIELD_SET_INT = 0x6,
-   FIELD_SET_FLOAT = 0x7,
-   FIELD_TYPE = 0x8
+   FIELD_LIST_NODE = 0x5
 };
 
 enum aggregate_type {

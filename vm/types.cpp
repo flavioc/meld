@@ -17,18 +17,16 @@ field_type_size(field_type type)
 {
    switch(type) {
       case FIELD_INT:
-      case FIELD_TYPE:
          return sizeof(int_val);
       case FIELD_FLOAT:
          return sizeof(float_val);
-      case FIELD_ADDR:
+      case FIELD_NODE:
+         return sizeof(node_val);
       case FIELD_LIST_INT:
       case FIELD_LIST_FLOAT:
-      case FIELD_LIST_ADDR:
-         return sizeof(addr_val);
+      case FIELD_LIST_NODE:
+         return sizeof(ptr_val);
       
-      case FIELD_SET_INT:
-      case FIELD_SET_FLOAT:
       default:
          throw type_error("Unrecognized field type " + number_to_string(type));
    }
@@ -41,14 +39,11 @@ field_type_string(field_type type)
 {
    switch(type) {
       case FIELD_INT: return string("int");
-      case FIELD_TYPE: return string("type");
       case FIELD_FLOAT: return string("float");
-      case FIELD_ADDR: return string("addr");
+      case FIELD_NODE: return string("node");
       case FIELD_LIST_INT: return string("int list");
       case FIELD_LIST_FLOAT: return string("float list");
-		case FIELD_LIST_ADDR: return string ("addr list");
-		case FIELD_SET_INT: return string("int set");
-		case FIELD_SET_FLOAT: return string("float set");
+		case FIELD_LIST_NODE: return string ("node list");
 	}
 	
    return string("");
