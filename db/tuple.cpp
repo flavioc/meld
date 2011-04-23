@@ -59,8 +59,8 @@ agg_configuration::test(tuple *tpl, const field_num agg_field) const
    tuple *other(*it);
    const predicate *pred(tpl->get_predicate());
    
-   for(field_num i(0); i < pred->num_fields(); ++i)
-      if(i != agg_field && !tpl->field_equal(*other, i))
+   for(field_num i(0); i < agg_field; ++i)
+      if(!tpl->field_equal(*other, i))
          return false;
    
    return true;
