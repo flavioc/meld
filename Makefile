@@ -6,10 +6,11 @@ LIBRARY_DIRS = -L/opt/local/lib
 
 PROFILING = #-pg
 OPTIMIZATIONS = -O0
+ARCH = -march=i686
 DEBUG = -g
 WARNINGS = -Wall
 
-CFLAGS = $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS)
+CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS)
 CXXFLAGS = $(CFLAGS) #-std=c++0x
 LIBRARIES = -lpthread -lm -lboost_thread-mt
 
@@ -68,7 +69,8 @@ db/node.o: db/node.cpp db/node.hpp
 db/database.o: db/database.cpp db/database.hpp vm/instr.hpp \
 							db/node.hpp
 
-process/process.o: process/process.cpp process/process.hpp vm/instr.hpp
+process/process.o: process/process.cpp process/process.hpp vm/instr.hpp \
+									process/queue.hpp
 
 process/machine.o: process/machine.hpp process/machine.cpp \
 									vm/state.hpp process/remote.hpp process/process.hpp \
