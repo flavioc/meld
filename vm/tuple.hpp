@@ -21,16 +21,16 @@
 namespace vm
 {
 
+typedef union {
+	int_val int_field;
+	float_val float_field;
+	node_val node_field;
+	ptr_val ptr_field;
+} tuple_field;
+
 class tuple: public mem::base<tuple>
 {
 private:
-
-	typedef struct {
-		int_val int_field;
-		float_val float_field;
-      node_val node_field;
-		ptr_val ptr_field;
-	} tuple_field;
 
 	predicate* pred;
    tuple_field *fields;

@@ -183,7 +183,7 @@ static inline void
 execute_alloc(const pcounter& pc, state& state)
 {
    tuple *tuple(state.PROGRAM->new_tuple(alloc_predicate(pc)));
-      
+
    state.set_tuple(alloc_reg(pc), tuple);
 }
 
@@ -200,7 +200,7 @@ execute_send(const pcounter& pc, state& state)
       // send to self
       state.proc->enqueue_work(state.node, stuple);
    else
-      state::MACHINE->route((node::node_id)dest_val, stuple);
+      state::MACHINE->route(state.proc, (node::node_id)dest_val, stuple);
 }
 
 template <typename T>

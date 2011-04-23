@@ -26,7 +26,7 @@ private:
    {
       assert(size != 0);
       if(size > MAX_OBJECT_SIZE) {
-         printf("%d\n", size);
+         printf("%ld\n", size);
          exit(1);
       }
       assert(size <= MAX_OBJECT_SIZE);

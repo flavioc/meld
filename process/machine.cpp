@@ -18,14 +18,18 @@ namespace process
 {
 
 void
-machine::route(const node::node_id id, const simple_tuple* stuple)
+machine::route(process *caller, const node::node_id id, const simple_tuple* stuple)
 {  
    remote* rem(rout.find_remote(id));
    
    if(rem == remote::self) {
       // on this machine
       node *node(state::DATABASE->find_node(id));
-      process_list[remote::self->find_proc_owner(id)]->enqueue_work(node, stuple);
+      process *proc(process_list[remote::self->find_proc_owner(id)]);
+      if(caller == proc)
+         caller->enqueue_work(node, stuple);
+      else
+         caller->enqueue_other(proc, node, stuple);
    } else {
       // remote, mpi machine
       
@@ -60,7 +64,7 @@ machine::distribute_nodes(database *db)
          ++it)
    {  
       process_list[cur_proc]->add_node(it->second);
-      
+   
       --num_nodes;
    
       if(num_nodes == 0) {
@@ -84,39 +88,25 @@ machine::start(void)
    for(size_t i(1); i < num_threads; ++i)
       process_list[i]->start();
    process_list[0]->start();
+   
+   for(size_t i(1); i < num_threads; ++i)
+      process_list[i]->join();
 
    if(will_show_database)
       state::DATABASE->print_db(cout);
 }
 
 void
-machine::notify_all(void)
-{
-   for(size_t i(0); i < num_threads; ++i)
-      process_list[i]->notify();
-}
-
-void
 machine::process_is_active(void)
 {
-   mutex::scoped_lock lock(active_mutex);
-   
-   //printf("Active\n");
-   ++threads_active;
-   
-   if(threads_active == 1)
+   if(__sync_fetch_and_add(&threads_active, 1) == 1)
       state::ROUTER->update_status(router::REMOTE_ACTIVE);
 }
 
 void
 machine::process_is_inactive(void)
 {
-   mutex::scoped_lock lock(active_mutex);
-   
-   --threads_active;
-   //printf("Inactive\n");
-   
-   if(threads_active == 0)
+   if(__sync_fetch_and_sub(&threads_active, 1) == 0)
       state::ROUTER->update_status(router::REMOTE_IDLE);
 }
 
@@ -130,8 +120,9 @@ machine::all_ended(void)
 }
 
 machine::machine(const string& file, router& _rout, const size_t th):
-   filename(file), num_threads(th), threads_active(th), rout(_rout),
-   is_finished(false), will_show_database(false)
+   filename(file), num_threads(th), will_show_database(false),
+   rout(_rout), proc_barrier(new barrier(th)),
+   threads_active(th), is_finished(false)
 {  
    state::PROGRAM = new program(filename, &rout);
    state::DATABASE = state::PROGRAM->get_database();
@@ -140,9 +131,7 @@ machine::machine(const string& file, router& _rout, const size_t th):
    process_list.resize(num_threads);
    
    for(process::process_id i(0); i < num_threads; ++i)
-      process_list[i] = new process(i);
-   
-   proc_barrier = new barrier(num_threads);
+      process_list[i] = new process(i, num_threads);
    
    mem::init(num_threads);
    

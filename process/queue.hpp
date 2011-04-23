@@ -16,21 +16,25 @@ public:
    T data;
    queue_node *next;
 };
-   
+
 template <class T>
 class wqueue_free
 {
-private:
-   typedef queue_node<T> node;
+public:
    
+   typedef queue_node<T> node;
    node *head;
    node *tail;
-   
-public:
+   size_t total;
    
    inline const bool empty(void) const
    {
       return head == NULL;
+   }
+   
+   inline const size_t size(void) const
+   {
+      return total;
    }
    
    inline void push(T el)
@@ -46,9 +50,23 @@ public:
          tail->next = new_node;
          tail = new_node;
       }
+      
+      assert(tail == new_node);
+      
+      ++total;
    }
    
-   explicit wqueue_free(void): head(NULL), tail(NULL) {}
+   inline void clear(void)
+   {
+      head = tail = NULL;
+      total = 0;
+      
+      assert(head == NULL);
+      assert(tail == NULL);
+      assert(total == 0);
+   }
+   
+   explicit wqueue_free(void): head(NULL), tail(NULL), total(0) {}
 };
 
 template <class T>
@@ -59,7 +77,6 @@ private:
    typedef queue_node<T> node;
    
    node *head;
-   char coiso[1000];
    node *tail;
    boost::mutex mtx;
    
@@ -79,6 +96,7 @@ public:
       if(head == NULL)
          head = tail = new_node;
       else {
+         assert(tail != NULL);
          tail->next = new_node;
          tail = new_node;
       }
@@ -89,6 +107,8 @@ public:
    inline T pop(void)
    {
       node *take(head);
+      
+      assert(head != NULL);
    
       if(head == tail) {
          mtx.lock();
@@ -105,6 +125,25 @@ public:
       mem::allocator<node>().deallocate(take, 1);
       
       return el;
+   }
+   
+   inline void snap(wqueue_free<T>& q)
+   {
+      mtx.lock();
+      
+      if(head == NULL) {
+         head = q.head;
+         tail = q.tail;
+      } else {
+         assert(tail != NULL);
+         
+         tail->next = q.head;
+         tail = q.tail;
+      }
+      
+      assert(q.tail = tail);
+      
+      mtx.unlock();
    }
    
    explicit wqueue(void): head(NULL), tail(NULL) {}

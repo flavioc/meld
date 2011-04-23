@@ -22,6 +22,61 @@ mutex process::remote_mutex;
 static thread_specific_ptr<process> proc_ptr(NULL);
 
 #define MAKE_IT_STOP 1
+//#define DEBUG_ACTIVE 1
+
+bool
+process::all_buffers_emptied(void)
+{
+   for(process_id i(0); i < (process_id)buffered_work.size(); ++i) {
+      if(!buffered_work[i].empty())
+         return false;
+   }
+   return true;
+}
+
+void
+process::flush_this_queue(wqueue_free<work_unit>& q, process *other)
+{
+   assert(this != other);
+   
+   //printf("%d: flushing %d works to proc %d\n", get_id(), q.size(), other->get_id());
+   
+#ifdef MAKE_IT_STOP
+   other->make_active();
+#endif
+
+   other->queue_work.snap(q);
+   q.clear();
+}
+
+void
+process::flush_buffered(void)
+{
+   for(process_id i(0); i < (process_id)buffered_work.size(); ++i) {
+      if(i != get_id()) {
+         wqueue_free<work_unit>& q(buffered_work[i]);
+         if(!q.empty())
+            flush_this_queue(q, state::MACHINE->get_process(i));
+      }
+   }
+}
+
+void
+process::enqueue_other(process *other, node* node, const simple_tuple *stuple)
+{
+   static const size_t WORK_THRESHOLD(20);
+   
+   work_unit work = {node, stuple, false};
+   wqueue_free<work_unit>& q(buffered_work[other->get_id()]);
+   
+   q.push(work);
+   
+   if(q.size() > WORK_THRESHOLD) {
+      //printf("HERE\n");
+      flush_this_queue(q, other);
+   }
+   //other->enqueue_work(node, stuple);
+}
 
 void
 process::enqueue_work(node* node, const simple_tuple* stpl, const bool is_agg)
@@ -32,36 +87,31 @@ process::enqueue_work(node* node, const simple_tuple* stpl, const bool is_agg)
    make_active();
 #endif
    
-   {
-      queue_work.push(work);
-   }
+   queue_work.push(work);
 }
 
 bool
 process::busy_wait(void)
 {
-   int cont(0);
-   
-   //boost::unique_lock<boost::mutex> lock(mutex);
+   static const unsigned int COUNT_UP_TO(2);
+    
+   unsigned int cont(0);
    
    while(queue_work.empty()) {
-      boost::this_thread::sleep(boost::posix_time::millisec(10));
       
-      cont++;
-      
-      if(cont == 10) {
-         make_inactive();
-      }
-      
+      if(cont == 0)
+         flush_buffered();
+         
 #ifdef MAKE_IT_STOP
-      if(state::MACHINE->finished()) {
-         printf("FINISHED\n");
-         //state::MACHINE->notify_all();
+      if(state::MACHINE->finished())
          return false;
-      }
 #endif
+         
+      if(cont == COUNT_UP_TO)
+         make_inactive();
+      else if(cont < COUNT_UP_TO)
+         cont++;
 
-      //cond.wait(lock);
 #ifdef COMPILE_MPI
       if(get_id() == 0) {
          update_remotes();
@@ -92,6 +142,8 @@ process::busy_wait(void)
 #endif
    }
    
+   assert(!queue_work.empty());
+   
    return true;
 }
 
@@ -102,7 +154,9 @@ process::make_inactive(void)
       mutex.lock();
       if(process_state == PROCESS_ACTIVE) {
          process_state = PROCESS_INACTIVE;
-         printf("Inactive\n");
+#ifdef DEBUG_ACTIVE
+         printf("Inactive %d\n", id);
+#endif
          state::MACHINE->process_is_inactive();
       }
       mutex.unlock();
@@ -117,7 +171,9 @@ process::make_active(void)
       if(process_state == PROCESS_INACTIVE) {
          state::MACHINE->process_is_active();
          process_state = PROCESS_ACTIVE;
-         printf("Active\n");
+#ifdef DEBUG_ACTIVE
+         printf("Active %d\n", id);
+#endif
       }
       mutex.unlock();
    }
@@ -193,6 +249,8 @@ process::do_work(node *node, const simple_tuple *_stuple, const bool ignore_agg)
    vm::tuple *tuple = stuple->get_tuple();
    ref_count count = stuple->get_count();
       
+   ++total_processed;
+   
    if(count == 0)
       return;
          
@@ -272,22 +330,26 @@ process::do_loop(void)
       } else
 #endif
       {
-         /*
+         assert(queue_work.empty());
+         assert(process_state == PROCESS_INACTIVE);
+         
          state::MACHINE->wait_aggregates();
          
+         //printf("%d - HERE %d\n", num_aggs, id);
          generate_aggs();
+         num_aggs++;
          
+         //printf("%d - HERE END %d\n", num_aggs, id);
          state::MACHINE->wait_aggregates();
 
-         if(state::MACHINE->finished())
+         if(state::MACHINE->finished()) {
+            printf("Machine finished %d\n", id);
             return;
-         */
+         }
+         
+         state::MACHINE->wait_aggregates();
       }
-      
-      break;
    }
-   
-   assert(queue_work.empty());
 }
 
 void
@@ -310,6 +372,10 @@ process::loop(void)
    }
    
    do_loop();
+
+   assert(queue_work.empty());
+   assert(all_buffers_emptied());
+   printf("Processed: %d Aggs %d\n", total_processed, num_aggs);
 }
 
 void
@@ -322,13 +388,16 @@ process::start(void)
       thread = new boost::thread(bind(&process::loop, this));
 }
 
-process::process(const process_id& _id):
+process::process(const process_id& _id, const size_t num_procs):
    nodes_interval(NULL), thread(NULL), id(_id),
    process_state(PROCESS_ACTIVE),
    ended(false),
    agg_checked(false),
-   state(this)
+   state(this),
+   total_processed(0),
+   num_aggs(0)
 {
+   buffered_work.resize(num_procs);
 }
 
 process::~process(void)

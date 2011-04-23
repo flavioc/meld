@@ -40,12 +40,13 @@ private:
    list_nodes nodes;
    process_id id;
    
+   std::vector<wqueue_free<work_unit> > buffered_work;
+   
    char _pad1[64];
    
    boost::mutex mutex;
    
    wqueue<work_unit> queue_work;
-   //wqueue_free<work_unit> queue_buf;
    
    char _pad2[64];
    
@@ -60,6 +61,8 @@ private:
    char _pad3[64];
    
    vm::state state;
+   int total_processed;
+   int num_aggs;
    
    void generate_aggs(void);
    void do_tuple_add(db::node *, vm::tuple *, const vm::ref_count);
@@ -72,6 +75,9 @@ private:
    void update_remotes(void);
    void make_active(void);
    void make_inactive(void);
+   void flush_this_queue(wqueue_free<work_unit>&, process *);
+   void flush_buffered(void);
+   bool all_buffers_emptied(void);
 
 public:
    
@@ -80,13 +86,12 @@ public:
    
    void add_node(db::node*);
    
+   void enqueue_other(process *, db::node *, const db::simple_tuple *);
    void enqueue_work(db::node*, const db::simple_tuple*, const bool is_agg = false);
    
    const process_id get_id(void) const { return id; }
    
    void start(void);
-   
-   void notify(void);
    
    bool owns_node(const db::node::node_id& id) const { return nodes_interval->between(id); }
    
@@ -94,9 +99,11 @@ public:
    
    bool has_ended(void) const { return ended; }
    
+   inline void join(void) { thread->join(); }
+   
    void print(std::ostream&) const;
    
-   explicit process(const process_id&);
+   explicit process(const process_id&, const size_t);
    
    ~process(void);
 };

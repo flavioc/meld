@@ -30,19 +30,21 @@ private:
    
    const std::string filename;
    const size_t num_threads;
-   size_t threads_active;
-   
-   boost::mutex active_mutex;
+   bool will_show_database;
    
    std::vector<process*> process_list;
    
    router& rout;
    
+   char _pad1[64];
+   
    boost::barrier *proc_barrier;
    
-   bool is_finished;
+   char _pad2[64];
    
-   bool will_show_database;
+   volatile size_t threads_active;
+   
+   bool is_finished;
    
    void distribute_nodes(db::database *);
    
@@ -62,11 +64,11 @@ public:
    
    inline const bool marked_finished(void) { return is_finished; }
    
-   void notify_all(void);
-   
    void show_database(void) { will_show_database = true; }
    
-   void route(const db::node::node_id, const db::simple_tuple*);
+   process *get_process(const process::process_id id) { return process_list[id]; }
+   
+   void route(process *, const db::node::node_id, const db::simple_tuple*);
    
    void start(void);
    
