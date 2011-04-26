@@ -148,7 +148,7 @@ tuple::~tuple(void)
       }
    }
    
-   delete []fields;
+   allocator<tuple_field>().deallocate(fields, pred->num_fields());
 }
 
 #ifdef COMPILE_MPI
