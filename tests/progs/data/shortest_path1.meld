@@ -1,0 +1,8 @@
+
+type route edge(node, node, int).
+
+edge(@0, @1, 1).
+edge(@1, @2, 3).
+edge(@0, @2, 5).
+start(@0).
+end(@2).
