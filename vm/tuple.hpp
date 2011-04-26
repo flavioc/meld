@@ -93,6 +93,8 @@ public:
    
    void print(std::ostream&) const;
    
+   tuple *copy(void) const;
+   
    explicit tuple(void); // only used for serialization!
 	explicit tuple(const predicate* pred);
 	

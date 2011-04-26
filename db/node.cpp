@@ -11,95 +11,35 @@ using namespace vm;
 namespace db
 {
 
-node::simple_tuple_list&
+trie&
 node::get_storage(const predicate_id& id)
 {
    simple_tuple_map::iterator it(tuples.find(id));
    
    if(it == tuples.end()) {
-      tuples[id] = simple_tuple_list();
-      return tuples[id];
+      tuples[id] = trie();
+      it = tuples.find(id);
    }
    
    return it->second;
-}
-
-static inline simple_tuple*
-look_for_simple_tuple(const node::simple_tuple_list& list, vm::tuple *tpl)
-{
-   for(node::simple_tuple_list::const_iterator it(list.begin());
-      it != list.end();
-      ++it)
-   {
-      simple_tuple *stuple(*it);
-      
-      if(*(stuple->get_tuple()) == *tpl)
-         return (simple_tuple*)stuple;
-   }
-   
-   return NULL;
 }
 
 bool
 node::add_tuple(vm::tuple *tpl, ref_count many)
 {  
    predicate_id id(tpl->get_predicate()->get_id());
-   simple_tuple_list& list(get_storage(id));
+   trie& tr(get_storage(id));
    
-   simple_tuple *found(look_for_simple_tuple(list, tpl));
-   
-   if(found != NULL) {
-      found->inc_count(many);
-      return false;
-   } else {
-      //cout << "add tuple " << *tuple << endl;
-      list.push_back(new simple_tuple(tpl, many));
-      return true;
-   }
+   return tr.insert_tuple(tpl, many);
 }
 
 node::delete_info
 node::delete_tuple(vm::tuple *tuple, ref_count many)
 {
-   predicate_id id(tuple->get_predicate()->get_id());
-   simple_tuple_list& list(get_storage(id));
-   delete_info ret;
+   const predicate_id id(tuple->get_predicate_id());
+   trie& tr(get_storage(id));
    
-   ret.to_delete = false;
-   
-   for(node::simple_tuple_list::iterator it(list.begin());
-      it != list.end();
-      ++it)
-   {
-      simple_tuple *stuple(*it);
-      
-      if(*(stuple->get_tuple()) == *tuple) {
-         simple_tuple *target((simple_tuple*)stuple);
-         
-         target->dec_count(many);
-         
-         if(target->get_count() == 0) {
-            ret.to_delete = true;
-            ret.it = it;
-            ret.list = &list;
-         }
-         
-         return ret;
-      }
-   }
-   return ret;
-}
-
-void
-node::commit_delete(const delete_info& info)
-{
-   simple_tuple* stuple(*(info.it));
-   vm::tuple *tuple(stuple->get_tuple());
-   
-   info.list->erase(info.it);
-   
-   delete tuple;
-   delete stuple;
+   return tr.delete_tuple(tuple, many);
 }
 
 void
@@ -119,10 +59,16 @@ node::add_agg_tuple(vm::tuple *tuple, const ref_count many)
    agg->add_to_set(tuple, many);
 }
 
-tuple_list
+void
+node::remove_agg_tuple(vm::tuple *tuple, const ref_count many)
+{
+   add_agg_tuple(tuple, -many);
+}
+
+simple_tuple_list
 node::generate_aggs(void)
 {
-   tuple_list ret;
+   simple_tuple_list ret;
    
    for(aggregate_map::iterator it(aggs.begin());
       it != aggs.end();
@@ -130,19 +76,15 @@ node::generate_aggs(void)
    {
       tuple_aggregate *agg(it->second);
       
-      tuple_list ls(agg->generate());
+      simple_tuple_list ls(agg->generate());
       
       ret.insert(ret.end(), ls.begin(), ls.end());
-      
-      delete agg;
    }
-   
-   aggs.clear();
    
    return ret;
 }
 
-node::tuple_vector*
+tuple_vector*
 node::match_predicate(const predicate_id id) const
 {
    tuple_vector *ret(new tuple_vector());
@@ -152,30 +94,25 @@ node::match_predicate(const predicate_id id) const
    if(it == tuples.end())
       return ret;
    
-   const simple_tuple_list& list(it->second);
+   const trie& tr(it->second);
    
-   for(simple_tuple_list::const_iterator it(list.begin());
-      it != list.end();
-      it++)
-   {
-      ret->push_back((*it)->get_tuple());
-   }
-   
-   return ret;
+   return tr.match_predicate();
 }
 
 node::~node(void)
 {
-   if(!USE_ALLOCATOR) {
-      for(simple_tuple_map::iterator it(tuples.begin()); it != tuples.end(); ++it) {
-         simple_tuple_list& list(it->second);
-      
-         for(simple_tuple_list::iterator it2(list.begin()); it2 != list.end(); ++it2) {
-            simple_tuple *stpl(*it2);
-            delete stpl->get_tuple();
-            delete stpl;
-         }
-      }
+}
+
+void
+node::dump(ostream& cout) const
+{
+   cout << get_id() << endl;
+   
+   for(simple_tuple_map::const_iterator it(tuples.begin());
+      it != tuples.end();
+      ++it)
+   {
+      it->second.dump(cout);
    }
 }
 
@@ -189,20 +126,7 @@ node::print(ostream& cout) const
       it != tuples.end();
       ++it)
    {
-      const simple_tuple_list& list(it->second);
-      
-      for(simple_tuple_list::const_iterator it2(list.begin());
-         it2 != list.end();
-         ++it2)
-      {
-         simple_tuple *stuple(*it2);
-         
-         if(it2 == list.begin()) {
-            cout << " " << *(stuple->get_tuple()->get_predicate()) << ":" << endl;
-         }
-         
-         cout << "\t" << *stuple << endl;
-      }
+      it->second.print(cout);
    }
 }
 

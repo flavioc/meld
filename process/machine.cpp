@@ -94,6 +94,8 @@ machine::start(void)
 
    if(will_show_database)
       state::DATABASE->print_db(cout);
+   if(will_dump_database)
+      state::DATABASE->dump_db(cout);
 }
 
 void
@@ -121,6 +123,7 @@ machine::all_ended(void)
 
 machine::machine(const string& file, router& _rout, const size_t th):
    filename(file), num_threads(th), will_show_database(false),
+   will_dump_database(false),
    rout(_rout), proc_barrier(new barrier(th)),
    threads_active(th), is_finished(false)
 {  

@@ -248,30 +248,36 @@ process::do_work(node *node, const simple_tuple *_stuple, const bool ignore_agg)
    auto_ptr<const simple_tuple> stuple(_stuple);
    vm::tuple *tuple = stuple->get_tuple();
    ref_count count = stuple->get_count();
+   
+   //cout << node->get_id() << " " << *stuple << endl;
       
    ++total_processed;
    
    if(count == 0)
       return;
-         
+   
    if(count > 0) {
       if(tuple->is_aggregate() && !ignore_agg)
          node->add_agg_tuple(tuple, count);
       else
          do_tuple_add(node, tuple, count);
    } else {
-      const node::delete_info result(node->delete_tuple(tuple, -1*count));
+      count = -count;
+      
+      if(tuple->is_aggregate() && !ignore_agg) {
+         node->remove_agg_tuple(tuple, count);
+      } else {
+         node::delete_info deleter(node->delete_tuple(tuple, count));
          
-      if(result.to_delete) { // to be removed
-         state.tuple = tuple;
-         state.node = node;
-         state.count = count;
-         execute_bytecode(state.PROGRAM->get_bytecode(tuple->get_predicate_id()), state);
-         cout << "COMMITING DELETE\n";
-         node->commit_delete(result);
-         cout << "NODE: " << *node << endl;
-      } else
-         delete tuple; // as in the positive case, nothing to do
+         if(deleter.to_delete()) { // to be removed
+            state.tuple = tuple;
+            state.node = node;
+            state.count = -count;
+            execute_bytecode(state.PROGRAM->get_bytecode(tuple->get_predicate_id()), state);
+            deleter();
+            } else
+               delete tuple; // as in the positive case, nothing to do
+      }
    }
 }
 
@@ -295,13 +301,14 @@ process::generate_aggs(void)
       ++it)
    {
       node *no(*it);
-      tuple_list ls(no->generate_aggs());
+      simple_tuple_list ls(no->generate_aggs());
 
-      for(tuple_list::iterator it2(ls.begin());
+      for(simple_tuple_list::iterator it2(ls.begin());
          it2 != ls.end();
          ++it2)
       {
-         enqueue_work(no, simple_tuple::create_new(*it2), true);
+         //cout << no->get_id() << " GENERATE " << **it2 << endl;
+         enqueue_work(no, *it2, true);
       }
    }
 }
@@ -343,7 +350,7 @@ process::do_loop(void)
          state::MACHINE->wait_aggregates();
 
          if(state::MACHINE->finished()) {
-            printf("Machine finished %d\n", id);
+            //printf("Machine finished %d\n", id);
             return;
          }
          
@@ -375,7 +382,7 @@ process::loop(void)
 
    assert(queue_work.empty());
    assert(all_buffers_emptied());
-   printf("Processed: %d Aggs %d\n", total_processed, num_aggs);
+   //printf("Processed: %d Aggs %d\n", total_processed, num_aggs);
 }
 
 void

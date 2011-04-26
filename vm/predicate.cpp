@@ -89,12 +89,13 @@ predicate::print(ostream& cout) const
    for(size_t i = 0; i < num_fields(); ++i) {
       if(i != 0)
          cout << ", ";
+
+      const string typ(field_type_string(types[i]));
       
-      cout << field_type_string(types[i]);
-      
-      if(is_aggregate() && agg_info->field == i) {
-         cout << aggregate_type_string(agg_info->type);
-      }
+      if(is_aggregate() && agg_info->field == i)
+         cout << aggregate_type_string(agg_info->type) << " " << typ;
+      else
+         cout << typ;
    }
    
    cout << ") [size=" << tuple_size;

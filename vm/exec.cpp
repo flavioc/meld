@@ -587,11 +587,11 @@ do_matches(pcounter pc, const tuple *tuple, const state& state)
 }
 
 static inline void
-execute_iter(pcounter pc, pcounter first, state& state, node::tuple_vector *tuples)
+execute_iter(pcounter pc, pcounter first, state& state, tuple_vector *tuples)
 {
    random_shuffle(tuples->begin(), tuples->end());
    
-   for(node::tuple_vector::iterator it(tuples->begin());
+   for(tuple_vector::iterator it(tuples->begin());
       it != tuples->end();
       ++it)
    {
@@ -762,7 +762,7 @@ eval_loop:
             throw vm_exec_error("ELSE instruction not supported");
          
          case ITER_INSTR: {
-               auto_ptr<node::tuple_vector> tuples(
+               auto_ptr<tuple_vector> tuples(
                      state.node->match_predicate(iter_predicate(pc)));
 
                if(!tuples->empty())

@@ -6,4 +6,5 @@
 - make test suite
 	- dump the database
 	- compare to a good set
+- use trie class in aggregate configurations
 - ...

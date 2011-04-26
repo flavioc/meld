@@ -31,6 +31,7 @@ private:
    const std::string filename;
    const size_t num_threads;
    bool will_show_database;
+   bool will_dump_database;
    
    std::vector<process*> process_list;
    
@@ -65,6 +66,7 @@ public:
    inline const bool marked_finished(void) { return is_finished; }
    
    void show_database(void) { will_show_database = true; }
+   void dump_database(void) { will_dump_database = true; }
    
    process *get_process(const process::process_id id) { return process_list[id]; }
    

@@ -84,8 +84,23 @@ database::add_node(const node::node_id id, const node::node_id trans)
 void
 database::print_db(ostream& cout) const
 {
-   for(map_nodes::const_iterator it(nodes.begin()); it != nodes.end(); ++it)
+   for(map_nodes::const_iterator it(nodes.begin());
+      it != nodes.end();
+      ++it)
+   {
       cout << *(it->second) << endl;
+   }
+}
+
+void
+database::dump_db(ostream& cout) const
+{
+   for(map_nodes::const_iterator it(nodes.begin());
+      it != nodes.end();
+      ++it)
+   {
+      it->second->dump(cout);
+   }
 }
 
 void

@@ -5,6 +5,6 @@
 // #define COMPILE_MPI 1
 
 static const bool USE_MPI = false;
-static const bool USE_ALLOCATOR = true;
+static const bool USE_ALLOCATOR = false;
 
 #endif

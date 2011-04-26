@@ -4,6 +4,7 @@
 #include "conf.hpp"
 
 #include <iostream>
+#include <string>
 #ifdef COMPILE_MPI
 #include <boost/serialization/serialization.hpp>
 #include <boost/mpi/packed_iarchive.hpp>
@@ -20,7 +21,7 @@ class cons
 {
 public:
    
-   typedef cons<T>* list_ptr;
+   typedef cons* list_ptr;
    typedef list_ptr ptr;
    
 private:

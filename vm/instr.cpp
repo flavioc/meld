@@ -52,26 +52,26 @@ val_string(const instr_val v, pcounter *pm)
    if(val_is_tuple(v))
       return string("tuple");
    else if(val_is_reg(v))
-      return string("reg ") + number_to_string((int)val_reg(v));
+      return string("reg ") + to_string((int)val_reg(v));
    else if(val_is_host(v))
       return string("host");
    else if(val_is_nil(v))
       return string("nil");
    else if(val_is_field(v)) {
-      const string ret(number_to_string((int)val_field_reg(*pm)) +
-         string(".") + number_to_string((int)val_field_num(*pm)));
+      const string ret(to_string((int)val_field_reg(*pm)) +
+         string(".") + to_string((int)val_field_num(*pm)));
       pcounter_move_field(pm);
       return ret;
    } else if(val_is_int(v)) {
-      const string ret(number_to_string(pcounter_int(*pm)));
+      const string ret(to_string(pcounter_int(*pm)));
       pcounter_move_int(pm);
       return ret;
    } else if(val_is_float(v)) {
-      const string ret(number_to_string(pcounter_float(*pm)));
+      const string ret(to_string(pcounter_float(*pm)));
       pcounter_move_float(pm);
       return ret;
    } else if(val_is_node(v)) {
-      const string ret(string("@") + number_to_string(pcounter_node(*pm)));
+      const string ret(string("@") + to_string(pcounter_node(*pm)));
       pcounter_move_node(pm);
       return ret;
    }

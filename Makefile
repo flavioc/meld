@@ -43,7 +43,8 @@ OBJS = utils/utils.o \
 			 vm/state.o \
 			 vm/tuple.o vm/exec.o \
 			 process/message.o \
-			 mem/thread.o
+			 mem/thread.o \
+			 db/trie.o
 
 all: meld print
 
@@ -60,17 +61,19 @@ print.o: print.cpp vm/program.hpp
 
 utils/utils.o: utils/utils.cpp utils/utils.hpp
 
-vm/instr.o: vm/instr.cpp vm/instr.hpp
+vm/instr.o: vm/instr.cpp vm/instr.hpp \
+						utils/utils.hpp
 
 db/tuple.o: db/tuple.cpp db/tuple.hpp
 
-db/node.o: db/node.cpp db/node.hpp
+db/node.o: db/node.cpp db/node.hpp \
+					db/tuple.hpp db/trie.hpp
 
 db/database.o: db/database.cpp db/database.hpp vm/instr.hpp \
 							db/node.hpp
 
 process/process.o: process/process.cpp process/process.hpp vm/instr.hpp \
-									process/queue.hpp
+									process/queue.hpp db/node.hpp
 
 process/machine.o: process/machine.hpp process/machine.cpp \
 									vm/state.hpp process/remote.hpp process/process.hpp \
@@ -84,7 +87,8 @@ vm/state.o: vm/state.cpp vm/state.hpp	\
 						vm/instr.hpp
 
 vm/tuple.o: vm/tuple.cpp vm/tuple.hpp	\
-						vm/instr.hpp runtime/list.hpp
+						vm/instr.hpp runtime/list.hpp \
+						utils/utils.hpp
 
 vm/program.o: vm/program.cpp vm/program.hpp vm/instr.hpp
 
@@ -101,6 +105,12 @@ process/message.o: process/message.cpp process/message.hpp \
 mem/thread.o: mem/thread.cpp mem/thread.hpp \
 							mem/pool.hpp mem/chunkgroup.hpp \
 							mem/base.hpp mem/chunk.hpp
+
+db/trie.o: db/trie.cpp db/trie.hpp \
+					utils/utils.hpp
+
+vm/types.o: vm/types.hpp vm/types.hpp \
+						utils/utils.hpp
 
 clean:
 	rm -f $(TARGET) *.o vm/*.o db/*.o process/*.o runtime/*.o utils/*.o mem/*.o

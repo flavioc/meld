@@ -12,6 +12,7 @@
 #include "runtime/list.hpp"
 #include "utils/utils.hpp"
 #include "process/router.hpp"
+#include "db/trie.hpp"
 
 using namespace utils;
 using namespace process;
@@ -20,6 +21,7 @@ static size_t num_threads = 0;
 static char *program = NULL;
 static char *progname = NULL;
 static bool show_database = false;
+static bool dump_database = false;
 
 static void
 help(void)
@@ -28,6 +30,7 @@ help(void)
   fprintf(stderr, "\t-f <name>:\tmeld program\n");
   fprintf(stderr, "\t-t <threads>:\tnumber of threads\n");
   fprintf(stderr, "\t-s shows database\n");
+  fprintf(stderr, "\t-d dump database (debug option)\n");
 
   exit(EXIT_SUCCESS);
 }
@@ -60,6 +63,9 @@ read_arguments(int argc, char **argv)
          case 's':
             show_database = true;
             break;
+         case 'd':
+            dump_database = true;
+            break;
          default:
             help();
       }
@@ -86,6 +92,8 @@ main(int argc, char **argv)
 
    if(show_database)
       mac.show_database();
+   if(dump_database)
+      mac.dump_database();
       
    mac.start();
 

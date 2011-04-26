@@ -12,6 +12,7 @@
 #include "vm/predicate.hpp"
 #include "db/tuple.hpp"
 #include "mem/allocator.hpp"
+#include "db/trie.hpp"
 #include "vm/defs.hpp"
 
 namespace db {
@@ -22,21 +23,14 @@ public:
    
    typedef vm::node_val node_id;
    
-   typedef std::list<simple_tuple*, mem::allocator<simple_tuple*> > simple_tuple_list;
-   typedef std::vector<vm::tuple*, mem::allocator<vm::tuple*> > tuple_vector;
-   
-   typedef struct {
-      bool to_delete;
-      simple_tuple_list *list;
-      simple_tuple_list::iterator it;
-   } delete_info;
+   typedef trie::delete_info delete_info;
    
 private:
    
 	node_id id;
    node_id translation;
 	
-   typedef std::map<vm::predicate_id, simple_tuple_list,
+   typedef std::map<vm::predicate_id, trie,
                std::less<vm::predicate_id>,
                mem::allocator<std::pair<const vm::predicate_id,
                                  simple_tuple_list> > > simple_tuple_map;
@@ -48,7 +42,7 @@ private:
    simple_tuple_map tuples;
    aggregate_map aggs;
    
-   simple_tuple_list& get_storage(const vm::predicate_id&);
+   trie& get_storage(const vm::predicate_id&);
 	
 public:
    
@@ -57,14 +51,15 @@ public:
    
    bool add_tuple(vm::tuple*, vm::ref_count);
    delete_info delete_tuple(vm::tuple *, vm::ref_count);
-   void commit_delete(const delete_info&);
    
    void add_agg_tuple(vm::tuple*, const vm::ref_count);
-   vm::tuple_list generate_aggs(void);
+   void remove_agg_tuple(vm::tuple*, const vm::ref_count);
+   simple_tuple_list generate_aggs(void);
    
    tuple_vector* match_predicate(const vm::predicate_id) const;
    
    void print(std::ostream&) const;
+   void dump(std::ostream&) const;
    
    explicit node(const node_id _id, const node_id _trans):
       id(_id), translation(_trans)

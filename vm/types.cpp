@@ -28,7 +28,7 @@ field_type_size(field_type type)
          return sizeof(ptr_val);
       
       default:
-         throw type_error("Unrecognized field type " + number_to_string(type));
+         throw type_error("Unrecognized field type " + to_string(type));
    }
    
    return 0;

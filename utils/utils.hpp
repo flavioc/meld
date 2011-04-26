@@ -10,10 +10,10 @@ namespace utils
 const size_t number_cpus(void);
 
 template <typename T>
-std::string number_to_string (T number)
+std::string to_string (const T& obj)
 {
 	std::stringstream ss;
-	ss << number;
+	ss << obj;
 	return ss.str();
 }
 

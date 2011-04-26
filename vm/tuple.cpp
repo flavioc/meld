@@ -54,7 +54,7 @@ tuple::field_equal(const tuple& other, const field_num i) const
             return false;
          break;
       default:
-         throw type_error("Unrecognized field type " + number_to_string(i));
+         throw type_error("Unrecognized field type " + to_string(i));
    }
    
    return true;
@@ -68,6 +68,37 @@ tuple::operator==(const tuple& other) const
          return false;
    
    return true;
+}
+
+tuple*
+tuple::copy(void) const
+{
+   tuple *ret(new tuple(get_predicate()));
+   
+   for(size_t i(0); i < num_fields(); ++i) {
+      switch(get_field_type(i)) {
+         case FIELD_INT:
+            ret->set_int(i, get_int(i));
+            break;
+         case FIELD_FLOAT:
+            ret->set_float(i, get_float(i));
+            break;
+         case FIELD_NODE:
+            ret->set_node(i, get_node(i));
+            break;
+         case FIELD_LIST_INT:
+            ret->set_int_list(i, get_int_list(i));
+            break;
+         case FIELD_LIST_FLOAT:
+            ret->set_float_list(i, get_float_list(i));
+            break;
+         case FIELD_LIST_NODE:
+            ret->set_node_list(i, get_node_list(i));
+            break;
+      }
+   }
+   
+   return ret;
 }
 
 void
@@ -99,7 +130,7 @@ tuple::print(ostream& cout) const
             cout << "@" << get_node(i);
             break;
          default:
-            throw type_error("Unrecognized field type " + number_to_string(i));
+            throw type_error("Unrecognized field type " + to_string(i));
       }
    }
    
@@ -153,7 +184,7 @@ tuple::save(mpi::packed_oarchive & ar, const unsigned int version) const
             node_list::save_list(ar, get_node_list(i));
             break;
          default:
-            throw type_error("unsupported field number " + number_to_string(i));
+            throw type_error("unsupported field number " + to_string(i));
       }
    }
 }
@@ -202,7 +233,7 @@ tuple::load(mpi::packed_iarchive& ar, const unsigned int version)
             set_node_list(i, node_list::load_list(ar));
             break;
          default:
-            throw type_error("unsupported field number " + number_to_string(i));
+            throw type_error("unsupported field number " + to_string(i));
       }
    }
 }

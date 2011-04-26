@@ -19,7 +19,6 @@ main(int argc, char **argv)
    
    const string file(argv[1]);
    
-	 printf("sizeof(%d)\n", sizeof(vm::tuple_field));
    router rout;
    program prog(file, &rout);
    
