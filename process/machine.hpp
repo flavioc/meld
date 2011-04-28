@@ -45,8 +45,6 @@ private:
    
    volatile size_t threads_active;
    
-   bool is_finished;
-   
    void distribute_nodes(db::database *);
    
 public:
@@ -59,16 +57,10 @@ public:
    
    void wait_aggregates(void) { proc_barrier->wait(); }
    
-   bool all_ended(void);
-   
-   void mark_finished(void) { is_finished = true; }
-   
-   inline const bool marked_finished(void) { return is_finished; }
-   
    void show_database(void) { will_show_database = true; }
    void dump_database(void) { will_dump_database = true; }
    
-   process *get_process(const process::process_id id) { return process_list[id]; }
+   process *get_process(const vm::process_id id) { return process_list[id]; }
    
    void route(process *, const db::node::node_id, const db::simple_tuple*);
    

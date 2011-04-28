@@ -30,24 +30,29 @@ router::set_nodes_total(const size_t total)
    for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i)
       remote_list[i]->cache_values(world_size, nodes_per_remote);
       
-#if 0
    if(remote::i_am_last_one())
       printf("Nodes per machine %ld\n", nodes_per_remote);
-#endif
 }
 
 void
-router::send(remote* rem, const process::process_id proc, const message& msg)
+router::send(remote *rem, const process_id& proc, const message& msg)
 {
-   cout << "Sending to rem " << rem->get_rank() << " proc: " << proc << " TAG: " << get_thread_tag(proc) << ": ";
-   cout << msg << endl;
 #ifdef COMPILE_MPI
+   assert(0);
    world->send(rem->get_rank(), get_thread_tag(proc), msg);
 #endif
 }
 
-message*
-router::recv_attempt(const process::process_id proc)
+void
+router::send(remote *rem, const process_id& proc, const message_set& ms)
+{
+#ifdef COMPILE_MPI
+   world->send(rem->get_rank(), get_thread_tag(proc), ms);
+#endif
+}
+
+message_set*
+router::recv_attempt(const process_id proc, remote*& rem)
 {
 #ifdef COMPILE_MPI
    mutex::scoped_lock l(mt);
@@ -55,14 +60,46 @@ router::recv_attempt(const process::process_id proc)
    optional<mpi::status> stat(world->iprobe(mpi::any_source, get_thread_tag(proc)));
    
    if(stat) {
-      message *msg(new message());
+      message_set *ms(new message_set());
       
-      world->recv(mpi::any_source, get_thread_tag(proc), *msg);
-      cout << "NEW MESSAGE " << *msg << endl;
-      return msg;
+      mpi::status stat(world->recv(mpi::any_source, get_thread_tag(proc), *ms));
+      
+      rem = remote_list[stat.source()];
+      
+      return ms;
    } else
 #endif
       return NULL;
+}
+
+size_t
+router::get_pending_messages(const process_id proc)
+{
+#ifdef COMPILE_MPI
+   mutex::scoped_lock l(mt);
+   
+   optional<mpi::status> stat(world->iprobe(mpi::any_source, get_thread_delay_tag(proc)));
+   
+   if(stat) {
+      size_t total;
+      
+      world->recv(mpi::any_source, get_thread_delay_tag(proc), total);
+      return total;
+   } else
+#endif
+      return 0;
+}
+
+void
+router::send_processed_messages(const remote* rem, const process_id& source, const size_t total)
+{
+#ifdef COMPILE_MPI
+   mutex::scoped_lock l(mt);
+   
+   assert(source == 0); // XXX: just for now
+   
+   world->send(rem->get_rank(), get_thread_delay_tag(source), total);
+#endif
 }
    
 remote*
@@ -104,8 +141,6 @@ router::fetch_updates(void)
       
       stat = world->recv(mpi::any_source, STATUS_TAG, state);
       remote_states[stat.source()] = state;
-      
-      cout << "RECEIVED STATE FROM " << stat.source() << ": " << state << endl;
    }
 #endif
 }
@@ -114,15 +149,17 @@ void
 router::update_status(const remote_state state)
 {
 #ifdef COMPILE_MPI
-   for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i)
-      if(i != remote::self->get_rank())
-         world->send(remote_list[i]->get_rank(), STATUS_TAG, state);
-   remote_states[remote::self->get_rank()] = state;
+   if(state != remote_states[remote::self->get_rank()]) {
+      for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i)
+         if(i != remote::self->get_rank())
+            world->send(remote_list[i]->get_rank(), STATUS_TAG, state);
+         remote_states[remote::self->get_rank()] = state;
+   }
 #endif
 }
 
 void
-router::finish(void)
+router::synchronize(void)
 {
 #ifdef COMPILE_MPI
    world->barrier();
@@ -133,7 +170,9 @@ void
 router::base_constructor(const size_t num_threads, int argc, char **argv)
 {
 #ifdef COMPILE_MPI
-   if(USE_MPI && argv != NULL && argc > 0) {
+   if(argv != NULL && argc > 0) {
+      assert(num_threads == 1); // limitation for now
+      
       const int mpi_thread_support = MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
    
       if(mpi_thread_support != MPI_THREAD_MULTIPLE)
@@ -194,7 +233,7 @@ router::~router(void)
       delete remote_list[i];
 
 #ifdef COMPILE_MPI
-   if(USE_MPI && world && env) {
+   if(world && env) {
       delete world;
       delete env;
    

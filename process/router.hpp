@@ -14,6 +14,7 @@
 #include "process/process.hpp"
 #include "db/tuple.hpp"
 #include "db/node.hpp"
+#include "vm/defs.hpp"
 #include "process/message.hpp"
 #include "conf.hpp"
 
@@ -34,10 +35,16 @@ private:
    
    static const remote_tag STATUS_TAG = 0;
    static const remote_tag THREAD_TAG = 100;
+   static const remote_tag THREAD_DELAY_TAG = 500;
    
-   static inline const remote_tag get_thread_tag(const process::process_id id)
+   static inline const remote_tag get_thread_tag(const vm::process_id id)
    {
       return THREAD_TAG + id;
+   }
+   
+   static inline const remote_tag get_thread_delay_tag(const vm::process_id id)
+   {
+      return THREAD_DELAY_TAG + id;
    }
    
    std::vector<remote*> remote_list;   
@@ -55,7 +62,7 @@ private:
    
 public:
    
-   inline const bool use_mpi(void) const { return USE_MPI && world_size > 1; }
+   inline const bool use_mpi(void) const { return world_size > 1; }
    
    const bool finished(void) const;
    
@@ -63,13 +70,18 @@ public:
    
    void update_status(const remote_state);
    
-   void finish(void);
+   void synchronize(void);
    
    void set_nodes_total(const size_t);
    
-   void send(remote*, const process::process_id, const message&);
+   void send(remote *, const vm::process_id&, const message&);
+   void send(remote *, const vm::process_id&, const message_set&);
    
-   message* recv_attempt(const process::process_id);
+   message_set* recv_attempt(const vm::process_id, remote*&);
+   
+   size_t get_pending_messages(const vm::process_id);
+   
+   void send_processed_messages(const remote*, const vm::process_id&, const size_t);
    
    remote* find_remote(const db::node::node_id) const;
    

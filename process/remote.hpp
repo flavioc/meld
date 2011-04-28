@@ -71,7 +71,7 @@ public:
       return nodes_per_proc;
    }
    
-   inline const process::process_id find_proc_owner(const db::node::node_id id) const
+   inline const vm::process_id find_proc_owner(const db::node::node_id id) const
    {
       const db::node::node_id remote_node_id(id - get_nodes_base());
       return std::min(remote_node_id / get_nodes_per_proc(), get_num_threads()-1);

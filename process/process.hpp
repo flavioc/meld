@@ -13,6 +13,9 @@
 #include "db/database.hpp"
 #include "utils/interval.hpp"
 #include "process/queue.hpp"
+#include "process/message.hpp"
+#include "process/buffer.hpp"
+#include "process/counter.hpp"
 
 namespace process
 {
@@ -25,10 +28,6 @@ typedef struct {
 
 class process
 {
-public:
-   
-   typedef unsigned short process_id;
-   
 private:
    
    static boost::mutex remote_mutex;
@@ -38,31 +37,37 @@ private:
    utils::interval<db::node::node_id> *nodes_interval;
    boost::thread *thread;
    list_nodes nodes;
-   process_id id;
-   
-   std::vector<wqueue_free<work_unit> > buffered_work;
+   vm::process_id id;
    
    char _pad1[64];
+   
+   typedef wqueue_free<work_unit> queue_work_free;
+   std::vector<queue_work_free, mem::allocator<queue_work_free> > buffered_work;
+   
+   char _pad2[64];
    
    boost::mutex mutex;
    
    wqueue<work_unit> queue_work;
    
-   char _pad2[64];
+   char _pad3[64];
    
    enum {
       PROCESS_ACTIVE,
       PROCESS_INACTIVE
    } process_state;
    
-   bool ended;
-   bool agg_checked;
-   
-   char _pad3[64];
+   char _pad4[64];
    
    vm::state state;
-   int total_processed;
-   int num_aggs;
+   size_t total_processed;
+   size_t num_aggs;
+   size_t pending_messages;
+   size_t round_trip_fetch;
+   size_t round_trip_update;
+   size_t round_trip_send;
+   counter msg_cnt;
+   buffer msg_buf;
    
    void generate_aggs(void);
    void do_tuple_add(db::node *, vm::tuple *, const vm::ref_count);
@@ -78,32 +83,29 @@ private:
    void flush_this_queue(wqueue_free<work_unit>&, process *);
    void flush_buffered(void);
    bool all_buffers_emptied(void);
+   void update_pending_messages(void);
 
 public:
-   
-   static db::database *DATABASE;
-   static vm::program *PROGRAM;
    
    void add_node(db::node*);
    
    void enqueue_other(process *, db::node *, const db::simple_tuple *);
    void enqueue_work(db::node*, const db::simple_tuple*, const bool is_agg = false);
+   void enqueue_remote(remote *, const vm::process_id, message *);
    
-   const process_id get_id(void) const { return id; }
+   const vm::process_id get_id(void) const { return id; }
    
    void start(void);
    
    bool owns_node(const db::node::node_id& id) const { return nodes_interval->between(id); }
    
    void finished(void) { thread->join(); }
-   
-   bool has_ended(void) const { return ended; }
-   
+      
    inline void join(void) { thread->join(); }
    
    void print(std::ostream&) const;
    
-   explicit process(const process_id&, const size_t);
+   explicit process(const vm::process_id&);
    
    ~process(void);
 };

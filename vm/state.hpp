@@ -42,6 +42,7 @@ public:
    static process::machine *MACHINE;
    static process::remote *REMOTE;
    static process::router *ROUTER;
+   static size_t NUM_THREADS;
    
 #define define_get(WHAT, RET, BODY) \
    inline RET get_ ## WHAT (const reg_num& num) const { BODY; }

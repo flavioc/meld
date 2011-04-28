@@ -58,6 +58,8 @@ public:
    static simple_tuple* create_new(vm::tuple *tuple) { return new simple_tuple(tuple, 1); }
 
    static simple_tuple* remove_new(vm::tuple *tuple) { return new simple_tuple(tuple, -1); }
+   
+   static void wipeout(simple_tuple *stpl) { delete stpl->get_tuple(); delete stpl; }
 
    explicit simple_tuple(vm::tuple *_tuple, const vm::ref_count _count):
       data(_tuple), count(_count)

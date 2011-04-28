@@ -47,7 +47,7 @@ database::database(ifstream& fp, router *rout)
       
       if(nodes_left > 0)
          fp.seekg(node_size * nodes_left, ios_base::cur);
-      remote::rout(cout) << "skip last " << nodes_left << " nodes" << endl;
+      //remote::rout(cout) << "skip last " << nodes_left << " nodes" << endl;
    }
 }
 

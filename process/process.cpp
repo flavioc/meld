@@ -7,6 +7,7 @@
 #include "vm/exec.hpp"
 #include "process/machine.hpp"
 #include "mem/thread.hpp"
+#include "process/counter.hpp"
 
 using namespace db;
 using namespace vm;
@@ -15,13 +16,11 @@ using namespace utils;
 using namespace boost;
 
 namespace process {
-   
-program *process::PROGRAM = NULL;
-database *process::DATABASE = NULL;
+
 mutex process::remote_mutex;
+
 static thread_specific_ptr<process> proc_ptr(NULL);
 
-#define MAKE_IT_STOP 1
 //#define DEBUG_ACTIVE 1
 
 bool
@@ -41,9 +40,7 @@ process::flush_this_queue(wqueue_free<work_unit>& q, process *other)
    
    //printf("%d: flushing %d works to proc %d\n", get_id(), q.size(), other->get_id());
    
-#ifdef MAKE_IT_STOP
    other->make_active();
-#endif
 
    other->queue_work.snap(q);
    q.clear();
@@ -72,10 +69,8 @@ process::enqueue_other(process *other, node* node, const simple_tuple *stuple)
    q.push(work);
    
    if(q.size() > WORK_THRESHOLD) {
-      //printf("HERE\n");
       flush_this_queue(q, other);
    }
-   //other->enqueue_work(node, stuple);
 }
 
 void
@@ -83,58 +78,60 @@ process::enqueue_work(node* node, const simple_tuple* stpl, const bool is_agg)
 {
    work_unit work = {node, stpl, is_agg};
    
-#ifdef MAKE_IT_STOP
    make_active();
-#endif
-   
+
    queue_work.push(work);
 }
 
 bool
 process::busy_wait(void)
 {
-   static const unsigned int COUNT_UP_TO(2);
+   static const size_t COUNT_UP_TO(2);
     
-   unsigned int cont(0);
+   size_t cont(0);
+   bool turned_inactive(false);
+   
+#ifdef COMPILE_MPI
+   fetch_work();
+#endif
    
    while(queue_work.empty()) {
       
       if(cont == 0)
          flush_buffered();
          
-#ifdef MAKE_IT_STOP
-      if(state::MACHINE->finished())
+      // thread case
+      if(!state::ROUTER->use_mpi() && state::MACHINE->finished())
          return false;
+
+#ifdef COMPILE_MPI
+      if(state::ROUTER->use_mpi()) {
+         if(cont == 0)
+            pending_messages += msg_buf.transmit();
+         update_pending_messages();
+      }
 #endif
-         
-      if(cont == COUNT_UP_TO)
+
+      if(cont >= COUNT_UP_TO && !turned_inactive && pending_messages == 0) {
          make_inactive();
-      else if(cont < COUNT_UP_TO)
+         turned_inactive = true;
+      } else if(cont < COUNT_UP_TO)
          cont++;
 
 #ifdef COMPILE_MPI
-      if(get_id() == 0) {
+      if(state::ROUTER->use_mpi() && get_id() == 0) {
+         if(turned_inactive)
+            state::ROUTER->update_status(router::REMOTE_IDLE);
+         
          update_remotes();
       
-         if(state::MACHINE->finished() && state::ROUTER->finished()) {
-         
-            // wait a bit before making a good decision
-            boost::this_thread::sleep(boost::posix_time::millisec(25));
-         
-            fetch_work();
-         
-            if(!queue.empty())
-               return true;
-            
-            update_remotes();
-            
-            if(state::MACHINE->finished() && state::ROUTER->finished()) {
-               state::MACHINE->mark_finished();
-               printf("ENDING HERE %d\n", remote::self->get_rank());
-               return false;
-            }
+         if(turned_inactive && state::ROUTER->finished()) {
+#ifdef DEBUG_REMOTE
+            cout << "ITERATION ENDED for " << remote::self->get_rank() << endl;
+#endif
+            return false;
          }
-      } else
+      }
 #endif
       
 #ifdef COMPILE_MPI   
@@ -167,15 +164,15 @@ void
 process::make_active(void)
 {
    if(process_state == PROCESS_INACTIVE) {
-      mutex.lock();
+      mutex::scoped_lock l(mutex);
+      
       if(process_state == PROCESS_INACTIVE) {
          state::MACHINE->process_is_active();
          process_state = PROCESS_ACTIVE;
 #ifdef DEBUG_ACTIVE
          printf("Active %d\n", id);
 #endif
-      }
-      mutex.unlock();
+      }   
    }
 }
 
@@ -183,16 +180,35 @@ bool
 process::get_work(work_unit& work)
 {
 #ifdef COMPILE_MPI
-   fetch_work();
+   static const size_t ROUND_TRIP_FETCH_MPI(5);
+   static const size_t ROUND_TRIP_UPDATE_MPI(10);
+   static const size_t ROUND_TRIP_SEND_MPI(100);
+   
+   ++round_trip_fetch;
+   ++round_trip_update;
+   ++round_trip_send;
+   
+   if(round_trip_fetch == ROUND_TRIP_FETCH_MPI) {
+      fetch_work();
+      round_trip_fetch = 0;
+   }
+   
+   if(round_trip_update == ROUND_TRIP_UPDATE_MPI) {
+      update_pending_messages();
+      round_trip_update = 0;
+   }
+   
+   if(round_trip_send == ROUND_TRIP_SEND_MPI) {
+      pending_messages += msg_buf.transmit();
+      round_trip_send = 0;
+   }
 #endif
    
    if(queue_work.empty()) {
       if(!busy_wait())
          return false;
 
-#ifdef MAKE_IT_STOP
       make_active();
-#endif
    }
    
    work = queue_work.pop();
@@ -209,22 +225,6 @@ process::add_node(node *node)
       nodes_interval = new interval<node::node_id>(node->get_id(), node->get_id());
    else
       nodes_interval->update(node->get_id());
-}
-
-void
-process::fetch_work(void)
-{
-#ifdef COMPILE_MPI
-   if(state::ROUTER->use_mpi()) {
-      message *msg;
-      
-      while((msg = state::ROUTER->recv_attempt(get_id()))) {
-         enqueue_work(state::DATABASE->find_node(msg->id), msg->data);
-         
-         delete msg;
-      }
-   }
-#endif
 }
 
 void
@@ -250,7 +250,7 @@ process::do_work(node *node, const simple_tuple *_stuple, const bool ignore_agg)
    ref_count count = stuple->get_count();
    
    //cout << node->get_id() << " " << *stuple << endl;
-      
+   
    ++total_processed;
    
    if(count == 0)
@@ -286,10 +286,69 @@ process::update_remotes(void)
 {
 #ifdef COMPILE_MPI
    if(state::ROUTER->use_mpi() && get_id() == 0) {
-      remote_mutex.lock();
+      mutex::scoped_lock l(remote_mutex);
       state::ROUTER->fetch_updates();
-      remote_mutex.unlock();
    }
+#endif
+}
+
+void
+process::fetch_work(void)
+{
+#ifdef COMPILE_MPI
+   if(state::ROUTER->use_mpi()) {
+      message_set *ms;
+      remote* rem;
+      
+      while((ms = state::ROUTER->recv_attempt(get_id(), rem)) != NULL) {
+         assert(!ms->empty());
+         assert(rem != NULL);
+         
+         const process_id source(ms->source);
+         
+         for(list_messages::const_iterator it(ms->begin()); it != ms->end(); ++it) {
+            message *msg(*it);
+            
+            enqueue_work(state::DATABASE->find_node(msg->id), msg->data);
+            
+            delete msg;
+         }
+         
+#ifdef DEBUG_REMOTE
+         cout << "Received work from " << rem->get_rank() << ": " << ms->size() << " works" << endl;
+#endif
+         
+         msg_cnt.increment(rem, source, ms->size());
+         
+         delete ms;
+         
+         rem = NULL;
+      }
+      
+      assert(ms == NULL);
+   }
+#endif
+}
+
+void
+process::enqueue_remote(remote *rem, const process_id proc, message *msg)
+{
+   pending_messages += msg_buf.insert(get_id(), rem, proc, msg);
+}
+
+void
+process::update_pending_messages(void)
+{
+#ifdef COMPILE_MPI
+   {
+      mutex::scoped_lock l(remote_mutex);
+      size_t dec;
+
+      while((dec = state::ROUTER->get_pending_messages(get_id())) != 0)
+         pending_messages -= dec;
+   }
+   
+   msg_cnt.flush_nonzero();
 #endif
 }
 
@@ -322,24 +381,35 @@ process::do_loop(void)
       while(get_work(work))
          do_work(work.work_node, work.work_tpl, work.agg);
    
+      assert(queue_work.empty());
+      assert(process_state == PROCESS_INACTIVE);
+      assert(msg_buf.empty());
+      assert(pending_messages == 0);
+      
 #ifdef COMPILE_MPI
       if(state::ROUTER->use_mpi()) {
-         ended = true;
-
-         if(get_id() == 0) {
-            while(!state::MACHINE->all_ended())
-               {}
+         assert(msg_cnt.everything_zero());
          
-            state::ROUTER->finish();
-         }
+         state::ROUTER->synchronize();
          
-         return;
+         generate_aggs();
+         num_aggs++;
+         
+         if(process_state == PROCESS_ACTIVE)
+            state::ROUTER->update_status(router::REMOTE_ACTIVE);
+         
+         state::ROUTER->synchronize();
+         
+         update_remotes();
+         
+         //state::ROUTER->synchronize();
+         
+         if(state::ROUTER->finished())
+            return;
+         
       } else
 #endif
-      {
-         assert(queue_work.empty());
-         assert(process_state == PROCESS_INACTIVE);
-         
+      {  
          state::MACHINE->wait_aggregates();
          
          //printf("%d - HERE %d\n", num_aggs, id);
@@ -365,6 +435,9 @@ process::loop(void)
    // start process pool
    mem::create_pool(get_id());
    proc_ptr.reset(this);
+   
+   // init buffered queues
+   buffered_work.resize(state::NUM_THREADS);
    
    // enqueue init tuple
    predicate *init_pred(state.PROGRAM->get_init_predicate());
@@ -395,16 +468,19 @@ process::start(void)
       thread = new boost::thread(bind(&process::loop, this));
 }
 
-process::process(const process_id& _id, const size_t num_procs):
-   nodes_interval(NULL), thread(NULL), id(_id),
+process::process(const process_id& _id):
+   nodes_interval(NULL),
+   thread(NULL),
+   id(_id),
    process_state(PROCESS_ACTIVE),
-   ended(false),
-   agg_checked(false),
    state(this),
    total_processed(0),
-   num_aggs(0)
+   num_aggs(0),
+   pending_messages(0),
+   round_trip_fetch(0),
+   round_trip_update(0),
+   round_trip_send(0)
 {
-   buffered_work.resize(num_procs);
 }
 
 process::~process(void)

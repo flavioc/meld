@@ -35,13 +35,9 @@ machine::route(process *caller, const node::node_id id, const simple_tuple* stup
       
       assert(rout.use_mpi());
       
-      printf("On remote machine: %d\n", id);
+      message *msg(new message(id, stuple));
       
-      message msg(id, stuple);
-      
-      rout.send(rem, rem->find_proc_owner(id), msg);
-      
-      delete stuple;
+      caller->enqueue_remote(rem, rem->find_proc_owner(id), msg);
    }
 }
 
@@ -112,31 +108,27 @@ machine::process_is_inactive(void)
       state::ROUTER->update_status(router::REMOTE_IDLE);
 }
 
-bool
-machine::all_ended(void)
-{
-   for(size_t i(0); i < num_threads; ++i)
-      if(!process_list[i]->has_ended())
-         return false;
-   return true;
-}
-
 machine::machine(const string& file, router& _rout, const size_t th):
-   filename(file), num_threads(th), will_show_database(false),
+   filename(file),
+   num_threads(th),
+   will_show_database(false),
    will_dump_database(false),
-   rout(_rout), proc_barrier(new barrier(th)),
-   threads_active(th), is_finished(false)
+   rout(_rout),
+   proc_barrier(new barrier(th)),
+   threads_active(th)
 {  
    state::PROGRAM = new program(filename, &rout);
    state::DATABASE = state::PROGRAM->get_database();
    state::MACHINE = this;
+   state::NUM_THREADS = num_threads;
    
    process_list.resize(num_threads);
    
-   for(process::process_id i(0); i < num_threads; ++i)
-      process_list[i] = new process(i, num_threads);
-   
    mem::init(num_threads);
+   
+   for(process_id i(0); i < num_threads; ++i) {
+      process_list[i] = new process(i);
+   }
    
    distribute_nodes(state::DATABASE);
 }
@@ -146,7 +138,7 @@ machine::~machine(void)
    delete state::PROGRAM;
    delete proc_barrier;
    
-   for(process::process_id i(0); i != num_threads; ++i)
+   for(process_id i(0); i != num_threads; ++i)
       delete process_list[i];
       
    mem::cleanup(num_threads);

@@ -1,9 +1,4 @@
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <assert.h>
-#include <math.h>
-#include <sys/stat.h>
+
 #include <iostream>
 
 #include "config.h"
@@ -16,6 +11,7 @@
 
 using namespace utils;
 using namespace process;
+using namespace std;
 
 static size_t num_threads = 0;
 static char *program = NULL;
@@ -86,16 +82,28 @@ main(int argc, char **argv)
    if (num_threads == 0)
       num_threads = number_cpus();
 
-   router rout(num_threads, argc, argv);
+   try {
+#ifdef COMPILE_MPI
+		 	double start_time(MPI_Wtime());
+#endif
+			
+      router rout(num_threads, argc, argv);
 
-   machine mac(program, rout, num_threads);
+      machine mac(program, rout, num_threads);
 
-   if(show_database)
-      mac.show_database();
-   if(dump_database)
-      mac.dump_database();
+      if(show_database)
+         mac.show_database();
+      if(dump_database)
+         mac.dump_database();
       
-   mac.start();
+      mac.start();
+#ifdef COMPILE_MPI
+			cout << MPI_Wtime() - start_time << " seconds\n";
+#endif
+   } catch(db::database_error& err) {
+      cerr << "Database error: " << err.what() << endl;
+      return EXIT_FAILURE;
+   }
 
    return EXIT_SUCCESS;
 }

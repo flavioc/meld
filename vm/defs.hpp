@@ -15,6 +15,7 @@ typedef unsigned long int ptr_val;
 typedef uint32_t node_val;
 typedef bool bool_val;
 typedef unsigned char predicate_id;
+typedef unsigned short process_id;
 typedef short ref_count;
 typedef unsigned char byte_code_el;
 typedef byte_code_el* byte_code;

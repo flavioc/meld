@@ -10,7 +10,7 @@ namespace process
 ostream&
 operator<<(ostream& cout, const message& msg)
 {
-   cout << "#(" << *(msg.data) << " -> " << msg.id << ")";
+   cout << "#" << "(" << *(msg.data) << " -> " << msg.id << ")";
    return cout;
 }
 
