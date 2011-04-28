@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <assert.h>
+#include <cstdio>
 
 #include "mem/chunkgroup.hpp"
 
