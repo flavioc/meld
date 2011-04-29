@@ -21,6 +21,10 @@ const size_t iter_match_size = 2;
 const size_t int_size = sizeof(int_val);
 const size_t float_size = sizeof(float_val);
 const size_t node_size = sizeof(node_val);
+const size_t reg_size = 0;
+const size_t host_size = 0;
+const size_t nil_size = 0;
+const size_t tuple_size = 0;
 
 const size_t SEND_BASE           = 3;
 const size_t OP_BASE             = 5;
@@ -40,6 +44,7 @@ const size_t NEXT_BASE           = 1;
 const size_t FLOAT_BASE          = 3;
 const size_t SELECT_BASE         = 9;
 const size_t RETURN_SELECT_BASE  = 5;
+const size_t COLOCATED_BASE      = 4;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -54,14 +59,15 @@ enum instr_type {
    FLOAT_INSTR          =  0x09,
    SELECT_INSTR         =  0x0A,
    RETURN_SELECT_INSTR  =  0x0B,
+   COLOCATED_INSTR      =  0x0C,
    CALL_INSTR		      =  0x20,
    MOVE_INSTR		      =  0x30,
    ALLOC_INSTR		      =  0x40,
    IF_INSTR 		      =  0x60,
    MOVE_NIL_INSTR	      =  0x70,
    REMOVE_INSTR 	      =  0x80,
-   ITER_INSTR		      =  0xa0,
-   OP_INSTR			      =  0xc0
+   ITER_INSTR		      =  0xA0,
+   OP_INSTR			      =  0xC0
 };
 
 enum instr_op {
@@ -88,8 +94,7 @@ enum instr_op {
    OP_DIVF       = 0x14,
    OP_DIVI       = 0x15,
    OP_NEQA       = 0x16,
-   OP_EQA        = 0x17,
-   OP_EQLINT	  = 0x18
+   OP_EQA        = 0x17
 };
 
 std::string op_string(const instr_op op);
@@ -246,6 +251,12 @@ inline pcounter select_hash_code(pcounter hash_start, const size_t hash_size, co
 
 inline code_size_t return_select_jump(pcounter pc) { return pcounter_code_size(pc + 1); }
 
+/* COLOCATED a b INTO c */
+
+inline instr_val colocated_first(const pcounter pc) { return val_get(pc, 1); }
+inline instr_val colocated_second(const pcounter pc) { return val_get(pc, 2); }
+inline reg_num colocated_dest(const pcounter pc) { return reg_get(pc, 3); }
+
 /* advance function */
 
 enum instr_argument_type {
@@ -255,17 +266,21 @@ enum instr_argument_type {
    ARGUMENT_WRITABLE,
    ARGUMENT_LIST,
    ARGUMENT_NON_LIST,
-   ARGUMENT_BOOL
+   ARGUMENT_BOOL,
+   ARGUMENT_NODE
 };
 
 template <instr_argument_type type>
-static inline size_t arg_size(instr_val v);
+static inline size_t arg_size(const instr_val v);
+
+#ifdef TEMPLATE_OPTIMIZERS
+#define STATIC_INLINE static inline
+#else
+#define STATIC_INLINE
+#endif
 
 template <>
-#ifdef TEMPLATE_OPTIMIZERS
-static inline
-#endif
-size_t arg_size<ARGUMENT_ANYTHING>(instr_val v)
+STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING>(const instr_val v)
 {
    if(val_is_float(v))
       return float_size;
@@ -274,13 +289,13 @@ size_t arg_size<ARGUMENT_ANYTHING>(instr_val v)
    else if(val_is_field(v))
       return field_size;
    else if(val_is_nil(v))
-      return 0;
+      return nil_size;
    else if(val_is_reg(v))
-      return 0;
+      return reg_size;
    else if(val_is_host(v))
-      return 0;
+      return host_size;
    else if(val_is_tuple(v))
-      return 0;
+      return tuple_size;
    else if(val_is_node(v))
       return node_size;
    else
@@ -288,10 +303,7 @@ size_t arg_size<ARGUMENT_ANYTHING>(instr_val v)
 }
 
 template <>
-#ifdef TEMPLATE_OPTIMIZERS
-static inline
-#endif
-size_t arg_size<ARGUMENT_ANYTHING_NOT_NIL>(instr_val v)
+STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING_NOT_NIL>(const instr_val v)
 {
    if(val_is_float(v))
       return float_size;
@@ -300,11 +312,11 @@ size_t arg_size<ARGUMENT_ANYTHING_NOT_NIL>(instr_val v)
    else if(val_is_field(v))
       return field_size;
    else if(val_is_reg(v))
-      return 0;
+      return reg_size;
    else if(val_is_host(v))
-      return 0;
+      return host_size;
    else if(val_is_tuple(v))
-      return 0;
+      return tuple_size;
    else if(val_is_node(v))
       return node_size;
    else {
@@ -313,15 +325,13 @@ size_t arg_size<ARGUMENT_ANYTHING_NOT_NIL>(instr_val v)
 }
 
 template <>
-#ifdef TEMPLATE_OPTIMIZERS
-static inline
-#endif
-size_t arg_size<ARGUMENT_INT>(instr_val v)
+STATIC_INLINE
+size_t arg_size<ARGUMENT_INT>(const instr_val v)
 {
    if(val_is_int(v))
       return int_size;
    else if(val_is_reg(v))
-      return 0;
+      return reg_size;
    else if(val_is_field(v))
       return field_size;
    else
@@ -329,13 +339,10 @@ size_t arg_size<ARGUMENT_INT>(instr_val v)
 }
 
 template <>
-#ifdef TEMPLATE_OPTIMIZERS
-static inline
-#endif
-size_t arg_size<ARGUMENT_WRITABLE>(instr_val v)
+STATIC_INLINE size_t arg_size<ARGUMENT_WRITABLE>(const instr_val v)
 {
    if(val_is_reg(v))
-      return 0;
+      return reg_size;
    else if(val_is_field(v))
       return field_size;
    else
@@ -343,26 +350,20 @@ size_t arg_size<ARGUMENT_WRITABLE>(instr_val v)
 }
 
 template <>
-#ifdef TEMPLATE_OPTIMIZERS
-static inline
-#endif
-size_t arg_size<ARGUMENT_LIST>(instr_val v)
+STATIC_INLINE size_t arg_size<ARGUMENT_LIST>(const instr_val v)
 {
    if(val_is_reg(v))
-      return 0;
+      return reg_size;
    else if(val_is_field(v))
       return field_size;
    else if(val_is_nil(v))
-      return 0;
+      return nil_size;
    else
       throw malformed_instr_error("invalid instruction list value");
 }
 
 template <>
-#ifdef TEMPLATE_OPTIMIZERS
-static inline
-#endif
-size_t arg_size<ARGUMENT_NON_LIST>(instr_val v)
+STATIC_INLINE size_t arg_size<ARGUMENT_NON_LIST>(const instr_val v)
 {
    if(val_is_float(v))
       return float_size;
@@ -371,9 +372,9 @@ size_t arg_size<ARGUMENT_NON_LIST>(instr_val v)
    else if(val_is_field(v))
       return field_size;
    else if(val_is_reg(v))
-      return 0;
+      return reg_size;
    else if(val_is_host(v))
-      return 0;
+      return host_size;
    else if(val_is_node(v))
       return node_size;
    else
@@ -381,17 +382,29 @@ size_t arg_size<ARGUMENT_NON_LIST>(instr_val v)
 }
 
 template <>
-#ifdef TEMPLATE_OPTIMIZERS
-static inline
-#endif
-size_t arg_size<ARGUMENT_BOOL>(instr_val v)
+STATIC_INLINE size_t arg_size<ARGUMENT_BOOL>(const instr_val v)
 {
    if(val_is_reg(v))
-      return 0;
+      return reg_size;
    else if(val_is_field(v))
       return field_size;
    else
       throw malformed_instr_error("invalid instruction bool value");
+}
+
+template <>
+STATIC_INLINE size_t arg_size<ARGUMENT_NODE>(const instr_val v)
+{
+   if(val_is_reg(v))
+      return reg_size;
+   else if(val_is_field(v))
+      return field_size;
+   else if(val_is_host(v))
+      return host_size;
+   else if(val_is_node(v))
+      return node_size;
+   else
+      throw malformed_instr_error("invalid instruction node value");
 }
 
 inline size_t
@@ -509,6 +522,11 @@ advance(pcounter pc)
          
       case SELECT_INSTR:
          return pc + SELECT_BASE + select_hash_size(pc)*sizeof(code_size_t);
+         
+      case COLOCATED_INSTR:
+         return pc + COLOCATED_BASE
+                   + arg_size<ARGUMENT_NODE>(colocated_first(pc))
+                   + arg_size<ARGUMENT_NODE>(colocated_second(pc));
          
       case ELSE_INSTR:
       case REMOVE_INSTR:

@@ -40,10 +40,15 @@ op_string(const instr_op op)
 		case OP_DIVF: return string("FLOAT DIV"); 
 		case OP_NEQA: return string("ADDR NOT EQUAL"); 
 		case OP_EQA: return string("ADDR EQUAL"); 
-		case OP_EQLINT: return string("LIST INT EQUAL"); 
 	}
 	
    return string("");
+}
+
+static inline string
+reg_string(const reg_num num)
+{
+   return string("reg ") + to_string((int)num);
 }
 
 string
@@ -52,7 +57,7 @@ val_string(const instr_val v, pcounter *pm)
    if(val_is_tuple(v))
       return string("tuple");
    else if(val_is_reg(v))
-      return string("reg ") + to_string((int)val_reg(v));
+      return reg_string(val_reg(v));
    else if(val_is_host(v))
       return string("host");
    else if(val_is_nil(v))
@@ -105,7 +110,7 @@ instr_print(pcounter pc, const bool recurse, const program *prog, ostream& cout)
          cout << "RETURN" << endl;
 			break;
 	   case IF_INSTR: {
-            cout << "IF (reg " << (int)if_reg(pc) << ") THEN" << endl;
+            cout << "IF (" << reg_string(if_reg(pc)) << ") THEN" << endl;
 				if(recurse) {
                pcounter cont = instrs_print(advance(pc), if_jump(pc) - (advance(pc) - pc),
                                        prog, cout);
@@ -140,7 +145,7 @@ instr_print(pcounter pc, const bool recurse, const program *prog, ostream& cout)
    		break;
    	case ALLOC_INSTR:
          cout << "ALLOC " << prog->get_predicate(alloc_predicate(pc))->get_name()
-              << " TO reg " << (int)alloc_reg(pc)
+              << " TO " << reg_string(alloc_reg(pc))
               << endl;
    		break;
    	case OP_INSTR: {
@@ -164,8 +169,8 @@ instr_print(pcounter pc, const bool recurse, const program *prog, ostream& cout)
            }
            break;
       case SEND_INSTR:
-         cout << "SEND reg " << (int)send_msg(pc)
-              << " TO reg " << (int)send_dest(pc)
+         cout << "SEND " << reg_string(send_msg(pc))
+              << " TO " << reg_string(send_dest(pc))
               << endl;
    		break;
    	case ITER_INSTR: {
@@ -264,7 +269,17 @@ instr_print(pcounter pc, const bool recurse, const program *prog, ostream& cout)
             return pc + select_size(pc);
          }
          break;
-    	case REMOVE_INSTR:
+      case COLOCATED_INSTR: {
+            pcounter m = pc + COLOCATED_BASE;
+            const string first(val_string(colocated_first(pc), &m));
+            const string second(val_string(colocated_second(pc), &m));
+         
+            cout << "COLOCATED (" << first << ", " << second
+               << ") TO " << reg_string(colocated_dest(pc)) << endl;
+            
+         }
+         break;
+      case REMOVE_INSTR:
     	case ELSE_INSTR:
          throw malformed_instr_error("unknown instruction code");
 	}

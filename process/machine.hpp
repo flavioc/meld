@@ -62,6 +62,8 @@ public:
    
    process *get_process(const vm::process_id id) { return process_list[id]; }
    
+   bool same_place(const db::node::node_id, const db::node::node_id) const;
+   
    void route(process *, const db::node::node_id, const db::simple_tuple*);
    
    void start(void);

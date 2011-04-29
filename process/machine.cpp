@@ -16,6 +16,21 @@ using namespace boost;
 
 namespace process
 {
+   
+bool
+machine::same_place(const node::node_id id1, const node::node_id id2) const
+{
+   if(id1 == id2)
+      return true;
+   
+   remote *rem1(rout.find_remote(id1));
+   remote *rem2(rout.find_remote(id2));
+   
+   if(rem1 != rem2)
+      return false;
+   
+   return rem1->find_proc_owner(id1) == rem1->find_proc_owner(id2);
+}
 
 void
 machine::route(process *caller, const node::node_id id, const simple_tuple* stuple)

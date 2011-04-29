@@ -485,7 +485,6 @@ execute_op(const pcounter& pc, state& state)
       case OP_DIVI: implement_operation(int_val, int_val, v1 / v2);
       case OP_NEQA: implement_operation(node_val, bool_val, v1 != v2);
       case OP_EQA: implement_operation(node_val, bool_val, v1 == v2);
-      case OP_EQLINT: throw vm_exec_error("OP_EQLINT must be removed");
    }
 #undef implement_operation
 }
@@ -733,6 +732,21 @@ execute_select(pcounter pc, state& state)
       return select_hash_code(hash_start, select_hash_size(pc), hashed);
 }
 
+static inline void
+execute_colocated(pcounter pc, state& state)
+{
+   pcounter m = pc + COLOCATED_BASE;
+   
+   const instr_val first(colocated_first(pc));
+   const instr_val second(colocated_second(pc));
+   const reg_num dest(colocated_dest(pc));
+ 
+   const node_val n1(get_op_function<node_val>(first, m, state));
+   const node_val n2(get_op_function<node_val>(second, m, state));
+   
+   state.set_bool(dest, state::MACHINE->same_place(n1, n2));
+}
+
 static inline return_type
 execute(pcounter pc, state& state)
 {
@@ -822,6 +836,10 @@ eval_loop:
          case SELECT_INSTR:
             pc = execute_select(pc, state);
             goto eval_loop;
+            
+         case COLOCATED_INSTR:
+            execute_colocated(pc, state);
+            break;
             
          default: throw vm_exec_error("unsupported instruction");
       }
