@@ -11,12 +11,12 @@ DEBUG = -g
 WARNINGS = -Wall
 
 CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS)
-CXXFLAGS = $(CFLAGS) #-std=c++0x
 LIBRARIES = -lpthread -lm -lboost_thread-mt
 
 ifneq ($(COMPILE_MPI),)
 	LIBRARIES += -lmpi -lmpi_cxx -lboost_serialization-mt -lboost_mpi-mt
 	CXX = mpic++
+	CFLAGS += -DCOMPILE_MPI=1
 else
 	CXX = g++
 endif
@@ -25,9 +25,10 @@ GCC_MINOR    := $(shell $(CXX) -v 2>&1 | \
 													grep " version " | cut -d' ' -f3  | cut -d'.' -f2)
 
 ifeq ($(GCC_MINOR),2)
-	CXXFLAGS += -DTEMPLATE_OPTIMIZERS=1
+	CFLAGS += -DTEMPLATE_OPTIMIZERS=1
 endif
 
+CXXFLAGS = $(CFLAGS) #-std=c++0x
 LDFLAGS = $(PROFILING) $(LIBRARY_DIRS) $(LIBRARIES)
 COMPILE = $(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS)
 
