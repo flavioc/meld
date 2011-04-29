@@ -42,7 +42,10 @@ INSTRUCTION & BYTE FORMAT & ARGS\\
 \\
 \inst{IF}    {0&1&1&0&0&0&0&0 \\\hline
 0&0&0&r&r&r&r&r \\\hline
-j&j&j&j&j&j&j&j \\\hline j&j&j&j&j&j&j&j} {reg, jump\_offset}
+j&j&j&j&j&j&j&j \\\hline
+j&j&j&j&j&j&j&j \\\hline
+j&j&j&j&j&j&j&j \\\hline
+j&j&j&j&j&j&j&j} {reg, jump\_offset}
 & if {\it reg} != 0 then process until ELSE and then jump.\\
 & if {\it reg} = 0 then jump to ELSE \\
 & (note: IFs may be nested) \\
@@ -50,8 +53,12 @@ j&j&j&j&j&j&j&j \\\hline j&j&j&j&j&j&j&j} {reg, jump\_offset}
 \inst{ELSE}  {0&0&0&0&0&0&1&0} {---}
 & a marker for if blocks\\
 \\
-\inst{ITER}  {1&0&1&0&0&0&0&0\\\hline 0&i&i&i&i&i&i&i \\\hline
-j&j&j&j&j&j&j&j \\\hline j&j&j&j&j&j&j&j} {id, jump\_offset, matchlist}
+\inst{ITER}  {1&0&1&0&0&0&0&0\\\hline
+0&i&i&i&i&i&i&i \\\hline
+j&j&j&j&j&j&j&j \\\hline
+j&j&j&j&j&j&j&j \\\hline
+j&j&j&j&j&j&j&j \\\hline
+j&j&j&j&j&j&j&j} {id, jump\_offset, matchlist}
 & iterates over all the tuples of type {\it id} that match\\
 & according to the following {\it matchlist}.\\
 & after all matching facts have been processed, use \\
