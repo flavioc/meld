@@ -80,7 +80,11 @@ main(int argc, char **argv)
       help();
 
    if (num_threads == 0)
-      num_threads = number_cpus();
+#ifdef COMPILE_MPI
+	   num_threads = 1;
+#else
+	   num_threads = number_cpus();
+#endif
 
    try {
 #ifdef COMPILE_MPI
