@@ -29,10 +29,10 @@ const size_t tuple_size = 0;
 const size_t SEND_BASE           = 3;
 const size_t OP_BASE             = 5;
 const size_t MOVE_BASE           = 3;
-const size_t ITER_BASE           = 4;
+const size_t ITER_BASE           = 6;
 const size_t ALLOC_BASE          = 3;
 const size_t CALL_BASE           = 3;
-const size_t IF_BASE             = 4;
+const size_t IF_BASE             = 6;
 const size_t MOVE_NIL_BASE       = 2;
 const size_t TEST_NIL_BASE       = 3;
 const size_t CONS_BASE           = 5;
@@ -137,7 +137,7 @@ inline void pcounter_move_node(pcounter *pc) { *pc = *pc + node_size; }
 /* common instruction functions */
 
 /* XXX */
-inline code_offset_t jump_get(pcounter x, size_t off) { return (code_offset_t)*(unsigned short*)(x + off); }
+inline code_offset_t jump_get(pcounter x, size_t off) { return pcounter_code_size(x + off); }
 
 inline reg_num reg_get(pcounter x, size_t off) { return (reg_num)(*(x + off) & 0x1f); }
 inline instr_val val_get(pcounter x, size_t off) { return (instr_val)(*(x + off) & 0x3f); }
@@ -175,7 +175,7 @@ inline instr_val move_to(pcounter pc) { return val_get(pc, 2); }
 typedef pcounter iter_match;
 
 inline predicate_id iter_predicate(pcounter pc) { return predicate_get(pc, 1); }
-inline size_t iter_jump(pcounter pc) { return (size_t)jump_get(pc, 2); }
+inline code_offset_t iter_jump(pcounter pc) { return jump_get(pc, 2); }
 inline bool iter_match_end(iter_match m) { return (*(m + 1) & 0xc0) == 0x40; }
 inline bool iter_match_none(iter_match m) { return (*(m + 1) & 0xc0) == 0xc0; }
 inline instr_val iter_match_val(iter_match m) { return val_get((pcounter)m, 1); }
