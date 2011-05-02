@@ -12,6 +12,7 @@ using namespace std;
 namespace process
 {
    
+#ifdef COMPILE_MPI
 void
 buffer::transmit_list(remote *rem, const process_id proc, message_set& ms)
 {
@@ -89,5 +90,6 @@ buffer::update_received(void)
 #endif
    }
 }
+#endif
 
 }

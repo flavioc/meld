@@ -61,10 +61,12 @@ private:
    vm::state state;
    size_t total_processed;
    size_t num_aggs;
+#ifdef COMPILE_MPI
    size_t round_trip_fetch;
    size_t round_trip_update;
    size_t round_trip_send;
    buffer msg_buf;
+#endif
    
    void generate_aggs(void);
    void do_tuple_add(db::node *, vm::tuple *, const vm::ref_count);

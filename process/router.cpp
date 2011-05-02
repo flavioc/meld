@@ -36,27 +36,23 @@ router::set_nodes_total(const size_t total)
 #endif
 }
 
+#ifdef COMPILE_MPI
 mpi::request
 router::send(remote *rem, const process_id& proc, const message& msg)
 {
-#ifdef COMPILE_MPI
    assert(0);
    return world->isend(rem->get_rank(), get_thread_tag(proc), msg);
-#endif
 }
 
 mpi::request
 router::send(remote *rem, const process_id& proc, const message_set& ms)
 {
-#ifdef COMPILE_MPI
    return world->isend(rem->get_rank(), get_thread_tag(proc), ms);
-#endif
 }
 
 message_set*
 router::recv_attempt(const process_id proc, remote*& rem)
 {
-#ifdef COMPILE_MPI
    mutex::scoped_lock l(mt);
    
    optional<mpi::status> stat(world->iprobe(mpi::any_source, get_thread_tag(proc)));
@@ -70,9 +66,16 @@ router::recv_attempt(const process_id proc, remote*& rem)
       
       return ms;
    } else
-#endif
       return NULL;
 }
+
+void
+router::check_requests(std::list<mpi::request>& reqs)
+{
+   reqs.erase(mpi::test_some(reqs.begin(), reqs.end()), reqs.end());
+}
+
+#endif
    
 remote*
 router::find_remote(const node::node_id id) const
@@ -136,12 +139,6 @@ router::synchronize(void)
 #ifdef COMPILE_MPI
    world->barrier();
 #endif
-}
-
-void
-router::check_requests(std::list<mpi::request>& reqs)
-{
-   reqs.erase(mpi::test_some(reqs.begin(), reqs.end()), reqs.end());
 }
 
 void

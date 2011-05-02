@@ -111,7 +111,11 @@ process::busy_wait(void)
       }
 #endif
 
-      if(cont >= COUNT_UP_TO && !turned_inactive && msg_buf.all_received()) {
+      if(cont >= COUNT_UP_TO && !turned_inactive
+#ifdef COMPILE_MPI
+					&& msg_buf.all_received()
+#endif
+					) {
          make_inactive();
          turned_inactive = true;
       } else if(cont < COUNT_UP_TO)
@@ -330,7 +334,9 @@ process::fetch_work(void)
 void
 process::enqueue_remote(remote *rem, const process_id proc, message *msg)
 {
+#ifdef COMPILE_MPI
    msg_buf.insert(get_id(), rem, proc, msg);
+#endif
 }
 
 void
@@ -372,8 +378,10 @@ process::do_loop(void)
    
       assert(queue_work.empty());
       assert(process_state == PROCESS_INACTIVE);
+#ifdef COMPILE_MPI
       assert(msg_buf.empty());
       assert(msg_buf.all_received());
+#endif
       
 #ifdef COMPILE_MPI
       if(state::ROUTER->use_mpi()) {
@@ -462,10 +470,12 @@ process::process(const process_id& _id):
    process_state(PROCESS_ACTIVE),
    state(this),
    total_processed(0),
-   num_aggs(0),
-   round_trip_fetch(0),
+   num_aggs(0)
+#ifdef COMPILE_MPI
+   ,round_trip_fetch(0),
    round_trip_update(0),
    round_trip_send(0)
+#endif
 {
 }
 

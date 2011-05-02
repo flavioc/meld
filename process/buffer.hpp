@@ -18,7 +18,6 @@ class remote;
 
 #ifdef COMPILE_MPI
 typedef std::list<boost::mpi::request> vector_reqs;
-#endif
 
 class buffer: public mem::base<buffer>
 {
@@ -51,6 +50,7 @@ public:
    
    ~buffer(void) {}
 };
+#endif
 
 }
 
