@@ -1,6 +1,0 @@
-
-type thing(catom).
-type other(catom).
-
-thing(A).
-schedule(A, other, 2) :- thing(A).

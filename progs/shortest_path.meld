@@ -1,24 +1,20 @@
 
-type persistent weight(node, node, int).
-type persistent start(node).
-type persistent end(node).
-type path(node, min int, node list).
+type start(node).
+type end(node).
+type route edge(node, node, int).
+type path(node, min int, list node).
 
-type print_path(node, int, node list).
+path(A, W, [A, B]) :-
+	edge(A, B, W),
+	end(B).
 
-extern node list list_node_new().
-extern node list list_push_tail_node(node list, node).
+path(A, D + W, [A | P]) :-
+	edge(A, B, W),
+	path(B, D, P).
 
-path(C, W, list_node_new()) :-
-	start(A),
-	weight(A, C, W),
-	edge(A, C).
+edge(@0, @1, 1).
+edge(@1, @2, 1).
+edge(@0, @2, 4).
+start(@0).
+end(@2).
 
-path(A, D + W, list_push_tail_node(P, E)) :-
-	path(E, D, P),
-	edge(E, A),
-	weight(E, A, W).
-	
-print_path(A, D, P) :-
-   end(A),
-   path(A, D, P).

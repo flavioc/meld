@@ -1,19 +1,8 @@
 
-type persistent start(node).
-type persistent end(node).
-type success(node, int).
-type connects(node, sum int). /* connects in "so many" ways */
+include #data/btree12.meld
 
-connects(B, 1) :-
-   start(A),
-   edge(A, B).
+type path(node, node).
    
-connects(B, T + 1) :-
-   connects(A, T),
-   edge(A, B).
-   
-success(A, T) :-
-   end(A),
-   edge(B, A),
-   connects(B, T).
-   
+path(A, B) :- edge(A, B).
+path(A, B) :- edge(A, C), path(C, B).
+

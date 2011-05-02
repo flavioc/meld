@@ -10,3 +10,4 @@ path(A, W, [A]) :-
 path(A, D + W, [A | P]) :-
 	edge(A, B, W),
 	path(B, D, P).
+
