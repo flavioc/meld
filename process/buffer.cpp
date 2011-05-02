@@ -12,24 +12,21 @@ using namespace std;
 namespace process
 {
    
-size_t
+void
 buffer::transmit_list(remote *rem, const process_id proc, message_set& ms)
 {
-   const size_t ret(ms.size());
+   total -= ms.size();
    
-   total -= ret;
-   
-   state::ROUTER->send(rem, proc, ms);
+   reqs.push_back(state::ROUTER->send(rem, proc, ms));
    
 #ifdef DEBUG_REMOTE
    cout << "Sent " << ms.size() << " messages to " << rem->get_rank() << ":" << proc << endl;
 #endif
    
    ms.wipeout();
-   return ret;
 }
 
-size_t
+void
 buffer::insert(const process_id source, remote *rem, const process_id proc, message* msg)
 {
    map_messages::iterator it(map_rem.find(rem));
@@ -57,16 +54,12 @@ buffer::insert(const process_id source, remote *rem, const process_id proc, mess
    static const size_t BUFFER_THRESHOLD(25);
    
    if(ms.size() >= BUFFER_THRESHOLD)
-      return transmit_list(rem, proc, ms);
-   else
-      return 0;
+      transmit_list(rem, proc, ms);
 }
 
-size_t
+void
 buffer::transmit(void)
 {
-   size_t ret(total);
-   
    if(total > 0) {
       for(map_messages::iterator it(map_rem.begin()); it != map_rem.end(); ++it) {
          map_procs& map_proc(it->second);
@@ -81,8 +74,20 @@ buffer::transmit(void)
          }
       }
    }
-   
-   return ret;
+}
+
+void
+buffer::update_received(void)
+{
+   if(!reqs.empty()) {
+#ifdef DEBUG_REMOTE
+      cout << "CHECKING " << reqs.size() << " requests\n";
+#endif
+      state::ROUTER->check_requests(reqs);
+#ifdef DEBUG_REMOTE
+      cout << "NOW I HAVE " << reqs.size() << " requests left\n";
+#endif
+   }
 }
 
 }

@@ -3,6 +3,9 @@
 #define PROCESS_BUFFER_HPP
 
 #include <list>
+#ifdef COMPILE_MPI
+#include <boost/mpi.hpp>
+#endif
 
 #include "process/message.hpp"
 #include "vm/defs.hpp"
@@ -12,6 +15,10 @@ namespace process
 {
    
 class remote;
+
+#ifdef COMPILE_MPI
+typedef std::list<boost::mpi::request> vector_reqs;
+#endif
 
 class buffer: public mem::base<buffer>
 {
@@ -23,17 +30,22 @@ private:
       mem::allocator< std::pair<remote*, map_procs> > > map_messages;
    
    map_messages map_rem;
+   vector_reqs reqs;
    size_t total;
    
-   size_t transmit_list(remote *, const vm::process_id, message_set&);
+   void transmit_list(remote *, const vm::process_id, message_set&);
    
 public:
    
    inline const bool empty(void) const { return total == 0; }
    
-   size_t insert(const vm::process_id, remote *, const vm::process_id, message *);
+   inline const bool all_received(void) const { return reqs.empty(); }
    
-   size_t transmit(void);
+   void update_received(void);
+   
+   void insert(const vm::process_id, remote *, const vm::process_id, message *);
+   
+   void transmit(void);
    
    explicit buffer(void): total(0) {}
    

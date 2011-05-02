@@ -138,4 +138,8 @@ std::ostream& operator<<(std::ostream&, const tuple_aggregate&);
 
 }
 
+#ifdef COMPILE_MPI
+BOOST_CLASS_TRACKING(db::simple_tuple, boost::serialization::track_never)
+#endif
+
 #endif

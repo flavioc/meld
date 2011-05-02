@@ -107,4 +107,8 @@ typedef std::list<tuple*, mem::allocator<vm::tuple*> > tuple_list;
 
 }
 
+#ifdef COMPILE_MPI
+BOOST_CLASS_TRACKING(vm::tuple, boost::serialization::track_never)
+#endif
+
 #endif

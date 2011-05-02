@@ -7,7 +7,6 @@
 #include "vm/exec.hpp"
 #include "process/machine.hpp"
 #include "mem/thread.hpp"
-#include "process/counter.hpp"
 
 using namespace db;
 using namespace vm;
@@ -107,12 +106,12 @@ process::busy_wait(void)
 #ifdef COMPILE_MPI
       if(state::ROUTER->use_mpi()) {
          if(cont == 0)
-            pending_messages += msg_buf.transmit();
+            msg_buf.transmit();
          update_pending_messages();
       }
 #endif
 
-      if(cont >= COUNT_UP_TO && !turned_inactive && pending_messages == 0) {
+      if(cont >= COUNT_UP_TO && !turned_inactive && msg_buf.all_received()) {
          make_inactive();
          turned_inactive = true;
       } else if(cont < COUNT_UP_TO)
@@ -180,9 +179,9 @@ bool
 process::get_work(work_unit& work)
 {
 #ifdef COMPILE_MPI
-   static const size_t ROUND_TRIP_FETCH_MPI(5);
-   static const size_t ROUND_TRIP_UPDATE_MPI(10);
-   static const size_t ROUND_TRIP_SEND_MPI(100);
+   static const size_t ROUND_TRIP_FETCH_MPI(40);
+   static const size_t ROUND_TRIP_UPDATE_MPI(40);
+   static const size_t ROUND_TRIP_SEND_MPI(40);
    
    ++round_trip_fetch;
    ++round_trip_update;
@@ -199,7 +198,7 @@ process::get_work(work_unit& work)
    }
    
    if(round_trip_send == ROUND_TRIP_SEND_MPI) {
-      pending_messages += msg_buf.transmit();
+      msg_buf.transmit();
       round_trip_send = 0;
    }
 #endif
@@ -318,8 +317,6 @@ process::fetch_work(void)
          cout << "Received work from " << rem->get_rank() << ": " << ms->size() << " works" << endl;
 #endif
          
-         msg_cnt.increment(rem, source, ms->size());
-         
          delete ms;
          
          rem = NULL;
@@ -333,22 +330,14 @@ process::fetch_work(void)
 void
 process::enqueue_remote(remote *rem, const process_id proc, message *msg)
 {
-   pending_messages += msg_buf.insert(get_id(), rem, proc, msg);
+   msg_buf.insert(get_id(), rem, proc, msg);
 }
 
 void
 process::update_pending_messages(void)
 {
 #ifdef COMPILE_MPI
-   {
-      mutex::scoped_lock l(remote_mutex);
-      size_t dec;
-
-      while((dec = state::ROUTER->get_pending_messages(get_id())) != 0)
-         pending_messages -= dec;
-   }
-   
-   msg_cnt.flush_nonzero();
+   msg_buf.update_received();
 #endif
 }
 
@@ -384,12 +373,10 @@ process::do_loop(void)
       assert(queue_work.empty());
       assert(process_state == PROCESS_INACTIVE);
       assert(msg_buf.empty());
-      assert(pending_messages == 0);
+      assert(msg_buf.all_received());
       
 #ifdef COMPILE_MPI
       if(state::ROUTER->use_mpi()) {
-         assert(msg_cnt.everything_zero());
-         
          state::ROUTER->synchronize();
          
          generate_aggs();
@@ -476,7 +463,6 @@ process::process(const process_id& _id):
    state(this),
    total_processed(0),
    num_aggs(0),
-   pending_messages(0),
    round_trip_fetch(0),
    round_trip_update(0),
    round_trip_send(0)

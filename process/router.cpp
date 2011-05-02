@@ -36,20 +36,20 @@ router::set_nodes_total(const size_t total)
 #endif
 }
 
-void
+mpi::request
 router::send(remote *rem, const process_id& proc, const message& msg)
 {
 #ifdef COMPILE_MPI
    assert(0);
-   world->send(rem->get_rank(), get_thread_tag(proc), msg);
+   return world->isend(rem->get_rank(), get_thread_tag(proc), msg);
 #endif
 }
 
-void
+mpi::request
 router::send(remote *rem, const process_id& proc, const message_set& ms)
 {
 #ifdef COMPILE_MPI
-   world->send(rem->get_rank(), get_thread_tag(proc), ms);
+   return world->isend(rem->get_rank(), get_thread_tag(proc), ms);
 #endif
 }
 
@@ -72,36 +72,6 @@ router::recv_attempt(const process_id proc, remote*& rem)
    } else
 #endif
       return NULL;
-}
-
-size_t
-router::get_pending_messages(const process_id proc)
-{
-#ifdef COMPILE_MPI
-   mutex::scoped_lock l(mt);
-   
-   optional<mpi::status> stat(world->iprobe(mpi::any_source, get_thread_delay_tag(proc)));
-   
-   if(stat) {
-      size_t total;
-      
-      world->recv(mpi::any_source, get_thread_delay_tag(proc), total);
-      return total;
-   } else
-#endif
-      return 0;
-}
-
-void
-router::send_processed_messages(const remote* rem, const process_id& source, const size_t total)
-{
-#ifdef COMPILE_MPI
-   mutex::scoped_lock l(mt);
-   
-   assert(source == 0); // XXX: just for now
-   
-   world->send(rem->get_rank(), get_thread_delay_tag(source), total);
-#endif
 }
    
 remote*
@@ -169,17 +139,25 @@ router::synchronize(void)
 }
 
 void
+router::check_requests(std::list<mpi::request>& reqs)
+{
+   reqs.erase(mpi::test_some(reqs.begin(), reqs.end()), reqs.end());
+}
+
+void
 router::base_constructor(const size_t num_threads, int argc, char **argv)
 {
 #ifdef COMPILE_MPI
    if(argv != NULL && argc > 0) {
       assert(num_threads == 1); // limitation for now
       
+#ifdef MPI_THREAD
       const int mpi_thread_support = MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
    
       if(mpi_thread_support != MPI_THREAD_MULTIPLE)
          throw remote_error("No multithread support for MPI");
-      
+#endif
+
       env = new mpi::environment(argc, argv);
       world = new mpi::communicator();
    
@@ -239,7 +217,9 @@ router::~router(void)
       delete world;
       delete env;
    
+#ifdef MPI_THREAD
       MPI::Finalize(); // must call this since MPI_Init_thread is not supported by boost
+#endif
    }
 #endif
 }

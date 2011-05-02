@@ -5,6 +5,7 @@
 #include "conf.hpp"
 
 #include <vector>
+#include <list>
 #include <stdexcept>
 #ifdef COMPILE_MPI
 #include <boost/mpi.hpp>
@@ -20,7 +21,7 @@
 
 namespace process
 {
-   
+
 class router
 {
 public:
@@ -74,14 +75,12 @@ public:
    
    void set_nodes_total(const size_t);
    
-   void send(remote *, const vm::process_id&, const message&);
-   void send(remote *, const vm::process_id&, const message_set&);
+   boost::mpi::request send(remote *, const vm::process_id&, const message&);
+   boost::mpi::request send(remote *, const vm::process_id&, const message_set&);
+   
+   void check_requests(std::list<boost::mpi::request>&);
    
    message_set* recv_attempt(const vm::process_id, remote*&);
-   
-   size_t get_pending_messages(const vm::process_id);
-   
-   void send_processed_messages(const remote*, const vm::process_id&, const size_t);
    
    remote* find_remote(const db::node::node_id) const;
    

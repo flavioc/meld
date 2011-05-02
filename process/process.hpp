@@ -15,7 +15,6 @@
 #include "process/queue.hpp"
 #include "process/message.hpp"
 #include "process/buffer.hpp"
-#include "process/counter.hpp"
 
 namespace process
 {
@@ -62,11 +61,9 @@ private:
    vm::state state;
    size_t total_processed;
    size_t num_aggs;
-   size_t pending_messages;
    size_t round_trip_fetch;
    size_t round_trip_update;
    size_t round_trip_send;
-   counter msg_cnt;
    buffer msg_buf;
    
    void generate_aggs(void);

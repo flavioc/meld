@@ -1,8 +1,6 @@
 
 #include <iostream>
 
-#include "config.h"
-
 #include "process/machine.hpp"
 #include "runtime/list.hpp"
 #include "utils/utils.hpp"
@@ -80,10 +78,10 @@ main(int argc, char **argv)
       help();
 
    if (num_threads == 0)
+      num_threads = number_cpus();
+      
 #ifdef COMPILE_MPI
-	   num_threads = 1;
-#else
-	   num_threads = number_cpus();
+	num_threads = 1;
 #endif
 
    try {

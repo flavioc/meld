@@ -16,7 +16,7 @@ class pool
 private:
    
    static const size_t ATOM_SIZE = 4;
-   static const size_t MAX_OBJECT = 256;
+   static const size_t MAX_OBJECT = 512;
    static const size_t MAX_OBJECT_SIZE = MAX_OBJECT * ATOM_SIZE;
    
    typedef std::vector<chunkgroup*> chunk_vector;

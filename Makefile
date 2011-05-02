@@ -8,7 +8,7 @@ PROFILING = #-pg
 OPTIMIZATIONS = -O0
 ARCH = -march=x86-64 #i686
 DEBUG = -g
-WARNINGS = -Wall
+WARNINGS = -Wall -Wno-sign-compare
 
 CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS)
 LIBRARIES = -lpthread -lm -lboost_thread-mt
@@ -46,7 +46,6 @@ OBJS = utils/utils.o \
 			 process/message.o \
 			 mem/thread.o \
 			 db/trie.o \
-			 process/counter.o \
 			 process/buffer.o
 
 all: meld print
@@ -76,7 +75,7 @@ db/database.o: db/database.cpp db/database.hpp vm/instr.hpp \
 							db/node.hpp
 
 process/process.o: process/process.cpp process/process.hpp vm/instr.hpp \
-									process/queue.hpp db/node.hpp process/counter.hpp \
+									process/queue.hpp db/node.hpp \
 									process/buffer.hpp
 
 process/machine.o: process/machine.hpp process/machine.cpp \
@@ -115,8 +114,6 @@ db/trie.o: db/trie.cpp db/trie.hpp \
 
 vm/types.o: vm/types.hpp vm/types.hpp \
 						utils/utils.hpp
-
-process/counter.o: process/counter.hpp process/counter.cpp
 
 process/buffer.o: process/buffer.hpp process/buffer.cpp \
 									process/message.hpp
