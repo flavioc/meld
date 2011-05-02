@@ -1,7 +1,9 @@
 
 VM = ../meld -d -f
 
-all:
+all: tests
+
+tests:
 	@for file in code/*.m; do \
 		./test.sh $$file || exit 1; \
 	done
