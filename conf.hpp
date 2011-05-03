@@ -3,6 +3,7 @@
 #define CONF_HPP
 
 //#define DEBUG_REMOTE 1
+//#define DEBUG_SERIALIZATION_TIME 1
 
 static const bool USE_ALLOCATOR = true;
 
