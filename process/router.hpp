@@ -17,7 +17,7 @@
 #include "db/node.hpp"
 #include "vm/defs.hpp"
 #include "process/message.hpp"
-#include "conf.hpp"
+#include "utils/time.hpp"
 
 namespace process
 {
@@ -57,6 +57,9 @@ private:
 #ifdef COMPILE_MPI
    boost::mpi::environment *env;
    boost::mpi::communicator *world;
+#ifdef DEBUG_SERIALIZATION_TIME
+   utils::execution_time serial_time;
+#endif
 #endif
 
    void base_constructor(const size_t, int, char **);

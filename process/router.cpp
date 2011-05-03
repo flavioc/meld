@@ -15,8 +15,6 @@ using namespace db;
 namespace process
 {
    
-static mutex mt;
-   
 void
 router::set_nodes_total(const size_t total)
 {
@@ -47,14 +45,20 @@ router::send(remote *rem, const process_id& proc, const message& msg)
 mpi::request
 router::send(remote *rem, const process_id& proc, const message_set& ms)
 {
+#ifdef DEBUG_SERIALIZATION_TIME
+   utils::execution_time::scope s(serial_time);
+#endif
+
    return world->isend(rem->get_rank(), get_thread_tag(proc), ms);
 }
 
 message_set*
 router::recv_attempt(const process_id proc, remote*& rem)
 {
-   mutex::scoped_lock l(mt);
-   
+#ifdef DEBUG_SERIALIZATION_TIME
+   utils::execution_time::scope s(serial_time);
+#endif
+
    optional<mpi::status> stat(world->iprobe(mpi::any_source, get_thread_tag(proc)));
    
    if(stat) {
@@ -107,8 +111,6 @@ router::fetch_updates(void)
 {
 #ifdef COMPILE_MPI
    optional<mpi::status> st;
-   
-   mutex::scoped_lock l(mt);
    
    while((st = world->iprobe(mpi::any_source, STATUS_TAG))) {
       remote_state state;
@@ -216,6 +218,9 @@ router::~router(void)
    
 #ifdef MPI_THREAD
       MPI::Finalize(); // must call this since MPI_Init_thread is not supported by boost
+#endif
+#ifdef DEBUG_SERIALIZATION_TIME
+      cout << "Serialization time: " << serial_time << endl;
 #endif
    }
 #endif
