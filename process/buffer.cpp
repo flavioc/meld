@@ -52,7 +52,7 @@ buffer::insert(const process_id source, remote *rem, const process_id proc, mess
    
    ms.add(msg);
    
-   static const size_t BUFFER_THRESHOLD(25);
+   static const size_t BUFFER_THRESHOLD(20);
    
    if(ms.size() >= BUFFER_THRESHOLD)
       transmit_list(rem, proc, ms);

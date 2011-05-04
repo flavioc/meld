@@ -18,6 +18,8 @@
 #include "vm/defs.hpp"
 #include "process/message.hpp"
 #include "utils/time.hpp"
+#include "utils/types.hpp"
+#include "process/buffer.hpp"
 
 namespace process
 {
@@ -79,11 +81,11 @@ public:
    void set_nodes_total(const size_t);
    
 #ifdef COMPILE_MPI
-   boost::mpi::request send(remote *, const vm::process_id&, const message_set&);
+   pair_req send(remote *, const vm::process_id&, const message_set&);
    
-   void check_requests(std::list<boost::mpi::request>&);
+   void check_requests(vector_reqs&);
    
-   message_set* recv_attempt(const vm::process_id, remote*&);
+   message_set* recv_attempt(const vm::process_id);
 #endif
    
    remote* find_remote(const db::node::node_id) const;

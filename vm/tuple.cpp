@@ -308,7 +308,6 @@ tuple*
 tuple::unpack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm)
 {
    predicate_id pred_id;
-   predicate *pred;
    
    MPI_Unpack(buf, buf_size, pos, &pred_id, 1, MPI_UNSIGNED_CHAR, comm);
    

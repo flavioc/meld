@@ -37,17 +37,19 @@ router::set_nodes_total(const size_t total)
 
 #ifdef COMPILE_MPI
 
-mpi::request
+pair<mpi::request, byte*>
 router::send(remote *rem, const process_id& proc, const message_set& ms)
 {
 #ifdef DEBUG_SERIALIZATION_TIME
    utils::execution_time::scope s(serial_time);
 #endif
 
+   const int tag(get_thread_tag(proc));
+
 #ifdef USE_MANUAL_SERIALIZATION
    const size_t msg_size(ms.storage_size());
 #define MAX_BUF_SIZE 512
-   byte buf[MAX_BUF_SIZE];
+   byte *buf(new byte[msg_size]);
    
    assert(msg_size < MAX_BUF_SIZE);
    
@@ -56,35 +58,43 @@ router::send(remote *rem, const process_id& proc, const message_set& ms)
 #ifdef DEBUG_REMOTE
    cout << "Serializing " << msg_size << " bytes of " << ms.size() << " messages" << endl;
 #endif
+
+   mpi::request ret;
    
-   return world->isend(rem->get_rank(), get_thread_tag(proc), buf, MAX_BUF_SIZE);
+   MPI_Isend(buf, msg_size, MPI_PACKED, rem->get_rank(), tag, *world, &ret.m_requests[0]);
+
+   return pair_req(ret, buf);
 #else
-   return world->isend(rem->get_rank(), get_thread_tag(proc), ms);
+   return world->isend(rem->get_rank(), tag, ms);
 #endif
 }
 
 message_set*
-router::recv_attempt(const process_id proc, remote*& rem)
+router::recv_attempt(const process_id proc)
 {
 #ifdef DEBUG_SERIALIZATION_TIME
    utils::execution_time::scope s(serial_time);
 #endif
 
-   optional<mpi::status> stat(world->iprobe(mpi::any_source, get_thread_tag(proc)));
+   const int tag(get_thread_tag(proc));
+
+   optional<mpi::status> stat(world->iprobe(mpi::any_source, tag));
    
    if(stat) {
 #ifdef USE_MANUAL_SERIALIZATION
       byte buf[MAX_BUF_SIZE];
-      mpi::status stat(world->recv(mpi::any_source, get_thread_tag(proc), buf, MAX_BUF_SIZE));
+      
+      // this is a hack on Boost.MPI
+      mpi::status stat;
+      MPI_Recv(buf, MAX_BUF_SIZE, MPI_PACKED, mpi::any_source, tag, *world, &stat.m_status);
       
       message_set *ms(message_set::unpack(buf, MAX_BUF_SIZE, *world));
 #else
       message_set *ms(new message_set());
       
-      mpi::status stat(world->recv(mpi::any_source, get_thread_tag(proc), *ms));
+      mpi::status stat(world->recv(mpi::any_source, tag, *ms));
       
 #endif
-      rem = remote_list[stat.source()];
       
       return ms;
    } else
@@ -92,9 +102,16 @@ router::recv_attempt(const process_id proc, remote*& rem)
 }
 
 void
-router::check_requests(std::list<mpi::request>& reqs)
+router::check_requests(vector_reqs& reqs)
 {
-   reqs.erase(mpi::test_some(reqs.begin(), reqs.end()), reqs.end());
+   for(vector_reqs::iterator it(reqs.begin()); it != reqs.end(); ++it) {
+      pair_req& r(*it);
+      
+      if(r.first.test()) {
+         delete []r.second;
+         it = reqs.erase(it);
+      }
+   }
 }
 
 #endif
@@ -147,7 +164,7 @@ router::update_status(const remote_state state)
    if(state != remote_states[remote::self->get_rank()]) {
       for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i)
          if(i != remote::self->get_rank())
-            world->send(remote_list[i]->get_rank(), STATUS_TAG, state);
+            world->isend(remote_list[i]->get_rank(), STATUS_TAG, state);
          remote_states[remote::self->get_rank()] = state;
    }
 #endif

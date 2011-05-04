@@ -10,6 +10,7 @@
 #include "process/message.hpp"
 #include "vm/defs.hpp"
 #include "mem/base.hpp"
+#include "utils/types.hpp"
 
 namespace process
 {
@@ -17,7 +18,8 @@ namespace process
 class remote;
 
 #ifdef COMPILE_MPI
-typedef std::list<boost::mpi::request> vector_reqs;
+typedef std::pair<boost::mpi::request, utils::byte*> pair_req;
+typedef std::list<pair_req> vector_reqs;
 
 class buffer: public mem::base<buffer>
 {

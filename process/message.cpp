@@ -26,7 +26,6 @@ message::pack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm) const
    data->pack(buf, buf_size, pos, comm);
 }
 
-
 message*
 message::unpack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm)
 {

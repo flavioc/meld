@@ -16,8 +16,6 @@ using namespace boost;
 
 namespace process {
 
-mutex process::remote_mutex;
-
 static thread_specific_ptr<process> proc_ptr(NULL);
 
 //#define DEBUG_ACTIVE 1
@@ -91,24 +89,26 @@ process::busy_wait(void)
    bool turned_inactive(false);
    
 #ifdef COMPILE_MPI
-   fetch_work();
+   if(state::ROUTER->use_mpi()) {
+      msg_buf.transmit();
+      update_pending_messages();
+      usleep(30 * 1000);
+      fetch_work();
+   }
 #endif
    
    while(queue_work.empty()) {
       
-      if(cont == 0)
+      if(cont == 0 && !state::ROUTER->use_mpi())
          flush_buffered();
-         
+      
       // thread case
       if(!state::ROUTER->use_mpi() && state::MACHINE->finished())
          return false;
 
 #ifdef COMPILE_MPI
-      if(state::ROUTER->use_mpi()) {
-         if(cont == 0)
-            msg_buf.transmit();
+      if(state::ROUTER->use_mpi())
          update_pending_messages();
-      }
 #endif
 
       if(cont >= COUNT_UP_TO && !turned_inactive
@@ -118,11 +118,11 @@ process::busy_wait(void)
 					) {
          make_inactive();
          turned_inactive = true;
-      } else if(cont < COUNT_UP_TO)
+      } else if(cont < COUNT_UP_TO || state::ROUTER->use_mpi())
          cont++;
 
 #ifdef COMPILE_MPI
-      if(state::ROUTER->use_mpi() && get_id() == 0) {
+      if(state::ROUTER->use_mpi()) {
          if(turned_inactive)
             state::ROUTER->update_status(router::REMOTE_IDLE);
          
@@ -137,7 +137,9 @@ process::busy_wait(void)
       }
 #endif
       
-#ifdef COMPILE_MPI   
+#ifdef COMPILE_MPI
+      //cout << "Sleep for " << cont * 50 << " ms" << endl;
+      usleep(cont * 50 * 1000);
       fetch_work();
 #endif
    }
@@ -278,8 +280,8 @@ process::do_work(node *node, const simple_tuple *_stuple, const bool ignore_agg)
             state.count = -count;
             execute_bytecode(state.PROGRAM->get_bytecode(tuple->get_predicate_id()), state);
             deleter();
-            } else
-               delete tuple; // as in the positive case, nothing to do
+         } else
+            delete tuple; // as in the positive case, nothing to do
       }
    }
 }
@@ -287,10 +289,14 @@ process::do_work(node *node, const simple_tuple *_stuple, const bool ignore_agg)
 void
 process::update_remotes(void)
 {
+   static size_t UPDATE_REMOTES(0);
+   
 #ifdef COMPILE_MPI
-   if(state::ROUTER->use_mpi() && get_id() == 0) {
-      mutex::scoped_lock l(remote_mutex);
+   if(state::ROUTER->use_mpi()) {
       state::ROUTER->fetch_updates();
+      ++UPDATE_REMOTES;
+      
+      //printf("%d\n", UPDATE_REMOTES);
    }
 #endif
 }
@@ -301,11 +307,9 @@ process::fetch_work(void)
 #ifdef COMPILE_MPI
    if(state::ROUTER->use_mpi()) {
       message_set *ms;
-      remote* rem;
       
-      while((ms = state::ROUTER->recv_attempt(get_id(), rem)) != NULL) {
+      while((ms = state::ROUTER->recv_attempt(get_id())) != NULL) {
          assert(!ms->empty());
-         assert(rem != NULL);
          
          for(list_messages::const_iterator it(ms->begin()); it != ms->end(); ++it) {
             message *msg(*it);
@@ -316,12 +320,10 @@ process::fetch_work(void)
          }
          
 #ifdef DEBUG_REMOTE
-         cout << "Received work from " << rem->get_rank() << ": " << ms->size() << " works" << endl;
+         cout << "Received " << ms->size() << " works" << endl;
 #endif
          
          delete ms;
-         
-         rem = NULL;
       }
       
       assert(ms == NULL);
