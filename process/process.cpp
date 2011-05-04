@@ -92,7 +92,6 @@ process::busy_wait(void)
    if(state::ROUTER->use_mpi()) {
       msg_buf.transmit();
       update_pending_messages();
-      usleep(30 * 1000);
       fetch_work();
    }
 #endif
@@ -127,7 +126,8 @@ process::busy_wait(void)
             state::ROUTER->update_status(router::REMOTE_IDLE);
          
          update_remotes();
-      
+         state::ROUTER->update_sent_states();
+         
          if(turned_inactive && state::ROUTER->finished()) {
 #ifdef DEBUG_REMOTE
             cout << "ITERATION ENDED for " << remote::self->get_rank() << endl;
@@ -138,8 +138,6 @@ process::busy_wait(void)
 #endif
       
 #ifdef COMPILE_MPI
-      //cout << "Sleep for " << cont * 50 << " ms" << endl;
-      usleep(cont * 50 * 1000);
       fetch_work();
 #endif
    }
@@ -153,7 +151,8 @@ void
 process::make_inactive(void)
 {
    if(process_state == PROCESS_ACTIVE) {
-      mutex.lock();
+      mutex::scoped_lock l(mutex);
+
       if(process_state == PROCESS_ACTIVE) {
          process_state = PROCESS_INACTIVE;
 #ifdef DEBUG_ACTIVE
@@ -161,7 +160,7 @@ process::make_inactive(void)
 #endif
          state::MACHINE->process_is_inactive();
       }
-      mutex.unlock();
+
    }
 }
 
@@ -213,6 +212,9 @@ process::get_work(work_unit& work)
       if(!busy_wait())
          return false;
 
+#ifdef COMPILE_MPI
+      state::ROUTER->update_status(router::REMOTE_ACTIVE);
+#endif
       make_active();
    }
    
@@ -344,6 +346,7 @@ process::update_pending_messages(void)
 {
 #ifdef COMPILE_MPI
    msg_buf.update_received();
+   state::ROUTER->update_sent_states();
 #endif
 }
 
@@ -379,25 +382,24 @@ process::do_loop(void)
       assert(queue_work.empty());
       assert(process_state == PROCESS_INACTIVE);
 #ifdef COMPILE_MPI
+      state::ROUTER->update_sent_states();
+      
       assert(msg_buf.empty());
       assert(msg_buf.all_received());
+      assert(state::ROUTER->all_states_sent());
 #endif
       
 #ifdef COMPILE_MPI
       if(state::ROUTER->use_mpi()) {
-         state::ROUTER->synchronize();
-         
          generate_aggs();
          num_aggs++;
          
          if(process_state == PROCESS_ACTIVE)
-            state::ROUTER->update_status(router::REMOTE_ACTIVE);
+            state::ROUTER->send_status(router::REMOTE_ACTIVE);
+         else
+            state::ROUTER->send_status(router::REMOTE_IDLE);
          
-         state::ROUTER->synchronize();
-         
-         update_remotes();
-         
-         //state::ROUTER->synchronize();
+         state::ROUTER->fetch_new_states();
          
          if(state::ROUTER->finished())
             return;

@@ -57,11 +57,14 @@ private:
    size_t nodes_per_remote;
 
 #ifdef COMPILE_MPI
+   typedef std::list<boost::mpi::request> list_state_reqs;
+   
    boost::mpi::environment *env;
    boost::mpi::communicator *world;
 #ifdef DEBUG_SERIALIZATION_TIME
    utils::execution_time serial_time;
 #endif
+   list_state_reqs state_reqs;
 #endif
 
    void base_constructor(const size_t, int, char **);
@@ -72,20 +75,28 @@ public:
    
    const bool finished(void) const;
    
+   void set_nodes_total(const size_t);
+   
+#ifdef COMPILE_MPI
+
    void fetch_updates(void);
    
    void update_status(const remote_state);
    
    void synchronize(void);
    
-   void set_nodes_total(const size_t);
+   void send_status(const remote_state);
    
-#ifdef COMPILE_MPI
+   void fetch_new_states(void);
+   
    pair_req send(remote *, const vm::process_id&, const message_set&);
    
    void check_requests(vector_reqs&);
    
    message_set* recv_attempt(const vm::process_id);
+   
+   void update_sent_states(void);
+   inline bool all_states_sent(void) const { return state_reqs.empty(); }
 #endif
    
    remote* find_remote(const db::node::node_id) const;

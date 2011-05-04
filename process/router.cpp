@@ -95,7 +95,6 @@ router::recv_attempt(const process_id proc)
       mpi::status stat(world->recv(mpi::any_source, tag, *ms));
       
 #endif
-      
       return ms;
    } else
       return NULL;
@@ -114,6 +113,67 @@ router::check_requests(vector_reqs& reqs)
    }
 }
 
+void
+router::fetch_updates(void)
+{
+   optional<mpi::status> st;
+   
+   while((st = world->iprobe(mpi::any_source, STATUS_TAG))) {
+      remote_state state;
+      mpi::status stat;
+      
+      stat = world->recv(mpi::any_source, STATUS_TAG, state);
+      remote_states[stat.source()] = state;
+   }
+}
+
+void
+router::update_status(const remote_state state)
+{
+   // only send if different
+   if(state != remote_states[remote::self->get_rank()]) {
+      for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i)
+         if(i != remote::self->get_rank())
+            state_reqs.push_back(world->isend(remote_list[i]->get_rank(), STATUS_TAG, state));
+      remote_states[remote::self->get_rank()] = state;
+   }
+}
+
+void
+router::send_status(const remote_state state)
+{
+   for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i)
+      if(i != remote::self->get_rank())
+         world->send(remote_list[i]->get_rank(), STATUS_TAG, state);
+   remote_states[remote::self->get_rank()] = state;
+}
+
+void
+router::fetch_new_states(void)
+{
+   for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i) {
+      if(i != remote::self->get_rank()) {
+         remote_state state;
+         mpi::status stat;
+         stat = world->recv(remote_list[i]->get_rank(), STATUS_TAG, state);
+         remote_states[stat.source()] = state;
+      }
+   }
+}
+
+void
+router::update_sent_states(void)
+{
+   list_state_reqs::iterator mark(mpi::test_some(state_reqs.begin(), state_reqs.end()));
+   
+   state_reqs.erase(mark, state_reqs.end());
+}
+
+void
+router::synchronize(void)
+{
+   world->barrier();
+}
 #endif
    
 remote*
@@ -139,43 +199,6 @@ router::finished(void) const
          return false;
    
    return true;
-}
-
-void
-router::fetch_updates(void)
-{
-#ifdef COMPILE_MPI
-   optional<mpi::status> st;
-   
-   while((st = world->iprobe(mpi::any_source, STATUS_TAG))) {
-      remote_state state;
-      mpi::status stat;
-      
-      stat = world->recv(mpi::any_source, STATUS_TAG, state);
-      remote_states[stat.source()] = state;
-   }
-#endif
-}
-
-void
-router::update_status(const remote_state state)
-{
-#ifdef COMPILE_MPI
-   if(state != remote_states[remote::self->get_rank()]) {
-      for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i)
-         if(i != remote::self->get_rank())
-            world->isend(remote_list[i]->get_rank(), STATUS_TAG, state);
-         remote_states[remote::self->get_rank()] = state;
-   }
-#endif
-}
-
-void
-router::synchronize(void)
-{
-#ifdef COMPILE_MPI
-   world->barrier();
-#endif
 }
 
 void
