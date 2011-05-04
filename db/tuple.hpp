@@ -9,6 +9,7 @@
 #include <list>
 
 #ifdef COMPILE_MPI
+#include <boost/mpi.hpp>
 #include <boost/serialization/serialization.hpp>
 #include <boost/mpi/packed_iarchive.hpp>
 #include <boost/mpi/packed_oarchive.hpp>
@@ -19,6 +20,7 @@
 #include "vm/tuple.hpp"
 #include "mem/allocator.hpp"
 #include "mem/base.hpp"
+#include "utils/types.hpp"
 
 namespace db
 {
@@ -54,6 +56,17 @@ public:
    inline void dec_count(const vm::ref_count& inc) { count -= inc; }
    
    inline void add_count(const vm::ref_count& plus) { count += plus; }
+   
+#ifdef COMPILE_MPI
+   const size_t storage_size(void) const
+   {
+      return sizeof(vm::ref_count) + data->get_size();
+   }
+   
+   void pack(utils::byte *, const size_t, int *, MPI_Comm) const;
+   
+   static simple_tuple* unpack(utils::byte *, const size_t, int *, MPI_Comm);
+#endif
 
    static simple_tuple* create_new(vm::tuple *tuple) { return new simple_tuple(tuple, 1); }
 

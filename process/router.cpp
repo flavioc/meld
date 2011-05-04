@@ -11,6 +11,7 @@ using namespace boost;
 using namespace vm;
 using namespace std;
 using namespace db;
+using namespace utils;
 
 namespace process
 {
@@ -35,12 +36,6 @@ router::set_nodes_total(const size_t total)
 }
 
 #ifdef COMPILE_MPI
-mpi::request
-router::send(remote *rem, const process_id& proc, const message& msg)
-{
-   assert(0);
-   return world->isend(rem->get_rank(), get_thread_tag(proc), msg);
-}
 
 mpi::request
 router::send(remote *rem, const process_id& proc, const message_set& ms)
@@ -49,7 +44,23 @@ router::send(remote *rem, const process_id& proc, const message_set& ms)
    utils::execution_time::scope s(serial_time);
 #endif
 
+#ifdef USE_MANUAL_SERIALIZATION
+   const size_t msg_size(ms.storage_size());
+#define MAX_BUF_SIZE 512
+   byte buf[MAX_BUF_SIZE];
+   
+   assert(msg_size < MAX_BUF_SIZE);
+   
+   ms.pack(buf, msg_size, *world);
+   
+#ifdef DEBUG_REMOTE
+   cout << "Serializing " << msg_size << " bytes of " << ms.size() << " messages" << endl;
+#endif
+   
+   return world->isend(rem->get_rank(), get_thread_tag(proc), buf, MAX_BUF_SIZE);
+#else
    return world->isend(rem->get_rank(), get_thread_tag(proc), ms);
+#endif
 }
 
 message_set*
@@ -62,10 +73,17 @@ router::recv_attempt(const process_id proc, remote*& rem)
    optional<mpi::status> stat(world->iprobe(mpi::any_source, get_thread_tag(proc)));
    
    if(stat) {
+#ifdef USE_MANUAL_SERIALIZATION
+      byte buf[MAX_BUF_SIZE];
+      mpi::status stat(world->recv(mpi::any_source, get_thread_tag(proc), buf, MAX_BUF_SIZE));
+      
+      message_set *ms(message_set::unpack(buf, MAX_BUF_SIZE, *world));
+#else
       message_set *ms(new message_set());
       
       mpi::status stat(world->recv(mpi::any_source, get_thread_tag(proc), *ms));
       
+#endif
       rem = remote_list[stat.source()];
       
       return ms;

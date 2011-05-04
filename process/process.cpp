@@ -307,8 +307,6 @@ process::fetch_work(void)
          assert(!ms->empty());
          assert(rem != NULL);
          
-         const process_id source(ms->source);
-         
          for(list_messages::const_iterator it(ms->begin()); it != ms->end(); ++it) {
             message *msg(*it);
             

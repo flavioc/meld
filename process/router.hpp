@@ -79,7 +79,6 @@ public:
    void set_nodes_total(const size_t);
    
 #ifdef COMPILE_MPI
-   boost::mpi::request send(remote *, const vm::process_id&, const message&);
    boost::mpi::request send(remote *, const vm::process_id&, const message_set&);
    
    void check_requests(std::list<boost::mpi::request>&);

@@ -6,6 +6,7 @@ using namespace db;
 using namespace vm;
 using namespace std;
 using namespace boost;
+using namespace utils;
 
 namespace db
 {
@@ -26,6 +27,28 @@ simple_tuple::load(mpi::packed_iarchive& ar, const unsigned int version)
    ar & *data;
    ar & count;
 }
+
+
+void
+simple_tuple::pack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm) const
+{
+   MPI_Pack((void*)&count, 1, MPI_SHORT, buf, buf_size, pos, comm);
+   
+   data->pack(buf, buf_size, pos, comm);
+}
+
+simple_tuple*
+simple_tuple::unpack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm)
+{
+   ref_count count;
+   
+   MPI_Unpack(buf, buf_size, pos, &count, 1, MPI_SHORT, comm);
+   
+   vm::tuple *tpl(vm::tuple::unpack(buf, buf_size, pos, comm));
+   
+   return new simple_tuple(tpl, count);
+}
+
 #endif
 
 simple_tuple::~simple_tuple(void)
@@ -58,7 +81,7 @@ agg_configuration::add_to_set(vm::tuple *tpl, const ref_count many)
       ++it)
    {
       simple_tuple *sother(*it);
-      tuple *other(sother->get_tuple());
+      vm::tuple *other(sother->get_tuple());
       
       if(*other == *tpl) {
          sother->add_count(many);
@@ -79,7 +102,7 @@ agg_configuration::add_to_set(vm::tuple *tpl, const ref_count many)
 }
 
 const bool
-agg_configuration::test(tuple *tpl, const field_num agg_field) const
+agg_configuration::test(vm::tuple *tpl, const field_num agg_field) const
 {
    if(values.empty())
       return false;
@@ -88,7 +111,7 @@ agg_configuration::test(tuple *tpl, const field_num agg_field) const
    
    simple_tuple_list::const_iterator it(values.begin());
    simple_tuple *sother(*it);
-   tuple *other(sother->get_tuple());
+   vm::tuple *other(sother->get_tuple());
    
    for(field_num i(0); i < agg_field; ++i)
       if(!tpl->field_equal(*other, i))
@@ -97,18 +120,18 @@ agg_configuration::test(tuple *tpl, const field_num agg_field) const
    return true;
 }
 
-tuple*
+vm::tuple*
 agg_configuration::generate_max_int(const field_num field) const
 {
    simple_tuple_list::const_iterator it(values.begin());
-   tuple *max_tpl((*it)->get_tuple());
+   vm::tuple *max_tpl((*it)->get_tuple());
    int_val max_val(max_tpl->get_int(field));
    
    ++it;
    for(; it != values.end(); ++it)
    {
       simple_tuple *sother(*it);
-      tuple *other(sother->get_tuple());
+      vm::tuple *other(sother->get_tuple());
       
       if(max_val < other->get_int(field)) {
          max_val = other->get_int(field);
@@ -119,17 +142,17 @@ agg_configuration::generate_max_int(const field_num field) const
    return max_tpl->copy();
 }
 
-tuple*
+vm::tuple*
 agg_configuration::generate_min_int(const field_num field) const
 {
    simple_tuple_list::const_iterator it(values.begin());
-   tuple *min_tpl((*it)->get_tuple());
+   vm::tuple *min_tpl((*it)->get_tuple());
    int_val min_val(min_tpl->get_int(field));
    
    ++it;
    for(; it != values.end(); ++it) {
       simple_tuple *sother(*it);
-      tuple *other(sother->get_tuple());
+      vm::tuple *other(sother->get_tuple());
       
       if(min_val > other->get_int(field)) {
          min_val = other->get_int(field);
@@ -140,12 +163,12 @@ agg_configuration::generate_min_int(const field_num field) const
    return min_tpl->copy();
 }
 
-tuple*
+vm::tuple*
 agg_configuration::generate_sum_int(const field_num field) const
 {
    simple_tuple_list::const_iterator it(values.begin());
    int_val sum_val = 0;
-   tuple *ret((*it)->get_tuple()->copy());
+   vm::tuple *ret((*it)->get_tuple()->copy());
    
    for(; it != values.end(); ++it) {
       simple_tuple *s(*it);
@@ -158,12 +181,12 @@ agg_configuration::generate_sum_int(const field_num field) const
    return ret;
 }
 
-tuple*
+vm::tuple*
 agg_configuration::generate_sum_float(const field_num field) const
 {
    simple_tuple_list::const_iterator it(values.begin());
    float_val sum_val = 0;
-   tuple *ret((*it)->get_tuple()->copy());
+   vm::tuple *ret((*it)->get_tuple()->copy());
    
    for(; it != values.end(); ++it) {
       simple_tuple *s(*it);
@@ -177,7 +200,7 @@ agg_configuration::generate_sum_float(const field_num field) const
    return ret;
 }
 
-tuple*
+vm::tuple*
 agg_configuration::generate_first(void) const
 {
    simple_tuple *s(values.front());
@@ -185,7 +208,7 @@ agg_configuration::generate_first(void) const
    return s->get_tuple()->copy();
 }
 
-tuple*
+vm::tuple*
 agg_configuration::do_generate(const aggregate_type typ, const field_num field)
 {
    if(values.empty())
@@ -220,7 +243,7 @@ void
 agg_configuration::generate(const aggregate_type typ, const field_num field,
    simple_tuple_list& cont)
 {
-   tuple* generated(do_generate(typ, field));
+   vm::tuple* generated(do_generate(typ, field));
    
    changed = false;
    

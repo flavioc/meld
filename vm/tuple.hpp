@@ -10,6 +10,7 @@
 #include <boost/serialization/serialization.hpp>
 #include <boost/mpi/packed_iarchive.hpp>
 #include <boost/mpi/packed_oarchive.hpp>
+#include <mpi.h>
 #endif
 
 #include "vm/defs.hpp"
@@ -17,6 +18,7 @@
 #include "runtime/list.hpp"
 #include "mem/allocator.hpp"
 #include "mem/base.hpp"
+#include "utils/types.hpp"
 
 namespace vm
 {
@@ -72,6 +74,15 @@ public:
    inline const predicate* get_predicate(void) const { return pred; }
 
    inline const predicate_id get_predicate_id(void) const { return pred->get_id(); }
+   
+#ifdef COMPILE_MPI
+   inline const size_t get_size(void) const { return sizeof(predicate_id) + pred->get_size(); }
+   
+   void pack(utils::byte *, const size_t, int *, MPI_Comm) const;
+   void load(utils::byte *, const size_t, int *, MPI_Comm);
+   
+   static tuple* unpack(utils::byte *, const size_t, int *, MPI_Comm);
+#endif
 
    field_type get_field_type(const field_num& field) const { return pred->get_field_type(field); }
 

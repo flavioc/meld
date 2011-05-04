@@ -42,7 +42,7 @@ buffer::insert(const process_id source, remote *rem, const process_id proc, mess
    map_procs::iterator it2(map_proc.find(proc));
    
    if(it2 == map_proc.end()) {
-      map_proc[proc] = message_set(source);
+      map_proc[proc] = message_set();
       it2 = map_proc.find(proc);
    }
    

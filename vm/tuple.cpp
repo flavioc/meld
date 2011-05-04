@@ -155,7 +155,8 @@ tuple::~tuple(void)
 void
 tuple::save(mpi::packed_oarchive & ar, const unsigned int version) const
 {
-   ar & get_predicate_id();
+   const predicate_id id(get_predicate_id());
+   ar & id;
    
    for(field_num i(0); i < num_fields(); ++i) {
       switch(get_field_type(i)) {
@@ -236,6 +237,87 @@ tuple::load(mpi::packed_iarchive& ar, const unsigned int version)
             throw type_error("unsupported field number " + to_string(i));
       }
    }
+}
+
+void
+tuple::pack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm) const
+{
+   const predicate_id id(get_predicate_id());
+   
+   MPI_Pack((void*)&id, 1, MPI_UNSIGNED_CHAR, buf, buf_size, pos, comm);
+   
+   for(field_num i(0); i < num_fields(); ++i) {
+      switch(get_field_type(i)) {
+         case FIELD_INT: {
+               const int_val val(get_int(i));
+               MPI_Pack((void*)&val, 1, MPI_INT, buf, buf_size, pos, comm);
+            }
+            break;
+         case FIELD_FLOAT: {
+               const float_val val(get_float(i));
+               MPI_Pack((void*)&val, 1, MPI_FLOAT, buf, buf_size, pos, comm);
+            }
+            break;
+         case FIELD_NODE: {
+               const node_val val(get_node(i));
+               MPI_Pack((void*)&val, 1, MPI_UNSIGNED, buf, buf_size, pos, comm);
+            }
+            break;
+         case FIELD_LIST_INT:
+         case FIELD_LIST_FLOAT:
+         case FIELD_LIST_NODE:
+         default:
+            throw type_error("unsupported field number " + to_string(i));
+      }
+   }
+}
+
+void
+tuple::load(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm)
+{
+   for(field_num i(0); i < num_fields(); ++i) {
+      switch(get_field_type(i)) {
+         case FIELD_INT: {
+               int_val val;
+               MPI_Unpack(buf, buf_size, pos, &val, 1, MPI_INT, comm);
+               set_int(i, val);
+            }
+            break;
+         case FIELD_FLOAT: {
+               float_val val;
+               MPI_Unpack(buf, buf_size, pos, &val, 1, MPI_FLOAT, comm);
+               set_float(i, val);
+            }
+            break;
+         case FIELD_NODE: {
+               node_val val;
+               MPI_Unpack(buf, buf_size, pos, &val, 1, MPI_UNSIGNED, comm);
+               set_node(i, val);
+            }
+            break;
+         case FIELD_LIST_INT:
+         case FIELD_LIST_FLOAT:
+         case FIELD_LIST_NODE:
+         default:
+            throw type_error("unsupported field number " + to_string(i));
+      }
+   }
+}
+
+tuple*
+tuple::unpack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm)
+{
+   predicate_id pred_id;
+   predicate *pred;
+   
+   MPI_Unpack(buf, buf_size, pos, &pred_id, 1, MPI_UNSIGNED_CHAR, comm);
+   
+   tuple *ret(new tuple(state::PROGRAM->get_predicate(pred_id)));
+   
+   ret->load(buf, buf_size, pos, comm);
+   
+   return ret;
+   
 }
 #endif
 
