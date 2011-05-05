@@ -1,8 +1,8 @@
 
 OS = $(shell uname -s)
 
-INCLUDE_DIRS = -I. -I/opt/local/include
-LIBRARY_DIRS = -L/opt/local/lib
+INCLUDE_DIRS = -I. -I/opt/local/include -I/usr/include/openmpi-x86_64/
+LIBRARY_DIRS = -L/opt/local/lib -L/usr/lib64/openmpi/lib
 
 PROFILING = #-pg
 OPTIMIZATIONS = -O0
