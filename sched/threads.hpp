@@ -33,13 +33,13 @@ private:
    
    utils::byte _pad_threads4[128];
    
-   typedef process::wqueue_free<work_unit> queue_work_free;
+   typedef wqueue_free<work_unit> queue_work_free;
    std::vector<queue_work_free, mem::allocator<queue_work_free> > buffered_work;
    
    void make_active(void);
    void make_inactive(void);
    bool all_buffers_emptied(void) const;
-   void flush_this_queue(process::wqueue_free<work_unit>&, threads_static *);
+   void flush_this_queue(wqueue_free<work_unit>&, threads_static *);
    void flush_buffered(void);
    
 protected:

@@ -1,12 +1,12 @@
 
-#ifndef PROCESS_QUEUE_HPP
-#define PROCESS_QUEUE_HPP
+#ifndef SCHED_QUEUE_HPP
+#define SCHED_QUEUE_HPP
 
 #include <boost/thread/mutex.hpp>
 
 #include "mem/allocator.hpp"
 
-namespace process
+namespace sched
 {
 
 template <class T>

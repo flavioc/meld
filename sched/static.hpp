@@ -7,7 +7,7 @@
 #include "sched/base.hpp"
 #include "db/node.hpp"
 #include "utils/interval.hpp"
-#include "process/queue.hpp"
+#include "sched/queue.hpp"
 #include "utils/types.hpp"
 
 namespace sched
@@ -31,7 +31,7 @@ protected:
    
    utils::byte _pad2[128];
    
-   process::wqueue<work_unit> queue_work;
+   wqueue<work_unit> queue_work;
    
    virtual void assert_end_iteration(void) const;
    

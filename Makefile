@@ -80,8 +80,7 @@ db/database.o: db/database.cpp db/database.hpp vm/instr.hpp \
 							db/node.hpp
 
 process/process.o: process/process.cpp process/process.hpp vm/instr.hpp \
-									process/queue.hpp db/node.hpp \
-									process/buffer.hpp
+									db/node.hpp process/buffer.hpp
 
 process/machine.o: process/machine.hpp process/machine.cpp \
 									vm/state.hpp process/remote.hpp process/process.hpp \
@@ -131,7 +130,8 @@ sched/static.o: sched/static.cpp sched/static.hpp \
 								sched/base.hpp
 
 sched/threads.o: sched/threads.cpp sched/threads.hpp \
-								sched/base.hpp sched/static.hpp
+								sched/base.hpp sched/static.hpp \
+								sched/queue.hpp
 
 sched/mpi.o: sched/mpi.hpp sched/mpi.cpp \
 						sched/base.hpp sched/static.hpp
