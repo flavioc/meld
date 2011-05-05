@@ -30,8 +30,10 @@ router::set_nodes_total(const size_t total)
       remote_list[i]->cache_values(world_size, nodes_per_remote);
       
 #ifdef COMPILE_MPI
+#if 0
    if(remote::i_am_last_one())
       printf("Nodes per machine %ld\n", nodes_per_remote);
+#endif
 #endif
 }
 
@@ -202,10 +204,10 @@ router::finished(void) const
 }
 
 void
-router::base_constructor(const size_t num_threads, int argc, char **argv)
+router::base_constructor(const size_t num_threads, int argc, char **argv, const bool use_mpi)
 {
 #ifdef COMPILE_MPI
-   if(argv != NULL && argc > 0) {
+   if(argv != NULL && argc > 0 && use_mpi) {
       assert(num_threads == 1); // limitation for now
       
 #ifdef MPI_THREAD
@@ -256,12 +258,12 @@ router::base_constructor(const size_t num_threads, int argc, char **argv)
 
 router::router(void)
 {
-   base_constructor(1, 0, NULL);
+   base_constructor(1, 0, NULL, false);
 }
 
-router::router(const size_t num_threads, int argc, char **argv)
+router::router(const size_t num_threads, int argc, char **argv, const bool use_mpi)
 {
-   base_constructor(num_threads, argc, argv);
+   base_constructor(num_threads, argc, argv, use_mpi);
 }
 
 router::~router(void)

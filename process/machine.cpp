@@ -160,6 +160,7 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
          }
          break;
       case SCHED_UNKNOWN:
+         assert(0);
          break;
    }
 }

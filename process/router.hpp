@@ -67,7 +67,7 @@ private:
    list_state_reqs state_reqs;
 #endif
 
-   void base_constructor(const size_t, int, char **);
+   void base_constructor(const size_t, int, char **, const bool);
    
 public:
    
@@ -101,7 +101,7 @@ public:
    
    remote* find_remote(const db::node::node_id) const;
    
-   explicit router(const size_t, int, char**);
+   explicit router(const size_t, int, char**, const bool);
    explicit router(void);
    
    ~router(void);

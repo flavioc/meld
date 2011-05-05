@@ -17,6 +17,7 @@ static char *progname = NULL;
 static scheduler_type sched_type = SCHED_UNKNOWN;
 static bool show_database = false;
 static bool dump_database = false;
+static bool time_execution = false;
 
 static void
 help(void)
@@ -26,6 +27,7 @@ help(void)
   fprintf(stderr, "\t-c <scheduler>\tselect scheduling type\n");
   fprintf(stderr, "\t\t\ttsX static division of work with X threads\n");
   fprintf(stderr, "\t\t\tmpi static division of work using mpi (use mpirun)\n");
+  fprintf(stderr, "\t-t \t\ttime execution\n");
   fprintf(stderr, "\t-s \t\tshows database\n");
   fprintf(stderr, "\t-d \t\tdump database (debug option)\n");
   fprintf(stderr, "\t-h \t\tshow this screen\n");
@@ -93,6 +95,9 @@ read_arguments(int argc, char **argv)
          case 'd':
             dump_database = true;
             break;
+         case 't':
+            time_execution = true;
+            break;
          case 'h':
             help();
             break;
@@ -130,11 +135,21 @@ main(int argc, char **argv)
 	   num_threads = 1;
 
    try {
+      double start_time;
+      execution_time tm;
+      
+      if(time_execution) {   
 #ifdef COMPILE_MPI
-		 double start_time(MPI_Wtime());
+         if(sched_type == SCHED_MPI_UNI_STATIC)
+            start_time = MPI_Wtime();
+         else
 #endif
+         {
+            tm.start();
+         }
+      }
 			
-      router rout(num_threads, argc, argv);
+      router rout(num_threads, argc, argv, sched_type == SCHED_MPI_UNI_STATIC);
 
       machine mac(program, rout, num_threads, sched_type);
 
@@ -144,10 +159,28 @@ main(int argc, char **argv)
          mac.dump_database();
       
       mac.start();
-      
+
+      if(time_execution) {
+         size_t ms;
+         
 #ifdef COMPILE_MPI
-		cout << MPI_Wtime() - start_time << " seconds\n";
+         if(sched_type == SCHED_MPI_UNI_STATIC) {
+            double total_time(MPI_Wtime() - start_time);
+            ms = static_cast<size_t>(total_time * 1000);
+            
+            if(remote::self->get_rank() == 0)
+               cout << "Time: " << ms << " ms" << endl;
+         }
+         else
 #endif
+         {
+            tm.stop();
+            ms = tm.milliseconds();
+            
+            cout << "Time: " << ms << " ms" << endl;
+         }
+      }
+
    } catch(db::database_error& err) {
       cerr << "Database error: " << err.what() << endl;
       return EXIT_FAILURE;

@@ -209,7 +209,6 @@ void
 threads_static::end(void)
 {
    sstatic::end();
-   cout << "Iterations: " << iteration << endl;
 }
 
 bool

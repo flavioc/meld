@@ -14,13 +14,6 @@ private:
    
    boost::posix_time::time_duration dur;
    boost::posix_time::ptime before;
-   
-   void start(void) { before = boost::posix_time::microsec_clock::local_time(); }
-   
-   void stop(void)
-   {
-      dur += (boost::posix_time::microsec_clock::local_time() - before);
-   }
 
 public:
    
@@ -37,7 +30,16 @@ public:
       ~scope(void) { t.stop(); }
    };
    
-   void print(std::ostream& cout) const { cout << dur.total_milliseconds() << "ms"; }
+   void start(void) { before = boost::posix_time::microsec_clock::local_time(); }
+   
+   void stop(void)
+   {
+      dur += (boost::posix_time::microsec_clock::local_time() - before);
+   }
+   
+   inline const size_t milliseconds(void) const { return dur.total_milliseconds(); }
+   
+   void print(std::ostream& cout) const { cout << milliseconds() << "ms"; }
    
    explicit execution_time(void) {}
    
