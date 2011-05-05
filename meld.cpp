@@ -14,6 +14,7 @@ using namespace std;
 static size_t num_threads = 0;
 static char *program = NULL;
 static char *progname = NULL;
+static scheduler_type sched_type = SCHED_UNKNOWN;
 static bool show_database = false;
 static bool dump_database = false;
 
@@ -21,12 +22,42 @@ static void
 help(void)
 {
   fprintf(stderr, "meld: execute meld program\n");
-  fprintf(stderr, "\t-f <name>:\tmeld program\n");
-  fprintf(stderr, "\t-t <threads>:\tnumber of threads\n");
-  fprintf(stderr, "\t-s shows database\n");
-  fprintf(stderr, "\t-d dump database (debug option)\n");
+  fprintf(stderr, "\t-f <name>\tmeld program\n");
+  fprintf(stderr, "\t-c <scheduler>\tselect scheduling type\n");
+  fprintf(stderr, "\t\t\ttsX static division of work with X threads\n");
+  fprintf(stderr, "\t\t\tmpi static division of work using mpi (use mpirun)\n");
+  fprintf(stderr, "\t-s \t\tshows database\n");
+  fprintf(stderr, "\t-d \t\tdump database (debug option)\n");
+  fprintf(stderr, "\t-h \t\tshow this screen\n");
 
   exit(EXIT_SUCCESS);
+}
+
+static void
+parse_sched(char *sched)
+{
+   assert(sched != NULL);
+   
+   if(strlen(sched) < 3) {
+      fprintf(stderr, "Error: invalid scheduler %s\n", sched);
+      exit(EXIT_FAILURE);
+   }
+      
+   if(strncmp(sched, "ts", 2) == 0) {
+      sched += 2;
+      num_threads = (size_t)atoi(sched);
+      sched_type = SCHED_THREADS_STATIC;
+   } else if(strncmp(sched, "mpi", 3) == 0 && strlen(sched) == 3) {
+#ifndef COMPILE_MPI
+      fprintf(stderr, "Error: MPI support was not compiled\n");
+      exit(EXIT_FAILURE);
+#endif
+      sched_type = SCHED_MPI_UNI_STATIC;
+      num_threads = 1;
+   } else {
+      fprintf(stderr, "Error: invalid scheduler %s\n", sched);
+      exit(EXIT_FAILURE);
+   }
 }
 
 static void
@@ -43,15 +74,17 @@ read_arguments(int argc, char **argv)
 
             program = argv[1];
 
-            argc--; argv++;
+            argc--;
+            argv++;
          }
          break;
-         case 't': {
-            if (num_threads > 0 || argc < 2)
+         case 'c': {
+            if (sched_type != SCHED_UNKNOWN)
                help();
-
-            num_threads = (size_t)atoi(argv[1]);
-            argc--; argv++;
+            
+            parse_sched(argv[1]);
+            argc--;
+            argv++;
          }
          break;
          case 's':
@@ -59,6 +92,9 @@ read_arguments(int argc, char **argv)
             break;
          case 'd':
             dump_database = true;
+            break;
+         case 'h':
+            help();
             break;
          default:
             help();
@@ -71,27 +107,36 @@ read_arguments(int argc, char **argv)
 
 int
 main(int argc, char **argv)
-{
+{  
    read_arguments(argc, argv);
 
-   if (program == NULL)
-      help();
-
-   if (num_threads == 0)
-      num_threads = number_cpus();
+   if(program == NULL && sched_type == SCHED_UNKNOWN) {
+      fprintf(stderr, "Error: please provide scheduler type and a program to run\n");
+      exit(EXIT_FAILURE);
+   } else if(program == NULL && sched_type != SCHED_UNKNOWN) {
+      fprintf(stderr, "Error: please provide a program to run\n");
+      exit(EXIT_FAILURE);
+   } else if(program != NULL && sched_type == SCHED_UNKNOWN) {
+      fprintf(stderr, "Error: please pick a scheduler to use\n");
+      exit(EXIT_FAILURE);
+   }
+   
+   if (num_threads == 0) {
+      fprintf(stderr, "Error: invalid number of threads\n");
+      exit(EXIT_FAILURE);
+   }
       
-#ifdef COMPILE_MPI
-	num_threads = 1;
-#endif
+   if(sched_type == SCHED_MPI_UNI_STATIC)
+	   num_threads = 1;
 
    try {
 #ifdef COMPILE_MPI
-		 	double start_time(MPI_Wtime());
+		 double start_time(MPI_Wtime());
 #endif
 			
       router rout(num_threads, argc, argv);
 
-      machine mac(program, rout, num_threads);
+      machine mac(program, rout, num_threads, sched_type);
 
       if(show_database)
          mac.show_database();
@@ -99,8 +144,9 @@ main(int argc, char **argv)
          mac.dump_database();
       
       mac.start();
+      
 #ifdef COMPILE_MPI
-			cout << MPI_Wtime() - start_time << " seconds\n";
+		cout << MPI_Wtime() - start_time << " seconds\n";
 #endif
    } catch(db::database_error& err) {
       cerr << "Database error: " << err.what() << endl;

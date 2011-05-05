@@ -17,9 +17,17 @@
 #include "process/router.hpp"
 #include "db/tuple.hpp"
 #include "db/node.hpp"
+#include "sched/threads.hpp"
+#include "sched/mpi.hpp"
 
 namespace process
 {
+   
+enum scheduler_type {
+   SCHED_UNKNOWN,
+   SCHED_THREADS_STATIC,
+   SCHED_MPI_UNI_STATIC
+};
 
 // forward declaration   
 class process;
@@ -30,6 +38,7 @@ private:
    
    const std::string filename;
    const size_t num_threads;
+   const scheduler_type sched_type;
    bool will_show_database;
    bool will_dump_database;
    
@@ -37,25 +46,9 @@ private:
    
    router& rout;
    
-   char _pad1[64];
-   
-   boost::barrier *proc_barrier;
-   
-   char _pad2[64];
-   
-   volatile size_t threads_active;
-   
-   void distribute_nodes(db::database *);
+   void distribute_nodes(db::database *, std::vector<sched::sstatic*>&);
    
 public:
-  
-   void process_is_active(void);
-   
-   void process_is_inactive(void);
-   
-   bool finished(void) const { return threads_active == 0; }
-   
-   void wait_aggregates(void) { proc_barrier->wait(); }
    
    void show_database(void) { will_show_database = true; }
    void dump_database(void) { will_dump_database = true; }
@@ -64,11 +57,16 @@ public:
    
    bool same_place(const db::node::node_id, const db::node::node_id) const;
    
+   inline void route_self(process *proc, db::node *node, const db::simple_tuple *stpl)
+   {
+      proc->get_scheduler()->new_work(node, stpl);
+   }
+   
    void route(process *, const db::node::node_id, const db::simple_tuple*);
    
    void start(void);
    
-   explicit machine(const std::string&, router&, const size_t);
+   explicit machine(const std::string&, router&, const size_t, const scheduler_type);
                
    ~machine(void);
 };

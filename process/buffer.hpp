@@ -44,7 +44,7 @@ public:
    
    void update_received(void);
    
-   void insert(const vm::process_id, remote *, const vm::process_id, message *);
+   void insert(remote *, const vm::process_id, message *);
    
    void transmit(void);
    

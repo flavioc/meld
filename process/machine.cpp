@@ -36,28 +36,32 @@ void
 machine::route(process *caller, const node::node_id id, const simple_tuple* stuple)
 {  
    remote* rem(rout.find_remote(id));
+   sched::base *sched_caller(caller->get_scheduler());
    
    if(rem == remote::self) {
       // on this machine
       node *node(state::DATABASE->find_node(id));
       process *proc(process_list[remote::self->find_proc_owner(id)]);
       if(caller == proc)
-         caller->enqueue_work(node, stuple);
+         sched_caller->new_work(node, stuple);
       else
-         caller->enqueue_other(proc, node, stuple);
-   } else {
+         sched_caller->new_work_other(proc->get_scheduler(), node, stuple);
+   }
+#ifdef COMPILE_MPI
+   else {
       // remote, mpi machine
       
       assert(rout.use_mpi());
       
       message *msg(new message(id, stuple));
       
-      caller->enqueue_remote(rem, rem->find_proc_owner(id), msg);
+      sched_caller->new_work_remote(rem, rem->find_proc_owner(id), msg);
    }
+#endif
 }
 
 void
-machine::distribute_nodes(database *db)
+machine::distribute_nodes(database *db, vector<sched::sstatic*>& schedulers)
 {
    const size_t total(remote::self->get_total_nodes());
    const size_t num_procs(process_list.size());
@@ -73,8 +77,8 @@ machine::distribute_nodes(database *db)
    
    for(; it != end && cur_proc < num_procs;
          ++it)
-   {  
-      process_list[cur_proc]->add_node(it->second);
+   {
+      schedulers[cur_proc]->add_node(it->second);
    
       --num_nodes;
    
@@ -89,7 +93,7 @@ machine::distribute_nodes(database *db)
       --cur_proc;
       
       for(; it != end; ++it)
-         process_list[cur_proc]->add_node(it->second);
+         schedulers[cur_proc]->add_node(it->second);
    }
 }
 
@@ -109,49 +113,60 @@ machine::start(void)
       state::DATABASE->dump_db(cout);
 }
 
-void
-machine::process_is_active(void)
-{
-   if(__sync_fetch_and_add(&threads_active, 1) == 1)
-      state::ROUTER->update_status(router::REMOTE_ACTIVE);
-}
-
-void
-machine::process_is_inactive(void)
-{
-   if(__sync_fetch_and_sub(&threads_active, 1) == 0)
-      state::ROUTER->update_status(router::REMOTE_IDLE);
-}
-
-machine::machine(const string& file, router& _rout, const size_t th):
+machine::machine(const string& file, router& _rout, const size_t th, const scheduler_type _sched_type):
    filename(file),
    num_threads(th),
+   sched_type(_sched_type),
    will_show_database(false),
    will_dump_database(false),
-   rout(_rout),
-   proc_barrier(new barrier(th)),
-   threads_active(th)
+   rout(_rout)
 {  
    state::PROGRAM = new program(filename, &rout);
    state::DATABASE = state::PROGRAM->get_database();
    state::MACHINE = this;
    state::NUM_THREADS = num_threads;
    
-   process_list.resize(num_threads);
-   
    mem::init(num_threads);
    
-   for(process_id i(0); i < num_threads; ++i) {
-      process_list[i] = new process(i);
+   switch(sched_type) {
+      case SCHED_THREADS_STATIC: {
+            vector<sched::threads_static*>& schedulers(sched::threads_static::start(num_threads));
+            vector<sched::sstatic*> transformed;
+            
+            transformed.resize(num_threads);
+            process_list.resize(num_threads);
+      
+            for(process_id i(0); i < num_threads; ++i) {
+               process_list[i] = new process(i, schedulers[i]);
+               transformed[i] = (sched::sstatic*)schedulers[i];
+            }
+      
+            distribute_nodes(state::DATABASE, transformed);
+         }
+         break;
+      case SCHED_MPI_UNI_STATIC: {
+#ifdef COMPILE_MPI
+            sched::mpi_static *scheduler(sched::mpi_static::start());
+            vector<sched::sstatic*> procs;
+            
+            process_list.resize(1);
+            procs.resize(1);
+            
+            process_list[0] = new process(0, scheduler);
+            procs[0] = (sched::sstatic*)scheduler;
+            
+            distribute_nodes(state::DATABASE, procs);
+#endif
+         }
+         break;
+      case SCHED_UNKNOWN:
+         break;
    }
-   
-   distribute_nodes(state::DATABASE);
 }
 
 machine::~machine(void)
 {
    delete state::PROGRAM;
-   delete proc_barrier;
    
    for(process_id i(0); i != num_threads; ++i)
       delete process_list[i];

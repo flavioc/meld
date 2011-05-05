@@ -197,8 +197,7 @@ execute_send(const pcounter& pc, state& state)
    const simple_tuple *stuple(new simple_tuple(tuple, state.count));
    
    if(msg == dest)
-      // send to self
-      state.proc->enqueue_work(state.node, stuple);
+      state::MACHINE->route_self(state.proc, state.node, stuple);
    else
       state::MACHINE->route(state.proc, (node::node_id)dest_val, stuple);
 }

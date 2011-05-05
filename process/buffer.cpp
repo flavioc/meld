@@ -28,7 +28,7 @@ buffer::transmit_list(remote *rem, const process_id proc, message_set& ms)
 }
 
 void
-buffer::insert(const process_id source, remote *rem, const process_id proc, message* msg)
+buffer::insert(remote *rem, const process_id proc, message* msg)
 {
    map_messages::iterator it(map_rem.find(rem));
    

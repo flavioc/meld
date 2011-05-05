@@ -3,6 +3,7 @@
 #define MEM_POOL_HPP
 
 #include <vector>
+#include <iostream>
 #include <assert.h>
 #include <cstdio>
 
@@ -26,10 +27,12 @@ private:
    size_t get_group(const size_t size)
    {
       assert(size != 0);
+      
       if(size > MAX_OBJECT_SIZE) {
-         printf("%ld\n", size);
-         exit(1);
+         std::cerr << "Must allocate something of size " << size << std::endl;
+         exit(EXIT_FAILURE);
       }
+      
       assert(size <= MAX_OBJECT_SIZE);
       
       assert(size % 4 == 0);
@@ -45,9 +48,7 @@ public:
    
    inline void* allocate(const size_t size)
    {
-      //printf("ALLOCATE SIZE: %ld\n", size);
       const size_t grp(get_group(size));
-      //printf("Group %d\n", size / ATOM_SIZE - 1);
       
       return chunks[grp]->allocate();
    }
@@ -55,8 +56,6 @@ public:
    inline void deallocate(void *ptr, const size_t size)
    {
       const size_t grp(get_group(size));
-      
-      //printf("DEALLOCATE SIZE %ld (%p)\n", size, ptr);
       
       chunks[grp]->deallocate(ptr);
    }

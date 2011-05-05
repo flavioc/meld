@@ -15,17 +15,19 @@ LIBRARIES = -lpthread -lm -lboost_thread-mt
 
 ifneq ($(COMPILE_MPI),)
 	LIBRARIES += -lmpi -lmpi_cxx -lboost_serialization-mt -lboost_mpi-mt
-	CXX = mpic++
 	CFLAGS += -DCOMPILE_MPI=1
-else
-	CXX = g++
 endif
+
+CXX = g++
 
 GCC_MINOR    := $(shell $(CXX) -v 2>&1 | \
 													grep " version " | cut -d' ' -f3  | cut -d'.' -f2)
 
 ifeq ($(GCC_MINOR),2)
 	CFLAGS += -DTEMPLATE_OPTIMIZERS=1
+endif
+ifeq ($(GCC_MINOR),4)
+	CFLAGS += -DIMPLEMENT_MISSING_MPI=1
 endif
 
 CXXFLAGS = $(CFLAGS) #-std=c++0x
@@ -46,7 +48,10 @@ OBJS = utils/utils.o \
 			 process/message.o \
 			 mem/thread.o \
 			 db/trie.o \
-			 process/buffer.o
+			 process/buffer.o \
+			 sched/static.o \
+			 sched/threads.o \
+			 sched/mpi.o
 
 all: meld print
 
@@ -57,7 +62,7 @@ print: $(OBJS) print.o
 	$(COMPILE) print.o -o print
 
 meld.o: meld.cpp utils/utils.hpp process/machine.hpp \
-				process/router.hpp
+				process/router.hpp sched/base.hpp sched/threads.hpp
 
 print.o: print.cpp vm/program.hpp
 
@@ -81,7 +86,10 @@ process/process.o: process/process.cpp process/process.hpp vm/instr.hpp \
 process/machine.o: process/machine.hpp process/machine.cpp \
 									vm/state.hpp process/remote.hpp process/process.hpp \
 									vm/instr.hpp conf.hpp \
-									process/message.hpp
+									process/message.hpp \
+									sched/static.hpp \
+									sched/threads.hpp \
+									sched/mpi.hpp
 
 process/remote.o: process/remote.hpp process/remote.cpp	\
 									vm/instr.hpp conf.hpp
@@ -119,8 +127,19 @@ vm/types.o: vm/types.hpp vm/types.hpp \
 process/buffer.o: process/buffer.hpp process/buffer.cpp \
 									process/message.hpp
 
+sched/static.o: sched/static.cpp sched/static.hpp \
+								sched/base.hpp
+
+sched/threads.o: sched/threads.cpp sched/threads.hpp \
+								sched/base.hpp sched/static.hpp
+
+sched/mpi.o: sched/mpi.hpp sched/mpi.cpp \
+						sched/base.hpp sched/static.hpp
+
 clean:
-	rm -f meld print *.o vm/*.o db/*.o process/*.o runtime/*.o utils/*.o mem/*.o
+	rm -f meld print *.o vm/*.o db/*.o process/*.o \
+		runtime/*.o utils/*.o \
+		mem/*.o sched/*.o
 
 re: clean all
 
