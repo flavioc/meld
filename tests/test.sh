@@ -20,7 +20,7 @@ do_exit ()
 do_test ()
 {
 	NTHREADS=$1
-	TO_RUN="${EXEC} -f ${TEST} -t ${NTHREADS}"
+	TO_RUN="${EXEC} -f ${TEST} -c ts${NTHREADS}"
 
 	${TO_RUN} > test.out
 
