@@ -77,6 +77,19 @@ public:
       return std::min(remote_node_id / get_nodes_per_proc(), get_num_threads()-1);
    }
    
+   inline const db::node::node_id find_first_node(const vm::process_id id) const
+   {
+      return get_nodes_base() + id * nodes_per_proc;
+   }
+   
+   inline const db::node::node_id find_last_node(const vm::process_id id) const
+   {
+      if(num_threads - 1 == id)
+         return get_nodes_base() + get_total_nodes();
+      else
+         return find_first_node(id + 1);
+   }
+   
    inline const remote_id get_rank(void) const { return addr; }
    
    inline const size_t get_num_threads(void) const { return num_threads; }

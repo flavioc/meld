@@ -231,8 +231,7 @@ threads_static::terminate_iteration(void)
 }
 
 threads_static::threads_static(const process_id _id):
-   sstatic(),
-   id(_id),
+   sstatic(_id),
    process_state(PROCESS_ACTIVE)
 {
 }

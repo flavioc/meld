@@ -6,7 +6,6 @@
 
 #include "sched/base.hpp"
 #include "db/node.hpp"
-#include "utils/interval.hpp"
 #include "sched/queue.hpp"
 #include "utils/types.hpp"
 
@@ -15,17 +14,11 @@ namespace sched
    
 class sstatic: public sched::base
 {
-private:
+protected:
    
-   typedef std::list<db::node*> list_nodes;
-   
-   list_nodes nodes;
-   
-   utils::interval<db::node::node_id> *nodes_interval;
+   const vm::process_id id;
    
    utils::byte _pad1[128];
-   
-protected:
    
    size_t iteration;
    
@@ -47,8 +40,6 @@ protected:
    
 public:
    
-   virtual void add_node(db::node *);
-   
    virtual void new_work(db::node *, const db::simple_tuple*, const bool is_agg = false);
    virtual void new_work_other(sched::base *, db::node *, const db::simple_tuple *) = 0;
    virtual void new_work_remote(process::remote *, const vm::process_id, process::message *) = 0;
@@ -59,7 +50,7 @@ public:
    virtual void end(void);
    virtual bool terminate_iteration(void);
    
-   explicit sstatic(void);
+   explicit sstatic(const vm::process_id);
    
    virtual ~sstatic(void);
 };

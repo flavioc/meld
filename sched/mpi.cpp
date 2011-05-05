@@ -200,7 +200,7 @@ mpi_static::new_work_remote(remote *rem, const process_id proc, message *msg)
 }
 
 mpi_static::mpi_static(void):
-   sstatic(),
+   sstatic(0),
    round_trip_fetch(0),
    round_trip_update(0),
    round_trip_send(0)

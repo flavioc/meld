@@ -35,8 +35,8 @@ public:
    static size_t nodes_total;
    
    map_nodes::const_iterator nodes_begin(void) const { return nodes.begin(); }
-   
    map_nodes::const_iterator nodes_end(void) const { return nodes.end(); }
+   map_nodes::iterator get_node_iterator(const node::node_id id) { return nodes.find(id); }
    
    size_t num_nodes(void) const { return nodes.size(); }
    

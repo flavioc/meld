@@ -18,20 +18,16 @@ private:
    
    utils::byte _pad_threads1[128];
    
-   vm::process_id id;
-   
-   utils::byte _pad_threads2[128];
-   
    enum {
       PROCESS_ACTIVE,
       PROCESS_INACTIVE
    } process_state;
    
-   utils::byte _pad_threads3[128];
+   utils::byte _pad_threads2[128];
    
    boost::mutex mutex;
    
-   utils::byte _pad_threads4[128];
+   utils::byte _pad_threads3[128];
    
    typedef wqueue_free<work_unit> queue_work_free;
    std::vector<queue_work_free, mem::allocator<queue_work_free> > buffered_work;

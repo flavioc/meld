@@ -2,11 +2,13 @@
 #include "sched/static.hpp"
 #include "vm/predicate.hpp"
 #include "vm/program.hpp"
+#include "process/remote.hpp"
 #include "vm/state.hpp"
 
 using namespace vm;
 using namespace db;
 using namespace utils;
+using namespace process;
 
 namespace sched
 {
@@ -49,24 +51,14 @@ sstatic::get_work(work_unit& work)
 }
 
 void
-sstatic::add_node(node *node)
-{
-   nodes.push_back(node);
-   
-   if(nodes_interval == NULL)
-      nodes_interval = new interval<node::node_id>(node->get_id(), node->get_id());
-   else
-      nodes_interval->update(node->get_id());
-}
-
-void
 sstatic::generate_aggs(void)
 {
-   for(list_nodes::iterator it(nodes.begin());
-      it != nodes.end();
-      ++it)
+   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
+   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(remote::self->find_last_node(id)));
+   
+   for(; it != end; ++it)
    {
-      node *no(*it);
+      node *no(it->second);
       simple_tuple_list ls(no->generate_aggs());
 
       for(simple_tuple_list::iterator it2(ls.begin());
@@ -91,12 +83,12 @@ sstatic::init(const size_t)
 {  
    predicate *init_pred(state::PROGRAM->get_init_predicate());
    
-   for(list_nodes::iterator it(nodes.begin());
-      it != nodes.end();
-      ++it)
+   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
+   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(remote::self->find_last_node(id)));
+   
+   for(; it != end; ++it)
    {
-      node *cur_node(*it);
-      
+      node *cur_node(it->second);
       new_work(cur_node, simple_tuple::create_new(new vm::tuple(init_pred)));
    }
 }
@@ -106,15 +98,14 @@ sstatic::end(void)
 {
 }
 
-sstatic::sstatic(void):
-   nodes_interval(NULL),
+sstatic::sstatic(const process_id _id):
+   id(_id),
    iteration(0)
 {
 }
 
 sstatic::~sstatic(void)
 {
-   delete nodes_interval;
 }
 
 }

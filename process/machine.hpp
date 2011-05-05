@@ -46,8 +46,6 @@ private:
    
    router& rout;
    
-   void distribute_nodes(db::database *, std::vector<sched::sstatic*>&);
-   
 public:
    
    void show_database(void) { will_show_database = true; }

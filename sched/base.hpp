@@ -23,9 +23,6 @@ struct work_unit {
    
 class base
 {
-private:
-   
-   
 public:
    
    virtual void new_work(db::node *, const db::simple_tuple *, const bool is_agg = false) = 0;

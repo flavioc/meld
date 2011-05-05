@@ -61,43 +61,6 @@ machine::route(process *caller, const node::node_id id, const simple_tuple* stup
 }
 
 void
-machine::distribute_nodes(database *db, vector<sched::sstatic*>& schedulers)
-{
-   const size_t total(remote::self->get_total_nodes());
-   const size_t num_procs(process_list.size());
-   
-   if(total < num_procs)
-      throw process_exec_error("Number of nodes is less than the number of threads");
-   
-   size_t nodes_per_proc = remote::self->get_nodes_per_proc();
-   size_t num_nodes = nodes_per_proc;
-   size_t cur_proc = 0;
-   database::map_nodes::const_iterator it(db->nodes_begin());
-	database::map_nodes::const_iterator end(db->nodes_end());
-   
-   for(; it != end && cur_proc < num_procs;
-         ++it)
-   {
-      schedulers[cur_proc]->add_node(it->second);
-   
-      --num_nodes;
-   
-      if(num_nodes == 0) {
-         num_nodes = nodes_per_proc;
-         ++cur_proc;
-      }
-   }
-   
-   if(it != end) {
-      // put remaining nodes on last process
-      --cur_proc;
-      
-      for(; it != end; ++it)
-         schedulers[cur_proc]->add_node(it->second);
-   }
-}
-
-void
 machine::start(void)
 {
    for(size_t i(1); i < num_threads; ++i)
@@ -140,8 +103,6 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
                process_list[i] = new process(i, schedulers[i]);
                transformed[i] = (sched::sstatic*)schedulers[i];
             }
-      
-            distribute_nodes(state::DATABASE, transformed);
          }
          break;
       case SCHED_MPI_UNI_STATIC: {
@@ -154,8 +115,6 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
             
             process_list[0] = new process(0, scheduler);
             procs[0] = (sched::sstatic*)scheduler;
-            
-            distribute_nodes(state::DATABASE, procs);
 #endif
          }
          break;
