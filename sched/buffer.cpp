@@ -1,15 +1,16 @@
 
 #include <iostream>
 
-#include "process/buffer.hpp"
+#include "sched/buffer.hpp"
 #include "vm/state.hpp"
 #include "process/router.hpp"
 #include "conf.hpp"
 
 using namespace vm;
 using namespace std;
+using namespace process;
 
-namespace process
+namespace sched
 {
    
 #ifdef COMPILE_MPI

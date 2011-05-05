@@ -19,7 +19,7 @@
 #include "process/message.hpp"
 #include "utils/time.hpp"
 #include "utils/types.hpp"
-#include "process/buffer.hpp"
+#include "process/request.hpp"
 
 namespace process
 {

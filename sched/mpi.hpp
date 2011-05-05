@@ -3,7 +3,7 @@
 #define SCHED_MPI_HPP
 
 #include "sched/static.hpp"
-#include "process/buffer.hpp"
+#include "sched/buffer.hpp"
 
 namespace sched
 {
@@ -18,7 +18,7 @@ private:
    size_t round_trip_update;
    size_t round_trip_send;
    
-   process::buffer msg_buf;
+   buffer msg_buf;
    
    void update_pending_messages(void);
    void update_remotes(void);

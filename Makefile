@@ -48,7 +48,7 @@ OBJS = utils/utils.o \
 			 process/message.o \
 			 mem/thread.o \
 			 db/trie.o \
-			 process/buffer.o \
+			 sched/buffer.o \
 			 sched/static.o \
 			 sched/threads.o \
 			 sched/mpi.o
@@ -80,7 +80,7 @@ db/database.o: db/database.cpp db/database.hpp vm/instr.hpp \
 							db/node.hpp
 
 process/process.o: process/process.cpp process/process.hpp vm/instr.hpp \
-									db/node.hpp process/buffer.hpp
+									db/node.hpp sched/buffer.hpp
 
 process/machine.o: process/machine.hpp process/machine.cpp \
 									vm/state.hpp process/remote.hpp process/process.hpp \
@@ -108,7 +108,8 @@ vm/exec.o: vm/exec.cpp vm/exec.hpp process/process.hpp	\
 process/router.o: process/router.hpp process/router.cpp \
 									process/remote.hpp \
 									process/message.hpp \
-									utils/time.hpp
+									utils/time.hpp \
+									process/request.hpp
 
 process/message.o: process/message.cpp process/message.hpp \
 									db/node.hpp db/tuple.hpp
@@ -123,8 +124,8 @@ db/trie.o: db/trie.cpp db/trie.hpp \
 vm/types.o: vm/types.hpp vm/types.hpp \
 						utils/utils.hpp
 
-process/buffer.o: process/buffer.hpp process/buffer.cpp \
-									process/message.hpp
+sched/buffer.o: sched/buffer.hpp sched/buffer.cpp \
+									process/message.hpp process/request.hpp
 
 sched/static.o: sched/static.cpp sched/static.hpp \
 								sched/base.hpp
