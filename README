@@ -1,10 +1,13 @@
 
 Dependencies:
 	- Boost
-	- G++ 4.6
+		- MPI
+		- Threads
+	- G++ 4.4/4.2, maybe 4.6
 
 Installation:
 	- use make
 
 Execution:
-	./meld -f app.m
+	./meld -f bytecodefile -c scheduler
+	Use ./meld -h for help
