@@ -170,12 +170,6 @@ router::update_sent_states(void)
    
    state_reqs.erase(mark, state_reqs.end());
 }
-
-void
-router::synchronize(void)
-{
-   world->barrier();
-}
 #endif
    
 remote*

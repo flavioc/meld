@@ -79,11 +79,11 @@ public:
    
 #ifdef COMPILE_MPI
 
+   inline void barrier(void) { world->barrier(); }
+
    void fetch_updates(void);
    
    void update_status(const remote_state);
-   
-   void synchronize(void);
    
    void send_status(const remote_state);
    

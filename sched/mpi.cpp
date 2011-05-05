@@ -135,7 +135,10 @@ mpi_static::busy_wait(void)
       update_remotes();
       state::ROUTER->update_sent_states();
          
-      if(turned_inactive && state::ROUTER->finished()) {
+      if(turned_inactive
+         && state::ROUTER->all_states_sent()
+         && state::ROUTER->finished())
+      {
 #ifdef DEBUG_REMOTE
          cout << "ITERATION ENDED for " << remote::self->get_rank() << endl;
 #endif
