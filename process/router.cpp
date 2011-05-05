@@ -50,10 +50,9 @@ router::send(remote *rem, const process_id& proc, const message_set& ms)
 
 #ifdef USE_MANUAL_SERIALIZATION
    const size_t msg_size(ms.storage_size());
-#define MAX_BUF_SIZE 512
    byte *buf(new byte[msg_size]);
    
-   assert(msg_size < MAX_BUF_SIZE);
+   assert(msg_size < MPI_BUF_SIZE);
    
    ms.pack(buf, msg_size, *world);
    
@@ -84,13 +83,11 @@ router::recv_attempt(const process_id proc)
    
    if(stat) {
 #ifdef USE_MANUAL_SERIALIZATION
-      byte buf[MAX_BUF_SIZE];
-      
       // this is a hack on Boost.MPI
       mpi::status stat;
-      MPI_Recv(buf, MAX_BUF_SIZE, MPI_PACKED, mpi::any_source, tag, *world, &stat.m_status);
+      MPI_Recv(recv_buf, MPI_BUF_SIZE, MPI_PACKED, mpi::any_source, tag, *world, &stat.m_status);
       
-      message_set *ms(message_set::unpack(buf, MAX_BUF_SIZE, *world));
+      message_set *ms(message_set::unpack(recv_buf, MPI_BUF_SIZE, *world));
 #else
       message_set *ms(new message_set());
       

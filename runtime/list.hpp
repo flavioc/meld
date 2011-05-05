@@ -6,10 +6,13 @@
 #include <iostream>
 #include <string>
 #ifdef COMPILE_MPI
+#include <boost/mpi.hpp>
 #include <boost/serialization/serialization.hpp>
 #include <boost/mpi/packed_iarchive.hpp>
 #include <boost/mpi/packed_oarchive.hpp>
 #endif
+#include "utils/types.hpp"
+#include "mem/base.hpp"
 
 #include "vm/defs.hpp"
 
@@ -17,7 +20,7 @@ namespace runtime
 {
 
 template <typename T>
-class cons
+class cons: public mem::base< cons<T> >
 {
 public:
    
@@ -132,6 +135,49 @@ public:
       ar & head;
       
       return new cons(load_list(ar, false), head); 
+   }
+   
+   static inline size_t size_list(const list_ptr ptr, const size_t elem_size)
+   {
+      size_t ret(sizeof(utils::byte));
+      
+      if(is_null(ptr))
+         return ret;
+      else
+         return ret + elem_size + size_list(ptr->get_tail(), elem_size);
+   }
+   
+   static inline void pack(const list_ptr ptr, MPI_Datatype typ,
+               utils::byte *buf, const size_t buf_size, int *pos, MPI_Comm comm)
+   {
+      utils::byte more;
+      
+      if(is_null(ptr)) {
+         more = 0;
+         MPI_Pack(&more, 1, MPI_UNSIGNED_CHAR, buf, buf_size, pos, comm);
+      } else {
+         more = 1;
+         MPI_Pack(&more, 1, MPI_UNSIGNED_CHAR, buf, buf_size, pos, comm);
+         MPI_Pack((void *)&(ptr->head), 1, typ, buf, buf_size, pos, comm);
+         pack(ptr->get_tail(), typ, buf, buf_size, pos, comm);
+      }
+   }
+   
+   static inline list_ptr unpack(MPI_Datatype typ, utils::byte *buf,
+               const size_t buf_size, int *pos, MPI_Comm comm)
+   {
+      utils::byte more;
+      
+      MPI_Unpack(buf, buf_size, pos, &more, 1, MPI_UNSIGNED_CHAR, comm);
+      
+      if(more == 0)
+         return null_list();
+      
+      T head;
+      
+      MPI_Unpack(buf, buf_size, pos, &head, 1, typ, comm);
+      
+      return new cons(unpack(typ, buf, buf_size, pos, comm), head);
    }
 #endif
    

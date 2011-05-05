@@ -49,6 +49,7 @@ public:
    inline size_t num_fields(void) const { return types.size(); }
    
    inline field_type get_field_type(const field_num field) const { return types[field]; }
+   inline size_t get_field_size(const field_num field) const { return fields_size[field]; }
    
    inline std::string get_name(void) const { return name; }
    

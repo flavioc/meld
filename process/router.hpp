@@ -65,7 +65,11 @@ private:
    utils::execution_time serial_time;
 #endif
    list_state_reqs state_reqs;
-#endif
+
+   
+#define MPI_BUF_SIZE 1024
+   utils::byte recv_buf[MPI_BUF_SIZE];
+#endif 
 
    void base_constructor(const size_t, int, char **, const bool);
    

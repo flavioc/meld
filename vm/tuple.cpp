@@ -239,6 +239,35 @@ tuple::load(mpi::packed_iarchive& ar, const unsigned int version)
    }
 }
 
+const size_t
+tuple::get_storage_size(void) const
+{
+   size_t ret(sizeof(predicate_id));
+
+   for(size_t i(0); i < num_fields(); ++i) {
+      switch(get_field_type(i)) {
+         case FIELD_INT:
+         case FIELD_FLOAT:
+         case FIELD_NODE:
+            ret += pred->get_field_size(i);
+            break;
+         case FIELD_LIST_INT:
+            ret += int_list::size_list(get_int_list(i), field_type_size(FIELD_INT));
+            break;
+         case FIELD_LIST_FLOAT:
+            ret += float_list::size_list(get_float_list(i), field_type_size(FIELD_FLOAT));
+            break;
+         case FIELD_LIST_NODE:
+            ret += node_list::size_list(get_node_list(i), field_type_size(FIELD_NODE));
+            break;
+         default:
+            throw type_error("unsupport field type in tuple::get_storage_size");
+      }
+   }
+   
+   return ret;
+}
+
 void
 tuple::pack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm) const
 {
@@ -264,10 +293,16 @@ tuple::pack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm) const
             }
             break;
          case FIELD_LIST_INT:
+            int_list::pack(get_int_list(i), MPI_INT, buf, buf_size, pos, comm);
+            break;
          case FIELD_LIST_FLOAT:
+            float_list::pack(get_float_list(i), MPI_FLOAT, buf, buf_size, pos, comm);
+            break;
          case FIELD_LIST_NODE:
+            node_list::pack(get_node_list(i), MPI_UNSIGNED, buf, buf_size, pos, comm);
+            break;
          default:
-            throw type_error("unsupported field number " + to_string(i));
+            throw type_error("unsupported field type to pack");
       }
    }
 }
@@ -296,10 +331,16 @@ tuple::load(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm)
             }
             break;
          case FIELD_LIST_INT:
+            set_int_list(i, int_list::unpack(MPI_INT, buf, buf_size, pos, comm));
+            break;
          case FIELD_LIST_FLOAT:
+            set_float_list(i, float_list::unpack(MPI_FLOAT, buf, buf_size, pos, comm));
+            break;
          case FIELD_LIST_NODE:
+            set_node_list(i, node_list::unpack(MPI_UNSIGNED, buf, buf_size, pos, comm));
+            break;
          default:
-            throw type_error("unsupported field number " + to_string(i));
+            throw type_error("unsupported field type to unpack");
       }
    }
 }

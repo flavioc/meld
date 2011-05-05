@@ -76,7 +76,7 @@ public:
    inline const predicate_id get_predicate_id(void) const { return pred->get_id(); }
    
 #ifdef COMPILE_MPI
-   inline const size_t get_size(void) const { return sizeof(predicate_id) + pred->get_size(); }
+   const size_t get_storage_size(void) const;
    
    void pack(utils::byte *, const size_t, int *, MPI_Comm) const;
    void load(utils::byte *, const size_t, int *, MPI_Comm);

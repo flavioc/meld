@@ -60,7 +60,7 @@ public:
 #ifdef COMPILE_MPI
    const size_t storage_size(void) const
    {
-      return sizeof(vm::ref_count) + data->get_size();
+      return sizeof(vm::ref_count) + data->get_storage_size();
    }
    
    void pack(utils::byte *, const size_t, int *, MPI_Comm) const;
