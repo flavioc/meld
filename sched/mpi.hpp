@@ -4,6 +4,7 @@
 
 #include "sched/static.hpp"
 #include "sched/buffer.hpp"
+#include "sched/token.hpp"
 
 namespace sched
 {
@@ -17,12 +18,22 @@ private:
    size_t round_trip_fetch;
    size_t round_trip_update;
    size_t round_trip_send;
+   size_t round_trip_token;
    
    buffer msg_buf;
+   token tok;
+   bool has_global_tok;
+   token global_tok;
    
    void update_pending_messages(void);
-   void update_remotes(void);
    void fetch_work(void);
+   void transmit_messages(void);
+   void try_fetch_token_as_worker(void);
+   void send_token_as_leader(void);
+   void send_token_as_idler(void);
+   bool try_fetch_token_as_leader(void);
+   bool try_fetch_token_as_idler(void);
+   bool try_fetch_end_iteration(void);
    virtual void work_found(void);
    virtual bool busy_wait(void);
    virtual bool terminate_iteration(void);

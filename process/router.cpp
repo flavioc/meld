@@ -12,6 +12,7 @@ using namespace vm;
 using namespace std;
 using namespace db;
 using namespace utils;
+using namespace sched;
 
 namespace process
 {
@@ -113,59 +114,62 @@ router::check_requests(vector_reqs& reqs)
 }
 
 void
-router::fetch_updates(void)
+router::send_token(const token& tok)
 {
+   const remote::remote_id left(remote::self->left_remote_id());
+   
+   world->send(left, TOKEN_TAG, tok);
+}
+
+bool
+router::receive_token(token& global_tok)
+{
+   const remote::remote_id right(remote::self->right_remote_id());
+   
    optional<mpi::status> st;
    
-   while((st = world->iprobe(mpi::any_source, STATUS_TAG))) {
-      remote_state state;
-      mpi::status stat;
+   while((st = world->iprobe(right, TOKEN_TAG))) {
+      world->recv(right, TOKEN_TAG, global_tok);
       
-      stat = world->recv(mpi::any_source, STATUS_TAG, state);
-      remote_states[stat.source()] = state;
+      return true;
    }
+      
+   return false;
 }
 
 void
-router::update_status(const remote_state state)
+router::broadcast_end_iteration(const size_t)
 {
-   // only send if different
-   if(state != remote_states[remote::self->get_rank()]) {
-      for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i)
-         if(i != remote::self->get_rank())
-            state_reqs.push_back(world->isend(remote_list[i]->get_rank(), STATUS_TAG, state));
-      remote_states[remote::self->get_rank()] = state;
-   }
-}
-
-void
-router::send_status(const remote_state state)
-{
-   for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i)
-      if(i != remote::self->get_rank())
-         world->send(remote_list[i]->get_rank(), STATUS_TAG, state);
-   remote_states[remote::self->get_rank()] = state;
-}
-
-void
-router::fetch_new_states(void)
-{
-   for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i) {
-      if(i != remote::self->get_rank()) {
-         remote_state state;
-         mpi::status stat;
-         stat = world->recv(remote_list[i]->get_rank(), STATUS_TAG, state);
-         remote_states[stat.source()] = state;
-      }
-   }
-}
-
-void
-router::update_sent_states(void)
-{
-   list_state_reqs::iterator mark(mpi::test_some(state_reqs.begin(), state_reqs.end()));
+   assert(remote::self->is_leader());
    
-   state_reqs.erase(mark, state_reqs.end());
+   for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i) {
+      if(remote_list[i] != remote::self)
+         world->send(i, TERMINATE_ITERATION_TAG);
+   }
+}
+
+bool
+router::received_end_iteration(void)
+{
+   assert(!remote::self->is_leader());
+   
+   optional<mpi::status> st;
+   
+   while((st = world->iprobe(remote::LEADER_RANK, TERMINATE_ITERATION_TAG))) {
+      world->recv(remote::LEADER_RANK, TERMINATE_ITERATION_TAG);
+      
+      return true;
+   }
+   
+   return false;
+}
+
+bool
+router::reduce_continue(const bool more_work)
+{
+   const unsigned char input(more_work ? 1 : 0);
+   
+   return mpi::all_reduce(*world, input, mpi::bitwise_or<byte>());
 }
 #endif
    
@@ -182,16 +186,6 @@ router::find_remote(const node::node_id id) const
 #else
    return remote::self;
 #endif
-}
-
-const bool
-router::finished(void) const
-{
-   for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i)
-      if(remote_states[i] == REMOTE_ACTIVE)
-         return false;
-   
-   return true;
 }
 
 void
@@ -239,12 +233,9 @@ router::base_constructor(const size_t num_threads, int argc, char **argv, const 
       state::REMOTE = remote::self = remote_list[0];
    }
    
+   remote::world_size = world_size;
+   
    state::ROUTER = this;
-   
-   remote_states.resize(world_size);
-   
-   for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i)
-      remote_states[i] = REMOTE_ACTIVE;
 }
 
 router::router(void)

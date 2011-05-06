@@ -135,7 +135,8 @@ sched/threads.o: sched/threads.cpp sched/threads.hpp \
 								sched/queue.hpp
 
 sched/mpi.o: sched/mpi.hpp sched/mpi.cpp \
-						sched/base.hpp sched/static.hpp
+						sched/base.hpp sched/static.hpp \
+						sched/token.hpp
 
 clean:
 	rm -f meld print *.o vm/*.o db/*.o process/*.o \

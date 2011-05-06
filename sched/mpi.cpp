@@ -11,6 +11,7 @@
 using namespace db;
 using namespace process;
 using namespace vm;
+using namespace std;
 
 #ifdef IMPLEMENT_MISSING_MPI
 namespace MPI {
@@ -33,11 +34,8 @@ mpi_static::assert_end_iteration(void)
 {
    sstatic::assert_end_iteration();
    
-   state::ROUTER->update_sent_states();
-   
    assert(msg_buf.empty());
    assert(msg_buf.all_received());
-   assert(state::ROUTER->all_states_sent());
 }
 
 void
@@ -47,7 +45,24 @@ mpi_static::assert_end(void)
    
    assert(msg_buf.empty());
    assert(msg_buf.all_received());
-   assert(state::ROUTER->all_states_sent());
+}
+
+void
+mpi_static::transmit_messages(void)
+{
+   size_t total(msg_buf.transmit());
+   
+   tok.transmitted(total);
+}
+
+void
+mpi_static::try_fetch_token_as_worker(void)
+{
+   assert(has_global_tok == false);
+   
+   if(state::ROUTER->receive_token(global_tok)) {
+      has_global_tok = true;
+   }
 }
    
 void
@@ -56,10 +71,12 @@ mpi_static::begin_get_work(void)
    static const size_t ROUND_TRIP_FETCH_MPI(40);
    static const size_t ROUND_TRIP_UPDATE_MPI(40);
    static const size_t ROUND_TRIP_SEND_MPI(40);
+   static const size_t ROUND_TRIP_TOKEN_MPI(40);
    
    ++round_trip_fetch;
    ++round_trip_update;
    ++round_trip_send;
+   ++round_trip_token;
    
    if(round_trip_fetch == ROUND_TRIP_FETCH_MPI) {
       fetch_work();
@@ -72,8 +89,14 @@ mpi_static::begin_get_work(void)
    }
    
    if(round_trip_send == ROUND_TRIP_SEND_MPI) {
-      msg_buf.transmit();
+      transmit_messages();
       round_trip_send = 0;
+   }
+   
+   if(round_trip_token == ROUND_TRIP_TOKEN_MPI) {
+      if(!has_global_tok)
+         try_fetch_token_as_worker();
+      round_trip_token = 0;
    }
 }
 
@@ -97,6 +120,9 @@ mpi_static::fetch_work(void)
 #ifdef DEBUG_REMOTE
          cout << "Received " << ms->size() << " works" << endl;
 #endif
+
+         tok.received();
+         tok.set_black();
          
          delete ms;
       }
@@ -105,15 +131,129 @@ mpi_static::fetch_work(void)
    }
 }
 
+void
+mpi_static::send_token_as_leader(void)
+{
+   assert(remote::self->is_leader());
+   assert(has_global_tok == true);
+   
+#ifdef DEBUG_REMOTE
+   cout << "Sent a white token / 0 from leader to" << endl;
+#endif
+
+   tok.set_white();
+   global_tok.set_white();
+   global_tok.reset_count();
+   has_global_tok = false;
+   
+   assert(global_tok.is_white());
+   assert(global_tok.is_zero());
+   state::ROUTER->send_token(global_tok);
+   
+   assert(tok.is_white());
+}
+
+bool
+mpi_static::try_fetch_token_as_leader(void)
+{
+   assert(remote::self->is_leader());
+   assert(has_global_tok == false);
+   
+   if(state::ROUTER->receive_token(global_tok)) {
+      has_global_tok = true;
+      global_tok.add_count(tok.get_count());
+#ifdef DEBUG_SAFRAS
+      cout << "Add count " << tok.get_count() << endl;
+#endif
+      if(global_tok.is_white() && global_tok.is_zero()) {
+#ifdef DEBUG_SAFRAS
+         cout << "TERMINATE!" << endl;
+#endif
+         assert(global_tok.is_white());
+         assert(global_tok.is_zero());
+         
+         state::ROUTER->broadcast_end_iteration(iteration);
+         
+         return true;
+      } else
+         send_token_as_leader();
+   }
+   
+   return false;
+}
+
+void
+mpi_static::send_token_as_idler(void)
+{
+   assert(!remote::self->is_leader());
+   assert(has_global_tok == true);
+   //assert(tok.is_black()); // local token must be black here
+   
+#ifdef DEBUG_SAFRAS
+   cout << "Send token as idler in black" << endl;
+#endif
+
+   global_tok.add_count(tok.get_count());
+   global_tok.set_black();
+   
+   assert(global_tok.is_black());
+   
+   state::ROUTER->send_token(global_tok);
+   has_global_tok = false;
+}
+
+bool
+mpi_static::try_fetch_token_as_idler(void)
+{
+   assert(!remote::self->is_leader());
+   assert(has_global_tok == false);
+   
+   if(state::ROUTER->receive_token(global_tok)) {
+      has_global_tok = true;
+      global_tok.add_count(tok.get_count());
+#ifdef DEBUG_SAFRAS
+      cout << "Received new tok and adding count " << tok.get_count() << endl;
+#endif
+
+      if(tok.is_black())
+         global_tok.set_black();
+      
+      tok.set_white();
+#ifdef DEBUG_SAFRAS
+      if(global_tok.is_black())
+         cout << "Resending as black\n";
+      else
+         cout << "Resending as white\n";
+#endif
+
+      assert(has_global_tok == true);
+      state::ROUTER->send_token(global_tok);
+      has_global_tok = false;
+      
+      assert(tok.is_white());
+      
+      return true;
+   }
+   
+   assert(has_global_tok == false);
+   
+   return false;
+}
+
+bool
+mpi_static::try_fetch_end_iteration(void)
+{
+   if(state::ROUTER->received_end_iteration())
+      return true;
+   return false;
+}
+
 bool
 mpi_static::busy_wait(void)
 {
-   static const size_t COUNT_UP_TO(2);
-    
-   size_t cont(0);
    bool turned_inactive(false);
    
-   msg_buf.transmit();
+   transmit_messages();
    update_pending_messages();
    fetch_work();
    
@@ -121,28 +261,35 @@ mpi_static::busy_wait(void)
 
       update_pending_messages();
 
-      if(cont >= COUNT_UP_TO
-            && !turned_inactive
+      if(!turned_inactive
 				&& msg_buf.all_received())
 		{
          turned_inactive = true;
-      } else if(cont < COUNT_UP_TO)
-         cont++;
-
-      if(turned_inactive)
-         state::ROUTER->update_status(router::REMOTE_IDLE);
+      }
          
-      update_remotes();
-      state::ROUTER->update_sent_states();
-         
-      if(turned_inactive
-         && state::ROUTER->all_states_sent()
-         && state::ROUTER->finished())
-      {
-#ifdef DEBUG_REMOTE
-         cout << "ITERATION ENDED for " << remote::self->get_rank() << endl;
-#endif
-         return false;
+      if(turned_inactive) {
+         if(remote::self->is_leader()) {
+            if(has_global_tok && !state::ROUTER->use_mpi())
+               return false;
+            if(has_global_tok)
+               send_token_as_leader();
+            else {
+               if(try_fetch_token_as_leader())
+                  return false;
+            }
+         } else {
+            if(has_global_tok)
+               send_token_as_idler();
+            else {
+               if(!try_fetch_token_as_idler()) {
+                  if(try_fetch_end_iteration())
+                     return false;
+               }
+            }
+         }
+      } else {
+         if(!has_global_tok)
+            try_fetch_token_as_worker();
       }
       
       fetch_work();
@@ -156,38 +303,32 @@ mpi_static::busy_wait(void)
 void
 mpi_static::work_found(void)
 {
-   state::ROUTER->update_status(router::REMOTE_ACTIVE);
-}
-
-void
-mpi_static::update_remotes(void)
-{
-   if(state::ROUTER->use_mpi())
-      state::ROUTER->fetch_updates();
 }
 
 void
 mpi_static::update_pending_messages(void)
 {
    msg_buf.update_received();
-   state::ROUTER->update_sent_states();
 }
 
 bool
 mpi_static::terminate_iteration(void)
 {
+   if(remote::self->is_leader()) {
+      assert(global_tok.is_zero());
+      assert(global_tok.is_white());
+      assert(has_global_tok == true);   
+   }
+   
+   assert(tok.is_white());
+   
+   tok.reset_count();
+   
    generate_aggs();
    
    ++iteration;
    
-   if(!queue_work.empty())
-      state::ROUTER->send_status(router::REMOTE_ACTIVE);
-   else
-      state::ROUTER->send_status(router::REMOTE_IDLE);
-   
-   state::ROUTER->fetch_new_states();
-   
-   return !state::ROUTER->finished();
+   return state::ROUTER->reduce_continue(!queue_work.empty());
 }
    
 void
@@ -199,15 +340,24 @@ mpi_static::new_work_other(sched::base *scheduler, node *node, const simple_tupl
 void
 mpi_static::new_work_remote(remote *rem, const process_id proc, message *msg)
 {
-   msg_buf.insert(rem, proc, msg);
+   if(msg_buf.insert(rem, proc, msg))
+      tok.transmitted();
 }
 
 mpi_static::mpi_static(void):
    sstatic(0),
    round_trip_fetch(0),
    round_trip_update(0),
-   round_trip_send(0)
+   round_trip_send(0),
+   round_trip_token(0)
 {
+   if(remote::self->is_leader()) {
+      has_global_tok = true;
+      global_tok.set_white();
+   } else {
+      has_global_tok = false;
+   }
+   tok.set_white();
 }
 
 mpi_static::~mpi_static(void)

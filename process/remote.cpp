@@ -13,6 +13,7 @@ namespace process
 {
 
 remote *remote::self = NULL;
+size_t remote::world_size(0);
 
 void
 remote::cache_values(const size_t world_size, const size_t nodes_per_remote)

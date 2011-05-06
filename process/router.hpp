@@ -20,6 +20,7 @@
 #include "utils/time.hpp"
 #include "utils/types.hpp"
 #include "process/request.hpp"
+#include "sched/token.hpp"
 
 namespace process
 {
@@ -39,6 +40,8 @@ private:
    static const remote_tag STATUS_TAG = 0;
    static const remote_tag THREAD_TAG = 100;
    static const remote_tag THREAD_DELAY_TAG = 500;
+   static const remote_tag TOKEN_TAG = 200;
+   static const remote_tag TERMINATE_ITERATION_TAG = 201;
    
    static inline const remote_tag get_thread_tag(const vm::process_id id)
    {
@@ -50,8 +53,7 @@ private:
       return THREAD_DELAY_TAG + id;
    }
    
-   std::vector<remote*> remote_list;   
-   std::vector<bool> remote_states;
+   std::vector<remote*> remote_list;
    
    size_t world_size;
    size_t nodes_per_remote;
@@ -77,30 +79,27 @@ public:
    
    inline const bool use_mpi(void) const { return world_size > 1; }
    
-   const bool finished(void) const;
-   
    void set_nodes_total(const size_t);
    
 #ifdef COMPILE_MPI
 
    inline void barrier(void) { world->barrier(); }
-
-   void fetch_updates(void);
-   
-   void update_status(const remote_state);
-   
-   void send_status(const remote_state);
-   
-   void fetch_new_states(void);
    
    pair_req send(remote *, const vm::process_id&, const message_set&);
    
    void check_requests(vector_reqs&);
    
    message_set* recv_attempt(const vm::process_id);
+
+   void send_token(const sched::token&);
    
-   void update_sent_states(void);
-   inline bool all_states_sent(void) const { return state_reqs.empty(); }
+   bool receive_token(sched::token&);
+   
+   void broadcast_end_iteration(const size_t);
+   
+   bool received_end_iteration(void);
+   
+   bool reduce_continue(const bool);
 #endif
    
    remote* find_remote(const db::node::node_id) const;

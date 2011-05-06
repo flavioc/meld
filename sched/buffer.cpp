@@ -17,7 +17,9 @@ namespace sched
 void
 buffer::transmit_list(remote *rem, const process_id proc, message_set& ms)
 {
-   total -= ms.size();
+   ms.size();
+   
+   --total;
    
    reqs.push_back(state::ROUTER->send(rem, proc, ms));
    
@@ -28,7 +30,7 @@ buffer::transmit_list(remote *rem, const process_id proc, message_set& ms)
    ms.wipeout();
 }
 
-void
+bool
 buffer::insert(remote *rem, const process_id proc, message* msg)
 {
    map_messages::iterator it(map_rem.find(rem));
@@ -49,20 +51,26 @@ buffer::insert(remote *rem, const process_id proc, message* msg)
    
    message_set& ms(it2->second);
    
-   ++total;
+   if(ms.empty())
+      ++total;
    
    ms.add(msg);
    
    static const size_t BUFFER_THRESHOLD(20);
    
-   if(ms.size() >= BUFFER_THRESHOLD)
+   if(ms.size() >= BUFFER_THRESHOLD) {
       transmit_list(rem, proc, ms);
+      return true;
+   } else
+      return false;
 }
 
-void
+size_t
 buffer::transmit(void)
 {
    if(total > 0) {
+      const size_t ret(total);
+      
       for(map_messages::iterator it(map_rem.begin()); it != map_rem.end(); ++it) {
          map_procs& map_proc(it->second);
          remote *rem(it->first);
@@ -75,7 +83,11 @@ buffer::transmit(void)
                transmit_list(rem, proc, ms);
          }
       }
+      
+      return ret;
    }
+   
+   return 0;
 }
 
 void

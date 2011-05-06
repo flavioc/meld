@@ -46,9 +46,9 @@ public:
    
    void update_received(void);
    
-   void insert(process::remote *, const vm::process_id, process::message *);
+   bool insert(process::remote *, const vm::process_id, process::message *);
    
-   void transmit(void);
+   size_t transmit(void);
    
    explicit buffer(void): total(0) {}
    

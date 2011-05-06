@@ -24,7 +24,9 @@ public:
    
    typedef int remote_id;
    
+   static const remote_id LEADER_RANK = 0;
    static remote *self;
+   static size_t world_size;
    
 private:
    
@@ -91,6 +93,23 @@ public:
    }
    
    inline const remote_id get_rank(void) const { return addr; }
+   inline const bool is_leader(void) const { return get_rank() == LEADER_RANK; }
+   
+   inline const remote_id left_remote_id(void) const
+   {
+      if(get_rank() == 0)
+         return (remote_id)(world_size - 1);
+      else
+         return (remote_id)(get_rank() - 1);
+   }
+   
+   inline const remote_id right_remote_id(void) const
+   {
+      if(get_rank() == (remote_id)(world_size - 1))
+         return 0;
+      else
+         return get_rank() + 1;
+   }
    
    inline const size_t get_num_threads(void) const { return num_threads; }
    
