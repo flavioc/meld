@@ -4,12 +4,7 @@ EXEC="../meld -d"
 TEST=${1}
 FILE="files/$(basename $TEST .m).test"
 
-number_nodes ()
-{
-	od -t u4 -N 1 -j 1 ${TEST} | head -n 1 | awk '{print $2}'
-}
-
-NODES=$(number_nodes)
+NODES=$(sh ./number_nodes.sh $TEST)
 
 do_exit ()
 {
