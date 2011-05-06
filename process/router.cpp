@@ -169,9 +169,7 @@ router::receive_end_iteration(const remote::remote_id source)
 bool
 router::reduce_continue(const bool more_work)
 {
-   const unsigned char input(more_work ? 1 : 0);
-   
-   return mpi::all_reduce(*world, input, mpi::bitwise_or<byte>());
+   return mpi::all_reduce(*world, more_work, logical_or<bool>());
 }
 #endif
    
