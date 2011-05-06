@@ -23,11 +23,7 @@ enum aggregate_type {
    AGG_SUM_INT = 4,
    AGG_MAX_FLOAT = 5,
    AGG_MIN_FLOAT = 6,
-   AGG_SUM_FLOAT = 7,
-   AGG_SET_UNION_INT = 8,
-   AGG_SET_UNION_FLOAT = 9,
-   AGG_SUM_LIST_INT = 10,
-   AGG_SUM_LIST_FLOAT = 11
+   AGG_SUM_FLOAT = 7
 };
 
 size_t field_type_size(field_type type);

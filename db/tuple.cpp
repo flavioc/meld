@@ -209,6 +209,48 @@ agg_configuration::generate_first(void) const
 }
 
 vm::tuple*
+agg_configuration::generate_max_float(const field_num field) const
+{
+   simple_tuple_list::const_iterator it(values.begin());
+   vm::tuple *max_tpl((*it)->get_tuple());
+   float_val max_val(max_tpl->get_float(field));
+   
+   ++it;
+   for(; it != values.end(); ++it) {
+      simple_tuple *sother(*it);
+      vm::tuple *other(sother->get_tuple());
+      
+      if(max_val < other->get_float(field)) {
+         max_val = other->get_float(field);
+         max_tpl = other;
+      }
+   }
+   
+   return max_tpl->copy();
+}
+
+vm::tuple*
+agg_configuration::generate_min_float(const field_num field) const
+{
+   simple_tuple_list::const_iterator it(values.begin());
+   vm::tuple *min_tpl((*it)->get_tuple());
+   float_val min_val(min_tpl->get_float(field));
+   
+   ++it;
+   for(; it != values.end(); ++it) {
+      simple_tuple *sother(*it);
+      vm::tuple *other(sother->get_tuple());
+      
+      if(min_val > other->get_float(field)) {
+         min_val = other->get_float(field);
+         min_tpl = other;
+      }
+   }
+   
+   return min_tpl->copy();
+}
+
+vm::tuple*
 agg_configuration::do_generate(const aggregate_type typ, const field_num field)
 {
    if(values.empty())
@@ -225,18 +267,11 @@ agg_configuration::do_generate(const aggregate_type typ, const field_num field)
          return generate_sum_int(field);
       case AGG_SUM_FLOAT:
          return generate_sum_float(field);
+      case AGG_MAX_FLOAT:
+         return generate_max_float(field);
+      case AGG_MIN_FLOAT:
+         return generate_min_float(field);
    }
-
-#if 0
-   AGG_SUM_INT = 4,
-   AGG_MAX_FLOAT = 5,
-   AGG_MIN_FLOAT = 6,
-   AGG_SUM_FLOAT = 7,
-   AGG_SET_UNION_INT = 8,
-   AGG_SET_UNION_FLOAT = 9,
-   AGG_SUM_LIST_INT = 10,
-   AGG_SUM_LIST_FLOAT = 11
-#endif
 }
 
 void

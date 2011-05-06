@@ -62,12 +62,7 @@ aggregate_type_string(aggregate_type type)
 			return string("max");
 	   case AGG_SUM_FLOAT:
 		case AGG_SUM_INT:
-		case AGG_SUM_LIST_INT:
-		case AGG_SUM_LIST_FLOAT:
 			return string("sum");
-		case AGG_SET_UNION_INT:
-		case AGG_SET_UNION_FLOAT:
-         return string("set_union");
 	}
 	
    return string("");
