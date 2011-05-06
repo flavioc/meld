@@ -95,9 +95,10 @@ public:
    
    bool receive_token(sched::token&);
    
-   void broadcast_end_iteration(const size_t);
+   void send_end_iteration(const size_t, const remote::remote_id);
    
-   bool received_end_iteration(void);
+   bool received_end_iteration(size_t&, const remote::remote_id);
+   void receive_end_iteration(const remote::remote_id);
    
    bool reduce_continue(const bool);
 #endif

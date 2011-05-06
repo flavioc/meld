@@ -34,6 +34,7 @@ private:
    bool try_fetch_token_as_leader(void);
    bool try_fetch_token_as_idler(void);
    bool try_fetch_end_iteration(void);
+   void do_collective_end_iteration(size_t);
    virtual void work_found(void);
    virtual bool busy_wait(void);
    virtual bool terminate_iteration(void);

@@ -7,11 +7,13 @@
 
 #include "vm/state.hpp"
 #include "process/router.hpp"
+#include "utils/utils.hpp"
 
 using namespace db;
 using namespace process;
 using namespace vm;
 using namespace std;
+using namespace utils;
 
 #ifdef IMPLEMENT_MISSING_MPI
 namespace MPI {
@@ -172,7 +174,8 @@ mpi_static::try_fetch_token_as_leader(void)
          assert(global_tok.is_white());
          assert(global_tok.is_zero());
          
-         state::ROUTER->broadcast_end_iteration(iteration);
+         do_collective_end_iteration(1);
+         //state::ROUTER->broadcast_end_iteration(iteration);
          
          return true;
       } else
@@ -240,11 +243,49 @@ mpi_static::try_fetch_token_as_idler(void)
    return false;
 }
 
+void
+mpi_static::do_collective_end_iteration(size_t stage)
+{
+   for( ; stage <= upper_log2(remote::world_size); ++stage) {
+      if(remote::self->get_rank() < pow(2, stage - 1)) {
+         const remote::remote_id dest(remote::self->get_rank() + pow(2, stage - 1));
+         
+         if(dest < remote::world_size) {
+            //cout << "Send from " << remote::self->get_rank() << " to " << dest << endl;
+            state::ROUTER->send_end_iteration(stage, dest);
+         }
+      } else if(remote::self->get_rank() >= pow(2, stage - 1) && remote::self->get_rank() < pow(2, stage)) {
+         const remote::remote_id source(remote::self->get_rank() - pow(2, stage - 1));
+         //cout << "Received from " << source << " to " << remote::self->get_rank() << endl;
+         state::ROUTER->receive_end_iteration(source);
+      }
+   }
+}
+
+static inline remote::remote_id
+find_source_collective(void)
+{
+   for(size_t stage(1); stage <= upper_log2(remote::world_size); ++stage) {
+      if(remote::self->get_rank() < pow(2, stage - 1))
+         assert(0);
+      else if(remote::self->get_rank() >= pow(2, stage - 1) && remote::self->get_rank() < pow(2, stage))
+         return remote::self->get_rank() - pow(2, stage - 1);
+   }
+   
+   assert(0);
+   
+   return -1;
+}
+
 bool
 mpi_static::try_fetch_end_iteration(void)
 {
-   if(state::ROUTER->received_end_iteration())
+   size_t stage;
+   
+   if(state::ROUTER->received_end_iteration(stage, find_source_collective())) {
+      do_collective_end_iteration(stage + 1);
       return true;
+   }
    return false;
 }
 

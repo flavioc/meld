@@ -138,30 +138,32 @@ router::receive_token(token& global_tok)
 }
 
 void
-router::broadcast_end_iteration(const size_t)
+router::send_end_iteration(const size_t stage, const remote::remote_id target)
 {
-   assert(remote::self->is_leader());
-   
-   for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i) {
-      if(remote_list[i] != remote::self)
-         world->send(i, TERMINATE_ITERATION_TAG);
-   }
+   world->send(target, TERMINATE_ITERATION_TAG, stage);
 }
 
 bool
-router::received_end_iteration(void)
+router::received_end_iteration(size_t& stage, const remote::remote_id source)
 {
    assert(!remote::self->is_leader());
    
    optional<mpi::status> st;
    
-   while((st = world->iprobe(remote::LEADER_RANK, TERMINATE_ITERATION_TAG))) {
-      world->recv(remote::LEADER_RANK, TERMINATE_ITERATION_TAG);
+   while((st = world->iprobe(source, TERMINATE_ITERATION_TAG))) {
+      world->recv(source, TERMINATE_ITERATION_TAG, stage);
       
       return true;
    }
    
    return false;
+}
+
+void
+router::receive_end_iteration(const remote::remote_id source)
+{
+   size_t stage; // UNUSED
+   world->recv(source, TERMINATE_ITERATION_TAG, stage);
 }
 
 bool
