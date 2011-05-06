@@ -10,6 +10,10 @@ def list_has(list, x):
 	except ValueError:
 		return False
 
+if len(sys.argv) != 2:
+	print "Usage: generate_pagerank.py <num nodes>"
+	sys.exit(1)
+
 total = int(sys.argv[1])
 
 print "type route edge(node, node)."
