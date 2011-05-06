@@ -109,7 +109,8 @@ process/router.o: process/router.hpp process/router.cpp \
 									process/remote.hpp \
 									process/message.hpp \
 									utils/time.hpp \
-									process/request.hpp
+									process/request.hpp \
+									sched/token.hpp
 
 process/message.o: process/message.cpp process/message.hpp \
 									db/node.hpp db/tuple.hpp

@@ -8,6 +8,7 @@
 #include <boost/serialization/serialization.hpp>
 #include <boost/mpi/packed_iarchive.hpp>
 #include <boost/mpi/packed_oarchive.hpp>
+#include <boost/mpi/datatype.hpp>
 
 namespace sched
 {
@@ -16,35 +17,30 @@ class token
 {
 private:
    
-   enum {
-      WHITE,
-      BLACK
-   } type;
+   static const bool WHITE = true;
+   static const bool BLACK = false;
    
+   bool type;
    int count;
    
    friend class boost::serialization::access;
    
-   inline void save(boost::mpi::packed_oarchive& ar, const unsigned int) const
+   template <class Archive>
+   inline void save(Archive& ar, const unsigned int) const
    {
-      bool to_save = (type == WHITE);
-      
-      ar & to_save;
-      
+      ar & type;
       ar & count;
    }
 
-   inline void load(boost::mpi::packed_iarchive& ar, const unsigned int)
+   template <class Archive>
+   inline void load(Archive& ar, const unsigned int)
    {
-      bool to_load;
-      ar & to_load;
-      
-      type = (to_load ? WHITE : BLACK);
+      ar & type;
       ar & count;
    }
 
    BOOST_SERIALIZATION_SPLIT_MEMBER()
-   
+
 public:
    
    void transmitted(void) { ++count; }
@@ -71,6 +67,15 @@ public:
 };
 
 }
+
+namespace boost { namespace mpi {
+      template<> struct is_mpi_datatype<sched::token>
+        : public mpl::true_ { };
+    } }
+    
+BOOST_CLASS_IMPLEMENTATION(sched::token, boost::serialization::object_serializable)
+BOOST_IS_BITWISE_SERIALIZABLE(sched::token)
+
 #endif
 
 #endif
