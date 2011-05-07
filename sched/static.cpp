@@ -22,6 +22,14 @@ sstatic::new_work(node *node, const simple_tuple *tpl, const bool is_agg)
 }
 
 void
+sstatic::new_work_agg(node *node, const simple_tuple *tpl)
+{
+   work_unit work = {node, tpl, true};
+
+   queue_work.push(work);
+}
+
+void
 sstatic::assert_end_iteration(void) const
 {
    assert(queue_work.empty());
@@ -35,9 +43,7 @@ sstatic::assert_end(void) const
 
 bool
 sstatic::get_work(work_unit& work)
-{
-   begin_get_work();
-   
+{  
    if(queue_work.empty()) {
       if(!busy_wait())
          return false;
@@ -66,7 +72,7 @@ sstatic::generate_aggs(void)
          ++it2)
       {
          //cout << no->get_id() << " GENERATE " << **it2 << endl;
-         new_work(no, *it2, true);
+         new_work_agg(no, *it2);
       }
    }
 }

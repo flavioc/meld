@@ -43,12 +43,14 @@ void
 threads_static::new_work(node *node, const simple_tuple *tpl, const bool is_agg)
 {
    sstatic::new_work(node, tpl, is_agg);
-   make_active();
+   assert(process_state == PROCESS_ACTIVE);
 }
 
 void
 threads_static::new_work_other(sched::base *scheduler, node *node, const simple_tuple *stuple)
 {
+   assert(process_state == PROCESS_ACTIVE);
+   
    static const size_t WORK_THRESHOLD(20);
    
    threads_static *other((threads_static*)scheduler);
@@ -89,10 +91,13 @@ void
 threads_static::flush_this_queue(wqueue_free<work_unit>& q, threads_static *other)
 {
    assert(this != other);
+   assert(process_state == PROCESS_ACTIVE);
    
-   other->make_active();
-
-   other->queue_work.snap(q);
+   {
+      mutex::scoped_lock l(other->mutex);
+      other->make_active();
+      other->queue_work.snap(q);
+   }
    
    q.clear();
 }
@@ -103,8 +108,10 @@ threads_static::flush_buffered(void)
    for(process_id i(0); i < (process_id)buffered_work.size(); ++i) {
       if(i != id) {
          wqueue_free<work_unit>& q(buffered_work[i]);
-         if(!q.empty())
+         if(!q.empty()) {
+            assert(process_state == PROCESS_ACTIVE);
             flush_this_queue(q, others[i]);
+         }
       }
    }
 }
@@ -112,43 +119,51 @@ threads_static::flush_buffered(void)
 bool
 threads_static::busy_wait(void)
 {
-   static const size_t COUNT_UP_TO(2);
-
-   size_t cont(0);
    bool turned_inactive(false);
    
    flush_buffered();
    
    while(queue_work.empty()) {
       
-      if(term_barrier->all_finished())
+      if(!turned_inactive) {
+         mutex::scoped_lock l(mutex);
+         if(queue_work.empty() && process_state == PROCESS_ACTIVE) {
+            make_inactive();
+            turned_inactive = true;
+            if(term_barrier->all_finished())
+               return false;
+         } else if(process_state == PROCESS_INACTIVE && queue_work.empty()) {
+            turned_inactive = true;
+         }
+      }
+      
+      if(term_barrier->all_finished()) {
+         assert(process_state == PROCESS_INACTIVE);
          return false;
-
-      if(cont >= COUNT_UP_TO && !turned_inactive) {
-         make_inactive();
-         turned_inactive = true;
-      } else if(cont < COUNT_UP_TO)
-         cont++;
+      }
    }
    
+   assert(process_state == PROCESS_ACTIVE);
    assert(!queue_work.empty());
    
    return true;
+}
+
+bool
+threads_static::get_work(work_unit& work)
+{
+   return sstatic::get_work(work);
 }
 
 void
 threads_static::make_active(void)
 {
    if(process_state == PROCESS_INACTIVE) {
-      mutex::scoped_lock l(mutex);
-      
-      if(process_state == PROCESS_INACTIVE) {
-         term_barrier->is_active();
-         process_state = PROCESS_ACTIVE;
+      term_barrier->is_active();
+      process_state = PROCESS_ACTIVE;
 #ifdef DEBUG_ACTIVE
-         cout << "Active " << id << endl;
+      cout << "Active " << id << endl;
 #endif
-      }
    }
 }
 
@@ -156,15 +171,11 @@ void
 threads_static::make_inactive(void)
 {
    if(process_state == PROCESS_ACTIVE) {
-      mutex::scoped_lock l(mutex);
-
-      if(process_state == PROCESS_ACTIVE) {
-         term_barrier->is_inactive();
-         process_state = PROCESS_INACTIVE;
+      term_barrier->is_inactive();
+      process_state = PROCESS_INACTIVE;
 #ifdef DEBUG_ACTIVE
-         cout << "Inactive: " << id << endl;
+      cout << "Inactive: " << id << endl;
 #endif
-      }
    }
 }
 
@@ -176,7 +187,8 @@ threads_static::begin_get_work(void)
 void
 threads_static::work_found(void)
 {
-   make_active();
+   assert(process_state == PROCESS_ACTIVE);
+   assert(!queue_work.empty());
 }
 
 void
@@ -187,32 +199,40 @@ threads_static::init(const size_t num_threads)
    // init buffered queues
    buffered_work.resize(num_threads);
    
-   threads_synchronize();
+   assert(process_state == PROCESS_ACTIVE);
 }
 
 void
 threads_static::end(void)
 {
    sstatic::end();
+   assert(process_state == PROCESS_INACTIVE);
 }
 
 bool
 threads_static::terminate_iteration(void)
 {
+   // this is needed since one thread can reach make_active
+   // and thus other threads waiting for all_finished will fail
+   // to get here
+   threads_synchronize();
+   
    sstatic::terminate_iteration();
    
-   threads_synchronize();
+   assert(all_buffers_emptied());
+   assert(process_state == PROCESS_INACTIVE);
    
    generate_aggs();
    
+   if(!queue_work.empty()) {
+      make_active();
+   }
+   
+   // again, needed since we must wait if any thread
+   // is set to active in the previous if
    threads_synchronize();
    
-   if(term_barrier->all_finished())
-      return false;
-   
-   threads_synchronize();
-   
-   return true;
+   return !term_barrier->all_finished();
 }
 
 threads_static*

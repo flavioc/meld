@@ -58,6 +58,7 @@ public:
    virtual void init(const size_t);
    virtual void end(void);
    virtual bool terminate_iteration(void);
+   virtual bool get_work(work_unit&);
    
    threads_static *find_scheduler(const db::node::node_id);
    
