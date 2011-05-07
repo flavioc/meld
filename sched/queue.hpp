@@ -76,8 +76,8 @@ private:
    
    typedef queue_node<T> node;
    
-   node *head;
-   node *tail;
+   mutable node *head;
+   mutable node *tail;
    boost::mutex mtx;
    
    inline void push_node(node *new_node)
@@ -91,6 +91,9 @@ private:
          tail->next = new_node;
          tail = new_node;
       }
+      
+      assert(head != NULL);
+      assert(tail == new_node);
    }
    
 public:
@@ -148,6 +151,8 @@ public:
       } else {
          head = head->next;
       }
+      
+      assert(head != take);
       
       T el(take->data);
       

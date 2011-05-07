@@ -9,6 +9,9 @@ using namespace vm;
 using namespace process;
 using namespace std;
 
+boost::mutex allocator_mtx;
+std::tr1::unordered_set<void*> mem_set;
+
 int
 main(int argc, char **argv)
 {

@@ -59,8 +59,10 @@ sstatic::get_work(work_unit& work)
 void
 sstatic::generate_aggs(void)
 {
-   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
-   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(remote::self->find_last_node(id)));
+   const node::node_id first(remote::self->find_first_node(id));
+   const node::node_id final(remote::self->find_last_node(id));
+   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(first));
+   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(final));
    
    for(; it != end; ++it)
    {
@@ -88,9 +90,11 @@ void
 sstatic::init(const size_t)
 {
    predicate *init_pred(state::PROGRAM->get_init_predicate());
+   const node::node_id first(remote::self->find_first_node(id));
+   const node::node_id final(remote::self->find_last_node(id));
    
-   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
-   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(remote::self->find_last_node(id)));
+   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(first));
+   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(final));
    
    for(; it != end; ++it)
    {

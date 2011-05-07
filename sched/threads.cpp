@@ -51,6 +51,9 @@ void
 threads_static::new_work_other(sched::base *scheduler, node *node, const simple_tuple *stuple)
 {
    assert(process_state == PROCESS_ACTIVE);
+   assert(node != NULL);
+   assert(stuple != NULL);
+   assert(scheduler != NULL);
    
    static const size_t WORK_THRESHOLD(20);
    

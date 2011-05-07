@@ -3,9 +3,17 @@
 #define MEM_ALLOCATOR_HPP
 
 #include <limits>
+#include <tr1/unordered_set>
 
 #include "conf.hpp"
 #include "mem/thread.hpp"
+
+#define ALLOCATOR_ASSERT 1
+
+#ifdef ALLOCATOR_ASSERT
+   extern boost::mutex allocator_mtx;
+   extern std::tr1::unordered_set<void*> mem_set; 
+#endif
 
 namespace mem
 {
@@ -46,14 +54,30 @@ public:
    inline pointer allocate(size_type cnt,
       typename std::allocator<void>::const_pointer = 0)
    {
+      pointer p;
       if(USE_ALLOCATOR)
-         return reinterpret_cast<pointer>(get_pool()->allocate(cnt * sizeof(T)));
+         p = reinterpret_cast<pointer>(get_pool()->allocate(cnt * sizeof(T)));
       else
-         return reinterpret_cast<pointer>(::operator new(cnt * sizeof(T)));
+         p = reinterpret_cast<pointer>(::operator new(cnt * sizeof(T)));
+      
+#ifdef ALLOCATOR_ASSERT
+      allocator_mtx.lock();
+      assert(mem_set.find(p) == mem_set.end());
+      mem_set.insert(p);
+      allocator_mtx.unlock();
+#endif
+      return p;
    }
    
    inline void deallocate(pointer p, size_type cnt)
-   {
+   {  
+#ifdef ALLOCATOR_ASSERT
+      allocator_mtx.lock();
+      assert(mem_set.find(p) != mem_set.end());  
+      mem_set.erase(p);
+      allocator_mtx.unlock();
+#endif
+
       if(USE_ALLOCATOR)
          get_pool()->deallocate(p, cnt * sizeof(T));
       else

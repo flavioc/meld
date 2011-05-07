@@ -26,7 +26,7 @@ node::get_storage(const predicate_id& id)
 
 bool
 node::add_tuple(vm::tuple *tpl, ref_count many)
-{  
+{
    predicate_id id(tpl->get_predicate()->get_id());
    trie& tr(get_storage(id));
    
