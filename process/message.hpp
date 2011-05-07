@@ -129,9 +129,6 @@ public:
 
 }
 
-#ifdef COMPILE_MPI
 BOOST_CLASS_TRACKING(process::message, boost::serialization::track_never)
-BOOST_CLASS_TRACKING(process::message_set, boost::serialization::track_never)
-#endif
 
 #endif

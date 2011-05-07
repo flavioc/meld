@@ -10,7 +10,6 @@
 #include "vm/predicate.hpp"
 #include "vm/defs.hpp"
 #include "vm/tuple.hpp"
-#include "db/database.hpp"
 
 namespace process {
    class router;
@@ -27,11 +26,7 @@ private:
    std::vector<byte_code> code;
    std::vector<code_size_t> code_size;
    
-   db::database *db;
-   
 public:
-   
-   db::database* get_database(void) { return db; }
    
    predicate *get_predicate_by_name(const std::string&) const;
    
@@ -49,7 +44,7 @@ public:
    
    tuple* new_tuple(const predicate_id&) const;
    
-   explicit program(const std::string&, process::router *);
+   explicit program(const std::string&);
    
    ~program(void);
 };

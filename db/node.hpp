@@ -66,7 +66,7 @@ public:
    {
    }
    
-   ~node(void);
+   virtual ~node(void);
 };
 
 std::ostream& operator<<(std::ostream&, const node&);

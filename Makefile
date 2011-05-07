@@ -1,12 +1,25 @@
 
 OS = $(shell uname -s)
 
-INCLUDE_DIRS = -I. -I/opt/local/include -I/usr/include/openmpi-x86_64/
-LIBRARY_DIRS = -L/opt/local/lib -L/usr/lib64/openmpi/lib
+INCLUDE_DIRS = -I/usr/include -I.
+LIBRARY_DIRS = -L/usr/lib
+
+ifeq (exists, $(shell test -d /opt/local/include && echo exists))
+	INCLUDE_DIRS += -I/opt/local/include
+endif
+ifeq (exists, $(shell test -d /opt/local/lib  && echo exists))
+	LIBRARY_DIRS += -L/opt/local/lib
+endif
+ifeq (exists, $(shell test -d /usr/include/openmpi-x86_64 && echo exists))
+	INCLUDE_DIRS += -I/usr/include/openmpi-x86_64/
+endif
+ifeq (exists, $(shell test -d /usr/lib64/openmpi/lib && echo exists))
+	LIBRARY_DIRS += -L/usr/lib64/openmpi/lib
+endif
 
 PROFILING = #-pg
 OPTIMIZATIONS = -O0
-ARCH = -march=x86-64 #i686
+ARCH = -march=x86-64
 DEBUG = -g
 WARNINGS = -Wall -Wno-sign-compare
 
@@ -19,6 +32,7 @@ ifneq ($(COMPILE_MPI),)
 endif
 
 CXX = g++
+C0X = -std=c++0x
 
 GCC_MINOR    := $(shell $(CXX) -v 2>&1 | \
 													grep " version " | cut -d' ' -f3  | cut -d'.' -f2)
@@ -27,10 +41,10 @@ ifeq ($(GCC_MINOR),2)
 	CFLAGS += -DTEMPLATE_OPTIMIZERS=1
 endif
 ifeq ($(GCC_MINOR),4)
-	CFLAGS += -DIMPLEMENT_MISSING_MPI=1
+	CFLAGS += -DIMPLEMENT_MISSING_MPI=1 $(C0X)
 endif
 
-CXXFLAGS = $(CFLAGS) #-std=c++0x
+CXXFLAGS = $(CFLAGS)
 LDFLAGS = $(PROFILING) $(LIBRARY_DIRS) $(LIBRARIES)
 COMPILE = $(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS)
 
@@ -51,7 +65,8 @@ OBJS = utils/utils.o \
 			 sched/buffer.o \
 			 sched/static.o \
 			 sched/threads.o \
-			 sched/mpi.o
+			 sched/mpi.o \
+			 sched/stealer.o
 
 all: meld print
 
@@ -88,7 +103,8 @@ process/machine.o: process/machine.hpp process/machine.cpp \
 									process/message.hpp \
 									sched/static.hpp \
 									sched/threads.hpp \
-									sched/mpi.hpp
+									sched/mpi.hpp \
+									sched/stealer.hpp
 
 process/remote.o: process/remote.hpp process/remote.cpp	\
 									vm/instr.hpp conf.hpp
@@ -133,14 +149,20 @@ sched/static.o: sched/static.cpp sched/static.hpp \
 
 sched/threads.o: sched/threads.cpp sched/threads.hpp \
 								sched/base.hpp sched/static.hpp \
-								sched/queue.hpp
+								sched/queue.hpp \
+								sched/termination_barrier.hpp
 
 sched/mpi.o: sched/mpi.hpp sched/mpi.cpp \
 						sched/base.hpp sched/static.hpp \
 						sched/token.hpp
 
+sched/stealer.o: sched/base.hpp sched/stealer.hpp \
+								sched/stealer.cpp sched/queue.hpp \
+								sched/termination_barrier.hpp
+
 clean:
-	rm -f meld print *.o vm/*.o db/*.o process/*.o \
+	rm -f meld print *.o vm/*.o \
+		db/*.o process/*.o \
 		runtime/*.o utils/*.o \
 		mem/*.o sched/*.o
 

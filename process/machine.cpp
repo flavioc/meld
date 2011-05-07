@@ -40,12 +40,15 @@ machine::route(process *caller, const node::node_id id, const simple_tuple* stup
    
    if(rem == remote::self) {
       // on this machine
+      
       node *node(state::DATABASE->find_node(id));
-      process *proc(process_list[remote::self->find_proc_owner(id)]);
-      if(caller == proc)
+      
+      sched::base *sched_other(sched_caller->find_scheduler(id));
+      
+      if(sched_caller == sched_other)
          sched_caller->new_work(node, stuple);
       else
-         sched_caller->new_work_other(proc->get_scheduler(), node, stuple);
+         sched_caller->new_work_other(sched_other, node, stuple);
    }
 #ifdef COMPILE_MPI
    else {
@@ -76,6 +79,20 @@ machine::start(void)
       state::DATABASE->dump_db(cout);
 }
 
+static inline database::create_node_fn
+get_creation_function(const scheduler_type sched_type)
+{
+   switch(sched_type) {
+      case SCHED_THREADS_STATIC:
+      case SCHED_MPI_UNI_STATIC:
+         return database::create_node_fn(sched::sstatic::create_node);
+      case SCHED_THREADS_STEALER:
+         return database::create_node_fn(sched::stealer::create_node);
+      case SCHED_UNKNOWN:
+         return NULL;
+   }
+}
+
 machine::machine(const string& file, router& _rout, const size_t th, const scheduler_type _sched_type):
    filename(file),
    num_threads(th),
@@ -84,38 +101,32 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
    will_dump_database(false),
    rout(_rout)
 {  
-   state::PROGRAM = new program(filename, &rout);
-   state::DATABASE = state::PROGRAM->get_database();
-   state::MACHINE = this;
+   state::PROGRAM = new program(filename);
+   state::DATABASE = new database(filename, get_creation_function(_sched_type));
    state::NUM_THREADS = num_threads;
+   state::MACHINE = this;
    
    mem::init(num_threads);
+   process_list.resize(num_threads);
    
    switch(sched_type) {
       case SCHED_THREADS_STATIC: {
-            vector<sched::threads_static*>& schedulers(sched::threads_static::start(num_threads));
-            vector<sched::sstatic*> transformed;
-            
-            transformed.resize(num_threads);
-            process_list.resize(num_threads);
+            vector<sched::threads_static*> schedulers(sched::threads_static::start(num_threads));
       
-            for(process_id i(0); i < num_threads; ++i) {
+            for(process_id i(0); i < num_threads; ++i)
                process_list[i] = new process(i, schedulers[i]);
-               transformed[i] = (sched::sstatic*)schedulers[i];
-            }
          }
          break;
-      case SCHED_MPI_UNI_STATIC: {
+      case SCHED_MPI_UNI_STATIC:
 #ifdef COMPILE_MPI
-            sched::mpi_static *scheduler(sched::mpi_static::start());
-            vector<sched::sstatic*> procs;
-            
-            process_list.resize(1);
-            procs.resize(1);
-            
-            process_list[0] = new process(0, scheduler);
-            procs[0] = (sched::sstatic*)scheduler;
+         process_list[0] = new process(0, sched::mpi_static::start());
 #endif
+         break;
+      case SCHED_THREADS_STEALER: {
+            vector<sched::stealer*> schedulers(sched::stealer::start(num_threads));
+            
+            for(process_id i(0); i < num_threads; ++i)
+               process_list[i] = new process(i, schedulers[i]);
          }
          break;
       case SCHED_UNKNOWN:
@@ -127,6 +138,7 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
 machine::~machine(void)
 {
    delete state::PROGRAM;
+   delete state::DATABASE;
    
    for(process_id i(0); i != num_threads; ++i)
       delete process_list[i];

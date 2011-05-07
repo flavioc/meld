@@ -6,13 +6,15 @@
 #include "vm/program.hpp"
 #include "db/tuple.hpp"
 #include "vm/instr.hpp"
-#include "process/router.hpp"
+#include "db/database.hpp"
+#include "utils/types.hpp"
 
 using namespace std;
 using namespace db;
 using namespace vm;
 using namespace vm::instr;
 using namespace process;
+using namespace utils;
 
 namespace vm {
 
@@ -21,7 +23,7 @@ static const size_t PREDICATE_DESCRIPTOR_SIZE = sizeof(code_size_t) +
                                                 PREDICATE_DESCRIPTOR_BASE_SIZE +
                                                 PRED_ARGS_MAX + NAME_SIZE_MAX;
 
-program::program(const string& filename, router *rout)
+program::program(const string& filename)
 {
    ifstream fp(filename.c_str(), ios::in | ios::binary);
    
@@ -29,9 +31,9 @@ program::program(const string& filename, router *rout)
       throw load_file_error(filename);
 
    // read number of predicates
-   char buf[PREDICATE_DESCRIPTOR_SIZE];
+   byte buf[PREDICATE_DESCRIPTOR_SIZE];
    
-   fp.read(buf, 1);
+   fp.read((char*)buf, sizeof(byte));
    
    size_t num_predicates = (size_t)buf[0];
    
@@ -39,13 +41,16 @@ program::program(const string& filename, router *rout)
    code_size.resize(num_predicates);
    code.resize(num_predicates);
    
-   // read database of nodes
-   db = new database(fp, rout);
+   // skip nodes
+   int_val num_nodes;
+   fp.read((char*)&num_nodes, sizeof(int_val));
+   
+   fp.seekg(num_nodes * database::node_size, ios_base::cur);
    
    // read predicate information
    for(size_t i(0); i < num_predicates; ++i) {
       code_size_t size;
-      fp.read(buf, PREDICATE_DESCRIPTOR_SIZE);
+      fp.read((char*)buf, PREDICATE_DESCRIPTOR_SIZE);
       
       predicates[i] = predicate::make_predicate_from_buf((unsigned char*)buf, &size);
       code_size[i] = size;
@@ -62,8 +67,6 @@ program::program(const string& filename, router *rout)
 
 program::~program(void)
 {
-   delete db;
-   
    for(size_t i(0); i < num_predicates(); ++i) {
       delete predicates[i];
       delete [] code[i];

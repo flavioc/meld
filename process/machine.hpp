@@ -19,6 +19,7 @@
 #include "db/node.hpp"
 #include "sched/threads.hpp"
 #include "sched/mpi.hpp"
+#include "sched/stealer.hpp"
 
 namespace process
 {
@@ -26,7 +27,8 @@ namespace process
 enum scheduler_type {
    SCHED_UNKNOWN,
    SCHED_THREADS_STATIC,
-   SCHED_MPI_UNI_STATIC
+   SCHED_MPI_UNI_STATIC,
+   SCHED_THREADS_STEALER
 };
 
 // forward declaration   

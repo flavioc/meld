@@ -19,8 +19,7 @@ main(int argc, char **argv)
    
    const string file(argv[1]);
    
-   router rout;
-   program prog(file, &rout);
+   program prog(file);
    
    prog.print_bytecode(cout);
    

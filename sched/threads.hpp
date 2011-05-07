@@ -59,6 +59,8 @@ public:
    virtual void end(void);
    virtual bool terminate_iteration(void);
    
+   threads_static *find_scheduler(const db::node::node_id);
+   
    static std::vector<threads_static*>& start(const size_t num_threads);
    
    explicit threads_static(const vm::process_id);

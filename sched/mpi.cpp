@@ -385,6 +385,12 @@ mpi_static::new_work_remote(remote *rem, const process_id proc, message *msg)
       tok.transmitted();
 }
 
+mpi_static*
+mpi_static::find_scheduler(const node::node_id)
+{
+   return this;
+}
+
 mpi_static::mpi_static(void):
    sstatic(0),
    round_trip_fetch(0),

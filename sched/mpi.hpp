@@ -48,6 +48,8 @@ public:
    virtual void new_work_other(sched::base *, db::node *, const db::simple_tuple *);
    virtual void new_work_remote(process::remote *, const vm::process_id, process::message *);
    
+   mpi_static *find_scheduler(const db::node::node_id);
+   
    static mpi_static *start(void);
    
    explicit mpi_static(void);

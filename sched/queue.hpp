@@ -80,6 +80,19 @@ private:
    node *tail;
    boost::mutex mtx;
    
+   inline void push_node(node *new_node)
+   {
+      boost::mutex::scoped_lock l(mtx);
+      
+      if(head == NULL)
+         head = tail = new_node;
+      else {
+         assert(tail != NULL);
+         tail->next = new_node;
+         tail = new_node;
+      }
+   }
+   
 public:
    
    inline const bool empty(void) const { return head == NULL; }
@@ -91,17 +104,33 @@ public:
       new_node->data = el;
       new_node->next = NULL;
       
+      push_node(new_node);
+   }
+   
+   inline bool pop_safe(T& el)
+   {
       mtx.lock();
       
-      if(head == NULL)
-         head = tail = new_node;
-      else {
-         assert(tail != NULL);
-         tail->next = new_node;
-         tail = new_node;
+      node *take(head);
+      
+      if(take == NULL)
+         return false;
+      
+      if(head == tail) {
+         if(head == tail) {
+            head = tail = NULL;
+         }
+      } else {
+         head = head->next;
       }
       
       mtx.unlock();
+      
+      el = take->data;
+      
+      mem::allocator<node>().deallocate(take, 1);
+      
+      return true;
    }
    
    inline T pop(void)
@@ -129,7 +158,7 @@ public:
    
    inline void snap(wqueue_free<T>& q)
    {
-      mtx.lock();
+      boost::mutex::scoped_lock l(mtx);
       
       if(head == NULL) {
          head = q.head;
@@ -142,8 +171,48 @@ public:
       }
       
       assert(q.tail = tail);
+   }
+   
+   inline node* steal(const size_t many)
+   {
+      if(many == 0)
+         return NULL;
+         
+      size_t remain(many);
       
-      mtx.unlock();
+      boost::mutex::scoped_lock l(mtx);
+      
+      node* ret(head);
+      node *more(head);
+      node *prev(NULL);
+      
+      while(more != NULL && remain > 0) {
+         --remain;
+         prev = more;
+         more = more->next;
+      }
+      
+      if(prev != NULL)
+         prev->next = NULL;
+      
+      assert(more != prev || head == NULL);
+      head = more;
+      
+      if(head == NULL)
+         tail = NULL;
+      
+      return ret;
+   }
+   
+   inline void append(node *more)
+   {
+      node *rem;
+      
+      while(more != NULL) {
+         rem = more->next;
+         push_node(more);
+         more = rem;
+      }
    }
    
    explicit wqueue(void): head(NULL), tail(NULL) {}

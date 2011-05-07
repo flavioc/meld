@@ -6,6 +6,7 @@
 
 #include "vm/state.hpp"
 #include "process/machine.hpp"
+#include "sched/termination_barrier.hpp"
 
 using namespace boost;
 using namespace vm;
@@ -17,28 +18,10 @@ using namespace std;
 
 namespace sched
 {
-   
-static size_t threads_active(0);
+
 static vector<threads_static*> others;
 static barrier *thread_barrier(NULL);
- 
-static inline void
-make_thread_active(void)
-{
-   __sync_fetch_and_add(&threads_active, 1);
-}
-
-static inline void
-make_thread_inactive(void)
-{
-   __sync_fetch_and_sub(&threads_active, 1);
-}
-
-static inline const bool
-are_threads_finished(void)
-{
-   return threads_active == 0;
-}
+static termination_barrier *term_barrier(NULL);
 
 static inline void
 threads_synchronize(void)
@@ -90,7 +73,7 @@ threads_static::assert_end_iteration(void) const
    sstatic::assert_end_iteration();
    assert(process_state == PROCESS_INACTIVE);
    assert(all_buffers_emptied());
-   assert(threads_active == 0);
+   assert(term_barrier->all_finished());
 }
 
 void
@@ -99,7 +82,7 @@ threads_static::assert_end(void) const
    sstatic::assert_end();
    assert(process_state == PROCESS_INACTIVE);
    assert(all_buffers_emptied());
-   assert(threads_active == 0);
+   assert(term_barrier->all_finished());
 }
 
 void
@@ -130,7 +113,7 @@ bool
 threads_static::busy_wait(void)
 {
    static const size_t COUNT_UP_TO(2);
-    
+
    size_t cont(0);
    bool turned_inactive(false);
    
@@ -138,7 +121,7 @@ threads_static::busy_wait(void)
    
    while(queue_work.empty()) {
       
-      if(are_threads_finished())
+      if(term_barrier->all_finished())
          return false;
 
       if(cont >= COUNT_UP_TO && !turned_inactive) {
@@ -160,12 +143,12 @@ threads_static::make_active(void)
       mutex::scoped_lock l(mutex);
       
       if(process_state == PROCESS_INACTIVE) {
-         make_thread_active();
+         term_barrier->is_active();
          process_state = PROCESS_ACTIVE;
 #ifdef DEBUG_ACTIVE
          cout << "Active " << id << endl;
 #endif
-      }   
+      }
    }
 }
 
@@ -176,7 +159,7 @@ threads_static::make_inactive(void)
       mutex::scoped_lock l(mutex);
 
       if(process_state == PROCESS_ACTIVE) {
-         make_thread_inactive();
+         term_barrier->is_inactive();
          process_state = PROCESS_INACTIVE;
 #ifdef DEBUG_ACTIVE
          cout << "Inactive: " << id << endl;
@@ -203,6 +186,8 @@ threads_static::init(const size_t num_threads)
    
    // init buffered queues
    buffered_work.resize(num_threads);
+   
+   threads_synchronize();
 }
 
 void
@@ -222,12 +207,18 @@ threads_static::terminate_iteration(void)
    
    threads_synchronize();
    
-   if(are_threads_finished())
+   if(term_barrier->all_finished())
       return false;
    
    threads_synchronize();
    
    return true;
+}
+
+threads_static*
+threads_static::find_scheduler(const node::node_id id)
+{
+   return others[remote::self->find_proc_owner(id)];
 }
 
 threads_static::threads_static(const process_id _id):
@@ -244,8 +235,8 @@ vector<threads_static*>&
 threads_static::start(const size_t num_threads)
 {
    thread_barrier = new barrier(num_threads);
+   term_barrier = new termination_barrier(num_threads);
    others.resize(num_threads);
-   threads_active = num_threads;
    
    for(process_id i(0); i < num_threads; ++i)
       others[i] = new threads_static(i);

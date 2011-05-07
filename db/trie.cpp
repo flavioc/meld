@@ -27,7 +27,7 @@ trie::look_for_simple_tuple(const simple_tuple_list& list, vm::tuple *tpl)
 }
 
 bool
-trie::insert_tuple(tuple *tpl, const ref_count many)
+trie::insert_tuple(vm::tuple *tpl, const ref_count many)
 {
    simple_tuple *found(look_for_simple_tuple(list, tpl));
    
@@ -54,7 +54,7 @@ trie::commit_delete(simple_tuple_list::iterator it)
 }
 
 trie::delete_info
-trie::delete_tuple(tuple *tpl, const ref_count many)
+trie::delete_tuple(vm::tuple *tpl, const ref_count many)
 {  
    for(simple_tuple_list::iterator it(list.begin());
       it != list.end();

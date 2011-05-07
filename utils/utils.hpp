@@ -10,7 +10,7 @@ namespace utils
 const size_t number_cpus(void);
 
 template <typename T>
-std::string to_string (const T& obj)
+std::string to_string(const T& obj)
 {
 	std::stringstream ss;
 	ss << obj;
@@ -36,6 +36,8 @@ T upper_log2(const T n)
    else  
       return -1;
 }
+
+const size_t random_unsigned(const size_t);
 
 }
 

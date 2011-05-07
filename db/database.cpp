@@ -13,19 +13,23 @@ namespace db
    
 size_t database::nodes_total = 0;
 
-database::database(ifstream& fp, router *rout)
+database::database(const string& filename, create_node_fn create_fn)
 {
-   static const size_t node_size(sizeof(node::node_id) * 2);
+   assert(state::ROUTER != NULL);
    
    int_val num_nodes;
    node::node_id fake_id;
    node::node_id real_id;
    
+   ifstream fp(filename.c_str(), ios::in | ios::binary);
+   
+   fp.seekg(sizeof(char) * 1, ios_base::cur);
+   
    fp.read((char*)&num_nodes, sizeof(int_val));
    
    nodes_total = num_nodes;
    
-   rout->set_nodes_total(nodes_total); // can throw database_error
+   state::ROUTER->set_nodes_total(nodes_total); // can throw database_error
    
    const size_t nodes_to_skip(remote::self->get_nodes_base());
    
@@ -39,7 +43,7 @@ database::database(ifstream& fp, router *rout)
       fp.read((char*)&real_id, sizeof(node::node_id));
       
       translation[fake_id] = real_id;
-      add_node(fake_id, real_id); 
+      nodes[fake_id] = create_fn(fake_id, real_id);
    }
    
    if(!remote::i_am_last_one()) {
@@ -66,19 +70,6 @@ database::find_node(const node::node_id id) const
       return NULL;
    else
       return it->second;
-}
-
-node*
-database::add_node(const node::node_id id, const node::node_id trans)
-{
-   node *ret(find_node(id));
-   
-   if(ret == NULL) {
-      ret = new node(id, trans);
-      nodes[id] = ret;
-   }
-   
-   return ret;
 }
 
 void

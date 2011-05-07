@@ -78,8 +78,10 @@ process::do_loop(void)
    sched::work_unit work;
 
    while(true) {
-      while(scheduler->get_work(work))
+      while(scheduler->get_work(work)) {
          do_work(work.work_node, work.work_tpl, work.agg);
+         scheduler->finish_work(work);
+      }
    
       scheduler->assert_end_iteration();
       

@@ -16,8 +16,6 @@ class sstatic: public sched::base
 {
 protected:
    
-   const vm::process_id id;
-   
    utils::byte _pad1[128];
    
    size_t iteration;
@@ -45,10 +43,18 @@ public:
    virtual void new_work_remote(process::remote *, const vm::process_id, process::message *) = 0;
    
    virtual bool get_work(work_unit&);
+   virtual void finish_work(const work_unit&) {};
    
    virtual void init(const size_t);
    virtual void end(void);
    virtual bool terminate_iteration(void);
+   
+   virtual sstatic *find_scheduler(const db::node::node_id) = 0;
+   
+   static db::node* create_node(const db::node::node_id id, const db::node::node_id trans)
+   {
+      return new db::node(id, trans);
+   }
    
    explicit sstatic(const vm::process_id);
    

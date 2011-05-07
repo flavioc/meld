@@ -80,7 +80,7 @@ sstatic::terminate_iteration(void)
 
 void
 sstatic::init(const size_t)
-{  
+{
    predicate *init_pred(state::PROGRAM->get_init_predicate());
    
    database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
@@ -99,7 +99,7 @@ sstatic::end(void)
 }
 
 sstatic::sstatic(const process_id _id):
-   id(_id),
+   base(_id),
    iteration(0)
 {
 }

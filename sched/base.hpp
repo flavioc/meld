@@ -23,6 +23,10 @@ struct work_unit {
    
 class base
 {
+protected:
+   
+   const vm::process_id id;
+   
 public:
    
    virtual void new_work(db::node *, const db::simple_tuple *, const bool is_agg = false) = 0;
@@ -33,13 +37,16 @@ public:
    virtual void end(void) = 0;
    
    virtual bool get_work(work_unit&) = 0;
+   virtual void finish_work(const work_unit&) = 0;
    
    virtual void assert_end(void) const = 0;
    virtual void assert_end_iteration(void) const = 0;
    
    virtual bool terminate_iteration(void) = 0;
    
-   explicit base(void) {}
+   virtual base* find_scheduler(const db::node::node_id) = 0;
+   
+   explicit base(const vm::process_id _id): id(_id) {}
    
    virtual ~base(void) {}
 };

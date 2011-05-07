@@ -22,17 +22,18 @@ static bool time_execution = false;
 static void
 help(void)
 {
-  fprintf(stderr, "meld: execute meld program\n");
-  fprintf(stderr, "\t-f <name>\tmeld program\n");
-  fprintf(stderr, "\t-c <scheduler>\tselect scheduling type\n");
-  fprintf(stderr, "\t\t\ttsX static division of work with X threads\n");
-  fprintf(stderr, "\t\t\tmpi static division of work using mpi (use mpirun)\n");
-  fprintf(stderr, "\t-t \t\ttime execution\n");
-  fprintf(stderr, "\t-s \t\tshows database\n");
-  fprintf(stderr, "\t-d \t\tdump database (debug option)\n");
-  fprintf(stderr, "\t-h \t\tshow this screen\n");
+   fprintf(stderr, "meld: execute meld program\n");
+   fprintf(stderr, "\t-f <name>\tmeld program\n");
+   fprintf(stderr, "\t-c <scheduler>\tselect scheduling type\n");
+   fprintf(stderr, "\t\t\ttsX static division of work with X threads\n");
+   fprintf(stderr, "\t\t\tstealX initial static division but allow work stealing\n");
+   fprintf(stderr, "\t\t\tmpi static division of work using mpi (use mpirun)\n");
+   fprintf(stderr, "\t-t \t\ttime execution\n");
+   fprintf(stderr, "\t-s \t\tshows database\n");
+   fprintf(stderr, "\t-d \t\tdump database (debug option)\n");
+   fprintf(stderr, "\t-h \t\tshow this screen\n");
 
-  exit(EXIT_SUCCESS);
+   exit(EXIT_SUCCESS);
 }
 
 static void
@@ -49,13 +50,17 @@ parse_sched(char *sched)
       sched += 2;
       num_threads = (size_t)atoi(sched);
       sched_type = SCHED_THREADS_STATIC;
-   } else if(strncmp(sched, "mpi", 3) == 0 && strlen(sched) == 3) {
+   } else if(strlen(sched) == 3 && strncmp(sched, "mpi", 3) == 0) {
 #ifndef COMPILE_MPI
       fprintf(stderr, "Error: MPI support was not compiled\n");
       exit(EXIT_FAILURE);
 #endif
       sched_type = SCHED_MPI_UNI_STATIC;
       num_threads = 1;
+   } else if(strlen(sched) > 5 && strncmp(sched, "steal", 5) == 0) {
+      sched_type = SCHED_THREADS_STEALER;
+      sched += 5;
+      num_threads = (size_t)atoi(sched);
    } else {
       fprintf(stderr, "Error: invalid scheduler %s\n", sched);
       exit(EXIT_FAILURE);
