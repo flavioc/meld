@@ -15,6 +15,7 @@ using namespace process;
 using namespace std;
 
 //#define DEBUG_ACTIVE 1
+#define ASSERT_THREADS 1
 
 namespace sched
 {
@@ -227,6 +228,25 @@ threads_static::terminate_iteration(void)
    if(!queue_work.empty()) {
       make_active();
    }
+   
+#ifdef ASSERT_THREADS
+   static boost::mutex local_mtx;
+   static vector<size_t> total;
+   
+   local_mtx.lock();
+   
+   total.push_back(iteration);
+   
+   if(total.size() == state::NUM_THREADS) {
+      for(size_t i(0); i < state::NUM_THREADS; ++i) {
+         assert(total[i] == iteration);
+      }
+      
+      total.clear();
+   }
+   
+   local_mtx.unlock();
+#endif
    
    // again, needed since we must wait if any thread
    // is set to active in the previous if

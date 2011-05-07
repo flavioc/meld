@@ -50,10 +50,11 @@ node::add_agg_tuple(vm::tuple *tuple, const ref_count many)
    aggregate_map::iterator it(aggs.find(id));
    tuple_aggregate *agg;
    
-   if(it == aggs.end())
+   if(it == aggs.end()) {
       // add new
-      agg = aggs[id] = new tuple_aggregate(pred);
-   else
+      agg = new tuple_aggregate(pred);
+      aggs[id] = agg;
+   } else
       agg = it->second;
 
    agg->add_to_set(tuple, many);
