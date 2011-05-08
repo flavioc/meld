@@ -146,13 +146,17 @@ public:
          mtx.lock();
          if(head == tail) {
             head = tail = NULL;
+            mtx.unlock();
+         } else {
+            mtx.unlock();
+            head = head->next;
          }
-         mtx.unlock();
       } else {
          head = head->next;
       }
       
       assert(head != take);
+      assert(take->next == head);
       
       T el(take->data);
       
