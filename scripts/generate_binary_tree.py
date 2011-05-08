@@ -2,8 +2,6 @@
 
 import sys
 
-print "type route edge(node, node)."
-
 counter = 0
 
 def get_id():
@@ -23,6 +21,12 @@ def generate_tree(root, levels):
 	write_edge(root, right)
 	generate_tree(left, levels - 1)
 	generate_tree(right, levels - 1)
+
+if len(sys.argv) != 2:
+	print "Usage: generate_binary_tree.py <num levels>"
+	sys.exit(1)
+
+print "type route edge(node, node)."
 
 levels = int(sys.argv[1])
 
