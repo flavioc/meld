@@ -38,9 +38,11 @@ threads_static::all_buffers_emptied(void) const
 }
 
 void
-threads_static::new_work(node *node, const simple_tuple *tpl, const bool is_agg)
+threads_static::new_work(node *from, node *to, const simple_tuple *tpl, const bool is_agg)
 {
-   sstatic::new_work(node, tpl, is_agg);
+   assert(to != NULL);
+   assert(tpl != NULL);
+   sstatic::new_work(from, to, tpl, is_agg);
    assert(process_state == PROCESS_ACTIVE);
 }
 
@@ -56,7 +58,7 @@ threads_static::new_work_other(sched::base *scheduler, node *node, const simple_
    
    threads_static *other((threads_static*)scheduler);
    work_unit work = {node, stuple, false};
-   wqueue_free<work_unit>& q(buffered_work[other->id]);
+   queue_free_work& q(buffered_work[other->id]);
    
    q.push(work);
    
@@ -89,7 +91,7 @@ threads_static::assert_end(void) const
 }
 
 void
-threads_static::flush_this_queue(wqueue_free<work_unit>& q, threads_static *other)
+threads_static::flush_this_queue(queue_free_work& q, threads_static *other)
 {
    assert(this != other);
    assert(process_state == PROCESS_ACTIVE);
@@ -108,7 +110,7 @@ threads_static::flush_buffered(void)
 {
    for(process_id i(0); i < (process_id)buffered_work.size(); ++i) {
       if(i != id) {
-         wqueue_free<work_unit>& q(buffered_work[i]);
+         queue_free_work& q(buffered_work[i]);
          if(!q.empty()) {
             assert(process_state == PROCESS_ACTIVE);
             flush_this_queue(q, others[i]);

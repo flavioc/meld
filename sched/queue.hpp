@@ -18,7 +18,7 @@ public:
 };
 
 template <class T>
-class wqueue_free
+class queue_lock_free
 {
 public:
    
@@ -56,6 +56,27 @@ public:
       ++total;
    }
    
+   inline T pop(void)
+   {
+      node *take(head);
+      
+      assert(head != NULL);
+   
+      if(head == tail)
+         head = tail = NULL;
+      else
+         head = head->next;
+      
+      assert(head != take);
+      assert(take->next == head);
+      
+      T el(take->data);
+      
+      mem::allocator<node>().deallocate(take, 1);
+      
+      return el;
+   }
+   
    inline void clear(void)
    {
       head = tail = NULL;
@@ -66,11 +87,11 @@ public:
       assert(total == 0);
    }
    
-   explicit wqueue_free(void): head(NULL), tail(NULL), total(0) {}
+   explicit queue_lock_free(void): head(NULL), tail(NULL), total(0) {}
 };
 
 template <class T>
-class wqueue
+class safe_queue
 {
 private:
    
@@ -110,32 +131,6 @@ public:
       push_node(new_node);
    }
    
-   inline bool pop_safe(T& el)
-   {
-      mtx.lock();
-      
-      node *take(head);
-      
-      if(take == NULL)
-         return false;
-      
-      if(head == tail) {
-         if(head == tail) {
-            head = tail = NULL;
-         }
-      } else {
-         head = head->next;
-      }
-      
-      mtx.unlock();
-      
-      el = take->data;
-      
-      mem::allocator<node>().deallocate(take, 1);
-      
-      return true;
-   }
-   
    inline T pop(void)
    {
       node *take(head);
@@ -153,10 +148,11 @@ public:
          }
       } else {
          head = head->next;
+         assert(take->next == head);
       }
       
       assert(head != take);
-      assert(take->next == head);
+      
       
       T el(take->data);
       
@@ -165,7 +161,8 @@ public:
       return el;
    }
    
-   inline void snap(wqueue_free<T>& q)
+   // append a lock free queue on this queue
+   inline void snap(queue_lock_free<T>& q)
    {
       boost::mutex::scoped_lock l(mtx);
       
@@ -182,51 +179,9 @@ public:
       assert(q.tail = tail);
    }
    
-   inline node* steal(const size_t many)
-   {
-      if(many == 0)
-         return NULL;
-         
-      size_t remain(many);
-      
-      boost::mutex::scoped_lock l(mtx);
-      
-      node* ret(head);
-      node *more(head);
-      node *prev(NULL);
-      
-      while(more != NULL && remain > 0) {
-         --remain;
-         prev = more;
-         more = more->next;
-      }
-      
-      if(prev != NULL)
-         prev->next = NULL;
-      
-      assert(more != prev || head == NULL);
-      head = more;
-      
-      if(head == NULL)
-         tail = NULL;
-      
-      return ret;
-   }
+   explicit safe_queue(void): head(NULL), tail(NULL) {}
    
-   inline void append(node *more)
-   {
-      node *rem;
-      
-      while(more != NULL) {
-         rem = more->next;
-         push_node(more);
-         more = rem;
-      }
-   }
-   
-   explicit wqueue(void): head(NULL), tail(NULL) {}
-   
-   ~wqueue(void) {}
+   ~safe_queue(void) {}
 };
 
 }

@@ -14,9 +14,9 @@ namespace sched
 {
    
 void
-sstatic::new_work(node *node, const simple_tuple *tpl, const bool is_agg)
+sstatic::new_work(node *from, node *to, const simple_tuple *tpl, const bool is_agg)
 {
-   work_unit work = {node, tpl, is_agg};
+   work_unit work = {to, tpl, is_agg};
 
    queue_work.push(work);
 }
@@ -99,7 +99,7 @@ sstatic::init(const size_t)
    for(; it != end; ++it)
    {
       node *cur_node(it->second);
-      new_work(cur_node, simple_tuple::create_new(new vm::tuple(init_pred)));
+      new_work(NULL, cur_node, simple_tuple::create_new(new vm::tuple(init_pred)));
    }
 }
 

@@ -114,7 +114,7 @@ mpi_static::fetch_work(void)
          for(list_messages::const_iterator it(ms->begin()); it != ms->end(); ++it) {
             message *msg(*it);
             
-            new_work(state::DATABASE->find_node(msg->id), msg->data);
+            new_work(NULL, state::DATABASE->find_node(msg->id), msg->data);
             
             delete msg;
          }

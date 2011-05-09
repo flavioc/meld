@@ -7,6 +7,7 @@
 #include "process/remote.hpp"
 #include "vm/state.hpp"
 #include "utils/utils.hpp"
+#include "sched/termination_barrier.hpp"
 
 using namespace boost;
 using namespace std;
@@ -20,25 +21,7 @@ namespace sched
 
 static vector<stealer*> others;
 static barrier *thread_barrier(NULL);
-static size_t threads_active(0);
-
-static inline void
-make_thread_active(void)
-{
-   __sync_fetch_and_add(&threads_active, 1);
-}
-
-static inline void
-make_thread_inactive(void)
-{
-   __sync_fetch_and_sub(&threads_active, 1);
-}
-
-static inline const bool
-are_threads_finished(void)
-{
-   return threads_active == 0;
-}
+static termination_barrier* term_barrier(NULL);
 
 static inline void
 threads_synchronize(void)
@@ -46,47 +29,31 @@ threads_synchronize(void)
    thread_barrier->wait();
 }
 
-bool
-stealer::all_buffers_emptied(void) const
-{
-   for(process_id i(0); i < (process_id)buffered_work.size(); ++i) {
-      if(!buffered_work[i].empty())
-         return false;
-   }
-   return true;
-}
-
 void
 stealer::assert_end(void) const
 {
-   assert(queue_work.empty());
+   assert(queue_nodes.empty());
    assert(process_state == PROCESS_INACTIVE);
-   assert(all_buffers_emptied());
-   assert(threads_active == 0);
+   assert(term_barrier->all_finished());
 }
 
 void
 stealer::assert_end_iteration(void) const
 {
-   assert(queue_work.empty());
+   assert(queue_nodes.empty());
    assert(process_state == PROCESS_INACTIVE);
-   assert(all_buffers_emptied());
-   assert(threads_active == 0);
+   assert(term_barrier->all_finished());
 }
 
 void
 stealer::make_active(void)
 {
    if(process_state == PROCESS_INACTIVE) {
-      mutex::scoped_lock l(mutex);
-      
-      if(process_state == PROCESS_INACTIVE) {
-         make_thread_active();
-         process_state = PROCESS_ACTIVE;
+      term_barrier->is_active();
+      process_state = PROCESS_ACTIVE;
 #ifdef DEBUG_ACTIVE
-         cout << "Active " << id << endl;
+      cout << "Active " << id << endl;
 #endif
-      }
    }
 }
 
@@ -94,51 +61,57 @@ void
 stealer::make_inactive(void)
 {
    if(process_state == PROCESS_ACTIVE) {
-      mutex::scoped_lock l(mutex);
-
-      if(process_state == PROCESS_ACTIVE) {
-         make_thread_inactive();
-         process_state = PROCESS_INACTIVE;
+      term_barrier->is_inactive();
+      process_state = PROCESS_INACTIVE;
 #ifdef DEBUG_ACTIVE
-         cout << "Inactive: " << id << endl;
+      cout << "Inactive: " << id << endl;
 #endif
-      }
    }
 }
 
 void
-stealer::flush_this_queue(wqueue_free<work_unit>& q, stealer *other)
+stealer::new_work(node *from, node *_to, const simple_tuple *tpl, const bool is_agg)
 {
-   assert(this != other);
+   (void)from;
+   thread_node *to((thread_node*)_to);
+    
+   assert(to != NULL);
+   assert(tpl != NULL);
    
-   other->make_active();
-   other->queue_work.snap(q);
+   to->add_work(tpl, is_agg);
    
-   q.clear();
-}
-
-void
-stealer::new_work(node *node, const simple_tuple *tpl, const bool is_agg)
-{
-   work_unit work = {node, tpl, is_agg};
-
-   queue_work.push(work);
-   make_active();
+   if(!to->in_queue())
+      add_to_queue(to);
+   
+   assert(to->in_queue());
 }
 
 void
 stealer::new_work_other(sched::base *scheduler, node *node, const simple_tuple *stuple)
 {
-   static const size_t WORK_THRESHOLD(20);
+   assert(process_state == PROCESS_ACTIVE);
+   assert(node != NULL);
+   assert(stuple != NULL);
+   assert(scheduler == NULL);
    
-   stealer *other((stealer*)scheduler);
-   work_unit work = {node, stuple, false};
-   wqueue_free<work_unit>& q(buffered_work[other->id]);
+   thread_node *tnode((thread_node*)node);
    
-   q.push(work);
+   tnode->add_work(stuple, false);
    
-   if(q.size() > WORK_THRESHOLD)
-      flush_this_queue(q, other);
+   if(!tnode->in_queue() && !tnode->no_more_work()) {
+      mutex::scoped_lock lock(tnode->mtx);
+      if(!tnode->in_queue() && !tnode->no_more_work()) {
+         tnode->set_in_queue(true);
+         stealer *owner(tnode->get_owner());
+         {
+            mutex::scoped_lock lock2(owner->mutex);
+            owner->make_active();
+            owner->add_to_queue(tnode);
+            assert(owner->process_state == PROCESS_ACTIVE);
+         }
+         assert(tnode->in_queue());
+      }
+   }
 }
 
 void
@@ -150,16 +123,16 @@ stealer::new_work_remote(remote *, const vm::process_id, message *)
 void
 stealer::generate_aggs(void)
 {
-}
+   for(node_set::iterator it(nodes->begin()); it != nodes->end(); ++it) {
+      node *no(*it);
+      simple_tuple_list ls(no->generate_aggs());
 
-void
-stealer::flush_buffered(void)
-{
-   for(process_id i(0); i < (process_id)buffered_work.size(); ++i) {
-      if(i != id) {
-         wqueue_free<work_unit>& q(buffered_work[i]);
-         if(!q.empty())
-            flush_this_queue(q, others[i]);
+      for(simple_tuple_list::iterator it2(ls.begin());
+         it2 != ls.end();
+         ++it2)
+      {
+         //cout << no->get_id() << " GENERATE " << **it2 << endl;
+         new_work(NULL, no, *it2, true);
       }
    }
 }
@@ -178,59 +151,30 @@ stealer::select_steal_target(void) const
 bool
 stealer::busy_wait(void)
 {
-   static const size_t COUNT_UP_TO(100);
-
-   if(state::NUM_THREADS == 1) {
-      make_inactive();
-      return false;
-   }
-   
-   size_t cont(0);
    bool turned_inactive(false);
    
-   flush_buffered();
-   
-   while(queue_work.empty()) {
+   while(queue_nodes.empty()) {
       
-      if(are_threads_finished())
-         return false;
-
-      if(cont == 20 && !turned_inactive) {
-         make_inactive();
-         turned_inactive = true;
-      } else {
-         cont++;
-         
-         if(cont == 10) {
-            stealer *target(select_steal_target());
-            
-            if(!target->queue_work.empty()) {
-               
-               static const size_t HOW_MANY(3);
-               queue_node<work_unit> *stolen(target->queue_work.steal(HOW_MANY));
-               
-               if(stolen) {
-                  queue_node<work_unit> *coiso(stolen);
-                  
-                  while(coiso) {
-                     work_unit& wu(coiso->data);
-                     thread_node *node((thread_node*)wu.work_node);
-                     node->set_owner(this);
-                     
-                     coiso = coiso->next;
-                  }
-                  
-                  queue_work.append(stolen);
-               }
-            }
+      if(!turned_inactive) {
+         mutex::scoped_lock l(mutex);
+         if(queue_nodes.empty() && process_state == PROCESS_ACTIVE) {
+            make_inactive();
+            turned_inactive = true;
+            if(term_barrier->all_finished())
+               return false;
+         } else if(process_state == PROCESS_INACTIVE && queue_nodes.empty()) {
+            turned_inactive = true;
          }
-         
-         if(cont == COUNT_UP_TO)
-            cont = 0;
+      }
+      
+      if(term_barrier->all_finished()) {
+         assert(process_state == PROCESS_INACTIVE);
+         return false;
       }
    }
    
-   assert(!queue_work.empty());
+   assert(process_state == PROCESS_ACTIVE);
+   assert(!queue_nodes.empty());
    
    return true;
 }
@@ -238,52 +182,114 @@ stealer::busy_wait(void)
 bool
 stealer::terminate_iteration(void)
 {
+   // this is needed since one thread can reach make_active
+   // and thus other threads waiting for all_finished will fail
+   // to get here
    threads_synchronize();
-   
+
+   assert(process_state == PROCESS_INACTIVE);
+
    generate_aggs();
-   
+
+   if(!queue_nodes.empty()) {
+      make_active();
+   }
+
+#ifdef ASSERT_THREADS
+   static boost::mutex local_mtx;
+   static vector<size_t> total;
+
+   local_mtx.lock();
+
+   total.push_back(iteration);
+
+   if(total.size() == state::NUM_THREADS) {
+      for(size_t i(0); i < state::NUM_THREADS; ++i) {
+         assert(total[i] == iteration);
+      }
+
+      total.clear();
+   }
+
+   local_mtx.unlock();
+#endif
+
+   // again, needed since we must wait if any thread
+   // is set to active in the previous if
    threads_synchronize();
-   
-   if(are_threads_finished())
-      return false;
-   
-   threads_synchronize();
-   
-   return true;
+
+   return !term_barrier->all_finished();
 }
 
 void
 stealer::finish_work(const work_unit& work)
 {
-   thread_node *node((thread_node*)work.work_node);
+   assert(current_node != NULL);
+   assert(current_node->in_queue());
+}
+
+bool
+stealer::check_if_current_useless(void)
+{
+   if(current_node->no_more_work()) {
+      mutex::scoped_lock lock(current_node->mtx);
+      
+      if(current_node->no_more_work()) {
+         current_node->set_in_queue(false);
+         assert(!current_node->in_queue());
+         current_node = NULL;
+         return true;
+      }
+   }
    
-   assert(node->get_worker() == this);
+   assert(!current_node->no_more_work());
+   return false;
+}
+
+bool
+stealer::set_next_node(void)
+{
+   if(current_node != NULL)
+      check_if_current_useless();
    
-   node->worker = NULL;
+   while (current_node == NULL) {   
+      if(queue_nodes.empty()) {
+         if(!busy_wait())
+            return false;
+      }
+      
+      assert(!queue_nodes.empty());
+      
+      current_node = queue_nodes.pop();
+      
+      assert(current_node != NULL);
+      
+      check_if_current_useless();
+   }
+   
+   assert(current_node != NULL);
+   return true;
 }
 
 bool
 stealer::get_work(work_unit& work)
-{
-   while(true) {
-      if(queue_work.empty())
-         if(!busy_wait())
-            return false;
+{  
+   if(!set_next_node())
+      return false;
       
-      make_active();
-      
-      if(!queue_work.pop_safe(work))
-         continue;
-      
-      thread_node *node((thread_node*)work.work_node);
-
-      if(__sync_bool_compare_and_swap(&node->worker, NULL, this)) {
-         return true;
-      } else {
-         queue_work.push(work);
-         continue;
-      }
-   }
+   assert(current_node != NULL);
+   assert(current_node->in_queue());
+   assert(!current_node->no_more_work());
+   
+   node_work_unit unit(current_node->get_work());
+   
+   work.work_tpl = unit.work_tpl;
+   work.agg = unit.agg;
+   work.work_node = current_node;
+   
+   assert(work.work_node == current_node);
+   
+   return true;
 }
 
 void
@@ -310,10 +316,7 @@ stealer::remove_node(node *node)
 
 void
 stealer::init(const size_t num_threads)
-{
-   // init buffered queues
-   buffered_work.resize(num_threads);
-   
+{  
    nodes_mutex = new boost::mutex();
    nodes = new node_set();
    
@@ -327,7 +330,7 @@ stealer::init(const size_t num_threads)
       thread_node *cur_node((thread_node*)it->second);
       cur_node->set_owner(this);
       
-      new_work(cur_node, simple_tuple::create_new(new vm::tuple(init_pred)));
+      new_work(NULL, cur_node, simple_tuple::create_new(new vm::tuple(init_pred)));
       
       nodes->insert(cur_node);
    }
@@ -338,18 +341,13 @@ stealer::init(const size_t num_threads)
 stealer*
 stealer::find_scheduler(const node::node_id id)
 {
-   thread_node* node((thread_node*)state::DATABASE->find_node(id));
-   
-   //printf("FIND HERE!\n");
-   assert(node != NULL);
-   assert(node->get_owner() != NULL);
-   
-   return node->get_owner();
+   return NULL;
 }
 
 stealer::stealer(const vm::process_id _id):
    base(_id),
    process_state(PROCESS_ACTIVE),
+   current_node(NULL),
    nodes(NULL)
 {
 }
@@ -363,8 +361,8 @@ vector<stealer*>&
 stealer::start(const size_t num_threads)
 {
    thread_barrier = new barrier(num_threads);
+   term_barrier = new termination_barrier(num_threads);
    others.resize(num_threads);
-   threads_active = num_threads;
    
    for(process_id i(0); i < num_threads; ++i)
       others[i] = new stealer(i);

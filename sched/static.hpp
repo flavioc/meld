@@ -22,7 +22,7 @@ protected:
    
    utils::byte _pad2[128];
    
-   wqueue<work_unit> queue_work;
+   safe_queue<work_unit> queue_work;
    
    virtual void assert_end_iteration(void) const;
    
@@ -38,7 +38,7 @@ protected:
    
 public:
    
-   virtual void new_work(db::node *, const db::simple_tuple*, const bool is_agg = false);
+   virtual void new_work(db::node *, db::node *, const db::simple_tuple*, const bool is_agg = false);
    virtual void new_work_agg(db::node *, const db::simple_tuple*);
    virtual void new_work_other(sched::base *, db::node *, const db::simple_tuple *) = 0;
    virtual void new_work_remote(process::remote *, const vm::process_id, process::message *) = 0;

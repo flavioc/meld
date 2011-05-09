@@ -29,13 +29,13 @@ private:
    
    utils::byte _pad_threads3[128];
    
-   typedef wqueue_free<work_unit> queue_work_free;
-   std::vector<queue_work_free, mem::allocator<queue_work_free> > buffered_work;
+   typedef queue_lock_free<work_unit> queue_free_work;
+   std::vector<queue_free_work, mem::allocator<queue_free_work> > buffered_work;
    
    void make_active(void);
    void make_inactive(void);
    bool all_buffers_emptied(void) const;
-   void flush_this_queue(wqueue_free<work_unit>&, threads_static *);
+   void flush_this_queue(queue_free_work&, threads_static *);
    void flush_buffered(void);
    
 protected:
@@ -51,7 +51,7 @@ protected:
    
 public:
    
-   virtual void new_work(db::node *, const db::simple_tuple*, const bool is_agg = false);
+   virtual void new_work(db::node *, db::node *, const db::simple_tuple*, const bool is_agg = false);
    virtual void new_work_other(sched::base *, db::node *, const db::simple_tuple *);
    virtual void new_work_remote(process::remote *, const vm::process_id, process::message *);
    

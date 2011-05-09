@@ -158,7 +158,8 @@ sched/mpi.o: sched/mpi.hpp sched/mpi.cpp \
 
 sched/stealer.o: sched/base.hpp sched/stealer.hpp \
 								sched/stealer.cpp sched/queue.hpp \
-								sched/termination_barrier.hpp
+								sched/termination_barrier.hpp \
+								sched/node.hpp
 
 clean:
 	rm -f meld print *.o vm/*.o \

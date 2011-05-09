@@ -22,42 +22,42 @@ private:
       PROCESS_ACTIVE,
       PROCESS_INACTIVE
    } process_state;
+   boost::mutex mutex;
    
    utils::byte _pad_threads2[128];
    
-   wqueue<work_unit> queue_work;
-   boost::mutex mutex;
+   safe_queue<thread_node*> queue_nodes;
+   thread_node *current_node;
    
    utils::byte _pad_threads3[128];
    
-   typedef std::tr1::unordered_set<db::node*, std::tr1::hash<db::node*>, std::equal_to<db::node*>, mem::allocator<db::node*> > node_set;
+   typedef std::tr1::unordered_set<db::node*, std::tr1::hash<db::node*>,
+                     std::equal_to<db::node*>, mem::allocator<db::node*> > node_set;
    
    node_set *nodes;
    boost::mutex *nodes_mutex;
    
-   utils::byte _pad_threads4[128];
-   
-   typedef wqueue_free<work_unit> queue_work_free;
-   std::vector<queue_work_free, mem::allocator<queue_work_free> > buffered_work;
-   
    virtual void assert_end(void) const;
    virtual void assert_end_iteration(void) const;
-   bool all_buffers_emptied(void) const;
+   bool set_next_node(void);
+   bool check_if_current_useless();
    void make_active(void);
    void make_inactive(void);
-   void flush_this_queue(wqueue_free<work_unit>&, stealer *);
    void generate_aggs(void);
    bool busy_wait(void);
-   void flush_buffered(void);
    void add_node(db::node *);
    void remove_node(db::node *);
    stealer *select_steal_target(void) const;
+   inline void add_to_queue(thread_node *node) {
+      node->set_in_queue(true);
+      queue_nodes.push(node);
+   }
    
 public:
    
    virtual void init(const size_t);
    
-   virtual void new_work(db::node *, const db::simple_tuple*, const bool is_agg = false);
+   virtual void new_work(db::node *, db::node *, const db::simple_tuple*, const bool is_agg = false);
    virtual void new_work_other(sched::base *, db::node *, const db::simple_tuple *);
    virtual void new_work_remote(process::remote *, const vm::process_id, process::message *);
    

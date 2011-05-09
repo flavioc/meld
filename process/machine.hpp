@@ -59,7 +59,7 @@ public:
    
    inline void route_self(process *proc, db::node *node, const db::simple_tuple *stpl)
    {
-      proc->get_scheduler()->new_work(node, stpl);
+      proc->get_scheduler()->new_work(node, node, stpl);
    }
    
    void route(process *, const db::node::node_id, const db::simple_tuple*);

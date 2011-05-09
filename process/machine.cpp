@@ -46,7 +46,7 @@ machine::route(process *caller, const node::node_id id, const simple_tuple* stup
       sched::base *sched_other(sched_caller->find_scheduler(id));
       
       if(sched_caller == sched_other)
-         sched_caller->new_work(node, stuple);
+         sched_caller->new_work(NULL, node, stuple);
       else
          sched_caller->new_work_other(sched_other, node, stuple);
    }
