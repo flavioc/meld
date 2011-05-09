@@ -19,7 +19,7 @@
 #include "db/node.hpp"
 #include "sched/threads.hpp"
 #include "sched/mpi.hpp"
-#include "sched/stealer.hpp"
+#include "sched/static_local.hpp"
 
 namespace process
 {

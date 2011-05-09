@@ -10,7 +10,7 @@
 namespace sched
 {
 
-class stealer; // forward declaration
+class static_local; // forward declaration
 
 struct node_work_unit {
    const db::simple_tuple *work_tpl;
@@ -21,19 +21,19 @@ class thread_node: public db::node
 {
 private:
    
-   friend class stealer;
+   friend class static_local;
    
-   stealer *owner;
+   static_local *owner;
    bool i_am_on_queue;
    boost::mutex mtx;
    safe_queue<node_work_unit> queue;
    
 public:
    
-   inline void set_owner(stealer *_owner) { owner = _owner; }
+   inline void set_owner(static_local *_owner) { owner = _owner; }
    inline const bool in_queue(void) const { return i_am_on_queue; }
    inline void set_in_queue(const bool new_val) { i_am_on_queue = new_val; }
-   inline stealer* get_owner(void) { return owner; }
+   inline static_local* get_owner(void) { return owner; }
    
    inline void add_work(const db::simple_tuple *tpl, const bool is_agg = false) {
       node_work_unit w = {tpl, is_agg};

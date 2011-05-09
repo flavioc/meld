@@ -1,6 +1,6 @@
 
-#ifndef SCHED_STEALER_HPP
-#define SCHED_STEALER_HPP
+#ifndef SCHED_STATIC_LOCAL_HPP
+#define SCHED_STATIC_LOCAL_HPP
 
 #include <vector>
 #include <tr1/unordered_set>
@@ -12,7 +12,7 @@
 namespace sched
 {
 
-class stealer: public sched::base
+class static_local: public sched::base
 {
 private:
    
@@ -47,7 +47,7 @@ private:
    bool busy_wait(void);
    void add_node(db::node *);
    void remove_node(db::node *);
-   stealer *select_steal_target(void) const;
+   static_local *select_steal_target(void) const;
    inline void add_to_queue(thread_node *node) {
       node->set_in_queue(true);
       queue_nodes.push(node);
@@ -66,18 +66,18 @@ public:
    virtual void end(void);
    virtual bool terminate_iteration(void);
    
-   stealer *find_scheduler(const db::node::node_id);
+   static_local *find_scheduler(const db::node::node_id);
    
    static db::node *create_node(const db::node::node_id id, const db::node::node_id trans)
    {
       return new thread_node(id, trans);
    }
    
-   static std::vector<stealer*>& start(const size_t);
+   static std::vector<static_local*>& start(const size_t);
    
-   explicit stealer(const vm::process_id);
+   explicit static_local(const vm::process_id);
    
-   virtual ~stealer(void);
+   virtual ~static_local(void);
 };
 
 }

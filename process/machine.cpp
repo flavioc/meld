@@ -87,7 +87,7 @@ get_creation_function(const scheduler_type sched_type)
       case SCHED_MPI_UNI_STATIC:
          return database::create_node_fn(sched::sstatic::create_node);
       case SCHED_THREADS_STEALER:
-         return database::create_node_fn(sched::stealer::create_node);
+         return database::create_node_fn(sched::static_local::create_node);
       case SCHED_UNKNOWN:
          return NULL;
    }
@@ -123,7 +123,7 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
 #endif
          break;
       case SCHED_THREADS_STEALER: {
-            vector<sched::stealer*> schedulers(sched::stealer::start(num_threads));
+            vector<sched::static_local*> schedulers(sched::static_local::start(num_threads));
             
             for(process_id i(0); i < num_threads; ++i)
                process_list[i] = new process(i, schedulers[i]);
