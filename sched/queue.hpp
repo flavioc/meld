@@ -17,8 +17,10 @@ public:
    queue_node *next;
 };
 
+// no safety of operations for this queue
+// also does counting of elements
 template <class T>
-class queue_lock_free
+class unsafe_queue_count
 {
 public:
    
@@ -74,6 +76,8 @@ public:
       
       mem::allocator<node>().deallocate(take, 1);
       
+      --total;
+      
       return el;
    }
    
@@ -87,9 +91,80 @@ public:
       assert(total == 0);
    }
    
-   explicit queue_lock_free(void): head(NULL), tail(NULL), total(0) {}
+   explicit unsafe_queue_count(void): head(NULL), tail(NULL), total(0) {}
+   
+   ~unsafe_queue_count(void)
+   {
+      assert(head == NULL);
+      assert(tail == NULL);
+      assert(total == 0);
+   }
 };
 
+// no safety of operations for this queue
+template <class T>
+class unsafe_queue
+{
+public:
+   
+   typedef queue_node<T> node;
+   node *head;
+   node *tail;
+   
+   inline const bool empty(void) const
+   {
+      return head == NULL;
+   }
+   
+   inline void push(T el)
+   {
+      node *new_node(mem::allocator<node>().allocate(1));
+      
+      new_node->data = el;
+      new_node->next = NULL;
+      
+      if(head == NULL)
+         head = tail = new_node;
+      else {
+         tail->next = new_node;
+         tail = new_node;
+      }
+      
+      assert(tail == new_node);
+   }
+   
+   inline T pop(void)
+   {
+      node *take(head);
+      
+      assert(head != NULL);
+   
+      if(head == tail)
+         head = tail = NULL;
+      else
+         head = head->next;
+      
+      assert(head != take);
+      assert(take->next == head);
+      
+      T el(take->data);
+      
+      mem::allocator<node>().deallocate(take, 1);
+      
+      return el;
+   }
+   
+   explicit unsafe_queue(void): head(NULL), tail(NULL) {}
+   
+   ~unsafe_queue(void)
+   {
+      assert(head == NULL);
+      assert(tail == NULL);
+   }
+};
+
+// this queue ensures safety for multiple threads
+// doing push and one thread doing pop
 template <class T>
 class safe_queue
 {
@@ -153,7 +228,6 @@ public:
       
       assert(head != take);
       
-      
       T el(take->data);
       
       mem::allocator<node>().deallocate(take, 1);
@@ -161,10 +235,13 @@ public:
       return el;
    }
    
-   // append a lock free queue on this queue
-   inline void snap(queue_lock_free<T>& q)
+   // append an unsafe queue on this queue
+   inline void snap(unsafe_queue_count<T>& q)
    {
       boost::mutex::scoped_lock l(mtx);
+      
+      assert(q.size() > 0);
+      assert(!q.empty());
       
       if(head == NULL) {
          head = q.head;
@@ -181,7 +258,11 @@ public:
    
    explicit safe_queue(void): head(NULL), tail(NULL) {}
    
-   ~safe_queue(void) {}
+   ~safe_queue(void)
+   {
+      assert(head == NULL);
+      assert(tail == NULL);
+   }
 };
 
 }

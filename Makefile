@@ -66,7 +66,8 @@ OBJS = utils/utils.o \
 			 sched/static.o \
 			 sched/threads.o \
 			 sched/mpi.o \
-			 sched/stealer.o
+			 sched/static_local.o \
+			 sched/dynamic_local.o
 
 all: meld print
 
@@ -104,7 +105,7 @@ process/machine.o: process/machine.hpp process/machine.cpp \
 									sched/static.hpp \
 									sched/threads.hpp \
 									sched/mpi.hpp \
-									sched/stealer.hpp
+									sched/static_local.hpp
 
 process/remote.o: process/remote.hpp process/remote.cpp	\
 									vm/instr.hpp conf.hpp
@@ -156,10 +157,14 @@ sched/mpi.o: sched/mpi.hpp sched/mpi.cpp \
 						sched/base.hpp sched/static.hpp \
 						sched/token.hpp
 
-sched/stealer.o: sched/base.hpp sched/stealer.hpp \
-								sched/stealer.cpp sched/queue.hpp \
+sched/static_local.o: sched/base.hpp sched/static_local.hpp \
+								sched/static_local.cpp sched/queue.hpp \
 								sched/termination_barrier.hpp \
 								sched/node.hpp
+
+sched/dynamic_local.o: sched/base.hpp sched/static_local.hpp \
+											sched/dynamic_local.hpp sched/dynamic_local.cpp \
+											sched/node.hpp sched/termination_barrier.hpp 
 
 clean:
 	rm -f meld print *.o vm/*.o \

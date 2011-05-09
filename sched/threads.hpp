@@ -29,7 +29,7 @@ private:
    
    utils::byte _pad_threads3[128];
    
-   typedef queue_lock_free<work_unit> queue_free_work;
+   typedef unsafe_queue_count<work_unit> queue_free_work;
    std::vector<queue_free_work, mem::allocator<queue_free_work> > buffered_work;
    
    void make_active(void);

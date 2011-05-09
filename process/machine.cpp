@@ -83,11 +83,13 @@ static inline database::create_node_fn
 get_creation_function(const scheduler_type sched_type)
 {
    switch(sched_type) {
-      case SCHED_THREADS_STATIC:
+      case SCHED_THREADS_STATIC_GLOBAL:
       case SCHED_MPI_UNI_STATIC:
          return database::create_node_fn(sched::sstatic::create_node);
-      case SCHED_THREADS_STEALER:
+      case SCHED_THREADS_STATIC_LOCAL:
          return database::create_node_fn(sched::static_local::create_node);
+      case SCHED_THREADS_DYNAMIC_LOCAL:
+         return database::create_node_fn(sched::dynamic_local::create_node);
       case SCHED_UNKNOWN:
          return NULL;
    }
@@ -110,7 +112,7 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
    process_list.resize(num_threads);
    
    switch(sched_type) {
-      case SCHED_THREADS_STATIC: {
+      case SCHED_THREADS_STATIC_GLOBAL: {
             vector<sched::threads_static*> schedulers(sched::threads_static::start(num_threads));
       
             for(process_id i(0); i < num_threads; ++i)
@@ -122,9 +124,15 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
          process_list[0] = new process(0, sched::mpi_static::start());
 #endif
          break;
-      case SCHED_THREADS_STEALER: {
+      case SCHED_THREADS_STATIC_LOCAL: {
             vector<sched::static_local*> schedulers(sched::static_local::start(num_threads));
             
+            for(process_id i(0); i < num_threads; ++i)
+               process_list[i] = new process(i, schedulers[i]);
+         }
+         break;
+      case SCHED_THREADS_DYNAMIC_LOCAL: {
+            vector<sched::dynamic_local*> schedulers(sched::dynamic_local::start(num_threads));
             for(process_id i(0); i < num_threads; ++i)
                process_list[i] = new process(i, schedulers[i]);
          }

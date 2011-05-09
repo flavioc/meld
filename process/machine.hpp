@@ -20,15 +20,17 @@
 #include "sched/threads.hpp"
 #include "sched/mpi.hpp"
 #include "sched/static_local.hpp"
+#include "sched/dynamic_local.hpp"
 
 namespace process
 {
    
 enum scheduler_type {
    SCHED_UNKNOWN,
-   SCHED_THREADS_STATIC,
+   SCHED_THREADS_STATIC_GLOBAL,
    SCHED_MPI_UNI_STATIC,
-   SCHED_THREADS_STEALER
+   SCHED_THREADS_STATIC_LOCAL,
+   SCHED_THREADS_DYNAMIC_LOCAL
 };
 
 // forward declaration   

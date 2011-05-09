@@ -2,19 +2,25 @@
 #ifndef SCHED_STATIC_LOCAL_HPP
 #define SCHED_STATIC_LOCAL_HPP
 
+#include <boost/thread/barrier.hpp>
 #include <vector>
-#include <tr1/unordered_set>
 
 #include "sched/base.hpp"
 #include "sched/node.hpp"
 #include "sched/queue.hpp"
+#include "sched/termination_barrier.hpp"
 
 namespace sched
 {
 
 class static_local: public sched::base
 {
-private:
+protected:
+   
+   static boost::barrier *thread_barrier;
+   static termination_barrier *term_barrier;
+   static void threads_synchronize(void);
+   static void init_barriers(const size_t);
    
    utils::byte _pad_threads1[128];
    
@@ -22,6 +28,7 @@ private:
       PROCESS_ACTIVE,
       PROCESS_INACTIVE
    } process_state;
+   
    boost::mutex mutex;
    
    utils::byte _pad_threads2[128];
@@ -29,25 +36,15 @@ private:
    safe_queue<thread_node*> queue_nodes;
    thread_node *current_node;
    
-   utils::byte _pad_threads3[128];
-   
-   typedef std::tr1::unordered_set<db::node*, std::tr1::hash<db::node*>,
-                     std::equal_to<db::node*>, mem::allocator<db::node*> > node_set;
-   
-   node_set *nodes;
-   boost::mutex *nodes_mutex;
-   
    virtual void assert_end(void) const;
    virtual void assert_end_iteration(void) const;
    bool set_next_node(void);
    bool check_if_current_useless();
    void make_active(void);
    void make_inactive(void);
-   void generate_aggs(void);
-   bool busy_wait(void);
-   void add_node(db::node *);
-   void remove_node(db::node *);
-   static_local *select_steal_target(void) const;
+   virtual void generate_aggs(void);
+   virtual bool busy_wait(void);
+   
    inline void add_to_queue(thread_node *node) {
       node->set_in_queue(true);
       queue_nodes.push(node);

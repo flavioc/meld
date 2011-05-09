@@ -10,7 +10,9 @@
 namespace sched
 {
 
-class static_local; // forward declaration
+// forward declarations
+class static_local; 
+class dynamic_local;
 
 struct node_work_unit {
    const db::simple_tuple *work_tpl;
@@ -22,6 +24,7 @@ class thread_node: public db::node
 private:
    
    friend class static_local;
+   friend class dynamic_local;
    
    static_local *owner;
    bool i_am_on_queue;
@@ -31,8 +34,14 @@ private:
 public:
    
    inline void set_owner(static_local *_owner) { owner = _owner; }
+   
    inline const bool in_queue(void) const { return i_am_on_queue; }
-   inline void set_in_queue(const bool new_val) { i_am_on_queue = new_val; }
+   
+   inline void set_in_queue(const bool new_val) {
+      assert(i_am_on_queue != new_val);
+      i_am_on_queue = new_val;
+   }
+   
    inline static_local* get_owner(void) { return owner; }
    
    inline void add_work(const db::simple_tuple *tpl, const bool is_agg = false) {

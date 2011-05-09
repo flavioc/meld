@@ -6,8 +6,6 @@
 #include "db/tuple.hpp"
 #include "process/remote.hpp"
 #include "vm/state.hpp"
-#include "utils/utils.hpp"
-#include "sched/termination_barrier.hpp"
 
 using namespace boost;
 using namespace std;
@@ -20,11 +18,11 @@ namespace sched
 {
 
 static vector<static_local*> others;
-static barrier *thread_barrier(NULL);
-static termination_barrier* term_barrier(NULL);
+barrier* static_local::thread_barrier(NULL);
+termination_barrier* static_local::term_barrier(NULL);
 
-static inline void
-threads_synchronize(void)
+void
+static_local::threads_synchronize(void)
 {
    thread_barrier->wait();
 }
@@ -48,25 +46,29 @@ static_local::assert_end_iteration(void) const
 void
 static_local::make_active(void)
 {
-   if(process_state == PROCESS_INACTIVE) {
-      term_barrier->is_active();
-      process_state = PROCESS_ACTIVE;
+   assert(process_state == PROCESS_INACTIVE);
+   
+   term_barrier->is_active();
+   
+   process_state = PROCESS_ACTIVE;
+   
 #ifdef DEBUG_ACTIVE
-      cout << "Active " << id << endl;
+   cout << "Active " << id << endl;
 #endif
-   }
 }
 
 void
 static_local::make_inactive(void)
 {
-   if(process_state == PROCESS_ACTIVE) {
-      term_barrier->is_inactive();
-      process_state = PROCESS_INACTIVE;
+   assert(process_state == PROCESS_ACTIVE);
+   
+   term_barrier->is_inactive();
+   
+   process_state = PROCESS_INACTIVE;
+   
 #ifdef DEBUG_ACTIVE
-      cout << "Inactive: " << id << endl;
+   cout << "Inactive: " << id << endl;
 #endif
-   }
 }
 
 void
@@ -80,8 +82,16 @@ static_local::new_work(node *from, node *_to, const simple_tuple *tpl, const boo
    
    to->add_work(tpl, is_agg);
    
-   if(!to->in_queue())
-      add_to_queue(to);
+   if(!to->in_queue()) {
+      mutex::scoped_lock lock(to->mtx);
+      if(!to->in_queue())
+         add_to_queue(to);
+      // no need to put owner active, since we own this node
+      // new_work was called for init or for self generation of
+      // tuples (SEND a TO a)
+      // the lock is needed in order to make sure
+      // the node is not put multiple times on the queue
+   }
    
    assert(to->in_queue());
 }
@@ -96,19 +106,26 @@ static_local::new_work_other(sched::base *scheduler, node *node, const simple_tu
    
    thread_node *tnode((thread_node*)node);
    
+   assert(tnode->get_owner() != NULL);
+   
    tnode->add_work(stuple, false);
    
-   if(!tnode->in_queue() && !tnode->no_more_work()) {
+   if(!tnode->in_queue()) {
       mutex::scoped_lock lock(tnode->mtx);
-      if(!tnode->in_queue() && !tnode->no_more_work()) {
-         tnode->set_in_queue(true);
+      if(!tnode->in_queue()) {
          static_local *owner(tnode->get_owner());
+         owner->add_to_queue(tnode);
+         
+         if(this != owner && 
+            owner->process_state == PROCESS_INACTIVE)
          {
             mutex::scoped_lock lock2(owner->mutex);
-            owner->make_active();
-            owner->add_to_queue(tnode);
+            
+            if(owner->process_state == PROCESS_INACTIVE)
+               owner->make_active();
             assert(owner->process_state == PROCESS_ACTIVE);
          }
+         
          assert(tnode->in_queue());
       }
    }
@@ -123,28 +140,23 @@ static_local::new_work_remote(remote *, const vm::process_id, message *)
 void
 static_local::generate_aggs(void)
 {
-   for(node_set::iterator it(nodes->begin()); it != nodes->end(); ++it) {
-      node *no(*it);
+   const node::node_id first(remote::self->find_first_node(id));
+   const node::node_id final(remote::self->find_last_node(id));
+   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(first));
+   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(final));
+
+   for(; it != end; ++it)
+   {
+      node *no(it->second);
       simple_tuple_list ls(no->generate_aggs());
 
       for(simple_tuple_list::iterator it2(ls.begin());
          it2 != ls.end();
          ++it2)
       {
-         new_work(NULL, no, *it2, true);
+         new_work(NULL, no, *it2);
       }
    }
-}
-
-static_local*
-static_local::select_steal_target(void) const
-{
-   size_t idx(random_unsigned(others.size()));
-   
-   while(others[idx] == this)
-      idx = random_unsigned(others.size());
-   
-   return others[idx];
 }
 
 bool
@@ -170,6 +182,12 @@ static_local::busy_wait(void)
          assert(process_state == PROCESS_INACTIVE);
          return false;
       }
+   }
+   
+   if(process_state == PROCESS_INACTIVE) {
+      mutex::scoped_lock l(mutex);
+      if(process_state == PROCESS_INACTIVE)
+         make_active();
    }
    
    assert(process_state == PROCESS_ACTIVE);
@@ -294,31 +312,11 @@ static_local::get_work(work_unit& work)
 void
 static_local::end(void)
 {
-   delete nodes_mutex;
-}
-
-void
-static_local::add_node(node *node)
-{
-   mutex::scoped_lock l(*nodes_mutex);
-   
-   nodes->insert(node);
-}
-
-void
-static_local::remove_node(node *node)
-{
-   mutex::scoped_lock l(*nodes_mutex);
-   
-   nodes->erase(node);
 }
 
 void
 static_local::init(const size_t num_threads)
 {
-   nodes_mutex = new boost::mutex();
-   nodes = new node_set();
-   
    predicate *init_pred(state::PROGRAM->get_init_predicate());
    
    database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
@@ -332,7 +330,8 @@ static_local::init(const size_t num_threads)
       
       new_work(NULL, cur_node, simple_tuple::create_new(new vm::tuple(init_pred)));
       
-      nodes->insert(cur_node);
+      assert(cur_node->in_queue());
+      assert(!cur_node->no_more_work());
    }
    
    threads_synchronize();
@@ -347,21 +346,25 @@ static_local::find_scheduler(const node::node_id id)
 static_local::static_local(const vm::process_id _id):
    base(_id),
    process_state(PROCESS_ACTIVE),
-   current_node(NULL),
-   nodes(NULL)
+   current_node(NULL)
 {
 }
 
 static_local::~static_local(void)
 {
-   delete nodes;
+}
+
+void
+static_local::init_barriers(const size_t num_threads)
+{
+   thread_barrier = new barrier(num_threads);
+   term_barrier = new termination_barrier(num_threads);
 }
    
 vector<static_local*>&
 static_local::start(const size_t num_threads)
 {
-   thread_barrier = new barrier(num_threads);
-   term_barrier = new termination_barrier(num_threads);
+   init_barriers(num_threads);
    others.resize(num_threads);
    
    for(process_id i(0); i < num_threads; ++i)
