@@ -19,9 +19,6 @@ static bool show_database = false;
 static bool dump_database = false;
 static bool time_execution = false;
 
-boost::mutex allocator_mtx;
-std::tr1::unordered_set<void*> mem_set;
-
 static void
 help(void)
 {

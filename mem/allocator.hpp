@@ -8,11 +8,9 @@
 #include "conf.hpp"
 #include "mem/thread.hpp"
 
-#define ALLOCATOR_ASSERT 1
-
 #ifdef ALLOCATOR_ASSERT
-   extern boost::mutex allocator_mtx;
-   extern std::tr1::unordered_set<void*> mem_set; 
+extern boost::mutex allocator_mtx;
+extern std::tr1::unordered_set<void*> mem_set; 
 #endif
 
 namespace mem

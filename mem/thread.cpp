@@ -2,11 +2,15 @@
 #include <boost/thread/tss.hpp>
 #include <vector>
 #include <iostream>
+#include <tr1/unordered_set>
 
 #include "mem/thread.hpp"
 
 using namespace boost;
 using namespace std;
+
+boost::mutex allocator_mtx;
+std::tr1::unordered_set<void*> mem_set;
 
 namespace mem
 {

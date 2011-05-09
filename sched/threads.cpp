@@ -14,9 +14,6 @@ using namespace db;
 using namespace process;
 using namespace std;
 
-//#define DEBUG_ACTIVE 1
-#define ASSERT_THREADS 1
-
 namespace sched
 {
 
