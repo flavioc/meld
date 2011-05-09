@@ -46,6 +46,8 @@ public:
    
    virtual base* find_scheduler(const db::node::node_id) = 0;
    
+   inline const vm::process_id get_id(void) const { return id; }
+   
    explicit base(const vm::process_id _id): id(_id) {}
    
    virtual ~base(void) {}

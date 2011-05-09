@@ -164,7 +164,8 @@ sched/static_local.o: sched/base.hpp sched/static_local.hpp \
 
 sched/dynamic_local.o: sched/base.hpp sched/static_local.hpp \
 											sched/dynamic_local.hpp sched/dynamic_local.cpp \
-											sched/node.hpp sched/termination_barrier.hpp 
+											sched/node.hpp sched/termination_barrier.hpp \
+											sched/queue.hpp sched/steal_set.hpp
 
 clean:
 	rm -f meld print *.o vm/*.o \

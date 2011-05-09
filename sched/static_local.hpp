@@ -34,6 +34,9 @@ protected:
    utils::byte _pad_threads2[128];
    
    safe_queue<thread_node*> queue_nodes;
+   
+   utils::byte _pad_threads3[128];
+   
    thread_node *current_node;
    
    virtual void assert_end(void) const;
@@ -45,8 +48,8 @@ protected:
    virtual void generate_aggs(void);
    virtual bool busy_wait(void);
    
-   inline void add_to_queue(thread_node *node) {
-      node->set_in_queue(true);
+   inline void add_to_queue(thread_node *node)
+   {
       queue_nodes.push(node);
    }
    

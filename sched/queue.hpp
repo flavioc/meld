@@ -4,13 +4,13 @@
 
 #include <boost/thread/mutex.hpp>
 
-#include "mem/allocator.hpp"
+#include "mem/base.hpp"
 
 namespace sched
 {
 
 template <class T>
-class queue_node
+class queue_node: public mem::base< queue_node<T> >
 {
 public:
    T data;
@@ -41,7 +41,7 @@ public:
    
    inline void push(T el)
    {
-      node *new_node(mem::allocator<node>().allocate(1));
+      node *new_node(new node());
       
       new_node->data = el;
       new_node->next = NULL;
@@ -74,7 +74,7 @@ public:
       
       T el(take->data);
       
-      mem::allocator<node>().deallocate(take, 1);
+      delete take;
       
       --total;
       
@@ -118,7 +118,7 @@ public:
    
    inline void push(T el)
    {
-      node *new_node(mem::allocator<node>().allocate(1));
+      node *new_node(new node());
       
       new_node->data = el;
       new_node->next = NULL;
@@ -149,7 +149,7 @@ public:
       
       T el(take->data);
       
-      mem::allocator<node>().deallocate(take, 1);
+      delete take;
       
       return el;
    }
@@ -198,7 +198,7 @@ public:
    
    inline void push(T el)
    {
-      node *new_node(mem::allocator<node>().allocate(1));
+      node *new_node(new node());
       
       new_node->data = el;
       new_node->next = NULL;
@@ -230,7 +230,7 @@ public:
       
       T el(take->data);
       
-      mem::allocator<node>().deallocate(take, 1);
+      delete take;
       
       return el;
    }

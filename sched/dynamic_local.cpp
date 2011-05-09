@@ -40,36 +40,11 @@ dynamic_local::remove_node(node *node)
 }
 
 void
-dynamic_local::new_work_other(sched::base *scheduler, node *node, const simple_tuple *stuple)
+dynamic_local::end(void)
 {
-   assert(process_state == PROCESS_ACTIVE);
-   assert(node != NULL);
-   assert(stuple != NULL);
-   assert(scheduler == NULL);
-   
-   thread_node *tnode((thread_node*)node);
-   
-   tnode->add_work(stuple, false);
-   
-   if(!tnode->in_queue()) {
-      mutex::scoped_lock lock(tnode->mtx);
-      if(!tnode->in_queue()) {
-         dynamic_local *owner((dynamic_local*)tnode->get_owner());
-         owner->add_to_queue(tnode);
-         
-         if(this != owner && 
-            owner->process_state == PROCESS_INACTIVE)
-         {
-            mutex::scoped_lock lock2(owner->mutex);
-            
-            if(owner->process_state == PROCESS_INACTIVE)
-               owner->make_active();
-            assert(owner->process_state == PROCESS_ACTIVE);
-         }
-         
-         assert(tnode->in_queue());
-      }
-   }
+   // cleanup the steal set
+   while(!steal.empty())
+      steal.pop();
 }
 
 dynamic_local*
@@ -81,6 +56,118 @@ dynamic_local::select_steal_target(void) const
       idx = random_unsigned(others.size());
    
    return others[idx];
+}
+
+bool
+dynamic_local::busy_wait(void)
+{
+   static const size_t MAX_ASK_STEAL(3);
+   
+   bool turned_inactive(false);
+   size_t asked_many(0);
+   
+   while(queue_nodes.empty()) {
+      
+      if(state::NUM_THREADS > 1 && asked_many < MAX_ASK_STEAL) {
+         dynamic_local *target(select_steal_target());
+         
+         if(target->process_state == PROCESS_ACTIVE) {
+            target->steal.push(this);
+            ++asked_many;
+            //cout << "Sent request to " << (int)target->get_id() << endl;
+         }
+      }
+      
+      if(!turned_inactive && queue_nodes.empty()) {
+         mutex::scoped_lock l(mutex);
+         if(queue_nodes.empty()) {
+            if(process_state == PROCESS_ACTIVE) {
+               make_inactive();
+               turned_inactive = true;
+               if(term_barrier->all_finished())
+                  return false;
+            } else if(process_state == PROCESS_INACTIVE) {
+               turned_inactive = true;
+            }
+         }
+      }
+      
+      if(term_barrier->all_finished()) {
+         assert(process_state == PROCESS_INACTIVE);
+         return false;
+      }
+   }
+   
+   if(process_state == PROCESS_INACTIVE) {
+      mutex::scoped_lock l(mutex);
+      if(process_state == PROCESS_INACTIVE)
+         make_active();
+   }
+   
+   assert(process_state == PROCESS_ACTIVE);
+   assert(!queue_nodes.empty());
+   
+   return true;
+}
+
+void
+dynamic_local::change_node(thread_node *node, dynamic_local *asker)
+{
+   // change ownership
+   node->set_owner((static_local*)asker);
+   remove_node(node);
+   asker->add_node(node);
+   
+   assert(node->in_queue());
+   assert(node->get_owner() == asker);
+   
+   asker->add_to_queue(node);
+}
+
+void
+dynamic_local::handle_stealing(void)
+{
+   assert(state::NUM_THREADS > 1);
+   
+   static const size_t MAX_PER_TIME(10);
+   
+   while(!steal.empty() && !queue_nodes.empty()) {
+      assert(!steal.empty());
+      assert(!queue_nodes.empty());
+      
+      dynamic_local *asker((dynamic_local*)steal.pop());
+      
+      assert(asker != NULL);
+      
+      //cout << "Answering request of " << (int)asker->get_id() << endl;
+      size_t total_sent(0);
+      
+      while(!queue_nodes.empty() && total_sent < MAX_PER_TIME) {
+         thread_node *node(queue_nodes.pop());
+
+         assert(node != NULL);
+         
+         change_node(node, asker);
+         
+         ++total_sent;
+      }
+      
+      assert(total_sent > 0);
+      
+      if(asker->process_state == PROCESS_INACTIVE) {
+         mutex::scoped_lock lock(asker->mutex);
+         if(asker->process_state == PROCESS_INACTIVE)
+            asker->make_active();
+      }
+   }
+}
+
+bool
+dynamic_local::get_work(work_unit& work)
+{
+   if(state::NUM_THREADS > 1)
+      handle_stealing();
+   return static_local::get_work(work);
 }
    
 void

@@ -84,8 +84,10 @@ static_local::new_work(node *from, node *_to, const simple_tuple *tpl, const boo
    
    if(!to->in_queue()) {
       mutex::scoped_lock lock(to->mtx);
-      if(!to->in_queue())
+      if(!to->in_queue()) {
          add_to_queue(to);
+         to->set_in_queue(true);
+      }
       // no need to put owner active, since we own this node
       // new_work was called for init or for self generation of
       // tuples (SEND a TO a)
@@ -114,6 +116,7 @@ static_local::new_work_other(sched::base *scheduler, node *node, const simple_tu
       mutex::scoped_lock lock(tnode->mtx);
       if(!tnode->in_queue()) {
          static_local *owner(tnode->get_owner());
+         tnode->set_in_queue(true);
          owner->add_to_queue(tnode);
          
          if(this != owner && 
