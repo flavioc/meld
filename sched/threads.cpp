@@ -122,9 +122,9 @@ threads_static::busy_wait(void)
       
       if(!turned_inactive) {
          mutex::scoped_lock l(mutex);
-         assert(is_active());
          if(queue_work.empty()) {
-            set_inactive();
+            if(is_active()) // may be inactive from the previous iteration
+               set_inactive();
             turned_inactive = true;
             if(all_threads_finished())
                return false;

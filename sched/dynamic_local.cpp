@@ -76,9 +76,9 @@ dynamic_local::busy_wait(void)
       
       if(!turned_inactive && !has_work()) {
          mutex::scoped_lock l(mutex);
-         assert(is_active());
          if(!has_work()) {
-            set_inactive();
+            if(is_active())
+               set_inactive();
             turned_inactive = true;
             if(all_threads_finished())
                return false;
