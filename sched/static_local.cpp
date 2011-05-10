@@ -135,7 +135,6 @@ static_local::busy_wait(void)
          mutex::scoped_lock l(mutex);
          assert(is_active());
          if(!has_work()) {
-            set_inactive();
             turned_inactive = true;
             if(all_threads_finished())
                return false;

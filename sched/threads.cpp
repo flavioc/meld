@@ -90,7 +90,7 @@ threads_static::flush_this_queue(queue_free_work& q, threads_static *other)
    
    {
       mutex::scoped_lock l(other->mutex);
-      if(is_inactive())
+      if(other->is_inactive())
          other->set_active();
    }
    
@@ -122,6 +122,7 @@ threads_static::busy_wait(void)
       
       if(!turned_inactive) {
          mutex::scoped_lock l(mutex);
+         assert(is_active());
          if(queue_work.empty()) {
             set_inactive();
             turned_inactive = true;
