@@ -175,7 +175,6 @@ mpi_static::try_fetch_token_as_leader(void)
          assert(global_tok.is_zero());
          
          do_collective_end_iteration(1);
-         //state::ROUTER->broadcast_end_iteration(iteration);
          
          return true;
       } else
@@ -190,7 +189,6 @@ mpi_static::send_token_as_idler(void)
 {
    assert(!remote::self->is_leader());
    assert(has_global_tok == true);
-   //assert(tok.is_black()); // local token must be black here
    
 #ifdef DEBUG_SAFRAS
    cout << "Send token as idler in black" << endl;

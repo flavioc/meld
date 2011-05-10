@@ -13,7 +13,7 @@
 namespace sched
 {
    
-class threads_static : public sched::sstatic,
+class static_global : public sched::sstatic,
                        public sched::threaded
 {
 private:
@@ -24,7 +24,7 @@ private:
    std::vector<queue_free_work, mem::allocator<queue_free_work> > buffered_work;
    
    bool all_buffers_emptied(void) const;
-   void flush_this_queue(queue_free_work&, threads_static *);
+   void flush_this_queue(queue_free_work&, static_global *);
    void flush_buffered(void);
    
 protected:
@@ -49,13 +49,13 @@ public:
    virtual bool terminate_iteration(void);
    virtual bool get_work(work_unit&);
    
-   threads_static *find_scheduler(const db::node::node_id);
+   static_global *find_scheduler(const db::node::node_id);
    
    static std::vector<sched::base*>& start(const size_t num_threads);
    
-   explicit threads_static(const vm::process_id);
+   explicit static_global(const vm::process_id);
    
-   virtual ~threads_static(void);
+   virtual ~static_global(void);
 };
 
 }

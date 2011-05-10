@@ -2,7 +2,7 @@
 #include <iostream>
 #include <boost/thread/barrier.hpp>
 
-#include "sched/threads.hpp"
+#include "sched/static_global.hpp"
 
 #include "vm/state.hpp"
 #include "process/machine.hpp"
@@ -18,7 +18,7 @@ namespace sched
 {
   
 bool
-threads_static::all_buffers_emptied(void) const
+static_global::all_buffers_emptied(void) const
 {
    for(process_id i(0); i < (process_id)buffered_work.size(); ++i) {
       if(!buffered_work[i].empty())
@@ -28,7 +28,7 @@ threads_static::all_buffers_emptied(void) const
 }
 
 void
-threads_static::new_work(node *from, node *to, const simple_tuple *tpl, const bool is_agg)
+static_global::new_work(node *from, node *to, const simple_tuple *tpl, const bool is_agg)
 {
    assert(to != NULL);
    assert(tpl != NULL);
@@ -37,7 +37,7 @@ threads_static::new_work(node *from, node *to, const simple_tuple *tpl, const bo
 }
 
 void
-threads_static::new_work_other(sched::base *scheduler, node *node, const simple_tuple *stuple)
+static_global::new_work_other(sched::base *scheduler, node *node, const simple_tuple *stuple)
 {
    assert(is_active());
    assert(node != NULL);
@@ -46,7 +46,7 @@ threads_static::new_work_other(sched::base *scheduler, node *node, const simple_
    
    static const size_t WORK_THRESHOLD(20);
    
-   threads_static *other((threads_static*)scheduler);
+   static_global *other((static_global*)scheduler);
    work_unit work = {node, stuple, false};
    queue_free_work& q(buffered_work[other->id]);
    
@@ -57,13 +57,13 @@ threads_static::new_work_other(sched::base *scheduler, node *node, const simple_
 }
 
 void
-threads_static::new_work_remote(remote *, const vm::process_id, message *)
+static_global::new_work_remote(remote *, const vm::process_id, message *)
 {
    assert(false);
 }
 
 void
-threads_static::assert_end_iteration(void) const
+static_global::assert_end_iteration(void) const
 {
    sstatic::assert_end_iteration();
    assert(is_inactive());
@@ -72,7 +72,7 @@ threads_static::assert_end_iteration(void) const
 }
 
 void
-threads_static::assert_end(void) const
+static_global::assert_end(void) const
 {
    sstatic::assert_end();
    assert(is_inactive());
@@ -81,7 +81,7 @@ threads_static::assert_end(void) const
 }
 
 void
-threads_static::flush_this_queue(queue_free_work& q, threads_static *other)
+static_global::flush_this_queue(queue_free_work& q, static_global *other)
 {
    assert(this != other);
    assert(is_active());
@@ -98,21 +98,21 @@ threads_static::flush_this_queue(queue_free_work& q, threads_static *other)
 }
 
 void
-threads_static::flush_buffered(void)
+static_global::flush_buffered(void)
 {
    for(process_id i(0); i < (process_id)buffered_work.size(); ++i) {
       if(i != id) {
          queue_free_work& q(buffered_work[i]);
          if(!q.empty()) {
             assert(is_active());
-            flush_this_queue(q, (threads_static*)ALL_THREADS[i]);
+            flush_this_queue(q, (static_global*)ALL_THREADS[i]);
          }
       }
    }
 }
    
 bool
-threads_static::busy_wait(void)
+static_global::busy_wait(void)
 {
    bool turned_inactive(false);
    
@@ -151,25 +151,25 @@ threads_static::busy_wait(void)
 }
 
 bool
-threads_static::get_work(work_unit& work)
+static_global::get_work(work_unit& work)
 {
    return sstatic::get_work(work);
 }
 
 void
-threads_static::begin_get_work(void)
+static_global::begin_get_work(void)
 {
 }
 
 void
-threads_static::work_found(void)
+static_global::work_found(void)
 {
    assert(is_active());
    assert(!queue_work.empty());
 }
 
 void
-threads_static::init(const size_t num_threads)
+static_global::init(const size_t num_threads)
 {
    sstatic::init(num_threads);
    
@@ -180,14 +180,14 @@ threads_static::init(const size_t num_threads)
 }
 
 void
-threads_static::end(void)
+static_global::end(void)
 {
    sstatic::end();
    assert(is_inactive());
 }
 
 bool
-threads_static::terminate_iteration(void)
+static_global::terminate_iteration(void)
 {
    // this is needed since one thread can reach make_active
    // and thus other threads waiting for all_finished will fail
@@ -230,28 +230,28 @@ threads_static::terminate_iteration(void)
    return !all_threads_finished();
 }
 
-threads_static*
-threads_static::find_scheduler(const node::node_id id)
+static_global*
+static_global::find_scheduler(const node::node_id id)
 {
-   return (threads_static*)ALL_THREADS[remote::self->find_proc_owner(id)];
+   return (static_global*)ALL_THREADS[remote::self->find_proc_owner(id)];
 }
 
-threads_static::threads_static(const process_id _id):
+static_global::static_global(const process_id _id):
    sstatic(_id)
 {
 }
 
-threads_static::~threads_static(void)
+static_global::~static_global(void)
 {
 }
 
 vector<sched::base*>&
-threads_static::start(const size_t num_threads)
+static_global::start(const size_t num_threads)
 {
    init_barriers(num_threads);
    
    for(process_id i(0); i < num_threads; ++i)
-      add_thread(new threads_static(i));
+      add_thread(new static_global(i));
       
    return ALL_THREADS;
 }

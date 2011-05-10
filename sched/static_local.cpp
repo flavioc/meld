@@ -149,6 +149,8 @@ static_local::busy_wait(void)
       }
    }
    
+   // since queue pushing and state setting are done in
+   // different exclusive regions, this may be needed
    if(is_inactive()) {
       mutex::scoped_lock l(mutex);
       if(is_inactive())

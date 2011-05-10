@@ -17,7 +17,7 @@
 #include "process/router.hpp"
 #include "db/tuple.hpp"
 #include "db/node.hpp"
-#include "sched/threads.hpp"
+#include "sched/static_global.hpp"
 #include "sched/mpi.hpp"
 #include "sched/static_local.hpp"
 #include "sched/dynamic_local.hpp"

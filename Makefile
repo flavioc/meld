@@ -69,7 +69,7 @@ OBJS = utils/utils.o \
 			 db/trie.o \
 			 sched/buffer.o \
 			 sched/static.o \
-			 sched/threads.o \
+			 sched/static_global.o \
 			 sched/mpi.o \
 			 sched/static_local.o \
 			 sched/dynamic_local.o \
@@ -84,7 +84,7 @@ print: $(OBJS) print.o
 	$(COMPILE) print.o -o print
 
 meld.o: meld.cpp utils/utils.hpp process/machine.hpp \
-				process/router.hpp sched/base.hpp sched/threads.hpp
+				process/router.hpp sched/base.hpp sched/static_global.hpp
 
 print.o: print.cpp vm/program.hpp
 
@@ -117,7 +117,7 @@ process/machine.o: process/machine.hpp process/machine.cpp \
 									vm/instr.hpp conf.hpp \
 									process/message.hpp \
 									sched/static.hpp \
-									sched/threads.hpp \
+									sched/static_global.hpp \
 									sched/mpi.hpp \
 									sched/static_local.hpp
 
@@ -162,7 +162,7 @@ sched/buffer.o: sched/buffer.hpp sched/buffer.cpp \
 sched/static.o: sched/static.cpp sched/static.hpp \
 								sched/base.hpp
 
-sched/threads.o: sched/threads.cpp sched/threads.hpp \
+sched/static_global.o: sched/static_global.cpp sched/static_global.hpp \
 								sched/base.hpp sched/static.hpp \
 								sched/queue/node.hpp \
 								sched/queue/unsafe_queue_count.hpp \
