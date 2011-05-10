@@ -28,6 +28,8 @@ tuple::tuple(void):
 bool
 tuple::field_equal(const tuple& other, const field_num i) const
 {
+   assert(i < num_fields());
+   
    switch(get_field_type(i)) {
       case FIELD_INT:
          if(get_int(i) != other.get_int(i))
@@ -54,7 +56,7 @@ tuple::field_equal(const tuple& other, const field_num i) const
             return false;
          break;
       default:
-         throw type_error("Unrecognized field type " + to_string(i));
+         throw type_error("Unrecognized field type " + to_string((int)i) + ": " + to_string(get_field_type(i)));
    }
    
    return true;

@@ -81,13 +81,14 @@ static_local::new_work_other(sched::base *scheduler, node *node, const simple_tu
          tnode->set_in_queue(true);
          owner->add_to_queue(tnode);
          
-         if(this != owner && owner->is_inactive())
-         {
+         if(this != owner) {
             mutex::scoped_lock lock2(owner->mutex);
-            
             if(owner->is_inactive())
-               owner->set_active();
-            assert(owner->is_active());
+            {
+               if(owner->is_inactive())
+                  owner->set_active();
+               assert(owner->is_active());
+            }
          }
          
          assert(tnode->in_queue());
@@ -118,7 +119,7 @@ static_local::generate_aggs(void)
          it2 != ls.end();
          ++it2)
       {
-         new_work(NULL, no, *it2);
+         new_work(NULL, no, *it2, true);
       }
    }
 }
@@ -132,15 +133,12 @@ static_local::busy_wait(void)
       
       if(!turned_inactive) {
          mutex::scoped_lock l(mutex);
+         assert(is_active());
          if(!has_work()) {
-            if(is_active()) {
-               set_inactive();
-               turned_inactive = true;
-               if(all_threads_finished())
-                  return false;
-            }
-         } else if(is_inactive()) {
+            set_inactive();
             turned_inactive = true;
+            if(all_threads_finished())
+               return false;
          }
       }
       
@@ -149,12 +147,6 @@ static_local::busy_wait(void)
          assert(is_inactive());
          return false;
       }
-   }
-   
-   if(is_inactive()) {
-      mutex::scoped_lock l(mutex);
-      if(is_inactive())
-         set_active();
    }
    
    assert(is_active());
@@ -209,6 +201,7 @@ static_local::finish_work(const work_unit& work)
 {
    assert(current_node != NULL);
    assert(current_node->in_queue());
+   assert(current_node->get_owner() == this);
 }
 
 bool
@@ -295,7 +288,7 @@ static_local::init(const size_t num_threads)
       cur_node->set_owner(this);
       
       new_work(NULL, cur_node, simple_tuple::create_new(new vm::tuple(init_pred)));
-      
+      assert(cur_node->get_owner() == this);
       assert(cur_node->in_queue());
       assert(!cur_node->no_more_work());
    }

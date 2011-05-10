@@ -115,7 +115,7 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
    
    switch(sched_type) {
       case SCHED_THREADS_STATIC_GLOBAL: {
-            vector<sched::threads_static*> schedulers(sched::threads_static::start(num_threads));
+            vector<sched::base*> schedulers(sched::threads_static::start(num_threads));
       
             for(process_id i(0); i < num_threads; ++i)
                process_list[i] = new process(i, schedulers[i]);

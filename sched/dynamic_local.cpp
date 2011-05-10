@@ -76,15 +76,12 @@ dynamic_local::busy_wait(void)
       
       if(!turned_inactive && !has_work()) {
          mutex::scoped_lock l(mutex);
+         assert(is_active());
          if(!has_work()) {
-            if(is_active()) {
-               set_inactive();
-               turned_inactive = true;
-               if(all_threads_finished())
-                  return false;
-            } else if(is_inactive()) {
-               turned_inactive = true;
-            }
+            set_inactive();
+            turned_inactive = true;
+            if(all_threads_finished())
+               return false;
          }
       }
       
@@ -93,12 +90,6 @@ dynamic_local::busy_wait(void)
          assert(turned_inactive);
          return false;
       }
-   }
-   
-   if(is_inactive()) {
-      mutex::scoped_lock l(mutex);
-      if(is_inactive())
-         set_active();
    }
    
    assert(is_active());

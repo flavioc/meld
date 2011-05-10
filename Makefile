@@ -194,7 +194,8 @@ clean:
 	rm -f meld print *.o vm/*.o \
 		db/*.o process/*.o \
 		runtime/*.o utils/*.o \
-		mem/*.o sched/*.o
+		mem/*.o sched/*.o \
+		sched/queue/*.o
 
 re: clean all
 

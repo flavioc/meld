@@ -7,33 +7,22 @@
 #include <vector>
 
 #include "sched/static.hpp"
+#include "sched/threaded.hpp"
 #include "vm/defs.hpp"
 
 namespace sched
 {
    
-class threads_static : public sched::sstatic
+class threads_static : public sched::sstatic,
+                       public sched::threaded
 {
 private:
    
    utils::byte _pad_threads1[128];
    
-   enum {
-      PROCESS_ACTIVE,
-      PROCESS_INACTIVE
-   } process_state;
-   
-   utils::byte _pad_threads2[128];
-   
-   boost::mutex mutex;
-   
-   utils::byte _pad_threads3[128];
-   
    typedef unsafe_queue_count<work_unit> queue_free_work;
    std::vector<queue_free_work, mem::allocator<queue_free_work> > buffered_work;
    
-   void make_active(void);
-   void make_inactive(void);
    bool all_buffers_emptied(void) const;
    void flush_this_queue(queue_free_work&, threads_static *);
    void flush_buffered(void);
@@ -62,7 +51,7 @@ public:
    
    threads_static *find_scheduler(const db::node::node_id);
    
-   static std::vector<threads_static*>& start(const size_t num_threads);
+   static std::vector<sched::base*>& start(const size_t num_threads);
    
    explicit threads_static(const vm::process_id);
    
