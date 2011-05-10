@@ -92,6 +92,12 @@ dynamic_local::busy_wait(void)
       }
    }
    
+   if(is_inactive()) {
+      mutex::scoped_lock l(mutex);
+      if(is_inactive())
+         set_active();
+   }
+   
    assert(is_active());
    assert(has_work());
    
