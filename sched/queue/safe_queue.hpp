@@ -19,8 +19,8 @@ private:
    
    typedef queue_node<T> node;
    
-   mutable node *head;
-   mutable node *tail;
+   volatile node *head;
+   volatile node *tail;
    boost::mutex mtx;
    
    inline void push_node(node *new_node)
@@ -55,7 +55,7 @@ public:
    
    inline T pop(void)
    {
-      node *take(head);
+      node *take((node*)head);
       
       assert(head != NULL);
    
@@ -100,7 +100,7 @@ public:
          tail = q.tail;
       }
       
-      assert(q.tail = tail);
+      assert(q.tail = (node*)tail);
    }
    
    explicit safe_queue(void): head(NULL), tail(NULL) {}

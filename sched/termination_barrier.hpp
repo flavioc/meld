@@ -9,7 +9,7 @@ class termination_barrier
 {
 private:
    
-   mutable size_t active_threads;
+   volatile size_t active_threads;
    
 public:
    

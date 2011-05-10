@@ -195,10 +195,11 @@ router::base_constructor(const size_t num_threads, int argc, char **argv, const 
    if(argv != NULL && argc > 0 && use_mpi) {
       assert(num_threads == 1); // limitation for now
       
-#ifdef MPI_THREAD
-      const int mpi_thread_support = MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
+#if 0
+      const int mpi_thread_support = MPI::Init_thread(argc, argv, MPI_THREAD_SINGLE);
    
-      if(mpi_thread_support != MPI_THREAD_MULTIPLE)
+      printf("%d\n", mpi_thread_support);
+      if(mpi_thread_support != MPI_THREAD_SINGLE)
          throw remote_error("No multithread support for MPI");
 #endif
 
@@ -258,9 +259,8 @@ router::~router(void)
       delete world;
       delete env;
    
-#ifdef MPI_THREAD
       MPI::Finalize(); // must call this since MPI_Init_thread is not supported by boost
-#endif
+      
 #ifdef DEBUG_SERIALIZATION_TIME
       cout << "Serialization time: " << serial_time << endl;
 #endif

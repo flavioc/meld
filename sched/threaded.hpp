@@ -20,7 +20,7 @@ private:
    static boost::barrier *thread_barrier;
    static termination_barrier *term_barrier;
    
-   mutable enum {
+   volatile enum {
       THREAD_ACTIVE,
       THREAD_INACTIVE
    } state;

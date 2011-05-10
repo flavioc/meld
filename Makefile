@@ -74,7 +74,8 @@ OBJS = utils/utils.o \
 			 sched/static_local.o \
 			 sched/dynamic_local.o \
 			 sched/threaded.o \
-			 sched/tokenizer.o
+			 sched/tokenizer.o \
+			 sched/mpi_thread.o
 
 all: meld print
 
@@ -193,6 +194,9 @@ sched/threaded.o: sched/termination_barrier.hpp \
 
 sched/tokenizer.o: sched/token.hpp sched/tokenizer.cpp \
 									 sched/tokenizer.hpp process/remote.hpp
+
+sched/mpi_thread.o: sched/mpi_thread.hpp sched/mpi_thread.cpp \
+										sched/tokenizer.hpp sched/dynamic_local.hpp
 
 clean:
 	rm -f meld print *.o vm/*.o \
