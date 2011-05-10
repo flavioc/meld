@@ -50,9 +50,14 @@ COMPILE = $(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS)
 
 OBJS = utils/utils.o \
 			 vm/program.o \
-			 vm/predicate.o vm/types.o \
-			 vm/instr.o db/node.o \
-			 db/tuple.o db/database.o \
+			 vm/predicate.o \
+			 vm/types.o \
+			 vm/instr.o \
+			 db/node.o \
+			 db/tuple.o \
+			 db/agg_configuration.o \
+			 db/tuple_aggregate.o \
+			 db/database.o \
 			 process/process.o \
 			 process/machine.o \
 			 process/remote.o \
@@ -89,8 +94,16 @@ vm/instr.o: vm/instr.cpp vm/instr.hpp \
 
 db/tuple.o: db/tuple.cpp db/tuple.hpp
 
+db/agg_configuration.o: db/tuple.hpp db/agg_configuration.cpp \
+												db/agg_configuration.hpp
+
+db/tuple_aggregate.o: db/tuple.hpp db/agg_configuration.hpp \
+											db/tuple_aggregate.hpp db/tuple_aggregate.cpp
+
 db/node.o: db/node.cpp db/node.hpp \
-					db/tuple.hpp db/trie.hpp
+					db/tuple.hpp db/trie.hpp \
+					db/agg_configuration.hpp \
+					db/tuple_aggregate.hpp
 
 db/database.o: db/database.cpp db/database.hpp vm/instr.hpp \
 							db/node.hpp

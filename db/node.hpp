@@ -11,6 +11,7 @@
 #include "vm/tuple.hpp"
 #include "vm/predicate.hpp"
 #include "db/tuple.hpp"
+#include "db/tuple_aggregate.hpp"
 #include "mem/allocator.hpp"
 #include "db/trie.hpp"
 #include "vm/defs.hpp"
