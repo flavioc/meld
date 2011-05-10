@@ -530,6 +530,7 @@ do_match(const tuple *tuple, const field_num& field, const instr_val& val,
          case FIELD_INT: return tuple->get_int(field) == state.get_int(reg);
          case FIELD_FLOAT: return tuple->get_float(field) == state.get_float(reg);
          case FIELD_NODE: return tuple->get_node(field) == state.get_node(reg);
+         default: throw vm_exec_error("matching with non-primitive types in registers is unsupported");
       }
    } else if(val_is_field(val)) {
       const vm::tuple *tuple2(state.get_tuple(val_field_reg(pc)));
@@ -541,9 +542,10 @@ do_match(const tuple *tuple, const field_num& field, const instr_val& val,
          case FIELD_INT: return tuple->get_int(field) == tuple2->get_int(field2);
          case FIELD_FLOAT: return tuple->get_float(field) == tuple2->get_float(field2);
          case FIELD_NODE: return tuple->get_node(field) == tuple2->get_node(field2);
+         default: throw vm_exec_error("matching with non-primitive types in fields is unsupported");
       }
    } else if(val_is_nil(val))
-      throw vm_exec_error("match for NIL not implemented XXX");
+      throw vm_exec_error("match for NIL not implemented");
    else if(val_is_host(val))
       return tuple->get_node(field) == state.node->get_id();
    else if(val_is_int(val)) {

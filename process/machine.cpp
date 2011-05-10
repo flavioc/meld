@@ -93,6 +93,8 @@ get_creation_function(const scheduler_type sched_type)
       case SCHED_UNKNOWN:
          return NULL;
    }
+   
+   throw machine_error("unknown scheduler type");
 }
 
 machine::machine(const string& file, router& _rout, const size_t th, const scheduler_type _sched_type):
