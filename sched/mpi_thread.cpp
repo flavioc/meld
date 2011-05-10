@@ -64,13 +64,13 @@ mpi_thread::change_node(thread_node *node, dynamic_local *_asker)
    
       node->set_owner((static_local*)asker);
       asker->add_to_queue(node);
+      
+      assert(node->in_queue());
+      assert(node->get_owner() == asker);
    }
    
    remove_node(node);
    asker->add_node(node);
-   
-   assert(node->in_queue());
-   assert(node->get_owner() == asker);
 }
 
 bool
@@ -134,7 +134,6 @@ mpi_thread::busy_wait(void)
          fetch_work();
    }
    
-   assert(false);
    set_active_if_inactive();
    
    assert(is_active());
@@ -160,6 +159,7 @@ mpi_thread::fetch_work(void)
          message *msg(*it);
          thread_node *node((thread_node*)state::DATABASE->find_node(msg->id));
          simple_tuple *stpl(msg->data);
+         mutex::scoped_lock lock(node->mtx);
          
          if(node->get_owner() == this) {
             node->add_work(stpl, false);
@@ -169,17 +169,13 @@ mpi_thread::fetch_work(void)
             }
             assert(node->in_queue());
          } else {
-            mpi_thread *owner;
-            {
-               mutex::scoped_lock lock(node->mtx);
-               owner = (mpi_thread*)node->get_owner();
+            mpi_thread *owner = (mpi_thread*)node->get_owner();
             
-               node->add_work(stpl, false);
+            node->add_work(stpl, false);
             
-               if(!node->in_queue()) {
-                  node->set_in_queue(true);
-                  owner->add_to_queue(node);
-               }
+            if(!node->in_queue()) {
+               node->set_in_queue(true);
+               owner->add_to_queue(node);
             }
             
             assert(owner != NULL);
@@ -284,7 +280,6 @@ mpi_thread::terminate_iteration(void)
    if(leader_thread()) {
       const bool no_more_work = state::ROUTER->reduce_continue(!all_threads_finished());
       iteration_finished = !no_more_work;
-      printf("New finished %d\n", iteration_finished);
    }
    
    // threads must wait for the final answer between processes
