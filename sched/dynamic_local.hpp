@@ -44,7 +44,7 @@ public:
       return new thread_node(id, trans);
    }
    
-   static std::vector<dynamic_local*>& start(const size_t);
+   static std::vector<sched::base*>& start(const size_t);
    
    explicit dynamic_local(const vm::process_id);
    

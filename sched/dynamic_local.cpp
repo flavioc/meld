@@ -15,8 +15,6 @@ using namespace process;
 namespace sched
 {
    
-static vector<dynamic_local*> others;
-   
 void
 dynamic_local::add_node(node *node)
 {
@@ -43,19 +41,18 @@ void
 dynamic_local::end(void)
 {
    // cleanup the steal set
-   while(!steal.empty())
-      steal.pop();
+   steal.clear();
 }
 
 dynamic_local*
 dynamic_local::select_steal_target(void) const
 {
-   size_t idx(random_unsigned(others.size()));
+   size_t idx(random_unsigned(ALL_THREADS.size()));
    
-   while(others[idx] == this)
-      idx = random_unsigned(others.size());
+   while(ALL_THREADS[idx] == this)
+      idx = random_unsigned(ALL_THREADS.size());
    
-   return others[idx];
+   return (dynamic_local*)ALL_THREADS[idx];
 }
 
 bool
@@ -66,45 +63,46 @@ dynamic_local::busy_wait(void)
    bool turned_inactive(false);
    size_t asked_many(0);
    
-   while(queue_nodes.empty()) {
+   while(!has_work()) {
       
       if(state::NUM_THREADS > 1 && asked_many < MAX_ASK_STEAL) {
          dynamic_local *target(select_steal_target());
          
-         if(target->process_state == PROCESS_ACTIVE) {
+         if(target->is_active()) {
             target->steal.push(this);
             ++asked_many;
          }
       }
       
-      if(!turned_inactive && queue_nodes.empty()) {
+      if(!turned_inactive && !has_work()) {
          mutex::scoped_lock l(mutex);
-         if(queue_nodes.empty()) {
-            if(process_state == PROCESS_ACTIVE) {
-               make_inactive();
+         if(!has_work()) {
+            if(is_active()) {
+               set_inactive();
                turned_inactive = true;
-               if(term_barrier->all_finished())
+               if(all_threads_finished())
                   return false;
-            } else if(process_state == PROCESS_INACTIVE) {
+            } else if(is_inactive()) {
                turned_inactive = true;
             }
          }
       }
       
-      if(term_barrier->all_finished()) {
-         assert(process_state == PROCESS_INACTIVE);
+      if(turned_inactive && is_inactive() && all_threads_finished()) {
+         assert(is_inactive());
+         assert(turned_inactive);
          return false;
       }
    }
    
-   if(process_state == PROCESS_INACTIVE) {
+   if(is_inactive()) {
       mutex::scoped_lock l(mutex);
-      if(process_state == PROCESS_INACTIVE)
-         make_active();
+      if(is_inactive())
+         set_active();
    }
    
-   assert(process_state == PROCESS_ACTIVE);
-   assert(!queue_nodes.empty());
+   assert(is_active());
+   assert(has_work());
    
    return true;
 }
@@ -130,9 +128,9 @@ dynamic_local::handle_stealing(void)
    
    static const size_t MAX_PER_TIME(10);
    
-   while(!steal.empty() && !queue_nodes.empty()) {
+   while(!steal.empty() && has_work()) {
       assert(!steal.empty());
-      assert(!queue_nodes.empty());
+      assert(has_work());
       
       dynamic_local *asker((dynamic_local*)steal.pop());
       
@@ -141,7 +139,7 @@ dynamic_local::handle_stealing(void)
       //cout << "Answering request of " << (int)asker->get_id() << endl;
       size_t total_sent(0);
       
-      while(!queue_nodes.empty() && total_sent < MAX_PER_TIME) {
+      while(has_work() && total_sent < MAX_PER_TIME) {
          thread_node *node(queue_nodes.pop());
 
          assert(node != NULL);
@@ -153,10 +151,10 @@ dynamic_local::handle_stealing(void)
       
       assert(total_sent > 0);
       
-      if(asker->process_state == PROCESS_INACTIVE) {
+      if(asker->is_inactive()) {
          mutex::scoped_lock lock(asker->mutex);
-         if(asker->process_state == PROCESS_INACTIVE)
-            asker->make_active();
+         if(asker->is_inactive())
+            asker->set_active();
       }
    }
 }
@@ -228,16 +226,15 @@ dynamic_local::~dynamic_local(void)
    delete nodes_mutex;
 }
 
-vector<dynamic_local*>&
+vector<sched::base*>&
 dynamic_local::start(const size_t num_threads)
 {
-   static_local::init_barriers(num_threads);
-   others.resize(num_threads);
+   init_barriers(num_threads);
    
    for(process_id i(0); i < num_threads; ++i)
-      others[i] = new dynamic_local(i);
+      add_thread(new dynamic_local(i));
       
-   return others;
+   return ALL_THREADS;
 }
    
 }

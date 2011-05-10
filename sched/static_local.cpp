@@ -17,58 +17,20 @@ using namespace utils;
 namespace sched
 {
 
-static vector<static_local*> others;
-barrier* static_local::thread_barrier(NULL);
-termination_barrier* static_local::term_barrier(NULL);
-
-void
-static_local::threads_synchronize(void)
-{
-   thread_barrier->wait();
-}
-
 void
 static_local::assert_end(void) const
 {
-   assert(queue_nodes.empty());
-   assert(process_state == PROCESS_INACTIVE);
-   assert(term_barrier->all_finished());
+   assert(!has_work());
+   assert(is_inactive());
+   assert(all_threads_finished());
 }
 
 void
 static_local::assert_end_iteration(void) const
 {
-   assert(queue_nodes.empty());
-   assert(process_state == PROCESS_INACTIVE);
-   assert(term_barrier->all_finished());
-}
-
-void
-static_local::make_active(void)
-{
-   assert(process_state == PROCESS_INACTIVE);
-   
-   term_barrier->is_active();
-   
-   process_state = PROCESS_ACTIVE;
-   
-#ifdef DEBUG_ACTIVE
-   cout << "Active " << id << endl;
-#endif
-}
-
-void
-static_local::make_inactive(void)
-{
-   assert(process_state == PROCESS_ACTIVE);
-   
-   term_barrier->is_inactive();
-   
-   process_state = PROCESS_INACTIVE;
-   
-#ifdef DEBUG_ACTIVE
-   cout << "Inactive: " << id << endl;
-#endif
+   assert(!has_work());
+   assert(is_inactive());
+   assert(all_threads_finished());
 }
 
 void
@@ -101,7 +63,7 @@ static_local::new_work(node *from, node *_to, const simple_tuple *tpl, const boo
 void
 static_local::new_work_other(sched::base *scheduler, node *node, const simple_tuple *stuple)
 {
-   assert(process_state == PROCESS_ACTIVE);
+   assert(is_active());
    assert(node != NULL);
    assert(stuple != NULL);
    assert(scheduler == NULL);
@@ -119,14 +81,13 @@ static_local::new_work_other(sched::base *scheduler, node *node, const simple_tu
          tnode->set_in_queue(true);
          owner->add_to_queue(tnode);
          
-         if(this != owner && 
-            owner->process_state == PROCESS_INACTIVE)
+         if(this != owner && owner->is_inactive())
          {
             mutex::scoped_lock lock2(owner->mutex);
             
-            if(owner->process_state == PROCESS_INACTIVE)
-               owner->make_active();
-            assert(owner->process_state == PROCESS_ACTIVE);
+            if(owner->is_inactive())
+               owner->set_active();
+            assert(owner->is_active());
          }
          
          assert(tnode->in_queue());
@@ -167,34 +128,37 @@ static_local::busy_wait(void)
 {
    bool turned_inactive(false);
    
-   while(queue_nodes.empty()) {
+   while(!has_work()) {
       
       if(!turned_inactive) {
          mutex::scoped_lock l(mutex);
-         if(queue_nodes.empty() && process_state == PROCESS_ACTIVE) {
-            make_inactive();
-            turned_inactive = true;
-            if(term_barrier->all_finished())
-               return false;
-         } else if(process_state == PROCESS_INACTIVE && queue_nodes.empty()) {
+         if(!has_work()) {
+            if(is_active()) {
+               set_inactive();
+               turned_inactive = true;
+               if(all_threads_finished())
+                  return false;
+            }
+         } else if(is_inactive()) {
             turned_inactive = true;
          }
       }
       
-      if(term_barrier->all_finished()) {
-         assert(process_state == PROCESS_INACTIVE);
+      if(turned_inactive && is_inactive() && all_threads_finished()) {
+         assert(turned_inactive);
+         assert(is_inactive());
          return false;
       }
    }
    
-   if(process_state == PROCESS_INACTIVE) {
+   if(is_inactive()) {
       mutex::scoped_lock l(mutex);
-      if(process_state == PROCESS_INACTIVE)
-         make_active();
+      if(is_inactive())
+         set_active();
    }
    
-   assert(process_state == PROCESS_ACTIVE);
-   assert(!queue_nodes.empty());
+   assert(is_active());
+   assert(has_work());
    
    return true;
 }
@@ -202,18 +166,17 @@ static_local::busy_wait(void)
 bool
 static_local::terminate_iteration(void)
 {
-   // this is needed since one thread can reach make_active
+   // this is needed since one thread can reach set_active
    // and thus other threads waiting for all_finished will fail
    // to get here
    threads_synchronize();
 
-   assert(process_state == PROCESS_INACTIVE);
+   assert(is_inactive());
 
    generate_aggs();
 
-   if(!queue_nodes.empty()) {
-      make_active();
-   }
+   if(has_work())
+      set_active();
 
 #ifdef ASSERT_THREADS
    static boost::mutex local_mtx;
@@ -238,7 +201,7 @@ static_local::terminate_iteration(void)
    // is set to active in the previous if
    threads_synchronize();
 
-   return !term_barrier->all_finished();
+   return !all_threads_finished();
 }
 
 void
@@ -273,12 +236,12 @@ static_local::set_next_node(void)
       check_if_current_useless();
    
    while (current_node == NULL) {   
-      if(queue_nodes.empty()) {
+      if(!has_work()) {
          if(!busy_wait())
             return false;
       }
       
-      assert(!queue_nodes.empty());
+      assert(has_work());
       
       current_node = queue_nodes.pop();
       
@@ -348,7 +311,6 @@ static_local::find_scheduler(const node::node_id id)
 
 static_local::static_local(const vm::process_id _id):
    base(_id),
-   process_state(PROCESS_ACTIVE),
    current_node(NULL)
 {
 }
@@ -356,24 +318,16 @@ static_local::static_local(const vm::process_id _id):
 static_local::~static_local(void)
 {
 }
-
-void
-static_local::init_barriers(const size_t num_threads)
-{
-   thread_barrier = new barrier(num_threads);
-   term_barrier = new termination_barrier(num_threads);
-}
    
-vector<static_local*>&
+vector<sched::base*>&
 static_local::start(const size_t num_threads)
 {
    init_barriers(num_threads);
-   others.resize(num_threads);
    
    for(process_id i(0); i < num_threads; ++i)
-      others[i] = new static_local(i);
+      add_thread(new static_local(i));
       
-   return others;
+   return ALL_THREADS;
 }
    
 }

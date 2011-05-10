@@ -96,10 +96,12 @@ threads_static::flush_this_queue(queue_free_work& q, threads_static *other)
    assert(this != other);
    assert(process_state == PROCESS_ACTIVE);
    
-   {
+   other->queue_work.snap(q);
+   
+   if(other->process_state == PROCESS_INACTIVE) {
       mutex::scoped_lock l(other->mutex);
-      other->make_active();
-      other->queue_work.snap(q);
+      if(other->process_state == PROCESS_INACTIVE)
+         other->make_active();
    }
    
    q.clear();
@@ -130,13 +132,15 @@ threads_static::busy_wait(void)
       
       if(!turned_inactive) {
          mutex::scoped_lock l(mutex);
-         if(queue_work.empty() && process_state == PROCESS_ACTIVE) {
-            make_inactive();
-            turned_inactive = true;
-            if(term_barrier->all_finished())
-               return false;
-         } else if(process_state == PROCESS_INACTIVE && queue_work.empty()) {
-            turned_inactive = true;
+         if(queue_work.empty()) {
+            if(process_state == PROCESS_ACTIVE) {
+               make_inactive();
+               turned_inactive = true;
+               if(term_barrier->all_finished())
+                  return false;
+            } else if(process_state == PROCESS_INACTIVE) {
+               turned_inactive = true;
+            }
          }
       }
       
@@ -144,6 +148,12 @@ threads_static::busy_wait(void)
          assert(process_state == PROCESS_INACTIVE);
          return false;
       }
+   }
+   
+   if(process_state == PROCESS_INACTIVE) {
+      mutex::scoped_lock l(mutex);
+      if(process_state == PROCESS_INACTIVE)
+         make_active();
    }
    
    assert(process_state == PROCESS_ACTIVE);
@@ -161,25 +171,17 @@ threads_static::get_work(work_unit& work)
 void
 threads_static::make_active(void)
 {
-   if(process_state == PROCESS_INACTIVE) {
-      term_barrier->is_active();
-      process_state = PROCESS_ACTIVE;
-#ifdef DEBUG_ACTIVE
-      cout << "Active " << id << endl;
-#endif
-   }
+   assert(process_state == PROCESS_INACTIVE);
+   term_barrier->is_active();
+   process_state = PROCESS_ACTIVE;
 }
 
 void
 threads_static::make_inactive(void)
 {
-   if(process_state == PROCESS_ACTIVE) {
-      term_barrier->is_inactive();
-      process_state = PROCESS_INACTIVE;
-#ifdef DEBUG_ACTIVE
-      cout << "Inactive: " << id << endl;
-#endif
-   }
+   assert(process_state == PROCESS_ACTIVE);
+   term_barrier->is_inactive();
+   process_state = PROCESS_INACTIVE;
 }
 
 void

@@ -127,14 +127,14 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
 #endif
          break;
       case SCHED_THREADS_STATIC_LOCAL: {
-            vector<sched::static_local*> schedulers(sched::static_local::start(num_threads));
+            vector<sched::base*> schedulers(sched::static_local::start(num_threads));
             
             for(process_id i(0); i < num_threads; ++i)
                process_list[i] = new process(i, schedulers[i]);
          }
          break;
       case SCHED_THREADS_DYNAMIC_LOCAL: {
-            vector<sched::dynamic_local*> schedulers(sched::dynamic_local::start(num_threads));
+            vector<sched::base*> schedulers(sched::dynamic_local::start(num_threads));
             for(process_id i(0); i < num_threads; ++i)
                process_list[i] = new process(i, schedulers[i]);
          }

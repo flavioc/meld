@@ -8,30 +8,17 @@
 #include "sched/base.hpp"
 #include "sched/node.hpp"
 #include "sched/queue/safe_queue.hpp"
-#include "sched/termination_barrier.hpp"
+#include "sched/threaded.hpp"
 
 namespace sched
 {
 
-class static_local: public sched::base
+class static_local: public sched::base,
+                    public sched::threaded
 {
 protected:
    
-   static boost::barrier *thread_barrier;
-   static termination_barrier *term_barrier;
-   static void threads_synchronize(void);
-   static void init_barriers(const size_t);
-   
    utils::byte _pad_threads1[128];
-   
-   enum {
-      PROCESS_ACTIVE,
-      PROCESS_INACTIVE
-   } process_state;
-   
-   boost::mutex mutex;
-   
-   utils::byte _pad_threads2[128];
    
    safe_queue<thread_node*> queue_nodes;
    
@@ -53,6 +40,8 @@ protected:
       queue_nodes.push(node);
    }
    
+   inline const bool has_work(void) const { return !queue_nodes.empty(); }
+   
 public:
    
    virtual void init(const size_t);
@@ -73,7 +62,7 @@ public:
       return new thread_node(id, trans);
    }
    
-   static std::vector<static_local*>& start(const size_t);
+   static std::vector<sched::base*>& start(const size_t);
    
    explicit static_local(const vm::process_id);
    

@@ -31,6 +31,12 @@ public:
       requests.push(sc);
    }
    
+   inline void clear(void)
+   {
+      while(!empty())
+         pop();
+   }
+   
    explicit steal_set(void)
    {
    }

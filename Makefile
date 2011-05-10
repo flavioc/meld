@@ -72,7 +72,8 @@ OBJS = utils/utils.o \
 			 sched/threads.o \
 			 sched/mpi.o \
 			 sched/static_local.o \
-			 sched/dynamic_local.o
+			 sched/dynamic_local.o \
+			 sched/threaded.o
 
 all: meld print
 
@@ -176,13 +177,18 @@ sched/static_local.o: sched/base.hpp sched/static_local.hpp \
 								sched/static_local.cpp sched/queue/node.hpp \
 								sched/termination_barrier.hpp \
 								sched/node.hpp sched/queue/unsafe_queue_count.hpp \
-								sched/queue/safe_queue.hpp
+								sched/queue/safe_queue.hpp \
+								sched/threaded.hpp
 
 sched/dynamic_local.o: sched/base.hpp sched/static_local.hpp \
 											sched/dynamic_local.hpp sched/dynamic_local.cpp \
 											sched/node.hpp sched/termination_barrier.hpp \
 											sched/queue/node.hpp sched/steal_set.hpp \
-											sched/queue/safe_queue.hpp
+											sched/queue/safe_queue.hpp \
+											sched/threaded.hpp
+
+sched/threaded.o: sched/termination_barrier.hpp \
+									sched/threaded.hpp sched/threaded.cpp
 
 clean:
 	rm -f meld print *.o vm/*.o \

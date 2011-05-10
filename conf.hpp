@@ -8,7 +8,7 @@
 //#define DEBUG_ACTIVE 1
 // #define ASSERT_THREADS 1
 //#define DEBUG_SERIALIZATION_TIME 1
-#define USE_MANUAL_SERIALIZATION 1
+#define USE_MANUAL_SERIALIZATION 1 // XXX should be removed
 
 static const bool USE_ALLOCATOR = true;
 
