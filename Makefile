@@ -73,7 +73,8 @@ OBJS = utils/utils.o \
 			 sched/mpi.o \
 			 sched/static_local.o \
 			 sched/dynamic_local.o \
-			 sched/threaded.o
+			 sched/threaded.o \
+			 sched/tokenizer.o
 
 all: meld print
 
@@ -171,7 +172,7 @@ sched/static_global.o: sched/static_global.cpp sched/static_global.hpp \
 
 sched/mpi.o: sched/mpi.hpp sched/mpi.cpp \
 						sched/base.hpp sched/static.hpp \
-						sched/token.hpp
+						sched/token.hpp sched/tokenizer.hpp
 
 sched/static_local.o: sched/base.hpp sched/static_local.hpp \
 								sched/static_local.cpp sched/queue/node.hpp \
@@ -189,6 +190,9 @@ sched/dynamic_local.o: sched/base.hpp sched/static_local.hpp \
 
 sched/threaded.o: sched/termination_barrier.hpp \
 									sched/threaded.hpp sched/threaded.cpp
+
+sched/tokenizer.o: sched/token.hpp sched/tokenizer.cpp \
+									 sched/tokenizer.hpp process/remote.hpp
 
 clean:
 	rm -f meld print *.o vm/*.o \
