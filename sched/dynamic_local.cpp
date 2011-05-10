@@ -55,6 +55,12 @@ dynamic_local::select_steal_target(void) const
    return (dynamic_local*)ALL_THREADS[idx];
 }
 
+void
+dynamic_local::request_work_to(dynamic_local *asker)
+{
+   steal.push(asker);
+}
+
 bool
 dynamic_local::busy_wait(void)
 {
@@ -69,7 +75,7 @@ dynamic_local::busy_wait(void)
          dynamic_local *target(select_steal_target());
          
          if(target->is_active()) {
-            target->steal.push(this);
+            target->request_work_to(this);
             ++asked_many;
          }
       }
@@ -92,11 +98,7 @@ dynamic_local::busy_wait(void)
       }
    }
    
-   if(is_inactive()) {
-      mutex::scoped_lock l(mutex);
-      if(is_inactive())
-         set_active();
-   }
+   set_active_if_inactive();
    
    assert(is_active());
    assert(has_work());
@@ -150,7 +152,7 @@ dynamic_local::handle_stealing(void)
       
       if(asker->is_inactive()) {
          mutex::scoped_lock lock(asker->mutex);
-         if(asker->is_inactive())
+         if(asker->is_inactive() && asker->has_work())
             asker->set_active();
       }
    }

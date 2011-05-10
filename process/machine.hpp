@@ -22,18 +22,10 @@
 #include "sched/static_local.hpp"
 #include "sched/dynamic_local.hpp"
 #include "sched/mpi_thread.hpp"
+#include "process/sched.hpp"
 
 namespace process
 {
-   
-enum scheduler_type {
-   SCHED_UNKNOWN,
-   SCHED_THREADS_STATIC_GLOBAL,
-   SCHED_MPI_UNI_STATIC,
-   SCHED_THREADS_STATIC_LOCAL,
-   SCHED_THREADS_DYNAMIC_LOCAL,
-   SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL
-};
 
 // forward declaration   
 class process;

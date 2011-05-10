@@ -86,8 +86,7 @@ mpi_static::begin_get_work(void)
    }
    
    if(round_trip_token == ROUND_TRIP_TOKEN_MPI) {
-      if(!has_global_tok)
-         try_fetch_token_as_worker();
+      try_fetch_token_as_worker_if_global();
       round_trip_token = 0;
    }
 }
@@ -113,8 +112,7 @@ mpi_static::fetch_work(void)
          cout << "Received " << ms->size() << " works" << endl;
 #endif
 
-         tok.received();
-         tok.set_black();
+         one_message_received();
          
          delete ms;
       }
@@ -183,9 +181,10 @@ mpi_static::new_work_other(sched::base *scheduler, node *node, const simple_tupl
 }
 
 void
-mpi_static::new_work_remote(remote *rem, const process_id proc, message *msg)
+mpi_static::new_work_remote(remote *rem, const node::node_id, message *msg)
 {
-   if(msg_buf.insert(rem, proc, msg))
+   // this is buffered as the 0 thread id, since only one thread per proc exists
+   if(msg_buf.insert(rem, 0, msg))
       tok.transmitted();
 }
 

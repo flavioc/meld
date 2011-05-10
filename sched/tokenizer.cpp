@@ -11,6 +11,13 @@ using namespace utils;
 
 namespace sched
 {
+   
+void
+tokenizer::one_message_received(void)
+{
+   tok.received();
+   tok.set_black();
+}
 
 void
 tokenizer::try_fetch_token_as_worker(void)

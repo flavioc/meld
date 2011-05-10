@@ -145,9 +145,6 @@ main(int argc, char **argv)
       fprintf(stderr, "Error: invalid number of threads\n");
       exit(EXIT_FAILURE);
    }
-      
-   if(sched_type == SCHED_MPI_UNI_STATIC)
-	   num_threads = 1;
 
    try {
       double start_time;
@@ -155,7 +152,7 @@ main(int argc, char **argv)
       
       if(time_execution) {   
 #ifdef COMPILE_MPI
-         if(sched_type == SCHED_MPI_UNI_STATIC)
+         if(is_mpi_sched(sched_type))
             start_time = MPI_Wtime();
          else
 #endif
@@ -164,7 +161,7 @@ main(int argc, char **argv)
          }
       }
 			
-      router rout(num_threads, argc, argv, sched_type == SCHED_MPI_UNI_STATIC);
+      router rout(num_threads, argc, argv, is_mpi_sched(sched_type));
 
       machine mac(program, rout, num_threads, sched_type);
 
@@ -179,7 +176,7 @@ main(int argc, char **argv)
          size_t ms;
          
 #ifdef COMPILE_MPI
-         if(sched_type == SCHED_MPI_UNI_STATIC) {
+         if(is_mpi_sched(sched_type)) {
             double total_time(MPI_Wtime() - start_time);
             ms = static_cast<size_t>(total_time * 1000);
             

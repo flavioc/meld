@@ -17,6 +17,9 @@ using namespace sched;
 namespace process
 {
    
+static mutex mpi_mutex;
+   
+   
 void
 router::set_nodes_total(const size_t total)
 {
@@ -49,7 +52,6 @@ router::send(remote *rem, const process_id& proc, const message_set& ms)
 
    const int tag(get_thread_tag(proc));
 
-#ifdef USE_MANUAL_SERIALIZATION
    const size_t msg_size(ms.storage_size());
    byte *buf(new byte[msg_size]);
    
@@ -62,13 +64,11 @@ router::send(remote *rem, const process_id& proc, const message_set& ms)
 #endif
 
    mpi::request ret;
+   mutex::scoped_lock lock(mpi_mutex);
    
    MPI_Isend(buf, msg_size, MPI_PACKED, rem->get_rank(), tag, *world, &ret.m_requests[0]);
 
    return pair_req(ret, buf);
-#else
-   return world->isend(rem->get_rank(), tag, ms);
-#endif
 }
 
 message_set*
@@ -80,21 +80,23 @@ router::recv_attempt(const process_id proc)
 
    const int tag(get_thread_tag(proc));
 
-   optional<mpi::status> stat(world->iprobe(mpi::any_source, tag));
+   optional<mpi::status> stat;
+   
+   {
+      mutex::scoped_lock lock(mpi_mutex);
+      
+      stat = world->iprobe(mpi::any_source, tag);
+   }
    
    if(stat) {
-#ifdef USE_MANUAL_SERIALIZATION
       // this is a hack on Boost.MPI
       mpi::status stat;
-      MPI_Recv(recv_buf, MPI_BUF_SIZE, MPI_PACKED, mpi::any_source, tag, *world, &stat.m_status);
+      {
+         mutex::scoped_lock lock(mpi_mutex);
+         MPI_Recv(recv_buf, MPI_BUF_SIZE, MPI_PACKED, mpi::any_source, tag, *world, &stat.m_status);
+      }
       
       message_set *ms(message_set::unpack(recv_buf, MPI_BUF_SIZE, *world));
-#else
-      message_set *ms(new message_set());
-      
-      mpi::status stat(world->recv(mpi::any_source, tag, *ms));
-      
-#endif
       return ms;
    } else
       return NULL;
@@ -103,6 +105,8 @@ router::recv_attempt(const process_id proc)
 void
 router::check_requests(vector_reqs& reqs)
 {
+   mutex::scoped_lock lock(mpi_mutex);
+   
    for(vector_reqs::iterator it(reqs.begin()); it != reqs.end(); ++it) {
       pair_req& r(*it);
       
@@ -116,6 +120,8 @@ router::check_requests(vector_reqs& reqs)
 void
 router::send_token(const token& tok)
 {
+   mutex::scoped_lock lock(mpi_mutex);
+   
    const remote::remote_id left(remote::self->left_remote_id());
    
    world->send(left, TOKEN_TAG, tok);
@@ -127,6 +133,7 @@ router::receive_token(token& global_tok)
    const remote::remote_id right(remote::self->right_remote_id());
    
    optional<mpi::status> st;
+   mutex::scoped_lock lock(mpi_mutex);
    
    while((st = world->iprobe(right, TOKEN_TAG))) {
       world->recv(right, TOKEN_TAG, global_tok);
@@ -198,7 +205,6 @@ router::base_constructor(const size_t num_threads, int argc, char **argv, const 
       
       MPI_Init_thread(&argc, &argv, mpi_required_support, &mpi_thread_support);
    
-      printf("%d\n", mpi_thread_support);
       if(mpi_thread_support != mpi_required_support)
          throw remote_error("No multithread support for MPI");
 
@@ -207,6 +213,8 @@ router::base_constructor(const size_t num_threads, int argc, char **argv, const 
    
       world_size = world->size();
    
+      printf("WORLD SIZE: %d\n", world_size);
+      
       remote_list.resize(world_size);
       for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i) {
          size_t nthreads_other;
@@ -220,6 +228,7 @@ router::base_constructor(const size_t num_threads, int argc, char **argv, const 
    } else
 #endif
    {
+      printf("HERE\n");
       world_size = 1;
       remote_list.resize(world_size);
       remote_list[0] = new remote(0, num_threads);

@@ -13,6 +13,7 @@ namespace sched
 // forward declarations
 class static_local; 
 class dynamic_local;
+class mpi_thread;
 
 struct node_work_unit {
    const db::simple_tuple *work_tpl;
@@ -25,6 +26,7 @@ private:
    
    friend class static_local;
    friend class dynamic_local;
+   friend class mpi_thread;
    
    static_local *owner;
    bool i_am_on_queue;

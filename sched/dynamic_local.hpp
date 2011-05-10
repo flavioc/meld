@@ -24,13 +24,17 @@ private:
    utils::byte _paddl2[128];
    steal_set steal;
    
+   virtual bool busy_wait(void);
+   void handle_stealing(void);
+   
+protected:
+   
+   virtual void generate_aggs(void);
+   dynamic_local *select_steal_target(void) const;
    void add_node(db::node *);
    void remove_node(db::node *);
-   virtual void generate_aggs(void);
-   virtual bool busy_wait(void);
-   dynamic_local *select_steal_target(void) const;
-   void handle_stealing(void);
-   void change_node(thread_node *, dynamic_local *);
+   void request_work_to(dynamic_local *);
+   virtual void change_node(thread_node *, dynamic_local *);
    
 public:
    

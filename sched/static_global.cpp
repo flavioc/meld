@@ -57,7 +57,7 @@ static_global::new_work_other(sched::base *scheduler, node *node, const simple_t
 }
 
 void
-static_global::new_work_remote(remote *, const vm::process_id, message *)
+static_global::new_work_remote(remote *, const node::node_id, message *)
 {
    assert(false);
 }
@@ -138,11 +138,7 @@ static_global::busy_wait(void)
       }
    }
    
-   if(is_inactive()) {
-      mutex::scoped_lock l(mutex);
-      if(is_inactive())
-         set_active();
-   }
+   set_active_if_inactive();
    
    assert(is_active());
    assert(!queue_work.empty());

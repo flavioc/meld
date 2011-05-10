@@ -22,10 +22,19 @@ protected:
    bool try_fetch_token_as_idler(void);
    bool try_fetch_end_iteration(void);
    void do_collective_end_iteration(size_t);
-   bool busy_loop_token(const bool);
-   void token_terminate_iteration(void);
+   
 
 public:
+   
+   void token_terminate_iteration(void);
+   bool busy_loop_token(const bool);
+   
+   void one_message_received(void);
+   inline void transmitted(const size_t total) { tok.transmitted(total); }
+   inline void try_fetch_token_as_worker_if_global(void) {
+      if(!has_global_tok)
+         try_fetch_token_as_worker();
+   }
    
    explicit tokenizer(void);
    

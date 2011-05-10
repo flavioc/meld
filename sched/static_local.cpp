@@ -97,7 +97,7 @@ static_local::new_work_other(sched::base *scheduler, node *node, const simple_tu
 }
 
 void
-static_local::new_work_remote(remote *, const vm::process_id, message *)
+static_local::new_work_remote(remote *, const node::node_id, message *)
 {
    assert(0);
 }
@@ -151,11 +151,7 @@ static_local::busy_wait(void)
    
    // since queue pushing and state setting are done in
    // different exclusive regions, this may be needed
-   if(is_inactive()) {
-      mutex::scoped_lock l(mutex);
-      if(is_inactive())
-         set_active();
-   }
+   set_active_if_inactive();
    
    assert(is_active());
    assert(has_work());

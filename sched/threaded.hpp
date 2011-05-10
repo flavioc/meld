@@ -40,6 +40,7 @@ protected:
    {
       thread_barrier->wait();
    }
+   
    static void init_barriers(const size_t);
    
    boost::mutex mutex;
@@ -56,6 +57,15 @@ protected:
       assert(state == THREAD_ACTIVE);
       state = THREAD_INACTIVE;
       term_barrier->is_inactive();
+   }
+   
+   inline void set_active_if_inactive(void)
+   {
+      if(is_inactive()) {
+         boost::mutex::scoped_lock l(mutex);
+         if(is_inactive())
+            set_active();
+      }
    }
    
    inline const bool is_inactive(void) const { return state == THREAD_INACTIVE; }

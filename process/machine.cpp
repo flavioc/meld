@@ -58,7 +58,7 @@ machine::route(process *caller, const node::node_id id, const simple_tuple* stup
       
       message *msg(new message(id, stuple));
       
-      sched_caller->new_work_remote(rem, rem->find_proc_owner(id), msg);
+      sched_caller->new_work_remote(rem, id, msg);
    }
 #endif
 }
