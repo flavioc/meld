@@ -7,7 +7,7 @@
 
 #include "sched/base.hpp"
 #include "sched/node.hpp"
-#include "sched/queue.hpp"
+#include "sched/queue/safe_queue.hpp"
 #include "sched/termination_barrier.hpp"
 
 namespace sched

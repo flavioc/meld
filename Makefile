@@ -150,7 +150,9 @@ sched/static.o: sched/static.cpp sched/static.hpp \
 
 sched/threads.o: sched/threads.cpp sched/threads.hpp \
 								sched/base.hpp sched/static.hpp \
-								sched/queue.hpp \
+								sched/queue/node.hpp \
+								sched/queue/unsafe_queue_count.hpp \
+								sched/queue/safe_queue.hpp \
 								sched/termination_barrier.hpp
 
 sched/mpi.o: sched/mpi.hpp sched/mpi.cpp \
@@ -158,14 +160,16 @@ sched/mpi.o: sched/mpi.hpp sched/mpi.cpp \
 						sched/token.hpp
 
 sched/static_local.o: sched/base.hpp sched/static_local.hpp \
-								sched/static_local.cpp sched/queue.hpp \
+								sched/static_local.cpp sched/queue/node.hpp \
 								sched/termination_barrier.hpp \
-								sched/node.hpp
+								sched/node.hpp sched/queue/unsafe_queue_count.hpp \
+								sched/queue/safe_queue.hpp
 
 sched/dynamic_local.o: sched/base.hpp sched/static_local.hpp \
 											sched/dynamic_local.hpp sched/dynamic_local.cpp \
 											sched/node.hpp sched/termination_barrier.hpp \
-											sched/queue.hpp sched/steal_set.hpp
+											sched/queue/node.hpp sched/steal_set.hpp \
+											sched/queue/safe_queue.hpp
 
 clean:
 	rm -f meld print *.o vm/*.o \

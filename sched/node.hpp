@@ -4,7 +4,7 @@
 
 #include "mem/base.hpp"
 #include "db/node.hpp"
-#include "sched/queue.hpp"
+#include "sched/queue/safe_queue.hpp"
 #include "db/tuple.hpp"
 
 namespace sched

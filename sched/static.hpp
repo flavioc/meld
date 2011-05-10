@@ -6,7 +6,7 @@
 
 #include "sched/base.hpp"
 #include "db/node.hpp"
-#include "sched/queue.hpp"
+#include "sched/queue/safe_queue.hpp"
 #include "utils/types.hpp"
 
 namespace sched

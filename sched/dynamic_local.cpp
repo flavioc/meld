@@ -74,7 +74,6 @@ dynamic_local::busy_wait(void)
          if(target->process_state == PROCESS_ACTIVE) {
             target->steal.push(this);
             ++asked_many;
-            //cout << "Sent request to " << (int)target->get_id() << endl;
          }
       }
       
