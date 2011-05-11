@@ -22,7 +22,7 @@
 #include "sched/static_local.hpp"
 #include "sched/dynamic_local.hpp"
 #include "sched/mpi_thread.hpp"
-#include "process/sched.hpp"
+#include "sched/types.hpp"
 
 namespace process
 {

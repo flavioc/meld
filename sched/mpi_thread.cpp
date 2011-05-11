@@ -16,6 +16,7 @@ namespace sched
    
 volatile static bool iteration_finished;
 static size_t round_trip_token(0);
+static size_t round_trip_fetch(0);
 static tokenizer *token;
 static mutex tok_mutex;
 

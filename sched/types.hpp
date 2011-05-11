@@ -1,6 +1,6 @@
 
-#ifndef PROCESS_SCHED_HPP
-#define PROCESS_SCHED_HPP
+#ifndef SCHED_TYPES_HPP
+#define SCHED_TYPES_HPP
 
 namespace process
 {
