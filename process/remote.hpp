@@ -116,6 +116,7 @@ public:
    explicit remote(const remote_id _addr, const size_t _num_threads):
       addr(_addr), num_threads(_num_threads)
    {
+      assert(num_threads != 0);
    }
 };
 

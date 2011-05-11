@@ -15,6 +15,7 @@ private:
    
    size_t round_trip_update;
    size_t round_trip_send;
+   size_t round_trip_fetch;
    
    utils::byte _pad_mpi_thread1[128];
    
@@ -47,7 +48,8 @@ public:
    explicit mpi_thread(const vm::process_id id):
       dynamic_local(id),
       round_trip_update(0),
-      round_trip_send(0)
+      round_trip_send(0),
+      round_trip_fetch(0)
    {
    }
    

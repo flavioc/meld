@@ -109,7 +109,11 @@ dynamic_local::busy_wait(void)
 void
 dynamic_local::change_node(thread_node *node, dynamic_local *asker)
 {
+   assert(node != current_node);
+   assert(node->get_owner() == this);
+   
    // change ownership
+   
    node->set_owner((static_local*)asker);
    remove_node(node);
    asker->add_node(node);

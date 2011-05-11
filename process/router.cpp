@@ -228,7 +228,6 @@ router::base_constructor(const size_t num_threads, int argc, char **argv, const 
    } else
 #endif
    {
-      printf("HERE\n");
       world_size = 1;
       remote_list.resize(world_size);
       remote_list[0] = new remote(0, num_threads);
