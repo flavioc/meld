@@ -49,7 +49,7 @@ mpi_thread::transmit_messages(void)
    size_t total(msg_buf.transmit());
    
    {
-      mutex::scoped_lock l(tok_mutex);
+      mutex::scoped_lock lock(tok_mutex);
       
       token->transmitted(total);
    }
@@ -86,7 +86,8 @@ mpi_thread::busy_wait(void)
    
    transmit_messages();
    update_pending_messages();
-   fetch_work();
+   if(leader_thread())
+      fetch_work();
    
    while(!has_work()) {
       
@@ -115,6 +116,7 @@ mpi_thread::busy_wait(void)
       }
       
       if(leader_thread() && all_threads_finished()) {
+         mutex::scoped_lock lock(tok_mutex);
          if(!token->busy_loop_token(all_threads_finished())) {
             assert(all_threads_finished());
             assert(turned_inactive);
@@ -132,7 +134,8 @@ mpi_thread::busy_wait(void)
          return false;
       }
       
-      fetch_work();
+      if(leader_thread())
+         fetch_work();
    }
    
    set_active_if_inactive();
@@ -146,12 +149,14 @@ mpi_thread::busy_wait(void)
 void
 mpi_thread::fetch_work(void)
 {
+   assert(leader_thread());
+   
    if(!state::ROUTER->use_mpi())
       return;
    
    message_set *ms;
       
-   while((ms = state::ROUTER->recv_attempt(get_id())) != NULL) {
+   while((ms = state::ROUTER->recv_attempt(0)) != NULL) {
       assert(!ms->empty());
       
       for(list_messages::const_iterator it(ms->begin()); it != ms->end(); ++it) {
@@ -194,7 +199,7 @@ mpi_thread::fetch_work(void)
 #endif
 
       {
-         mutex::scoped_lock l(tok_mutex);
+         mutex::scoped_lock lock(tok_mutex);
          token->one_message_received();
       }
       
@@ -207,9 +212,7 @@ mpi_thread::fetch_work(void)
 void
 mpi_thread::new_work_remote(remote *rem, const node::node_id, message *msg)
 {
-   const process_id key(random_unsigned(rem->get_num_threads()));
-   
-   if(msg_buf.insert(rem, key, msg)) {
+   if(msg_buf.insert(rem, 0, msg)) {
       mutex::scoped_lock lock(tok_mutex);
       token->transmitted(1);
    }
@@ -225,7 +228,6 @@ mpi_thread::get_work(work_unit& work)
    
    ++round_trip_update;
    ++round_trip_send;
-   ++round_trip_fetch;
 
    if(round_trip_update == ROUND_TRIP_UPDATE_MPI) {
       update_pending_messages();
@@ -237,16 +239,17 @@ mpi_thread::get_work(work_unit& work)
       round_trip_send = 0;
    }
    
-   if(round_trip_fetch == ROUND_TRIP_FETCH_MPI) {
-      fetch_work();
-      round_trip_fetch = 0;
-   }
-   
    if(leader_thread()) {
       ++round_trip_token;
+      ++round_trip_fetch;
+      
+      if(round_trip_fetch == ROUND_TRIP_FETCH_MPI) {
+         fetch_work();
+         round_trip_fetch = 0;
+      }
 
       if(round_trip_token == ROUND_TRIP_TOKEN_MPI) {
-         assert(leader_thread());
+         mutex::scoped_lock lock(tok_mutex);
          token->try_fetch_token_as_worker_if_global();
          round_trip_token = 0;
       }
