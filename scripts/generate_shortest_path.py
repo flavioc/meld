@@ -35,17 +35,31 @@ def add_link(hash, k, v):
 def generate_weight():
 	return random.randint(1, 10)
 
+if len(sys.argv) < 2:
+	print "Usage: generate_shortest_path.py <number of nodes> [-all-pairs]"
+	sys.exit(1)
+
+all_pairs = False
+if len(sys.argv) == 3:
+	arg3 = sys.argv[2]
+	if arg3 == '-all-pairs':
+		all_pairs = True
+
 total = int(sys.argv[1])
-source = random.randint(0, total-1)
-dest = source
-while (dest == source):
-	dest = random.randint(0, total-1)
 
 print "type route edge(node, node, int)."
-print "type start(node)."
-print "type end(node)."
-print "start(@" + str(source) + ")."
-print "end(@" + str(dest) + ")."
+
+if not all_pairs:
+	source = random.randint(0, total-1)
+	dest = source
+	while (dest == source):
+		dest = random.randint(0, total-1)
+
+	print "type start(node)."
+	print "type end(node)."
+
+	print "start(@" + str(source) + ")."
+	print "end(@" + str(dest) + ")."
 
 alllinks = {}
 
