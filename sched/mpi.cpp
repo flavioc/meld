@@ -37,7 +37,7 @@ mpi_static::assert_end_iteration(void)
    sstatic::assert_end_iteration();
    
    assert(msg_buf.empty());
-   assert(msg_buf.all_received());
+   //assert(msg_buf.all_received());
 }
 
 void
@@ -46,7 +46,7 @@ mpi_static::assert_end(void)
    sstatic::assert_end();
    
    assert(msg_buf.empty());
-   assert(msg_buf.all_received());
+   //assert(msg_buf.all_received());
 }
 
 void
@@ -63,7 +63,7 @@ mpi_static::begin_get_work(void)
    static const size_t ROUND_TRIP_FETCH_MPI(40);
    static const size_t ROUND_TRIP_UPDATE_MPI(40);
    static const size_t ROUND_TRIP_SEND_MPI(40);
-   static const size_t ROUND_TRIP_TOKEN_MPI(40);
+   static const size_t ROUND_TRIP_TOKEN_MPI(200);
    
    ++round_trip_fetch;
    ++round_trip_update;
@@ -76,7 +76,7 @@ mpi_static::begin_get_work(void)
    }
    
    if(round_trip_update == ROUND_TRIP_UPDATE_MPI) {
-      update_pending_messages();
+      //update_pending_messages();
       round_trip_update = 0;
    }
    
@@ -127,16 +127,14 @@ mpi_static::busy_wait(void)
    bool turned_inactive(false);
    
    transmit_messages();
-   update_pending_messages();
+   //update_pending_messages();
    fetch_work();
    
    while(queue_work.empty()) {
 
-      update_pending_messages();
+      //update_pending_messages();
 
-      if(!turned_inactive
-				&& msg_buf.all_received())
-		{
+      if(!turned_inactive) {
          turned_inactive = true;
       }
       
@@ -166,6 +164,7 @@ bool
 mpi_static::terminate_iteration(void)
 {
    token_terminate_iteration();
+   update_pending_messages();
    
    generate_aggs();
    
@@ -173,10 +172,9 @@ mpi_static::terminate_iteration(void)
    
    const bool ret(state::ROUTER->reduce_continue(!queue_work.empty()));
    
-   if(ret)
-      token_is_not_over();
-   else
-      token_is_over();
+   /*
+   if(remote::self->is_leader() && !ret)
+      token_is_not_over();*/
    
    return ret;
 }

@@ -63,12 +63,13 @@ tokenizer::try_fetch_token_as_leader(void)
 #ifdef DEBUG_SAFRAS
       cout << "Add count " << tok.get_count() << endl;
 #endif
-      if(global_tok.is_white() && global_tok.is_zero()) {
+      if(global_tok.is_white() && global_tok.is_zero() && tok.is_white()) {
 #ifdef DEBUG_SAFRAS
          cout << "TERMINATE!" << endl;
 #endif
          assert(global_tok.is_white());
          assert(global_tok.is_zero());
+         assert(tok.is_white());
          
          do_collective_end_iteration(1);
          

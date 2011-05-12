@@ -29,9 +29,6 @@ public:
    void token_terminate_iteration(void);
    bool busy_loop_token(const bool);
    
-   void token_is_over(void) { tok.set_white(); global_tok.set_white(); }
-   void token_is_not_over(void) { tok.set_black(); }
-   
    void one_message_received(void);
    inline void transmitted(const size_t total) { tok.transmitted(total); }
    inline void try_fetch_token_as_worker_if_global(void) {
