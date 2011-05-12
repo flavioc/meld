@@ -37,7 +37,6 @@ mpi_static::assert_end_iteration(void)
    sstatic::assert_end_iteration();
    
    assert(msg_buf.empty());
-   //assert(msg_buf.all_received());
 }
 
 void
@@ -46,7 +45,6 @@ mpi_static::assert_end(void)
    sstatic::assert_end();
    
    assert(msg_buf.empty());
-   //assert(msg_buf.all_received());
 }
 
 void
@@ -60,34 +58,23 @@ mpi_static::transmit_messages(void)
 void
 mpi_static::begin_get_work(void)
 {
-   static const size_t ROUND_TRIP_FETCH_MPI(40);
-   static const size_t ROUND_TRIP_UPDATE_MPI(40);
-   static const size_t ROUND_TRIP_SEND_MPI(40);
-   static const size_t ROUND_TRIP_TOKEN_MPI(200);
-   
    ++round_trip_fetch;
    ++round_trip_update;
    ++round_trip_send;
-   ++round_trip_token;
    
-   if(round_trip_fetch == ROUND_TRIP_FETCH_MPI) {
+   if(round_trip_fetch == step_fetch) {
       fetch_work();
       round_trip_fetch = 0;
    }
    
-   if(round_trip_update == ROUND_TRIP_UPDATE_MPI) {
-      //update_pending_messages();
+   if(round_trip_update == MPI_ROUND_TRIP_UPDATE) {
+      update_pending_messages();
       round_trip_update = 0;
    }
    
-   if(round_trip_send == ROUND_TRIP_SEND_MPI) {
+   if(round_trip_send == MPI_ROUND_TRIP_SEND) {
       transmit_messages();
       round_trip_send = 0;
-   }
-   
-   if(round_trip_token == ROUND_TRIP_TOKEN_MPI) {
-      try_fetch_token_as_worker_if_global();
-      round_trip_token = 0;
    }
 }
 
@@ -96,6 +83,7 @@ mpi_static::fetch_work(void)
 {
    if(state::ROUTER->use_mpi()) {
       message_set *ms;
+			bool any = false;
       
       while((ms = state::ROUTER->recv_attempt(0)) != NULL) {
          assert(!ms->empty());
@@ -115,7 +103,14 @@ mpi_static::fetch_work(void)
          one_message_received();
          
          delete ms;
+
+			any = true;
       }
+
+		if(any && step_fetch > MPI_MIN_ROUND_TRIP_FETCH)
+			step_fetch -= MPI_DECREASE_ROUND_TRIP_FETCH;
+		if(!any && step_fetch < MPI_MAX_ROUND_TRIP_FETCH)
+			step_fetch += MPI_INCREASE_ROUND_TRIP_FETCH;
       
       assert(ms == NULL);
    }
@@ -127,16 +122,14 @@ mpi_static::busy_wait(void)
    bool turned_inactive(false);
    
    transmit_messages();
-   //update_pending_messages();
    fetch_work();
    
    while(queue_work.empty()) {
 
-      //update_pending_messages();
+      update_pending_messages();
 
-      if(!turned_inactive) {
+      if(!turned_inactive)
          turned_inactive = true;
-      }
       
       if(!busy_loop_token(turned_inactive))
          return false;
@@ -164,17 +157,12 @@ bool
 mpi_static::terminate_iteration(void)
 {
    token_terminate_iteration();
-   update_pending_messages();
    
    generate_aggs();
    
    ++iteration;
    
    const bool ret(state::ROUTER->reduce_continue(!queue_work.empty()));
-   
-   /*
-   if(remote::self->is_leader() && !ret)
-      token_is_not_over();*/
    
    return ret;
 }
@@ -201,10 +189,10 @@ mpi_static::find_scheduler(const node::node_id)
 
 mpi_static::mpi_static(void):
    sstatic(0),
+	step_fetch(MPI_DEFAULT_ROUND_TRIP_FETCH),
    round_trip_fetch(0),
    round_trip_update(0),
-   round_trip_send(0),
-   round_trip_token(0)
+   round_trip_send(0)
 {
 }
 

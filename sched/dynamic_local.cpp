@@ -64,8 +64,6 @@ dynamic_local::request_work_to(dynamic_local *asker)
 bool
 dynamic_local::busy_wait(void)
 {
-   static const size_t MAX_ASK_STEAL(3);
-   
    bool turned_inactive(false);
    size_t asked_many(0);
    
@@ -129,8 +127,6 @@ dynamic_local::handle_stealing(void)
 {
    assert(state::NUM_THREADS > 1);
    
-   static const size_t MAX_PER_TIME(10);
-   
    while(!steal.empty() && has_work()) {
       assert(!steal.empty());
       assert(has_work());
@@ -142,7 +138,7 @@ dynamic_local::handle_stealing(void)
       //cout << "Answering request of " << (int)asker->get_id() << endl;
       size_t total_sent(0);
       
-      while(has_work() && total_sent < MAX_PER_TIME) {
+      while(has_work() && total_sent < MAX_SEND_PER_TIME) {
          thread_node *node(queue_nodes.pop());
 
          assert(node != NULL);

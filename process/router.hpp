@@ -68,8 +68,6 @@ private:
 #endif
    list_state_reqs state_reqs;
 
-   
-#define MPI_BUF_SIZE 1024
    utils::byte recv_buf[MPI_BUF_SIZE];
 #endif 
 

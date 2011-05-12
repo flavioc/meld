@@ -8,6 +8,7 @@
 using namespace vm;
 using namespace process;
 using namespace utils;
+using namespace std;
 
 namespace sched
 {

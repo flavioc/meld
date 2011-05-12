@@ -31,10 +31,12 @@ public:
    
    void one_message_received(void);
    inline void transmitted(const size_t total) { tok.transmitted(total); }
+/*
    inline void try_fetch_token_as_worker_if_global(void) {
       if(!has_global_tok)
          try_fetch_token_as_worker();
    }
+*/
    
    explicit tokenizer(void);
    

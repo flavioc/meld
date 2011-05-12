@@ -10,8 +10,6 @@ using namespace vm;
 using namespace std;
 using namespace process;
 
-static const size_t BUFFER_THRESHOLD(40);
-
 namespace sched
 {
    
@@ -58,7 +56,7 @@ buffer::insert(remote *rem, const process_id proc, message* msg)
    
    ms.add(msg);
    
-   if(ms.size() >= BUFFER_THRESHOLD) {
+   if(ms.size() >= MPI_BUFFER_THRESHOLD) {
       transmit_list(rem, proc, ms);
       return true;
    } else

@@ -16,10 +16,10 @@ class mpi_static: public sched::sstatic,
 {
 private:
    
+	 size_t step_fetch;
    size_t round_trip_fetch;
    size_t round_trip_update;
    size_t round_trip_send;
-   size_t round_trip_token;
    
    buffer msg_buf;
    

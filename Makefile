@@ -145,7 +145,8 @@ process/router.o: process/router.hpp process/router.cpp \
 									process/message.hpp \
 									utils/time.hpp \
 									process/request.hpp \
-									sched/token.hpp
+									sched/token.hpp \
+									conf.hpp
 
 process/message.o: process/message.cpp process/message.hpp \
 									db/node.hpp db/tuple.hpp
@@ -175,7 +176,8 @@ sched/static_global.o: sched/static_global.cpp sched/static_global.hpp \
 
 sched/mpi.o: sched/mpi.hpp sched/mpi.cpp \
 						sched/base.hpp sched/static.hpp \
-						sched/token.hpp sched/tokenizer.hpp
+						sched/token.hpp sched/tokenizer.hpp \
+						conf.hpp
 
 sched/static_local.o: sched/base.hpp sched/static_local.hpp \
 								sched/static_local.cpp sched/queue/node.hpp \
@@ -189,7 +191,8 @@ sched/dynamic_local.o: sched/base.hpp sched/static_local.hpp \
 											sched/node.hpp sched/termination_barrier.hpp \
 											sched/queue/node.hpp sched/steal_set.hpp \
 											sched/queue/safe_queue.hpp \
-											sched/threaded.hpp
+											sched/threaded.hpp \
+											conf.hpp
 
 sched/threaded.o: sched/termination_barrier.hpp \
 									sched/threaded.hpp sched/threaded.cpp
@@ -198,7 +201,8 @@ sched/tokenizer.o: sched/token.hpp sched/tokenizer.cpp \
 									 sched/tokenizer.hpp process/remote.hpp
 
 sched/mpi_thread.o: sched/mpi_thread.hpp sched/mpi_thread.cpp \
-										sched/tokenizer.hpp sched/dynamic_local.hpp
+										sched/tokenizer.hpp sched/dynamic_local.hpp \
+										sched/token.hpp conf.hpp
 
 clean:
 	rm -f meld print *.o vm/*.o \
