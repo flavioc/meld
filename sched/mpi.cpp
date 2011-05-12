@@ -171,7 +171,14 @@ mpi_static::terminate_iteration(void)
    
    ++iteration;
    
-   return state::ROUTER->reduce_continue(!queue_work.empty());
+   const bool ret(state::ROUTER->reduce_continue(!queue_work.empty()));
+   
+   if(ret)
+      token_is_not_over();
+   else
+      token_is_over();
+   
+   return ret;
 }
    
 void

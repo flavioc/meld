@@ -213,8 +213,6 @@ router::base_constructor(const size_t num_threads, int argc, char **argv, const 
    
       world_size = world->size();
    
-      printf("WORLD SIZE: %d\n", world_size);
-      
       remote_list.resize(world_size);
       for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i) {
          size_t nthreads_other;

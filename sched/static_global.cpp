@@ -188,6 +188,7 @@ static_global::terminate_iteration(void)
    // this is needed since one thread can reach make_active
    // and thus other threads waiting for all_finished will fail
    // to get here
+   
    threads_synchronize();
    
    sstatic::terminate_iteration();
@@ -197,8 +198,9 @@ static_global::terminate_iteration(void)
    
    generate_aggs();
    
-   if(!queue_work.empty())
+   if(!queue_work.empty()) {
       set_active();
+   }
    
 #ifdef ASSERT_THREADS
    static boost::mutex local_mtx;
@@ -221,9 +223,16 @@ static_global::terminate_iteration(void)
    
    // again, needed since we must wait if any thread
    // is set to active in the previous if
+   
    threads_synchronize();
    
-   return !all_threads_finished();
+   const bool ret(!all_threads_finished());
+   
+   // if we don't synchronize here we risk that other threads get ahead
+   // and turn into inactive and we have work to do
+   threads_synchronize();
+   
+   return ret;
 }
 
 static_global*

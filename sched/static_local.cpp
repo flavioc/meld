@@ -197,7 +197,11 @@ static_local::terminate_iteration(void)
    // is set to active in the previous if
    threads_synchronize();
 
-   return !all_threads_finished();
+   const bool ret(!all_threads_finished());
+   
+   threads_synchronize();
+   
+   return ret;
 }
 
 void

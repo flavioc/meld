@@ -282,8 +282,13 @@ mpi_thread::terminate_iteration(void)
    threads_synchronize();
    
    if(leader_thread()) {
-      const bool no_more_work = state::ROUTER->reduce_continue(!all_threads_finished());
-      iteration_finished = !no_more_work;
+      const bool more_work = state::ROUTER->reduce_continue(!all_threads_finished());
+      iteration_finished = !more_work;
+      
+      if(more_work)
+         token->token_is_not_over();
+      else
+         token->token_is_over();
    }
    
    // threads must wait for the final answer between processes
