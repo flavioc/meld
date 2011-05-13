@@ -60,6 +60,9 @@ private:
    
 public:
    
+   typedef simple_tuple_list::iterator iterator;
+   typedef simple_tuple_list::const_iterator const_iterator;
+   
    class delete_info
    {
    private:
@@ -90,11 +93,27 @@ public:
       }
    };
    
+   // inserts tuple into the trie
+   // returns false if tuple is repeated (+ ref count)
+   // returns true if tuple is new
    bool insert_tuple(vm::tuple *, const vm::ref_count);
    
+   // returns delete info object
+   // call to_delete to know if the ref count reached zero
+   // call the object to commit the deletion operation
    delete_info delete_tuple(vm::tuple *, const vm::ref_count);
    
    tuple_vector* match_predicate(void) const;
+   
+   inline const bool empty(void) const { return list.empty(); }
+   
+   inline const_iterator begin(void) const { return list.begin(); }
+   inline const_iterator end(void) const { return list.end(); }
+   
+   inline iterator begin(void) { return list.begin(); }
+   inline iterator end(void) { return list.end(); }
+   
+   void wipeout(void);
    
    void print(std::ostream&) const;
    void dump(std::ostream&) const;

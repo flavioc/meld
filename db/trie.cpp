@@ -131,14 +131,21 @@ trie::dump(ostream& cout) const
    }
 }
 
+void
+trie::wipeout(void)
+{
+   for(iterator it(begin()); it != end(); ++it) {
+      simple_tuple *stpl(*it);
+      delete stpl->get_tuple();
+      delete stpl;
+   }
+   list.clear();
+}
+
 trie::~trie(void)
 {
    if(!USE_ALLOCATOR) {
-      for(simple_tuple_list::iterator it(list.begin()); it != list.end(); ++it) {
-         simple_tuple *stpl(*it);
-         delete stpl->get_tuple();
-         delete stpl;
-      }
+      wipeout();
    }
 }
    

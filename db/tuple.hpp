@@ -51,11 +51,9 @@ public:
    
    inline const bool reached_zero(void) const { return get_count() == 0; }
 
-   inline void inc_count(const vm::ref_count& inc) { count += inc; }
+   inline void inc_count(const vm::ref_count& inc) { assert(inc > 0); count += inc; }
 
-   inline void dec_count(const vm::ref_count& inc) { count -= inc; }
-   
-   inline void add_count(const vm::ref_count& plus) { count += plus; }
+   inline void dec_count(const vm::ref_count& inc) { assert(inc > 0); count -= inc; }
    
 #ifdef COMPILE_MPI
    const size_t storage_size(void) const

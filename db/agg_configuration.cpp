@@ -11,44 +11,37 @@ void
 agg_configuration::add_to_set(vm::tuple *tpl, const ref_count many)
 {
    assert(many != 0);
-   assert(many > 0 || (many < 0 && !values.empty()));
+   assert(many > 0 || (many < 0 && !vals.empty()));
 
    changed = true; // this is important
-
-   for(simple_tuple_list::iterator it(values.begin());
-      it != values.end();
-      ++it)
-   {
-      simple_tuple *sother(*it);
-      vm::tuple *other(sother->get_tuple());
-
-      if(*other == *tpl) {
-         sother->add_count(many);
-
-         if(sother->reached_zero()) {
-            values.erase(it);
-            delete sother->get_tuple();
-            delete sother;
-         }
-
+   
+   if(many > 0) {
+      if(!vals.insert_tuple(tpl, many)) {
+         // repeated tuple
          delete tpl;
-         return;
       }
+   } else {
+      // to delete
+      trie::delete_info deleter(vals.delete_tuple(tpl, -many)); // note the minus sign
+      if(deleter.to_delete()) {
+         deleter();
+      }
+      delete tpl;
    }
-
-   // new one
-   values.push_back(new simple_tuple(tpl, many));
 }
 
 const bool
 agg_configuration::test(vm::tuple *tpl, const field_num agg_field) const
 {
-   if(values.empty())
+   if(vals.empty())
       return false;
 
-   assert(!values.empty());
+   assert(!vals.empty());
 
-   simple_tuple_list::const_iterator it(values.begin());
+   const_iterator it(vals.begin());
+   
+   assert(it != vals.end());
+   
    simple_tuple *sother(*it);
    vm::tuple *other(sother->get_tuple());
 
@@ -62,12 +55,13 @@ agg_configuration::test(vm::tuple *tpl, const field_num agg_field) const
 vm::tuple*
 agg_configuration::generate_max_int(const field_num field) const
 {
-   simple_tuple_list::const_iterator it(values.begin());
+   const_iterator end(vals.end());
+   const_iterator it(vals.begin());
    vm::tuple *max_tpl((*it)->get_tuple());
    int_val max_val(max_tpl->get_int(field));
 
    ++it;
-   for(; it != values.end(); ++it)
+   for(; it != end; ++it)
    {
       simple_tuple *sother(*it);
       vm::tuple *other(sother->get_tuple());
@@ -84,12 +78,15 @@ agg_configuration::generate_max_int(const field_num field) const
 vm::tuple*
 agg_configuration::generate_min_int(const field_num field) const
 {
-   simple_tuple_list::const_iterator it(values.begin());
+   assert(!vals.empty());
+   
+   const_iterator end(vals.end());
+   const_iterator it(vals.begin());
    vm::tuple *min_tpl((*it)->get_tuple());
    int_val min_val(min_tpl->get_int(field));
 
    ++it;
-   for(; it != values.end(); ++it) {
+   for(; it != end; ++it) {
       simple_tuple *sother(*it);
       vm::tuple *other(sother->get_tuple());
 
@@ -105,11 +102,14 @@ agg_configuration::generate_min_int(const field_num field) const
 vm::tuple*
 agg_configuration::generate_sum_int(const field_num field) const
 {
-   simple_tuple_list::const_iterator it(values.begin());
+   assert(!vals.empty());
+   
+   const_iterator end(vals.end());
+   const_iterator it(vals.begin());
    int_val sum_val = 0;
    vm::tuple *ret((*it)->get_tuple()->copy());
 
-   for(; it != values.end(); ++it) {
+   for(; it != end; ++it) {
       simple_tuple *s(*it);
 
       for(ref_count i(0); i < s->get_count(); ++i)
@@ -123,11 +123,14 @@ agg_configuration::generate_sum_int(const field_num field) const
 vm::tuple*
 agg_configuration::generate_sum_float(const field_num field) const
 {
-   simple_tuple_list::const_iterator it(values.begin());
+   assert(!vals.empty());
+   
+   const_iterator end(vals.end());
+   const_iterator it(vals.begin());
    float_val sum_val = 0;
    vm::tuple *ret((*it)->get_tuple()->copy());
 
-   for(; it != values.end(); ++it) {
+   for(; it != vals.end(); ++it) {
       simple_tuple *s(*it);
 
       for(ref_count i(0); i < s->get_count(); ++i)
@@ -142,7 +145,13 @@ agg_configuration::generate_sum_float(const field_num field) const
 vm::tuple*
 agg_configuration::generate_first(void) const
 {
-   simple_tuple *s(values.front());
+   assert(!vals.empty());
+   
+   const_iterator fst(vals.begin());
+   
+   assert(fst != vals.end());
+   
+   simple_tuple *s(*fst);
 
    return s->get_tuple()->copy();
 }
@@ -150,12 +159,15 @@ agg_configuration::generate_first(void) const
 vm::tuple*
 agg_configuration::generate_max_float(const field_num field) const
 {
-   simple_tuple_list::const_iterator it(values.begin());
+   assert(!vals.empty());
+   
+   const_iterator end(vals.end());
+   const_iterator it(vals.begin());
    vm::tuple *max_tpl((*it)->get_tuple());
    float_val max_val(max_tpl->get_float(field));
 
    ++it;
-   for(; it != values.end(); ++it) {
+   for(; it != end; ++it) {
       simple_tuple *sother(*it);
       vm::tuple *other(sother->get_tuple());
 
@@ -171,12 +183,15 @@ agg_configuration::generate_max_float(const field_num field) const
 vm::tuple*
 agg_configuration::generate_min_float(const field_num field) const
 {
-   simple_tuple_list::const_iterator it(values.begin());
+   assert(!vals.empty());
+   
+   const_iterator end(vals.end());
+   const_iterator it(vals.begin());
    vm::tuple *min_tpl((*it)->get_tuple());
    float_val min_val(min_tpl->get_float(field));
 
    ++it;
-   for(; it != values.end(); ++it) {
+   for(; it != end; ++it) {
       simple_tuple *sother(*it);
       vm::tuple *other(sother->get_tuple());
 
@@ -192,7 +207,7 @@ agg_configuration::generate_min_float(const field_num field) const
 vm::tuple*
 agg_configuration::do_generate(const aggregate_type typ, const field_num field)
 {
-   if(values.empty())
+   if(vals.empty())
       return NULL;
 
    switch(typ) {
@@ -212,7 +227,7 @@ agg_configuration::do_generate(const aggregate_type typ, const field_num field)
          return generate_min_float(field);
    }
    
-   assert(0);
+   assert(false);
    return NULL;
 }
 
@@ -243,20 +258,14 @@ agg_configuration::generate(const aggregate_type typ, const field_num field,
 
 agg_configuration::~agg_configuration(void)
 {
-   for(simple_tuple_list::iterator it(values.begin());
-      it != values.end();
-      ++it)
-   {
-      delete (*it)->get_tuple();
-      delete *it;
-   }
+   vals.wipeout();
 }
 
 void
 agg_configuration::print(ostream& cout) const
 {
-   for(simple_tuple_list::const_iterator it(values.begin());
-      it != values.end();
+   for(const_iterator it(vals.begin());
+      it != vals.end();
       ++it)
    {
       cout << "\t\t" << **it << endl;

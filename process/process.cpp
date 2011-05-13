@@ -40,7 +40,7 @@ process::do_work(node *node, const simple_tuple *_stuple, const bool ignore_agg)
    vm::tuple *tuple = stuple->get_tuple();
    ref_count count = stuple->get_count();
    
-   //cout << node->get_id() << " " << *stuple << endl;
+   //cout << node->get_id() << " " << *stuple << " " << ignore_agg << endl;
    
    ++total_processed;
    

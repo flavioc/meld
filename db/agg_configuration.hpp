@@ -8,6 +8,7 @@
 #include "db/tuple.hpp"
 #include "vm/defs.hpp"
 #include "vm/types.hpp"
+#include "db/trie.hpp"
 
 namespace db
 {
@@ -15,8 +16,11 @@ namespace db
 class agg_configuration: public mem::base<agg_configuration>
 {
 private:
+   
+   typedef trie::iterator iterator;
+   typedef trie::const_iterator const_iterator;
 
-   simple_tuple_list values;
+   trie vals;
    bool changed;
    vm::tuple *corresponds;
 
@@ -38,13 +42,15 @@ public:
    const bool test(vm::tuple *, const vm::field_num) const;
 
    inline const bool has_changed(void) const { return changed; }
-   inline const bool is_empty(void) const { return values.empty(); }
+   inline const bool is_empty(void) const { return vals.empty(); }
 
    void add_to_set(vm::tuple *, const vm::ref_count);
 
    explicit agg_configuration(void):
       changed(false), corresponds(NULL)
    {
+      assert(corresponds == NULL);
+      assert(!changed);
    }
 
    ~agg_configuration(void);
