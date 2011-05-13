@@ -26,10 +26,10 @@ WARNINGS = -Wall -Wno-sign-compare
 CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS)
 LIBRARIES = -lpthread -lm -lboost_thread-mt
 
-ifneq ($(COMPILE_MPI),)
+#ifneq ($(COMPILE_MPI),)
 	LIBRARIES += -lmpi -lmpi_cxx -lboost_serialization-mt -lboost_mpi-mt
 	CFLAGS += -DCOMPILE_MPI=1
-endif
+#endif
 
 CXX = g++
 C0X = -std=c++0x
