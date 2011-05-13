@@ -1,8 +1,5 @@
 - Write new system of external functions.
 	- Goal is to limit use of external functions.
-- Implement a distributed version using boost mpi
-	- multithreaded version
-- Use trie class in aggregate configurations
 - Implement a trie
 - Make BP work again
 - Make pagerank smarter

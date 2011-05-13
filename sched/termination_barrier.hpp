@@ -2,6 +2,9 @@
 #ifndef SCHED_TERMINATION_BARRIER_HPP
 #define SCHED_TERMINATION_BARRIER_HPP
 
+#include "vm/state.hpp"
+#include "utils/atomic.hpp"
+
 namespace sched
 {
    
@@ -9,12 +12,19 @@ class termination_barrier
 {
 private:
    
-   volatile size_t active_threads;
+   utils::atomic<size_t> active_threads;
    
 public:
    
-   inline void is_active(void) { __sync_fetch_and_add(&active_threads, 1); }
-   inline void is_inactive(void) { __sync_fetch_and_sub(&active_threads, 1); }
+   inline void is_active(void) {
+      assert(active_threads < vm::state::NUM_THREADS);
+      active_threads++;
+   }
+   
+   inline void is_inactive(void) {
+      assert(active_threads > 0);
+      active_threads--;
+   }
    
    inline const bool all_finished(void) const { return active_threads == 0; }
    

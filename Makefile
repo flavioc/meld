@@ -124,7 +124,8 @@ process/machine.o: process/machine.hpp process/machine.cpp \
 									sched/mpi.hpp \
 									sched/static_local.hpp \
 									sched/types.hpp \
-									db/database.hpp
+									db/database.hpp \
+									vm/predicate.hpp
 
 process/remote.o: process/remote.hpp process/remote.cpp	\
 									vm/instr.hpp conf.hpp
@@ -136,7 +137,8 @@ vm/tuple.o: vm/tuple.cpp vm/tuple.hpp	\
 						vm/instr.hpp runtime/list.hpp \
 						utils/utils.hpp
 
-vm/program.o: vm/program.cpp vm/program.hpp vm/instr.hpp
+vm/program.o: vm/program.cpp vm/program.hpp vm/instr.hpp \
+							vm/predicate.hpp
 
 vm/exec.o: vm/exec.cpp vm/exec.hpp process/process.hpp	\
 						vm/instr.hpp db/node.hpp
@@ -173,7 +175,8 @@ sched/static_global.o: sched/static_global.cpp sched/static_global.hpp \
 								sched/queue/node.hpp \
 								sched/queue/unsafe_queue_count.hpp \
 								sched/queue/safe_queue.hpp \
-								sched/termination_barrier.hpp
+								sched/termination_barrier.hpp \
+								utils/atomic.hpp
 
 sched/mpi.o: sched/mpi.hpp sched/mpi.cpp \
 						sched/base.hpp sched/static.hpp \
@@ -183,6 +186,7 @@ sched/mpi.o: sched/mpi.hpp sched/mpi.cpp \
 sched/static_local.o: sched/base.hpp sched/static_local.hpp \
 								sched/static_local.cpp sched/queue/node.hpp \
 								sched/termination_barrier.hpp \
+								utils/atomic.hpp \
 								sched/node.hpp sched/queue/unsafe_queue_count.hpp \
 								sched/queue/safe_queue.hpp \
 								sched/threaded.hpp
@@ -193,10 +197,11 @@ sched/dynamic_local.o: sched/base.hpp sched/static_local.hpp \
 											sched/queue/node.hpp sched/steal_set.hpp \
 											sched/queue/safe_queue.hpp \
 											sched/threaded.hpp \
-											conf.hpp
+											conf.hpp utils/atomic.hpp
 
 sched/threaded.o: sched/termination_barrier.hpp \
-									sched/threaded.hpp sched/threaded.cpp
+									sched/threaded.hpp sched/threaded.cpp \
+									utils/atomic.hpp
 
 sched/tokenizer.o: sched/token.hpp sched/tokenizer.cpp \
 									 sched/tokenizer.hpp process/remote.hpp
