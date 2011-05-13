@@ -18,7 +18,7 @@ void
 buffer::transmit_list(remote *rem, const process_id proc, message_set& ms)
 {
    assert(rem != NULL);
-   assert(!ms.empty();
+   assert(!ms.empty());
    assert(total > 0);
    
    ms.size();

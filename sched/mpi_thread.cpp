@@ -168,7 +168,13 @@ mpi_thread::fetch_work(void)
                node->set_in_queue(true);
                this->add_to_queue(node);
             }
+            if(is_inactive()) {
+               mutex::scoped_lock lock(mutex);
+               if(is_inactive())
+                  set_active();
+            }
             assert(node->in_queue());
+            assert(is_active());
          } else {
             mpi_thread *owner = (mpi_thread*)node->get_owner();
             
