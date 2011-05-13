@@ -105,14 +105,16 @@ router::recv_attempt(const process_id proc)
 }
 
 void
-router::check_requests(vector_reqs& reqs)
+router::check_requests(vector_reqs& reqs, const bool test)
 {
+   assert(!reqs.empty());
+   
    mutex::scoped_lock lock(mpi_mutex);
    
    for(vector_reqs::iterator it(reqs.begin()); it != reqs.end(); ++it) {
       pair_req& r(*it);
       
-      if(r.first.test()) {
+      if((test && r.first.test()) || !test) {
          delete []r.second;
          it = reqs.erase(it);
       }

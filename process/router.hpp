@@ -85,7 +85,7 @@ public:
    
    pair_req send(remote *, const vm::process_id&, const message_set&);
    
-   void check_requests(vector_reqs&);
+   void check_requests(vector_reqs&, const bool);
    
    message_set* recv_attempt(const vm::process_id);
 

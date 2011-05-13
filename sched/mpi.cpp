@@ -150,7 +150,7 @@ mpi_static::work_found(void)
 void
 mpi_static::update_pending_messages(void)
 {
-   msg_buf.update_received();
+   msg_buf.update_received(true);
 }
 
 bool

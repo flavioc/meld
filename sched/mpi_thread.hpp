@@ -25,7 +25,7 @@ private:
    void fetch_work(void);
    
    virtual void change_node(thread_node *, dynamic_local *);
-   void update_pending_messages(void);
+   void update_pending_messages(const bool test = true);
    void transmit_messages(void);
    virtual bool busy_wait(void);
    virtual void assert_end(void) const;

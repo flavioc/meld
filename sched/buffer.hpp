@@ -44,7 +44,7 @@ public:
    
    inline const bool all_received(void) const { return reqs.empty(); }
    
-   void update_received(void);
+   void update_received(const bool);
    
    bool insert(process::remote *, const vm::process_id, process::message *);
    

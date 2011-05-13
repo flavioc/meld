@@ -37,9 +37,9 @@ mpi_thread::assert_end_iteration(void) const
 }
 
 void
-mpi_thread::update_pending_messages(void)
+mpi_thread::update_pending_messages(const bool test)
 {
-   msg_buf.update_received();
+   msg_buf.update_received(test);
 }
 
 void
@@ -84,10 +84,9 @@ mpi_thread::busy_wait(void)
    transmit_messages();
    if(leader_thread())
       fetch_work();
+   update_pending_messages();
    
    while(!has_work()) {
-      
-      update_pending_messages();
       
       if(state::NUM_THREADS > 1 && asked_many < MAX_ASK_STEAL) {
          mpi_thread *target((mpi_thread*)select_steal_target());
@@ -262,6 +261,7 @@ mpi_thread::terminate_iteration(void)
    // and thus other threads waiting for all_finished will fail
    // to get here
    threads_synchronize();
+   update_pending_messages(false); // just delete all requests
    
    if(leader_thread())
       token->token_terminate_iteration();

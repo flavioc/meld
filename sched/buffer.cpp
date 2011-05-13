@@ -102,13 +102,13 @@ buffer::transmit(void)
 }
 
 void
-buffer::update_received(void)
+buffer::update_received(const bool test)
 {
    if(!reqs.empty()) {
 #ifdef DEBUG_REMOTE
       cout << "CHECKING " << reqs.size() << " requests\n";
 #endif
-      state::ROUTER->check_requests(reqs);
+      state::ROUTER->check_requests(reqs, test);
 #ifdef DEBUG_REMOTE
       cout << "NOW I HAVE " << reqs.size() << " requests left\n";
 #endif

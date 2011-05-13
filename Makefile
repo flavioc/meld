@@ -178,7 +178,7 @@ sched/static_global.o: sched/static_global.cpp sched/static_global.hpp \
 sched/mpi.o: sched/mpi.hpp sched/mpi.cpp \
 						sched/base.hpp sched/static.hpp \
 						sched/token.hpp sched/tokenizer.hpp \
-						conf.hpp
+						conf.hpp sched/buffer.hpp
 
 sched/static_local.o: sched/base.hpp sched/static_local.hpp \
 								sched/static_local.cpp sched/queue/node.hpp \
@@ -203,7 +203,7 @@ sched/tokenizer.o: sched/token.hpp sched/tokenizer.cpp \
 
 sched/mpi_thread.o: sched/mpi_thread.hpp sched/mpi_thread.cpp \
 										sched/tokenizer.hpp sched/dynamic_local.hpp \
-										sched/token.hpp conf.hpp
+										sched/token.hpp conf.hpp sched/buffer.hpp
 
 clean:
 	rm -f meld print *.o vm/*.o \
