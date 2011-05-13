@@ -123,7 +123,8 @@ process/machine.o: process/machine.hpp process/machine.cpp \
 									sched/static_global.hpp \
 									sched/mpi.hpp \
 									sched/static_local.hpp \
-									sched/types.hpp
+									sched/types.hpp \
+									db/database.hpp
 
 process/remote.o: process/remote.hpp process/remote.cpp	\
 									vm/instr.hpp conf.hpp

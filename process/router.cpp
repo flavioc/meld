@@ -50,9 +50,11 @@ router::send(remote *rem, const process_id& proc, const message_set& ms)
    utils::execution_time::scope s(serial_time);
 #endif
 
+   assert(rem != NULL);
+
    const int tag(get_thread_tag(proc));
 
-   const size_t msg_size(ms.storage_size());
+   const size_t msg_size(ms.get_storage_size());
    byte *buf(new byte[msg_size]);
    
    assert(msg_size < MPI_BUF_SIZE);
@@ -187,8 +189,14 @@ router::find_remote(const node::node_id id) const
    if(!use_mpi())
       return remote::self;
       
+   assert(id <= state::DATABASE->max_id());
+   
+   assert(nodes_per_remote > 0);
+   assert(world_size > 1);
+   
    const remote::remote_id rem(min(id / nodes_per_remote, world_size-1));
 
+   //printf("Returning remote %d from id %d\n", rem, id);
    return remote_list[rem];
 #else
    return remote::self;

@@ -66,10 +66,9 @@ database::find_node(const node::node_id id) const
 {
    map_nodes::const_iterator it(nodes.find(id));
    
-   if(it == nodes.end())
-      return NULL;
-   else
-      return it->second;
+   assert(it != nodes.end());
+   
+   return it->second;
 }
 
 void

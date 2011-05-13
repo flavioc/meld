@@ -17,15 +17,23 @@ namespace sched
 void
 buffer::transmit_list(remote *rem, const process_id proc, message_set& ms)
 {
+   assert(rem != NULL);
+   assert(!ms.empty();
+   assert(total > 0);
+   
    ms.size();
    
    --total;
+   
+   assert(ms.get_storage_size() < MPI_BUFFER_THRESHOLD);
    
    reqs.push_back(state::ROUTER->send(rem, proc, ms));
    
 #ifdef DEBUG_REMOTE
    cout << "Sent " << ms.size() << " messages to " << rem->get_rank() << ":" << proc << endl;
 #endif
+   
+   assert(!reqs.empty());
    
    ms.wipeout();
 }
@@ -34,6 +42,9 @@ bool
 buffer::insert(remote *rem, const process_id proc, message* msg)
 {
    map_messages::iterator it(map_rem.find(rem));
+   
+   assert(rem != NULL);
+   assert(msg != NULL);
    
    if(it == map_rem.end()) {
       map_rem[rem] = map_procs();
@@ -50,17 +61,19 @@ buffer::insert(remote *rem, const process_id proc, message* msg)
    }
    
    message_set& ms(it2->second);
+
+   bool transmitted(false);
+   
+   if(ms.get_storage_size() + msg->get_storage_size() >= MPI_BUFFER_THRESHOLD) {
+      transmit_list(rem, proc, ms);
+      transmitted = true;
+   }
    
    if(ms.empty())
       ++total;
-   
    ms.add(msg);
    
-   if(ms.size() >= MPI_BUFFER_THRESHOLD) {
-      transmit_list(rem, proc, ms);
-      return true;
-   } else
-      return false;
+   return transmitted;
 }
 
 size_t

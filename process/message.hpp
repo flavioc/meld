@@ -52,7 +52,7 @@ public:
    db::node::node_id id;
    db::simple_tuple *data;
 
-   const size_t storage_size(void) const
+   const size_t get_storage_size(void) const
    {
       return sizeof(db::node::node_id) + data->storage_size();
    }
@@ -96,16 +96,29 @@ private:
 
    BOOST_SERIALIZATION_SPLIT_MEMBER()
    
+   static const size_t INITIAL_MESSAGE_SIZE = sizeof(unsigned short int); /* size of number of messages */
+      
    list_messages lst;
+   size_t total_size;
    
 public:
    
-   void add(message *msg) { lst.push_back(msg); }
+   void add(message *msg) {
+      lst.push_back(msg);
+      assert(total_size > 0);
+      total_size += msg->get_storage_size();
+      assert(total_size > lst.size());
+   }
    
    inline const size_t size(void) const { return lst.size(); }
-   inline const bool empty(void) const { return lst.empty(); }
    
-   const size_t storage_size(void) const;
+   inline const bool empty(void) const {
+      if(lst.empty())
+         assert(total_size == INITIAL_MESSAGE_SIZE);
+      return lst.empty();
+   }
+   
+   const size_t get_storage_size(void) const { return total_size; }
    
    void pack(utils::byte *, const size_t, MPI_Comm) const;
    
@@ -118,9 +131,13 @@ public:
       for(list_messages::iterator it(lst.begin()); it != lst.end(); ++it)
          message::wipeout(*it);
       lst.clear();
+      total_size = INITIAL_MESSAGE_SIZE;
    }
    
-   explicit message_set(void) {}
+   explicit message_set(void): total_size(INITIAL_MESSAGE_SIZE)
+   {
+      assert(total_size > 0);
+   }
    
    ~message_set(void) {}
 };

@@ -260,6 +260,7 @@ mpi_thread::terminate_iteration(void)
    if(leader_thread())
       token->token_terminate_iteration();
 
+   assert(iteration_finished);
    assert(is_inactive());
 
    generate_aggs();

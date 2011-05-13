@@ -38,17 +38,6 @@ message::unpack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm)
    return new message(id, stpl);
 }
 
-const size_t
-message_set::storage_size(void) const
-{
-   size_t total(sizeof(unsigned short int));
-   
-   for(list_messages::const_iterator it(lst.begin()); it != lst.end(); ++it)
-      total += (*it)->storage_size();
-      
-   return total;
-}
-
 void
 message_set::pack(byte *buf, const size_t buf_size, MPI_Comm comm) const
 {

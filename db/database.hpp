@@ -37,6 +37,7 @@ public:
    map_nodes::iterator get_node_iterator(const node::node_id id) { return nodes.find(id); }
    
    size_t num_nodes(void) const { return nodes.size(); }
+   node::node_id max_id(void) const { return nodes_total - 1; }
    
    node* find_node(const node::node_id) const;
    

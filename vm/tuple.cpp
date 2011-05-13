@@ -18,6 +18,7 @@ namespace vm
 tuple::tuple(const predicate* _pred):
    pred((predicate*)_pred), fields(allocator<tuple_field>().allocate(pred->num_fields())) 
 {
+   assert(pred != NULL);
 }
 
 tuple::tuple(void):
@@ -75,6 +76,8 @@ tuple::operator==(const tuple& other) const
 tuple*
 tuple::copy(void) const
 {
+   assert(pred != NULL);
+   
    tuple *ret(new tuple(get_predicate()));
    
    for(size_t i(0); i < num_fields(); ++i) {
@@ -106,6 +109,8 @@ tuple::copy(void) const
 void
 tuple::print(ostream& cout) const
 {
+   assert(pred != NULL);
+   
    cout << pred_name() << "(";
    
    for(field_num i = 0; i < num_fields(); ++i) {
@@ -275,7 +280,9 @@ tuple::pack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm) const
 {
    const predicate_id id(get_predicate_id());
    
+   assert(*pos <= buf_size);
    MPI_Pack((void*)&id, 1, MPI_UNSIGNED_CHAR, buf, buf_size, pos, comm);
+   assert(*pos <= buf_size);
    
    for(field_num i(0); i < num_fields(); ++i) {
       switch(get_field_type(i)) {
@@ -306,6 +313,7 @@ tuple::pack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm) const
          default:
             throw type_error("unsupported field type to pack");
       }
+      assert(*pos <= buf_size);
    }
 }
 

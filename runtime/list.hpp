@@ -152,6 +152,8 @@ public:
    {
       utils::byte more;
       
+      assert(*pos < buf_size);
+      
       if(is_null(ptr)) {
          more = 0;
          MPI_Pack(&more, 1, MPI_UNSIGNED_CHAR, buf, buf_size, pos, comm);

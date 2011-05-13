@@ -38,6 +38,8 @@ machine::route(process *caller, const node::node_id id, const simple_tuple* stup
    remote* rem(rout.find_remote(id));
    sched::base *sched_caller(caller->get_scheduler());
    
+   assert(id <= state::DATABASE->max_id());
+   
    if(rem == remote::self) {
       // on this machine
       
