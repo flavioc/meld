@@ -72,6 +72,8 @@ public:
    void push(const T item, const size_t prio)
    {
       assert(total >= 0);
+      assert(prio >= 0);
+      assert(prio < leaves.size());
       
       tree_node *node = leaves[prio];
       node->bin.push(item);
@@ -94,7 +96,6 @@ public:
       
       while(!node->is_leaf()) {
          assert(node->counter >= 0);
-         assert(node->counter <= total);
          
          if(node->counter > 0) {
             node->counter--;

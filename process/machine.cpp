@@ -114,8 +114,6 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
    state::NUM_THREADS = num_threads;
    state::MACHINE = this;
    
-   printf("MAX STRAT %d\n", predicate::MAX_STRAT_LEVEL);
-   
    mem::init(num_threads);
    process_list.resize(num_threads);
    
