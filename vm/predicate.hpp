@@ -7,11 +7,13 @@
 
 #include "vm/types.hpp"
 #include "vm/defs.hpp"
+#include "utils/types.hpp"
 
 namespace vm {
 
+const size_t PRED_DESCRIPTOR_BASE_SIZE = 4;
 const size_t PRED_ARGS_MAX = 32;
-const size_t NAME_SIZE_MAX = 32;
+const size_t PRED_NAME_SIZE_MAX = 32;
 
 class predicate {
 private:
@@ -19,6 +21,7 @@ private:
    
    predicate_id id;
    std::string name;
+   strat_level level;
    
    std::vector<field_type> types;
    std::vector<size_t> fields_size;
@@ -39,6 +42,8 @@ private:
    
 public:
    
+   static strat_level MAX_STRAT_LEVEL;
+   
    inline bool is_aggregate(void) const { return agg_info != NULL; }
    
    inline const field_num get_aggregate_field(void) const { return agg_info->field; }
@@ -55,9 +60,11 @@ public:
    
    inline size_t get_size(void) const { return tuple_size; }
    
+   inline strat_level get_strat_level(void) const { return level; }
+   
    void print(std::ostream&) const;
    
-   static predicate* make_predicate_from_buf(unsigned char *buf, code_size_t *code_size);
+   static predicate* make_predicate_from_buf(utils::byte *buf, code_size_t *code_size);
 };
 
 std::ostream& operator<<(std::ostream&, const predicate&);

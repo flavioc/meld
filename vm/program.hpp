@@ -36,6 +36,8 @@ public:
    
    void print_bytecode(std::ostream&) const;
    
+   void print_predicates(std::ostream&) const;
+   
    predicate* get_predicate(const predicate_id&) const;
    
    byte_code get_bytecode(const predicate_id&) const;

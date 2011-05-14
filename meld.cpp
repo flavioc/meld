@@ -2,10 +2,8 @@
 #include <iostream>
 
 #include "process/machine.hpp"
-#include "runtime/list.hpp"
 #include "utils/utils.hpp"
 #include "process/router.hpp"
-#include "db/trie.hpp"
 
 using namespace utils;
 using namespace process;
@@ -127,7 +125,7 @@ read_arguments(int argc, char **argv)
 
 int
 main(int argc, char **argv)
-{  
+{
    read_arguments(argc, argv);
 
    if(program == NULL && sched_type == SCHED_UNKNOWN) {

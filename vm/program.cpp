@@ -18,10 +18,9 @@ using namespace utils;
 
 namespace vm {
 
-static const size_t PREDICATE_DESCRIPTOR_BASE_SIZE = 3;
 static const size_t PREDICATE_DESCRIPTOR_SIZE = sizeof(code_size_t) +
-                                                PREDICATE_DESCRIPTOR_BASE_SIZE +
-                                                PRED_ARGS_MAX + NAME_SIZE_MAX;
+                                                PRED_DESCRIPTOR_BASE_SIZE +
+                                                PRED_ARGS_MAX + PRED_NAME_SIZE_MAX;
 
 program::program(const string& filename)
 {
@@ -105,6 +104,14 @@ program::print_bytecode(ostream& cout) const
            << " (" << code_size[i] << "):" << endl;
       instrs_print(code[i], code_size[i], this, cout);
       cout << "END PROCESS;" << endl;
+   }
+}
+
+void
+program::print_predicates(ostream& cout) const
+{
+   for(size_t i(0); i < num_predicates(); ++i) {
+      cout << *predicates[i] << endl;
    }
 }
 

@@ -22,6 +22,7 @@ typedef byte_code_el* byte_code;
 typedef uint32_t code_size_t;
 typedef code_size_t code_offset_t;
 typedef byte_code pcounter;
+typedef size_t strat_level;
 
 static const ptr_val null_ptr_val = 0;
 

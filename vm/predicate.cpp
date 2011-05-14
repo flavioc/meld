@@ -5,15 +5,17 @@
 
 using namespace std;
 using namespace vm;
+using namespace utils;
 
 namespace vm {
 
 #define PRED_AGG 0x01
 
 predicate_id predicate::current_id = 0;
+strat_level predicate::MAX_STRAT_LEVEL = 0;
 
 predicate*
-predicate::make_predicate_from_buf(unsigned char *buf, code_size_t *code_size)
+predicate::make_predicate_from_buf(byte *buf, code_size_t *code_size)
 {
    predicate *pred = new predicate();
    
@@ -24,7 +26,7 @@ predicate::make_predicate_from_buf(unsigned char *buf, code_size_t *code_size)
    buf += sizeof(code_size_t);
    
    // get predicate properties
-   unsigned char prop = buf[0];
+   byte prop = buf[0];
    if(prop & PRED_AGG)
       pred->agg_info = new predicate::aggregate_info;
    else
@@ -40,6 +42,11 @@ predicate::make_predicate_from_buf(unsigned char *buf, code_size_t *code_size)
    }
    buf++;
    
+   // read stratification level
+   pred->level = (strat_level)buf[0];
+   MAX_STRAT_LEVEL = max(pred->level + 1, MAX_STRAT_LEVEL);
+   buf++;
+
    // read number of fields
    pred->types.resize((size_t)buf[0]);
    buf++;
@@ -102,6 +109,8 @@ predicate::print(ostream& cout) const
    
    if(is_aggregate())
       cout << ",agg";
+      
+   cout << ",strat_level=" << get_strat_level();
    
    cout << "]";
 }

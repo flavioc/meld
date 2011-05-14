@@ -110,7 +110,8 @@ sstatic::end(void)
 
 sstatic::sstatic(const process_id _id):
    base(_id),
-   iteration(0)
+   iteration(0),
+   queue_work()
 {
 }
 

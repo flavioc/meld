@@ -5,6 +5,7 @@
 #include "mem/base.hpp"
 #include "db/node.hpp"
 #include "sched/queue/safe_queue.hpp"
+#include "sched/queue/bounded_pqueue.hpp"
 #include "db/tuple.hpp"
 
 namespace sched
@@ -31,7 +32,8 @@ private:
    static_local *owner;
    bool i_am_on_queue;
    boost::mutex mtx;
-   safe_queue<node_work_unit> queue;
+   bounded_pqueue<node_work_unit> queue;
+   //safe_queue<node_work_unit> queue;
    
 public:
    
@@ -48,7 +50,8 @@ public:
    
    inline void add_work(const db::simple_tuple *tpl, const bool is_agg = false) {
       node_work_unit w = {tpl, is_agg};
-      queue.push(w);
+      //queue.push(w);
+      queue.push(w, tpl->get_strat_level());
    }
    
    inline const bool no_more_work(void) const { return queue.empty(); }
@@ -61,7 +64,8 @@ public:
    explicit thread_node(const db::node::node_id _id, const db::node::node_id _trans):
       db::node(_id, _trans),
       owner(NULL),
-      i_am_on_queue(false) // must be false! node will be added to queue automatically
+      i_am_on_queue(false), // must be false! node will be added to queue automatically
+      queue(vm::predicate::MAX_STRAT_LEVEL)
    {}
    
    virtual ~thread_node(void) { }

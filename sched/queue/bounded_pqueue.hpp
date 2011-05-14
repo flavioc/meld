@@ -6,6 +6,7 @@
 
 #include "sched/queue/safe_queue.hpp"
 #include "utils/atomic.hpp"
+#include "utils/utils.hpp"
 
 namespace sched
 {
@@ -70,6 +71,8 @@ public:
    
    void push(const T item, const size_t prio)
    {
+      assert(total >= 0);
+      
       tree_node *node = leaves[prio];
       node->bin.push(item);
       
@@ -90,15 +93,25 @@ public:
       tree_node *node = root;
       
       while(!node->is_leaf()) {
-         if(node->counter-- > 0)
+         assert(node->counter >= 0);
+         assert(node->counter <= total);
+         
+         if(node->counter > 0) {
+            node->counter--;
             node = node->left;
-         else
+         } else
             node = node->right;
       }
       
+      assert(!node->bin.empty());
+      
       T ret(node->bin.pop());
       
+      assert(total > 0);
+      
       total--;
+      
+      assert(total >= 0);
       
       return ret;
    }
@@ -110,6 +123,10 @@ public:
       
       const size_t number_leaves = utils::next_power2(range);
       
+      /*
+      printf("Range %d number of leaves %d height %d\n",
+         range, number_leaves, utils::upper_log2(number_leaves));
+      */ 
       assert(number_leaves >= range);
       
       leaves.resize(number_leaves);

@@ -37,6 +37,17 @@ T upper_log2(const T n)
       return -1;
 }
 
+template <typename T>
+T next_power2(const T val)
+{
+   T ret(1);
+   
+   while(ret < val)
+      ret <<= 1;
+      
+   return ret;
+}
+
 const size_t random_unsigned(const size_t);
 
 }
