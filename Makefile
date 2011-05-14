@@ -192,7 +192,8 @@ sched/static_local.o: sched/base.hpp sched/static_local.hpp \
 								utils/atomic.hpp \
 								sched/node.hpp sched/queue/unsafe_queue_count.hpp \
 								sched/queue/safe_queue.hpp \
-								sched/threaded.hpp
+								sched/threaded.hpp \
+								sched/queue/bounded_pqueue.hpp
 
 sched/dynamic_local.o: sched/base.hpp sched/static_local.hpp \
 											sched/dynamic_local.hpp sched/dynamic_local.cpp \
@@ -200,7 +201,8 @@ sched/dynamic_local.o: sched/base.hpp sched/static_local.hpp \
 											sched/queue/node.hpp sched/steal_set.hpp \
 											sched/queue/safe_queue.hpp \
 											sched/threaded.hpp \
-											conf.hpp utils/atomic.hpp
+											conf.hpp utils/atomic.hpp \
+											sched/queue/bounded_pqueue.hpp
 
 sched/threaded.o: sched/termination_barrier.hpp \
 									sched/threaded.hpp sched/threaded.cpp \
@@ -211,7 +213,8 @@ sched/tokenizer.o: sched/token.hpp sched/tokenizer.cpp \
 
 sched/mpi_thread.o: sched/mpi_thread.hpp sched/mpi_thread.cpp \
 										sched/tokenizer.hpp sched/dynamic_local.hpp \
-										sched/token.hpp conf.hpp sched/buffer.hpp
+										sched/token.hpp conf.hpp sched/buffer.hpp \
+										sched/queue/bounded_pqueue.hpp
 
 clean:
 	rm -f meld print *.o vm/*.o \

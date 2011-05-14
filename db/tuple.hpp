@@ -44,6 +44,11 @@ private:
 public:
 
    inline vm::tuple* get_tuple(void) const { return data; }
+   
+   inline vm::strat_level get_strat_level(void) const
+   {
+      return get_tuple()->get_predicate()->get_strat_level();
+   }
 
    void print(std::ostream&) const;
 
