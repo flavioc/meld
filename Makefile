@@ -77,13 +77,16 @@ OBJS = utils/utils.o \
 			 sched/tokenizer.o \
 			 sched/mpi_thread.o
 
-all: meld print
+all: meld print predicates
 
 meld: $(OBJS) meld.o
 	$(COMPILE) meld.o -o meld
 
 print: $(OBJS) print.o
 	$(COMPILE) print.o -o print
+
+predicates: $(OBJS) predicates.o
+	$(COMPILE) predicates.o -o predicates
 
 meld.o: meld.cpp utils/utils.hpp process/machine.hpp \
 				process/router.hpp sched/base.hpp sched/static_global.hpp \

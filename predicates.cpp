@@ -12,7 +12,7 @@ int
 main(int argc, char **argv)
 {
    if(argc != 2) {
-      fprintf(stderr, "usage: print <bytecode file>\n");
+      fprintf(stderr, "usage: predicates <bytecode file>\n");
       return EXIT_FAILURE;
    }
    
@@ -20,7 +20,7 @@ main(int argc, char **argv)
    
    program prog(file);
    
-   prog.print_bytecode(cout);
+   prog.print_predicates(cout);
    
    return EXIT_SUCCESS;
 }
