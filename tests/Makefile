@@ -2,9 +2,9 @@
 VM = ../meld -d -f
 
 all:
-	@echo "Type 'make tests' to test. Or type 'make compiled' to recompile tests."
+	@echo "Type 'make test' to test. Or type 'make compiled' to recompile tests."
 
-tests:
+test:
 	@for file in code/*.m; do \
 		./test.sh $$file || exit 1; \
 	done

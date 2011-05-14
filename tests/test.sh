@@ -14,15 +14,16 @@ do_exit ()
 
 do_test ()
 {
-	NTHREADS=$1
-	TO_RUN="${EXEC} -f ${TEST} -c ts${NTHREADS}"
+	NTHREADS=${1}
+	SCHED=${2}
+	TO_RUN="${EXEC} -f ${TEST} -c ${SCHED}${NTHREADS}"
 
 	${TO_RUN} > test.out
 
 	DIFF=`diff -u test.out ${FILE}`
 	if [ ! -z "${DIFF}" ]; then
 		echo "DIFFERENCES!!!"
-		echo ${DIFF}
+		diff -u test.out ${FILE}
 		exit 1
 	fi
 	rm test.out
@@ -32,20 +33,29 @@ run_test_n ()
 {
 	NTHREADS=${1}
 	TIMES=${2}
-	echo "Running ${TEST} ${TIMES} times with ${NTHREADS} threads..."
+	SCHED=${3}
+	echo "Running ${TEST} ${TIMES} times with ${NTHREADS} threads (SCHED: ${SCHED})..."
 	for((I=1; I <= ${TIMES}; I++)); do
-		do_test ${NTHREADS}
+		do_test ${NTHREADS} ${SCHED}
 	done
 }
 
 [ -f "${TEST}" ] || do_exit "Test code ${TEST} not found"
 [ -f "${FILE}" ] || do_exit "Test file ${FILE} not found"
 
-run_test_n 1 2
-run_test_n 2 5
-if [ $NODES -gt 2 ]; then
-	run_test_n 3 5
-fi
-if [ $NODES -gt 3 ]; then
-	run_test_n 4 5
-fi
+loop_sched ()
+{
+	SCHED=${1}
+	run_test_n 1 2 ${SCHED}
+	run_test_n 2 3 ${SCHED}
+	if [ $NODES -gt 2 ]; then
+		run_test_n 3 3 ${SCHED}
+	fi
+	if [ $NODES -gt 3 ]; then
+		run_test_n 4 3 ${SCHED}
+	fi
+}
+
+loop_sched ts
+loop_sched tl
+loop_sched td
