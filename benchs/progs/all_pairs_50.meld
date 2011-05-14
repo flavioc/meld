@@ -1,0 +1,3 @@
+
+include #data/all_pairs_50.meld
+include #sources/all_pairs.meld

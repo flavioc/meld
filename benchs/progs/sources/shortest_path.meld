@@ -1,0 +1,10 @@
+
+type path(node, min int, list node).
+
+path(A, W, [A, B]) :-
+	edge(A, B, W),
+	end(B).
+
+path(A, D + W, [A | P]) :-
+	edge(A, B, W),
+	path(B, D, P).

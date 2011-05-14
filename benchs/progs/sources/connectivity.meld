@@ -1,0 +1,9 @@
+
+type path(node, node).
+   
+path(A, B) :- edge(A, B).
+path(A, B) :- edge(A, C), path(C, B).
+
+edge(@1, @2).
+edge(@2, @3).
+
