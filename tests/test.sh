@@ -41,11 +41,11 @@ run_test_n ()
 [ -f "${TEST}" ] || do_exit "Test code ${TEST} not found"
 [ -f "${FILE}" ] || do_exit "Test file ${FILE} not found"
 
-run_test_n 1 10
-run_test_n 2 10
+run_test_n 1 2
+run_test_n 2 5
 if [ $NODES -gt 2 ]; then
-	run_test_n 3 10
+	run_test_n 3 5
 fi
 if [ $NODES -gt 3 ]; then
-	run_test_n 4 10
+	run_test_n 4 5
 fi

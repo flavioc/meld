@@ -32,6 +32,8 @@ get_node_val(pcounter& m, state& state)
    const node_val ret(pcounter_node(m));
    
    pcounter_move_node(&m);
+
+   assert(ret <= state::DATABASE->max_id());
    
    return ret;
 }
@@ -195,7 +197,7 @@ execute_send(const pcounter& pc, state& state)
    const node_val dest_val(state.get_node(dest));
    tuple *tuple(state.get_tuple(msg));
    const simple_tuple *stuple(new simple_tuple(tuple, state.count));
-   
+
    if(msg == dest)
       state::MACHINE->route_self(state.proc, state.node, stuple);
    else

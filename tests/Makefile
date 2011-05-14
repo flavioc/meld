@@ -1,7 +1,8 @@
 
 VM = ../meld -d -f
 
-all: tests
+all:
+	@echo "Type 'make tests' to test. Or type 'make compiled' to recompile tests."
 
 tests:
 	@for file in code/*.m; do \
@@ -9,8 +10,6 @@ tests:
 	done
 
 compiled:
-	for file in progs/*.meld; do \
-		name=`basename $$file .meld`; \
-		compile-file $(PWD)/$$file $(PWD)/code/$$name; \
-	done
-	rm -f code/*.ast code/*.code
+	@mkdir -p code
+	@compile-directory progs code
+	@rm -f code/*.ast code/*.code
