@@ -4,11 +4,15 @@
 
 #include <cstdlib>
 
+/* when this is active we active a more strict debugging of threads */
+#define ASSERT_THREADS 1
+
+/* when this is active the allocator checks for allocate/dealloc correctness */
 //#define ALLOCATOR_ASSERT 1
+
 //#define DEBUG_SAFRAS 1
 //#define DEBUG_REMOTE 1
 //#define DEBUG_ACTIVE 1
-// #define ASSERT_THREADS 1
 //#define DEBUG_SERIALIZATION_TIME 1
 
 /* use memory pools for each thread or not */

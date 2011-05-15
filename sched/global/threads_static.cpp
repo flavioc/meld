@@ -7,6 +7,7 @@
 #include "vm/state.hpp"
 #include "process/machine.hpp"
 #include "sched/thread/termination_barrier.hpp"
+#include "sched/thread/assert.hpp"
 
 using namespace boost;
 using namespace vm;
@@ -186,24 +187,7 @@ static_global::terminate_iteration(void)
    if(has_work())
       set_active();
    
-#ifdef ASSERT_THREADS
-   static boost::mutex local_mtx;
-   static vector<size_t> total;
-   
-   local_mtx.lock();
-   
-   total.push_back(iteration);
-   
-   if(total.size() == state::NUM_THREADS) {
-      for(size_t i(0); i < state::NUM_THREADS; ++i) {
-         assert(total[i] == iteration);
-      }
-      
-      total.clear();
-   }
-   
-   local_mtx.unlock();
-#endif
+   assert_thread_iteration(iteration);
    
    // again, needed since we must wait if any thread
    // is set to active in the previous if

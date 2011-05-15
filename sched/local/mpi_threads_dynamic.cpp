@@ -3,6 +3,7 @@
 #include "vm/state.hpp"
 #include "process/router.hpp"
 #include "utils/utils.hpp"
+#include "sched/thread/assert.hpp"
 
 using namespace std;
 using namespace vm;
@@ -273,6 +274,8 @@ mpi_thread::terminate_iteration(void)
 
    if(has_work())
       set_active();
+      
+   assert_thread_iteration(iteration);
 
    // again, needed since we must wait if any thread
    // is set to active in the previous if

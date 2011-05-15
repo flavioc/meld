@@ -75,6 +75,7 @@ OBJS = utils/utils.o \
 			 sched/local/threads_dynamic.o \
 			 sched/thread/threaded.o \
 			 sched/thread/queue_buffer.o \
+			 sched/thread/assert.o \
 			 sched/mpi/tokenizer.o \
 			 sched/local/mpi_threads_dynamic.o
 
@@ -186,7 +187,8 @@ sched/global/threads_static.o: sched/global/threads_static.cpp \
 								sched/queue/safe_queue.hpp \
 								sched/thread/termination_barrier.hpp \
 								utils/atomic.hpp \
-								sched/thread/queue_buffer.hpp
+								sched/thread/queue_buffer.hpp \
+								sched/thread/assert.hpp
 
 sched/global/mpi.o: sched/global/mpi.hpp sched/global/mpi.cpp \
 						sched/base.hpp sched/global/static.hpp \
@@ -200,7 +202,8 @@ sched/local/threads_static.o: sched/base.hpp sched/local/threads_static.hpp \
 								sched/thread/node.hpp sched/queue/unsafe_queue_count.hpp \
 								sched/queue/safe_queue.hpp \
 								sched/thread/threaded.hpp \
-								sched/queue/bounded_pqueue.hpp
+								sched/queue/bounded_pqueue.hpp \
+								sched/thread/assert.hpp
 
 sched/local/threads_dynamic.o: sched/base.hpp sched/local/threads_static.hpp \
 											sched/local/threads_dynamic.hpp \
@@ -210,7 +213,8 @@ sched/local/threads_dynamic.o: sched/base.hpp sched/local/threads_static.hpp \
 											sched/queue/safe_queue.hpp \
 											sched/thread/threaded.hpp \
 											conf.hpp utils/atomic.hpp \
-											sched/queue/bounded_pqueue.hpp
+											sched/queue/bounded_pqueue.hpp \
+											sched/thread/assert.hpp
 
 sched/thread/threaded.o: sched/thread/termination_barrier.hpp \
 									sched/thread/threaded.hpp sched/thread/threaded.cpp \
@@ -219,6 +223,9 @@ sched/thread/threaded.o: sched/thread/termination_barrier.hpp \
 sched/thread/queue_buffer.o: sched/thread/queue_buffer.hpp \
 														sched/thread/queue_buffer.cpp \
 														vm/predicate.hpp
+
+sched/thread/assert.o: sched/thread/assert.hpp \
+											sched/thread/assert.cpp
 
 sched/mpi/tokenizer.o: sched/mpi/token.hpp sched/mpi/tokenizer.cpp \
 									 sched/mpi/tokenizer.hpp process/remote.hpp
