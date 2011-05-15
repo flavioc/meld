@@ -4,7 +4,7 @@
 
 #include "sched/local/threads_dynamic.hpp"
 #include "sched/mpi/tokenizer.hpp"
-#include "sched/mpi/buffer.hpp"
+#include "sched/mpi/message_buffer.hpp"
 
 namespace sched
 {
@@ -20,7 +20,7 @@ private:
    
    utils::byte _pad_mpi_thread2[128];
    
-   buffer msg_buf;
+   message_buffer msg_buf;
    
    void fetch_work(void);
    
@@ -37,7 +37,7 @@ public:
    inline const bool leader_thread(void) const { return get_id() == 0; }
    
    virtual bool get_work(work_unit&);
-   virtual void new_work_remote(process::remote *, const db::node::node_id, process::message *);
+   virtual void new_work_remote(process::remote *, const db::node::node_id, message *);
    
    static std::vector<sched::base*>& start(const size_t);
    

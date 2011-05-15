@@ -16,9 +16,9 @@
 #include "db/tuple.hpp"
 #include "db/node.hpp"
 #include "vm/defs.hpp"
-#include "process/message.hpp"
 #include "utils/time.hpp"
 #include "utils/types.hpp"
+#include "sched/mpi/message.hpp"
 #include "sched/mpi/request.hpp"
 #include "sched/mpi/token.hpp"
 
@@ -83,11 +83,11 @@ public:
 
    inline void barrier(void) { world->barrier(); }
    
-   pair_req send(remote *, const vm::process_id&, const message_set&);
+   sched::pair_req send(remote *, const vm::process_id&, const sched::message_set&);
    
-   void check_requests(vector_reqs&, const bool);
+   void check_requests(sched::vector_reqs&, const bool);
    
-   message_set* recv_attempt(const vm::process_id);
+   sched::message_set* recv_attempt(const vm::process_id);
 
    void send_token(const sched::token&);
    

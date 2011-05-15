@@ -1,6 +1,6 @@
 
-#ifndef PROCESS_MESSAGE_HPP
-#define PROCESS_MESSAGE_HPP
+#ifndef SCHED_MPI_MESSAGE_HPP
+#define SCHED_MPI_MESSAGE_HPP
 
 #include "conf.hpp"
 
@@ -20,7 +20,7 @@
 #include "mem/base.hpp"
 #include "utils/types.hpp"
 
-namespace process
+namespace sched
 {
    
 #ifdef COMPILE_MPI
@@ -146,6 +146,6 @@ public:
 
 }
 
-BOOST_CLASS_TRACKING(process::message, boost::serialization::track_never)
+BOOST_CLASS_TRACKING(sched::message, boost::serialization::track_never)
 
 #endif

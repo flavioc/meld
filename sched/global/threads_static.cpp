@@ -16,16 +16,6 @@ using namespace std;
 
 namespace sched
 {
-  
-bool
-static_global::all_buffers_emptied(void) const
-{
-   for(process_id i(0); i < (process_id)buffered_work.size(); ++i) {
-      if(!buffered_work[i].empty())
-         return false;
-   }
-   return true;
-}
 
 void
 static_global::new_work(node *from, node *to, const simple_tuple *tpl, const bool is_agg)
@@ -44,16 +34,12 @@ static_global::new_work_other(sched::base *scheduler, node *node, const simple_t
    assert(stuple != NULL);
    assert(scheduler != NULL);
    
-   static const size_t WORK_THRESHOLD(20);
-   
    static_global *other((static_global*)scheduler);
    work_unit work = {node, stuple, false};
-   queue_free_work& q(buffered_work[other->id]);
+   const process_id other_id(other->id);
    
-   q.push(work, stuple->get_strat_level());
-   
-   if(q.size() > WORK_THRESHOLD)
-      flush_this_queue(q, other);
+   if(buf.push(other_id, work))
+      flush_queue(other_id, other);
 }
 
 void
@@ -67,7 +53,7 @@ static_global::assert_end_iteration(void) const
 {
    sstatic::assert_end_iteration();
    assert(is_inactive());
-   assert(all_buffers_emptied());
+   assert(buf.empty());
    assert(all_threads_finished());
 }
 
@@ -76,15 +62,18 @@ static_global::assert_end(void) const
 {
    sstatic::assert_end();
    assert(is_inactive());
-   assert(all_buffers_emptied());
+   assert(buf.empty());
    assert(all_threads_finished());
 }
 
 void
-static_global::flush_this_queue(queue_free_work& q, static_global *other)
+static_global::flush_queue(const process_id id, static_global *other)
 {
+   queue_buffer::queue& q(buf.get_queue(id));
+   
    assert(this != other);
    assert(is_active());
+   assert(!q.empty());
    
    other->queue_work.snap(q);
    
@@ -94,20 +83,20 @@ static_global::flush_this_queue(queue_free_work& q, static_global *other)
          other->set_active();
    }
    
-   q.clear();
+   buf.clear_queue(id);
 }
 
 void
 static_global::flush_buffered(void)
 {
-   for(process_id i(0); i < (process_id)buffered_work.size(); ++i) {
-      if(i != id) {
-         queue_free_work& q(buffered_work[i]);
-         if(!q.empty()) {
-            assert(is_active());
-            flush_this_queue(q, (static_global*)ALL_THREADS[i]);
-         }
-      }
+   if(buf.empty())
+      return;
+      
+   assert(is_active());
+   
+   for(process_id i(0); i < (process_id)state::NUM_THREADS; ++i) {
+      if(i != id && !buf.empty(i))
+         flush_queue(i, (static_global*)ALL_THREADS[i]);
    }
 }
    
@@ -118,11 +107,11 @@ static_global::busy_wait(void)
    
    flush_buffered();
    
-   while(queue_work.empty()) {
+   while(!has_work()) {
       
       if(!turned_inactive) {
          mutex::scoped_lock l(mutex);
-         if(queue_work.empty()) {
+         if(!has_work()) {
             if(is_active()) // may be inactive from the previous iteration
                set_inactive();
             turned_inactive = true;
@@ -141,7 +130,7 @@ static_global::busy_wait(void)
    set_active_if_inactive();
    
    assert(is_active());
-   assert(!queue_work.empty());
+   assert(has_work());
    
    return true;
 }
@@ -161,18 +150,15 @@ void
 static_global::work_found(void)
 {
    assert(is_active());
-   assert(!queue_work.empty());
+   assert(has_work());
 }
 
 void
 static_global::init(const size_t num_threads)
 {
    sstatic::init(num_threads);
-   
-   // init buffered queues
-   for(size_t i(0); i < num_threads; ++i)
-      buffered_work.push_back(queue_free_work(vm::predicate::MAX_STRAT_LEVEL));
-   
+   buf.init(num_threads);
+      
    assert(is_active());
 }
 
@@ -194,14 +180,13 @@ static_global::terminate_iteration(void)
    
    sstatic::terminate_iteration();
    
-   assert(all_buffers_emptied());
+   assert(buf.empty());
    assert(is_inactive());
    
    generate_aggs();
    
-   if(!queue_work.empty()) {
+   if(has_work())
       set_active();
-   }
    
 #ifdef ASSERT_THREADS
    static boost::mutex local_mtx;

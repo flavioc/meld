@@ -24,16 +24,12 @@ protected:
    
    safe_bounded_pqueue<work_unit>::type queue_work;
    
+   inline const bool has_work(void) const { return !queue_work.empty(); }
    virtual void assert_end_iteration(void) const;
-   
    virtual void assert_end(void) const;
-   
    virtual bool busy_wait(void) = 0;
-   
    virtual void begin_get_work(void) = 0;
-   
    virtual void work_found(void) = 0;
-   
    virtual void generate_aggs(void);
    
 public:
@@ -41,7 +37,7 @@ public:
    virtual void new_work(db::node *, db::node *, const db::simple_tuple*, const bool is_agg = false);
    virtual void new_work_agg(db::node *, const db::simple_tuple*);
    virtual void new_work_other(sched::base *, db::node *, const db::simple_tuple *) = 0;
-   virtual void new_work_remote(process::remote *, const db::node::node_id, process::message *) = 0;
+   virtual void new_work_remote(process::remote *, const db::node::node_id, sched::message *) = 0;
    
    virtual bool get_work(work_unit&);
    virtual void finish_work(const work_unit&) {};

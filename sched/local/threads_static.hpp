@@ -9,6 +9,7 @@
 #include "sched/thread/node.hpp"
 #include "sched/queue/safe_queue.hpp"
 #include "sched/thread/threaded.hpp"
+#include "sched/thread/queue_buffer.hpp"
 
 namespace sched
 {
@@ -48,7 +49,7 @@ public:
    
    virtual void new_work(db::node *, db::node *, const db::simple_tuple*, const bool is_agg = false);
    virtual void new_work_other(sched::base *, db::node *, const db::simple_tuple *);
-   virtual void new_work_remote(process::remote *, const db::node::node_id, process::message *);
+   virtual void new_work_remote(process::remote *, const db::node::node_id, message *);
    
    virtual bool get_work(work_unit&);
    virtual void finish_work(const work_unit&);

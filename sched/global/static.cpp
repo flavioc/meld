@@ -32,19 +32,19 @@ sstatic::new_work_agg(node *node, const simple_tuple *tpl)
 void
 sstatic::assert_end_iteration(void) const
 {
-   assert(queue_work.empty());
+   assert(!has_work());
 }
 
 void
 sstatic::assert_end(void) const
 {
-   assert(queue_work.empty());
+   assert(!has_work());
 }
 
 bool
 sstatic::get_work(work_unit& work)
 {  
-   if(queue_work.empty()) {
+   if(!has_work()) {
       if(!busy_wait())
          return false;
 

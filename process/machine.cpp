@@ -5,7 +5,7 @@
 #include "vm/state.hpp"
 #include "process/process.hpp"
 #include "runtime/list.hpp"
-#include "process/message.hpp"
+#include "sched/mpi/message.hpp"
 #include "mem/thread.hpp"
 
 using namespace process;
@@ -13,6 +13,7 @@ using namespace db;
 using namespace std;
 using namespace vm;
 using namespace boost;
+using namespace sched;
 
 namespace process
 {

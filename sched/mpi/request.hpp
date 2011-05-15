@@ -10,7 +10,7 @@
 #include <list>
 #include <boost/mpi/request.hpp>
 
-namespace process
+namespace sched
 {
 
 typedef std::pair<boost::mpi::request, utils::byte*> pair_req;

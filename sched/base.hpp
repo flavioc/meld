@@ -6,7 +6,7 @@
 
 #include "db/tuple.hpp"
 #include "db/node.hpp"
-#include "process/message.hpp"
+#include "sched/mpi/message.hpp"
 
 namespace process {
    class remote;
@@ -31,7 +31,7 @@ public:
    
    virtual void new_work(db::node *, db::node *, const db::simple_tuple *, const bool is_agg = false) = 0;
    virtual void new_work_other(sched::base *, db::node *, const db::simple_tuple *) = 0;
-   virtual void new_work_remote(process::remote *, const db::node::node_id, process::message *) = 0;
+   virtual void new_work_remote(process::remote *, const db::node::node_id, sched::message *) = 0;
    
    virtual void init(const size_t) = 0;
    virtual void end(void) = 0;

@@ -64,16 +64,17 @@ OBJS = utils/utils.o \
 			 process/router.o \
 			 vm/state.o \
 			 vm/tuple.o vm/exec.o \
-			 process/message.o \
+			 sched/mpi/message.o \
 			 mem/thread.o \
 			 db/trie.o \
-			 sched/mpi/buffer.o \
+			 sched/mpi/message_buffer.o \
 			 sched/global/static.o \
 			 sched/global/threads_static.o \
 			 sched/global/mpi.o \
 			 sched/local/threads_static.o \
 			 sched/local/threads_dynamic.o \
 			 sched/thread/threaded.o \
+			 sched/thread/queue_buffer.o \
 			 sched/mpi/tokenizer.o \
 			 sched/local/mpi_threads_dynamic.o
 
@@ -88,8 +89,8 @@ print: $(OBJS) print.o
 predicates: $(OBJS) predicates.o
 	$(COMPILE) predicates.o -o predicates
 
-meld.o: meld.cpp utils/utils.hpp process/machine.hpp \
-				process/router.hpp sched/base.hpp sched/global/threads_static.hpp \
+meld.o: meld.cpp process/machine.hpp \
+				process/router.hpp \
 				sched/types.hpp
 
 print.o: print.cpp vm/program.hpp
@@ -116,12 +117,12 @@ db/database.o: db/database.cpp db/database.hpp vm/instr.hpp \
 							db/node.hpp
 
 process/process.o: process/process.cpp process/process.hpp vm/instr.hpp \
-									db/node.hpp sched/mpi/buffer.hpp
+									db/node.hpp sched/mpi/message_buffer.hpp
 
 process/machine.o: process/machine.hpp process/machine.cpp \
 									vm/state.hpp process/remote.hpp process/process.hpp \
 									vm/instr.hpp conf.hpp \
-									process/message.hpp \
+									sched/mpi/message.hpp \
 									sched/global/static.hpp \
 									sched/global/threads_static.hpp \
 									sched/global/mpi.hpp \
@@ -151,13 +152,13 @@ vm/exec.o: vm/exec.cpp vm/exec.hpp process/process.hpp	\
 
 process/router.o: process/router.hpp process/router.cpp \
 									process/remote.hpp \
-									process/message.hpp \
 									utils/time.hpp \
+									sched/mpi/message.hpp \
 									sched/mpi/request.hpp \
 									sched/mpi/token.hpp \
 									conf.hpp
 
-process/message.o: process/message.cpp process/message.hpp \
+sched/mpi/message.o: sched/mpi/message.cpp sched/mpi/message.hpp \
 									db/node.hpp db/tuple.hpp
 
 mem/thread.o: mem/thread.cpp mem/thread.hpp \
@@ -170,8 +171,9 @@ db/trie.o: db/trie.cpp db/trie.hpp \
 vm/types.o: vm/types.hpp vm/types.hpp \
 						utils/utils.hpp
 
-sched/mpi/buffer.o: sched/mpi/buffer.hpp sched/mpi/buffer.cpp \
-									process/message.hpp sched/mpi/request.hpp
+sched/mpi/message_buffer.o: sched/mpi/message_buffer.hpp \
+									sched/mpi/message_buffer.cpp \
+									sched/mpi/message.hpp sched/mpi/request.hpp
 
 sched/global/static.o: sched/global/static.cpp sched/global/static.hpp \
 								sched/base.hpp
@@ -183,12 +185,13 @@ sched/global/threads_static.o: sched/global/threads_static.cpp \
 								sched/queue/unsafe_queue_count.hpp \
 								sched/queue/safe_queue.hpp \
 								sched/thread/termination_barrier.hpp \
-								utils/atomic.hpp
+								utils/atomic.hpp \
+								sched/thread/queue_buffer.hpp
 
 sched/global/mpi.o: sched/global/mpi.hpp sched/global/mpi.cpp \
 						sched/base.hpp sched/global/static.hpp \
 						sched/mpi/token.hpp sched/mpi/tokenizer.hpp \
-						conf.hpp sched/mpi/buffer.hpp
+						conf.hpp sched/mpi/message_buffer.hpp
 
 sched/local/threads_static.o: sched/base.hpp sched/local/threads_static.hpp \
 								sched/local/threads_static.cpp sched/queue/node.hpp \
@@ -213,13 +216,17 @@ sched/thread/threaded.o: sched/thread/termination_barrier.hpp \
 									sched/thread/threaded.hpp sched/thread/threaded.cpp \
 									utils/atomic.hpp
 
+sched/thread/queue_buffer.o: sched/thread/queue_buffer.hpp \
+														sched/thread/queue_buffer.cpp \
+														vm/predicate.hpp
+
 sched/mpi/tokenizer.o: sched/mpi/token.hpp sched/mpi/tokenizer.cpp \
 									 sched/mpi/tokenizer.hpp process/remote.hpp
 
 sched/local/mpi_threads_dynamic.o: sched/local/mpi_threads_dynamic.hpp \
 										sched/local/mpi_threads_dynamic.cpp \
 										sched/mpi/tokenizer.hpp sched/local/threads_dynamic.hpp \
-										sched/mpi/token.hpp conf.hpp sched/mpi/buffer.hpp \
+										sched/mpi/token.hpp conf.hpp sched/mpi/message_buffer.hpp \
 										sched/queue/bounded_pqueue.hpp
 
 clean:
@@ -230,6 +237,7 @@ clean:
 		sched/mpi/*.o \
 		sched/queue/*.o \
 		sched/global/*.o \
+		sched/thread/*.o \
 		sched/local/*.o
 
 re: clean all

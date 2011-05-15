@@ -124,7 +124,7 @@ mpi_static::busy_wait(void)
    transmit_messages();
    fetch_work();
    
-   while(queue_work.empty()) {
+   while(!has_work()) {
 
       update_pending_messages();
 
@@ -137,7 +137,7 @@ mpi_static::busy_wait(void)
       fetch_work();
    }
    
-   assert(!queue_work.empty());
+   assert(has_work());
    
    return true;
 }
@@ -162,7 +162,7 @@ mpi_static::terminate_iteration(void)
    
    ++iteration;
    
-   const bool ret(state::ROUTER->reduce_continue(!queue_work.empty()));
+   const bool ret(state::ROUTER->reduce_continue(has_work()));
    
    return ret;
 }

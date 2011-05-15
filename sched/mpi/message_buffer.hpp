@@ -1,16 +1,16 @@
 
-#ifndef SCHED_MPI_BUFFER_HPP
-#define SCHED_MPI_BUFFER_HPP
+#ifndef SCHED_MPI_MESSAGE_BUFFER_HPP
+#define SCHED_MPI_MESSAGE_BUFFER_HPP
 
 #include <list>
 #ifdef COMPILE_MPI
 #include <boost/mpi.hpp>
 #endif
 
-#include "process/message.hpp"
 #include "vm/defs.hpp"
 #include "mem/base.hpp"
 #include "utils/types.hpp"
+#include "sched/mpi/message.hpp"
 #include "sched/mpi/request.hpp"
 
 namespace process
@@ -23,20 +23,20 @@ namespace sched
 
 #ifdef COMPILE_MPI
 
-class buffer: public mem::base<buffer>
+class message_buffer: public mem::base<message_buffer>
 {
 private:
    
-   typedef std::map<vm::process_id, process::message_set, std::less<vm::process_id>,
-      mem::allocator< std::pair<vm::process_id, process::message_set> > > map_procs;
+   typedef std::map<vm::process_id, message_set, std::less<vm::process_id>,
+      mem::allocator< std::pair<vm::process_id, message_set> > > map_procs;
    typedef std::map<process::remote*, map_procs, std::less<process::remote*>,
       mem::allocator< std::pair<process::remote*, map_procs> > > map_messages;
    
    map_messages map_rem;
-   process::vector_reqs reqs;
+   vector_reqs reqs;
    size_t total;
    
-   void transmit_list(process::remote *, const vm::process_id, process::message_set&);
+   void transmit_list(process::remote *, const vm::process_id, message_set&);
    
 public:
    
@@ -46,13 +46,13 @@ public:
    
    void update_received(const bool);
    
-   bool insert(process::remote *, const vm::process_id, process::message *);
+   bool insert(process::remote *, const vm::process_id, message *);
    
    size_t transmit(void);
    
-   explicit buffer(void): total(0) {}
+   explicit message_buffer(void): total(0) {}
    
-   ~buffer(void) {}
+   ~message_buffer(void) {}
 };
 #endif
 

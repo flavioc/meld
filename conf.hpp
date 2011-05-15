@@ -36,5 +36,7 @@ const size_t MAX_ASK_STEAL(3);
 const size_t MAX_SEND_PER_TIME(10);
 /* if a message buffer reaches this size, the buffer is sent */
 const size_t MPI_BUFFER_THRESHOLD(MPI_BUF_SIZE);
+/* threshold to use in global/threads_static to flush work to other threads */
+const size_t THREADS_GLOBAL_WORK_FLUSH(20);
 
 #endif

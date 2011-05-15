@@ -1,7 +1,7 @@
 
 #include <iostream>
 
-#include "sched/mpi/buffer.hpp"
+#include "sched/mpi/message_buffer.hpp"
 #include "vm/state.hpp"
 #include "process/router.hpp"
 #include "conf.hpp"
@@ -15,7 +15,7 @@ namespace sched
    
 #ifdef COMPILE_MPI
 void
-buffer::transmit_list(remote *rem, const process_id proc, message_set& ms)
+message_buffer::transmit_list(remote *rem, const process_id proc, message_set& ms)
 {
    assert(rem != NULL);
    assert(!ms.empty());
@@ -39,7 +39,7 @@ buffer::transmit_list(remote *rem, const process_id proc, message_set& ms)
 }
 
 bool
-buffer::insert(remote *rem, const process_id proc, message* msg)
+message_buffer::insert(remote *rem, const process_id proc, message* msg)
 {
    map_messages::iterator it(map_rem.find(rem));
    
@@ -77,7 +77,7 @@ buffer::insert(remote *rem, const process_id proc, message* msg)
 }
 
 size_t
-buffer::transmit(void)
+message_buffer::transmit(void)
 {
    if(total > 0) {
       const size_t ret(total);
@@ -102,7 +102,7 @@ buffer::transmit(void)
 }
 
 void
-buffer::update_received(const bool test)
+message_buffer::update_received(const bool test)
 {
    if(!reqs.empty()) {
 #ifdef DEBUG_REMOTE

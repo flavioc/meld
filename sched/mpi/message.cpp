@@ -1,12 +1,11 @@
 
-#include "process/message.hpp"
+#include "sched/mpi/message.hpp"
 
 using namespace std;
-using namespace process;
 using namespace utils;
 using namespace db;
 
-namespace process
+namespace sched
 {
 
 #ifdef COMPILE_MPI

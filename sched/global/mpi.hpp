@@ -3,7 +3,7 @@
 #define SCHED_GLOBAL_MPI_HPP
 
 #include "sched/global/static.hpp"
-#include "sched/mpi/buffer.hpp"
+#include "sched/mpi/message_buffer.hpp"
 #include "sched/mpi/tokenizer.hpp"
 
 namespace sched
@@ -16,12 +16,12 @@ class mpi_static: public sched::sstatic,
 {
 private:
    
-	 size_t step_fetch;
+	size_t step_fetch;
    size_t round_trip_fetch;
    size_t round_trip_update;
    size_t round_trip_send;
    
-   buffer msg_buf;
+   message_buffer msg_buf;
    
    void update_pending_messages(void);
    void fetch_work(void);
@@ -37,7 +37,7 @@ public:
    virtual void begin_get_work(void);
    
    virtual void new_work_other(sched::base *, db::node *, const db::simple_tuple *);
-   virtual void new_work_remote(process::remote *, const db::node::node_id, process::message *);
+   virtual void new_work_remote(process::remote *, const db::node::node_id, message *);
    
    mpi_static *find_scheduler(const db::node::node_id);
    
