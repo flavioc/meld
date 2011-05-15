@@ -79,13 +79,6 @@ sstatic::generate_aggs(void)
    }
 }
 
-bool
-sstatic::terminate_iteration(void)
-{
-   ++iteration;
-   return true;
-}
-
 void
 sstatic::init(const size_t)
 {
@@ -110,7 +103,6 @@ sstatic::end(void)
 
 sstatic::sstatic(const process_id _id):
    base(_id),
-   iteration(0),
    queue_work(vm::predicate::MAX_STRAT_LEVEL)
 {
 }

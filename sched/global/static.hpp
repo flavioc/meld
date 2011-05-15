@@ -18,10 +18,6 @@ protected:
    
    utils::byte _pad1[128];
    
-   size_t iteration;
-   
-   utils::byte _pad2[128];
-   
    safe_bounded_pqueue<work_unit>::type queue_work;
    
    inline const bool has_work(void) const { return !queue_work.empty(); }
@@ -44,7 +40,7 @@ public:
    
    virtual void init(const size_t);
    virtual void end(void);
-   virtual bool terminate_iteration(void);
+   virtual bool terminate_iteration(void) = 0;
    
    virtual sstatic *find_scheduler(const db::node::node_id) = 0;
    

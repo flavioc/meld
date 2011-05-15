@@ -178,8 +178,6 @@ static_global::terminate_iteration(void)
    
    threads_synchronize();
    
-   sstatic::terminate_iteration();
-   
    assert(buf.empty());
    assert(is_inactive());
    

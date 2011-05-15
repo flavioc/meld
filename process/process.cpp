@@ -85,8 +85,8 @@ process::do_loop(void)
    
       scheduler->assert_end_iteration();
       
-      // false from terminate_iteration ends program
-      if(!scheduler->terminate_iteration())
+      // false from end_iteration ends program
+      if(!scheduler->end_iteration())
          return;
    }
 }

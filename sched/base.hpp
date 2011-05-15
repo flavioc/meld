@@ -27,6 +27,12 @@ protected:
    
    const vm::process_id id;
    
+   utils::byte _pad_base[128];
+   
+   size_t iteration;
+   
+   virtual bool terminate_iteration(void) = 0;
+   
 public:
    
    virtual void new_work(db::node *, db::node *, const db::simple_tuple *, const bool is_agg = false) = 0;
@@ -42,13 +48,17 @@ public:
    virtual void assert_end(void) const = 0;
    virtual void assert_end_iteration(void) const = 0;
    
-   virtual bool terminate_iteration(void) = 0;
+   inline bool end_iteration(void)
+   {
+      ++iteration;
+      return terminate_iteration();
+   }
    
    virtual base* find_scheduler(const db::node::node_id) = 0;
    
    inline const vm::process_id get_id(void) const { return id; }
    
-   explicit base(const vm::process_id _id): id(_id) {}
+   explicit base(const vm::process_id _id): id(_id), iteration(0) {}
    
    virtual ~base(void) {}
 };
