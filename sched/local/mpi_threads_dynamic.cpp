@@ -16,17 +16,15 @@ namespace sched
 {
    
 volatile static bool iteration_finished;
-static size_t round_trip_fetch(0);
 static tokenizer *token;
 static mutex tok_mutex;
-static size_t step_fetch(MPI_DEFAULT_ROUND_TRIP_FETCH);
 
 void
 mpi_thread::assert_end(void) const
 {
    dynamic_local::assert_end();
    assert(iteration_finished);
-   assert(msg_buf.empty());
+   assert_mpi();
 }
 
 void
@@ -34,26 +32,63 @@ mpi_thread::assert_end_iteration(void) const
 {
    dynamic_local::assert_end_iteration();
    assert(iteration_finished);
-   assert(msg_buf.empty());
+   assert_mpi();
 }
 
 void
-mpi_thread::update_pending_messages(const bool test)
+mpi_thread::messages_were_transmitted(const size_t total)
 {
-   msg_buf.update_received(test);
+   mutex::scoped_lock lock(tok_mutex);
+   token->messages_transmitted(total);
 }
 
 void
-mpi_thread::transmit_messages(void)
+mpi_thread::messages_were_received(const size_t total)
 {
-   size_t total(msg_buf.transmit());
+   mutex::scoped_lock lock(tok_mutex);
+   token->messages_received(total);
+}
+
+void
+mpi_thread::new_mpi_message(message *msg)
+{
+   thread_node *node((thread_node*)state::DATABASE->find_node(msg->id));
+   simple_tuple *stpl(msg->data);
+   mutex::scoped_lock lock(node->mtx);
+
+   if(node->get_owner() == this) {
+      node->add_work(stpl, false);
+      if(!node->in_queue()) {
+         node->set_in_queue(true);
+         this->add_to_queue(node);
+      }
+      if(is_inactive()) {
+         mutex::scoped_lock lock(mutex);
+         if(is_inactive())
+            set_active();
+      }
+      assert(node->in_queue());
+      assert(is_active());
+   } else {
+      mpi_thread *owner = (mpi_thread*)node->get_owner();
    
-   {
-      mutex::scoped_lock lock(tok_mutex);
-      
-      token->transmitted(total);
+      node->add_work(stpl, false);
+   
+      if(!node->in_queue()) {
+         node->set_in_queue(true);
+         owner->add_to_queue(node);
+      }
+   
+      assert(owner != NULL);
+   
+      if(owner->is_inactive()) {
+         mutex::scoped_lock lock(owner->mutex);
+         if(owner->is_inactive() && owner->has_work())
+            owner->set_active();
+      }
    }
 }
+
 
 void
 mpi_thread::change_node(thread_node *node, dynamic_local *_asker)
@@ -85,7 +120,7 @@ mpi_thread::busy_wait(void)
    transmit_messages();
    if(leader_thread())
       fetch_work();
-   update_pending_messages();
+   update_pending_messages(true);
    
    while(!has_work()) {
       
@@ -143,114 +178,18 @@ mpi_thread::busy_wait(void)
 }
 
 void
-mpi_thread::fetch_work(void)
-{
-   assert(leader_thread());
-   
-   if(!state::ROUTER->use_mpi())
-      return;
-   
-   message_set *ms;
-   bool any(false);
-      
-   while((ms = state::ROUTER->recv_attempt(0)) != NULL) {
-      assert(!ms->empty());
-      
-      for(list_messages::const_iterator it(ms->begin()); it != ms->end(); ++it) {
-         message *msg(*it);
-         thread_node *node((thread_node*)state::DATABASE->find_node(msg->id));
-         simple_tuple *stpl(msg->data);
-         mutex::scoped_lock lock(node->mtx);
-         
-         if(node->get_owner() == this) {
-            node->add_work(stpl, false);
-            if(!node->in_queue()) {
-               node->set_in_queue(true);
-               this->add_to_queue(node);
-            }
-            if(is_inactive()) {
-               mutex::scoped_lock lock(mutex);
-               if(is_inactive())
-                  set_active();
-            }
-            assert(node->in_queue());
-            assert(is_active());
-         } else {
-            mpi_thread *owner = (mpi_thread*)node->get_owner();
-            
-            node->add_work(stpl, false);
-            
-            if(!node->in_queue()) {
-               node->set_in_queue(true);
-               owner->add_to_queue(node);
-            }
-            
-            assert(owner != NULL);
-            
-            if(owner->is_inactive()) {
-               mutex::scoped_lock lock(owner->mutex);
-               if(owner->is_inactive() && owner->has_work())
-                  owner->set_active();
-            }
-         }
-          
-         delete msg;
-      }
-         
-#ifdef DEBUG_REMOTE
-      cout << "Received " << ms->size() << " works" << endl;
-#endif
-
-      {
-         mutex::scoped_lock lock(tok_mutex);
-         token->one_message_received();
-      }
-      
-      delete ms;
-      any = true;
-   }
-   
-   if(any && step_fetch > MPI_MIN_ROUND_TRIP_FETCH)
-		step_fetch -= MPI_DECREASE_ROUND_TRIP_FETCH;
-	if(!any && step_fetch < MPI_MAX_ROUND_TRIP_FETCH)
-		step_fetch += MPI_INCREASE_ROUND_TRIP_FETCH;
-      
-   assert(ms == NULL);
-}
-
-void
 mpi_thread::new_work_remote(remote *rem, const node::node_id, message *msg)
 {
-   if(msg_buf.insert(rem, 0, msg)) {
-      mutex::scoped_lock lock(tok_mutex);
-      token->transmitted(1);
-   }
+   buffer_message(rem, 0, msg);
 }
 
 bool
 mpi_thread::get_work(work_unit& work)
 {  
-   ++round_trip_update;
-   ++round_trip_send;
-
-   if(round_trip_update == MPI_ROUND_TRIP_UPDATE) {
-      update_pending_messages();
-      round_trip_update = 0;
-   }
-
-   if(round_trip_send == MPI_ROUND_TRIP_SEND) {
-      transmit_messages();
-      round_trip_send = 0;
-   }
+   do_mpi_worker_cycle();
    
-   if(leader_thread()) {
-      ++round_trip_fetch;
-      
-      if(round_trip_fetch == step_fetch) {
-         fetch_work();
-         round_trip_fetch = 0;
-      }
-   }
+   if(leader_thread())
+      do_mpi_leader_cycle();
    
    return dynamic_local::get_work(work);
 }

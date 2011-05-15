@@ -77,6 +77,7 @@ OBJS = utils/utils.o \
 			 sched/thread/queue_buffer.o \
 			 sched/thread/assert.o \
 			 sched/mpi/tokenizer.o \
+			 sched/mpi/handler.o \
 			 sched/local/mpi_threads_dynamic.o
 
 all: meld print predicates
@@ -193,7 +194,8 @@ sched/global/threads_static.o: sched/global/threads_static.cpp \
 sched/global/mpi.o: sched/global/mpi.hpp sched/global/mpi.cpp \
 						sched/base.hpp sched/global/static.hpp \
 						sched/mpi/token.hpp sched/mpi/tokenizer.hpp \
-						conf.hpp sched/mpi/message_buffer.hpp
+						conf.hpp sched/mpi/message_buffer.hpp \
+						sched/mpi/handler.hpp
 
 sched/local/threads_static.o: sched/base.hpp sched/local/threads_static.hpp \
 								sched/local/threads_static.cpp sched/queue/node.hpp \
@@ -230,11 +232,13 @@ sched/thread/assert.o: sched/thread/assert.hpp \
 sched/mpi/tokenizer.o: sched/mpi/token.hpp sched/mpi/tokenizer.cpp \
 									 sched/mpi/tokenizer.hpp process/remote.hpp
 
+sched/mpi/handler.o: sched/mpi/handler.hpp sched/mpi/handler.cpp
+
 sched/local/mpi_threads_dynamic.o: sched/local/mpi_threads_dynamic.hpp \
 										sched/local/mpi_threads_dynamic.cpp \
 										sched/mpi/tokenizer.hpp sched/local/threads_dynamic.hpp \
 										sched/mpi/token.hpp conf.hpp sched/mpi/message_buffer.hpp \
-										sched/queue/bounded_pqueue.hpp
+										sched/queue/bounded_pqueue.hpp sched/mpi/handler.hpp
 
 clean:
 	rm -f meld print *.o vm/*.o \

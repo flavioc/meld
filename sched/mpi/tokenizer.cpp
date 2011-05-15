@@ -14,9 +14,9 @@ namespace sched
 {
    
 void
-tokenizer::one_message_received(void)
+tokenizer::messages_received(const size_t total)
 {
-   tok.received();
+   tok.received(total);
    tok.set_black();
 }
 

@@ -3,7 +3,7 @@
 #define SCHED_GLOBAL_MPI_HPP
 
 #include "sched/global/static.hpp"
-#include "sched/mpi/message_buffer.hpp"
+#include "sched/mpi/handler.hpp"
 #include "sched/mpi/tokenizer.hpp"
 
 namespace sched
@@ -12,20 +12,15 @@ namespace sched
 #ifdef COMPILE_MPI
 
 class mpi_static: public sched::sstatic,
-                  private sched::tokenizer
+                  private sched::tokenizer,
+                  private sched::mpi_handler
 {
 private:
    
-	size_t step_fetch;
-   size_t round_trip_fetch;
-   size_t round_trip_update;
-   size_t round_trip_send;
+   void messages_were_transmitted(const size_t);
+   void messages_were_received(const size_t);
+   void new_mpi_message(message *);
    
-   message_buffer msg_buf;
-   
-   void update_pending_messages(void);
-   void fetch_work(void);
-   void transmit_messages(void);
    virtual void work_found(void);
    virtual bool busy_wait(void);
    virtual bool terminate_iteration(void);

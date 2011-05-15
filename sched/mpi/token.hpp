@@ -43,14 +43,12 @@ private:
 
 public:
    
-   void transmitted(void) { ++count; }
    void transmitted(const int plus) { count += plus; }
+   void received(const size_t total) { count -= total; }
    
    void add_count(const int plus) { count += plus; }
    
    inline const bool is_zero(void) const { return count == 0; }
-   
-   void received(void) { --count; }
    
    void reset_count(void) { count = 0; }
    inline const int get_count(void) const { return count; }

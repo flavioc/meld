@@ -4,12 +4,13 @@
 
 #include "sched/local/threads_dynamic.hpp"
 #include "sched/mpi/tokenizer.hpp"
-#include "sched/mpi/message_buffer.hpp"
+#include "sched/mpi/handler.hpp"
 
 namespace sched
 {
 
-class mpi_thread: public sched::dynamic_local
+class mpi_thread: public sched::dynamic_local,
+                  private sched::mpi_handler
 {
 private:
    
@@ -22,11 +23,11 @@ private:
    
    message_buffer msg_buf;
    
-   void fetch_work(void);
+   void messages_were_transmitted(const size_t);
+   void messages_were_received(const size_t);
+   void new_mpi_message(message *);
    
    virtual void change_node(thread_node *, dynamic_local *);
-   void update_pending_messages(const bool test = true);
-   void transmit_messages(void);
    virtual bool busy_wait(void);
    virtual void assert_end(void) const;
    virtual void assert_end_iteration(void) const;

@@ -36,7 +36,7 @@ mpi_static::assert_end_iteration(void)
 {
    sstatic::assert_end_iteration();
    
-   assert(msg_buf.empty());
+   assert_mpi();
 }
 
 void
@@ -44,76 +44,36 @@ mpi_static::assert_end(void)
 {
    sstatic::assert_end();
    
-   assert(msg_buf.empty());
-}
-
-void
-mpi_static::transmit_messages(void)
-{
-   size_t total(msg_buf.transmit());
-   
-   tok.transmitted(total);
+   assert_mpi();
 }
    
 void
 mpi_static::begin_get_work(void)
 {
-   ++round_trip_fetch;
-   ++round_trip_update;
-   ++round_trip_send;
-   
-   if(round_trip_fetch == step_fetch) {
-      fetch_work();
-      round_trip_fetch = 0;
-   }
-   
-   if(round_trip_update == MPI_ROUND_TRIP_UPDATE) {
-      update_pending_messages();
-      round_trip_update = 0;
-   }
-   
-   if(round_trip_send == MPI_ROUND_TRIP_SEND) {
-      transmit_messages();
-      round_trip_send = 0;
-   }
+   do_mpi_worker_cycle();
+   do_mpi_leader_cycle();
 }
 
 void
-mpi_static::fetch_work(void)
+mpi_static::messages_were_transmitted(const size_t total)
 {
-   if(state::ROUTER->use_mpi()) {
-      message_set *ms;
-			bool any = false;
-      
-      while((ms = state::ROUTER->recv_attempt(0)) != NULL) {
-         assert(!ms->empty());
-         
-         for(list_messages::const_iterator it(ms->begin()); it != ms->end(); ++it) {
-            message *msg(*it);
-            
-            new_work(NULL, state::DATABASE->find_node(msg->id), msg->data);
-            
-            delete msg;
-         }
-         
-#ifdef DEBUG_REMOTE
-         cout << "Received " << ms->size() << " works" << endl;
-#endif
+   assert(total > 0);
+   
+   messages_transmitted(total);
+}
 
-         one_message_received();
-         
-         delete ms;
+void
+mpi_static::messages_were_received(const size_t total)
+{
+   assert(total > 0);
+   
+   messages_received(total);
+}
 
-			any = true;
-      }
-
-		if(any && step_fetch > MPI_MIN_ROUND_TRIP_FETCH)
-			step_fetch -= MPI_DECREASE_ROUND_TRIP_FETCH;
-		if(!any && step_fetch < MPI_MAX_ROUND_TRIP_FETCH)
-			step_fetch += MPI_INCREASE_ROUND_TRIP_FETCH;
-      
-      assert(ms == NULL);
-   }
+void
+mpi_static::new_mpi_message(message *msg)
+{
+   new_work(NULL, state::DATABASE->find_node(msg->id), msg->data);
 }
 
 bool
@@ -126,7 +86,7 @@ mpi_static::busy_wait(void)
    
    while(!has_work()) {
 
-      update_pending_messages();
+      update_pending_messages(true);
 
       if(!turned_inactive)
          turned_inactive = true;
@@ -145,12 +105,7 @@ mpi_static::busy_wait(void)
 void
 mpi_static::work_found(void)
 {
-}
-
-void
-mpi_static::update_pending_messages(void)
-{
-   msg_buf.update_received(true);
+   assert(has_work());
 }
 
 bool
@@ -160,25 +115,20 @@ mpi_static::terminate_iteration(void)
    
    generate_aggs();
    
-   ++iteration;
-   
-   const bool ret(state::ROUTER->reduce_continue(has_work()));
-   
-   return ret;
+   return state::ROUTER->reduce_continue(has_work());
 }
    
 void
 mpi_static::new_work_other(sched::base *scheduler, node *node, const simple_tuple *stuple)
 {
-   assert(0);
+   assert(false);
 }
 
 void
 mpi_static::new_work_remote(remote *rem, const node::node_id, message *msg)
 {
    // this is buffered as the 0 thread id, since only one thread per proc exists
-   if(msg_buf.insert(rem, 0, msg))
-      tok.transmitted();
+   buffer_message(rem, 0, msg);
 }
 
 mpi_static*
@@ -188,11 +138,7 @@ mpi_static::find_scheduler(const node::node_id)
 }
 
 mpi_static::mpi_static(void):
-   sstatic(0),
-	step_fetch(MPI_DEFAULT_ROUND_TRIP_FETCH),
-   round_trip_fetch(0),
-   round_trip_update(0),
-   round_trip_send(0)
+   sstatic(0)
 {
 }
 
