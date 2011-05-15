@@ -1,5 +1,5 @@
 
-#include "sched/static.hpp"
+#include "sched/global/static.hpp"
 #include "vm/predicate.hpp"
 #include "vm/program.hpp"
 #include "process/remote.hpp"
@@ -18,7 +18,7 @@ sstatic::new_work(node *from, node *to, const simple_tuple *tpl, const bool is_a
 {
    work_unit work = {to, tpl, is_agg};
 
-   queue_work.push(work);
+   queue_work.push(work, tpl->get_strat_level());
 }
 
 void
@@ -26,7 +26,7 @@ sstatic::new_work_agg(node *node, const simple_tuple *tpl)
 {
    work_unit work = {node, tpl, true};
 
-   queue_work.push(work);
+   queue_work.push(work, tpl->get_strat_level());
 }
 
 void
@@ -111,7 +111,7 @@ sstatic::end(void)
 sstatic::sstatic(const process_id _id):
    base(_id),
    iteration(0),
-   queue_work()
+   queue_work(vm::predicate::MAX_STRAT_LEVEL)
 {
 }
 

@@ -5,21 +5,32 @@
 #include <vector>
 
 #include "sched/queue/safe_queue.hpp"
+#include "sched/queue/simple_linear_pqueue.hpp"
 #include "utils/atomic.hpp"
 #include "utils/utils.hpp"
 
 namespace sched
 {
    
-template <class C> // parameter is a container
+template <class C, class A> // parameter is a container and counter
 class queue_tree_node
 {
 public:
-   typedef queue_tree_node<C> tree_node;
+   typedef queue_tree_node<C, A> tree_node;
    
-   utils::atomic<int> counter;
+   A counter;
    tree_node *parent, *left, *right;
    C bin;
+   
+   void delete_all(void)
+   {
+      if(!is_leaf()) {
+         left->delete_all();
+         delete left;
+         right->delete_all();
+         delete right;
+      }
+   }
    
    inline const bool is_leaf(void) const { return right == NULL; }
    
@@ -37,17 +48,17 @@ public:
    }
 };
    
-template <class T>
+template <class T, class C, class A>
 class bounded_pqueue
 {
 private:
    
-   typedef queue_tree_node< safe_queue<T> > tree_node;
+   typedef queue_tree_node<C, A> tree_node;
    
    std::vector<tree_node*> leaves;
    tree_node *root;
    
-   utils::atomic<size_t> total;
+   A total;
    
    tree_node* build_tree(const size_t height, const size_t prio)
    {
@@ -64,6 +75,26 @@ private:
       return root;
    }
    
+   void push_queue(unsafe_queue_count<T>& q, const size_t prio)
+   {
+      const size_t size(q.size());
+      
+      assert(size > 0);
+      assert(prio >= 0);
+      assert(prio < leaves.size());
+      
+      tree_node *node(leaves[prio]);
+      node->bin.snap(q);
+      
+      while(node != root) {
+         tree_node *parent = node->parent;
+         if(node == parent->left)
+            parent->counter += size;
+         node = parent;
+      }
+      
+      total += size;
+   }
    
 public:
    
@@ -117,6 +148,18 @@ public:
       return ret;
    }
    
+   void snap(simple_linear_pqueue<T>& other)
+   {
+      assert(!other.empty());
+      
+      for(size_t i(0); i < leaves.size(); ++i) {
+         unsafe_queue_count<T>& q(other.get_queue(i));
+         
+         if(!q.empty())
+            push_queue(q, i);
+      }
+   }
+   
    explicit bounded_pqueue(const size_t range):
       total(0)
    {
@@ -124,10 +167,6 @@ public:
       
       const size_t number_leaves = utils::next_power2(range);
       
-      /*
-      printf("Range %d number of leaves %d height %d\n",
-         range, number_leaves, utils::upper_log2(number_leaves));
-      */ 
       assert(number_leaves >= range);
       
       leaves.resize(number_leaves);
@@ -139,7 +178,17 @@ public:
    {
       assert(root != NULL);
       assert(empty());
+      
+      root->delete_all();
    }
+};
+
+// XXX: must use C++0X
+
+template<typename T>
+struct safe_bounded_pqueue
+{
+   typedef bounded_pqueue<T, safe_queue<T>, utils::atomic<size_t> > type;
 };
 
 }

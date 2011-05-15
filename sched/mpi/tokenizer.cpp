@@ -2,7 +2,7 @@
 #include "process/remote.hpp"
 #include "vm/state.hpp"
 #include "process/router.hpp"
-#include "sched/tokenizer.hpp"
+#include "sched/mpi/tokenizer.hpp"
 #include "utils/utils.hpp"
 
 using namespace vm;

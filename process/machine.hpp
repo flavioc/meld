@@ -17,11 +17,11 @@
 #include "process/router.hpp"
 #include "db/tuple.hpp"
 #include "db/node.hpp"
-#include "sched/static_global.hpp"
-#include "sched/mpi.hpp"
-#include "sched/static_local.hpp"
-#include "sched/dynamic_local.hpp"
-#include "sched/mpi_thread.hpp"
+#include "sched/global/threads_static.hpp"
+#include "sched/global/mpi.hpp"
+#include "sched/local/threads_static.hpp"
+#include "sched/local/threads_dynamic.hpp"
+#include "sched/local/mpi_threads_dynamic.hpp"
 #include "sched/types.hpp"
 
 namespace process

@@ -1,10 +1,10 @@
 
-#ifndef SCHED_MPI_HPP
-#define SCHED_MPI_HPP
+#ifndef SCHED_GLOBAL_MPI_HPP
+#define SCHED_GLOBAL_MPI_HPP
 
-#include "sched/static.hpp"
-#include "sched/buffer.hpp"
-#include "sched/tokenizer.hpp"
+#include "sched/global/static.hpp"
+#include "sched/mpi/buffer.hpp"
+#include "sched/mpi/tokenizer.hpp"
 
 namespace sched
 {

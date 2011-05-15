@@ -1,6 +1,6 @@
 
-#ifndef SCHED_STEAL_SET_HPP
-#define SCHED_STEAL_SET_HPP
+#ifndef SCHED_THREAD_STEAL_SET_HPP
+#define SCHED_THREAD_STEAL_SET_HPP
 
 #include "mem/base.hpp"
 #include "sched/queue/safe_queue.hpp"

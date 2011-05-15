@@ -1,14 +1,14 @@
 
-#ifndef SCHED_STATIC_LOCAL_HPP
-#define SCHED_STATIC_LOCAL_HPP
+#ifndef SCHED_LOCAL_THREADS_STATIC_HPP
+#define SCHED_LOCAL_THREADS_STATIC_HPP
 
 #include <boost/thread/barrier.hpp>
 #include <vector>
 
 #include "sched/base.hpp"
-#include "sched/node.hpp"
+#include "sched/thread/node.hpp"
 #include "sched/queue/safe_queue.hpp"
-#include "sched/threaded.hpp"
+#include "sched/thread/threaded.hpp"
 
 namespace sched
 {

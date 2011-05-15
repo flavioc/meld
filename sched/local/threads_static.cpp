@@ -1,7 +1,7 @@
 #include <iostream>
 #include <boost/thread/barrier.hpp>
 
-#include "sched/static_local.hpp"
+#include "sched/local/threads_static.hpp"
 #include "db/database.hpp"
 #include "db/tuple.hpp"
 #include "process/remote.hpp"

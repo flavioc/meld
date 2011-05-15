@@ -1,13 +1,14 @@
 
-#ifndef SCHED_THREADS_HPP
-#define SCHED_THREADS_HPP
+#ifndef SCHED_GLOBAL_THREADS_THREADS_HPP
+#define SCHED_GLOBAL_THREADS_THREADS_HPP
 
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <vector>
 
-#include "sched/static.hpp"
-#include "sched/threaded.hpp"
+#include "sched/global/static.hpp"
+#include "sched/thread/threaded.hpp"
+#include "sched/queue/simple_linear_pqueue.hpp"
 #include "vm/defs.hpp"
 
 namespace sched
@@ -20,7 +21,7 @@ private:
    
    utils::byte _pad_threads1[128];
    
-   typedef unsafe_queue_count<work_unit> queue_free_work;
+   typedef simple_linear_pqueue<work_unit> queue_free_work;
    std::vector<queue_free_work, mem::allocator<queue_free_work> > buffered_work;
    
    bool all_buffers_emptied(void) const;

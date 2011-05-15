@@ -46,6 +46,17 @@ public:
       return fetch_and_sub(1);
    }
    
+   // +=
+   atomic & operator+=(const T val) {
+      fetch_and_add(val);
+      return *this;
+   }
+   
+   atomic& operator-=(const T val) {
+      fetch_and_sub(val);
+      return *this;
+   }
+   
    operator T() const { return elem; }
    
    explicit atomic(const T _elem): elem(_elem) {}

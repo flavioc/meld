@@ -1,6 +1,6 @@
 
-#ifndef SCHED_TOKEN_HPP
-#define SCHED_TOKEN_HPP
+#ifndef SCHED_MPI_TOKEN_HPP
+#define SCHED_MPI_TOKEN_HPP
 
 #include "conf.hpp"
 

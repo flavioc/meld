@@ -1,6 +1,6 @@
 
-#ifndef SCHED_THREADED_HPP
-#define SCHED_THREADED_HPP
+#ifndef SCHED_THREAD_THREADED_HPP
+#define SCHED_THREAD_THREADED_HPP
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/barrier.hpp>
@@ -8,7 +8,7 @@
 
 #include "utils/types.hpp"
 #include "sched/base.hpp"
-#include "sched/termination_barrier.hpp"
+#include "sched/thread/termination_barrier.hpp"
 
 namespace sched
 {

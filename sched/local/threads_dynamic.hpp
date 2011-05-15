@@ -1,11 +1,11 @@
 
-#ifndef SCHED_DYNAMIC_LOCAL_HPP
-#define SCHED_DYNAMIC_LOCAL_HPP
+#ifndef SCHED_LOCAL_THREADS_DYNAMIC_HPP
+#define SCHED_LOCAL_THREADS_DYNAMIC_HPP
 
 #include <tr1/unordered_set>
 
-#include "sched/static_local.hpp"
-#include "sched/steal_set.hpp"
+#include "sched/local/threads_static.hpp"
+#include "sched/thread/steal_set.hpp"
 
 namespace sched
 {

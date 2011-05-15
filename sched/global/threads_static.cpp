@@ -2,11 +2,11 @@
 #include <iostream>
 #include <boost/thread/barrier.hpp>
 
-#include "sched/static_global.hpp"
+#include "sched/global/threads_static.hpp"
 
 #include "vm/state.hpp"
 #include "process/machine.hpp"
-#include "sched/termination_barrier.hpp"
+#include "sched/thread/termination_barrier.hpp"
 
 using namespace boost;
 using namespace vm;
@@ -50,7 +50,7 @@ static_global::new_work_other(sched::base *scheduler, node *node, const simple_t
    work_unit work = {node, stuple, false};
    queue_free_work& q(buffered_work[other->id]);
    
-   q.push(work);
+   q.push(work, stuple->get_strat_level());
    
    if(q.size() > WORK_THRESHOLD)
       flush_this_queue(q, other);
@@ -88,7 +88,7 @@ static_global::flush_this_queue(queue_free_work& q, static_global *other)
    
    other->queue_work.snap(q);
    
-   {
+   if(other->is_inactive()) {
       mutex::scoped_lock l(other->mutex);
       if(other->is_inactive())
          other->set_active();
@@ -170,7 +170,8 @@ static_global::init(const size_t num_threads)
    sstatic::init(num_threads);
    
    // init buffered queues
-   buffered_work.resize(num_threads);
+   for(size_t i(0); i < num_threads; ++i)
+      buffered_work.push_back(queue_free_work(vm::predicate::MAX_STRAT_LEVEL));
    
    assert(is_active());
 }

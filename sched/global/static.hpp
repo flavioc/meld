@@ -6,7 +6,7 @@
 
 #include "sched/base.hpp"
 #include "db/node.hpp"
-#include "sched/queue/safe_queue.hpp"
+#include "sched/queue/bounded_pqueue.hpp"
 #include "utils/types.hpp"
 
 namespace sched
@@ -22,7 +22,7 @@ protected:
    
    utils::byte _pad2[128];
    
-   safe_queue<work_unit> queue_work;
+   safe_bounded_pqueue<work_unit>::type queue_work;
    
    virtual void assert_end_iteration(void) const;
    

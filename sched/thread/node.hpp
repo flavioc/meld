@@ -1,10 +1,9 @@
 
-#ifndef SCHED_NODE_HPP
-#define SCHED_NODE_HPP
+#ifndef SCHED_THREAD_NODE_HPP
+#define SCHED_THREAD_NODE_HPP
 
 #include "mem/base.hpp"
 #include "db/node.hpp"
-#include "sched/queue/safe_queue.hpp"
 #include "sched/queue/bounded_pqueue.hpp"
 #include "db/tuple.hpp"
 
@@ -32,8 +31,7 @@ private:
    static_local *owner;
    bool i_am_on_queue;
    boost::mutex mtx;
-   bounded_pqueue<node_work_unit> queue;
-   //safe_queue<node_work_unit> queue;
+   safe_bounded_pqueue<node_work_unit>::type queue;
    
 public:
    
@@ -50,7 +48,6 @@ public:
    
    inline void add_work(const db::simple_tuple *tpl, const bool is_agg = false) {
       node_work_unit w = {tpl, is_agg};
-      //queue.push(w);
       queue.push(w, tpl->get_strat_level());
    }
    

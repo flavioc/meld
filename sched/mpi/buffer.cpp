@@ -1,7 +1,7 @@
 
 #include <iostream>
 
-#include "sched/buffer.hpp"
+#include "sched/mpi/buffer.hpp"
 #include "vm/state.hpp"
 #include "process/router.hpp"
 #include "conf.hpp"

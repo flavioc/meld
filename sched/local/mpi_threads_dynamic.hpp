@@ -1,10 +1,10 @@
 
-#ifndef SCHED_MPI_THREAD_HPP
-#define SCHED_MPI_THREAD_HPP
+#ifndef SCHED_LOCAL_MPI_THREADS_DYNAMIC_HPP
+#define SCHED_LOCAL_MPI_THREADS_DYNAMIC_HPP
 
-#include "sched/dynamic_local.hpp"
-#include "sched/tokenizer.hpp"
-#include "sched/buffer.hpp"
+#include "sched/local/threads_dynamic.hpp"
+#include "sched/mpi/tokenizer.hpp"
+#include "sched/mpi/buffer.hpp"
 
 namespace sched
 {

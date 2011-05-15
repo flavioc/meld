@@ -1,8 +1,8 @@
 
 OS = $(shell uname -s)
 
-INCLUDE_DIRS = -I/usr/include -I.
-LIBRARY_DIRS = -L/usr/lib
+INCLUDE_DIRS = -I. #-I/usr/include
+LIBRARY_DIRS = #-L/usr/lib
 
 ifeq (exists, $(shell test -d /opt/local/include && echo exists))
 	INCLUDE_DIRS += -I/opt/local/include
@@ -22,8 +22,9 @@ OPTIMIZATIONS = -O0
 ARCH = -march=x86-64
 DEBUG = -g
 WARNINGS = -Wall -Wno-sign-compare
+C0X = -std=c++0x
 
-CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS)
+CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) $(COX)
 LIBRARIES = -lpthread -lm -lboost_thread-mt
 
 #ifneq ($(COMPILE_MPI),)
@@ -32,7 +33,6 @@ LIBRARIES = -lpthread -lm -lboost_thread-mt
 #endif
 
 CXX = g++
-C0X = -std=c++0x
 
 GCC_MINOR    := $(shell $(CXX) -v 2>&1 | \
 													grep " version " | cut -d' ' -f3  | cut -d'.' -f2)
@@ -67,15 +67,15 @@ OBJS = utils/utils.o \
 			 process/message.o \
 			 mem/thread.o \
 			 db/trie.o \
-			 sched/buffer.o \
-			 sched/static.o \
-			 sched/static_global.o \
-			 sched/mpi.o \
-			 sched/static_local.o \
-			 sched/dynamic_local.o \
-			 sched/threaded.o \
-			 sched/tokenizer.o \
-			 sched/mpi_thread.o
+			 sched/mpi/buffer.o \
+			 sched/global/static.o \
+			 sched/global/threads_static.o \
+			 sched/global/mpi.o \
+			 sched/local/threads_static.o \
+			 sched/local/threads_dynamic.o \
+			 sched/thread/threaded.o \
+			 sched/mpi/tokenizer.o \
+			 sched/local/mpi_threads_dynamic.o
 
 all: meld print predicates
 
@@ -89,7 +89,7 @@ predicates: $(OBJS) predicates.o
 	$(COMPILE) predicates.o -o predicates
 
 meld.o: meld.cpp utils/utils.hpp process/machine.hpp \
-				process/router.hpp sched/base.hpp sched/static_global.hpp \
+				process/router.hpp sched/base.hpp sched/global/threads_static.hpp \
 				sched/types.hpp
 
 print.o: print.cpp vm/program.hpp
@@ -116,16 +116,19 @@ db/database.o: db/database.cpp db/database.hpp vm/instr.hpp \
 							db/node.hpp
 
 process/process.o: process/process.cpp process/process.hpp vm/instr.hpp \
-									db/node.hpp sched/buffer.hpp
+									db/node.hpp sched/mpi/buffer.hpp
 
 process/machine.o: process/machine.hpp process/machine.cpp \
 									vm/state.hpp process/remote.hpp process/process.hpp \
 									vm/instr.hpp conf.hpp \
 									process/message.hpp \
-									sched/static.hpp \
-									sched/static_global.hpp \
-									sched/mpi.hpp \
-									sched/static_local.hpp \
+									sched/global/static.hpp \
+									sched/global/threads_static.hpp \
+									sched/global/mpi.hpp \
+									sched/global/threads_static.hpp \
+									sched/local/threads_static.hpp \
+									sched/local/threads_dynamic.hpp \
+									sched/local/mpi_threads_dynamic.hpp \
 									sched/types.hpp \
 									db/database.hpp \
 									vm/predicate.hpp
@@ -150,8 +153,8 @@ process/router.o: process/router.hpp process/router.cpp \
 									process/remote.hpp \
 									process/message.hpp \
 									utils/time.hpp \
-									process/request.hpp \
-									sched/token.hpp \
+									sched/mpi/request.hpp \
+									sched/mpi/token.hpp \
 									conf.hpp
 
 process/message.o: process/message.cpp process/message.hpp \
@@ -167,53 +170,56 @@ db/trie.o: db/trie.cpp db/trie.hpp \
 vm/types.o: vm/types.hpp vm/types.hpp \
 						utils/utils.hpp
 
-sched/buffer.o: sched/buffer.hpp sched/buffer.cpp \
-									process/message.hpp process/request.hpp
+sched/mpi/buffer.o: sched/mpi/buffer.hpp sched/mpi/buffer.cpp \
+									process/message.hpp sched/mpi/request.hpp
 
-sched/static.o: sched/static.cpp sched/static.hpp \
+sched/global/static.o: sched/global/static.cpp sched/global/static.hpp \
 								sched/base.hpp
 
-sched/static_global.o: sched/static_global.cpp sched/static_global.hpp \
-								sched/base.hpp sched/static.hpp \
+sched/global/threads_static.o: sched/global/threads_static.cpp \
+								sched/global/threads_static.hpp \
+								sched/base.hpp sched/global/static.hpp \
 								sched/queue/node.hpp \
 								sched/queue/unsafe_queue_count.hpp \
 								sched/queue/safe_queue.hpp \
-								sched/termination_barrier.hpp \
+								sched/thread/termination_barrier.hpp \
 								utils/atomic.hpp
 
-sched/mpi.o: sched/mpi.hpp sched/mpi.cpp \
-						sched/base.hpp sched/static.hpp \
-						sched/token.hpp sched/tokenizer.hpp \
-						conf.hpp sched/buffer.hpp
+sched/global/mpi.o: sched/global/mpi.hpp sched/global/mpi.cpp \
+						sched/base.hpp sched/global/static.hpp \
+						sched/mpi/token.hpp sched/mpi/tokenizer.hpp \
+						conf.hpp sched/mpi/buffer.hpp
 
-sched/static_local.o: sched/base.hpp sched/static_local.hpp \
-								sched/static_local.cpp sched/queue/node.hpp \
-								sched/termination_barrier.hpp \
+sched/local/threads_static.o: sched/base.hpp sched/local/threads_static.hpp \
+								sched/local/threads_static.cpp sched/queue/node.hpp \
+								sched/thread/termination_barrier.hpp \
 								utils/atomic.hpp \
-								sched/node.hpp sched/queue/unsafe_queue_count.hpp \
+								sched/thread/node.hpp sched/queue/unsafe_queue_count.hpp \
 								sched/queue/safe_queue.hpp \
-								sched/threaded.hpp \
+								sched/thread/threaded.hpp \
 								sched/queue/bounded_pqueue.hpp
 
-sched/dynamic_local.o: sched/base.hpp sched/static_local.hpp \
-											sched/dynamic_local.hpp sched/dynamic_local.cpp \
-											sched/node.hpp sched/termination_barrier.hpp \
-											sched/queue/node.hpp sched/steal_set.hpp \
+sched/local/threads_dynamic.o: sched/base.hpp sched/local/threads_static.hpp \
+											sched/local/threads_dynamic.hpp \
+											sched/local/threads_dynamic.cpp \
+											sched/thread/node.hpp sched/thread/termination_barrier.hpp \
+											sched/queue/node.hpp sched/thread/steal_set.hpp \
 											sched/queue/safe_queue.hpp \
-											sched/threaded.hpp \
+											sched/thread/threaded.hpp \
 											conf.hpp utils/atomic.hpp \
 											sched/queue/bounded_pqueue.hpp
 
-sched/threaded.o: sched/termination_barrier.hpp \
-									sched/threaded.hpp sched/threaded.cpp \
+sched/thread/threaded.o: sched/thread/termination_barrier.hpp \
+									sched/thread/threaded.hpp sched/thread/threaded.cpp \
 									utils/atomic.hpp
 
-sched/tokenizer.o: sched/token.hpp sched/tokenizer.cpp \
-									 sched/tokenizer.hpp process/remote.hpp
+sched/mpi/tokenizer.o: sched/mpi/token.hpp sched/mpi/tokenizer.cpp \
+									 sched/mpi/tokenizer.hpp process/remote.hpp
 
-sched/mpi_thread.o: sched/mpi_thread.hpp sched/mpi_thread.cpp \
-										sched/tokenizer.hpp sched/dynamic_local.hpp \
-										sched/token.hpp conf.hpp sched/buffer.hpp \
+sched/local/mpi_threads_dynamic.o: sched/local/mpi_threads_dynamic.hpp \
+										sched/local/mpi_threads_dynamic.cpp \
+										sched/mpi/tokenizer.hpp sched/local/threads_dynamic.hpp \
+										sched/mpi/token.hpp conf.hpp sched/mpi/buffer.hpp \
 										sched/queue/bounded_pqueue.hpp
 
 clean:
@@ -221,7 +227,9 @@ clean:
 		db/*.o process/*.o \
 		runtime/*.o utils/*.o \
 		mem/*.o sched/*.o \
-		sched/queue/*.o
+		sched/mpi/*.o \
+		sched/queue/*.o \
+		sched/global/*.o \
+		sched/local/*.o
 
 re: clean all
-

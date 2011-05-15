@@ -1,6 +1,6 @@
 
-#ifndef PROCESS_REQUEST_HPP
-#define PROCESS_REQUEST_HPP
+#ifndef SCHED_MPI_REQUEST_HPP
+#define SCHED_MPI_REQUEST_HPP
 
 #include "conf.hpp"
 

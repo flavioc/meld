@@ -1,6 +1,6 @@
 
-#ifndef SCHED_TERMINATION_BARRIER_HPP
-#define SCHED_TERMINATION_BARRIER_HPP
+#ifndef SCHED_THREAD_TERMINATION_BARRIER_HPP
+#define SCHED_THREAD_TERMINATION_BARRIER_HPP
 
 #include "vm/state.hpp"
 #include "utils/atomic.hpp"

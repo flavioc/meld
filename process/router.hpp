@@ -19,8 +19,8 @@
 #include "process/message.hpp"
 #include "utils/time.hpp"
 #include "utils/types.hpp"
-#include "process/request.hpp"
-#include "sched/token.hpp"
+#include "sched/mpi/request.hpp"
+#include "sched/mpi/token.hpp"
 
 namespace process
 {

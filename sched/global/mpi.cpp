@@ -1,5 +1,5 @@
 
-#include "sched/mpi.hpp"
+#include "sched/global/mpi.hpp"
 
 #ifdef COMPILE_MPI
 

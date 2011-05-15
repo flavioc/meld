@@ -1,5 +1,5 @@
 
-#include "sched/threaded.hpp"
+#include "sched/thread/threaded.hpp"
 
 using namespace boost;
 using namespace std;

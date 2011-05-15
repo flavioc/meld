@@ -1,8 +1,8 @@
 
-#ifndef SCHED_TOKENIZER_HPP
-#define SCHED_TOKENIZER_HPP
+#ifndef SCHED_MPI_TOKENIZER_HPP
+#define SCHED_MPI_TOKENIZER_HPP
 
-#include "sched/token.hpp"
+#include "sched/mpi/token.hpp"
 
 namespace sched
 {

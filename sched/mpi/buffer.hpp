@@ -1,6 +1,6 @@
 
-#ifndef SCHED_BUFFER_HPP
-#define SCHED_BUFFER_HPP
+#ifndef SCHED_MPI_BUFFER_HPP
+#define SCHED_MPI_BUFFER_HPP
 
 #include <list>
 #ifdef COMPILE_MPI
@@ -11,7 +11,7 @@
 #include "vm/defs.hpp"
 #include "mem/base.hpp"
 #include "utils/types.hpp"
-#include "process/request.hpp"
+#include "sched/mpi/request.hpp"
 
 namespace process
 {
