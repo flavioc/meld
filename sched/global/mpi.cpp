@@ -71,9 +71,9 @@ mpi_static::messages_were_received(const size_t total)
 }
 
 void
-mpi_static::new_mpi_message(message *msg)
+mpi_static::new_mpi_message(node *node, simple_tuple *tpl)
 {
-   new_work(NULL, state::DATABASE->find_node(msg->id), msg->data);
+   new_work(NULL, node, tpl);
 }
 
 bool

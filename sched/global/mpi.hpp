@@ -19,7 +19,7 @@ private:
    
    void messages_were_transmitted(const size_t);
    void messages_were_received(const size_t);
-   void new_mpi_message(message *);
+   void new_mpi_message(db::node *, db::simple_tuple *);
    
    virtual void work_found(void);
    virtual bool busy_wait(void);

@@ -23,7 +23,7 @@ private:
    
 protected:
    
-   virtual void new_mpi_message(message *) = 0;
+   virtual void new_mpi_message(db::node *, db::simple_tuple *) = 0;
    virtual void messages_were_transmitted(const size_t) = 0;
    virtual void messages_were_received(const size_t) = 0;
    

@@ -50,10 +50,9 @@ mpi_thread::messages_were_received(const size_t total)
 }
 
 void
-mpi_thread::new_mpi_message(message *msg)
+mpi_thread::new_mpi_message(node *_node, simple_tuple *stpl)
 {
-   thread_node *node((thread_node*)state::DATABASE->find_node(msg->id));
-   simple_tuple *stpl(msg->data);
+   thread_node *node((thread_node*)_node);
    mutex::scoped_lock lock(node->mtx);
 
    if(node->get_owner() == this) {

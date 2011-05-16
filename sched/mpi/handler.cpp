@@ -4,6 +4,7 @@
 #include "process/router.hpp"
 
 using namespace vm;
+using namespace db;
 
 namespace sched
 {
@@ -22,8 +23,11 @@ mpi_handler::fetch_work(void)
       
       for(list_messages::const_iterator it(ms->begin()); it != ms->end(); ++it) {
          message *msg(*it);
+         node *node(state::DATABASE->find_node(msg->id));
+         simple_tuple *tpl(msg->data);
 
-         new_mpi_message(msg);
+         node->more_to_process(tpl->get_predicate_id());
+         new_mpi_message(node, tpl);
          
          delete msg;
       }
