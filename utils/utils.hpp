@@ -48,6 +48,21 @@ T next_power2(const T val)
    return ret;
 }
 
+template <typename T>
+T power(const T base, const T exp)
+{
+   assert(exp >= 0);
+   
+   if(exp == 0) return 1;
+   
+   T ret(base);
+   
+   for(size_t i = 1; i < (size_t)exp; ++i)
+      ret *= base;
+      
+   return ret;
+}
+
 const size_t random_unsigned(const size_t);
 
 }

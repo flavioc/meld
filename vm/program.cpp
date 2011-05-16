@@ -8,6 +8,7 @@
 #include "vm/instr.hpp"
 #include "db/database.hpp"
 #include "utils/types.hpp"
+#include "vm/state.hpp"
 
 using namespace std;
 using namespace db;
@@ -20,7 +21,9 @@ namespace vm {
 
 static const size_t PREDICATE_DESCRIPTOR_SIZE = sizeof(code_size_t) +
                                                 PRED_DESCRIPTOR_BASE_SIZE +
-                                                PRED_ARGS_MAX + PRED_NAME_SIZE_MAX;
+                                                PRED_ARGS_MAX +
+                                                PRED_NAME_SIZE_MAX +
+                                                PRED_AGG_INFO_MAX;
 
 program::program(const string& filename)
 {
@@ -34,11 +37,12 @@ program::program(const string& filename)
    
    fp.read((char*)buf, sizeof(byte));
    
-   size_t num_predicates = (size_t)buf[0];
+   const size_t num_predicates = (size_t)buf[0];
    
    predicates.resize(num_predicates);
    code_size.resize(num_predicates);
    code.resize(num_predicates);
+   state::NUM_PREDICATES = num_predicates;
    
    // skip nodes
    int_val num_nodes;

@@ -42,7 +42,7 @@ node::delete_tuple(vm::tuple *tuple, ref_count many)
    return tr.delete_tuple(tuple, many);
 }
 
-void
+agg_configuration*
 node::add_agg_tuple(vm::tuple *tuple, const ref_count many)
 {
    const predicate *pred(tuple->get_predicate());
@@ -57,7 +57,7 @@ node::add_agg_tuple(vm::tuple *tuple, const ref_count many)
    } else
       agg = it->second;
 
-   agg->add_to_set(tuple, many);
+   return agg->add_to_set(tuple, many);
 }
 
 void

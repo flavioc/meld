@@ -1,8 +1,8 @@
 
 OS = $(shell uname -s)
 
-INCLUDE_DIRS = -I. #-I/usr/include
-LIBRARY_DIRS = #-L/usr/lib
+INCLUDE_DIRS = -I.
+LIBRARY_DIRS =
 
 ifeq (exists, $(shell test -d /opt/local/include && echo exists))
 	INCLUDE_DIRS += -I/opt/local/include

@@ -3,7 +3,9 @@ Dependencies:
 	- Boost
 		- MPI
 		- Threads
-	- G++ 4.4/4.2, maybe 4.6
+	- A compiler
+		G++ 4.4/4.2, maybe 4.6
+		LLVM/Clang also works
 
 Installation:
 	- use make

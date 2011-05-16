@@ -55,6 +55,7 @@ public:
    
    inline void route_self(process *proc, db::node *node, const db::simple_tuple *stpl)
    {
+      node->more_to_process(stpl->get_predicate_id());
       proc->get_scheduler()->new_work(node, node, stpl);
    }
    

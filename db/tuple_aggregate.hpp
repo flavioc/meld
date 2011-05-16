@@ -27,7 +27,7 @@ public:
 
    simple_tuple_list generate(void);
 
-   void add_to_set(vm::tuple *, const vm::ref_count);
+   agg_configuration* add_to_set(vm::tuple *, const vm::ref_count);
 
    explicit tuple_aggregate(const vm::predicate *_pred): pred(_pred) {}
 

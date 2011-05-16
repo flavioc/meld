@@ -34,6 +34,36 @@ process::do_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
 }
 
 void
+process::do_agg_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
+{
+   const predicate *pred(tuple->get_predicate()); // get predicate here since tuple can be deleted!
+   agg_configuration *conf(node->add_agg_tuple(tuple, count));
+   
+   if(pred->has_agg_term_info()) {
+      if(node->no_more_to_process(pred->get_id())) {
+         vector<const predicate*> deps(pred->get_agg_deps());
+      
+         for(size_t i(0); i < deps.size(); ++i) {
+            const predicate *pred(deps[i]);
+            if(!node->no_more_to_process(pred->get_id())) {
+               return;
+            }
+         }
+         
+         return;
+         simple_tuple_list list;
+         conf->generate(pred->get_aggregate_type(), pred->get_aggregate_field(), list);
+         
+         for(simple_tuple_list::iterator it(list.begin()); it != list.end(); ++it) {
+            simple_tuple *tpl(*it);
+            //cout << "Generated " << *tpl << endl;
+            scheduler->new_work(node, node, tpl, true);
+         }
+      }
+   }
+}
+
+void
 process::do_work(node *node, const simple_tuple *_stuple, const bool ignore_agg)
 {
    auto_ptr<const simple_tuple> stuple(_stuple);
@@ -46,10 +76,12 @@ process::do_work(node *node, const simple_tuple *_stuple, const bool ignore_agg)
    
    if(count == 0)
       return;
+      
+   node->less_to_process(tuple->get_predicate_id());
    
    if(count > 0) {
       if(tuple->is_aggregate() && !ignore_agg)
-         node->add_agg_tuple(tuple, count);
+         do_agg_tuple_add(node, tuple, count);
       else
          do_tuple_add(node, tuple, count);
    } else {

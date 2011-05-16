@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <assert.h>
 
 #include "vm/types.hpp"
 #include "vm/defs.hpp"
@@ -14,6 +15,7 @@ namespace vm {
 const size_t PRED_DESCRIPTOR_BASE_SIZE = 4;
 const size_t PRED_ARGS_MAX = 32;
 const size_t PRED_NAME_SIZE_MAX = 32;
+const size_t PRED_AGG_INFO_MAX = 32;
 
 class predicate {
 private:
@@ -32,6 +34,7 @@ private:
    typedef struct {
       field_num field;
       aggregate_type type;
+      std::vector<predicate_id> sizes;
    } aggregate_info;
    
    aggregate_info *agg_info;
@@ -45,6 +48,10 @@ public:
    static strat_level MAX_STRAT_LEVEL;
    
    inline bool is_aggregate(void) const { return agg_info != NULL; }
+   
+   inline bool has_agg_term_info(void) const { assert(is_aggregate()); return !agg_info->sizes.empty(); }
+   
+   std::vector<const predicate*> get_agg_deps(void) const;
    
    inline const field_num get_aggregate_field(void) const { return agg_info->field; }
    inline const aggregate_type get_aggregate_type(void) const { return agg_info->type; }

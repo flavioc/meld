@@ -5,6 +5,7 @@
 #include "process/remote.hpp"
 #include "vm/state.hpp"
 
+using namespace std;
 using namespace vm;
 using namespace db;
 using namespace utils;
@@ -17,14 +18,6 @@ void
 sstatic::new_work(node *from, node *to, const simple_tuple *tpl, const bool is_agg)
 {
    work_unit work = {to, tpl, is_agg};
-
-   queue_work.push(work, tpl->get_strat_level());
-}
-
-void
-sstatic::new_work_agg(node *node, const simple_tuple *tpl)
-{
-   work_unit work = {node, tpl, true};
 
    queue_work.push(work, tpl->get_strat_level());
 }
@@ -65,18 +58,7 @@ sstatic::generate_aggs(void)
    database::map_nodes::iterator end(state::DATABASE->get_node_iterator(final));
    
    for(; it != end; ++it)
-   {
-      node *no(it->second);
-      simple_tuple_list ls(no->generate_aggs());
-
-      for(simple_tuple_list::iterator it2(ls.begin());
-         it2 != ls.end();
-         ++it2)
-      {
-         //cout << no->get_id() << " GENERATE " << **it2 << endl;
-         new_work_agg(no, *it2);
-      }
-   }
+      generate_agg_node(it->second);
 }
 
 void

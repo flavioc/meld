@@ -143,16 +143,15 @@ void
 tokenizer::do_collective_end_iteration(size_t stage)
 {
    for( ; stage <= upper_log2(remote::world_size); ++stage) {
-      if(remote::self->get_rank() < pow(2, stage - 1)) {
-         const remote::remote_id dest(remote::self->get_rank() + pow(2, stage - 1));
+      if(remote::self->get_rank() < power<remote::remote_id>(2, stage - 1)) {
+         const remote::remote_id dest(remote::self->get_rank() + power<remote::remote_id>(2, stage - 1));
          
-         if(dest < remote::world_size) {
-            //cout << "Send from " << remote::self->get_rank() << " to " << dest << endl;
+         if(dest < remote::world_size)
             state::ROUTER->send_end_iteration(stage, dest);
-         }
-      } else if(remote::self->get_rank() >= pow(2, stage - 1) && remote::self->get_rank() < pow(2, stage)) {
-         const remote::remote_id source(remote::self->get_rank() - pow(2, stage - 1));
-         //cout << "Received from " << source << " to " << remote::self->get_rank() << endl;
+      } else if(remote::self->get_rank() >= power<remote::remote_id>(2, stage - 1)
+                  && remote::self->get_rank() < power<remote::remote_id>(2, stage))
+      {
+         const remote::remote_id source(remote::self->get_rank() - power<remote::remote_id>(2, stage - 1));
          state::ROUTER->receive_end_iteration(source);
       }
    }
@@ -162,10 +161,11 @@ static inline remote::remote_id
 find_source_collective(void)
 {
    for(size_t stage(1); stage <= upper_log2(remote::world_size); ++stage) {
-      if(remote::self->get_rank() < pow(2, stage - 1))
-         assert(0);
-      else if(remote::self->get_rank() >= pow(2, stage - 1) && remote::self->get_rank() < pow(2, stage))
-         return remote::self->get_rank() - pow(2, stage - 1);
+      if(remote::self->get_rank() < power<remote::remote_id>(2, stage - 1))
+         assert(false);
+      else if(remote::self->get_rank() >= power<remote::remote_id>(2, stage - 1)
+               && remote::self->get_rank() < power<remote::remote_id>(2, stage))
+         return remote::self->get_rank() - power<remote::remote_id>(2, stage - 1);
    }
    
    assert(0);

@@ -196,17 +196,8 @@ dynamic_local::init(const size_t num_threads)
 void
 dynamic_local::generate_aggs(void)
 {
-   for(node_set::iterator it(nodes->begin()); it != nodes->end(); ++it) {
-      node *no(*it);
-      simple_tuple_list ls(no->generate_aggs());
-
-      for(simple_tuple_list::iterator it2(ls.begin());
-         it2 != ls.end();
-         ++it2)
-      {
-         new_work(NULL, no, *it2, true);
-      }
-   }
+   for(node_set::iterator it(nodes->begin()); it != nodes->end(); ++it)
+      generate_agg_node(*it);
 }
 
 dynamic_local::dynamic_local(const process_id id):

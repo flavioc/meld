@@ -16,6 +16,7 @@ agg_configuration::add_to_set(vm::tuple *tpl, const ref_count many)
    changed = true; // this is important
    
    if(many > 0) {
+      
       if(!vals.insert_tuple(tpl, many)) {
          // repeated tuple
          delete tpl;

@@ -42,8 +42,10 @@ database::database(const string& filename, create_node_fn create_fn)
       fp.read((char*)&fake_id, sizeof(node::node_id));
       fp.read((char*)&real_id, sizeof(node::node_id));
       
+      node *node(create_fn(fake_id, real_id));
       translation[fake_id] = real_id;
-      nodes[fake_id] = create_fn(fake_id, real_id);
+      nodes[fake_id] = node;
+      node->init_to_process(state::NUM_PREDICATES);
    }
    
    if(!remote::i_am_last_one()) {

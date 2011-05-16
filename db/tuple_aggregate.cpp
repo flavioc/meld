@@ -7,7 +7,7 @@ using namespace std;
 namespace db
 {
    
-void
+agg_configuration*
 tuple_aggregate::add_to_set(vm::tuple *tpl, const ref_count many)
 {
    const field_num field(pred->get_aggregate_field());
@@ -20,7 +20,7 @@ tuple_aggregate::add_to_set(vm::tuple *tpl, const ref_count many)
       
       if(conf->test(tpl, field)) {
          conf->add_to_set(tpl, many);
-         return;
+         return conf;
       }
    }
    
@@ -28,6 +28,8 @@ tuple_aggregate::add_to_set(vm::tuple *tpl, const ref_count many)
    agg_configuration *conf(new agg_configuration());
    conf->add_to_set(tpl, many);
    values.push_back(conf);
+   
+   return conf;
 }
 
 simple_tuple_list

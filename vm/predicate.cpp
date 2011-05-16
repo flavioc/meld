@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "vm/predicate.hpp"
+#include "vm/state.hpp"
 
 using namespace std;
 using namespace vm;
@@ -60,6 +61,22 @@ predicate::make_predicate_from_buf(byte *buf, code_size_t *code_size)
    // read predicate name
    pred->name = string((const char*)buf);
    
+   buf += PRED_NAME_SIZE_MAX;
+   
+   if(pred->is_aggregate()) {
+      const size_t total(buf[0]);
+      
+      buf++;
+      
+      for(size_t i(0); i < total; ++i) {
+         predicate_id id(buf[0]);
+         
+         pred->agg_info->sizes.push_back(id);
+         
+         buf++;
+      }
+   }
+   
    return pred;
 }
 
@@ -80,6 +97,23 @@ predicate::build_field_info(void)
    }
    
    tuple_size = offset;
+}
+
+vector<const predicate*>
+predicate::get_agg_deps(void) const
+{
+   assert(is_aggregate());
+   
+   vector<const predicate*> ret;
+   
+   for(size_t i(0); i < agg_info->sizes.size(); ++i) {
+      const predicate_id id(agg_info->sizes[0]);
+      const predicate *pred(state::PROGRAM->get_predicate(id));
+      
+      ret.push_back(pred);
+   }
+   
+   return ret;
 }
 
 predicate::predicate(void)

@@ -33,11 +33,26 @@ protected:
    
    virtual bool terminate_iteration(void) = 0;
    
+   virtual void generate_agg_node(db::node *node)
+   {
+      db::simple_tuple_list ls(node->generate_aggs());
+
+      for(db::simple_tuple_list::iterator it(ls.begin());
+         it != ls.end();
+         ++it)
+      {
+         new_work_agg(node, *it);
+      }
+   }
+   
 public:
    
    virtual void new_work(db::node *, db::node *, const db::simple_tuple *, const bool is_agg = false) = 0;
    virtual void new_work_other(sched::base *, db::node *, const db::simple_tuple *) = 0;
    virtual void new_work_remote(process::remote *, const db::node::node_id, sched::message *) = 0;
+   virtual void new_work_agg(db::node *node, const db::simple_tuple *tpl) {
+      new_work(node, node, tpl, true);
+   }
    
    virtual void init(const size_t) = 0;
    virtual void end(void) = 0;

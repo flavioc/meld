@@ -112,17 +112,7 @@ static_local::generate_aggs(void)
    database::map_nodes::iterator end(state::DATABASE->get_node_iterator(final));
 
    for(; it != end; ++it)
-   {
-      node *no(it->second);
-      simple_tuple_list ls(no->generate_aggs());
-
-      for(simple_tuple_list::iterator it2(ls.begin());
-         it2 != ls.end();
-         ++it2)
-      {
-         new_work(NULL, no, *it2, true);
-      }
-   }
+      generate_agg_node(it->second);
 }
 
 bool

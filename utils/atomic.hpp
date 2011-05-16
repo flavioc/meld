@@ -57,6 +57,11 @@ public:
       return *this;
    }
    
+   /*
+   inline const bool operator==(const T& val) const {
+      return elem == val;
+   }*/
+   
    operator T() const { return elem; }
    
    explicit atomic(const T _elem): elem(_elem) {}
