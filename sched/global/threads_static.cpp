@@ -24,7 +24,7 @@ static_global::new_work(node *from, node *to, const simple_tuple *tpl, const boo
    assert(to != NULL);
    assert(tpl != NULL);
    sstatic::new_work(from, to, tpl, is_agg);
-   assert(is_active());
+   assert((!is_agg && is_active()) || is_agg);
 }
 
 void

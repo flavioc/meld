@@ -45,6 +45,7 @@ const size_t FLOAT_BASE          = 3;
 const size_t SELECT_BASE         = 9;
 const size_t RETURN_SELECT_BASE  = 5;
 const size_t COLOCATED_BASE      = 4;
+const size_t DELETE_BASE         = 3;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -60,6 +61,7 @@ enum instr_type {
    SELECT_INSTR         =  0x0A,
    RETURN_SELECT_INSTR  =  0x0B,
    COLOCATED_INSTR      =  0x0C,
+   DELETE_INSTR         =  0x0D,
    CALL_INSTR		      =  0x20,
    MOVE_INSTR		      =  0x30,
    ALLOC_INSTR		      =  0x40,
@@ -256,6 +258,11 @@ inline code_size_t return_select_jump(pcounter pc) { return pcounter_code_size(p
 inline instr_val colocated_first(const pcounter pc) { return val_get(pc, 1); }
 inline instr_val colocated_second(const pcounter pc) { return val_get(pc, 2); }
 inline reg_num colocated_dest(const pcounter pc) { return reg_get(pc, 3); }
+
+/* DELETE predicate */
+
+inline predicate_id delete_predicate(const pcounter pc) { return predicate_get(pc, 1); }
+inline instr_val delete_filter(const pcounter pc) { return val_get(pc, 2); }
 
 /* advance function */
 
@@ -527,6 +534,10 @@ advance(pcounter pc)
          return pc + COLOCATED_BASE
                    + arg_size<ARGUMENT_NODE>(colocated_first(pc))
                    + arg_size<ARGUMENT_NODE>(colocated_second(pc));
+                   
+      case DELETE_INSTR:
+         return pc + DELETE_BASE
+                   + arg_size<ARGUMENT_INT>(delete_filter(pc));
          
       case ELSE_INSTR:
       case REMOVE_INSTR:

@@ -62,9 +62,14 @@ public:
       return elem == val;
    }*/
    
+   inline void operator=(const T val)
+   {
+      elem = val;
+   }
+   
    operator T() const { return elem; }
    
-   explicit atomic(const T _elem): elem(_elem) {}
+   atomic(const T _elem): elem(_elem) {}
    
    ~atomic(void) {}
 };

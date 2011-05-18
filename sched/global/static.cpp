@@ -58,13 +58,12 @@ sstatic::generate_aggs(void)
    database::map_nodes::iterator end(state::DATABASE->get_node_iterator(final));
    
    for(; it != end; ++it)
-      generate_agg_node(it->second);
+      node_iteration(it->second);
 }
 
 void
 sstatic::init(const size_t)
 {
-   predicate *init_pred(state::PROGRAM->get_init_predicate());
    const node::node_id first(remote::self->find_first_node(id));
    const node::node_id final(remote::self->find_last_node(id));
    
@@ -72,10 +71,7 @@ sstatic::init(const size_t)
    database::map_nodes::iterator end(state::DATABASE->get_node_iterator(final));
    
    for(; it != end; ++it)
-   {
-      node *cur_node(it->second);
-      new_work(NULL, cur_node, simple_tuple::create_new(new vm::tuple(init_pred)));
-   }
+      init_node(it->second);
 }
 
 void

@@ -279,6 +279,12 @@ instr_print(pcounter pc, const bool recurse, const program *prog, ostream& cout)
             
          }
          break;
+      case DELETE_INSTR: {
+            pcounter m = pc + DELETE_BASE;
+            cout << "DELETE " << prog->get_predicate(delete_predicate(pc))->get_name()
+                 << " FROM " << val_string(delete_filter(pc), &m) << endl;
+         }
+         break;
       case REMOVE_INSTR:
     	case ELSE_INSTR:
          throw malformed_instr_error("unknown instruction code");

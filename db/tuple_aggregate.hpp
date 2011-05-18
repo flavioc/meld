@@ -28,6 +28,11 @@ public:
    simple_tuple_list generate(void);
 
    agg_configuration* add_to_set(vm::tuple *, const vm::ref_count);
+   
+   inline const bool empty(void) const { return values.empty(); }
+   
+   void delete_by_first_int_arg(const vm::int_val);
+   void delete_all(void);
 
    explicit tuple_aggregate(const vm::predicate *_pred): pred(_pred) {}
 

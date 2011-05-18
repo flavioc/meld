@@ -172,8 +172,6 @@ dynamic_local::init(const size_t num_threads)
    nodes_mutex = new boost::mutex();
    nodes = new node_set();
    
-   predicate *init_pred(state::PROGRAM->get_init_predicate());
-   
    database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
    database::map_nodes::iterator end(state::DATABASE->get_node_iterator(remote::self->find_last_node(id)));
    
@@ -184,7 +182,7 @@ dynamic_local::init(const size_t num_threads)
       cur_node->set_owner(this);
       nodes->insert(cur_node);
       
-      new_work(NULL, cur_node, simple_tuple::create_new(new vm::tuple(init_pred)));
+      init_node(cur_node);
       
       assert(cur_node->in_queue());
       assert(!cur_node->no_more_work());
@@ -197,7 +195,7 @@ void
 dynamic_local::generate_aggs(void)
 {
    for(node_set::iterator it(nodes->begin()); it != nodes->end(); ++it)
-      generate_agg_node(*it);
+      node_iteration(*it);
 }
 
 dynamic_local::dynamic_local(const process_id id):

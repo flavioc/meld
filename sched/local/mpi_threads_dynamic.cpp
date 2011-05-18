@@ -88,7 +88,6 @@ mpi_thread::new_mpi_message(node *_node, simple_tuple *stpl)
    }
 }
 
-
 void
 mpi_thread::change_node(thread_node *node, dynamic_local *_asker)
 {
@@ -212,7 +211,7 @@ mpi_thread::terminate_iteration(void)
 
    if(has_work())
       set_active();
-      
+   
    assert_thread_iteration(iteration);
 
    // again, needed since we must wait if any thread

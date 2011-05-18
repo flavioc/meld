@@ -200,8 +200,10 @@ execute_send(const pcounter& pc, state& state)
 
    if(msg == dest)
       state::MACHINE->route_self(state.proc, state.node, stuple);
-   else
+   else {
+      // cout << "sending " << *stuple << " to " << dest_val << endl;
       state::MACHINE->route(state.proc, (node::node_id)dest_val, stuple);
+   }
 }
 
 template <typename T>
@@ -750,6 +752,22 @@ execute_colocated(pcounter pc, state& state)
    state.set_bool(dest, state::MACHINE->same_place(n1, n2));
 }
 
+static inline void
+execute_delete(const pcounter pc, state& state)
+{
+   const predicate_id id(delete_predicate(pc));
+   const predicate *pred(state::PROGRAM->get_predicate(id));
+   pcounter m(pc + DELETE_BASE);
+   const instr_val fil_val(delete_filter(pc));
+   const int_val fil(get_op_function<int_val>(fil_val, m, state));
+   
+   assert(state.node != NULL);
+   
+   //cout << state.node->get_id() << " Dumping id " << pred->get_name() << " indexed " << fil << endl;
+   
+   state.node->delete_by_first_int_arg(id, fil);
+}
+
 static inline return_type
 execute(pcounter pc, state& state)
 {
@@ -757,7 +775,7 @@ execute(pcounter pc, state& state)
    {
 eval_loop:
 
-      //instr_print_simple(pc, state.PROGRAM, cout);
+      // instr_print_simple(pc, state.PROGRAM, cout);
       
       switch(fetch(pc)) {
          case RETURN_INSTR: return RETURN_OK;
@@ -842,6 +860,10 @@ eval_loop:
             
          case COLOCATED_INSTR:
             execute_colocated(pc, state);
+            break;
+            
+         case DELETE_INSTR:
+         execute_delete(pc, state);
             break;
             
          default: throw vm_exec_error("unsupported instruction");

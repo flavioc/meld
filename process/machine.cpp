@@ -34,6 +34,12 @@ machine::same_place(const node::node_id id1, const node::node_id id2) const
 }
 
 void
+machine::route_self(process *proc, node *node, const simple_tuple *stpl)
+{
+   proc->get_scheduler()->new_work_self(node, stpl, false);
+}
+
+void
 machine::route(process *caller, const node::node_id id, const simple_tuple* stuple)
 {  
    remote* rem(rout.find_remote(id));
@@ -112,7 +118,8 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
    will_dump_database(false),
    rout(_rout)
 {  
-   state::PROGRAM = new program(filename);
+   new program(filename);
+   
    state::DATABASE = new database(filename, get_creation_function(_sched_type));
    state::NUM_THREADS = num_threads;
    state::MACHINE = this;

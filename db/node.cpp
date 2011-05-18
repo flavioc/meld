@@ -3,6 +3,7 @@
 #include <assert.h>
 
 #include "db/node.hpp"
+#include "vm/state.hpp"
 
 using namespace db;
 using namespace std;
@@ -67,8 +68,15 @@ node::remove_agg_tuple(vm::tuple *tuple, const ref_count many)
 }
 
 simple_tuple_list
-node::generate_aggs(void)
+node::end_iteration(void)
 {
+   // reset counters
+   for(size_t i(0); i < state::NUM_PREDICATES; ++i) {
+      auto_generated[i] = 0;
+      to_proc[i] = 0;
+   }
+   
+   // generate possible aggregates
    simple_tuple_list ret;
    
    for(aggregate_map::iterator it(aggs.begin());
@@ -100,8 +108,65 @@ node::match_predicate(const predicate_id id) const
    return tr.match_predicate();
 }
 
+void
+node::delete_all(const predicate_id id)
+{
+   trie& tr(get_storage(id));
+   
+   tr.delete_all();
+   
+   aggregate_map::iterator it(aggs.find(id));
+   
+   if(it != aggs.end()) {
+      tuple_aggregate *agg(it->second);
+      agg->delete_all();
+      assert(agg->empty());
+   }
+}
+
+void
+node::delete_by_first_int_arg(const vm::predicate_id id, const int_val arg)
+{
+   trie& tr(get_storage(id));
+   
+   tr.delete_by_first_int_arg(arg);
+   
+   aggregate_map::iterator it(aggs.find(id));
+   
+   if(it != aggs.end()) {
+      tuple_aggregate *agg(it->second);
+      agg->delete_by_first_int_arg(arg);
+   }
+}
+
+const size_t
+node::count_total(const predicate_id id) const
+{
+   simple_tuple_map::const_iterator it(tuples.find(id));
+   
+   if(it == tuples.end())
+      return 0;
+      
+   const trie& tr(it->second);
+   
+   return tr.size();
+}
+
+node::node(const node_id _id, const node_id _trans):
+   id(_id), translation(_trans)
+{
+   for(size_t i(0); i < state::NUM_PREDICATES; ++i) {
+      to_proc.push_back(0);
+      auto_generated.push_back(0);
+   }
+}
+
 node::~node(void)
 {
+   for(size_t i(0); i < state::NUM_PREDICATES; ++i) {
+      assert(auto_generated[i] == 0);
+      assert(to_proc[i] == 0);
+   }
 }
 
 void

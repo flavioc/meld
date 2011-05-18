@@ -9,7 +9,7 @@ using namespace std;
 
 namespace db
 {
-   
+
 simple_tuple*
 trie::look_for_simple_tuple(const simple_tuple_list& list, vm::tuple *tpl)
 {
@@ -31,6 +31,8 @@ trie::insert_tuple(vm::tuple *tpl, const ref_count many)
 {
    simple_tuple *found(look_for_simple_tuple(list, tpl));
    
+   total += many;
+   
    if(found != NULL) {
       found->inc_count(many);
       return false;
@@ -45,17 +47,19 @@ void
 trie::commit_delete(simple_tuple_list::iterator it)
 {
    simple_tuple* stuple(*it);
-   vm::tuple *tuple(stuple->get_tuple());
+   
+   assert(stuple->get_count() == 0);
    
    list.erase(it);
    
-   delete tuple;
-   delete stuple;
+   simple_tuple::wipeout(stuple);
 }
 
 trie::delete_info
 trie::delete_tuple(vm::tuple *tpl, const ref_count many)
-{  
+{
+   assert(many > 0);
+   
    for(simple_tuple_list::iterator it(list.begin());
       it != list.end();
       ++it)
@@ -66,11 +70,13 @@ trie::delete_tuple(vm::tuple *tpl, const ref_count many)
          simple_tuple *target((simple_tuple*)stuple);
          
          target->dec_count(many);
+         total -= many;
          
          if(target->get_count() == 0)
             return delete_info(this, true, it);
-         else
+         else {
             return delete_info(false);
+         }
       }
    }
    
@@ -132,14 +138,35 @@ trie::dump(ostream& cout) const
 }
 
 void
+trie::delete_by_first_int_arg(const int_val val)
+{
+   for(simple_tuple_list::iterator it(list.begin());
+      it != list.end();
+      ++it)
+   {
+      simple_tuple *stuple(*it);
+      
+      if(stuple->get_tuple()->get_int(0) == val) {
+         total -= stuple->get_count();
+         simple_tuple::wipeout(stuple);
+         it = list.erase(it);
+      }
+   }
+}
+
+void
+trie::delete_all(void)
+{
+   wipeout();
+}
+
+void
 trie::wipeout(void)
 {
-   for(iterator it(begin()); it != end(); ++it) {
-      simple_tuple *stpl(*it);
-      delete stpl->get_tuple();
-      delete stpl;
-   }
+   for(iterator it(begin()); it != end(); ++it)
+      simple_tuple::wipeout(*it);
    list.clear();
+   total = 0;
 }
 
 trie::~trie(void)

@@ -112,7 +112,7 @@ static_local::generate_aggs(void)
    database::map_nodes::iterator end(state::DATABASE->get_node_iterator(final));
 
    for(; it != end; ++it)
-      generate_agg_node(it->second);
+      node_iteration(it->second);
 }
 
 bool
@@ -258,18 +258,16 @@ static_local::end(void)
 void
 static_local::init(const size_t num_threads)
 {
-   predicate *init_pred(state::PROGRAM->get_init_predicate());
-   
    database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
    database::map_nodes::iterator end(state::DATABASE->get_node_iterator(remote::self->find_last_node(id)));
    
    for(; it != end; ++it)
    {
       thread_node *cur_node((thread_node*)it->second);
-      
       cur_node->set_owner(this);
       
-      new_work(NULL, cur_node, simple_tuple::create_new(new vm::tuple(init_pred)));
+      init_node(cur_node);
+      
       assert(cur_node->get_owner() == this);
       assert(cur_node->in_queue());
       assert(!cur_node->no_more_work());

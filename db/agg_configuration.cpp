@@ -53,6 +53,24 @@ agg_configuration::test(vm::tuple *tpl, const field_num agg_field) const
    return true;
 }
 
+const bool
+agg_configuration::matches_first_int_arg(const int_val val) const
+{
+   if(vals.empty())
+      return false;
+   
+   assert(!vals.empty());
+
+   const_iterator it(vals.begin());
+   
+   assert(it != vals.end());
+   
+   simple_tuple *sother(*it);
+   vm::tuple *other(sother->get_tuple());
+   
+   return other->get_int(0) == val;
+}
+
 vm::tuple*
 agg_configuration::generate_max_int(const field_num field) const
 {

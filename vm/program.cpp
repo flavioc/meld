@@ -27,6 +27,8 @@ static const size_t PREDICATE_DESCRIPTOR_SIZE = sizeof(code_size_t) +
 
 program::program(const string& filename)
 {
+   state::PROGRAM = this;
+   
    ifstream fp(filename.c_str(), ios::in | ios::binary);
    
    if(!fp.is_open())
@@ -58,6 +60,9 @@ program::program(const string& filename)
       predicates[i] = predicate::make_predicate_from_buf((unsigned char*)buf, &size);
       code_size[i] = size;
    }
+   
+   for(size_t i(0); i < num_predicates; ++i)
+      predicates[i]->cache_info();
    
    // read predicate code
    for(size_t i(0); i < num_predicates; ++i) {
@@ -135,7 +140,12 @@ program::get_predicate_by_name(const string& name) const
 predicate*
 program::get_init_predicate(void) const
 {
-   return get_predicate_by_name("_init");
+   static predicate *init(NULL);
+   
+   if(init == NULL)
+      init = get_predicate_by_name("_init");
+      
+   return init;
 }
 
 predicate*

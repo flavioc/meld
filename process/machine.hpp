@@ -53,11 +53,7 @@ public:
    
    bool same_place(const db::node::node_id, const db::node::node_id) const;
    
-   inline void route_self(process *proc, db::node *node, const db::simple_tuple *stpl)
-   {
-      node->more_to_process(stpl->get_predicate_id());
-      proc->get_scheduler()->new_work(node, node, stpl);
-   }
+   void route_self(process *, db::node *, const db::simple_tuple *);
    
    void route(process *, const db::node::node_id, const db::simple_tuple*);
    

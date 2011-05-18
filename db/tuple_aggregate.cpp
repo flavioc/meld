@@ -56,7 +56,24 @@ tuple_aggregate::generate(void)
    return ls;
 }
 
-tuple_aggregate::~tuple_aggregate(void)
+void
+tuple_aggregate::delete_by_first_int_arg(const int_val val)
+{
+   for(agg_conf_list::iterator it(values.begin());
+      it != values.end();
+      ++it)
+   {
+      agg_configuration *conf(*it);
+      
+      if(conf->matches_first_int_arg(val)) {
+         delete *it;
+         it = values.erase(it);
+      }
+   }
+}
+
+void
+tuple_aggregate::delete_all(void)
 {
    for(agg_conf_list::iterator it(values.begin());
       it != values.end();
@@ -64,6 +81,12 @@ tuple_aggregate::~tuple_aggregate(void)
    {
       delete *it;
    }
+   values.clear();
+}
+
+tuple_aggregate::~tuple_aggregate(void)
+{
+   delete_all();
 }
 
 void

@@ -43,8 +43,11 @@ public:
 
    inline const bool has_changed(void) const { return changed; }
    inline const bool is_empty(void) const { return vals.empty(); }
+   inline const size_t size(void) const { return vals.size(); }
 
    void add_to_set(vm::tuple *, const vm::ref_count);
+   
+   const bool matches_first_int_arg(const vm::int_val) const;
 
    explicit agg_configuration(void):
       changed(false), corresponds(NULL)

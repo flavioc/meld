@@ -40,25 +40,44 @@ process::do_agg_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
    agg_configuration *conf(node->add_agg_tuple(tuple, count));
    
    if(pred->has_agg_term_info()) {
-      if(node->no_more_to_process(pred->get_id())) {
-         vector<const predicate*> deps(pred->get_agg_deps());
+      const vector<const predicate*>& local_deps(pred->get_local_agg_deps());
+      const vector<const predicate*>& remote_deps(pred->get_remote_agg_deps());
       
-         for(size_t i(0); i < deps.size(); ++i) {
-            const predicate *pred(deps[i]);
+      if(!local_deps.empty() && remote_deps.empty()) {
+         for(size_t i(0); i < local_deps.size(); ++i) {
+            const predicate *pred(local_deps[i]);
+            //cout << "Checking predicate " << local_deps[i]->get_name() << endl;
             if(!node->no_more_to_process(pred->get_id())) {
+               //printf("FAILED!\n");
                return;
             }
          }
+      }
+      
+      if(!remote_deps.empty()) {
+         const predicate *remote_pred(remote_deps[0]);
          
-         return;
-         simple_tuple_list list;
-         conf->generate(pred->get_aggregate_type(), pred->get_aggregate_field(), list);
+         if(!node->no_more_to_process(remote_pred->get_id()))
+            return;
          
-         for(simple_tuple_list::iterator it(list.begin()); it != list.end(); ++it) {
-            simple_tuple *tpl(*it);
-            //cout << "Generated " << *tpl << endl;
-            scheduler->new_work(node, node, tpl, true);
-         }
+         const size_t total_remote(node->count_total(remote_pred->get_id()));
+         const size_t total_agg(conf->size());
+            
+         // cout << node->get_id() << " Total remote: " << total_remote << " TOTAL AGG: " << total_agg << endl;
+         
+         if(!(total_agg == total_remote+1))
+            return;
+      }
+         
+         
+      simple_tuple_list list;
+      conf->generate(pred->get_aggregate_type(), pred->get_aggregate_field(), list);
+         
+      for(simple_tuple_list::iterator it(list.begin()); it != list.end(); ++it) {
+         simple_tuple *tpl(*it);
+            
+         //cout << node->get_id() << " AUTO GENERATING " << *tpl << endl;
+         scheduler->new_work_agg(node, tpl);
       }
    }
 }
@@ -70,7 +89,7 @@ process::do_work(node *node, const simple_tuple *_stuple, const bool ignore_agg)
    vm::tuple *tuple = stuple->get_tuple();
    ref_count count = stuple->get_count();
    
-   //cout << node->get_id() << " " << *stuple << " " << ignore_agg << endl;
+   // cout << node->get_id() << " " << *stuple << " " << ignore_agg << endl;
    
    ++total_processed;
    
@@ -116,6 +135,8 @@ process::do_loop(void)
       }
    
       scheduler->assert_end_iteration();
+      
+      // cout << id << " -------- END ITERATION ---------" << endl;
       
       // false from end_iteration ends program
       if(!scheduler->end_iteration())

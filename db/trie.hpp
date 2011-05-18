@@ -52,8 +52,8 @@ private:
    typedef trie_node node;
    
    node *child;
-   
    simple_tuple_list list;
+   size_t total;
    
    simple_tuple* look_for_simple_tuple(const simple_tuple_list&, vm::tuple *);
    void commit_delete(simple_tuple_list::iterator);
@@ -106,6 +106,7 @@ public:
    tuple_vector* match_predicate(void) const;
    
    inline const bool empty(void) const { return list.empty(); }
+   inline const size_t size(void) const { return total; }
    
    inline const_iterator begin(void) const { return list.begin(); }
    inline const_iterator end(void) const { return list.end(); }
@@ -113,12 +114,14 @@ public:
    inline iterator begin(void) { return list.begin(); }
    inline iterator end(void) { return list.end(); }
    
+   void delete_all(void);
+   void delete_by_first_int_arg(const vm::int_val);
    void wipeout(void);
    
    void print(std::ostream&) const;
    void dump(std::ostream&) const;
    
-   explicit trie(void) {}
+   explicit trie(void): total(0) {}
    
    ~trie(void);
 };

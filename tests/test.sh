@@ -20,10 +20,10 @@ do_test ()
 
 	${TO_RUN} > test.out
 
-	DIFF=`diff -u test.out ${FILE}`
+	DIFF=`diff -u ${FILE} test.out`
 	if [ ! -z "${DIFF}" ]; then
 		echo "DIFFERENCES!!!"
-		diff -u test.out ${FILE}
+		diff -u ${FILE} test.out
 		exit 1
 	fi
 	rm test.out

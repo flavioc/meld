@@ -55,7 +55,6 @@ predicate::make_predicate_from_buf(byte *buf, code_size_t *code_size)
    // read argument types
    for(size_t i = 0; i < pred->num_fields(); ++i)
       pred->types[i] = (field_type)buf[i];
-   pred->build_field_info();
    buf += PRED_ARGS_MAX;
    
    // read predicate name
@@ -64,15 +63,23 @@ predicate::make_predicate_from_buf(byte *buf, code_size_t *code_size)
    buf += PRED_NAME_SIZE_MAX;
    
    if(pred->is_aggregate()) {
-      const size_t total(buf[0]);
+      const size_t local_total(buf[0]);
       
       buf++;
       
-      for(size_t i(0); i < total; ++i) {
+      for(size_t i(0); i < local_total; ++i) {
          predicate_id id(buf[0]);
-         
-         pred->agg_info->sizes.push_back(id);
-         
+         pred->agg_info->local_sizes.push_back(id);  
+         buf++;
+      }
+      
+      const size_t remote_total(buf[0]);
+      
+      buf++;
+      
+      for(size_t i(0); i < remote_total; ++i) {
+         predicate_id id(buf[0]);
+         pred->agg_info->remote_sizes.push_back(id);
          buf++;
       }
    }
@@ -99,21 +106,50 @@ predicate::build_field_info(void)
    tuple_size = offset;
 }
 
-vector<const predicate*>
-predicate::get_agg_deps(void) const
+void
+predicate::build_aggregate_info(void)
+{
+   for(size_t i(0); i < agg_info->local_sizes.size(); ++i) {
+      const predicate_id id(agg_info->local_sizes[i]);
+      const predicate *pred(state::PROGRAM->get_predicate(id));
+      
+      agg_info->local_predicates.push_back(pred);
+   }
+   
+   for(size_t i(0); i < agg_info->remote_sizes.size(); ++i) {
+      const predicate_id id(agg_info->remote_sizes[i]);
+      const predicate *pred(state::PROGRAM->get_predicate(id));
+      
+      agg_info->remote_predicates.push_back(pred);
+   }
+   
+   // current constraints
+   if(!agg_info->remote_sizes.empty())
+      assert(agg_info->remote_predicates.size() == 1);
+}
+
+void
+predicate::cache_info(void)
+{
+   build_field_info();
+   if(is_aggregate())
+      build_aggregate_info();
+}
+
+const vector<const predicate*>&
+predicate::get_local_agg_deps(void) const
 {
    assert(is_aggregate());
    
-   vector<const predicate*> ret;
+   return agg_info->local_predicates;
+}
+
+const vector<const predicate*>&
+predicate::get_remote_agg_deps(void) const
+{
+   assert(is_aggregate());
    
-   for(size_t i(0); i < agg_info->sizes.size(); ++i) {
-      const predicate_id id(agg_info->sizes[0]);
-      const predicate *pred(state::PROGRAM->get_predicate(id));
-      
-      ret.push_back(pred);
-   }
-   
-   return ret;
+   return agg_info->remote_predicates;
 }
 
 predicate::predicate(void)
@@ -147,6 +183,29 @@ predicate::print(ostream& cout) const
    cout << ",strat_level=" << get_strat_level();
    
    cout << "]";
+   
+   if(is_aggregate()) {
+      const vector<const predicate*>& locals(get_local_agg_deps());
+      if(!locals.empty()) {
+         cout << "[local_deps=";
+         for(size_t i(0); i < locals.size(); ++i) {
+            if(i != 0)
+               cout << ",";
+            cout << locals[i]->get_name();
+         }
+         cout << "]";
+      }
+      const vector<const predicate*>& remotes(get_remote_agg_deps());
+      if(!remotes.empty()) {
+         cout << "[remote_deps=";
+         for(size_t i(0); i < remotes.size(); ++i) {
+            if(i != 0)
+               cout << ",";
+            cout << remotes[i]->get_name();
+         }
+         cout << "]";
+      }
+   }
 }
 
 ostream& operator<<(ostream& cout, const predicate& pred)
