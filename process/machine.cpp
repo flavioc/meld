@@ -125,6 +125,7 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
    sched_type(_sched_type),
    will_show_database(false),
    will_dump_database(false),
+   will_show_memory(false),
    rout(_rout)
 {  
    new program(filename);

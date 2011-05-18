@@ -27,21 +27,19 @@ private:
    {
       boost::mutex::scoped_lock l(mtx);
       
-      if(head == NULL)
-         head = tail = new_node;
-      else {
-         assert(tail != NULL);
-         tail->next = new_node;
-         tail = new_node;
-      }
+      assert(tail != NULL && head != NULL);
       
-      assert(head != NULL);
+      tail->next = new_node;
+      tail = new_node;
+      
+      assert(head != tail);
       assert(tail == new_node);
+      assert(tail->next == NULL);
    }
    
 public:
    
-   inline const bool empty(void) const { return head == NULL; }
+   inline const bool empty(void) const { return head == tail; }
    
    inline void push(T el)
    {
@@ -55,60 +53,45 @@ public:
    
    inline T pop(void)
    {
-      node *take((node*)head);
-      
       assert(head != NULL);
-   
-      if(head == tail) {
-         mtx.lock();
-         if(head == tail) {
-            head = tail = NULL;
-            mtx.unlock();
-         } else {
-            mtx.unlock();
-            head = head->next;
-         }
-      } else {
-         head = head->next;
-         assert(take->next == head);
-      }
+      assert(head->next != NULL);
       
-      assert(head != take);
+      node *take((node*)head->next);
+      node *old((node*)head);
       
-      T el(take->data);
+      head = take;
       
-      delete take;
+      delete old;
       
-      return el;
+      assert(head == take);
+      assert(take != NULL);
+      
+      return take->data;
    }
    
    // append an unsafe queue on this queue
    inline void snap(unsafe_queue_count<T>& q)
    {
-      boost::mutex::scoped_lock l(mtx);
-      
       assert(q.size() > 0);
       assert(!q.empty());
       
-      if(head == NULL) {
-         head = q.head;
-         tail = q.tail;
-      } else {
-         assert(tail != NULL);
+      boost::mutex::scoped_lock l(mtx);
          
-         tail->next = q.head;
-         tail = q.tail;
-      }
+      tail->next = q.head;
+      tail = q.tail;
       
       assert(q.tail = (node*)tail);
    }
    
-   explicit safe_queue(void): head(NULL), tail(NULL) {}
+   explicit safe_queue(void) {
+      // sentinel node XXX use non-thread pool
+      head = tail = (node*)malloc(sizeof(node));
+   }
    
    ~safe_queue(void)
    {
-      assert(head == NULL);
-      assert(tail == NULL);
+      assert(head == tail);
+      delete head;
    }
 };
 
