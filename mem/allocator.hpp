@@ -7,6 +7,7 @@
 
 #include "conf.hpp"
 #include "mem/thread.hpp"
+#include "mem/stat.hpp"
 
 #ifdef ALLOCATOR_ASSERT
 extern boost::mutex allocator_mtx;
@@ -53,6 +54,9 @@ public:
       typename std::allocator<void>::const_pointer = 0)
    {
       pointer p;
+      
+      register_allocation(cnt, sizeof(T));
+      
       if(USE_ALLOCATOR)
          p = reinterpret_cast<pointer>(get_pool()->allocate(cnt * sizeof(T)));
       else
@@ -75,6 +79,8 @@ public:
       mem_set.erase(p);
       allocator_mtx.unlock();
 #endif
+
+      register_deallocation(cnt, sizeof(T));
 
       if(USE_ALLOCATOR)
          get_pool()->deallocate(p, cnt * sizeof(T));

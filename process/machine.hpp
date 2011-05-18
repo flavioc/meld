@@ -39,6 +39,7 @@ private:
    const scheduler_type sched_type;
    bool will_show_database;
    bool will_dump_database;
+   bool will_show_memory;
    
    std::vector<process*> process_list;
    
@@ -48,6 +49,7 @@ public:
    
    void show_database(void) { will_show_database = true; }
    void dump_database(void) { will_dump_database = true; }
+   void show_memory(void) { will_show_memory = true; }
    
    process *get_process(const vm::process_id id) { return process_list[id]; }
    

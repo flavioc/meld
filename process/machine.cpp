@@ -7,6 +7,7 @@
 #include "runtime/list.hpp"
 #include "sched/mpi/message.hpp"
 #include "mem/thread.hpp"
+#include "mem/stat.hpp"
 
 using namespace process;
 using namespace db;
@@ -14,6 +15,7 @@ using namespace std;
 using namespace vm;
 using namespace boost;
 using namespace sched;
+using namespace mem;
 
 namespace process
 {
@@ -88,6 +90,13 @@ machine::start(void)
       state::DATABASE->print_db(cout);
    if(will_dump_database)
       state::DATABASE->dump_db(cout);
+   if(will_show_memory) {
+#ifdef MEMORY_STATISTICS
+      cout << "Total memory in use: " << get_memory_in_use() / 1024 << "KB" << endl;
+#else
+      cout << "Memory statistics support was not compiled in" << endl;
+#endif
+   }
 }
 
 static inline database::create_node_fn

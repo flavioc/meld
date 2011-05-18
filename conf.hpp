@@ -10,6 +10,9 @@
 /* when this is active the allocator checks for allocate/dealloc correctness */
 //#define ALLOCATOR_ASSERT 1
 
+/* activate this to collect statistics on memory use */
+#define MEMORY_STATISTICS 1
+
 //#define DEBUG_SAFRAS 1
 //#define DEBUG_REMOTE 1
 //#define DEBUG_ACTIVE 1

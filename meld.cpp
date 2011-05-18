@@ -16,6 +16,7 @@ static scheduler_type sched_type = SCHED_UNKNOWN;
 static bool show_database = false;
 static bool dump_database = false;
 static bool time_execution = false;
+static bool memory_statistics = false;
 
 static void
 help(void)
@@ -29,6 +30,7 @@ help(void)
    fprintf(stderr, "\t\t\tmpi static division of work using mpi\n");
    fprintf(stderr, "\t\t\tmpiX static division of work using mpi plus threads\n");
    fprintf(stderr, "\t-t \t\ttime execution\n");
+   fprintf(stderr, "\t-m \t\tmemory statistics\n");
    fprintf(stderr, "\t-s \t\tshows database\n");
    fprintf(stderr, "\t-d \t\tdump database (debug option)\n");
    fprintf(stderr, "\t-h \t\tshow this screen\n");
@@ -111,6 +113,9 @@ read_arguments(int argc, char **argv)
          case 't':
             time_execution = true;
             break;
+         case 'm':
+            memory_statistics = true;
+            break;
          case 'h':
             help();
             break;
@@ -167,6 +172,8 @@ main(int argc, char **argv)
          mac.show_database();
       if(dump_database)
          mac.dump_database();
+      if(memory_statistics)
+         mac.show_memory();
       
       mac.start();
 

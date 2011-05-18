@@ -53,20 +53,22 @@ OBJS = utils/utils.o \
 			 vm/predicate.o \
 			 vm/types.o \
 			 vm/instr.o \
+			 vm/state.o \
+			 vm/tuple.o \
+			 vm/exec.o \
 			 db/node.o \
 			 db/tuple.o \
 			 db/agg_configuration.o \
 			 db/tuple_aggregate.o \
 			 db/database.o \
+			 db/trie.o \
 			 process/process.o \
 			 process/machine.o \
 			 process/remote.o \
 			 process/router.o \
-			 vm/state.o \
-			 vm/tuple.o vm/exec.o \
-			 sched/mpi/message.o \
 			 mem/thread.o \
-			 db/trie.o \
+			 mem/stat.o \
+			 sched/mpi/message.o \
 			 sched/mpi/message_buffer.o \
 			 sched/global/static.o \
 			 sched/global/threads_static.o \
@@ -166,6 +168,8 @@ sched/mpi/message.o: sched/mpi/message.cpp sched/mpi/message.hpp \
 mem/thread.o: mem/thread.cpp mem/thread.hpp \
 							mem/pool.hpp mem/chunkgroup.hpp \
 							mem/base.hpp mem/chunk.hpp
+
+mem/stat.o: mem/stat.cpp mem/stat.hpp
 
 db/trie.o: db/trie.cpp db/trie.hpp \
 					utils/utils.hpp
