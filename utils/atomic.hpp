@@ -81,30 +81,30 @@ class atomic_ref
 {
 private:
    
-   volatile T *ref;
+   volatile T ref;
    
 public:
    
-   inline void operator=(volatile T* val)
+   inline void operator=(volatile T val)
    {
       ref = val;
    }
    
-   inline T* get(void) const { return (T*)ref; }
+   inline T get(void) const { return (T)ref; }
    
-   inline operator T*() const { return get(); }
+   inline operator T() const { return get(); }
    
-   inline bool compare_test_set(T* comp, T* new_val)
+   inline bool compare_test_set(T comp, T new_val)
    {
       return __sync_bool_compare_and_swap(&ref, comp, new_val);
    }
    
-   inline T* compare_and_set(T* comp, T* new_val)
+   inline T compare_and_set(T comp, T new_val)
    {
-      return __sync_val_compare_and_swap((T**)&ref, comp, new_val);
+      return __sync_val_compare_and_swap((T*)&ref, comp, new_val);
    }
    
-   atomic_ref(T* _ref = NULL): ref(_ref) {}
+   atomic_ref(T _ref): ref(_ref) {}
    
    ~atomic_ref(void) {}
 };

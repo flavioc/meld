@@ -2,7 +2,6 @@
 #ifndef SCHED_QUEUE_SAFE_QUEUE_HPP
 #define SCHED_QUEUE_SAFE_QUEUE_HPP
 
-#include <boost/thread/mutex.hpp>
 #include <boost/static_assert.hpp>
 
 #include "sched/queue/node.hpp"
@@ -17,7 +16,7 @@ class special_queue_node
 {
 public:
    T data;
-   utils::atomic_ref<special_queue_node> next;
+   utils::atomic_ref<special_queue_node*> next;
 };
 
 // this queue ensures safety for multiple threads
@@ -33,7 +32,7 @@ private:
    BOOST_STATIC_ASSERT(sizeof(special_node) == sizeof(node));
    
    volatile node *head;
-   utils::atomic_ref<special_node> tail;
+   utils::atomic_ref<special_node*> tail;
    
    inline void push_node(special_node *new_node)
    {
@@ -119,7 +118,9 @@ public:
       }
    }
    
-   explicit safe_queue(void) {
+   explicit safe_queue(void):
+      tail(NULL)
+   {
       // sentinel node
       head = new node();
       head->next = NULL;
