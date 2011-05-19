@@ -103,25 +103,24 @@ static_local::new_work_other(sched::base *scheduler, node *node, const simple_tu
    
    tnode->add_work(stuple, false);
    
+   mutex::scoped_lock lock(tnode->mtx);
+   
    if(!tnode->in_queue()) {
-      mutex::scoped_lock lock(tnode->mtx);
-      if(!tnode->in_queue()) {
-         static_local *owner(tnode->get_owner());
-         tnode->set_in_queue(true);
-         owner->add_to_queue(tnode);
+      static_local *owner(tnode->get_owner());
+      tnode->set_in_queue(true);
+      owner->add_to_queue(tnode);
          
-         if(this != owner) {
-            mutex::scoped_lock lock2(owner->mutex);
-            if(owner->is_inactive() && owner->has_work())
-            {
-               if(owner->is_inactive())
-                  owner->set_active();
-               assert(owner->is_active());
-            }
+      if(this != owner) {
+         mutex::scoped_lock lock2(owner->mutex);
+         if(owner->is_inactive() && owner->has_work())
+         {
+            if(owner->is_inactive())
+               owner->set_active();
+            assert(owner->is_active());
          }
-         
-         assert(tnode->in_queue());
       }
+         
+      assert(tnode->in_queue());
    }
 }
 
@@ -246,6 +245,7 @@ static_local::set_next_node(void)
       
       current_node = queue_nodes.pop();
       
+      assert(current_node->in_queue());
       assert(current_node != NULL);
       
       check_if_current_useless();
