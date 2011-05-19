@@ -41,16 +41,19 @@ tuple_aggregate::generate(void)
    
    for(agg_conf_list::iterator it(values.begin());
       it != values.end();
-      ++it)
+      )
    {
       agg_configuration *conf(*it);
       
       if(conf->has_changed())
          conf->generate(typ, field, ls);
+      assert(!conf->has_changed());
+      
       if(conf->is_empty()) {
          it = values.erase(it);
          delete conf;
-      }
+      } else
+         ++it;
    }
    
    return ls;
@@ -77,14 +80,15 @@ tuple_aggregate::delete_by_first_int_arg(const int_val val)
 {
    for(agg_conf_list::iterator it(values.begin());
       it != values.end();
-      ++it)
+      )
    {
       agg_configuration *conf(*it);
       
       if(conf->matches_first_int_arg(val)) {
          delete *it;
          it = values.erase(it);
-      }
+      } else
+         it++;
    }
 }
 

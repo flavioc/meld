@@ -90,6 +90,8 @@ node::end_iteration(void)
       ret.insert(ret.end(), ls.begin(), ls.end());
    }
    
+   assert_end();
+   
    return ret;
 }
 

@@ -111,13 +111,14 @@ router::check_requests(vector_reqs& reqs, const bool test)
    
    mutex::scoped_lock lock(mpi_mutex);
    
-   for(vector_reqs::iterator it(reqs.begin()); it != reqs.end(); ++it) {
+   for(vector_reqs::iterator it(reqs.begin()); it != reqs.end();) {
       pair_req& r(*it);
       
       if((test && r.first.test()) || !test) {
          delete []r.second;
          it = reqs.erase(it);
-      }
+      } else
+         ++it;
    }
 }
 

@@ -53,8 +53,8 @@ static_local::assert_end_iteration(void) const
 
    for(; it != end; ++it) {
       thread_node *node((thread_node*)it->second);
-      node->assert_end_iteration();
       assert(!node->in_queue());
+      node->assert_end_iteration();
    }
 }
 
@@ -158,6 +158,7 @@ static_local::busy_wait(void)
       if(!has_work() && is_inactive() && all_threads_finished()) {
          assert(!has_work());
          assert(is_inactive());
+         assert(all_threads_finished());
          return false;
       }
    }

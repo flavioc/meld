@@ -142,7 +142,7 @@ trie::delete_by_first_int_arg(const int_val val)
 {
    for(simple_tuple_list::iterator it(list.begin());
       it != list.end();
-      ++it)
+      )
    {
       simple_tuple *stuple(*it);
       
@@ -150,7 +150,8 @@ trie::delete_by_first_int_arg(const int_val val)
          total -= stuple->get_count();
          simple_tuple::wipeout(stuple);
          it = list.erase(it);
-      }
+      } else
+         it++;
    }
 }
 
