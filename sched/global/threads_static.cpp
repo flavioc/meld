@@ -25,6 +25,7 @@ static_global::new_work(node *from, node *to, const simple_tuple *tpl, const boo
    assert(tpl != NULL);
    sstatic::new_work(from, to, tpl, is_agg);
    assert((!is_agg && is_active()) || is_agg);
+   assert_thread_push_work();
 }
 
 void
@@ -41,6 +42,8 @@ static_global::new_work_other(sched::base *scheduler, node *node, const simple_t
    
    if(buf.push(other_id, work))
       flush_queue(other_id, other);
+      
+   assert_thread_push_work();
 }
 
 void
@@ -139,7 +142,11 @@ static_global::busy_wait(void)
 bool
 static_global::get_work(work_unit& work)
 {
-   return sstatic::get_work(work);
+   const bool ret(sstatic::get_work(work));
+   if(ret)
+      assert_thread_pop_work();
+      
+   return ret;
 }
 
 void
@@ -177,6 +184,7 @@ static_global::terminate_iteration(void)
    // and thus other threads waiting for all_finished will fail
    // to get here
    
+   assert_thread_end_iteration();
    threads_synchronize();
    
    assert(buf.empty());

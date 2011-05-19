@@ -12,6 +12,7 @@
 #include <boost/mpi/packed_oarchive.hpp>
 #endif
 #include "utils/types.hpp"
+#include "utils/atomic.hpp"
 #include "mem/base.hpp"
 
 #include "vm/defs.hpp"
@@ -34,7 +35,7 @@ private:
    
    typedef unsigned int ref_count;
    
-   ref_count refs;
+   utils::atomic<size_t> refs;
    
 #ifdef COMPILE_MPI
    friend class boost::serialization::access;
@@ -70,11 +71,12 @@ public:
    const list_ptr get_tail(void) const { return tail; }
    
    inline void inc_refs(void) {
-      ++refs;
+      refs++;
    }
    
    inline void dec_refs(void) {
-      --refs;
+      assert(refs > 0);
+      refs--;
       if(refs == 0) {
          if(!is_null(get_tail()))
             get_tail()->dec_refs();
