@@ -61,11 +61,7 @@ mpi_thread::new_mpi_message(node *_node, simple_tuple *stpl)
          node->set_in_queue(true);
          this->add_to_queue(node);
       }
-      if(is_inactive()) {
-         mutex::scoped_lock lock(mutex);
-         if(is_inactive())
-            set_active();
-      }
+      turn_active_if_inactive();
       assert(node->in_queue());
       assert(is_active());
    } else {
@@ -80,12 +76,10 @@ mpi_thread::new_mpi_message(node *_node, simple_tuple *stpl)
    
       assert(owner != NULL);
    
-      if(owner->is_inactive()) {
-         mutex::scoped_lock lock(owner->mutex);
-         if(owner->is_inactive() && owner->has_work())
-            owner->set_active();
-      }
+      owner->turn_active_if_inactive();
    }
+   
+   turn_active_if_inactive();
 }
 
 void
@@ -112,7 +106,6 @@ mpi_thread::change_node(thread_node *node, dynamic_local *_asker)
 bool
 mpi_thread::busy_wait(void)
 {
-   volatile bool turned_inactive(false);
    size_t asked_many(0);
    
    transmit_messages();
@@ -131,33 +124,23 @@ mpi_thread::busy_wait(void)
          }
       }
       
-      if(!turned_inactive && !has_work()) {
-         assert(!turned_inactive);
-         mutex::scoped_lock l(mutex);
-         if(!has_work()) {
-            if(is_active()) {
-               set_inactive();
-            }
-            turned_inactive = true;
-            if(!leader_thread() && iteration_finished)
-               return false;
-         }
-      }
+      if(is_active() && !has_work())
+         turn_inactive_if_active();
       
       if(leader_thread() && all_threads_finished()) {
          mutex::scoped_lock lock(tok_mutex);
          if(!token->busy_loop_token(all_threads_finished())) {
             assert(all_threads_finished());
-            assert(turned_inactive);
+            assert(!has_work());
             iteration_finished = true;
             return false;
          }
       }
       
-      if(!leader_thread() && turned_inactive && is_inactive() && iteration_finished) {
+      if(!leader_thread() && is_inactive() && iteration_finished) {
          assert(!leader_thread()); // leader thread does not finish here
          assert(is_inactive());
-         assert(turned_inactive);
+         assert(!has_work());
          assert(iteration_finished);
          assert(all_threads_finished());
          return false;
@@ -167,7 +150,7 @@ mpi_thread::busy_wait(void)
          fetch_work();
    }
    
-   set_active_if_inactive();
+   turn_active_if_inactive();
    
    assert(is_active());
    assert(has_work());
