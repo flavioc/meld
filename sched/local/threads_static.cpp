@@ -82,15 +82,8 @@ static_local::new_work_other(sched::base *scheduler, node *node, const simple_tu
          tnode->set_in_queue(true);
          owner->add_to_queue(tnode);
          
-         if(this != owner) {
-            mutex::scoped_lock lock2(owner->mutex);
-            if(owner->is_inactive())
-            {
-               if(owner->is_inactive())
-                  owner->set_active();
-               assert(owner->is_active());
-            }
-         }
+         if(this != owner)
+            owner->turn_active_if_inactive();
          
          assert(tnode->in_queue());
       }
@@ -118,31 +111,22 @@ static_local::generate_aggs(void)
 bool
 static_local::busy_wait(void)
 {
-   bool turned_inactive(false);
-   
    while(!has_work()) {
       
-      if(!turned_inactive) {
-         mutex::scoped_lock l(mutex);
-         if(!has_work()) {
-            if(is_active())
-               set_inactive(); // may be inactive from previous iteration
-            turned_inactive = true;
-            if(all_threads_finished())
-               return false;
-         }
-      }
+      if(is_active() && !has_work())
+         turn_inactive_if_active();
       
-      if(turned_inactive && is_inactive() && all_threads_finished()) {
-         assert(turned_inactive);
+      if(is_inactive() && all_threads_finished() && !has_work()) {
+         assert(!has_work());
          assert(is_inactive());
+         assert(all_threads_finished());
          return false;
       }
    }
    
    // since queue pushing and state setting are done in
    // different exclusive regions, this may be needed
-   set_active_if_inactive();
+   turn_active_if_inactive();
    
    assert(is_active());
    assert(has_work());
