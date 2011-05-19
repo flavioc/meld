@@ -9,7 +9,6 @@
 #include "utils/types.hpp"
 #include "sched/base.hpp"
 #include "sched/thread/termination_barrier.hpp"
-#include "utils/atomic.hpp"
 
 namespace sched
 {
@@ -18,15 +17,13 @@ class threaded
 {
 private:
    
-   enum thread_state {
-      THREAD_ACTIVE,
-      THREAD_INACTIVE
-   };
-   
    static boost::barrier *thread_barrier;
    static termination_barrier *term_barrier;
    
-   utils::atomic_ref<thread_state> state;
+   volatile enum {
+      THREAD_ACTIVE,
+      THREAD_INACTIVE
+   } state;
    
    utils::byte _pad_threaded[128];
    
@@ -69,24 +66,6 @@ protected:
          if(is_inactive())
             set_active();
       }
-   }
-   
-   inline bool turn_active_if_inactive(void)
-   {
-      if(state.compare_test_set(THREAD_INACTIVE, THREAD_ACTIVE)) {
-         term_barrier->is_active();
-         return true;
-      }
-      return false;
-   }
-   
-   inline bool turn_inactive_if_active(void)
-   {
-      if(state.compare_test_set(THREAD_ACTIVE, THREAD_INACTIVE)) {
-         term_barrier->is_inactive();
-         return true;
-      }
-      return false;
    }
    
    inline const bool is_inactive(void) const { return state == THREAD_INACTIVE; }
