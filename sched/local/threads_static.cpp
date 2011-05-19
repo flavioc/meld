@@ -33,6 +33,7 @@ static_local::assert_end(void) const
 
    for(; it != end; ++it) {
       thread_node *node((thread_node*)it->second);
+      assert(!node->in_queue());
       node->assert_end();
    }
 }
@@ -53,6 +54,7 @@ static_local::assert_end_iteration(void) const
    for(; it != end; ++it) {
       thread_node *node((thread_node*)it->second);
       node->assert_end_iteration();
+      assert(!node->in_queue());
    }
 }
 
