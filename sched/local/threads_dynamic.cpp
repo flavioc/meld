@@ -64,12 +64,11 @@ dynamic_local::request_work_to(dynamic_local *asker)
 bool
 dynamic_local::busy_wait(void)
 {
-   bool turned_inactive(false);
    size_t asked_many(0);
    
    while(!has_work()) {
       
-      if(state::NUM_THREADS > 1 && asked_many < MAX_ASK_STEAL) {
+      if(is_inactive() && state::NUM_THREADS > 1 && asked_many < MAX_ASK_STEAL) {
          dynamic_local *target(select_steal_target());
          
          if(target->is_active()) {
@@ -78,25 +77,18 @@ dynamic_local::busy_wait(void)
          }
       }
       
-      if(!turned_inactive && !has_work()) {
-         mutex::scoped_lock l(mutex);
-         if(!has_work()) {
-            if(is_active())
-               set_inactive();
-            turned_inactive = true;
-            if(all_threads_finished())
-               return false;
-         }
-      }
+      if(is_active() && !has_work())
+         turn_inactive_if_active();
       
-      if(turned_inactive && is_inactive() && all_threads_finished()) {
+      if(is_inactive() && all_threads_finished() && !has_work()) {
          assert(is_inactive());
-         assert(turned_inactive);
+         assert(!has_work());
+         assert(all_threads_finished());
          return false;
       }
    }
    
-   set_active_if_inactive();
+   turn_active_if_inactive();
    
    assert(is_active());
    assert(has_work());
@@ -150,11 +142,7 @@ dynamic_local::handle_stealing(void)
       
       assert(total_sent > 0);
       
-      if(asker->is_inactive()) {
-         mutex::scoped_lock lock(asker->mutex);
-         if(asker->is_inactive() && asker->has_work())
-            asker->set_active();
-      }
+      asker->turn_active_if_inactive();
    }
 }
 
