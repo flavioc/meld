@@ -24,6 +24,7 @@ static_local::assert_end(void) const
    assert(!has_work());
    assert(is_inactive());
    assert(all_threads_finished());
+   assert_thread_end_iteration();
 }
 
 void
@@ -32,6 +33,7 @@ static_local::assert_end_iteration(void) const
    assert(!has_work());
    assert(is_inactive());
    assert(all_threads_finished());
+   assert_thread_end_iteration();
 }
 
 void

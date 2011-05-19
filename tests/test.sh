@@ -70,50 +70,50 @@ run_test_mpi_n ()
 loop_sched ()
 {
 	SCHED=${1}
-	run_test_n 1 2 ${SCHED}
-	run_test_n 2 3 ${SCHED}
+	run_test_n 1 1 ${SCHED}
+	run_test_n 2 1 ${SCHED}
 	if [ $NODES -gt 2 ]; then
-		run_test_n 3 2 ${SCHED}
+		run_test_n 3 1 ${SCHED}
 	fi
 	if [ $NODES -gt 3 ]; then
-		run_test_n 4 2 ${SCHED}
+		run_test_n 4 1 ${SCHED}
 	fi
 	if [ $NODES -gt 4 ]; then
-		run_test_n 5 2 ${SCHED}
+		run_test_n 5 1 ${SCHED}
 	fi
 	if [ $NODES -gt 5 ]; then
-		run_test_n 6 2 ${SCHED}
+		run_test_n 6 1 ${SCHED}
 	fi
 	if [ $NODES -gt 6 ]; then
-		run_test_n 7 2 ${SCHED}
+		run_test_n 7 1 ${SCHED}
 	fi
 	if [ $NODES -gt 7 ]; then
-		run_test_n 8 2 ${SCHED}
+		run_test_n 8 1 ${SCHED}
 	fi
 }
 
 loop_sched_mpi ()
 {
-	run_test_mpi_n 1 2
-	run_test_mpi_n 2 3
+	run_test_mpi_n 1 1
+	run_test_mpi_n 2 1
 	
 	if [ $NODES -gt 2 ]; then
-		run_test_mpi_n 3 2
+		run_test_mpi_n 3 1
 	fi
 	if [ $NODES -gt 3 ]; then
-		run_test_mpi_n 4 2
+		run_test_mpi_n 4 1
 	fi
 	if [ $NODES -gt 4 ]; then
-		run_test_mpi_n 5 2
+		run_test_mpi_n 5 1
 	fi
 	if [ $NODES -gt 5 ]; then
-		run_test_mpi_n 6 2
+		run_test_mpi_n 6 1
 	fi
 	if [ $NODES -gt 6 ]; then
-		run_test_mpi_n 7 2
+		run_test_mpi_n 7 1
 	fi
 	if [ $NODES -gt 7 ]; then
-		run_test_mpi_n 8 2
+		run_test_mpi_n 8 1
 	fi
 }
 

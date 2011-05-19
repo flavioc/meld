@@ -100,9 +100,6 @@ public:
    void receive_end_iteration(const remote::remote_id);
    
    bool reduce_continue(const bool);
-   
-   void wait_print_order(void);
-   void send_print_order(void);
 #endif
    
    remote* find_remote(const db::node::node_id) const;

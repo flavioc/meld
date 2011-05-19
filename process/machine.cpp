@@ -88,20 +88,21 @@ machine::start(void)
    
    const bool will_print(will_show_database || will_dump_database);
 
-#ifdef COMPILE_MPI   
-   if(rout.use_mpi() && will_print)
-      rout.wait_print_order();
-#endif
+   if(will_print) {
+      for(size_t i(0); i < remote::world_size; ++i) {
 
-   if(will_show_database)
-      state::DATABASE->print_db(cout);
-   if(will_dump_database)
-      state::DATABASE->dump_db(cout);
-
+         if(remote::self->get_rank() == i) {
+            if(will_show_database)
+               state::DATABASE->print_db(cout);
+            if(will_dump_database)
+               state::DATABASE->dump_db(cout);
+         }
 #ifdef COMPILE_MPI
-   if(rout.use_mpi() && will_print)
-      rout.send_print_order();
+         if(rout.use_mpi())
+            rout.barrier();
 #endif
+      }
+   }
 
    if(will_show_memory) {
 #ifdef MEMORY_STATISTICS

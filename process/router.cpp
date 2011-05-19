@@ -182,24 +182,6 @@ router::reduce_continue(const bool more_work)
 {
    return mpi::all_reduce(*world, more_work, logical_or<bool>());
 }
-
-void
-router::wait_print_order(void)
-{
-   if(remote::self->is_leader())
-      return;
-      
-   world->recv(remote::self->left_remote_id(), PRINT_TAG);
-}
-
-void
-router::send_print_order(void)
-{
-   if(remote::self->is_last())
-      return;
-      
-   world->send(remote::self->right_remote_id(), PRINT_TAG);
-}
 #endif
    
 remote*
