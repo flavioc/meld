@@ -19,6 +19,7 @@ namespace sched
 static mutex mtx;
 static vector<size_t> total;
 static atomic<int> work(0);
+static bool assert_work_count(true);
 
 void
 assert_thread_iteration(const size_t iteration)
@@ -46,8 +47,17 @@ assert_thread_pop_work(void)
 }
 
 void
+assert_thread_disable_work_count(void)
+{
+   assert_work_count = false;
+}
+
+void
 assert_thread_end_iteration(void)
 {
+   if(!assert_work_count)
+      return;
+      
    if(work > 0)
       printf("Missing %d tuples to process\n", (size_t)work);
    assert(work == 0);
@@ -72,6 +82,11 @@ assert_thread_pop_work(void)
 
 void
 assert_thread_end_iteration(void)
+{
+}
+
+void
+assert_thread_disable_work_count(void)
 {
 }
 

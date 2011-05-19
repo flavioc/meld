@@ -112,7 +112,6 @@ mpi_thread::change_node(thread_node *node, dynamic_local *_asker)
 bool
 mpi_thread::busy_wait(void)
 {
-   volatile bool turned_inactive(false);
    size_t asked_many(0);
    
    transmit_messages();
@@ -122,7 +121,7 @@ mpi_thread::busy_wait(void)
    
    while(!has_work()) {
       
-      if(state::NUM_THREADS > 1 && asked_many < MAX_ASK_STEAL) {
+      if(is_inactive() && state::NUM_THREADS > 1 && asked_many < MAX_ASK_STEAL) {
          mpi_thread *target((mpi_thread*)select_steal_target());
          
          if(target->is_active()) {
@@ -131,33 +130,30 @@ mpi_thread::busy_wait(void)
          }
       }
       
-      if(!turned_inactive && !has_work()) {
-         assert(!turned_inactive);
+      if(is_active() && !has_work()) {
          mutex::scoped_lock l(mutex);
          if(!has_work()) {
             if(is_active()) {
                set_inactive();
             }
-            turned_inactive = true;
-            if(!leader_thread() && iteration_finished)
-               return false;
          }
       }
       
-      if(leader_thread() && all_threads_finished()) {
+      if(is_inactive() && !has_work() && leader_thread() && all_threads_finished()) {
          mutex::scoped_lock lock(tok_mutex);
          if(!token->busy_loop_token(all_threads_finished())) {
             assert(all_threads_finished());
-            assert(turned_inactive);
+            assert(is_inactive());
+            assert(!has_work());
             iteration_finished = true;
             return false;
          }
       }
       
-      if(!leader_thread() && turned_inactive && is_inactive() && iteration_finished) {
+      if(!leader_thread() && !has_work() && is_inactive() && iteration_finished) {
          assert(!leader_thread()); // leader thread does not finish here
          assert(is_inactive());
-         assert(turned_inactive);
+         assert(!has_work());
          assert(iteration_finished);
          assert(all_threads_finished());
          return false;
@@ -239,6 +235,8 @@ mpi_thread::start(const size_t num_threads)
    
    for(process_id i(0); i < num_threads; ++i)
       add_thread(new mpi_thread(i));
+      
+   assert_thread_disable_work_count();
    
    return ALL_THREADS;
 }
