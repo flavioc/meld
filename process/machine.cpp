@@ -16,6 +16,7 @@ using namespace vm;
 using namespace boost;
 using namespace sched;
 using namespace mem;
+using namespace utils;
 
 namespace process
 {
@@ -76,6 +77,12 @@ machine::route(process *caller, const node::node_id id, const simple_tuple* stup
 #endif
 }
 
+static inline string
+get_output_filename(const string other, const remote::remote_id id)
+{
+   return string("meld_output." + other + "." + to_string(id));
+}
+
 void
 machine::start(void)
 {
@@ -85,22 +92,40 @@ machine::start(void)
    
    for(size_t i(1); i < num_threads; ++i)
       process_list[i]->join();
-   
+
    const bool will_print(will_show_database || will_dump_database);
 
    if(will_print) {
-      for(size_t i(0); i < remote::world_size; ++i) {
-
-         if(remote::self->get_rank() == i) {
-            if(will_show_database)
-               state::DATABASE->print_db(cout);
-            if(will_dump_database)
-               state::DATABASE->dump_db(cout);
+      if(rout.use_mpi()) {
+         if(will_show_database) {
+            const string filename(get_output_filename("db", remote::self->get_rank()));
+            ofstream fp(filename.c_str());
+            
+            state::DATABASE->print_db(fp);
          }
-#ifdef COMPILE_MPI
-         if(rout.use_mpi())
-            rout.barrier();
-#endif
+         if(will_dump_database) {
+            const string filename(get_output_filename("dump", remote::self->get_rank()));
+            ofstream fp(filename.c_str());
+            state::DATABASE->dump_db(fp);
+         }
+         rout.barrier();
+         
+         // read and output files
+         if(remote::self->is_leader()) {
+            if(will_show_database) {
+               for(size_t i(0); i < remote::world_size; ++i)
+                  file_print_and_remove(get_output_filename("db", i));
+            }
+            if(will_dump_database) {
+               for(size_t i(0); i < remote::world_size; ++i)
+                  file_print_and_remove(get_output_filename("dump", i));
+            }
+         }
+      } else {
+         if(will_show_database)
+            state::DATABASE->print_db(cout);
+         if(will_dump_database)
+            state::DATABASE->dump_db(cout);
       }
    }
 

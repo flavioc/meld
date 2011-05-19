@@ -65,6 +65,8 @@ T power(const T base, const T exp)
 
 const size_t random_unsigned(const size_t);
 
+void file_print_and_remove(const std::string&);
+
 }
 
 #endif
