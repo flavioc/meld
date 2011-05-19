@@ -152,6 +152,17 @@ node::count_total(const predicate_id id) const
    return tr.size();
 }
 
+void
+node::assert_end(void) const
+{
+   for(aggregate_map::const_iterator it(aggs.begin());
+      it != aggs.end();
+      ++it)
+   {
+      assert(it->second->no_changes());
+   }
+}
+
 node::node(const node_id _id, const node_id _trans):
    id(_id), translation(_trans)
 {

@@ -87,6 +87,9 @@ public:
    void delete_by_first_int_arg(const vm::predicate_id, const vm::int_val);
    void delete_all(const vm::predicate_id);
    
+   virtual void assert_end(void) const;
+   
+   virtual void assert_end_iteration(void) const {}
    
    tuple_vector* match_predicate(const vm::predicate_id) const;
    

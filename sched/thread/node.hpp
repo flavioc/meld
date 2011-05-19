@@ -58,6 +58,17 @@ public:
       return queue.pop();
    }
    
+   virtual void assert_end(void) const
+   {
+      db::node::assert_end();
+      assert(queue.empty());
+   }
+   
+   virtual void assert_end_iteration(void) const
+   {
+      assert(queue.empty());
+   }
+   
    explicit thread_node(const db::node::node_id _id, const db::node::node_id _trans):
       db::node(_id, _trans),
       owner(NULL),

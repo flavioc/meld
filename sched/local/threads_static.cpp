@@ -25,6 +25,16 @@ static_local::assert_end(void) const
    assert(is_inactive());
    assert(all_threads_finished());
    assert_thread_end_iteration();
+   
+   const node::node_id first(remote::self->find_first_node(id));
+   const node::node_id final(remote::self->find_last_node(id));
+   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(first));
+   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(final));
+
+   for(; it != end; ++it) {
+      thread_node *node((thread_node*)it->second);
+      node->assert_end();
+   }
 }
 
 void
@@ -34,6 +44,16 @@ static_local::assert_end_iteration(void) const
    assert(is_inactive());
    assert(all_threads_finished());
    assert_thread_end_iteration();
+   
+   const node::node_id first(remote::self->find_first_node(id));
+   const node::node_id final(remote::self->find_last_node(id));
+   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(first));
+   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(final));
+
+   for(; it != end; ++it) {
+      thread_node *node((thread_node*)it->second);
+      node->assert_end_iteration();
+   }
 }
 
 void
@@ -90,7 +110,7 @@ static_local::new_work_other(sched::base *scheduler, node *node, const simple_tu
          
          if(this != owner) {
             mutex::scoped_lock lock2(owner->mutex);
-            if(owner->is_inactive())
+            if(owner->is_inactive() && owner->has_work())
             {
                if(owner->is_inactive())
                   owner->set_active();
@@ -124,23 +144,18 @@ static_local::generate_aggs(void)
 bool
 static_local::busy_wait(void)
 {
-   bool turned_inactive(false);
-   
    while(!has_work()) {
       
-      if(!turned_inactive) {
+      if(is_active() && !has_work()) {
          mutex::scoped_lock l(mutex);
          if(!has_work()) {
             if(is_active())
                set_inactive(); // may be inactive from previous iteration
-            turned_inactive = true;
-            if(all_threads_finished())
-               return false;
          }
       }
       
-      if(turned_inactive && is_inactive() && all_threads_finished()) {
-         assert(turned_inactive);
+      if(!has_work() && is_inactive() && all_threads_finished()) {
+         assert(!has_work());
          assert(is_inactive());
          return false;
       }

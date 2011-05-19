@@ -29,6 +29,8 @@ private:
    
 protected:
    
+   virtual void assert_end(void) const;
+   virtual void assert_end_iteration(void) const;
    virtual void generate_aggs(void);
    dynamic_local *select_steal_target(void) const;
    void add_node(db::node *);

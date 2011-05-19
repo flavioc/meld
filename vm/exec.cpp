@@ -756,7 +756,6 @@ static inline void
 execute_delete(const pcounter pc, state& state)
 {
    const predicate_id id(delete_predicate(pc));
-   const predicate *pred(state::PROGRAM->get_predicate(id));
    pcounter m(pc + DELETE_BASE);
    const instr_val fil_val(delete_filter(pc));
    const int_val fil(get_op_function<int_val>(fil_val, m, state));

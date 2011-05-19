@@ -56,6 +56,22 @@ tuple_aggregate::generate(void)
    return ls;
 }
 
+const bool
+tuple_aggregate::no_changes(void) const
+{
+   for(agg_conf_list::const_iterator it(values.begin());
+      it != values.end();
+      ++it)
+   {
+      agg_configuration *conf(*it);
+      
+      if(conf->has_changed() || conf->is_empty())
+         return false;
+   }
+   
+   return true;
+}
+
 void
 tuple_aggregate::delete_by_first_int_arg(const int_val val)
 {

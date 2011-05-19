@@ -16,6 +16,27 @@ namespace sched
 {
    
 void
+dynamic_local::assert_end(void) const
+{
+   static_local::assert_end();
+   for(node_set::iterator it(nodes->begin()); it != nodes->end(); ++it) {
+      thread_node *node((thread_node*)*it);
+      
+      node->assert_end();
+   }
+}
+
+void
+dynamic_local::assert_end_iteration(void) const
+{
+   for(node_set::iterator it(nodes->begin()); it != nodes->end(); ++it) {
+      thread_node *node((thread_node*)*it);
+      
+      node->assert_end_iteration();
+   }
+}
+   
+void
 dynamic_local::add_node(node *node)
 {
    assert(nodes != NULL);
@@ -64,12 +85,11 @@ dynamic_local::request_work_to(dynamic_local *asker)
 bool
 dynamic_local::busy_wait(void)
 {
-   bool turned_inactive(false);
    size_t asked_many(0);
    
    while(!has_work()) {
       
-      if(state::NUM_THREADS > 1 && asked_many < MAX_ASK_STEAL) {
+      if(is_inactive() && state::NUM_THREADS > 1 && asked_many < MAX_ASK_STEAL) {
          dynamic_local *target(select_steal_target());
          
          if(target->is_active()) {
@@ -78,20 +98,18 @@ dynamic_local::busy_wait(void)
          }
       }
       
-      if(!turned_inactive && !has_work()) {
+      if(is_active() && !has_work()) {
          mutex::scoped_lock l(mutex);
          if(!has_work()) {
             if(is_active())
                set_inactive();
-            turned_inactive = true;
-            if(all_threads_finished())
-               return false;
          }
       }
       
-      if(turned_inactive && is_inactive() && all_threads_finished()) {
+      if(is_inactive() && !has_work() && all_threads_finished()) {
          assert(is_inactive());
-         assert(turned_inactive);
+         assert(!has_work());
+         assert(all_threads_finished());
          return false;
       }
    }
@@ -112,9 +130,10 @@ dynamic_local::change_node(thread_node *node, dynamic_local *asker)
    
    // change ownership
    
-   node->set_owner((static_local*)asker);
    remove_node(node);
    asker->add_node(node);
+   
+   node->set_owner((static_local*)asker);
    
    assert(node->in_queue());
    assert(node->get_owner() == asker);
@@ -194,8 +213,11 @@ dynamic_local::init(const size_t num_threads)
 void
 dynamic_local::generate_aggs(void)
 {
-   for(node_set::iterator it(nodes->begin()); it != nodes->end(); ++it)
-      node_iteration(*it);
+   for(node_set::iterator it(nodes->begin()); it != nodes->end(); ++it) {
+      node *node(*it);
+      assert(((thread_node*)node)->get_owner() == this);
+      node_iteration(node);
+   }
 }
 
 dynamic_local::dynamic_local(const process_id id):

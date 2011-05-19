@@ -48,6 +48,8 @@ assert_thread_pop_work(void)
 void
 assert_thread_end_iteration(void)
 {
+   if(work > 0)
+      printf("Missing %d tuples to process\n", (size_t)work);
    assert(work == 0);
 }
 
