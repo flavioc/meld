@@ -78,11 +78,7 @@ static_global::flush_queue(const process_id id, static_global *other)
    
    other->queue_work.snap(q);
    
-   if(other->is_inactive()) {
-      mutex::scoped_lock l(other->mutex);
-      if(other->is_inactive())
-         other->set_active();
-   }
+   other->turn_active_if_inactive();
    
    buf.clear_queue(id);
 }
@@ -104,31 +100,22 @@ static_global::flush_buffered(void)
 bool
 static_global::busy_wait(void)
 {
-   bool turned_inactive(false);
-   
    flush_buffered();
    
    while(!has_work()) {
       
-      if(!turned_inactive) {
-         mutex::scoped_lock l(mutex);
-         if(!has_work()) {
-            if(is_active()) // may be inactive from the previous iteration
-               set_inactive();
-            turned_inactive = true;
-            if(all_threads_finished())
-               return false;
-         }
-      }
+      if(is_active() && !has_work())
+         turn_inactive_if_active();
       
-      if(turned_inactive && is_inactive() && all_threads_finished()) {
-         assert(turned_inactive);
+      if(is_inactive() && all_threads_finished() && !has_work()) {
          assert(is_inactive());
+         assert(!has_work());
+         assert(all_threads_finished());
          return false;
       }
    }
    
-   set_active_if_inactive();
+   turn_active_if_inactive();
    
    assert(is_active());
    assert(has_work());
