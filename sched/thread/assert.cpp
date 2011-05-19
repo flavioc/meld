@@ -9,6 +9,7 @@
 using namespace boost;
 using namespace std;
 using namespace vm;
+using namespace utils;
 
 namespace sched
 {
@@ -17,6 +18,7 @@ namespace sched
 
 static mutex mtx;
 static vector<size_t> total;
+static atomic<int> work(0);
 
 void
 assert_thread_iteration(const size_t iteration)
@@ -31,10 +33,43 @@ assert_thread_iteration(const size_t iteration)
       total.clear();
 }
 
+void
+assert_thread_push_work(void)
+{
+   work++;
+}
+
+void
+assert_thread_pop_work(void)
+{
+   work--;
+}
+
+void
+assert_thread_end_iteration(void)
+{
+   assert(work == 0);
+}
+
 #else
 
 void
 assert_thread_iteration(const size_t)
+{
+}
+
+void
+assert_thread_push_work(void)
+{
+}
+
+void
+assert_thread_pop_work(void)
+{
+}
+
+void
+assert_thread_end_iteration(void)
 {
 }
 

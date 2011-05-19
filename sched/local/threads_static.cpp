@@ -43,6 +43,8 @@ static_local::new_work(node *from, node *_to, const simple_tuple *tpl, const boo
    assert(to != NULL);
    assert(tpl != NULL);
    
+   assert_thread_push_work();
+   
    to->add_work(tpl, is_agg);
    
    if(!to->in_queue()) {
@@ -72,6 +74,8 @@ static_local::new_work_other(sched::base *scheduler, node *node, const simple_tu
    thread_node *tnode((thread_node*)node);
    
    assert(tnode->get_owner() != NULL);
+   
+   assert_thread_push_work();
    
    tnode->add_work(stuple, false);
    
@@ -156,6 +160,9 @@ static_local::terminate_iteration(void)
    // this is needed since one thread can reach set_active
    // and thus other threads waiting for all_finished will fail
    // to get here
+   
+   assert_thread_end_iteration();
+   
    threads_synchronize();
 
    assert(is_inactive());
@@ -246,6 +253,8 @@ static_local::get_work(work_unit& work)
    work.work_node = current_node;
    
    assert(work.work_node == current_node);
+   
+   assert_thread_pop_work();
    
    return true;
 }
