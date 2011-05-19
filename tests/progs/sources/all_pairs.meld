@@ -1,13 +1,8 @@
 
-type route edge(node, node, int).
 type path(node, node, min int, list node).
 
-path(A, A, 0, []).
-
-path(A, B, W, [A, B]) :-
-	edge(A, B, W).
+path(A, A, 0, [A]).
 
 path(A, B, D + W, [A | P]) :-
 	edge(A, C, W),
 	path(C, B, D, P).
-

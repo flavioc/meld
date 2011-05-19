@@ -85,11 +85,24 @@ machine::start(void)
    
    for(size_t i(1); i < num_threads; ++i)
       process_list[i]->join();
+   
+   const bool will_print(will_show_database || will_dump_database);
+
+#ifdef COMPILE_MPI   
+   if(rout.use_mpi() && will_print)
+      rout.wait_print_order();
+#endif
 
    if(will_show_database)
       state::DATABASE->print_db(cout);
    if(will_dump_database)
       state::DATABASE->dump_db(cout);
+
+#ifdef COMPILE_MPI
+   if(rout.use_mpi() && will_print)
+      rout.send_print_order();
+#endif
+
    if(will_show_memory) {
 #ifdef MEMORY_STATISTICS
       cout << "Total memory in use: " << get_memory_in_use() / 1024 << "KB" << endl;

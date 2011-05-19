@@ -28,7 +28,7 @@ help(void)
    fprintf(stderr, "\t\t\ttlX static division with a queue per node\n");
    fprintf(stderr, "\t\t\ttdX initial static division but allow work stealing\n");
    fprintf(stderr, "\t\t\tmpi static division of work using mpi\n");
-   fprintf(stderr, "\t\t\tmpiX static division of work using mpi plus threads\n");
+   fprintf(stderr, "\t\t\tmixX static division of work using mpi plus threads\n");
    fprintf(stderr, "\t-t \t\ttime execution\n");
    fprintf(stderr, "\t-m \t\tmemory statistics\n");
    fprintf(stderr, "\t-s \t\tshows database\n");
@@ -59,7 +59,7 @@ parse_sched(char *sched)
 #endif
       sched_type = SCHED_MPI_UNI_STATIC;
       num_threads = 1;
-   } else if(strncmp(sched, "mpi", 3) == 0 && strlen(sched) > 3) {
+   } else if(strncmp(sched, "mix", 3) == 0 && strlen(sched) > 3) {
       sched_type = SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL;
       sched += 3;
       num_threads = (size_t)atoi(sched);

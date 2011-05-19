@@ -29,7 +29,7 @@ private:
    friend class mpi_thread;
    
    static_local *owner;
-   bool i_am_on_queue;
+   volatile bool i_am_on_queue;
    boost::mutex mtx;
    safe_bounded_pqueue<node_work_unit>::type queue;
    

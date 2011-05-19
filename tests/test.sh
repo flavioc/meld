@@ -12,14 +12,10 @@ do_exit ()
 	exit 1
 }
 
-do_test ()
+run_diff ()
 {
-	NTHREADS=${1}
-	SCHED=${2}
-	TO_RUN="${EXEC} -f ${TEST} -c ${SCHED}${NTHREADS}"
-
+	TO_RUN="${1}"
 	${TO_RUN} > test.out
-
 	DIFF=`diff -u ${FILE} test.out`
 	if [ ! -z "${DIFF}" ]; then
 		echo "DIFFERENCES!!!"
@@ -27,6 +23,24 @@ do_test ()
 		exit 1
 	fi
 	rm test.out
+}
+
+do_test ()
+{
+	NTHREADS=${1}
+	SCHED=${2}
+	TO_RUN="${EXEC} -f ${TEST} -c ${SCHED}${NTHREADS}"
+
+	run_diff "${TO_RUN}"
+}
+
+do_test_mpi ()
+{
+	NPROCS=${1}
+
+	TO_RUN="mpirun -n ${NPROCS} ${EXEC} -f ${TEST} -c mpi"
+
+	run_diff "${TO_RUN}"
 }
 
 run_test_n ()
@@ -40,6 +54,16 @@ run_test_n ()
 	done
 }
 
+run_test_mpi_n ()
+{
+	NPROCS=${1}
+	TIMES=${2}
+	echo "Running ${TEST} ${TIMES} times with ${NPROCS} processes (SCHED: mpi)..."
+	for((I=1; I <= ${TIMES}; I++)); do
+		do_test_mpi ${NPROCS}
+	done
+}
+
 [ -f "${TEST}" ] || do_exit "Test code ${TEST} not found"
 [ -f "${FILE}" ] || do_exit "Test file ${FILE} not found"
 
@@ -49,13 +73,52 @@ loop_sched ()
 	run_test_n 1 2 ${SCHED}
 	run_test_n 2 3 ${SCHED}
 	if [ $NODES -gt 2 ]; then
-		run_test_n 3 3 ${SCHED}
+		run_test_n 3 2 ${SCHED}
 	fi
 	if [ $NODES -gt 3 ]; then
-		run_test_n 4 3 ${SCHED}
+		run_test_n 4 2 ${SCHED}
+	fi
+	if [ $NODES -gt 4 ]; then
+		run_test_n 5 2 ${SCHED}
+	fi
+	if [ $NODES -gt 5 ]; then
+		run_test_n 6 2 ${SCHED}
+	fi
+	if [ $NODES -gt 6 ]; then
+		run_test_n 7 2 ${SCHED}
+	fi
+	if [ $NODES -gt 7 ]; then
+		run_test_n 8 2 ${SCHED}
+	fi
+}
+
+loop_sched_mpi ()
+{
+	run_test_mpi_n 1 2
+	run_test_mpi_n 2 3
+	
+	if [ $NODES -gt 2 ]; then
+		run_test_mpi_n 3 2
+	fi
+	if [ $NODES -gt 3 ]; then
+		run_test_mpi_n 4 2
+	fi
+	if [ $NODES -gt 4 ]; then
+		run_test_mpi_n 5 2
+	fi
+	if [ $NODES -gt 5 ]; then
+		run_test_mpi_n 6 2
+	fi
+	if [ $NODES -gt 6 ]; then
+		run_test_mpi_n 7 2
+	fi
+	if [ $NODES -gt 7 ]; then
+		run_test_mpi_n 8 2
 	fi
 }
 
 loop_sched ts
 loop_sched tl
 loop_sched td
+loop_sched_mpi
+

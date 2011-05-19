@@ -96,6 +96,7 @@ public:
    
    inline const remote_id get_rank(void) const { return addr; }
    inline const bool is_leader(void) const { return get_rank() == LEADER_RANK; }
+   inline const bool is_last(void) const { return get_rank() == (remote_id)(world_size-1); }
    
    inline const remote_id left_remote_id(void) const
    {
@@ -107,7 +108,7 @@ public:
    
    inline const remote_id right_remote_id(void) const
    {
-      if(get_rank() == (remote_id)(world_size - 1))
+      if(is_last())
          return 0;
       else
          return get_rank() + 1;

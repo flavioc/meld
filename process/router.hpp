@@ -42,6 +42,7 @@ private:
    static const remote_tag THREAD_DELAY_TAG = 500;
    static const remote_tag TOKEN_TAG = 200;
    static const remote_tag TERMINATE_ITERATION_TAG = 201;
+   static const remote_tag PRINT_TAG = 202;
    
    static inline const remote_tag get_thread_tag(const vm::process_id id)
    {
@@ -99,6 +100,9 @@ public:
    void receive_end_iteration(const remote::remote_id);
    
    bool reduce_continue(const bool);
+   
+   void wait_print_order(void);
+   void send_print_order(void);
 #endif
    
    remote* find_remote(const db::node::node_id) const;

@@ -59,7 +59,7 @@ private:
    }
    
    void load(boost::mpi::packed_iarchive& ar, const unsigned int version)
-   {  
+   {
    }
    
    BOOST_SERIALIZATION_SPLIT_MEMBER()
@@ -91,7 +91,7 @@ public:
       else
          cout << ",";
       
-      cout << head << "(" << refs << ")";
+      cout << head;
       
       if(is_null(tail))
          cout << "]";
