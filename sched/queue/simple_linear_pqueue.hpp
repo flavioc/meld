@@ -24,10 +24,15 @@ public:
    
    inline const bool empty(void) const { return total == 0; }
    inline const size_t size(void) const { return total; }
-   inline queue& get_queue(const size_t prio) { return queues[prio]; }
+   inline queue& get_queue(const size_t prio) {
+      assert(prio < queues.size());
+      return queues[prio];
+   }
    
    void push(const T item, const size_t prio)
    {
+      assert(prio < queues.size());
+      
       queues[prio].push(item);
       ++total;
    }
@@ -40,6 +45,7 @@ public:
       
       for(size_t i(0); i < queues.size(); ++i)
          get_queue(i).clear();
+         
       total = 0;
    }
    

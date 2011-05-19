@@ -29,8 +29,16 @@ private:
 public:
    
    inline const bool empty(void) const { return total == 0; }
-   inline const bool empty(const vm::process_id id) const { return buffered_work[id].empty(); }
-   queue& get_queue(const vm::process_id id) { return buffered_work[id]; }
+   
+   inline const bool empty(const vm::process_id id) const {
+      assert(id < buffered_work.size());
+      return buffered_work[id].empty();
+   }
+   
+   queue& get_queue(const vm::process_id id) {
+      assert(id < buffered_work.size());
+      return buffered_work[id];
+   }
    
    void clear_queue(const vm::process_id);
    

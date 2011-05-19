@@ -9,6 +9,8 @@ namespace sched
 void
 queue_buffer::clear_queue(const process_id id)
 {
+   assert(id < buffered_work.size());
+   
    queue& q(get_queue(id));
    const size_t size(q.size());
    
@@ -19,6 +21,8 @@ queue_buffer::clear_queue(const process_id id)
 bool
 queue_buffer::push(const process_id id, work_unit& work)
 {
+   assert(id < buffered_work.size());
+   
    queue& q(get_queue(id));
 
    q.push(work, work.work_tpl->get_strat_level());

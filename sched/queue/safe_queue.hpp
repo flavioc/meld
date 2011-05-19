@@ -75,6 +75,9 @@ public:
       assert(q.size() > 0);
       assert(!q.empty());
       
+      assert(tail != NULL);
+      assert(head != NULL);
+      
       boost::mutex::scoped_lock l(mtx);
          
       tail->next = q.head;

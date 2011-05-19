@@ -36,9 +36,10 @@ public:
       new_node->data = el;
       new_node->next = NULL;
       
-      if(head == NULL)
+      if(head == NULL) {
+         assert(tail == NULL);
          head = tail = new_node;
-      else {
+      } else {
          tail->next = new_node;
          tail = new_node;
       }

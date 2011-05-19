@@ -59,6 +59,7 @@ private:
    tree_node *root;
    
    A total;
+   size_t range;
    
    tree_node* build_tree(const size_t height, const size_t prio)
    {
@@ -151,8 +152,9 @@ public:
    void snap(simple_linear_pqueue<T>& other)
    {
       assert(!other.empty());
+      assert(other.size() > 0);
       
-      for(size_t i(0); i < leaves.size(); ++i) {
+      for(size_t i(0); i < range; ++i) {
          unsafe_queue_count<T>& q(other.get_queue(i));
          
          if(!q.empty())
@@ -160,8 +162,9 @@ public:
       }
    }
    
-   explicit bounded_pqueue(const size_t range):
-      total(0)
+   explicit bounded_pqueue(const size_t _range):
+      total(0),
+      range(_range)
    {
       assert(range > 0);
       
