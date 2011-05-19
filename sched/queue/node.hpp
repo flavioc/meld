@@ -12,7 +12,7 @@ class queue_node: public mem::base< queue_node<T> >
 {
 public:
    T data;
-   queue_node *next;
+   volatile queue_node *next;
 };
 
 }

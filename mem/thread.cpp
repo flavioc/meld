@@ -14,7 +14,8 @@ std::tr1::unordered_set<void*> mem_set;
 
 namespace mem
 {
-   
+
+static pool *main_pool(new pool());
 static thread_specific_ptr<pool> pools(NULL);
 static vector<pool*> vec;
 
@@ -35,7 +36,12 @@ create_pool(const size_t id)
 pool*
 get_pool(void)
 {
-   return pools.get();
+   pool *pool(pools.get());
+   
+   if(pool == NULL)
+      return main_pool;
+      
+   return pool;
 }
 
 void
