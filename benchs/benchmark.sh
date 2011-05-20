@@ -55,7 +55,7 @@ do_time_thread ()
 	THREADS="${2}"
 
 	TO_RUN="${EXEC} ${FILE} -c ${SCHEDULER}${THREADS}"
-	time_run_n "${TO_RUN}" "$(basename ${FILE} .m) ${SCHEDULER} ${THREADS} threads"
+	time_run_n "${TO_RUN}" "$(basename ${FILE} .m) ${SCHEDULER} ${THREADS}"
 }
 
 do_time_mpi ()
@@ -64,7 +64,7 @@ do_time_mpi ()
 	PROCS="${2}"
 
 	TO_RUN="mpirun -np ${PROCS} ${EXEC} ${FILE} -c mpi"
-	time_run_n "${TO_RUN}" "$(basename ${FILE} .m) mpi ${PROCS} processes"
+	time_run_n "${TO_RUN}" "$(basename ${FILE} .m) mpi ${PROCS}"
 }
 
 do_time_mix ()
