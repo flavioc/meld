@@ -20,13 +20,10 @@ private:
    static boost::barrier *thread_barrier;
    static termination_barrier *term_barrier;
    
-   enum thread_state {
+   volatile enum {
       THREAD_ACTIVE,
-      THREAD_INACTIVE,
-      THREAD_NEW_WORK
-   };
-   
-   utils::atomic_ref<thread_state> state;
+      THREAD_INACTIVE
+   } state;
    
    utils::byte _pad_threaded[128];
    
@@ -71,45 +68,8 @@ protected:
       }
    }
    
-   inline bool turn_active_if_inactive(void)
-   {
-      if(state.compare_test_set(THREAD_INACTIVE, THREAD_ACTIVE)) {
-         term_barrier->is_active();
-         return true;
-      }
-      
-      return false;
-   }
-   
-   inline bool turn_inactive_if_active(void)
-   {
-      if(state.compare_test_set(THREAD_ACTIVE, THREAD_INACTIVE)) {
-         term_barrier->is_inactive();
-         return true;
-      }
-      
-      return false;
-   }
-   
-   inline bool turn_active_if_new_work(void)
-   {
-      return state.compare_test_set(THREAD_NEW_WORK, THREAD_ACTIVE);
-   }
-   
-   inline bool turn_new_work_if_inactive(void)
-   {
-      if(state.compare_test_set(THREAD_INACTIVE, THREAD_NEW_WORK)) {
-         term_barrier->is_active();
-         return true;
-      }
-      
-      return false;
-   }
-   
    inline const bool is_inactive(void) const { return state == THREAD_INACTIVE; }
-   inline const bool is_active(void) const { return !is_inactive(); }
-   inline const bool is_really_active(void) const { return state == THREAD_ACTIVE; }
-   inline const bool is_new_work(void) const { return state == THREAD_NEW_WORK; }
+   inline const bool is_active(void) const { return state == THREAD_ACTIVE; }
    
    inline const bool all_threads_finished(void) const
    {
