@@ -184,6 +184,11 @@ INSTRUCTION & BYTE FORMAT & ARGS\\
 & sets dest = true if nodes n1 and n2 are on the same machine\\
 & sets dest = false otherwise \\
 \\
+\inst{DELETE} {0&0&0&0&1&1&0&1\\\hline
+0&i&i&i&i&i&i&i\\\hline
+0&0&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$} {i,v1}\\
+& deletes the tuples of type $i$ with the first argument as value $v_1$\\
+\\
 \end{tabular}
 
 \begin{tabular}{lll}

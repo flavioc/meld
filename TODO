@@ -2,6 +2,4 @@
 	- Goal is to limit use of external functions.
 - Implement a trie
 - Make BP work again
-- Make pagerank smarter
-- Add aggregate rules
 - ...
