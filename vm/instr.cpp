@@ -200,17 +200,19 @@ instr_print(pcounter pc, const bool recurse, const program *prog, ostream& cout)
          break;
    	case CALL_INSTR: {
             pcounter m = pc + CALL_BASE;
-         
-   	      cout << "CALL func(" << call_extern_id(pc) << "):"
-   	           << call_num_args(pc) << " TO reg "
-                 << call_dest(pc) << " = (";
+            const external_function_id id(call_extern_id(pc));
+            
+   	      cout << "CALL func(" << id << "):"
+   	           << call_num_args(pc) << " TO "
+                 << reg_string(call_dest(pc)) << " = (";
             
             for(size_t i = 0; i < call_num_args(pc); ++i) {
                if(i != 0)
                   cout << ", ";
                
-               ++m;
-               cout << val_string(call_val(m-1), &m);
+               pcounter val_ptr(m);
+               m += val_size;
+               cout << val_string(call_val(val_ptr), &m);
             }
             cout << ")" << endl;
    		}

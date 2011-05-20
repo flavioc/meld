@@ -221,7 +221,6 @@ float_val get_op_function<float_val>(const instr_val& val, pcounter& m, state& s
    } else if(val_is_field(val)) {
       const tuple *tuple(state.get_tuple(val_field_reg(m)));
       const field_num field(val_field_num(m));
-      
       pcounter_move_field(&m);
       
       return tuple->get_float(field);
@@ -767,6 +766,82 @@ execute_delete(const pcounter pc, state& state)
    state.node->delete_by_first_int_arg(id, fil);
 }
 
+static inline void
+read_call_arg(argument& arg, const field_type type, pcounter& m, state& state)
+{
+   const instr_val val_type(call_val(m));
+   
+   m += val_size;
+   
+   switch(type) {
+      case FIELD_INT: {
+         const int_val val(get_op_function<int_val>(val_type, m, state));
+         TO_ARG(val, arg);
+      }
+      break;
+      case FIELD_FLOAT: {
+         const float_val val(get_op_function<float_val>(val_type, m, state));
+         TO_ARG(val, arg);
+      }
+      break;
+      case FIELD_NODE: {
+         const node_val val(get_op_function<node_val>(val_type, m, state));
+         TO_ARG(val, arg);
+      }
+      break;
+      default:
+         throw vm_exec_error("can't read this external function argument");
+   }
+}
+
+static inline void
+execute_call(pcounter pc, state& state)
+{
+   pcounter m(pc + CALL_BASE);
+   const external_function_id id(call_extern_id(pc));
+   const size_t num_args(call_num_args(pc));
+   const reg_num reg(call_dest(pc));
+   external_function *f(lookup_external_function(id));
+   const field_type ret_type(f->get_return_type());
+   argument args[num_args];
+   
+   for(size_t i(0); i < num_args; ++i)
+      read_call_arg(args[i], f->get_arg_type(i), m, state);
+   
+   assert(num_args == f->get_num_args());
+   
+   argument ret;
+   
+   // call function
+   switch(num_args) {
+      case 0:
+         ret = f->get_fun_ptr()();
+         break;
+      case 1:
+         ret = ((external_function_ptr1)f->get_fun_ptr())(args[0]);
+         break;
+      case 2:
+         ret = ((external_function_ptr2)f->get_fun_ptr())(args[0], args[1]);
+         break;
+      default:
+         throw vm_exec_error("vm does not support external functions with more than 2 arguments");
+   }
+   
+   switch(ret_type) {
+      case FIELD_INT:
+         state.set_int(reg, FROM_ARG(ret, int_val));
+         break;
+      case FIELD_FLOAT:
+         state.set_float(reg, FROM_ARG(ret, float_val));
+         break;
+      case FIELD_NODE:
+         state.set_node(reg, FROM_ARG(ret, node_val));
+         break;
+      default:
+         throw vm_exec_error("invalid return type in call");
+   }
+}
+
 static inline return_type
 execute(pcounter pc, state& state)
 {
@@ -862,7 +937,11 @@ eval_loop:
             break;
             
          case DELETE_INSTR:
-         execute_delete(pc, state);
+            execute_delete(pc, state);
+            break;
+            
+         case CALL_INSTR:
+            execute_call(pc, state);
             break;
             
          default: throw vm_exec_error("unsupported instruction");

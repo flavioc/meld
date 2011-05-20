@@ -56,6 +56,7 @@ OBJS = utils/utils.o \
 			 vm/state.o \
 			 vm/tuple.o \
 			 vm/exec.o \
+			 vm/external.o \
 			 db/node.o \
 			 db/tuple.o \
 			 db/agg_configuration.o \
@@ -80,7 +81,8 @@ OBJS = utils/utils.o \
 			 sched/thread/assert.o \
 			 sched/mpi/tokenizer.o \
 			 sched/mpi/handler.o \
-			 sched/local/mpi_threads_dynamic.o
+			 sched/local/mpi_threads_dynamic.o \
+			 external/math.o
 
 all: meld print predicates
 
@@ -177,6 +179,9 @@ db/trie.o: db/trie.cpp db/trie.hpp \
 vm/types.o: vm/types.hpp vm/types.hpp \
 						utils/utils.hpp
 
+vm/external.o: vm/types.hpp vm/external.cpp \
+							vm/external.hpp
+
 sched/mpi/message_buffer.o: sched/mpi/message_buffer.hpp \
 									sched/mpi/message_buffer.cpp \
 									sched/mpi/message.hpp sched/mpi/request.hpp
@@ -244,15 +249,10 @@ sched/local/mpi_threads_dynamic.o: sched/local/mpi_threads_dynamic.hpp \
 										sched/mpi/token.hpp conf.hpp sched/mpi/message_buffer.hpp \
 										sched/queue/bounded_pqueue.hpp sched/mpi/handler.hpp
 
+external/math.o: external/math.hpp external/math.cpp
+
 clean:
-	rm -f meld print *.o vm/*.o \
-		db/*.o process/*.o \
-		runtime/*.o utils/*.o \
-		mem/*.o sched/*.o \
-		sched/mpi/*.o \
-		sched/queue/*.o \
-		sched/global/*.o \
-		sched/thread/*.o \
-		sched/local/*.o
+	find . -name '*.o' | xargs rm -f
+	rm -f meld predicates print
 
 re: clean all

@@ -26,8 +26,7 @@ class state
 private:
    
    static const size_t NUM_REGS = 32;
-   typedef unsigned long int reg;
-   
+   typedef all_val reg;
    reg regs[NUM_REGS];
    
 public:

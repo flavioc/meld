@@ -8,6 +8,7 @@
 
 #include "vm/defs.hpp"
 #include "vm/program.hpp"
+#include "vm/external.hpp"
 
 namespace vm {
 
@@ -18,6 +19,7 @@ namespace instr {
 
 const size_t field_size = 2;
 const size_t iter_match_size = 2;
+const size_t val_size = 1;
 const size_t int_size = sizeof(int_val);
 const size_t float_size = sizeof(float_val);
 const size_t node_size = sizeof(node_val);
@@ -31,7 +33,7 @@ const size_t OP_BASE             = 5;
 const size_t MOVE_BASE           = 3;
 const size_t ITER_BASE           = 6;
 const size_t ALLOC_BASE          = 3;
-const size_t CALL_BASE           = 3;
+const size_t CALL_BASE           = 4;
 const size_t IF_BASE             = 6;
 const size_t MOVE_NIL_BASE       = 2;
 const size_t TEST_NIL_BASE       = 3;
@@ -144,6 +146,7 @@ inline code_offset_t jump_get(pcounter x, size_t off) { return pcounter_code_siz
 inline reg_num reg_get(pcounter x, size_t off) { return (reg_num)(*(x + off) & 0x1f); }
 inline instr_val val_get(pcounter x, size_t off) { return (instr_val)(*(x + off) & 0x3f); }
 inline predicate_id predicate_get(pcounter x, size_t off) { return (predicate_id)(*(x + off) & 0x7f); }
+inline utils::byte byte_get(pcounter x, size_t off) { return *(utils::byte*)(x + off); } 
 
 /* IF reg THEN ... ENDIF */
 
@@ -190,12 +193,11 @@ inline reg_num alloc_reg(pcounter pc) { return reg_get(pc, 2); }
 
 /* CALL */
 
-typedef size_t call_id;
 
+inline external_function_id call_extern_id(pcounter pc) { return (external_function_id)byte_get(pc, 1); }
+inline size_t call_num_args(pcounter pc) { return (size_t)byte_get(pc, 2); }
+inline reg_num call_dest(pcounter pc) { return reg_get(pc, 3); }
 inline instr_val call_val(pcounter pc) { return val_get(pc, 0); }
-inline call_id call_extern_id(pcounter pc) { (void)pc; return 0; }
-inline reg_num call_dest(pcounter pc) { return reg_get(pc, 2); }
-inline size_t call_num_args(pcounter pc) { (void)pc; return 0; }
 
 /* MOVE-NIL TO dst */
 
