@@ -4,6 +4,7 @@
 
 #include "vm/external.hpp"
 #include "external/math.hpp"
+#include "external/utils.hpp"
 
 using namespace std;
 using namespace std::tr1;
@@ -95,6 +96,7 @@ init_external_functions(void)
 #define EXTERNAL2(NAME, RET, ARG1, ARG2) external1(EXTERN(NAME), RET, ARG1, ARG2)
 
    register_external_function(EXTERNAL1(sigmoid, FIELD_FLOAT, FIELD_FLOAT));
+   register_external_function(EXTERNAL1(randint, FIELD_INT, FIELD_INT));
    
    return true;
 }

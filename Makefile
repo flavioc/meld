@@ -82,7 +82,8 @@ OBJS = utils/utils.o \
 			 sched/mpi/tokenizer.o \
 			 sched/mpi/handler.o \
 			 sched/local/mpi_threads_dynamic.o \
-			 external/math.o
+			 external/math.o \
+			 external/utils.o
 
 all: meld print predicates
 
@@ -250,6 +251,7 @@ sched/local/mpi_threads_dynamic.o: sched/local/mpi_threads_dynamic.hpp \
 										sched/queue/bounded_pqueue.hpp sched/mpi/handler.hpp
 
 external/math.o: external/math.hpp external/math.cpp
+external/utils.o: external/utils.hpp external/utils.cpp
 
 clean:
 	find . -name '*.o' | xargs rm -f
