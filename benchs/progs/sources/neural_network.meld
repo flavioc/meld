@@ -1,0 +1,44 @@
+
+include #data/neural.meld
+
+type activated(node, int, float).
+type expected(node, int, float).
+
+type receive(node, int, sum float).
+type allgradient(node, int, sum float).
+type gradient(node, int, float).
+type delta(node, int, node, float).
+
+extern float sigmoid(float).
+
+const lrate = 0.01.
+
+receive(A, I, W * V) :-
+	link(B, A),
+	weight(B, I, A, W),
+	activated(B, I, V).
+
+activated(A, I, sigmoid(V)) :-
+	receive(A, I, V).
+
+allgradient(A, I, W * G) :-
+	weight(A, I, B, W),
+	hidden(A),
+	link(A, B),
+	gradient(B, I, G).
+
+gradient(A, I, V * ((1 - V) * S)) :-
+	hidden(A),
+	activated(A, I, V),
+	allgradient(A, I, S).
+gradient(A, I, G * (1.0 - G) * (E - G)) :-
+	output(A),
+	expected(A, I, E),
+	activated(A, I, G).
+
+weight(A, I + 1, B, O + (lrate * V * G)) :-
+	weight(A, I, B, O),
+	activated(A, I, V),
+	link(A, B),
+	gradient(B, I, G).
+
