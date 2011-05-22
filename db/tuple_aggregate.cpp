@@ -25,7 +25,7 @@ tuple_aggregate::add_to_set(vm::tuple *tpl, const ref_count many)
    }
    
    // new configuration
-   agg_configuration *conf(new agg_configuration());
+   agg_configuration *conf(new agg_configuration(pred));
    conf->add_to_set(tpl, many);
    values.push_back(conf);
    
@@ -47,6 +47,7 @@ tuple_aggregate::generate(void)
       
       if(conf->has_changed())
          conf->generate(typ, field, ls);
+         
       assert(!conf->has_changed());
       
       if(conf->is_empty()) {
@@ -79,13 +80,12 @@ void
 tuple_aggregate::delete_by_first_int_arg(const int_val val)
 {
    for(agg_conf_list::iterator it(values.begin());
-      it != values.end();
-      )
+      it != values.end(); )
    {
       agg_configuration *conf(*it);
       
       if(conf->matches_first_int_arg(val)) {
-         delete *it;
+         delete conf;
          it = values.erase(it);
       } else
          it++;

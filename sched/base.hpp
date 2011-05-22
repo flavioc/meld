@@ -2,6 +2,8 @@
 #ifndef SCHED_BASE_HPP
 #define SCHED_BASE_HPP
 
+#include <iostream>
+
 #include "conf.hpp"
 
 #include "db/tuple.hpp"
@@ -95,7 +97,9 @@ public:
    
    explicit base(const vm::process_id _id): id(_id), iteration(0) {}
    
-   virtual ~base(void) {}
+   virtual ~base(void) {
+      //std::cout << iteration << std::endl;
+   }
 };
 
 }

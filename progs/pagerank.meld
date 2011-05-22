@@ -1,7 +1,8 @@
 
 type route edge(node, node).
 type pagerank(node, int, float).
-type calcRank(node, int, sum float).
+type calcRank(node, int, sum float)
+		{ <- edge}.
 type numLinks(node, sum int).
 
 const damping = 0.85.

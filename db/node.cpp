@@ -12,35 +12,35 @@ using namespace vm;
 namespace db
 {
 
-trie&
-node::get_storage(const predicate_id& id)
+trie*
+node::get_storage(const predicate* pred)
 {
-   simple_tuple_map::iterator it(tuples.find(id));
+   simple_tuple_map::iterator it(tuples.find(pred->get_id()));
    
    if(it == tuples.end()) {
-      tuples[id] = trie();
-      it = tuples.find(id);
-   }
-   
-   return it->second;
+      trie *tr(new trie(pred));
+      tuples[pred->get_id()] = tr;
+      return tr;
+   } else
+      return it->second;
 }
 
 bool
 node::add_tuple(vm::tuple *tpl, ref_count many)
 {
-   predicate_id id(tpl->get_predicate()->get_id());
-   trie& tr(get_storage(id));
+   const predicate* pred(tpl->get_predicate());
+   trie *tr(get_storage(pred));
    
-   return tr.insert_tuple(tpl, many);
+   return tr->insert_tuple(tpl, many);
 }
 
 node::delete_info
 node::delete_tuple(vm::tuple *tuple, ref_count many)
 {
-   const predicate_id id(tuple->get_predicate_id());
-   trie& tr(get_storage(id));
+   const predicate *pred(tuple->get_predicate());
+   trie *tr(get_storage(pred));
    
-   return tr.delete_tuple(tuple, many);
+   return tr->delete_tuple(tuple, many);
 }
 
 agg_configuration*
@@ -105,17 +105,17 @@ node::match_predicate(const predicate_id id) const
    if(it == tuples.end())
       return ret;
    
-   const trie& tr(it->second);
+   const trie *tr(it->second);
    
-   return tr.match_predicate();
+   return tr->match_predicate();
 }
 
 void
-node::delete_all(const predicate_id id)
+node::delete_all(const predicate* pred)
 {
-   trie& tr(get_storage(id));
+   trie *tr(get_storage(pred));
    
-   tr.delete_all();
+   tr->delete_all();
    
    aggregate_map::iterator it(aggs.find(id));
    
@@ -127,11 +127,11 @@ node::delete_all(const predicate_id id)
 }
 
 void
-node::delete_by_first_int_arg(const vm::predicate_id id, const int_val arg)
+node::delete_by_first_int_arg(const predicate *pred, const int_val arg)
 {
-   trie& tr(get_storage(id));
+   trie *tr(get_storage(pred));
    
-   tr.delete_by_first_int_arg(arg);
+   tr->delete_by_first_int_arg(arg);
    
    aggregate_map::iterator it(aggs.find(id));
    
@@ -149,9 +149,9 @@ node::count_total(const predicate_id id) const
    if(it == tuples.end())
       return 0;
       
-   const trie& tr(it->second);
+   const trie *tr(it->second);
    
-   return tr.size();
+   return tr->size();
 }
 
 void
@@ -191,7 +191,7 @@ node::dump(ostream& cout) const
       it != tuples.end();
       ++it)
    {
-      it->second.dump(cout);
+      it->second->dump(cout);
    }
 }
 
@@ -205,7 +205,7 @@ node::print(ostream& cout) const
       it != tuples.end();
       ++it)
    {
-      it->second.print(cout);
+      it->second->print(cout);
    }
 }
 

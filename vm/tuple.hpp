@@ -86,6 +86,8 @@ public:
 
    field_type get_field_type(const field_num& field) const { return pred->get_field_type(field); }
 
+   tuple_field get_field(const field_num& field) const { return fields[field]; }
+   
 #define define_get(RET, NAME, VAL) \
    inline RET get_ ## NAME (const field_num& field) const { return VAL; }
 

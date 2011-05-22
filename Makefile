@@ -110,7 +110,7 @@ vm/instr.o: vm/instr.cpp vm/instr.hpp \
 db/tuple.o: db/tuple.cpp db/tuple.hpp
 
 db/agg_configuration.o: db/tuple.hpp db/agg_configuration.cpp \
-												db/agg_configuration.hpp
+												db/agg_configuration.hpp db/trie.hpp
 
 db/tuple_aggregate.o: db/tuple.hpp db/agg_configuration.hpp \
 											db/tuple_aggregate.hpp db/tuple_aggregate.cpp
@@ -124,7 +124,8 @@ db/database.o: db/database.cpp db/database.hpp vm/instr.hpp \
 							db/node.hpp
 
 process/process.o: process/process.cpp process/process.hpp vm/instr.hpp \
-									db/node.hpp sched/mpi/message_buffer.hpp
+									db/node.hpp sched/mpi/message_buffer.hpp \
+									db/trie.hpp
 
 process/machine.o: process/machine.hpp process/machine.cpp \
 									vm/state.hpp process/remote.hpp process/process.hpp \

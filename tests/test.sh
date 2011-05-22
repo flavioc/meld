@@ -175,8 +175,43 @@ loop_sched_mix ()
 	fi
 }
 
-loop_sched ts
-loop_sched tl
-loop_sched td
-loop_sched_mpi
-loop_sched_mix
+TYPE="${2}"
+
+if [ "${TYPE}" = "all" ]; then
+	loop_sched ts
+	loop_sched tl
+	loop_sched td
+	loop_sched_mpi
+	loop_sched_mix
+	exit 0
+fi
+
+if [ "${TYPE}" = "serial" ]; then
+	run_test_n 1 1 ts
+	exit 0
+fi
+
+if [ "${TYPE}" = "ts" ]; then
+	loop_sched ts
+	exit 0
+fi
+
+if [ "${TYPE}" = "tl" ]; then
+	loop_sched tl
+	exit 0
+fi
+
+if [ "${TYPE}" = "td" ]; then
+	loop_sched td
+	exit 0
+fi
+
+if [ "${TYPE}" = "mpi" ]; then
+	loop_sched_mpi
+	exit 0
+fi
+
+if [ "${TYPE}" = "mix" ]; then
+	loop_sched_mix
+	exit 0
+fi

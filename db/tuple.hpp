@@ -65,6 +65,8 @@ public:
 
    inline void dec_count(const vm::ref_count& inc) { assert(inc > 0); count -= inc; }
    
+   inline void add_count(const vm::ref_count& inc) { count += inc; }
+   
 #ifdef COMPILE_MPI
    const size_t storage_size(void) const
    {

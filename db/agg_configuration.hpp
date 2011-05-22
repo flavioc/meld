@@ -49,8 +49,8 @@ public:
    
    const bool matches_first_int_arg(const vm::int_val) const;
 
-   explicit agg_configuration(void):
-      changed(false), corresponds(NULL)
+   explicit agg_configuration(const vm::predicate *_pred):
+      vals(_pred), changed(false), corresponds(NULL)
    {
       assert(corresponds == NULL);
       assert(!changed);

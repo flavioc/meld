@@ -755,6 +755,7 @@ static inline void
 execute_delete(const pcounter pc, state& state)
 {
    const predicate_id id(delete_predicate(pc));
+   const predicate *pred(state::PROGRAM->get_predicate(id));
    pcounter m(pc + DELETE_BASE);
    const instr_val fil_val(delete_filter(pc));
    const int_val fil(get_op_function<int_val>(fil_val, m, state));
@@ -763,7 +764,7 @@ execute_delete(const pcounter pc, state& state)
    
    //cout << state.node->get_id() << " Dumping id " << pred->get_name() << " indexed " << fil << endl;
    
-   state.node->delete_by_first_int_arg(id, fil);
+   state.node->delete_by_first_int_arg(pred, fil);
 }
 
 static inline void

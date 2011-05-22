@@ -255,6 +255,15 @@ agg_configuration::generate(const aggregate_type typ, const field_num field,
    simple_tuple_list& cont)
 {
    vm::tuple* generated(do_generate(typ, field));
+   
+   /*
+   cout << "Generated from ";
+   if(generated)
+      cout << *generated;
+   cout << endl;
+   vals.dump(cout);
+   cout << endl;
+   */
 
    changed = false;
 
@@ -277,7 +286,6 @@ agg_configuration::generate(const aggregate_type typ, const field_num field,
 
 agg_configuration::~agg_configuration(void)
 {
-   vals.wipeout();
 }
 
 void

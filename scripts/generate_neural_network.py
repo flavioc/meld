@@ -8,7 +8,7 @@ import sys
 import csv
 
 if len(sys.argv) != 5:
-	print "Usage: generate_neural_network.py <input neuros> <hidden neurons> <output neurons> <file>"
+	print "Usage: generate_neural_network.py <input neurons> <hidden neurons> <output neurons> <file>"
 	sys.exit(1)
 
 num_input = int(sys.argv[1])
@@ -74,7 +74,7 @@ for h in range(num_hidden + 1):
    print
 print
 
-MAX_READ = 500
+MAX_READ = 60
 
 reader = csv.reader(open(file, 'rb'), delimiter=',')
 count = 0
@@ -91,5 +91,5 @@ for row in reader:
    print "activated(@" + bias_input + ", " + str(count) + ", 0.0 - 1.0)."
    print "activated(@" + bias_hidden + ", " + str(count) + ", 0.0 - 1.0)."
    count = count + 1
-   if count == 60:
+   if count == MAX_READ:
       sys.exit(1)
