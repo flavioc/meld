@@ -150,7 +150,7 @@ mpi_thread::busy_wait(void)
          }
       }
       
-      if(!leader_thread() && !has_work() && is_inactive() && iteration_finished) {
+      if(!leader_thread() && !has_work() && is_inactive() && all_threads_finished() && iteration_finished) {
          assert(!leader_thread()); // leader thread does not finish here
          assert(is_inactive());
          assert(!has_work());
@@ -222,7 +222,11 @@ mpi_thread::terminate_iteration(void)
    // threads must wait for the final answer between processes
    threads_synchronize();
 
-   return !iteration_finished;
+   const bool ret(!iteration_finished);
+   
+   threads_synchronize();
+   
+   return ret;
 }
    
 vector<sched::base*>&
