@@ -4,6 +4,7 @@
 
 #include <list>
 #include <stack>
+#include <tr1/unordered_map>
 #include <ostream>
 
 #include "mem/base.hpp"
@@ -18,15 +19,42 @@ namespace db
 typedef std::list<simple_tuple*, mem::allocator<simple_tuple*> > simple_tuple_list;
 typedef std::vector<vm::tuple*, mem::allocator<vm::tuple*> > tuple_vector;
 
-class trie_node: public mem::base<trie_node>
+typedef std::stack<vm::tuple_field> val_stack;
+typedef std::stack<vm::field_type> type_stack;
+
+class trie_hash;
+class trie_node;
+
+class trie_leaf: public mem::base<trie_leaf>
 {
 private:
    
+   friend class trie_node;
    friend class trie;
    friend class trie_iterator;
    
-   typedef std::stack<vm::tuple_field> val_stack;
-   typedef std::stack<vm::field_type> type_stack;
+   trie_leaf *prev;
+   trie_leaf *next;
+   
+   simple_tuple* tpl;
+   
+public:
+   
+   inline simple_tuple *get_tuple(void) const { return tpl; }
+   
+   explicit trie_leaf(simple_tuple *_tpl):
+      tpl(_tpl)
+   {
+   }
+};
+
+class trie_node: public mem::base<trie_node>
+{
+protected:
+
+   friend class trie;
+   friend class trie_iterator;
+   friend class trie_hash;
 
    trie_node *parent;
    trie_node *next;
@@ -35,69 +63,108 @@ private:
 
    vm::tuple_field data;
    
-   trie_node *find_next_leaf(void) const;
-   trie_node *find_first_leaf(void) const;
-   size_t delete_by_first_int(const vm::int_val);
-   size_t count_refs(void) const;
+   bool hashed;
+   trie_node **bucket;
+   
+   trie_node* get_by_first_int(const vm::int_val) const;
+   void convert_hash(const vm::field_type&);
 
 public:
 
+   inline const bool is_hashed(void) const { return hashed; }
    inline const bool is_leaf(void) const { return (vm::ptr_val)child & 0x1; }
 
    inline trie_node* get_next(void) const { return next; }
    inline trie_node* get_child(void) const { return (trie_node*)((vm::ptr_val)child & (~(vm::ptr_val)(0x1))); }
    inline trie_node* get_parent(void) const { return parent; }
    
-   inline simple_tuple* get_tuple_leaf(void) const
+   inline trie_leaf* get_leaf(void) const
    {
-      return (simple_tuple *)get_child();
+      return (trie_leaf *)get_child();
    }
    
-   inline void set_tuple_leaf(simple_tuple *tpl)
+   inline void set_leaf(trie_leaf *leaf)
    {
-      child = (trie_node *)((vm::ptr_val)tpl | 0x1);
+      child = (trie_node *)((vm::ptr_val)leaf | 0x1);
    }
    
-   trie_node *match(const vm::tuple_field&, const vm::field_type&, val_stack&, type_stack&) const;
+   size_t count_refs(void) const;
+   
+   trie_node *match(const vm::tuple_field&, const vm::field_type&, val_stack&, type_stack&, size_t&) const;
    
    trie_node *insert(const vm::tuple_field&, const vm::field_type&, val_stack&, type_stack&);
    
-   void delete_path(void);
-   
    explicit trie_node(const vm::tuple_field& _data):
-      parent(NULL),
       next(NULL),
       prev(NULL),
       child(NULL),
-      data(_data)
+      data(_data),
+      hashed(false),
+      bucket(NULL)
    {
    }
 
    explicit trie_node(void): // no data
-      parent(NULL),
       next(NULL),
       prev(NULL),
-      child(NULL)
+      child(NULL),
+      hashed(false),
+      bucket(NULL)
    {
    }
 
    ~trie_node(void);
 };
 
+class trie_hash: public mem::base<trie_hash>
+{
+private:
+   
+   friend class trie;
+   friend class trie_node;
+   friend class trie_iterator;
+   
+   const vm::field_type type;
+   
+   trie_node *parent;
+   trie_node **buckets;
+   size_t num_buckets;
+   size_t total;
+   
+   inline size_t hash_item(const size_t item) const { return item & (num_buckets-1); }
+   
+public:
+   
+   size_t count_refs(void) const;
+   
+   void insert_int(const vm::int_val&, trie_node *);
+   void insert_float(const vm::float_val&, trie_node *);
+   void insert_node(const vm::node_val&, trie_node *);
+   
+   trie_node *get_int(const vm::int_val&) const;
+   trie_node *get_float(const vm::float_val&) const;
+   trie_node *get_node(const vm::node_val&) const;
+   
+   void expand(void);
+   
+   explicit trie_hash(const vm::field_type&, trie_node*);
+   
+   ~trie_hash(void);
+};
+
 class trie_iterator: public mem::base<trie_node>
 {
 private:
    
-   trie_node *current_leaf;
+   trie_leaf *current_leaf;
    
 public:
    
    inline simple_tuple* operator*(void) const
    {
       assert(current_leaf != NULL);
-      assert(current_leaf->is_leaf());
       
-      return current_leaf->get_tuple_leaf();
+      return current_leaf->get_tuple();
    }
    
    inline const bool operator==(const trie_iterator& it) const
@@ -109,18 +176,18 @@ public:
    
    inline trie_iterator& operator++(void)
    {
-      current_leaf = current_leaf->find_next_leaf();
+      current_leaf = current_leaf->next;
       return *this;
    }
    
    inline trie_iterator operator++(int)
    {
-      current_leaf = current_leaf->find_next_leaf();
+      current_leaf = current_leaf->next;
       
       return *this;
    }
    
-   explicit trie_iterator(trie_node *first_leaf):
+   explicit trie_iterator(trie_leaf *first_leaf):
       current_leaf(first_leaf)
    {
    }
@@ -140,9 +207,13 @@ private:
    const vm::predicate *pred;
    node *root;
    size_t total;
+   trie_leaf *first_leaf;
+   trie_leaf *last_leaf;
    
    trie_node* check_insert(vm::tuple *, const vm::ref_count, bool&);
    void commit_delete(trie_node *);
+   void delete_branch(trie_node *);
+   void delete_path(trie_node *);
    
 public:
    
@@ -194,10 +265,10 @@ public:
    inline const bool empty(void) const { return total == 0; }
    inline const size_t size(void) const { return total; }
    
-   inline const_iterator begin(void) const { return trie_iterator(root->find_first_leaf()); }
+   inline const_iterator begin(void) const { return trie_iterator(first_leaf); }
    inline const_iterator end(void) const { return trie_iterator(); }
    
-   inline iterator begin(void) { return trie_iterator(root->find_first_leaf()); }
+   inline iterator begin(void) { return trie_iterator(first_leaf); }
    inline iterator end(void) { return trie_iterator(); }
    
    void delete_all(void);

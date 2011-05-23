@@ -10,6 +10,9 @@
 /* when this is active the allocator checks for allocate/dealloc correctness */
 //#define ALLOCATOR_ASSERT 1
 
+/* when this is active it activates extra trie checking code */
+#define TRIE_ASSERT 1
+
 /* activate this to collect statistics on memory use */
 #define MEMORY_STATISTICS 1
 

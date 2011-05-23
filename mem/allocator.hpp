@@ -8,6 +8,7 @@
 #include "conf.hpp"
 #include "mem/thread.hpp"
 #include "mem/stat.hpp"
+#include <iostream>
 
 #ifdef ALLOCATOR_ASSERT
 extern boost::mutex allocator_mtx;
@@ -61,6 +62,8 @@ public:
          p = reinterpret_cast<pointer>(get_pool()->allocate(cnt * sizeof(T)));
       else
          p = reinterpret_cast<pointer>(::operator new(cnt * sizeof(T)));
+         
+      //std::cout << "New memory " << p << " " << cnt * sizeof(T) << " for " << typeid(T).name() << std::endl;
       
 #ifdef ALLOCATOR_ASSERT
       allocator_mtx.lock();

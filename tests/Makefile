@@ -7,6 +7,9 @@ all:
 test-serial:
 	@bash test_all.sh serial
 
+test-mix:
+	@bash test_all.sh mix
+
 test:
 	@bash test_all.sh all
 
