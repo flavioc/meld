@@ -56,6 +56,8 @@ protected:
    
 public:
    
+   inline const bool leader_thread(void) const { return get_id() == 0; }
+   
    // a new work was created for the current executing node
    inline void new_work_self(db::node *node, const db::simple_tuple *tpl, const bool is_agg = false)
    {
