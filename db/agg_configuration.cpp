@@ -27,6 +27,7 @@ agg_configuration::add_to_set(vm::tuple *tpl, const ref_count many)
       if(deleter.to_delete()) {
          deleter();
       }
+      
       delete tpl;
    }
 }

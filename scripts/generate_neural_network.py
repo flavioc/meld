@@ -74,7 +74,7 @@ for h in range(num_hidden + 1):
    print
 print
 
-MAX_READ = 60
+MAX_READ = 5
 
 reader = csv.reader(open(file, 'rb'), delimiter=',')
 count = 0

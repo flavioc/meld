@@ -19,8 +19,6 @@ tuple_aggregate::add_to_set(vm::tuple *tpl, const ref_count many)
    agg_trie_leaf *leaf(vals.find_configuration(tpl));
    agg_configuration *conf;
    
-   
-   
    if(leaf->get_conf() == NULL) {
       conf = new agg_configuration(pred);
       leaf->set_conf(conf);

@@ -66,6 +66,7 @@ public:
    trie_node *insert(const vm::tuple_field&, const vm::field_type&, val_stack&, type_stack&);
    
    explicit trie_node(const vm::tuple_field& _data):
+      parent(NULL),
       next(NULL),
       prev(NULL),
       child(NULL),
@@ -73,15 +74,18 @@ public:
       hashed(false),
       bucket(NULL)
    {
+      assert(next == NULL && prev == NULL && parent == NULL && child == NULL && hashed == false);
    }
 
    explicit trie_node(void): // no data
+      parent(NULL),
       next(NULL),
       prev(NULL),
       child(NULL),
       hashed(false),
       bucket(NULL)
    {
+      assert(next == NULL && prev == NULL && parent == NULL && child == NULL && hashed == false);
    }
 
    ~trie_node(void);
@@ -246,6 +250,17 @@ protected:
    trie_leaf *first_leaf;
    trie_leaf *last_leaf;
    
+   inline void basic_invariants(void)
+   {
+      assert(root != NULL);
+      assert(root->parent == NULL);
+      assert((root->child == NULL && total == 0) || (root->child != NULL && total > 0));
+      assert(root->prev == NULL);
+      assert(root->next == NULL);
+      assert((root->child == NULL && first_leaf == NULL && last_leaf == NULL)
+         || (root->child != NULL && first_leaf != NULL && last_leaf != NULL));
+   }
+   
    void commit_delete(trie_node *);
    void delete_branch(trie_node *);
    void delete_path(trie_node *);
@@ -336,7 +351,7 @@ public:
    
    tuple_vector* match_predicate(void) const;
    
-   explicit tuple_trie(const vm::predicate *_pred): pred(_pred) {}
+   explicit tuple_trie(const vm::predicate *_pred): trie(), pred(_pred) { basic_invariants(); }
    
    virtual ~tuple_trie(void) {}
 };

@@ -18,6 +18,7 @@ node::get_storage(const predicate* pred)
    simple_tuple_map::iterator it(tuples.find(pred->get_id()));
    
    if(it == tuples.end()) {
+      //cout << "New trie for " << *pred << endl;
       tuple_trie *tr(new tuple_trie(pred));
       tuples[pred->get_id()] = tr;
       return tr;
