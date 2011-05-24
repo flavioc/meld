@@ -29,6 +29,12 @@ private:
    
 protected:
    
+   static volatile bool all_informed;
+   static boost::mutex informed_mtx;
+   
+   boost::mutex mutex;
+   boost::condition_variable cond;
+   
    static std::vector<sched::base*> ALL_THREADS;
    
    static inline void add_thread(sched::base *add)
@@ -42,8 +48,6 @@ protected:
    }
    
    static void init_barriers(const size_t);
-   
-   boost::mutex mutex;
 
    inline void set_active(void)
    {

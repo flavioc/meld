@@ -10,6 +10,8 @@ namespace sched
 vector<base*> threaded::ALL_THREADS;
 barrier* threaded::thread_barrier(NULL);
 termination_barrier* threaded::term_barrier(NULL);
+volatile bool threaded::all_informed(false);
+mutex threaded::informed_mtx;
 
 void
 threaded::init_barriers(const size_t num_threads)

@@ -35,8 +35,6 @@ private:
    
 public:
    
-   inline const bool leader_thread(void) const { return get_id() == 0; }
-   
    virtual bool get_work(work_unit&);
    virtual void new_work_remote(process::remote *, const db::node::node_id, message *);
    
