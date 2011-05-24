@@ -5,7 +5,7 @@ all:
 	@echo "Type 'make test' to test. Or type 'make compiled' to recompile tests."
 
 test-ts:
-	@bash test_All.sh ts
+	@bash test_all.sh ts
 
 test-serial:
 	@bash test_all.sh serial
