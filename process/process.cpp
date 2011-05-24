@@ -157,6 +157,7 @@ process::loop(void)
    
    scheduler->assert_end();
    scheduler->end();
+   // cout << "DONE " << id << endl;
 }
 
 void

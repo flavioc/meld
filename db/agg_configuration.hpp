@@ -17,10 +17,10 @@ class agg_configuration: public mem::base<agg_configuration>
 {
 private:
    
-   typedef trie::iterator iterator;
-   typedef trie::const_iterator const_iterator;
+   typedef tuple_trie::iterator iterator;
+   typedef tuple_trie::const_iterator const_iterator;
 
-   trie vals;
+   tuple_trie vals;
    bool changed;
    vm::tuple *corresponds;
 

@@ -10,24 +10,29 @@ namespace db
 agg_configuration*
 tuple_aggregate::add_to_set(vm::tuple *tpl, const ref_count many)
 {
-   const field_num field(pred->get_aggregate_field());
+   /*
+   cout << "Adding " << *tpl << endl;
+   cout << "Before" << endl;
+   print(cout);
+   */
    
-   for(agg_conf_list::iterator it(values.begin());
-      it != values.end();
-      ++it)
-   {
-      agg_configuration *conf(*it);
-      
-      if(conf->test(tpl, field)) {
-         conf->add_to_set(tpl, many);
-         return conf;
-      }
+   agg_trie_leaf *leaf(vals.find_configuration(tpl));
+   agg_configuration *conf;
+   
+   
+   
+   if(leaf->get_conf() == NULL) {
+      conf = new agg_configuration(pred);
+      leaf->set_conf(conf);
+   } else {
+      conf = leaf->get_conf();
    }
    
-   // new configuration
-   agg_configuration *conf(new agg_configuration(pred));
+   /*
+   cout << "After\n";
+   print(cout);
+   */
    conf->add_to_set(tpl, many);
-   values.push_back(conf);
    
    return conf;
 }
@@ -39,22 +44,22 @@ tuple_aggregate::generate(void)
    const field_num field(pred->get_aggregate_field());
    simple_tuple_list ls;
    
-   for(agg_conf_list::iterator it(values.begin());
-      it != values.end();
-      )
+   for(agg_trie::iterator it(vals.begin());
+      it != vals.end(); )
    {
       agg_configuration *conf(*it);
       
+      assert(conf != NULL);
+      
       if(conf->has_changed())
          conf->generate(typ, field, ls);
-         
+      
       assert(!conf->has_changed());
       
-      if(conf->is_empty()) {
-         it = values.erase(it);
-         delete conf;
-      } else
-         ++it;
+      if(conf->is_empty())
+         it = vals.erase(it);
+      else
+         it++;
    }
    
    return ls;
@@ -63,13 +68,13 @@ tuple_aggregate::generate(void)
 const bool
 tuple_aggregate::no_changes(void) const
 {
-   for(agg_conf_list::const_iterator it(values.begin());
-      it != values.end();
+   for(agg_trie::const_iterator it(vals.begin());
+      it != vals.end();
       ++it)
    {
       agg_configuration *conf(*it);
       
-      if(conf->has_changed() || conf->is_empty())
+      if(conf->has_changed())
          return false;
    }
    
@@ -79,34 +84,17 @@ tuple_aggregate::no_changes(void) const
 void
 tuple_aggregate::delete_by_first_int_arg(const int_val val)
 {
-   for(agg_conf_list::iterator it(values.begin());
-      it != values.end(); )
-   {
-      agg_configuration *conf(*it);
-      
-      if(conf->matches_first_int_arg(val)) {
-         delete conf;
-         it = values.erase(it);
-      } else
-         it++;
-   }
-}
-
-void
-tuple_aggregate::delete_all(void)
-{
-   for(agg_conf_list::iterator it(values.begin());
-      it != values.end();
-      ++it)
-   {
-      delete *it;
-   }
-   values.clear();
+   /*
+   cout << "Before " << val << endl;
+   print(cout);*/
+   
+   vals.delete_by_first_int_arg(val);
+   /*cout << "After" << endl;
+   print(cout);*/
 }
 
 tuple_aggregate::~tuple_aggregate(void)
 {
-   delete_all();
 }
 
 void
@@ -114,11 +102,13 @@ tuple_aggregate::print(ostream& cout) const
 {
    cout << "agg of " << *pred << ":" << endl;
    
-   for(agg_conf_list::const_iterator it(values.begin());
-      it != values.end();
-      ++it)
+   for(agg_trie::const_iterator it(vals.begin());
+      it != vals.end();
+      it++)
    {
-      cout << **it << endl;
+      agg_configuration *conf(*it);
+      assert(conf != NULL);
+      cout << *conf << endl;
    }
 }
 

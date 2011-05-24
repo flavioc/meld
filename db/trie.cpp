@@ -3,6 +3,7 @@
 
 #include "utils/utils.hpp"
 #include "db/trie.hpp"
+#include "db/agg_configuration.hpp"
 
 using namespace vm;
 using namespace std;
@@ -11,7 +12,7 @@ using namespace std::tr1;
 
 namespace db
 {
-   
+
 static const size_t TRIE_HASH_LIST_THRESHOLD(2);
 static const size_t TRIE_HASH_BASE_BUCKETS(8);
 static const size_t TRIE_HASH_MAX_NODES_PER_BUCKET(TRIE_HASH_LIST_THRESHOLD / 2);
@@ -37,10 +38,7 @@ size_t
 trie_node::count_refs(void) const
 {
    if(is_leaf()) {
-      trie_leaf *leaf(get_leaf());
-      simple_tuple *tpl(leaf->get_tuple());
-      
-      return tpl->get_count();
+      return get_leaf()->get_count();
    } else {
       size_t ret(0);
       
@@ -453,9 +451,7 @@ trie::delete_branch(trie_node *node)
          first_leaf = leaf->next;
       if(leaf == last_leaf)
          last_leaf = leaf->prev;
-         
-      simple_tuple *tpl(leaf->get_tuple());
-      simple_tuple::wipeout(tpl);
+      
       delete leaf;
       return;
    }
@@ -492,34 +488,25 @@ trie::delete_branch(trie_node *node)
 }
 
 trie_node*
-trie::check_insert(vm::tuple *tpl, const ref_count many, bool& found)
+trie::check_insert(void *data, const ref_count many, val_stack& vals, type_stack& typs, bool& found)
 {
-   // cout << "Starting insertion of " << *tpl << endl;
-   
-   if(tpl->num_fields() == 0) {
+   if(vals.empty()) {
       // 0-arity tuple
       if(!root->is_leaf()) {
          found = false;
-         trie_leaf *leaf(new trie_leaf(new simple_tuple(tpl, many)));
+         trie_leaf *leaf(create_leaf(data, many));
          root->set_leaf(leaf);
+         leaf->node = root;
          leaf->prev = leaf->next = NULL;
          first_leaf = last_leaf = leaf;
       } else {
          found = true;
-         trie_leaf *orig(root->get_leaf());
+         trie_leaf *leaf(root->get_leaf());
          
-         orig->get_tuple()->add_count(many);
+         leaf->add_count(many);
       }
       
       return root;
-   }
- 
-   val_stack vals;
-   type_stack typs;
-  
-   for(int i(tpl->num_fields()-1); i >= 0; --i) {
-      vals.push(tpl->get_field(i));
-      typs.push(tpl->get_field_type(i));
    }
    
    trie_node *parent(root);
@@ -571,7 +558,8 @@ trie::check_insert(vm::tuple *tpl, const ref_count many, bool& found)
          assert(typs.empty());
          
          // parent is now set as a leaf
-         trie_leaf *leaf(new trie_leaf(new simple_tuple(tpl, many)));
+         trie_leaf *leaf(create_leaf(data, many));
+         leaf->node = parent;
          parent->set_leaf(leaf);
          leaf->next = NULL;
          
@@ -605,13 +593,125 @@ trie::check_insert(vm::tuple *tpl, const ref_count many, bool& found)
    assert(parent->is_leaf());
    trie_leaf *orig(parent->get_leaf());
    
-   orig->get_tuple()->add_count(many);
+   orig->add_count(many);
    
    return parent;
 }
 
+void
+trie::commit_delete(trie_node *node)
+{
+   /*simple_tuple *tpl(node->get_tuple_leaf());
+   cout << "To delete: " << *tpl << endl;
+   dump(cout);*/
+
+   assert(node->is_leaf());
+
+   trie_leaf *leaf(node->get_leaf());
+
+   if(leaf->next)
+      leaf->next->prev = leaf->prev;
+   if(leaf->prev)
+      leaf->prev->next = leaf->next;
+      
+   if(leaf == first_leaf)
+      first_leaf = first_leaf->next;
+   
+   if(leaf == last_leaf)
+      last_leaf = last_leaf->prev;
+   
+   delete leaf;
+   node->child = NULL;
+   delete_path(node);
+
+#ifdef TRIE_ASSERT
+   leaf = first_leaf;
+   size_t count(0);
+   while(leaf) {
+      count += leaf->get_count();
+      if(!leaf->next)
+         assert(last_leaf == leaf);
+      leaf = leaf->next;
+   }
+   
+   assert(count == total);
+#endif
+
+   /*cout << "After: " << endl;
+   dump(cout);
+   printf("\n");*/
+}
+
+void
+trie::delete_by_first_int_arg(const int_val val)
+{
+   trie_node *node(root->get_by_first_int(val));
+
+   if(node == NULL)
+      return;
+   
+   if(node->prev != NULL)
+      node->prev->next = node->next;
+   if(node->next != NULL)
+      node->next->prev = node->prev;
+      
+   // fix bucket if this node is hashed
+   if(node->bucket != NULL && node->prev == NULL) {
+      trie_hash *hash((trie_hash*)node->parent->child);
+      hash->total--;
+      *(node->bucket) = node->next;
+   }
+   
+   if(node->prev == NULL)
+      node->parent->child = node->next;
+      
+   total -= node->count_refs();
+      
+   delete_branch(node);
+   delete node;
+}
+
+void
+trie::wipeout(void)
+{
+   delete_branch(root);
+   delete root;
+   total = 0;
+}
+
+trie::trie(void):
+   root(new trie_node()),
+   total(0),
+   first_leaf(NULL),
+   last_leaf(NULL)
+{
+}
+
+trie::~trie(void)
+{
+   wipeout();
+}
+
+trie_node*
+tuple_trie::check_insert(vm::tuple *tpl, const ref_count many, bool& found)
+{
+   // cout << "Starting insertion of " << *tpl << endl;
+ 
+   val_stack vals;
+   type_stack typs;
+  
+   if(tpl->num_fields() > 0) {
+      for(int i(tpl->num_fields()-1); i >= 0; --i) {
+         vals.push(tpl->get_field(i));
+         typs.push(tpl->get_field_type(i));
+      }
+   }
+   
+   return trie::check_insert((void*)tpl, many, vals, typs, found);
+}
+
 bool
-trie::insert_tuple(vm::tuple *tpl, const ref_count many)
+tuple_trie::insert_tuple(vm::tuple *tpl, const ref_count many)
 {
    /*
    cout << "To insert " << *tpl << endl;
@@ -635,7 +735,7 @@ trie::insert_tuple(vm::tuple *tpl, const ref_count many)
    trie_leaf *leaf(first_leaf);
    size_t count(0);
    while(leaf) {
-      count += leaf->get_tuple()->get_count();
+      count += leaf->get_count();
       if(!leaf->next)
          assert(last_leaf == leaf);
       leaf = leaf->next;
@@ -647,54 +747,8 @@ trie::insert_tuple(vm::tuple *tpl, const ref_count many)
    return is_new;
 }
 
-void
-trie::commit_delete(trie_node *node)
-{
-   /*simple_tuple *tpl(node->get_tuple_leaf());
-   cout << "To delete: " << *tpl << endl;
-   dump(cout);*/
-   
-   assert(node->is_leaf());
-   
-   trie_leaf *leaf(node->get_leaf());
-   
-   if(leaf->next)
-      leaf->next->prev = leaf->prev;
-   if(leaf->prev)
-      leaf->prev->next = leaf->next;
-      
-   if(leaf == first_leaf)
-      first_leaf = first_leaf->next;
-   
-   if(leaf == last_leaf)
-      last_leaf = last_leaf->prev;
-   
-   simple_tuple* tpl(leaf->get_tuple());
-   simple_tuple::wipeout(tpl);
-   delete leaf;
-   node->child = NULL;
-   delete_path(node);
-   
-#ifdef TRIE_ASSERT
-   leaf = first_leaf;
-   size_t count(0);
-   while(leaf) {
-      count += leaf->get_tuple()->get_count();
-      if(!leaf->next)
-         assert(last_leaf == leaf);
-      leaf = leaf->next;
-   }
-   
-   assert(count == total);
-#endif
-
-   /*cout << "After: " << endl;
-   dump(cout);
-   printf("\n");*/
-}
-
 trie::delete_info
-trie::delete_tuple(vm::tuple *tpl, const ref_count many)
+tuple_trie::delete_tuple(vm::tuple *tpl, const ref_count many)
 {
    assert(many > 0);
    
@@ -706,31 +760,15 @@ trie::delete_tuple(vm::tuple *tpl, const ref_count many)
    total -= many;
    
    trie_leaf *leaf(node->get_leaf());
-   simple_tuple *target(leaf->get_tuple());
    
-   if(target->reached_zero())
+   if(leaf->to_delete())
       return delete_info(this, true, node);
    else
       return delete_info(false);
 }
 
-tuple_vector*
-trie::match_predicate(void) const
-{
-   tuple_vector *ret(new tuple_vector());
-   
-   for(const_iterator it(begin());
-      it != end();
-      it++)
-   {
-      ret->push_back((*it)->get_tuple());
-   }
-   
-   return ret;
-}
-
 void
-trie::print(ostream& cout) const
+tuple_trie::print(ostream& cout) const
 {
    assert(!empty());
    
@@ -741,13 +779,12 @@ trie::print(ostream& cout) const
       it++)
    {
       simple_tuple *stuple(*it);
-      
       cout << "\t" << *stuple << endl;
    }
 }
 
 void
-trie::dump(ostream& cout) const
+tuple_trie::dump(ostream& cout) const
 {
    std::list<string> ls;
    
@@ -769,61 +806,60 @@ trie::dump(ostream& cout) const
    }
 }
 
-void
-trie::delete_by_first_int_arg(const int_val val)
+tuple_vector*
+tuple_trie::match_predicate(void) const
 {
-   trie_node *node(root->get_by_first_int(val));
-
-   if(node == NULL)
-      return;
+   tuple_vector *ret(new tuple_vector());
    
-   if(node->prev != NULL)
-      node->prev->next = node->next;
-   if(node->next != NULL)
-      node->next->prev = node->prev;
-   // fix bucket if this node is hashed
-   if(node->bucket != NULL && node->prev == NULL) {
-      trie_hash *hash((trie_hash*)node->parent->child);
-      hash->total--;
-      *(node->bucket) = node->next;
+   for(const_iterator it(begin());
+      it != end();
+      it++)
+   {
+      ret->push_back((*it)->get_tuple());
+   }
+
+   return ret;
+}
+
+agg_trie_leaf::~agg_trie_leaf(void)
+{
+   assert(conf);
+   delete conf;
+}
+
+agg_trie_leaf*
+agg_trie::find_configuration(vm::tuple *tpl)
+{
+   const predicate *pred(tpl->get_predicate());
+   
+   val_stack vals;
+   type_stack typs;
+  
+   for(int i(pred->get_aggregate_field()-1); i >= 0; --i) {
+      vals.push(tpl->get_field(i));
+      typs.push(tpl->get_field_type(i));
    }
    
-   if(node->prev == NULL)
-      node->parent->child = node->next;
-      
-   total -= node->count_refs();
-      
-   delete_branch(node);
-   delete node;
+   bool found;
+   trie_node *node(trie::check_insert(NULL, 1, vals, typs, found));
+   
+   if(!found)
+      ++total;
+   
+   return (agg_trie_leaf*)node->get_leaf();
 }
 
-void
-trie::delete_all(void)
+agg_trie_iterator
+agg_trie::erase(agg_trie_iterator& it)
 {
-   assert(false);
-   wipeout();
-}
-
-void
-trie::wipeout(void)
-{
-   delete_branch(root);
-   delete root;
-   total = 0;
-}
-
-trie::trie(const predicate *_pred):
-   pred(_pred),
-   root(new trie_node()),
-   total(0),
-   first_leaf(NULL),
-   last_leaf(NULL)
-{
-}
-
-trie::~trie(void)
-{
-   wipeout();
+   agg_trie_leaf *leaf(it.current_leaf);
+   agg_trie_leaf *next_leaf((agg_trie_leaf*)leaf->next);
+   trie_node *node(leaf->node);
+   
+   commit_delete(node);
+   total--;
+   
+   return agg_trie_iterator(next_leaf);
 }
    
 }

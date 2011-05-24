@@ -113,7 +113,8 @@ db/agg_configuration.o: db/tuple.hpp db/agg_configuration.cpp \
 												db/agg_configuration.hpp db/trie.hpp
 
 db/tuple_aggregate.o: db/tuple.hpp db/agg_configuration.hpp \
-											db/tuple_aggregate.hpp db/tuple_aggregate.cpp
+											db/tuple_aggregate.hpp db/tuple_aggregate.cpp \
+											db/trie.hpp
 
 db/node.o: db/node.cpp db/node.hpp \
 					db/tuple.hpp db/trie.hpp \

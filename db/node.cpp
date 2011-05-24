@@ -12,13 +12,13 @@ using namespace vm;
 namespace db
 {
 
-trie*
+tuple_trie*
 node::get_storage(const predicate* pred)
 {
    simple_tuple_map::iterator it(tuples.find(pred->get_id()));
    
    if(it == tuples.end()) {
-      trie *tr(new trie(pred));
+      tuple_trie *tr(new tuple_trie(pred));
       tuples[pred->get_id()] = tr;
       return tr;
    } else
@@ -29,7 +29,7 @@ bool
 node::add_tuple(vm::tuple *tpl, ref_count many)
 {
    const predicate* pred(tpl->get_predicate());
-   trie *tr(get_storage(pred));
+   tuple_trie *tr(get_storage(pred));
    
    return tr->insert_tuple(tpl, many);
 }
@@ -38,7 +38,7 @@ node::delete_info
 node::delete_tuple(vm::tuple *tuple, ref_count many)
 {
    const predicate *pred(tuple->get_predicate());
-   trie *tr(get_storage(pred));
+   tuple_trie *tr(get_storage(pred));
    
    return tr->delete_tuple(tuple, many);
 }
@@ -105,7 +105,7 @@ node::match_predicate(const predicate_id id) const
    if(it == tuples.end())
       return ret;
    
-   const trie *tr(it->second);
+   const tuple_trie *tr(it->second);
    
    return tr->match_predicate();
 }
@@ -113,27 +113,17 @@ node::match_predicate(const predicate_id id) const
 void
 node::delete_all(const predicate* pred)
 {
-   trie *tr(get_storage(pred));
-   
-   tr->delete_all();
-   
-   aggregate_map::iterator it(aggs.find(id));
-   
-   if(it != aggs.end()) {
-      tuple_aggregate *agg(it->second);
-      agg->delete_all();
-      assert(agg->empty());
-   }
+   assert(false);
 }
 
 void
 node::delete_by_first_int_arg(const predicate *pred, const int_val arg)
 {
-   trie *tr(get_storage(pred));
+   tuple_trie *tr(get_storage(pred));
    
    tr->delete_by_first_int_arg(arg);
    
-   aggregate_map::iterator it(aggs.find(id));
+   aggregate_map::iterator it(aggs.find(pred->get_id()));
    
    if(it != aggs.end()) {
       tuple_aggregate *agg(it->second);
@@ -149,7 +139,7 @@ node::count_total(const predicate_id id) const
    if(it == tuples.end())
       return 0;
       
-   const trie *tr(it->second);
+   const tuple_trie *tr(it->second);
    
    return tr->size();
 }

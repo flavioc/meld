@@ -23,38 +23,11 @@ typedef std::stack<vm::tuple_field> val_stack;
 typedef std::stack<vm::field_type> type_stack;
 
 class trie_hash;
-class trie_node;
-
-class trie_leaf: public mem::base<trie_leaf>
-{
-private:
-   
-   friend class trie_node;
-   friend class trie;
-   friend class trie_iterator;
-   
-   trie_leaf *prev;
-   trie_leaf *next;
-   
-   simple_tuple* tpl;
-   
-public:
-   
-   inline simple_tuple *get_tuple(void) const { return tpl; }
-   
-   explicit trie_leaf(simple_tuple *_tpl):
-      tpl(_tpl)
-   {
-   }
-};
+class trie_leaf;
 
 class trie_node: public mem::base<trie_node>
 {
-protected:
-
-   friend class trie;
-   friend class trie_iterator;
-   friend class trie_hash;
+public:
 
    trie_node *parent;
    trie_node *next;
@@ -69,15 +42,13 @@ protected:
    trie_node* get_by_first_int(const vm::int_val) const;
    void convert_hash(const vm::field_type&);
 
-public:
-
    inline const bool is_hashed(void) const { return hashed; }
    inline const bool is_leaf(void) const { return (vm::ptr_val)child & 0x1; }
 
    inline trie_node* get_next(void) const { return next; }
    inline trie_node* get_child(void) const { return (trie_node*)((vm::ptr_val)child & (~(vm::ptr_val)(0x1))); }
    inline trie_node* get_parent(void) const { return parent; }
-   
+
    inline trie_leaf* get_leaf(void) const
    {
       return (trie_leaf *)get_child();
@@ -121,8 +92,9 @@ class trie_hash: public mem::base<trie_hash>
 private:
    
    friend class trie;
+   friend class tuple_trie;
    friend class trie_node;
-   friend class trie_iterator;
+   friend class tuple_trie_iterator;
    
    const vm::field_type type;
    
@@ -152,11 +124,76 @@ public:
    ~trie_hash(void);
 };
 
-class trie_iterator: public mem::base<trie_node>
+class trie_leaf
 {
 private:
    
-   trie_leaf *current_leaf;
+   friend class trie_node;
+   friend class trie;
+   friend class tuple_trie;
+   friend class tuple_trie_iterator;
+   friend class agg_trie_iterator;
+   friend class agg_trie;
+   
+   trie_leaf *prev;
+   trie_leaf *next;
+   trie_node *node;
+   
+public:
+   
+   virtual size_t get_count(void) const = 0;
+   
+   virtual void add_count(const vm::ref_count many) = 0;
+   
+   virtual const bool to_delete(void) const = 0;
+   
+   explicit trie_leaf(void)
+   {
+   }
+   
+   virtual ~trie_leaf(void)
+   {
+   }
+};
+
+class tuple_trie_leaf: public trie_leaf, public mem::base<tuple_trie_leaf>
+{
+private:
+   
+   friend class trie_node;
+   friend class trie;
+   friend class tuple_trie;
+   friend class tuple_trie_iterator;
+   
+   simple_tuple* tpl;
+   
+public:
+   
+   inline simple_tuple *get_tuple(void) const { return tpl; }
+   
+   virtual inline size_t get_count(void) const { return tpl->get_count(); }
+   
+   virtual inline void add_count(const vm::ref_count many) { tpl->add_count(many); }
+   
+   virtual inline const bool to_delete(void) const { return tpl->reached_zero(); }
+   
+   explicit tuple_trie_leaf(simple_tuple *_tpl):
+      trie_leaf(),
+      tpl(_tpl)
+   {
+   }
+   
+   virtual ~tuple_trie_leaf(void)
+   {
+      simple_tuple::wipeout(tpl);
+   }
+};
+
+class tuple_trie_iterator: public mem::base<tuple_trie_iterator>
+{
+private:
+   
+   tuple_trie_leaf *current_leaf;
    
 public:
    
@@ -167,32 +204,32 @@ public:
       return current_leaf->get_tuple();
    }
    
-   inline const bool operator==(const trie_iterator& it) const
+   inline const bool operator==(const tuple_trie_iterator& it) const
    {
       return current_leaf == it.current_leaf;
    }
    
-   inline const bool operator!=(const trie_iterator& it) const { return !operator==(it); }
+   inline const bool operator!=(const tuple_trie_iterator& it) const { return !operator==(it); }
    
-   inline trie_iterator& operator++(void)
+   inline tuple_trie_iterator& operator++(void)
    {
-      current_leaf = current_leaf->next;
+      current_leaf = (tuple_trie_leaf*)current_leaf->next;
       return *this;
    }
    
-   inline trie_iterator operator++(int)
+   inline tuple_trie_iterator operator++(int)
    {
-      current_leaf = current_leaf->next;
+      current_leaf = (tuple_trie_leaf*)current_leaf->next;
       
       return *this;
    }
    
-   explicit trie_iterator(trie_leaf *first_leaf):
+   explicit tuple_trie_iterator(tuple_trie_leaf *first_leaf):
       current_leaf(first_leaf)
    {
    }
    
-   explicit trie_iterator(void): // end iterator
+   explicit tuple_trie_iterator(void): // end iterator
       current_leaf(NULL)
    {
    }
@@ -200,25 +237,24 @@ public:
 
 class trie
 {
-private:
+protected:
    
    typedef trie_node node;
    
-   const vm::predicate *pred;
    node *root;
    size_t total;
    trie_leaf *first_leaf;
    trie_leaf *last_leaf;
    
-   trie_node* check_insert(vm::tuple *, const vm::ref_count, bool&);
    void commit_delete(trie_node *);
    void delete_branch(trie_node *);
    void delete_path(trie_node *);
    
-public:
+   virtual trie_leaf* create_leaf(void *data, const vm::ref_count many) = 0;
    
-   typedef trie_iterator iterator;
-   typedef trie_iterator const_iterator;
+   trie_node *check_insert(void *, const vm::ref_count, val_stack&, type_stack&, bool&);
+   
+public:
    
    class delete_info
    {
@@ -250,6 +286,35 @@ public:
       }
    };
    
+   inline const bool empty(void) const { return total == 0; }
+   inline const size_t size(void) const { return total; }
+   
+   void delete_by_first_int_arg(const vm::int_val);
+   void wipeout(void);
+   
+   explicit trie(void);
+   
+   virtual ~trie(void);
+};
+
+class tuple_trie: public trie, public mem::base<tuple_trie>
+{
+private:
+   
+   const vm::predicate *pred;
+   
+   virtual trie_leaf* create_leaf(void *data, const vm::ref_count many)
+   {
+      return new tuple_trie_leaf(new simple_tuple((vm::tuple*)data, many));
+   }
+   
+   trie_node* check_insert(vm::tuple *, const vm::ref_count, bool&);
+   
+public:
+   
+   typedef tuple_trie_iterator iterator;
+   typedef tuple_trie_iterator const_iterator;
+   
    // inserts tuple into the trie
    // returns false if tuple is repeated (+ ref count)
    // returns true if tuple is new
@@ -260,27 +325,133 @@ public:
    // call the object to commit the deletion operation
    delete_info delete_tuple(vm::tuple *, const vm::ref_count);
    
-   tuple_vector* match_predicate(void) const;
+   inline const_iterator begin(void) const { return iterator((tuple_trie_leaf*)first_leaf); }
+   inline const_iterator end(void) const { return iterator(); }
    
-   inline const bool empty(void) const { return total == 0; }
-   inline const size_t size(void) const { return total; }
-   
-   inline const_iterator begin(void) const { return trie_iterator(first_leaf); }
-   inline const_iterator end(void) const { return trie_iterator(); }
-   
-   inline iterator begin(void) { return trie_iterator(first_leaf); }
-   inline iterator end(void) { return trie_iterator(); }
-   
-   void delete_all(void);
-   void delete_by_first_int_arg(const vm::int_val);
-   void wipeout(void);
+   inline iterator begin(void) { return iterator((tuple_trie_leaf*)first_leaf); }
+   inline iterator end(void) { return iterator(); }
    
    void print(std::ostream&) const;
    void dump(std::ostream&) const;
    
-   explicit trie(const vm::predicate *);
+   tuple_vector* match_predicate(void) const;
    
-   ~trie(void);
+   explicit tuple_trie(const vm::predicate *_pred): pred(_pred) {}
+   
+   virtual ~tuple_trie(void) {}
+};
+
+class agg_configuration;
+
+class agg_trie_leaf: public trie_leaf, public mem::base<tuple_trie_leaf>
+{
+private:
+   
+   friend class trie_node;
+   friend class trie;
+   friend class tuple_trie;
+   friend class tuple_trie_iterator;
+   
+   agg_configuration *conf;
+   
+public:
+   
+   inline void set_conf(agg_configuration* _conf) { conf = _conf; }
+   
+   inline agg_configuration *get_conf(void) const { return conf; }
+   
+   virtual inline size_t get_count(void) const { return 1; }
+   
+   virtual inline void add_count(const vm::ref_count many) { }
+   
+   virtual inline const bool to_delete(void) const { return false; }
+   
+   explicit agg_trie_leaf(agg_configuration *_conf):
+      trie_leaf(),
+      conf(_conf)
+   {
+   }
+   
+   virtual ~agg_trie_leaf(void);
+};
+
+class agg_trie_iterator: public mem::base<agg_trie_iterator>
+{
+private:
+   
+   friend class agg_trie;
+   
+   agg_trie_leaf *current_leaf;
+   
+public:
+   
+   inline agg_configuration* operator*(void) const
+   {
+      assert(current_leaf != NULL);
+      
+      return current_leaf->get_conf();
+   }
+   
+   inline const bool operator==(const agg_trie_iterator& it) const
+   {
+      return current_leaf == it.current_leaf;
+   }
+   
+   inline const bool operator!=(const agg_trie_iterator& it) const { return !operator==(it); }
+   
+   inline agg_trie_iterator& operator++(void)
+   {
+      current_leaf = (agg_trie_leaf*)current_leaf->next;
+      return *this;
+   }
+   
+   inline agg_trie_iterator operator++(int)
+   {
+      current_leaf = (agg_trie_leaf*)current_leaf->next;
+      
+      return *this;
+   }
+   
+   explicit agg_trie_iterator(agg_trie_leaf *first_leaf):
+      current_leaf(first_leaf)
+   {
+   }
+   
+   explicit agg_trie_iterator(void): // end iterator
+      current_leaf(NULL)
+   {
+   }
+};
+
+class agg_trie: public trie, public mem::base<agg_trie>
+{
+private:
+   
+   virtual trie_leaf* create_leaf(void *data, const vm::ref_count many)
+   {
+      return new agg_trie_leaf(NULL);
+   }
+   
+public:
+   
+   typedef agg_trie_iterator iterator;
+   typedef agg_trie_iterator const_iterator;
+   
+   agg_trie_leaf *find_configuration(vm::tuple *);
+   
+   void delete_configuration(trie_node *node);
+   
+   inline const_iterator begin(void) const { return iterator((agg_trie_leaf*)first_leaf); }
+   inline const_iterator end(void) const { return iterator(); }
+   
+   inline iterator begin(void) { return iterator((agg_trie_leaf*)first_leaf); }
+   inline iterator end(void) { return iterator(); }
+   
+   iterator erase(iterator& it);
+   
+   explicit agg_trie(void) {}
+   
+   virtual ~agg_trie(void) {}
 };
    
 }
