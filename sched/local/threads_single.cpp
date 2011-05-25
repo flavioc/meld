@@ -79,11 +79,6 @@ threads_single::new_work(node *from, node *_to, const simple_tuple *tpl, const b
          add_to_queue(to);
          to->set_in_queue(true);
       }
-      // no need to put owner active, since we own this node
-      // new_work was called for init or for self generation of
-      // tuples (SEND a TO a)
-      // the lock is needed in order to make sure
-      // the node is not put multiple times on the queue
    }
 }
 
@@ -101,15 +96,14 @@ threads_single::new_work_other(sched::base *scheduler, node *node, const simple_
    
    tnode->add_work(stuple, false);
    
-   mutex::scoped_lock lock(tnode->mtx);
-   
    if(!tnode->in_queue()) {
-      tnode->set_in_queue(true);
-      add_to_queue(tnode);
-         
-      /* XXX */
-         
-      assert(tnode->in_queue());
+      mutex::scoped_lock lock(tnode->mtx);
+      if(!tnode->in_queue()) {
+         tnode->set_in_queue(true);
+         add_to_queue(tnode);
+      
+         assert(tnode->in_queue());
+      }
    }
 }
 
@@ -157,7 +151,6 @@ threads_single::busy_wait(void)
    set_active_if_inactive();
    
    assert(is_active());
-   assert(has_work());
    
    return true;
 }
@@ -228,9 +221,7 @@ threads_single::set_next_node(void)
          if(!busy_wait())
             return false;
       }
-      
-      assert(has_work());
-      
+            
       if(!queue_nodes.pop(current_node))
          continue;
       
