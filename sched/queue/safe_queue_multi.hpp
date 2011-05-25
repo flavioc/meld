@@ -4,6 +4,7 @@
 
 #include <boost/thread/mutex.hpp>
 #include <queue>
+#include "utils/spinlock.hpp"
 
 namespace sched
 {
@@ -14,7 +15,7 @@ class safe_queue_multi
 private:
    
    std::queue<T> cont;
-   boost::mutex mtx;
+	 utils::spinlock mtx;
    
 public:
    
@@ -25,7 +26,7 @@ public:
       if(cont.empty())
          return false;
          
-      boost::mutex::scoped_lock l(mtx);
+			utils::spinlock::scoped_lock l(mtx);
       
       if(cont.empty()) {
          return false;
@@ -40,7 +41,7 @@ public:
    
    inline void push(T data)
    {
-      boost::mutex::scoped_lock l(mtx);
+		 utils::spinlock::scoped_lock l(mtx);
    
       cont.push(data);
    }
