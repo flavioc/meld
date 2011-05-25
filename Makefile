@@ -4,6 +4,9 @@ OS = $(shell uname -s)
 INCLUDE_DIRS = -I.
 LIBRARY_DIRS =
 
+ifeq (exists, $(shell test -d /usr/lib/openmpi/include && echo exists))
+	INCLUDE_DIRS += -I/usr/lib/openmpi/include
+endif
 ifeq (exists, $(shell test -d /opt/local/include && echo exists))
 	INCLUDE_DIRS += -I/opt/local/include
 endif
