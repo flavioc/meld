@@ -29,6 +29,7 @@ help(void)
    fprintf(stderr, "\t\t\ttdX initial static division but allow work stealing\n");
    fprintf(stderr, "\t\t\tmpi static division of work using mpi\n");
    fprintf(stderr, "\t\t\tmixX static division of work using mpi plus threads\n");
+   fprintf(stderr, "\t\t\tsinX no division of working using local queues\n");
    fprintf(stderr, "\t-t \t\ttime execution\n");
    fprintf(stderr, "\t-m \t\tmemory statistics\n");
    fprintf(stderr, "\t-s \t\tshows database\n");
@@ -70,6 +71,10 @@ parse_sched(char *sched)
    } else if(strncmp(sched, "td", 2) == 0) {
       sched_type = SCHED_THREADS_DYNAMIC_LOCAL;
       sched += 2;
+      num_threads = (size_t)atoi(sched);
+   } else if(strncmp(sched, "sin", 3) == 0) {
+      sched_type = SCHED_THREADS_SINGLE_LOCAL;
+      sched += 3;
       num_threads = (size_t)atoi(sched);
    } else {
       fprintf(stderr, "Error: invalid scheduler %s\n", sched);

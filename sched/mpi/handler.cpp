@@ -6,6 +6,19 @@
 using namespace vm;
 using namespace db;
 
+#ifdef IMPLEMENT_MISSING_MPI
+namespace MPI {
+
+   void Comm::Set_errhandler(MPI::Errhandler const&) {
+      assert(0);
+   }
+
+   void Win::Set_errhandler(MPI::Errhandler const&) {
+      assert(0);
+   }
+}
+#endif
+
 namespace sched
 {
    

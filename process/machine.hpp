@@ -20,6 +20,7 @@
 #include "sched/global/threads_static.hpp"
 #include "sched/global/mpi.hpp"
 #include "sched/local/threads_static.hpp"
+#include "sched/local/threads_single.hpp"
 #include "sched/local/threads_dynamic.hpp"
 #include "sched/local/mpi_threads_dynamic.hpp"
 #include "sched/types.hpp"

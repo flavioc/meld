@@ -76,6 +76,7 @@ OBJS = utils/utils.o \
 			 sched/global/mpi.o \
 			 sched/local/threads_static.o \
 			 sched/local/threads_dynamic.o \
+			 sched/local/threads_single.o \
 			 sched/thread/threaded.o \
 			 sched/thread/queue_buffer.o \
 			 sched/thread/assert.o \
@@ -137,6 +138,7 @@ process/machine.o: process/machine.hpp process/machine.cpp \
 									sched/global/mpi.hpp \
 									sched/global/threads_static.hpp \
 									sched/local/threads_static.hpp \
+									sched/local/threads_single.hpp \
 									sched/local/threads_dynamic.hpp \
 									sched/local/mpi_threads_dynamic.hpp \
 									sched/types.hpp \
@@ -215,6 +217,16 @@ sched/local/threads_static.o: sched/base.hpp sched/local/threads_static.hpp \
 								utils/atomic.hpp \
 								sched/thread/node.hpp sched/queue/unsafe_queue_count.hpp \
 								sched/queue/safe_queue.hpp \
+								sched/thread/threaded.hpp \
+								sched/queue/bounded_pqueue.hpp \
+								sched/thread/assert.hpp
+
+sched/local/threads_single.o: sched/base.hpp sched/local/threads_single.hpp \
+								sched/local/threads_single.cpp sched/queue/node.hpp \
+								sched/thread/termination_barrier.hpp \
+								utils/atomic.hpp \
+								sched/thread/node.hpp sched/queue/unsafe_queue_count.hpp \
+								sched/queue/safe_queue_multi.hpp \
 								sched/thread/threaded.hpp \
 								sched/queue/bounded_pqueue.hpp \
 								sched/thread/assert.hpp

@@ -14,6 +14,7 @@ namespace sched
 class static_local; 
 class dynamic_local;
 class mpi_thread;
+class threads_single;
 
 struct node_work_unit {
    const db::simple_tuple *work_tpl;
@@ -27,6 +28,7 @@ private:
    friend class static_local;
    friend class dynamic_local;
    friend class mpi_thread;
+   friend class threads_single;
    
    static_local *owner;
    volatile bool i_am_on_queue;
