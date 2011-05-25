@@ -22,6 +22,9 @@ public:
    
    inline bool pop(T& data)
    {
+      if(cont.empty())
+         return false;
+         
       boost::mutex::scoped_lock l(mtx);
       
       if(cont.empty()) {
