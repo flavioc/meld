@@ -19,6 +19,7 @@ tuple::tuple(const predicate* _pred):
    pred((predicate*)_pred), fields(allocator<tuple_field>().allocate(pred->num_fields())) 
 {
    assert(pred != NULL);
+   memset(fields, 0, sizeof(tuple_field) * pred->num_fields());
 }
 
 tuple::tuple(void):
@@ -73,6 +74,31 @@ tuple::operator==(const tuple& other) const
    return true;
 }
 
+void
+tuple::copy_field(tuple *ret, const field_num i) const
+{
+   switch(get_field_type(i)) {
+      case FIELD_INT:
+         ret->set_int(i, get_int(i));
+         break;
+      case FIELD_FLOAT:
+         ret->set_float(i, get_float(i));
+         break;
+      case FIELD_NODE:
+         ret->set_node(i, get_node(i));
+         break;
+      case FIELD_LIST_INT:
+         ret->set_int_list(i, get_int_list(i));
+         break;
+      case FIELD_LIST_FLOAT:
+         ret->set_float_list(i, get_float_list(i));
+         break;
+      case FIELD_LIST_NODE:
+         ret->set_node_list(i, get_node_list(i));
+         break;
+   }
+}
+
 tuple*
 tuple::copy(void) const
 {
@@ -80,27 +106,22 @@ tuple::copy(void) const
    
    tuple *ret(new tuple(get_predicate()));
    
+   for(size_t i(0); i < num_fields(); ++i)
+      copy_field(ret, i);
+   
+   return ret;
+}
+
+tuple*
+tuple::copy_except(const field_num field) const
+{
+   assert(pred != NULL);
+   
+   tuple *ret(new tuple(get_predicate()));
+   
    for(size_t i(0); i < num_fields(); ++i) {
-      switch(get_field_type(i)) {
-         case FIELD_INT:
-            ret->set_int(i, get_int(i));
-            break;
-         case FIELD_FLOAT:
-            ret->set_float(i, get_float(i));
-            break;
-         case FIELD_NODE:
-            ret->set_node(i, get_node(i));
-            break;
-         case FIELD_LIST_INT:
-            ret->set_int_list(i, get_int_list(i));
-            break;
-         case FIELD_LIST_FLOAT:
-            ret->set_float_list(i, get_float_list(i));
-            break;
-         case FIELD_LIST_NODE:
-            ret->set_node_list(i, get_node_list(i));
-            break;
-      }
+      if(i != field)
+         copy_field(ret, i);
    }
    
    return ret;

@@ -5,7 +5,7 @@
 #include <cstdlib>
 
 /* when this is active we active a more strict debugging of threads */
-#define ASSERT_THREADS 1
+// #define ASSERT_THREADS 1
 
 /* when this is active the allocator checks for allocate/dealloc correctness */
 //#define ALLOCATOR_ASSERT 1
@@ -14,7 +14,7 @@
 #define TRIE_ASSERT 1
 
 /* activate this to collect statistics on memory use */
-#define MEMORY_STATISTICS 1
+// #define MEMORY_STATISTICS 1
 
 //#define DEBUG_SAFRAS 1
 //#define DEBUG_REMOTE 1

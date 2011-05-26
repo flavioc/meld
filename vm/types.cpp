@@ -46,6 +46,8 @@ field_type_string(field_type type)
 		case FIELD_LIST_NODE: return string ("node list");
 	}
 	
+   assert(false);
+	
    return string("");
 }
 
@@ -62,9 +64,11 @@ aggregate_type_string(aggregate_type type)
 			return string("max");
 	   case AGG_SUM_FLOAT:
 		case AGG_SUM_INT:
+		case AGG_SUM_LIST_FLOAT:
 			return string("sum");
 	}
 	
+   assert(false);
    return string("");
 }
 

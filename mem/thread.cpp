@@ -1,5 +1,4 @@
 
-#include <boost/thread/tss.hpp>
 #include <vector>
 #include <iostream>
 #include <tr1/unordered_set>
@@ -8,16 +7,27 @@
 
 using namespace boost;
 using namespace std;
+using namespace std::tr1;
 
-boost::mutex allocator_mtx;
-std::tr1::unordered_set<void*> mem_set;
+mutex allocator_mtx;
+unordered_set<void*> mem_set;
 
 namespace mem
 {
+   
+static bool init_keys(void);
 
 static pool *main_pool(new pool());
-static thread_specific_ptr<pool> pools(NULL);
 static vector<pool*> vec;
+static pthread_key_t pool_key;
+static bool started(init_keys());
+
+static bool
+init_keys(void)
+{
+   int ret(pthread_key_create(&pool_key, NULL));
+   assert(ret == 0);
+}
 
 void
 init(const size_t num_threads)
@@ -28,20 +38,22 @@ init(const size_t num_threads)
 void
 create_pool(const size_t id)
 {
-   pool *pl(new pool());   
-   pools.reset(pl);
+   thread::id pid(this_thread::get_id());
+   
+   pool *pl(new pool());
    vec[id] = pl;
+   pthread_setspecific(pool_key, pl);
 }
 
 pool*
 get_pool(void)
 {
-   pool *pool(pools.get());
+   pool *pl((pool*)pthread_getspecific(pool_key));
    
-   if(pool == NULL)
+   if(pl == NULL)
       return main_pool;
-      
-   return pool;
+   
+   return pl;
 }
 
 void

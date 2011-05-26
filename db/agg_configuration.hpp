@@ -31,6 +31,7 @@ private:
    vm::tuple *generate_first(void) const;
    vm::tuple *generate_max_float(const vm::field_num) const;
    vm::tuple *generate_min_float(const vm::field_num) const;
+   vm::tuple *generate_sum_list_float(const vm::field_num) const;
    vm::tuple *do_generate(const vm::aggregate_type, const vm::field_num);
 
 public:

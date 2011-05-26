@@ -19,8 +19,8 @@ namespace db
 typedef std::list<simple_tuple*, mem::allocator<simple_tuple*> > simple_tuple_list;
 typedef std::vector<vm::tuple*, mem::allocator<vm::tuple*> > tuple_vector;
 
-typedef std::stack<vm::tuple_field> val_stack;
-typedef std::stack<vm::field_type> type_stack;
+typedef std::stack<vm::tuple_field, std::deque<vm::tuple_field, mem::allocator<vm::tuple_field> > > val_stack;
+typedef std::stack<vm::field_type, std::deque<vm::field_type, mem::allocator<vm::field_type> > > type_stack;
 
 class trie_hash;
 class trie_leaf;
@@ -349,7 +349,7 @@ public:
    void print(std::ostream&) const;
    void dump(std::ostream&) const;
    
-   tuple_vector* match_predicate(void) const;
+   void match_predicate(tuple_vector& vec) const;
    
    explicit tuple_trie(const vm::predicate *_pred): trie(), pred(_pred) { basic_invariants(); }
    

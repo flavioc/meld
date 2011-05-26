@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <string>
+#include <stack>
 #ifdef COMPILE_MPI
 #include <boost/mpi.hpp>
 #include <boost/serialization/serialization.hpp>
@@ -32,8 +33,6 @@ private:
    
    list_ptr tail;
    const T head;
-   
-   typedef unsigned int ref_count;
    
    utils::atomic<size_t> refs;
    
@@ -77,11 +76,18 @@ public:
    inline void dec_refs(void) {
       assert(refs > 0);
       refs--;
-      if(refs == 0) {
-         if(!is_null(get_tail()))
-            get_tail()->dec_refs();
-         delete this;
-      }
+      if(zero_refs())
+         destroy();
+   }
+   
+   inline const bool zero_refs(void) const { return refs == 0; }
+   
+   inline void destroy(void)
+   {
+      assert(zero_refs());
+      if(!is_null(get_tail()))
+         get_tail()->dec_refs();
+      delete this;
    }
    
    void print(std::ostream& cout, const bool first) const
@@ -206,6 +212,23 @@ public:
       return equal(l1->get_tail(), l2->get_tail());
    }
    
+   static inline size_t length(const list_ptr ls) {
+      if(is_null(ls))
+         return 0;
+         
+      return 1 + length(ls->get_tail());
+   }
+   
+   static inline T get(const list_ptr ls, const size_t pos, const T def) {
+      if(is_null(ls))
+         return def;
+         
+      if(pos == 0)
+         return ls->get_head();
+      
+      return get(ls->get_tail(), pos - 1, def);
+   }
+   
    explicit cons(list_ptr _tail, const T _head):
       tail(_tail), head(_head), refs(0)
    {
@@ -226,6 +249,20 @@ operator<<(std::ostream& cout, const cons<T>& ls)
 typedef cons<vm::int_val> int_list;
 typedef cons<vm::float_val> float_list;
 typedef cons<vm::node_val> node_list;
+typedef std::stack<vm::float_val, std::deque<vm::float_val, mem::allocator<vm::float_val> > > stack_float_list;
+
+static inline float_list*
+from_stack_to_list(stack_float_list& stk)
+{
+   float_list *ptr(float_list::null_list());
+   
+   while(!stk.empty()) {
+      ptr = new float_list(ptr, stk.top());
+      stk.pop();
+   }
+   
+   return ptr;
+}
 
 }
 

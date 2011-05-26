@@ -46,6 +46,8 @@ private:
    BOOST_SERIALIZATION_SPLIT_MEMBER()
 #endif
 
+   void copy_field(tuple *, const field_num) const;
+
 public:
 
    bool field_equal(const tuple&, const field_num) const;
@@ -106,6 +108,7 @@ public:
    
    void print(std::ostream&) const;
    
+   tuple *copy_except(const field_num) const;
    tuple *copy(void) const;
    
    explicit tuple(void); // only used for serialization!

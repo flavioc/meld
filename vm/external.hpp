@@ -15,6 +15,7 @@ typedef all_val argument;
 typedef argument (*external_function_ptr0)();
 typedef argument (*external_function_ptr1)(argument);
 typedef argument (*external_function_ptr2)(argument,argument);
+typedef argument (*external_function_ptr3)(argument, argument, argument);
 typedef external_function_ptr0 external_function_ptr;
 
 #define FROM_ARG(X, TYPE) (*(TYPE*)&(X))

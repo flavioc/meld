@@ -847,19 +847,15 @@ tuple_trie::dump(ostream& cout) const
    }
 }
 
-tuple_vector*
-tuple_trie::match_predicate(void) const
+void
+tuple_trie::match_predicate(tuple_vector& vec) const
 {
-   tuple_vector *ret(new tuple_vector());
-   
    for(const_iterator it(begin());
       it != end();
       it++)
    {
-      ret->push_back((*it)->get_tuple());
+      vec.push_back((*it)->get_tuple());
    }
-
-   return ret;
 }
 
 agg_trie_leaf::~agg_trie_leaf(void)

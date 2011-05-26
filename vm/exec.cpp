@@ -590,12 +590,12 @@ do_matches(pcounter pc, const tuple *tuple, const state& state)
 }
 
 static inline void
-execute_iter(pcounter pc, pcounter first, state& state, tuple_vector *tuples)
+execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples)
 {
-   random_shuffle(tuples->begin(), tuples->end());
+   random_shuffle(tuples.begin(), tuples.end());
    
-   for(tuple_vector::iterator it(tuples->begin());
-      it != tuples->end();
+   for(tuple_vector::iterator it(tuples.begin());
+      it != tuples.end();
       ++it)
    {
       tuple *match_tuple(*it);
@@ -790,6 +790,11 @@ read_call_arg(argument& arg, const field_type type, pcounter& m, state& state)
          TO_ARG(val, arg);
       }
       break;
+      case FIELD_LIST_FLOAT: {
+         const float_list *val(get_op_function<float_list*>(val_type, m, state));
+         TO_ARG(val, arg);
+      }
+      break;
       default:
          throw vm_exec_error("can't read this external function argument");
    }
@@ -824,8 +829,11 @@ execute_call(pcounter pc, state& state)
       case 2:
          ret = ((external_function_ptr2)f->get_fun_ptr())(args[0], args[1]);
          break;
+      case 3:
+         ret = ((external_function_ptr3)f->get_fun_ptr())(args[0], args[1], args[2]);
+         break;
       default:
-         throw vm_exec_error("vm does not support external functions with more than 2 arguments");
+         throw vm_exec_error("vm does not support external functions with more than 3 arguments");
    }
    
    switch(ret_type) {
@@ -838,6 +846,10 @@ execute_call(pcounter pc, state& state)
       case FIELD_NODE:
          state.set_node(reg, FROM_ARG(ret, node_val));
          break;
+      case FIELD_LIST_FLOAT:
+         state.set_float_list(reg, FROM_ARG(ret, float_list*));
+         state.add_float_list(FROM_ARG(ret, float_list*));
+      break;
       default:
          throw vm_exec_error("invalid return type in call");
    }
@@ -872,11 +884,12 @@ eval_loop:
             throw vm_exec_error("ELSE instruction not supported");
          
          case ITER_INSTR: {
-               auto_ptr<tuple_vector> tuples(
-                     state.node->match_predicate(iter_predicate(pc)));
+               tuple_vector matches;
+               
+               state.node->match_predicate(iter_predicate(pc), matches);
 
-               if(!tuples->empty())
-                  execute_iter(pc + ITER_BASE, advance(pc), state, tuples.get());
+               if(!matches.empty())
+                  execute_iter(pc + ITER_BASE, advance(pc), state, matches);
                
                pc += iter_jump(pc);
                goto eval_loop;
@@ -954,6 +967,7 @@ void
 execute_bytecode(byte_code code, state& state)
 {
    execute((pcounter)code, state);
+   state.purge_lists();
 }
 
 }

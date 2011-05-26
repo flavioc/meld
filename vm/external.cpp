@@ -87,16 +87,35 @@ external2(external_function_ptr ptr, const field_type ret, const field_type arg1
    return f;
 }
 
+static inline external_function*
+external3(external_function_ptr ptr, const field_type ret, const field_type arg1,
+   const field_type arg2, const field_type arg3)
+{
+   external_function *f(new external_function(ptr, 3, ret));
+   
+   f->set_arg_type(0, arg1);
+   f->set_arg_type(1, arg2);
+   f->set_arg_type(2, arg3);
+   
+   return f;
+}
+
 static bool
 init_external_functions(void)
 {
 #define EXTERN(NAME) (external_function_ptr) external :: NAME
 #define EXTERNAL0(NAME, RET) external0(EXTERN(NAME), RET)
 #define EXTERNAL1(NAME, RET, ARG1) external1(EXTERN(NAME), RET, ARG1)
-#define EXTERNAL2(NAME, RET, ARG1, ARG2) external1(EXTERN(NAME), RET, ARG1, ARG2)
+#define EXTERNAL2(NAME, RET, ARG1, ARG2) external2(EXTERN(NAME), RET, ARG1, ARG2)
+#define EXTERNAL3(NAME, RET, ARG1, ARG2, ARG3) external3(EXTERN(NAME), RET, ARG1, ARG2, ARG3)
 
    register_external_function(EXTERNAL1(sigmoid, FIELD_FLOAT, FIELD_FLOAT));
    register_external_function(EXTERNAL1(randint, FIELD_INT, FIELD_INT));
+   register_external_function(EXTERNAL1(normalize, FIELD_LIST_FLOAT, FIELD_LIST_FLOAT));
+   register_external_function(EXTERNAL3(damp, FIELD_LIST_FLOAT,
+               FIELD_LIST_FLOAT, FIELD_LIST_FLOAT, FIELD_FLOAT));
+   register_external_function(EXTERNAL2(divide, FIELD_LIST_FLOAT, FIELD_LIST_FLOAT, FIELD_LIST_FLOAT));
+   register_external_function(EXTERNAL2(convolve, FIELD_LIST_FLOAT, FIELD_LIST_FLOAT, FIELD_LIST_FLOAT));
    
    return true;
 }

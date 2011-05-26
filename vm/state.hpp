@@ -1,6 +1,8 @@
 
-#ifndef STATE_HPP
-#define STATE_HPP
+#ifndef VM_STATE_HPP
+#define VM_STATE_HPP
+
+#include <list>
 
 #include "vm/tuple.hpp"
 #include "db/node.hpp"
@@ -28,6 +30,10 @@ private:
    static const size_t NUM_REGS = 32;
    typedef all_val reg;
    reg regs[NUM_REGS];
+   
+   std::list<runtime::float_list*, mem::allocator<runtime::float_list*> > free_float_list;
+   std::list<runtime::int_list*, mem::allocator<runtime::int_list*> > free_int_list;
+   std::list<runtime::node_list*, mem::allocator<runtime::node_list*> > free_node_list;
    
 public:
    
@@ -80,6 +86,11 @@ public:
    inline void copy_reg(const reg_num& reg_from, const reg_num& reg_to) {
       regs[reg_to] = regs[reg_from];
    }
+   
+   inline void add_float_list(runtime::float_list *ls) { free_float_list.push_back(ls); }
+   inline void add_int_list(runtime::int_list *ls) { free_int_list.push_back(ls); }
+   inline void add_node_list(runtime::node_list *ls) { free_node_list.push_back(ls); }
+   void purge_lists(void);
    
    explicit state(process::process *_proc):
       proc(_proc)

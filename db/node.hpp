@@ -92,7 +92,7 @@ public:
    
    virtual void assert_end_iteration(void) const {}
    
-   tuple_vector* match_predicate(const vm::predicate_id) const;
+   void match_predicate(const vm::predicate_id, tuple_vector&) const;
    
    const size_t count_total(const vm::predicate_id) const;
    

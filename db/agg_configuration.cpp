@@ -3,6 +3,7 @@
 
 using namespace std;
 using namespace vm;
+using namespace runtime;
 
 namespace db
 {
@@ -225,6 +226,54 @@ agg_configuration::generate_min_float(const field_num field) const
 }
 
 vm::tuple*
+agg_configuration::generate_sum_list_float(const field_num field) const
+{
+   assert(!vals.empty());
+   
+   const_iterator end(vals.end());
+   const_iterator it(vals.begin());
+   vm::tuple *first_tpl((*it)->get_tuple());
+   float_list *first(first_tpl->get_float_list(field));
+   const size_t len(float_list::length(first));
+   const size_t num_lists(vals.size());
+   float_list *lists[num_lists];
+   vm::tuple *ret(first_tpl->copy_except(field));
+   
+   for(size_t i(0); it != end; ++it) {
+      simple_tuple *stpl(*it);
+      for(size_t j(0); j < stpl->get_count(); ++j) {
+         lists[i++] = stpl->get_tuple()->get_float_list(field);
+         assert(float_list::length(lists[i-1]) == len);
+      }
+      assert(i <= num_lists);
+   }
+   
+   stack_float_list vals;
+   
+   for(size_t i(0); i < len; ++i) {
+      float_val sum(0.0);
+      
+      for(size_t j(0); j < num_lists; ++j) {
+         float_list *ls(lists[j]);
+         assert(ls != NULL);
+         sum += ls->get_head();
+         lists[j] = ls->get_tail();
+      }
+      
+      vals.push(sum);
+   }
+   
+   for(size_t j(0); j < num_lists; ++j)
+      assert(float_list::is_null(lists[j]));
+   
+   float_list *ptr(from_stack_to_list(vals));
+   
+   ret->set_float_list(field, ptr);
+   
+   return ret;
+}
+
+vm::tuple*
 agg_configuration::do_generate(const aggregate_type typ, const field_num field)
 {
    if(vals.empty())
@@ -245,6 +294,8 @@ agg_configuration::do_generate(const aggregate_type typ, const field_num field)
          return generate_max_float(field);
       case AGG_MIN_FLOAT:
          return generate_min_float(field);
+      case AGG_SUM_LIST_FLOAT:
+         return generate_sum_list_float(field);
    }
    
    assert(false);
