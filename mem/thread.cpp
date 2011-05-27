@@ -27,6 +27,7 @@ init_keys(void)
 {
    int ret(pthread_key_create(&pool_key, NULL));
    assert(ret == 0);
+   return true;
 }
 
 void
