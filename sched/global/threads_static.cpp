@@ -14,11 +14,10 @@ using namespace vm;
 using namespace db;
 using namespace process;
 using namespace std;
+using namespace utils;
 
 namespace sched
 {
-
-static volatile bool all_informed(false);
 
 void
 static_global::new_work(node *from, node *to, const simple_tuple *tpl, const bool is_agg)
@@ -61,7 +60,6 @@ static_global::assert_end_iteration(void) const
    assert(is_inactive());
    assert(buf.empty());
    assert(all_threads_finished());
-   assert(all_informed);
 }
 
 void
@@ -85,10 +83,9 @@ static_global::flush_queue(const process_id id, static_global *other)
    other->queue_work.snap(q);
    
    if(other->is_inactive()) {
-      mutex::scoped_lock l(other->mutex);
+      spinlock::scoped_lock l(other->lock);
       if(other->is_inactive() && other->has_work())
          other->set_active();
-      other->cond.notify_one();
    }
    
    buf.clear_queue(id);
@@ -127,28 +124,7 @@ static_global::busy_wait(void)
          assert(!has_work());
          assert(all_threads_finished());
          assert(is_inactive());
-         if(!all_informed) {
-            mutex::scoped_lock lock(informed_mtx);
-            if(!all_informed) {
-               all_informed = true;
-               for(size_t i(0); i < state::NUM_THREADS; ++i) {
-                  static_global *c((static_global*)ALL_THREADS[i]);
-                  if(c != this) {
-                     c->mutex.lock();
-                     c->cond.notify_one();
-                     c->mutex.unlock();
-                  }
-               }
-            }
-         }
          return false;
-      }
-      
-      if(is_inactive() && !has_work())
-      {
-         mutex::scoped_lock l(mutex);
-         while(!has_work() && !all_threads_finished())
-            cond.wait(l);
       }
    }
    
@@ -216,9 +192,6 @@ static_global::terminate_iteration(void)
    if(has_work())
       set_active();
       
-   if(leader_thread())
-      all_informed = false;
-   
    assert_thread_iteration(iteration);
    
    // again, needed since we must wait if any thread

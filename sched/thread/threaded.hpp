@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "utils/types.hpp"
+#include "utils/spinlock.hpp"
 #include "sched/base.hpp"
 #include "sched/thread/termination_barrier.hpp"
 
@@ -29,11 +30,7 @@ private:
    
 protected:
    
-   static volatile bool all_informed;
-   static boost::mutex informed_mtx;
-   
-   boost::mutex mutex;
-   boost::condition_variable cond;
+	 utils::spinlock lock;
    
    static std::vector<sched::base*> ALL_THREADS;
    
@@ -66,7 +63,7 @@ protected:
    inline void set_active_if_inactive(void)
    {
       if(is_inactive()) {
-         boost::mutex::scoped_lock l(mutex);
+					utils::spinlock::scoped_lock l(lock);
          if(is_inactive())
             set_active();
       }

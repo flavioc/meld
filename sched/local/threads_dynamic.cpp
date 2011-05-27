@@ -42,7 +42,7 @@ dynamic_local::add_node(node *node)
    assert(nodes != NULL);
    assert(node != NULL);
    
-   mutex::scoped_lock l(*nodes_mutex);
+   spinlock::scoped_lock l(*nodes_mutex);
 
    nodes->insert(node);
 }
@@ -53,7 +53,7 @@ dynamic_local::remove_node(node *node)
    assert(nodes != NULL);
    assert(node != NULL);
    
-   mutex::scoped_lock l(*nodes_mutex);
+   spinlock::scoped_lock l(*nodes_mutex);
 
    nodes->erase(node);
 }
@@ -85,21 +85,22 @@ dynamic_local::request_work_to(dynamic_local *asker)
 bool
 dynamic_local::busy_wait(void)
 {
-   size_t asked_many(0);
+   size_t asked_now(0);
    
    while(!has_work()) {
       
-      if(is_inactive() && state::NUM_THREADS > 1 && asked_many < MAX_ASK_STEAL) {
+      if(is_inactive() && state::NUM_THREADS > 1 && asked_now < MAX_ASK_STEAL_ROUND && asked_many < MAX_ASK_STEAL) {
          dynamic_local *target(select_steal_target());
          
          if(target->is_active()) {
             target->request_work_to(this);
-            ++asked_many;
+            ++asked_now;
+						++asked_many;
          }
       }
       
       if(is_active() && !has_work()) {
-         mutex::scoped_lock l(mutex);
+         spinlock::scoped_lock l(lock);
          if(!has_work()) {
             if(is_active())
                set_inactive();
@@ -113,6 +114,9 @@ dynamic_local::busy_wait(void)
          return false;
       }
    }
+
+	 if(asked_many > 0)
+		 --asked_many;
    
    set_active_if_inactive();
    
@@ -170,7 +174,7 @@ dynamic_local::handle_stealing(void)
       assert(total_sent > 0);
       
       if(asker->is_inactive()) {
-         mutex::scoped_lock lock(asker->mutex);
+         spinlock::scoped_lock lock(asker->lock);
          if(asker->is_inactive() && asker->has_work())
             asker->set_active();
       }
@@ -188,7 +192,7 @@ dynamic_local::get_work(work_unit& work)
 void
 dynamic_local::init(const size_t num_threads)
 {
-   nodes_mutex = new boost::mutex();
+   nodes_mutex = new spinlock();
    nodes = new node_set();
    
    database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
@@ -223,7 +227,8 @@ dynamic_local::generate_aggs(void)
 dynamic_local::dynamic_local(const process_id id):
    static_local(id),
    nodes(NULL),
-   nodes_mutex(NULL)
+   nodes_mutex(NULL),
+	 asked_many(0)
 {
 }
    

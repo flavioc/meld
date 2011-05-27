@@ -7,6 +7,7 @@
 #include "process/remote.hpp"
 #include "sched/thread/assert.hpp"
 #include "vm/state.hpp"
+#include "utils/time.hpp"
 
 using namespace boost;
 using namespace std;
@@ -74,7 +75,7 @@ threads_single::new_work(node *from, node *_to, const simple_tuple *tpl, const b
    to->add_work(tpl, is_agg);
    
    if(!to->in_queue()) {
-      mutex::scoped_lock lock(to->mtx);
+      spinlock::scoped_lock lock(to->spin);
       if(!to->in_queue()) {
          add_to_queue(to);
          to->set_in_queue(true);
@@ -97,7 +98,7 @@ threads_single::new_work_other(sched::base *scheduler, node *node, const simple_
    tnode->add_work(stuple, false);
    
    if(!tnode->in_queue()) {
-      mutex::scoped_lock lock(tnode->mtx);
+      spinlock::scoped_lock lock(tnode->spin);
       if(!tnode->in_queue()) {
          tnode->set_in_queue(true);
          add_to_queue(tnode);
@@ -131,7 +132,7 @@ threads_single::busy_wait(void)
    while(!has_work()) {
       
       if(is_active() && !has_work()) {
-         mutex::scoped_lock l(mutex);
+         spinlock::scoped_lock l(lock);
          if(!has_work()) {
             if(is_active())
                set_inactive(); // may be inactive from previous iteration
@@ -197,7 +198,7 @@ bool
 threads_single::check_if_current_useless(void)
 {
    if(current_node->no_more_work()) {
-      mutex::scoped_lock lock(current_node->mtx);
+      spinlock::scoped_lock lock(current_node->spin);
       
       if(current_node->no_more_work()) {
          current_node->set_in_queue(false);

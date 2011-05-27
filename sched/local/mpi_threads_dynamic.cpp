@@ -53,7 +53,7 @@ void
 mpi_thread::new_mpi_message(node *_node, simple_tuple *stpl)
 {
    thread_node *node((thread_node*)_node);
-   mutex::scoped_lock lock(node->mtx);
+   spinlock::scoped_lock lnode(node->spin);
 
    if(node->get_owner() == this) {
       node->add_work(stpl, false);
@@ -62,7 +62,7 @@ mpi_thread::new_mpi_message(node *_node, simple_tuple *stpl)
          this->add_to_queue(node);
       }
       if(is_inactive()) {
-         mutex::scoped_lock lock(mutex);
+         spinlock::scoped_lock l(lock);
          if(is_inactive())
             set_active();
       }
@@ -81,7 +81,7 @@ mpi_thread::new_mpi_message(node *_node, simple_tuple *stpl)
       assert(owner != NULL);
    
       if(owner->is_inactive()) {
-         mutex::scoped_lock lock(owner->mutex);
+         spinlock::scoped_lock lock(owner->lock);
          if(owner->is_inactive() && owner->has_work())
             owner->set_active();
       }
@@ -100,7 +100,7 @@ mpi_thread::change_node(thread_node *node, dynamic_local *_asker)
    asker->add_node(node);
    
    {
-      mutex::scoped_lock lock(node->mtx);
+      spinlock::scoped_lock lock(node->spin);
       node->set_owner((static_local*)asker);
       assert(node->in_queue());
       assert(node->get_owner() == asker);

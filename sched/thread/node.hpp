@@ -6,6 +6,7 @@
 #include "db/node.hpp"
 #include "sched/queue/bounded_pqueue.hpp"
 #include "db/tuple.hpp"
+#include "utils/spinlock.hpp"
 
 namespace sched
 {
@@ -32,7 +33,7 @@ private:
    
    static_local *owner;
    volatile bool i_am_on_queue;
-   boost::mutex mtx;
+	 utils::spinlock spin;
    safe_bounded_pqueue<node_work_unit>::type queue;
    
 public:

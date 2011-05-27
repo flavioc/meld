@@ -6,6 +6,7 @@
 
 #include "sched/local/threads_static.hpp"
 #include "sched/thread/steal_set.hpp"
+#include "utils/spinlock.hpp"
 
 namespace sched
 {
@@ -19,10 +20,14 @@ private:
                      std::equal_to<db::node*>, mem::allocator<db::node*> > node_set;
    
    node_set *nodes;
-   boost::mutex *nodes_mutex;
+
+
+   utils::spinlock *nodes_mutex;
    
-   utils::byte _paddl2[128];
+   utils::byte _paddl3[128];
    steal_set steal;
+	 utils::byte _paddl2[128];
+	 size_t asked_many;
    
    virtual bool busy_wait(void);
    void handle_stealing(void);

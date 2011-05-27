@@ -16,8 +16,6 @@ using namespace boost;
 
 namespace process {
 
-static thread_specific_ptr<process> proc_ptr(NULL);
-
 void
 process::do_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
 {
@@ -149,7 +147,6 @@ process::loop(void)
 {
    // start process pool
    mem::create_pool(id);
-   proc_ptr.reset(this);
    
    scheduler->init(state::NUM_THREADS);
       

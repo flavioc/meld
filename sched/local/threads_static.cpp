@@ -72,7 +72,7 @@ static_local::new_work(node *from, node *_to, const simple_tuple *tpl, const boo
    to->add_work(tpl, is_agg);
    
    if(!to->in_queue()) {
-      mutex::scoped_lock lock(to->mtx);
+      spinlock::scoped_lock lock(to->spin);
       if(!to->in_queue()) {
          add_to_queue(to);
          to->set_in_queue(true);
@@ -103,15 +103,14 @@ static_local::new_work_other(sched::base *scheduler, node *node, const simple_tu
    
    tnode->add_work(stuple, false);
    
-   mutex::scoped_lock lock(tnode->mtx);
-   
-   if(!tnode->in_queue()) {
-      static_local *owner(tnode->get_owner());
-      tnode->set_in_queue(true);
-      owner->add_to_queue(tnode);
+		 spinlock::scoped_lock lock(tnode->spin);
+   if(!tnode->in_queue() && !tnode->no_more_work()) {
+				static_local *owner(tnode->get_owner());
+				tnode->set_in_queue(true);
+				owner->add_to_queue(tnode);
          
       if(this != owner) {
-         mutex::scoped_lock lock2(owner->mutex);
+         spinlock::scoped_lock lock2(owner->lock);
          if(owner->is_inactive() && owner->has_work())
          {
             if(owner->is_inactive())
@@ -152,7 +151,7 @@ static_local::busy_wait(void)
          if(!has_work()) {
             if(is_active())
                set_inactive(); // may be inactive from previous iteration
-         }
+         } else break;
       }
       
       if(!has_work() && is_inactive() && all_threads_finished()) {
@@ -216,7 +215,7 @@ bool
 static_local::check_if_current_useless(void)
 {
    if(current_node->no_more_work()) {
-      mutex::scoped_lock lock(current_node->mtx);
+      spinlock::scoped_lock lock(current_node->spin);
       
       if(current_node->no_more_work()) {
          current_node->set_in_queue(false);
