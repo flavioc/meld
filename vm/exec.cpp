@@ -592,7 +592,7 @@ do_matches(pcounter pc, const tuple *tuple, const state& state)
 static inline void
 execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples)
 {
-   random_shuffle(tuples.begin(), tuples.end());
+   random_shuffle(tuples.begin(), tuples.end(), state.random);
    
    for(tuple_vector::iterator it(tuples.begin());
       it != tuples.end();
