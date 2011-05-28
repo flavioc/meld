@@ -43,7 +43,7 @@ router::set_nodes_total(const size_t total)
 
 #ifdef COMPILE_MPI
 
-pair<mpi::request, byte*>
+req_obj
 router::send(remote *rem, const process_id& proc, const message_set& ms)
 {
 #ifdef DEBUG_SERIALIZATION_TIME
@@ -55,7 +55,7 @@ router::send(remote *rem, const process_id& proc, const message_set& ms)
    const int tag(get_thread_tag(proc));
 
    const size_t msg_size(ms.get_storage_size());
-   byte *buf(new byte[msg_size]);
+   byte *buf(allocator<byte>().allocate(msg_size));
    
    assert(msg_size < MPI_BUF_SIZE);
    
@@ -65,12 +65,16 @@ router::send(remote *rem, const process_id& proc, const message_set& ms)
    cout << "Serializing " << msg_size << " bytes of " << ms.size() << " messages" << endl;
 #endif
 
-   mpi::request ret;
+   req_obj r;
+   
+   // define request memory
+   r.mem = buf;
+   
    mutex::scoped_lock lock(mpi_mutex);
    
-   MPI_Isend(buf, msg_size, MPI_PACKED, rem->get_rank(), tag, *world, &ret.m_requests[0]);
+   MPI_Isend(buf, msg_size, MPI_PACKED, rem->get_rank(), tag, *world, &r.mpi_req);
 
-   return pair_req(ret, buf);
+   return r;
 }
 
 message_set*
@@ -104,22 +108,16 @@ router::recv_attempt(const process_id proc)
       return NULL;
 }
 
-void
-router::check_requests(vector_reqs& reqs, const bool test)
+const bool
+router::was_received(const size_t total, MPI_Request *reqs) const
 {
-   assert(!reqs.empty());
-   
    mutex::scoped_lock lock(mpi_mutex);
    
-   for(vector_reqs::iterator it(reqs.begin()); it != reqs.end();) {
-      pair_req& r(*it);
-      
-      if((test && r.first.test()) || !test) {
-         delete []r.second;
-         it = reqs.erase(it);
-      } else
-         ++it;
-   }
+   int flag(0);
+   
+   MPI_Testall(total, reqs, &flag, MPI_STATUSES_IGNORE);
+ 
+   return flag;
 }
 
 void

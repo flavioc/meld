@@ -10,11 +10,42 @@
 #include <list>
 #include <boost/mpi/request.hpp>
 
+#include "process/remote.hpp"
+#include "mem/allocator.hpp"
+
 namespace sched
 {
 
-typedef std::pair<boost::mpi::request, utils::byte*> pair_req;
-typedef std::list<pair_req> vector_reqs;
+struct req_obj {
+   MPI_Request mpi_req;
+   utils::byte *mem;
+};
+
+typedef std::list<req_obj, mem::allocator<req_obj> > list_reqs;
+
+class request_handler
+{
+private:
+   
+   std::vector<list_reqs, mem::allocator<list_reqs> > all_reqs;
+   int total;
+   size_t requests_per_round;
+   
+public:
+   
+   inline const bool empty(void) const { return total == 0; }
+   
+   void flush(const bool);
+   
+   inline void add_request(const process::remote* rem, req_obj& req) {
+      assert(rem->get_rank() < all_reqs.size());
+      ++total;
+      all_reqs[rem->get_rank()].push_back(req);
+   }
+   
+   explicit request_handler(void);
+   ~request_handler(void);
+};
 
 }
 

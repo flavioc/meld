@@ -33,7 +33,7 @@ private:
       mem::allocator< std::pair<process::remote*, map_procs> > > map_messages;
    
    map_messages map_rem;
-   vector_reqs reqs;
+   request_handler req_handler;
    size_t total;
    
    void transmit_list(process::remote *, const vm::process_id, message_set&);
@@ -42,9 +42,13 @@ public:
    
    inline const bool empty(void) const { return total == 0; }
    
-   inline const bool all_received(void) const { return reqs.empty(); }
+   inline const bool all_received(void) const { return req_handler.empty(); }
    
-   void update_received(const bool);
+   inline void update_received(const bool test)
+   {
+      if(!req_handler.empty())
+         req_handler.flush(test);
+   }
    
    bool insert(process::remote *, const vm::process_id, message *);
    

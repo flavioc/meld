@@ -98,6 +98,7 @@ mpi_static::work_found(void)
 bool
 mpi_static::terminate_iteration(void)
 {
+   update_pending_messages(false);
    token_terminate_iteration();
    
    generate_aggs();

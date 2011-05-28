@@ -84,9 +84,9 @@ public:
 
    inline void barrier(void) { world->barrier(); }
    
-   sched::pair_req send(remote *, const vm::process_id&, const sched::message_set&);
+   sched::req_obj send(remote *, const vm::process_id&, const sched::message_set&);
    
-   void check_requests(sched::vector_reqs&, const bool);
+   const bool was_received(const size_t, MPI_Request *) const;
    
    sched::message_set* recv_attempt(const vm::process_id);
 

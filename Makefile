@@ -74,6 +74,7 @@ OBJS = utils/utils.o \
 			 mem/stat.o \
 			 sched/mpi/message.o \
 			 sched/mpi/message_buffer.o \
+			 sched/mpi/request.o \
 			 sched/global/static.o \
 			 sched/global/threads_static.o \
 			 sched/global/mpi.o \
@@ -194,6 +195,8 @@ vm/external.o: vm/types.hpp vm/external.cpp \
 sched/mpi/message_buffer.o: sched/mpi/message_buffer.hpp \
 									sched/mpi/message_buffer.cpp \
 									sched/mpi/message.hpp sched/mpi/request.hpp
+
+sched/mpi/request.o: sched/mpi/request.hpp sched/mpi/request.cpp
 
 sched/global/static.o: sched/global/static.cpp sched/global/static.hpp \
 								sched/base.hpp

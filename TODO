@@ -1,5 +1,4 @@
-- Write new system of external functions.
-	- Goal is to limit use of external functions.
-- Implement a trie
-- Make BP work again
+- Use tries for matching
+- Add new aggregate modifiers
+- Fix neural network speedups
 - ...

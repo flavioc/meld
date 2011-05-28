@@ -26,14 +26,15 @@ message_buffer::transmit_list(remote *rem, const process_id proc, message_set& m
    --total;
    
    assert(ms.get_storage_size() < MPI_BUFFER_THRESHOLD);
+   req_obj obj(state::ROUTER->send(rem, proc, ms));
    
-   reqs.push_back(state::ROUTER->send(rem, proc, ms));
+   req_handler.add_request(rem, obj);
    
 #ifdef DEBUG_REMOTE
    cout << "Sent " << ms.size() << " messages to " << rem->get_rank() << ":" << proc << endl;
 #endif
    
-   assert(!reqs.empty());
+   assert(!req_handler.empty());
    
    ms.wipeout();
 }
@@ -99,20 +100,6 @@ message_buffer::transmit(void)
    }
    
    return 0;
-}
-
-void
-message_buffer::update_received(const bool test)
-{
-   if(!reqs.empty()) {
-#ifdef DEBUG_REMOTE
-      cout << "CHECKING " << reqs.size() << " requests\n";
-#endif
-      state::ROUTER->check_requests(reqs, test);
-#ifdef DEBUG_REMOTE
-      cout << "NOW I HAVE " << reqs.size() << " requests left\n";
-#endif
-   }
 }
 #endif
 
