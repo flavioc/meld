@@ -184,7 +184,7 @@ mem/thread.o: mem/thread.cpp mem/thread.hpp \
 mem/stat.o: mem/stat.cpp mem/stat.hpp
 
 db/trie.o: db/trie.cpp db/trie.hpp \
-					utils/utils.hpp
+					utils/utils.hpp utils/stack.hpp
 
 vm/types.o: vm/types.hpp vm/types.hpp \
 						utils/utils.hpp

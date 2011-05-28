@@ -13,6 +13,7 @@ using namespace std::tr1;
 namespace db
 {
 
+static const size_t STACK_EXTRA_SIZE(3);
 static const size_t TRIE_HASH_LIST_THRESHOLD(8);
 static const size_t TRIE_HASH_BASE_BUCKETS(64);
 static const size_t TRIE_HASH_MAX_NODES_PER_BUCKET(TRIE_HASH_LIST_THRESHOLD / 2);
@@ -727,8 +728,8 @@ tuple_trie::check_insert(vm::tuple *tpl, const ref_count many, bool& found)
 {
    // cout << "Starting insertion of " << *tpl << endl;
  
-   val_stack vals;
-   type_stack typs;
+   val_stack vals(tpl->num_fields() + STACK_EXTRA_SIZE);
+   type_stack typs(tpl->num_fields() + STACK_EXTRA_SIZE);
   
    if(tpl->num_fields() > 0) {
       for(int i(tpl->num_fields()-1); i >= 0; --i) {
@@ -863,8 +864,7 @@ struct continuation_frame {
    trie_node *next_node;
 };
 
-typedef stack<continuation_frame, deque<continuation_frame, mem::allocator<continuation_frame> > >
-   continuation_stack;
+typedef utils::stack<continuation_frame> continuation_stack;
 
 void
 tuple_trie::match_predicate(const match& m, tuple_vector& vec) const
@@ -875,18 +875,22 @@ tuple_trie::match_predicate(const match& m, tuple_vector& vec) const
       return;
    }
    
-   match_val_stack vals(m.get_val_stack());
-   match_type_stack typs(m.get_type_stack());
-   continuation_stack cont;
-   match_val_stack val_backup;
-   match_type_stack typ_backup;
+   const size_t stack_size(pred->num_fields() + STACK_EXTRA_SIZE);
+   match_val_stack vals(stack_size);
+   match_type_stack typs(stack_size);
+   continuation_stack cont(stack_size);
+   match_val_stack val_backup(stack_size);
+   match_type_stack typ_backup(stack_size);
    
    trie_node *parent(root);
    trie_node *node(root->child);
    
-   // if it was a leaf, m would have no exact match
+   // initialize stacks
+   m.get_type_stack(typs);
+   m.get_val_stack(vals);
 
    // dump(cout);
+   // if it was a leaf, m would have no exact match
    assert(!root->is_leaf());
    
    match_field mtype;
@@ -1100,8 +1104,9 @@ agg_trie::find_configuration(vm::tuple *tpl)
 {
    const predicate *pred(tpl->get_predicate());
    
-   val_stack vals;
-   type_stack typs;
+   const size_t stack_size(pred->get_aggregate_field() + STACK_EXTRA_SIZE);
+   val_stack vals(stack_size);
+   type_stack typs(stack_size);
   
    for(int i(pred->get_aggregate_field()-1); i >= 0; --i) {
       vals.push(tpl->get_field(i));
