@@ -624,15 +624,12 @@ build_match_object(match& m, pcounter pc, state& state, const predicate *pred)
          break;
          default: throw vm_exec_error("invalid field type for ITERATE");
       }
-      
    } while(!iter_match_end(match));
 }
 
 static inline void
 execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples)
 {
-   random_shuffle(tuples.begin(), tuples.end(), state.random);
-   
    for(tuple_vector::iterator it(tuples.begin());
       it != tuples.end();
       ++it)
