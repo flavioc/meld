@@ -15,7 +15,7 @@ namespace db
 
 static const size_t TRIE_HASH_LIST_THRESHOLD(8);
 static const size_t TRIE_HASH_BASE_BUCKETS(64);
-static const size_t TRIE_HASH_MAX_NODES_PER_BUCKET(1);//TRIE_HASH_LIST_THRESHOLD / 2);
+static const size_t TRIE_HASH_MAX_NODES_PER_BUCKET(TRIE_HASH_LIST_THRESHOLD / 2);
 
 size_t
 trie_hash::count_refs(void) const
@@ -856,6 +856,237 @@ tuple_trie::match_predicate(tuple_vector& vec) const
    {
       vec.push_back((*it)->get_tuple());
    }
+}
+
+struct continuation_frame {
+   size_t size_stacks;
+   trie_node *next_node;
+};
+
+typedef stack<continuation_frame, deque<continuation_frame, mem::allocator<continuation_frame> > >
+   continuation_stack;
+
+void
+tuple_trie::match_predicate(const match& m, tuple_vector& vec) const
+{
+   if(!m.has_any_exact()) {
+      // just retrieve everything and be done with it
+      match_predicate(vec);
+      return;
+   }
+   
+   match_val_stack vals(m.get_val_stack());
+   match_type_stack typs(m.get_type_stack());
+   continuation_stack cont;
+   match_val_stack val_backup;
+   match_type_stack typ_backup;
+   
+   trie_node *parent(root);
+   trie_node *node(root->child);
+   
+   // if it was a leaf, m would have no exact match
+
+   // dump(cout);
+   assert(!root->is_leaf());
+   
+   match_field mtype;
+   tuple_field mfield;
+   bool going_down = true;
+   continuation_frame frm;
+   
+#define ADD_ALT(NODE) do { \
+   assert((NODE) != NULL); \
+   frm.next_node = NODE;   \
+   frm.size_stacks = val_backup.size();   \
+   cont.push(frm); } while(false)
+   
+match_begin:
+   // printf("Start loop\n");
+   assert(!vals.empty());
+   assert(!typs.empty());
+   
+   mtype = typs.top();
+   
+   assert(node != NULL);
+   assert(parent != NULL);
+   
+   if(mtype.exact) {
+      // printf("Match exact\n");
+      // must do an exact match
+      // there will be no continuation frames at this level
+      mfield = vals.top();
+      switch(mtype.type) {
+         case FIELD_INT:
+            // printf("Match %d\n", mfield.int_field);
+            if(parent->is_hashed()) {
+               assert(going_down);
+               
+               trie_hash *hash((trie_hash*)node);
+               
+               node = hash->get_int(mfield.int_field);
+            }
+            
+            while(node) {
+               if(node->data.int_field == mfield.int_field)
+                  goto match_succeeded;
+               node = node->next;
+            }
+            goto try_again;
+         case FIELD_FLOAT:
+            if(parent->is_hashed()) {
+               assert(going_down);
+               
+               trie_hash *hash((trie_hash*)node);
+               
+               node = hash->get_float(mfield.float_field);
+            }
+            
+            while(node) {
+               if(node->data.float_field == mfield.float_field)
+                  goto match_succeeded;
+               node = node->next;
+            }
+            goto try_again;
+         case FIELD_NODE:
+            // printf("Match node %d\n", mfield.node_field);
+            if(parent->is_hashed()) {
+               assert(going_down);
+               
+               trie_hash *hash((trie_hash*)node);
+               
+               node = hash->get_node(mfield.node_field);
+            }
+            
+            while(node) {
+               if(node->data.node_field == mfield.node_field)
+                  goto match_succeeded;
+               node = node->next;
+            }
+            goto try_again;
+         default: assert(false);
+      }
+   } else {
+      // printf("Match all\n");
+      if(parent->is_hashed()) {
+         trie_hash *hash((trie_hash*)node);
+         
+         if(going_down) {
+            // must select a valid node
+            trie_node **buckets(hash->buckets);
+            trie_node **end_buckets(buckets + hash->num_buckets);
+            
+            // find first valid bucket
+            for(; *buckets == NULL && buckets < end_buckets; ++buckets) {
+               if(*buckets)
+                  break;
+            }
+            
+            assert(buckets < end_buckets);
+            
+            node = *buckets;
+            assert(node != NULL);
+            
+            if(node->next)
+               ADD_ALT(node->next);
+            else {
+               // find another valid bucket
+               ++buckets;
+               for(; *buckets == NULL && buckets < end_buckets; ++buckets)
+                  ;
+               
+               if(buckets != end_buckets)
+                  ADD_ALT(*buckets);
+            }
+         } else {
+            // must continue traversing the hash table
+            assert(parent->child != node);
+            
+            trie_hash *hash((trie_hash*)parent->child);
+            
+            assert(hash != NULL);
+            
+            trie_node **buckets(hash->buckets);
+            trie_node **end_buckets(buckets + hash->num_buckets);
+            trie_node **current_bucket(node->bucket);
+            
+            if(node->next)
+               ADD_ALT(node->next);
+            else {
+               // must find new bucket
+               ++current_bucket;
+               for(; *current_bucket == NULL && current_bucket < end_buckets; ++current_bucket)
+                  ;
+               if(current_bucket != end_buckets)
+                  ADD_ALT(*current_bucket);
+            }
+         }
+      } else {
+         // push first alternative
+         if(node->next)
+            ADD_ALT(node->next);
+      }
+   }
+      
+match_succeeded:
+   // printf("Nice\n");
+   
+   if(node->is_leaf())
+      // no need to save the stacks
+      // since if we try again from the continuation stack
+      // we do not need to put things back from the backup stacks
+      // printf("Jump out!\n");
+      goto leaf_found;
+      
+   val_backup.push(vals.top());
+   typ_backup.push(typs.top());
+   vals.pop();
+   typs.pop();
+      
+   parent = node;
+   node = node->child;
+   going_down = true;
+   goto match_begin;
+   
+try_again:
+   // match failed
+   // use continuation stack to restore state at a given node
+
+   // printf("Failed\n");
+   
+   if(cont.empty())
+      return;
+   
+   frm = cont.top();
+   cont.pop();
+   
+   node = frm.next_node;
+   parent = node->parent;
+   going_down = false;
+   
+   // restore vals and typs stack
+   while(val_backup.size() != frm.size_stacks) {
+      assert(!val_backup.empty());
+      assert(!typ_backup.empty());
+      
+      vals.push(val_backup.top());
+      typs.push(typ_backup.top());
+      // printf("Push back!\n");
+      val_backup.pop();
+      typ_backup.pop();
+   }
+   
+   goto match_begin;
+   
+leaf_found:
+   // printf("Got here\n");
+   assert(node != NULL);
+   assert(node->is_leaf());
+      
+   tuple_trie_leaf *leaf((tuple_trie_leaf*)node->get_leaf());
+   vm::tuple *tpl(leaf->get_tuple()->get_tuple());
+   // cout << "Added " << *tpl << endl;
+   vec.push_back(tpl);
+   goto try_again;
 }
 
 agg_trie_leaf::~agg_trie_leaf(void)

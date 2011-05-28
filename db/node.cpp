@@ -110,6 +110,19 @@ node::match_predicate(const predicate_id id, tuple_vector& vec) const
 }
 
 void
+node::match_predicate(const predicate_id id, const match& m, tuple_vector& vec) const
+{
+   simple_tuple_map::const_iterator it(tuples.find(id));
+   
+   if(it == tuples.end())
+      return;
+   
+   const tuple_trie *tr(it->second);
+   
+   tr->match_predicate(m, vec);
+}
+
+void
 node::delete_all(const predicate* pred)
 {
    assert(false);

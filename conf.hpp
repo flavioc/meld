@@ -16,6 +16,12 @@
 /* activate this to collect statistics on memory use */
 // #define MEMORY_STATISTICS 1
 
+/* activate tuple matching using the trie structure */
+#define TRIE_MATCHING 1
+
+/* activate special code for testing trie matching */
+#define TRIE_MATCHING_ASSERT 1
+
 //#define DEBUG_SAFRAS 1
 //#define DEBUG_REMOTE 1
 //#define DEBUG_ACTIVE 1

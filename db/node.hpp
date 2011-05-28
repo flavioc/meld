@@ -15,6 +15,7 @@
 #include "mem/allocator.hpp"
 #include "db/trie.hpp"
 #include "vm/defs.hpp"
+#include "vm/match.hpp"
 #include "utils/atomic.hpp"
 
 namespace sched { class base; class mpi_handler; }
@@ -93,6 +94,7 @@ public:
    virtual void assert_end_iteration(void) const {}
    
    void match_predicate(const vm::predicate_id, tuple_vector&) const;
+   void match_predicate(const vm::predicate_id, const vm::match&, tuple_vector&) const;
    
    const size_t count_total(const vm::predicate_id) const;
    

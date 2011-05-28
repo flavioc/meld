@@ -103,11 +103,11 @@ static_local::new_work_other(sched::base *scheduler, node *node, const simple_tu
    
    tnode->add_work(stuple, false);
    
-		 spinlock::scoped_lock lock(tnode->spin);
+	spinlock::scoped_lock lock(tnode->spin);
    if(!tnode->in_queue() && !tnode->no_more_work()) {
-				static_local *owner(tnode->get_owner());
-				tnode->set_in_queue(true);
-				owner->add_to_queue(tnode);
+		static_local *owner(tnode->get_owner());
+		tnode->set_in_queue(true);
+		owner->add_to_queue(tnode);
          
       if(this != owner) {
          spinlock::scoped_lock lock2(owner->lock);
@@ -126,7 +126,7 @@ static_local::new_work_other(sched::base *scheduler, node *node, const simple_tu
 void
 static_local::new_work_remote(remote *, const node::node_id, message *)
 {
-   assert(0);
+   assert(false);
 }
 
 void
@@ -145,7 +145,6 @@ bool
 static_local::busy_wait(void)
 {
    while(!has_work()) {
-      
       if(is_active() && !has_work()) {
          mutex::scoped_lock l(mutex);
          if(!has_work()) {

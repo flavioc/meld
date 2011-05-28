@@ -12,15 +12,13 @@
 #include "vm/defs.hpp"
 #include "db/tuple.hpp"
 #include "vm/predicate.hpp"
+#include "vm/match.hpp"
 
 namespace db
 {
 
 typedef std::list<simple_tuple*, mem::allocator<simple_tuple*> > simple_tuple_list;
 typedef std::vector<vm::tuple*, mem::allocator<vm::tuple*> > tuple_vector;
-
-typedef std::stack<vm::tuple_field, std::deque<vm::tuple_field, mem::allocator<vm::tuple_field> > > val_stack;
-typedef std::stack<vm::field_type, std::deque<vm::field_type, mem::allocator<vm::field_type> > > type_stack;
 
 class trie_hash;
 class trie_leaf;
@@ -61,9 +59,9 @@ public:
    
    size_t count_refs(void) const;
    
-   trie_node *match(const vm::tuple_field&, const vm::field_type&, val_stack&, type_stack&, size_t&) const;
+   trie_node *match(const vm::tuple_field&, const vm::field_type&, vm::val_stack&, vm::type_stack&, size_t&) const;
    
-   trie_node *insert(const vm::tuple_field&, const vm::field_type&, val_stack&, type_stack&);
+   trie_node *insert(const vm::tuple_field&, const vm::field_type&, vm::val_stack&, vm::type_stack&);
    
    explicit trie_node(const vm::tuple_field& _data):
       parent(NULL),
@@ -267,7 +265,7 @@ protected:
    
    virtual trie_leaf* create_leaf(void *data, const vm::ref_count many) = 0;
    
-   trie_node *check_insert(void *, const vm::ref_count, val_stack&, type_stack&, bool&);
+   trie_node *check_insert(void *, const vm::ref_count, vm::val_stack&, vm::type_stack&, bool&);
    
 public:
    
@@ -349,7 +347,9 @@ public:
    void print(std::ostream&) const;
    void dump(std::ostream&) const;
    
-   void match_predicate(tuple_vector& vec) const;
+   void match_predicate(const vm::match&, tuple_vector&) const;
+   
+   void match_predicate(tuple_vector&) const;
    
    explicit tuple_trie(const vm::predicate *_pred): trie(), pred(_pred) { basic_invariants(); }
    

@@ -162,7 +162,8 @@ vm/program.o: vm/program.cpp vm/program.hpp vm/instr.hpp \
 							vm/predicate.hpp
 
 vm/exec.o: vm/exec.cpp vm/exec.hpp process/process.hpp	\
-						vm/instr.hpp db/node.hpp utils/random.hpp
+						vm/instr.hpp db/node.hpp utils/random.hpp \
+						vm/match.hpp
 
 process/router.o: process/router.hpp process/router.cpp \
 									process/remote.hpp \

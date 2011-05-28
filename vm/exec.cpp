@@ -5,6 +5,7 @@
 
 #include "vm/exec.hpp"
 #include "vm/tuple.hpp"
+#include "vm/match.hpp"
 #include "db/tuple.hpp"
 #include "process/process.hpp"
 #include "process/machine.hpp"
@@ -572,7 +573,7 @@ do_matches(pcounter pc, const tuple *tuple, const state& state)
 {
    if(iter_match_none(pc))
       return true;
-      
+   
    iter_match match;
    
    do {
@@ -590,6 +591,44 @@ do_matches(pcounter pc, const tuple *tuple, const state& state)
 }
 
 static inline void
+build_match_object(match& m, pcounter pc, state& state, const predicate *pred)
+{
+   if(iter_match_none(pc))
+      return;
+      
+   iter_match match;
+   
+   do {
+      match = pc;
+      
+      const field_num field(iter_match_field(match));
+      const instr_val val(iter_match_val(match));
+      
+      pcounter_move_match(&pc);
+      
+      switch(pred->get_field_type(field)) {
+         case FIELD_INT: {
+            const int_val i(get_op_function<int_val>(val, pc, state));
+            m.match_int(field, i);
+         }
+         break;
+         case FIELD_FLOAT: {
+            const float_val f(get_op_function<float_val>(val, pc, state));
+            m.match_float(field, f);
+         }
+         break;
+         case FIELD_NODE: {
+            const node_val n(get_op_function<node_val>(val, pc, state));
+            m.match_node(field, n);
+         }
+         break;
+         default: throw vm_exec_error("invalid field type for ITERATE");
+      }
+      
+   } while(!iter_match_end(match));
+}
+
+static inline void
 execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples)
 {
    random_shuffle(tuples.begin(), tuples.end(), state.random);
@@ -599,7 +638,20 @@ execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples)
       ++it)
    {
       tuple *match_tuple(*it);
+    
+#if defined(TRIE_MATCHING_ASSERT) && defined(TRIE_MATCHING)
+      assert(do_matches(pc, match_tuple, state));
+#endif
+
+#ifdef TRIE_MATCHING
+      tuple *old_tuple = state.tuple;
+            
+      state.tuple = match_tuple;
       
+      execute(first, state);
+      
+      state.tuple = old_tuple;
+#else
       if(do_matches(pc, match_tuple, state)) {
          tuple *old_tuple = state.tuple;
          
@@ -607,9 +659,9 @@ execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples)
          
          execute(first, state);
          
-         // restore state
          state.tuple = old_tuple;
       }
+#endif
    }
 }
 
@@ -885,8 +937,18 @@ eval_loop:
          
          case ITER_INSTR: {
                tuple_vector matches;
+               const predicate_id pred_id(iter_predicate(pc));
+               const predicate *pred(state::PROGRAM->get_predicate(pred_id));
+               match mobj(pred);
                
-               state.node->match_predicate(iter_predicate(pc), matches);
+               //cout << *pred << endl;
+               
+#ifdef TRIE_MATCHING
+               build_match_object(mobj, pc + ITER_BASE, state, pred);
+               state.node->match_predicate(pred_id, mobj, matches);
+#else
+               state.node->match_predicate(pred_id, matches);
+#endif
 
                if(!matches.empty())
                   execute_iter(pc + ITER_BASE, advance(pc), state, matches);
