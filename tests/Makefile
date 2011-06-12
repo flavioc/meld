@@ -13,6 +13,9 @@ test-serial:
 test-mix:
 	@bash test_all.sh mix
 
+test-mpi:
+	@bash test_all.sh mpi
+
 test:
 	@bash test_all.sh all
 

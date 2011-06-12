@@ -25,8 +25,8 @@ private:
    
    chunkgroup *get_group(const size_t size)
    {
-      assert(size % ATOM_SIZE == 0);
-      
+      assert(size > 0);
+        
       chunk_map::iterator it(chunks.find(size));
       chunkgroup *grp;
       

@@ -69,6 +69,7 @@ router::send(remote *rem, const process_id& proc, const message_set& ms)
    
    // define request memory
    r.mem = buf;
+   r.mem_size = msg_size;
    
    mutex::scoped_lock lock(mpi_mutex);
    

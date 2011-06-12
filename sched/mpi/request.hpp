@@ -19,6 +19,7 @@ namespace sched
 struct req_obj {
    MPI_Request mpi_req;
    utils::byte *mem;
+   size_t mem_size;
 };
 
 typedef std::list<req_obj, mem::allocator<req_obj> > list_reqs;
