@@ -14,6 +14,8 @@ private:
    
    edge_set sent;
    
+   virtual vm::tuple *do_generate(const vm::aggregate_type, const vm::field_num);
+   
 public:
    
    // XXX need to find a better way to change the class allocator using inheritance

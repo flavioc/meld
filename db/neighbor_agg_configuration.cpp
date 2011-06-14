@@ -36,4 +36,19 @@ neighbor_agg_configuration::all_present(const edge_set& edges) const
    return true;
 }
 
+vm::tuple*
+neighbor_agg_configuration::do_generate(const aggregate_type typ, const field_num num)
+{
+   vm::tuple *ret(agg_configuration::do_generate(typ, num));
+   
+   if(ret) {
+      const predicate *pred(ret->get_predicate());
+      const size_t last_field(pred->num_fields()-1);
+      
+      ret->set_node(last_field, 0);
+   }
+   
+   return ret;
+}
+
 }
