@@ -1,9 +1,9 @@
 
 type activated(node, int, float).
 type expected(node, int, float).
-type receive(node, int, sum float).
+type receive(node, int, sum float [<- link]).
 type hiddengrad(node, int, float).
-type allhiddengrad(node, int, sum float).
+type allhiddengrad(node, int, sum float [-> link]).
 type outgrad(node, int, float).
 type delta(node, int, node, float).
 

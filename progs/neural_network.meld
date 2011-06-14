@@ -3,9 +3,9 @@ include #data/neural.meld
 
 type activated(node, int, float).
 type expected(node, int, float).
-type receive(node, int, sum float).
+type receive(node, int, sum float [<- link]).
 type hiddengrad(node, int, float).
-type allhiddengrad(node, int, sum float).
+type allhiddengrad(node, int, sum float [-> link]).
 type outgrad(node, int, float).
 type delta(node, int, node, float).
 
@@ -33,8 +33,8 @@ outgrad(A, I, G * (1.0 - G) * (E - G)) :-
 
 allhiddengrad(A, I, V * W) :-
 	hidden(A),
-	link(A, B),
 	weight(A, I, B, W),
+	link(A, B),
 	outgrad(B, I, V).
 
 hiddengrad(A, I, V * (1.0 - V) * T) :-

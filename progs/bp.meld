@@ -8,20 +8,21 @@ type belief(node, int, list float).
 type globalpotential(node, list float).
 type message(node, int, node, list float).
 
-type beliefmul(node, int, sum list float).
+type beliefmul(node, int, sum list float [-> edge]).
 
 extern list float normalize(list float).
 extern list float damp(list float, list float, float).
 extern list float divide(list float, list float).
 extern list float convolve(list float, list float).
+extern list float addfloatlists(list float, list float).
 
 const iterations = 5.
 const damping = 0.1.
 
-beliefmul(A, I + 1, L) :- potential(A, L), belief(A, I, _), I < iterations.
 beliefmul(A, I + 1, L) :- edge(A, B), message(B, I, A, L).
 
-belief(A, I, normalize(L)) :- beliefmul(A, I, L), I <= iterations.
+belief(A, I, normalize(addfloatlists(L, P))) :-
+	beliefmul(A, I, L), potential(A, P), I <= iterations.
 
 message(A, I + 1, B, damp(Convolved, OldOut, damping)) :-
 	I <= iterations,

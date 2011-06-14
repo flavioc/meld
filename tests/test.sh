@@ -2,6 +2,7 @@
 
 EXEC="../meld -d"
 TEST=${1}
+TYPE="${2}"
 FILE="files/$(basename $TEST .m).test"
 
 NODES=$(sh ./number_nodes.sh $TEST)
@@ -174,8 +175,6 @@ loop_sched_mix ()
 		run_test_mix_n 4 2 1
 	fi
 }
-
-TYPE="${2}"
 
 if [ "${TYPE}" = "all" ]; then
 	loop_sched ts

@@ -1,11 +1,9 @@
 
-include #data/neural.meld
-
 type activated(node, int, float).
 type expected(node, int, float).
 
-type receive(node, int, sum float).
-type allgradient(node, int, sum float).
+type receive(node, int, sum float [<- link]).
+type allgradient(node, int, sum float [-> link]).
 type gradient(node, int, float).
 type delta(node, int, node, float).
 
