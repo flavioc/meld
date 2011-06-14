@@ -1010,7 +1010,7 @@ eval_loop:
             break;
             
          case DELETE_INSTR:
-            execute_delete(pc, state);
+            // execute_delete(pc, state);
             break;
             
          case CALL_INSTR:

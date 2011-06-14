@@ -1,5 +1,5 @@
 
-#include "sched/local/mpi_threads_dynamic.hpp"
+#include "sched/local/mpi_threads_static.hpp"
 #include "vm/state.hpp"
 #include "process/router.hpp"
 #include "utils/utils.hpp"
@@ -20,37 +20,37 @@ static tokenizer *token;
 static mutex tok_mutex;
 
 void
-mpi_thread_dynamic::assert_end(void) const
+mpi_thread_static::assert_end(void) const
 {
-   dynamic_local::assert_end();
+   static_local::assert_end();
    assert(iteration_finished);
    assert_mpi();
 }
 
 void
-mpi_thread_dynamic::assert_end_iteration(void) const
+mpi_thread_static::assert_end_iteration(void) const
 {
-   dynamic_local::assert_end_iteration();
+   static_local::assert_end_iteration();
    assert(iteration_finished);
    assert_mpi();
 }
 
 void
-mpi_thread_dynamic::messages_were_transmitted(const size_t total)
+mpi_thread_static::messages_were_transmitted(const size_t total)
 {
    mutex::scoped_lock lock(tok_mutex);
    token->messages_transmitted(total);
 }
 
 void
-mpi_thread_dynamic::messages_were_received(const size_t total)
+mpi_thread_static::messages_were_received(const size_t total)
 {
    mutex::scoped_lock lock(tok_mutex);
    token->messages_received(total);
 }
 
 void
-mpi_thread_dynamic::new_mpi_message(node *_node, simple_tuple *stpl)
+mpi_thread_static::new_mpi_message(node *_node, simple_tuple *stpl)
 {
    thread_node *node((thread_node*)_node);
    spinlock::scoped_lock lnode(node->spin);
@@ -69,7 +69,7 @@ mpi_thread_dynamic::new_mpi_message(node *_node, simple_tuple *stpl)
       assert(node->in_queue());
       assert(is_active());
    } else {
-      mpi_thread_dynamic *owner = (mpi_thread_dynamic*)node->get_owner();
+      mpi_thread_static *owner = (mpi_thread_static*)node->get_owner();
    
       node->add_work(stpl, false);
    
@@ -88,47 +88,15 @@ mpi_thread_dynamic::new_mpi_message(node *_node, simple_tuple *stpl)
    }
 }
 
-void
-mpi_thread_dynamic::change_node(thread_node *node, dynamic_local *_asker)
-{
-   mpi_thread_dynamic *asker((mpi_thread_dynamic*)_asker);
-   
-   assert(node != current_node);
-   assert(node->get_owner() == this);
-   
-   remove_node(node);
-   asker->add_node(node);
-   
-   {
-      spinlock::scoped_lock lock(node->spin);
-      node->set_owner((static_local*)asker);
-      assert(node->in_queue());
-      assert(node->get_owner() == asker);
-   }
-   
-   asker->add_to_queue(node);
-}
-
 bool
-mpi_thread_dynamic::busy_wait(void)
+mpi_thread_static::busy_wait(void)
 {
-   size_t asked_many(0);
-   
    transmit_messages();
    if(leader_thread())
       fetch_work();
    update_pending_messages(true);
    
    while(!has_work()) {
-      
-      if(is_inactive() && state::NUM_THREADS > 1 && asked_many < MAX_ASK_STEAL) {
-         mpi_thread_dynamic *target((mpi_thread_dynamic*)select_steal_target());
-         
-         if(target->is_active()) {
-            target->request_work_to(this);
-            ++asked_many;
-         }
-      }
       
       if(is_active() && !has_work()) {
          mutex::scoped_lock l(mutex);
@@ -172,24 +140,24 @@ mpi_thread_dynamic::busy_wait(void)
 }
 
 void
-mpi_thread_dynamic::new_work_remote(remote *rem, const node::node_id, message *msg)
+mpi_thread_static::new_work_remote(remote *rem, const node::node_id, message *msg)
 {
    buffer_message(rem, 0, msg);
 }
 
 bool
-mpi_thread_dynamic::get_work(work_unit& work)
+mpi_thread_static::get_work(work_unit& work)
 {  
    do_mpi_worker_cycle();
    
    if(leader_thread())
       do_mpi_leader_cycle();
    
-   return dynamic_local::get_work(work);
+   return static_local::get_work(work);
 }
 
 bool
-mpi_thread_dynamic::terminate_iteration(void)
+mpi_thread_static::terminate_iteration(void)
 {
    // this is needed since one thread can reach set_active
    // and thus other threads waiting for all_finished will fail
@@ -230,7 +198,7 @@ mpi_thread_dynamic::terminate_iteration(void)
 }
    
 vector<sched::base*>&
-mpi_thread_dynamic::start(const size_t num_threads)
+mpi_thread_static::start(const size_t num_threads)
 {
    init_barriers(num_threads);
    token = new sched::tokenizer();
@@ -238,7 +206,7 @@ mpi_thread_dynamic::start(const size_t num_threads)
    iteration_finished = false;
    
    for(process_id i(0); i < num_threads; ++i)
-      add_thread(new mpi_thread_dynamic(i));
+      add_thread(new mpi_thread_static(i));
       
    assert_thread_disable_work_count();
    

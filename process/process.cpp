@@ -40,11 +40,7 @@ process::do_agg_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
    
    if(pred->has_agg_term_info()) {
       const vector<const predicate*>& local_deps(pred->get_local_agg_deps());
-      
-      /*
-      if(!node->no_more_to_process(pred->get_id()))
-         return;
-      */
+   
       if(!local_deps.empty() && !pred->agg_depends_remote()) {
          for(size_t i(0); i < local_deps.size(); ++i) {
             const predicate *pred(local_deps[i]);

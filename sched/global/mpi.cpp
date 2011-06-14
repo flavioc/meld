@@ -14,9 +14,13 @@ using namespace process;
 using namespace vm;
 using namespace std;
 using namespace utils;
+using namespace boost;
 
 namespace sched
 {
+   
+static tokenizer *token;
+static mutex tok_mutex;
    
 void
 mpi_static::assert_end_iteration(void)
@@ -44,17 +48,19 @@ mpi_static::begin_get_work(void)
 void
 mpi_static::messages_were_transmitted(const size_t total)
 {
+   mutex::scoped_lock lock(tok_mutex);
+   
    assert(total > 0);
    
-   messages_transmitted(total);
+   token->messages_transmitted(total);
 }
 
 void
 mpi_static::messages_were_received(const size_t total)
 {
+   mutex::scoped_lock lock(tok_mutex);
    assert(total > 0);
-   
-   messages_received(total);
+   token->messages_received(total);
 }
 
 void
@@ -78,7 +84,7 @@ mpi_static::busy_wait(void)
       if(!turned_inactive)
          turned_inactive = true;
       
-      if(!busy_loop_token(turned_inactive))
+      if(!token->busy_loop_token(turned_inactive))
          return false;
       
       fetch_work();
@@ -99,7 +105,7 @@ bool
 mpi_static::terminate_iteration(void)
 {
    update_pending_messages(false);
-   token_terminate_iteration();
+   token->token_terminate_iteration();
    
    generate_aggs();
    
@@ -128,6 +134,7 @@ mpi_static::find_scheduler(const node::node_id)
 mpi_static::mpi_static(void):
    sstatic(0)
 {
+   token = new tokenizer();
 }
 
 mpi_static::~mpi_static(void)

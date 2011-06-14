@@ -1,15 +1,15 @@
 
-#ifndef SCHED_LOCAL_MPI_THREADS_DYNAMIC_HPP
-#define SCHED_LOCAL_MPI_THREADS_DYNAMIC_HPP
+#ifndef SCHED_LOCAL_MPI_THREADS_STATIC_HPP
+#define SCHED_LOCAL_MPI_THREADS_STATIC_HPP
 
-#include "sched/local/threads_dynamic.hpp"
+#include "sched/local/threads_static.hpp"
 #include "sched/mpi/tokenizer.hpp"
 #include "sched/mpi/handler.hpp"
 
 namespace sched
 {
 
-class mpi_thread_dynamic: public sched::dynamic_local,
+class mpi_thread_static: public sched::static_local,
                   private sched::mpi_handler
 {
 private:
@@ -22,7 +22,6 @@ private:
    void messages_were_received(const size_t);
    void new_mpi_message(db::node *, db::simple_tuple *);
    
-   virtual void change_node(thread_node *, dynamic_local *);
    virtual bool busy_wait(void);
    virtual void assert_end(void) const;
    virtual void assert_end_iteration(void) const;
@@ -40,12 +39,12 @@ public:
       return new thread_node(id, trans);
    }
    
-   explicit mpi_thread_dynamic(const vm::process_id id):
-      dynamic_local(id)
+   explicit mpi_thread_static(const vm::process_id id):
+      static_local(id)
    {
    }
    
-   virtual ~mpi_thread_dynamic(void)
+   virtual ~mpi_thread_static(void)
    {
    }
 };

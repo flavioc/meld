@@ -10,6 +10,9 @@ test-ts:
 test-serial:
 	@bash test_all.sh serial
 
+test-mis:
+	@bash test_all.sh mis
+
 test-mix:
 	@bash test_all.sh mix
 
