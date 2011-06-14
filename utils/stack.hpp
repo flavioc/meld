@@ -29,6 +29,10 @@ public:
    {
       reserve(defsize);
    }
+   
+   explicit stack(void)
+   {
+   }
 };
 
 }

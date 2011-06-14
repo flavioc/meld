@@ -32,6 +32,17 @@ node::add_tuple(vm::tuple *tpl, ref_count many)
    const predicate* pred(tpl->get_predicate());
    tuple_trie *tr(get_storage(pred));
    
+   if(pred->is_route_pred()) {
+      const predicate_id pred_id(pred->get_id());
+      edge_map::iterator it(edge_info.find(pred_id));
+      
+      assert(it != edge_info.end());
+      
+      edge_set& s(it->second);
+      
+      s.insert(tpl->get_node(0));
+   }
+   
    return tr->insert_tuple(tpl, many);
 }
 
@@ -208,6 +219,16 @@ node::print(ostream& cout) const
       ++it)
    {
       it->second->print(cout);
+   }
+}
+
+void
+node::init(void)
+{
+   for(size_t i(0); i < state::PROGRAM->num_route_predicates(); ++i) {
+      const predicate *pred(state::PROGRAM->get_route_predicate(i));
+      
+      edge_info[pred->get_id()] = edge_set();
    }
 }
 

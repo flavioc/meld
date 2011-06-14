@@ -11,6 +11,8 @@ using namespace utils;
 namespace vm {
 
 #define PRED_AGG 0x01
+#define PRED_ROUTE 0x02
+#define PRED_REVERSE_ROUTE 0x04
 
 predicate_id predicate::current_id = 0;
 strat_level predicate::MAX_STRAT_LEVEL = 0;
@@ -32,6 +34,8 @@ predicate::make_predicate_from_buf(byte *buf, code_size_t *code_size)
       pred->agg_info = new predicate::aggregate_info;
    else
       pred->agg_info = NULL;
+   pred->is_route = prop & PRED_ROUTE;
+   pred->is_reverse_route = prop & PRED_REVERSE_ROUTE;
    buf++;
    
    // get aggregate information, if any
@@ -40,6 +44,7 @@ predicate::make_predicate_from_buf(byte *buf, code_size_t *code_size)
       
       pred->agg_info->field = agg & 0xf;
       pred->agg_info->type = (aggregate_type)((0xf0 & agg) >> 4);
+      pred->agg_info->with_remote_pred = false;
    }
    buf++;
    
@@ -77,9 +82,10 @@ predicate::make_predicate_from_buf(byte *buf, code_size_t *code_size)
       
       buf++;
       
-      for(size_t i(0); i < remote_total; ++i) {
-         predicate_id id(buf[0]);
-         pred->agg_info->remote_sizes.push_back(id);
+      assert(remote_total >= 0 && remote_total <= 1);
+      if(remote_total == 1) {
+         pred->agg_info->with_remote_pred = true;
+         pred->agg_info->remote_pred_id = (predicate_id)(buf[0]);
          buf++;
       }
    }
@@ -116,16 +122,9 @@ predicate::build_aggregate_info(void)
       agg_info->local_predicates.push_back(pred);
    }
    
-   for(size_t i(0); i < agg_info->remote_sizes.size(); ++i) {
-      const predicate_id id(agg_info->remote_sizes[i]);
-      const predicate *pred(state::PROGRAM->get_predicate(id));
-      
-      agg_info->remote_predicates.push_back(pred);
+   if(agg_info->with_remote_pred) {
+      agg_info->remote_pred = state::PROGRAM->get_predicate(agg_info->remote_pred_id);
    }
-   
-   // current constraints
-   if(!agg_info->remote_sizes.empty())
-      assert(agg_info->remote_predicates.size() == 1);
 }
 
 void
@@ -142,14 +141,6 @@ predicate::get_local_agg_deps(void) const
    assert(is_aggregate());
    
    return agg_info->local_predicates;
-}
-
-const vector<const predicate*>&
-predicate::get_remote_agg_deps(void) const
-{
-   assert(is_aggregate());
-   
-   return agg_info->remote_predicates;
 }
 
 predicate::predicate(void)
@@ -182,6 +173,11 @@ predicate::print(ostream& cout) const
       
    cout << ",strat_level=" << get_strat_level();
    
+   if(is_route)
+      cout << ",route";
+   if(is_reverse_route)
+      cout << ",reverse_route";
+   
    cout << "]";
    
    if(is_aggregate()) {
@@ -195,16 +191,8 @@ predicate::print(ostream& cout) const
          }
          cout << "]";
       }
-      const vector<const predicate*>& remotes(get_remote_agg_deps());
-      if(!remotes.empty()) {
-         cout << "[remote_deps=";
-         for(size_t i(0); i < remotes.size(); ++i) {
-            if(i != 0)
-               cout << ",";
-            cout << remotes[i]->get_name();
-         }
-         cout << "]";
-      }
+      if(agg_info->with_remote_pred)
+         cout << "[remote_dep=" << agg_info->remote_pred->get_name() << "]";
    }
 }
 

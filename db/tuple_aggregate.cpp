@@ -1,5 +1,6 @@
 
 #include "db/tuple_aggregate.hpp"
+#include "db/neighbor_agg_configuration.hpp"
 
 using namespace vm;
 using namespace std;
@@ -20,7 +21,10 @@ tuple_aggregate::add_to_set(vm::tuple *tpl, const ref_count many)
    agg_configuration *conf;
    
    if(leaf->get_conf() == NULL) {
-      conf = new agg_configuration(pred);
+      if(pred->agg_depends_remote())
+         conf = new neighbor_agg_configuration(pred);
+      else
+         conf = new agg_configuration(pred);
       leaf->set_conf(conf);
    } else {
       conf = leaf->get_conf();

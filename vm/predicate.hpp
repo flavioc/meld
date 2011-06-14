@@ -40,11 +40,15 @@ private:
       aggregate_type type;
       std::vector<predicate_id> local_sizes;
       std::vector<const predicate*> local_predicates;
-      std::vector<predicate_id> remote_sizes;
-      std::vector<const predicate*> remote_predicates;
+      bool with_remote_pred;
+      predicate_id remote_pred_id;
+      predicate *remote_pred;
    } aggregate_info;
    
    aggregate_info *agg_info;
+   
+   bool is_route;
+   bool is_reverse_route;
    
    void build_field_info(void);
    void build_aggregate_info(void);
@@ -60,11 +64,14 @@ public:
    
    inline bool has_agg_term_info(void) const {
       assert(is_aggregate());
-      return !agg_info->local_predicates.empty() || !agg_info->remote_predicates.empty();
+      return !agg_info->local_predicates.empty() || agg_info->with_remote_pred;
    }
    
    const std::vector<const predicate*>& get_local_agg_deps(void) const;
-   const std::vector<const predicate*>& get_remote_agg_deps(void) const;
+   inline const bool agg_depends_remote(void) const { return agg_info->with_remote_pred; }
+   inline const predicate *get_remote_pred(void) const { return agg_info->remote_pred; }
+   
+   inline const bool is_route_pred(void) const { return is_route || is_reverse_route; }
    
    inline const field_num get_aggregate_field(void) const { return agg_info->field; }
    inline const aggregate_type get_aggregate_type(void) const { return agg_info->type; }

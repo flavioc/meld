@@ -59,6 +59,9 @@ program::program(const string& filename)
       
       predicates[i] = predicate::make_predicate_from_buf((unsigned char*)buf, &size);
       code_size[i] = size;
+      
+      if(predicates[i]->is_route_pred())
+         route_predicates.push_back(predicates[i]);
    }
    
    for(size_t i(0); i < num_predicates; ++i)
@@ -89,6 +92,14 @@ program::get_predicate(const predicate_id& id) const
    }
    
    return predicates[id];
+}
+
+predicate*
+program::get_route_predicate(const size_t& i) const
+{
+   assert(i < num_route_predicates());
+   
+   return route_predicates[i];
 }
 
 byte_code

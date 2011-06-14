@@ -52,6 +52,7 @@ protected:
    {
       db::simple_tuple *stpl(db::simple_tuple::create_new(new vm::tuple(vm::state::PROGRAM->get_init_predicate())));
       new_work_self(node, stpl, false);
+      node->init();
    }
    
 public:

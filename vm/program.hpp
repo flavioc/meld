@@ -26,6 +26,8 @@ private:
    std::vector<byte_code> code;
    std::vector<code_size_t> code_size;
    
+   std::vector<predicate*> route_predicates;
+   
 public:
    
    predicate *get_predicate_by_name(const std::string&) const;
@@ -35,14 +37,15 @@ public:
    predicate *get_edge_predicate(void) const;
    
    void print_bytecode(std::ostream&) const;
-   
    void print_predicates(std::ostream&) const;
    
    predicate* get_predicate(const predicate_id&) const;
+   predicate* get_route_predicate(const size_t&) const;
    
    byte_code get_bytecode(const predicate_id&) const;
    
    size_t num_predicates(void) const { return predicates.size(); }
+   size_t num_route_predicates(void) const { return route_predicates.size(); }
    
    tuple* new_tuple(const predicate_id&) const;
    

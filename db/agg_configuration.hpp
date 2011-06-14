@@ -13,14 +13,13 @@
 namespace db
 {
    
-class agg_configuration: public mem::base<agg_configuration>
+class agg_configuration
 {
 private:
    
    typedef tuple_trie::iterator iterator;
    typedef tuple_trie::const_iterator const_iterator;
 
-   tuple_trie vals;
    bool changed;
    vm::tuple *corresponds;
 
@@ -33,8 +32,22 @@ private:
    vm::tuple *generate_min_float(const vm::field_num) const;
    vm::tuple *generate_sum_list_float(const vm::field_num) const;
    vm::tuple *do_generate(const vm::aggregate_type, const vm::field_num);
+   
+protected:
+   
+   tuple_trie vals;
 
 public:
+   
+   inline void* operator new(size_t size)
+   {
+      return mem::allocator<agg_configuration>().allocate(1);
+   }
+   
+   static inline void operator delete(void *ptr)
+   {
+      mem::allocator<agg_configuration>().deallocate((agg_configuration*)ptr, 1);
+   }
 
    void print(std::ostream&) const;
 
@@ -46,18 +59,18 @@ public:
    inline const bool is_empty(void) const { return vals.empty(); }
    inline const size_t size(void) const { return vals.size(); }
 
-   void add_to_set(vm::tuple *, const vm::ref_count);
+   virtual void add_to_set(vm::tuple *, const vm::ref_count);
    
    const bool matches_first_int_arg(const vm::int_val) const;
 
    explicit agg_configuration(const vm::predicate *_pred):
-      vals(_pred), changed(false), corresponds(NULL)
+      changed(false), corresponds(NULL), vals(_pred)
    {
       assert(corresponds == NULL);
       assert(!changed);
    }
 
-   ~agg_configuration(void);
+   virtual ~agg_configuration(void);
 };
 
 std::ostream& operator<<(std::ostream&, const agg_configuration&);

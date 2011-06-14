@@ -158,5 +158,28 @@ convolve(EXTERNAL_ARG(bin_fact), EXTERNAL_ARG(ls))
    RETURN_ARG(ptr);
 }
 
+argument
+addfloatlists(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
+{
+   DECLARE_ARG(ls1, float_list*);
+   DECLARE_ARG(ls2, float_list*);
+   
+   float_list *ptr1((float_list*)ls1);
+   float_list *ptr2((float_list*)ls2);
+   
+   stack_float_list vals;
+   
+   while(!float_list::is_null(ptr1) && !float_list::is_null(ptr2)) {
+      vals.push(ptr1->get_head() + ptr2->get_head());
+      
+      ptr1 = ptr1->get_tail();
+      ptr2 = ptr2->get_tail();
+   }
+   
+   float_list *ptr(from_stack_to_list(vals));
+      
+   RETURN_ARG(ptr);
+}
+
 }
 }

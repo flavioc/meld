@@ -116,6 +116,7 @@ init_external_functions(void)
                FIELD_LIST_FLOAT, FIELD_LIST_FLOAT, FIELD_FLOAT));
    register_external_function(EXTERNAL2(divide, FIELD_LIST_FLOAT, FIELD_LIST_FLOAT, FIELD_LIST_FLOAT));
    register_external_function(EXTERNAL2(convolve, FIELD_LIST_FLOAT, FIELD_LIST_FLOAT, FIELD_LIST_FLOAT));
+   register_external_function(EXTERNAL2(addfloatlists, FIELD_LIST_FLOAT, FIELD_LIST_FLOAT, FIELD_LIST_FLOAT));
    
    return true;
 }
