@@ -679,7 +679,6 @@ trie::delete_by_first_int_arg(const int_val val)
    if(node->next != NULL)
       node->next->prev = node->prev;
       
-
    if(node->bucket != NULL) {
       trie_hash *hash((trie_hash*)node->parent->child);
       hash->total--;
@@ -860,7 +859,8 @@ tuple_trie::match_predicate(tuple_vector& vec) const
 }
 
 struct continuation_frame {
-   size_t size_stacks;
+   match_val_stack vals_stack;
+   match_type_stack typs_stack;
    trie_node *next_node;
 };
 
@@ -879,8 +879,8 @@ tuple_trie::match_predicate(const match& m, tuple_vector& vec) const
    match_val_stack vals(stack_size);
    match_type_stack typs(stack_size);
    continuation_stack cont(stack_size);
-   match_val_stack val_backup(stack_size);
-   match_type_stack typ_backup(stack_size);
+   
+   // cout << *pred << endl;
    
    trie_node *parent(root);
    trie_node *node(root->child);
@@ -901,7 +901,8 @@ tuple_trie::match_predicate(const match& m, tuple_vector& vec) const
 #define ADD_ALT(NODE) do { \
    assert((NODE) != NULL); \
    frm.next_node = NODE;   \
-   frm.size_stacks = val_backup.size();   \
+   frm.vals_stack = vals;   \
+   frm.typs_stack = typs; \
    cont.push(frm); } while(false)
    
 match_begin:
@@ -932,7 +933,7 @@ match_begin:
             
             while(node) {
                if(node->data.int_field == mfield.int_field)
-                  goto match_succeeded;
+                  goto match_succeeded_and_pop;
                node = node->next;
             }
             goto try_again;
@@ -947,7 +948,7 @@ match_begin:
             
             while(node) {
                if(node->data.float_field == mfield.float_field)
-                  goto match_succeeded;
+                  goto match_succeeded_and_pop;
                node = node->next;
             }
             goto try_again;
@@ -963,14 +964,15 @@ match_begin:
             
             while(node) {
                if(node->data.node_field == mfield.node_field)
-                  goto match_succeeded;
+                  goto match_succeeded_and_pop;
                node = node->next;
             }
             goto try_again;
          default: assert(false);
       }
    } else {
-      // printf("Match all\n");
+      //printf("Match all\n");
+      
       if(parent->is_hashed()) {
          trie_hash *hash((trie_hash*)node);
          
@@ -1029,23 +1031,41 @@ match_begin:
          if(node->next)
             ADD_ALT(node->next);
       }
+      
+      switch(mtype.type) {
+#define MATCH_LIST_TYPE(LIST_ENUM, LIST_ITEM) \
+         case LIST_ENUM: { \
+            if(node->data.int_field == 0) \
+               goto match_succeeded_and_pop; \
+            else {   \
+               match_field f = {false, LIST_ITEM}; \
+               typs.push(f); vals.push(tuple_field()); \
+               goto match_succeeded; \
+            } \
+         }
+         MATCH_LIST_TYPE(FIELD_LIST_INT, FIELD_INT)
+         MATCH_LIST_TYPE(FIELD_LIST_FLOAT, FIELD_FLOAT)
+         MATCH_LIST_TYPE(FIELD_LIST_NODE, FIELD_NODE)
+#undef MATCH_LIST_TYPE
+         case FIELD_INT:
+         case FIELD_FLOAT:
+         case FIELD_NODE:
+            goto match_succeeded_and_pop;
+         default: goto match_succeeded;
+      }
    }
-      
-match_succeeded:
-   // printf("Nice\n");
    
-   if(node->is_leaf())
-      // no need to save the stacks
-      // since if we try again from the continuation stack
-      // we do not need to put things back from the backup stacks
-      // printf("Jump out!\n");
-      goto leaf_found;
-      
-   val_backup.push(vals.top());
-   typ_backup.push(typs.top());
+match_succeeded_and_pop:
    vals.pop();
    typs.pop();
-      
+
+match_succeeded:
+   //printf("Nice\n");
+   
+   if(node->is_leaf())
+      // printf("Jump out!\n");
+      goto leaf_found;
+   
    parent = node;
    node = node->child;
    going_down = true;
@@ -1065,19 +1085,9 @@ try_again:
    
    node = frm.next_node;
    parent = node->parent;
+   vals = frm.vals_stack;
+   typs = frm.typs_stack;
    going_down = false;
-   
-   // restore vals and typs stack
-   while(val_backup.size() != frm.size_stacks) {
-      assert(!val_backup.empty());
-      assert(!typ_backup.empty());
-      
-      vals.push(val_backup.top());
-      typs.push(typ_backup.top());
-      // printf("Push back!\n");
-      val_backup.pop();
-      typ_backup.pop();
-   }
    
    goto match_begin;
    

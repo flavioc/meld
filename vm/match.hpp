@@ -33,9 +33,11 @@ private:
    std::vector<match_field, mem::allocator<match_field> > types;
    std::vector<tuple_field, mem::allocator<tuple_field> > vals;
    
-   inline void set_any_all(void) {
-      for(size_t i(0); i < types.size(); ++i)
+   inline void set_any_all(const predicate *pred) {
+      for(size_t i(0); i < types.size(); ++i) {
          types[i].exact = false;
+         types[i].type = pred->get_field_type(i);
+      }
    }
    
 public:
@@ -94,7 +96,7 @@ public:
    {
       types.resize(pred->num_fields());
       vals.resize(pred->num_fields());
-      set_any_all();
+      set_any_all(pred);
    }
 };
    
