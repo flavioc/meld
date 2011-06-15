@@ -48,8 +48,9 @@ do_test_mix ()
 {
 	NPROCS=${1}
 	NTHREADS=${2}
+	MIX_TYPE=${3}
 
-	TO_RUN="mpirun -n ${NPROCS} ${EXEC} -f ${TEST} -c mix${NTHREADS}"
+	TO_RUN="mpirun -n ${NPROCS} ${EXEC} -f ${TEST} -c ${MIX_TYPE}${NTHREADS}"
 
 	run_diff "${TO_RUN}"
 }
@@ -80,9 +81,10 @@ run_test_mix_n ()
 	NPROCS=${1}
 	NTHREADS=${2}
 	TIMES=${3}
-	echo "Running ${TEST} ${TIMES} times with ${NPROCS} processes and ${NTHREADS} threads (SCHED: mix)..."
+	MIX_TYPE=${4}
+	echo "Running ${TEST} ${TIMES} times with ${NPROCS} processes and ${NTHREADS} threads (SCHED: ${MIX_TYPE})..."
 	for((I=1; I <= ${TIMES}; I++)); do
-		do_test_mix ${NPROCS} ${NTHREADS}
+		do_test_mix ${NPROCS} ${NTHREADS} ${MIX_TYPE}
 	done
 }
 
@@ -141,38 +143,39 @@ loop_sched_mpi ()
 
 loop_sched_mix ()
 {
-	run_test_mix_n 1 1 1
-	run_test_mix_n 2 1 1
-	run_test_mix_n 1 2 1
+	MIX_TYPE=${1}
+	run_test_mix_n 1 1 1 ${MIX_TYPE}
+	run_test_mix_n 2 1 1 ${MIX_TYPE}
+	run_test_mix_n 1 2 1 ${MIX_TYPE}
 	
 	if [ $NODES -gt 2 ]; then
-		run_test_mix_n 3 1 1
-		run_test_mix_n 1 3 1
+		run_test_mix_n 3 1 1 ${MIX_TYPE}
+		run_test_mix_n 1 3 1 ${MIX_TYPE}
 	fi
 	if [ $NODES -gt 3 ]; then
-		run_test_mix_n 4 1 1
-		run_test_mix_n 1 4 1
-		run_test_mix_n 2 2 1
+		run_test_mix_n 4 1 1 ${MIX_TYPE}
+		run_test_mix_n 1 4 1 ${MIX_TYPE}
+		run_test_mix_n 2 2 1 ${MIX_TYPE}
 	fi
 	if [ $NODES -gt 4 ]; then
-		run_test_mix_n 5 1 1
-		run_test_mix_n 1 5 1
+		run_test_mix_n 5 1 1 ${MIX_TYPE}
+		run_test_mix_n 1 5 1 ${MIX_TYPE}
 	fi
 	if [ $NODES -gt 5 ]; then
-		run_test_mix_n 6 1 1
-		run_test_mix_n 1 6 1
-		run_test_mix_n 2 3 1
-		run_test_mix_n 3 2 1
+		run_test_mix_n 6 1 1 ${MIX_TYPE}
+		run_test_mix_n 1 6 1 ${MIX_TYPE}
+		run_test_mix_n 2 3 1 ${MIX_TYPE}
+		run_test_mix_n 3 2 1 ${MIX_TYPE}
 	fi
 	if [ $NODES -gt 6 ]; then
-		run_test_mix_n 7 1 1
-		run_test_mix_n 1 7 1
+		run_test_mix_n 7 1 1 ${MIX_TYPE}
+		run_test_mix_n 1 7 1 ${MIX_TYPE}
 	fi
 	if [ $NODES -gt 7 ]; then
-		run_test_mix_n 8 1 1
-		run_test_mix_n 1 8 1
-		run_test_mix_n 2 4 1
-		run_test_mix_n 4 2 1
+		run_test_mix_n 8 1 1 ${MIX_TYPE}
+		run_test_mix_n 1 8 1 ${MIX_TYPE}
+		run_test_mix_n 2 4 1 ${MIX_TYPE}
+		run_test_mix_n 4 2 1 ${MIX_TYPE}
 	fi
 }
 
@@ -181,7 +184,8 @@ if [ "${TYPE}" = "all" ]; then
 	loop_sched tl
 	loop_sched td
 	loop_sched_mpi
-	loop_sched_mix
+	loop_sched_mix mix
+	loop_sched_mix mis
 	exit 0
 fi
 
@@ -211,6 +215,11 @@ if [ "${TYPE}" = "mpi" ]; then
 fi
 
 if [ "${TYPE}" = "mix" ]; then
-	loop_sched_mix
+	loop_sched_mix mix
+	exit 0
+fi
+
+if [ "${TYPE}" = "mis" ]; then
+	loop_sched_mix mis
 	exit 0
 fi

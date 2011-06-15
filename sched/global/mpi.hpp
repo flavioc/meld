@@ -12,7 +12,6 @@ namespace sched
 #ifdef COMPILE_MPI
 
 class mpi_static: public sched::sstatic,
-                  private sched::tokenizer,
                   private sched::mpi_handler
 {
 private:

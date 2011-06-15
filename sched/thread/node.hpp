@@ -14,7 +14,8 @@ namespace sched
 // forward declarations
 class static_local; 
 class dynamic_local;
-class mpi_thread;
+class mpi_thread_dynamic;
+class mpi_thread_static;
 class threads_single;
 
 struct node_work_unit {
@@ -28,12 +29,13 @@ private:
    
    friend class static_local;
    friend class dynamic_local;
-   friend class mpi_thread;
+   friend class mpi_thread_static;
+   friend class mpi_thread_dynamic;
    friend class threads_single;
    
    static_local *owner;
    volatile bool i_am_on_queue;
-	 utils::spinlock spin;
+	utils::spinlock spin;
    safe_bounded_pqueue<node_work_unit>::type queue;
    
 public:
@@ -49,7 +51,8 @@ public:
    
    inline static_local* get_owner(void) { return owner; }
    
-   inline void add_work(const db::simple_tuple *tpl, const bool is_agg = false) {
+   inline void add_work(const db::simple_tuple *tpl, const bool is_agg = false)
+   {
       node_work_unit w = {tpl, is_agg};
       queue.push(w, tpl->get_strat_level());
    }

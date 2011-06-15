@@ -2,9 +2,18 @@
 ___egde(@1)@1
 ___egde(@4)@1
 _init()@1
+pagerank(0, 0.2)@1
+pagerank(1, 0.88)@1
+pagerank(2, 0.98425)@1
+pagerank(3, 1.00686)@1
+pagerank(4, 1.00921)@1
 pagerank(5, 1.00972)@1
-calcRank(5, 1.06478, @4)@1
-calcRank(6, 1.06513, @4)@1
+calcRank(1, 0.2, @0)@1
+calcRank(2, 0.895, @0)@1
+calcRank(3, 1.04575, @0)@1
+calcRank(4, 1.06139, @0)@1
+calcRank(5, 1.06478, @0)@1
+calcRank(6, 1.06513, @0)@1
 numLinks(1)@1
 edge(@1)@1
 1
@@ -12,9 +21,18 @@ ___egde(@0)@1
 ___egde(@2)@1
 ___egde(@3)@1
 _init()@1
+pagerank(0, 0.2)@1
+pagerank(1, 0.94)@1
+pagerank(2, 1.2415)@1
+pagerank(3, 1.27277)@1
+pagerank(4, 1.27956)@1
 pagerank(5, 1.28026)@1
-calcRank(5, 2.86842, @3)@1
-calcRank(6, 2.86943, @3)@1
+calcRank(1, 0.6, @0)@1
+calcRank(2, 2.61, @0)@1
+calcRank(3, 2.8185, @0)@1
+calcRank(4, 2.86373, @0)@1
+calcRank(5, 2.86842, @0)@1
+calcRank(6, 2.86943, @0)@1
 numLinks(2)@1
 edge(@0)@1
 edge(@2)@1
@@ -22,23 +40,50 @@ edge(@2)@1
 ___egde(@1)@1
 ___egde(@4)@1
 _init()@1
+pagerank(0, 0.2)@1
+pagerank(1, 0.88)@1
+pagerank(2, 0.98425)@1
+pagerank(3, 1.00686)@1
+pagerank(4, 1.00921)@1
 pagerank(5, 1.00972)@1
-calcRank(5, 1.06478, @4)@1
-calcRank(6, 1.06513, @4)@1
+calcRank(1, 0.2, @0)@1
+calcRank(2, 0.895, @0)@1
+calcRank(3, 1.04575, @0)@1
+calcRank(4, 1.06139, @0)@1
+calcRank(5, 1.06478, @0)@1
+calcRank(6, 1.06513, @0)@1
 numLinks(1)@1
 edge(@1)@1
 3
 _init()@1
+pagerank(0, 0.2)@1
+pagerank(1, 0.85)@1
+pagerank(2, 0.85)@1
+pagerank(3, 0.85)@1
+pagerank(4, 0.85)@1
 pagerank(5, 0.85)@1
-calcRank(5, 0, @3)@1
-calcRank(6, 0, @3)@1
+calcRank(1, 0, @0)@1
+calcRank(2, 0, @0)@1
+calcRank(3, 0, @0)@1
+calcRank(4, 0, @0)@1
+calcRank(5, 0, @0)@1
+calcRank(6, 0, @0)@1
 numLinks(1)@1
 edge(@1)@1
 4
 _init()@1
+pagerank(0, 0.2)@1
+pagerank(1, 0.85)@1
+pagerank(2, 0.85)@1
+pagerank(3, 0.85)@1
+pagerank(4, 0.85)@1
 pagerank(5, 0.85)@1
-calcRank(5, 0, @4)@1
-calcRank(6, 0, @4)@1
+calcRank(1, 0, @0)@1
+calcRank(2, 0, @0)@1
+calcRank(3, 0, @0)@1
+calcRank(4, 0, @0)@1
+calcRank(5, 0, @0)@1
+calcRank(6, 0, @0)@1
 numLinks(2)@1
 edge(@0)@1
 edge(@2)@1
