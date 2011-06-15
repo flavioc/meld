@@ -268,7 +268,7 @@ sched/thread/assert.o: sched/thread/assert.hpp \
 sched/mpi/tokenizer.o: sched/mpi/token.hpp sched/mpi/tokenizer.cpp \
 									 sched/mpi/tokenizer.hpp process/remote.hpp
 
-sched/mpi/handler.o: sched/mpi/handler.hpp sched/mpi/handler.cpp
+sched/mpi/handler.o: sched/mpi/handler.hpp sched/mpi/handler.cpp conf.hpp
 
 sched/local/mpi_threads_dynamic.o: sched/local/mpi_threads_dynamic.hpp \
 										sched/local/mpi_threads_dynamic.cpp \
