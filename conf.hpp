@@ -33,15 +33,15 @@ const bool USE_ALLOCATOR = true;
 /* delay to check if messages were sent (in order to delete them) */
 const size_t MPI_ROUND_TRIP_UPDATE(200);
 /* delay to transmit all messages */
-const size_t MPI_ROUND_TRIP_SEND(1000);
+const size_t MPI_DEFAULT_ROUND_TRIP_SEND(250);
 /* default delay to fetch messages */
 const size_t MPI_DEFAULT_ROUND_TRIP_FETCH(500);
 /* min delay round trip to fetch new messages in MPI */
-const size_t MPI_MIN_ROUND_TRIP_FETCH(50);
+const size_t MPI_MIN_ROUND_TRIP_FETCH(10);
 /* delay to decrease the round trip to fetch new messages if a message is found */
-const size_t MPI_DECREASE_ROUND_TRIP_FETCH(100);
+const size_t MPI_DECREASE_ROUND_TRIP_FETCH(10);
 /* delay to increase the round trip to fetch new messages if messages are not found */
-const size_t MPI_INCREASE_ROUND_TRIP_FETCH(1000);
+const size_t MPI_INCREASE_ROUND_TRIP_FETCH(10);
 /* max delay round trip to fetch new messages in MPI */
 const size_t MPI_MAX_ROUND_TRIP_FETCH(100000);
 /* size of buffer to send MPI messages */

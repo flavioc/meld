@@ -3,6 +3,7 @@
 #include "vm/state.hpp"
 #include "process/router.hpp"
 
+using namespace std;
 using namespace vm;
 using namespace db;
 
@@ -59,6 +60,8 @@ mpi_handler::fetch_work(void)
 		   step_fetch -= MPI_DECREASE_ROUND_TRIP_FETCH;
 	   else if(step_fetch < MPI_MAX_ROUND_TRIP_FETCH)
 		   step_fetch += MPI_INCREASE_ROUND_TRIP_FETCH;
+
+      step_fetch = max(step_fetch,MPI_MIN_ROUND_TRIP_FETCH);
    }
    
    assert(ms == NULL);
@@ -84,7 +87,7 @@ mpi_handler::do_mpi_worker_cycle(void)
       round_trip_update = 0;
    }
 
-   if(round_trip_send == MPI_ROUND_TRIP_SEND) {
+   if(round_trip_send == step_send) {
       transmit_messages();
       round_trip_send = 0;
    }
@@ -109,6 +112,7 @@ mpi_handler::update_pending_messages(const bool test)
    
 mpi_handler::mpi_handler(void):
    step_fetch(MPI_DEFAULT_ROUND_TRIP_FETCH),
+   step_send(MPI_DEFAULT_ROUND_TRIP_SEND),
    round_trip_fetch(0),
    round_trip_update(0),
    round_trip_send(0)
