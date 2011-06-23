@@ -68,6 +68,7 @@ static_local::new_work(node *from, node *_to, const simple_tuple *tpl, const boo
    assert(tpl != NULL);
    
    assert_thread_push_work();
+   assert(is_active());
    
    to->add_work(tpl, is_agg);
    
@@ -113,10 +114,11 @@ static_local::new_work_other(sched::base *scheduler, node *node, const simple_tu
          spinlock::scoped_lock lock2(owner->lock);
          if(owner->is_inactive() && owner->has_work())
          {
-            if(owner->is_inactive())
-               owner->set_active();
+            owner->set_active();
             assert(owner->is_active());
          }
+      } else {
+         assert(is_active());
       }
          
       assert(tnode->in_queue());
@@ -260,6 +262,7 @@ static_local::get_work(work_unit& work)
    if(!set_next_node())
       return false;
       
+   assert(is_active());
    assert(current_node != NULL);
    assert(current_node->in_queue());
    assert(!current_node->no_more_work());
