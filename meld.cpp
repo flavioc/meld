@@ -27,10 +27,11 @@ help(void)
    fprintf(stderr, "\t\t\ttsX static division with a queue per thread\n");
    fprintf(stderr, "\t\t\ttlX static division with a queue per node\n");
    fprintf(stderr, "\t\t\ttdX initial static division but allow work stealing\n");
-   fprintf(stderr, "\t\t\tmpiX static division of work using mpi plus threads\n");
-   fprintf(stderr, "\t\t\tmisX static division of work using mpi plus threads\n");
-   fprintf(stderr, "\t\t\tmixX static division of work using mpi plus threads and work stealing\n");
-   fprintf(stderr, "\t\t\tsinX no division of working using local queues\n");
+   fprintf(stderr, "\t\t\tsinX no division of work using local queues\n");
+   fprintf(stderr, "\t\t\tmpiglobalX static division of work using mpi plus threads\n");
+   fprintf(stderr, "\t\t\tmpistaticX static division of work using mpi plus threads\n");
+   fprintf(stderr, "\t\t\tmpidynamicX static division of work using mpi plus threads and work stealing\n");
+   fprintf(stderr, "\t\t\tmpisingleX no division of work with static processes\n");
    fprintf(stderr, "\t-t \t\ttime execution\n");
    fprintf(stderr, "\t-m \t\tmemory statistics\n");
    fprintf(stderr, "\t-s \t\tshows database\n");
@@ -38,6 +39,35 @@ help(void)
    fprintf(stderr, "\t-h \t\tshow this screen\n");
 
    exit(EXIT_SUCCESS);
+}
+
+static inline bool
+match_mpi(const char *name, char *arg, const scheduler_type type)
+{
+   const size_t len(strlen(name));
+   
+   if(strncmp(name, arg, len) == 0 && strlen(arg) > len) {
+      sched_type = type;
+      arg += len;
+      num_threads = (size_t)atoi(arg);
+      return true;
+   }
+   
+   return false;
+}
+
+static inline bool
+match_threads(const char *name, char *arg, const scheduler_type type)
+{
+   return match_mpi(name, arg, type);
+}
+
+static inline bool
+fail_sched(char* sched)
+{
+   fprintf(stderr, "Error: invalid scheduler %s\n", sched);
+   exit(EXIT_FAILURE);
+   return false;
 }
 
 static void
@@ -49,39 +79,16 @@ parse_sched(char *sched)
       fprintf(stderr, "Error: invalid scheduler %s\n", sched);
       exit(EXIT_FAILURE);
    }
-      
-   if(strncmp(sched, "ts", 2) == 0) {
-      sched += 2;
-      num_threads = (size_t)atoi(sched);
-      sched_type = SCHED_THREADS_STATIC_GLOBAL;
-   } else if(strlen(sched) > 3 && strncmp(sched, "mpi", 3) == 0) {
-      sched_type = SCHED_MPI_AND_THREADS_STATIC_GLOBAL;
-      sched += 3;
-      num_threads = (size_t)atoi(sched);
-   } else if(strncmp(sched, "mis", 3) == 0 && strlen(sched) > 3) {
-      sched_type = SCHED_MPI_AND_THREADS_STATIC_LOCAL;
-      sched += 3;
-      num_threads = (size_t)atoi(sched);
-   } else if(strncmp(sched, "mix", 3) == 0 && strlen(sched) > 3) {
-      sched_type = SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL;
-      sched += 3;
-      num_threads = (size_t)atoi(sched);
-   } else if(strncmp(sched, "tl", 2) == 0) {
-      sched_type = SCHED_THREADS_STATIC_LOCAL;
-      sched += 2;
-      num_threads = (size_t)atoi(sched);
-   } else if(strncmp(sched, "td", 2) == 0) {
-      sched_type = SCHED_THREADS_DYNAMIC_LOCAL;
-      sched += 2;
-      num_threads = (size_t)atoi(sched);
-   } else if(strncmp(sched, "sin", 3) == 0) {
-      sched_type = SCHED_THREADS_SINGLE_LOCAL;
-      sched += 3;
-      num_threads = (size_t)atoi(sched);
-   } else {
-      fprintf(stderr, "Error: invalid scheduler %s\n", sched);
-      exit(EXIT_FAILURE);
-   }
+   
+   match_mpi("mpiglobal", sched, SCHED_MPI_AND_THREADS_STATIC_GLOBAL) ||
+   match_mpi("mpistatic", sched, SCHED_MPI_AND_THREADS_STATIC_LOCAL) ||
+   match_mpi("mpidynamic", sched, SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL) ||
+   match_mpi("mpisingle", sched, SCHED_MPI_AND_THREADS_SINGLE_LOCAL) ||
+   match_threads("ts", sched, SCHED_THREADS_STATIC_GLOBAL) ||
+   match_threads("tl", sched, SCHED_THREADS_STATIC_LOCAL) ||
+   match_threads("td", sched, SCHED_THREADS_DYNAMIC_LOCAL) ||
+   match_threads("sin", sched, SCHED_THREADS_SINGLE_LOCAL) ||
+   fail_sched(sched);
 }
 
 static void
@@ -137,7 +144,7 @@ read_arguments(int argc, char **argv)
 
 int
 main(int argc, char **argv)
-{  
+{
    read_arguments(argc, argv);
 
    if(program == NULL && sched_type == SCHED_UNKNOWN) {

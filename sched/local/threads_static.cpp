@@ -106,7 +106,8 @@ static_local::new_work_other(sched::base *scheduler, node *node, const simple_tu
    
 	spinlock::scoped_lock l(tnode->spin);
    if(!tnode->in_queue() && !tnode->no_more_work()) {
-		static_local *owner(tnode->get_owner());
+		static_local *owner(dynamic_cast<static_local*>(tnode->get_owner()));
+		
 		tnode->set_in_queue(true);
 		owner->add_to_queue(tnode);
          

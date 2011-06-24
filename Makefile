@@ -83,6 +83,7 @@ OBJS = utils/utils.o \
 			 sched/local/threads_single.o \
 			 sched/local/mpi_threads_static.o \
 			 sched/local/mpi_threads_dynamic.o \
+			 sched/local/mpi_threads_single.o \
 			 sched/thread/threaded.o \
 			 sched/thread/queue_buffer.o \
 			 sched/thread/assert.o \
@@ -149,6 +150,8 @@ process/machine.o: process/machine.hpp process/machine.cpp \
 									sched/local/threads_single.hpp \
 									sched/local/threads_dynamic.hpp \
 									sched/local/mpi_threads_dynamic.hpp \
+									sched/local/mpi_threads_static.hpp \
+									sched/local/mpi_threads_single.hpp \
 									sched/types.hpp \
 									db/database.hpp \
 									vm/predicate.hpp
@@ -275,6 +278,12 @@ sched/local/mpi_threads_dynamic.o: sched/local/mpi_threads_dynamic.hpp \
 sched/local/mpi_threads_static.o: sched/local/mpi_threads_static.hpp \
 										sched/local/mpi_threads_static.cpp \
 										sched/mpi/tokenizer.hpp sched/local/threads_static.hpp \
+										sched/mpi/token.hpp conf.hpp sched/mpi/message_buffer.hpp \
+										sched/queue/bounded_pqueue.hpp sched/mpi/handler.hpp
+
+sched/local/mpi_threads_single.o: sched/local/mpi_threads_single.hpp \
+										sched/local/mpi_threads_single.cpp \
+										sched/mpi/tokenizer.hpp sched/local/threads_single.hpp \
 										sched/mpi/token.hpp conf.hpp sched/mpi/message_buffer.hpp \
 										sched/queue/bounded_pqueue.hpp sched/mpi/handler.hpp
 

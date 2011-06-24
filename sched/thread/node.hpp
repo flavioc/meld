@@ -14,9 +14,10 @@ namespace sched
 // forward declarations
 class static_local; 
 class dynamic_local;
+class threads_single;
 class mpi_thread_dynamic;
 class mpi_thread_static;
-class threads_single;
+class mpi_thread_single;
 
 struct node_work_unit {
    const db::simple_tuple *work_tpl;
@@ -29,18 +30,19 @@ private:
    
    friend class static_local;
    friend class dynamic_local;
+   friend class threads_single;
    friend class mpi_thread_static;
    friend class mpi_thread_dynamic;
-   friend class threads_single;
+   friend class mpi_thread_single;
    
-   static_local *owner;
+   sched::base *owner;
    volatile bool i_am_on_queue;
 	utils::spinlock spin;
    safe_bounded_pqueue<node_work_unit>::type queue;
    
 public:
    
-   inline void set_owner(static_local *_owner) { owner = _owner; }
+   inline void set_owner(sched::base *_owner) { owner = _owner; }
    
    inline const bool in_queue(void) const { return i_am_on_queue; }
    
@@ -49,7 +51,7 @@ public:
       i_am_on_queue = new_val;
    }
    
-   inline static_local* get_owner(void) { return owner; }
+   inline sched::base* get_owner(void) { return owner; }
    
    inline void add_work(const db::simple_tuple *tpl, const bool is_agg = false)
    {

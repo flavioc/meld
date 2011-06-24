@@ -36,8 +36,8 @@ threads_single::assert_end(void) const
 
    for(; it != end; ++it) {
       thread_node *node((thread_node*)it->second);
-      assert(!node->in_queue());
       node->assert_end();
+      assert(!node->in_queue());
    }
 }
 
@@ -56,8 +56,8 @@ threads_single::assert_end_iteration(void) const
 
    for(; it != end; ++it) {
       thread_node *node((thread_node*)it->second);
-      assert(!node->in_queue());
       node->assert_end_iteration();
+      assert(!node->in_queue());
    }
 }
 
@@ -74,11 +74,11 @@ threads_single::new_work(node *from, node *_to, const simple_tuple *tpl, const b
    
    to->add_work(tpl, is_agg);
    
-   if(!to->in_queue()) {
-      spinlock::scoped_lock lock(to->spin);
-      if(!to->in_queue()) {
-         add_to_queue(to);
+   if(!to->in_queue() && !to->no_more_work()) {
+      spinlock::scoped_lock l(to->spin);
+      if(!to->in_queue() && !to->no_more_work()) {
          to->set_in_queue(true);
+         add_to_queue(to);
       }
    }
 }
@@ -86,7 +86,6 @@ threads_single::new_work(node *from, node *_to, const simple_tuple *tpl, const b
 void
 threads_single::new_work_other(sched::base *scheduler, node *node, const simple_tuple *stuple)
 {
-   assert(is_active());
    assert(node != NULL);
    assert(stuple != NULL);
    assert(scheduler == NULL);
@@ -97,12 +96,11 @@ threads_single::new_work_other(sched::base *scheduler, node *node, const simple_
    
    tnode->add_work(stuple, false);
    
-   if(!tnode->in_queue()) {
-      spinlock::scoped_lock lock(tnode->spin);
-      if(!tnode->in_queue()) {
+   if(!tnode->in_queue() && !tnode->no_more_work()) {
+      spinlock::scoped_lock l(tnode->spin);
+      if(!tnode->in_queue() && !tnode->no_more_work()) {
          tnode->set_in_queue(true);
          add_to_queue(tnode);
-      
          assert(tnode->in_queue());
       }
    }
@@ -111,7 +109,7 @@ threads_single::new_work_other(sched::base *scheduler, node *node, const simple_
 void
 threads_single::new_work_remote(remote *, const node::node_id, message *)
 {
-   assert(0);
+   assert(false);
 }
 
 void
@@ -185,7 +183,7 @@ bool
 threads_single::check_if_current_useless(void)
 {
    if(current_node->no_more_work()) {
-      spinlock::scoped_lock lock(current_node->spin);
+      spinlock::scoped_lock l(current_node->spin);
       
       if(current_node->no_more_work()) {
          current_node->set_in_queue(false);

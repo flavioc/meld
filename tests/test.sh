@@ -149,9 +149,10 @@ if [ "${TYPE}" = "all" ]; then
 	loop_sched ts
 	loop_sched tl
 	loop_sched td
-	loop_sched_mpi
-	loop_sched_mix mix
-	loop_sched_mix mis
+	loop_sched_mix mpiglobal
+	loop_sched_mix mpistatic
+	loop_sched_mix mpidynamic
+	loop_sched_mix mpisingle
 	exit 0
 fi
 
@@ -175,17 +176,22 @@ if [ "${TYPE}" = "td" ]; then
 	exit 0
 fi
 
-if [ "${TYPE}" = "mpi" ]; then
-	loop_sched_mix mpi
+if [ "${TYPE}" = "mpiglobal" ]; then
+	loop_sched_mix mpiglobal
 	exit 0
 fi
 
-if [ "${TYPE}" = "mix" ]; then
-	loop_sched_mix mix
+if [ "${TYPE}" = "mpistatic" ]; then
+	loop_sched_mix mpistatic
 	exit 0
 fi
 
-if [ "${TYPE}" = "mis" ]; then
-	loop_sched_mix mis
+if [ "${TYPE}" = "mpidynamic" ]; then
+	loop_sched_mix mpidynamic
+	exit 0
+fi
+
+if [ "${TYPE}" = "mpisingle" ]; then
+	loop_sched_mix mpisingle
 	exit 0
 fi
