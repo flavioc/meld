@@ -136,7 +136,8 @@ threads_single::busy_wait(void)
          if(!has_work()) {
             if(is_active())
                set_inactive(); // may be inactive from previous iteration
-         }
+         } else
+            break;
       }
       
       if(!has_work() && is_inactive() && all_threads_finished()) {

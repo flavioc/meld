@@ -104,14 +104,15 @@ static_local::new_work_other(sched::base *scheduler, node *node, const simple_tu
    
    tnode->add_work(stuple, false);
    
-	spinlock::scoped_lock lock(tnode->spin);
+	spinlock::scoped_lock l(tnode->spin);
    if(!tnode->in_queue() && !tnode->no_more_work()) {
 		static_local *owner(tnode->get_owner());
 		tnode->set_in_queue(true);
 		owner->add_to_queue(tnode);
          
       if(this != owner) {
-         spinlock::scoped_lock lock2(owner->lock);
+         spinlock::scoped_lock l2(owner->lock);
+         
          if(owner->is_inactive() && owner->has_work())
          {
             owner->set_active();
@@ -148,7 +149,7 @@ static_local::busy_wait(void)
 {
    while(!has_work()) {
       if(is_active() && !has_work()) {
-         mutex::scoped_lock l(mutex);
+         spinlock::scoped_lock l(lock);
          if(!has_work()) {
             if(is_active())
                set_inactive(); // may be inactive from previous iteration

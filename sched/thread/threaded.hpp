@@ -30,7 +30,7 @@ private:
    
 protected:
    
-	 utils::spinlock lock;
+	utils::spinlock lock;
    
    static std::vector<sched::base*> ALL_THREADS;
    
@@ -63,7 +63,7 @@ protected:
    inline void set_active_if_inactive(void)
    {
       if(is_inactive()) {
-					utils::spinlock::scoped_lock l(lock);
+			utils::spinlock::scoped_lock l(lock);
          if(is_inactive())
             set_active();
       }

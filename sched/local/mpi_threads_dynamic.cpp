@@ -131,12 +131,13 @@ mpi_thread_dynamic::busy_wait(void)
       }
       
       if(is_active() && !has_work()) {
-         mutex::scoped_lock l(mutex);
+         spinlock::scoped_lock l(lock);
          if(!has_work()) {
             if(is_active()) {
                set_inactive();
             }
-         }
+         } else
+            break;
       }
       
       if(is_inactive() && !has_work() && leader_thread() && all_threads_finished()) {

@@ -228,7 +228,7 @@ dynamic_local::dynamic_local(const process_id id):
    static_local(id),
    nodes(NULL),
    nodes_mutex(NULL),
-	 asked_many(0)
+	asked_many(0)
 {
 }
    
