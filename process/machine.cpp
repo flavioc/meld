@@ -179,55 +179,37 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
    mem::init(num_threads);
    process_list.resize(num_threads);
    
+   vector<sched::base*> schedulers;
+   
    switch(sched_type) {
-      case SCHED_THREADS_STATIC_GLOBAL: {
-            vector<sched::base*> schedulers(sched::static_global::start(num_threads));
-      
-            for(process_id i(0); i < num_threads; ++i)
-               process_list[i] = new process(i, schedulers[i]);
-         }
-         break;
       case SCHED_MPI_UNI_STATIC:
-#ifdef COMPILE_MPI
-         process_list[0] = new process(0, sched::mpi_static::start());
-#endif
+         schedulers.push_back(sched::mpi_static::start());
          break;
-      case SCHED_THREADS_STATIC_LOCAL: {
-            vector<sched::base*> schedulers(sched::static_local::start(num_threads));
-            
-            for(process_id i(0); i < num_threads; ++i)
-               process_list[i] = new process(i, schedulers[i]);
-         }
+      case SCHED_THREADS_STATIC_LOCAL:
+         schedulers = sched::static_local::start(num_threads);
          break;
-      case SCHED_THREADS_SINGLE_LOCAL: {
-            vector<sched::base*> schedulers(sched::threads_single::start(num_threads));
-            
-            for(process_id i(0); i < num_threads; ++i)
-               process_list[i] = new process(i, schedulers[i]);
-         }
+      case SCHED_THREADS_STATIC_GLOBAL:
+         schedulers = sched::static_global::start(num_threads);
          break;
-      case SCHED_THREADS_DYNAMIC_LOCAL: {
-            vector<sched::base*> schedulers(sched::dynamic_local::start(num_threads));
-            for(process_id i(0); i < num_threads; ++i)
-               process_list[i] = new process(i, schedulers[i]);
-         }
+      case SCHED_THREADS_SINGLE_LOCAL:
+         schedulers = sched::threads_single::start(num_threads);
          break;
-      case SCHED_MPI_AND_THREADS_STATIC_LOCAL: {
-            vector<sched::base*> schedulers(sched::mpi_thread_static::start(num_threads));
-            for(process_id i(0); i < num_threads; ++i)
-               process_list[i] = new process(i, schedulers[i]);
-         }
+      case SCHED_THREADS_DYNAMIC_LOCAL:
+         schedulers = sched::dynamic_local::start(num_threads);
          break;
-      case SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL: {
-            vector<sched::base*> schedulers(sched::mpi_thread_dynamic::start(num_threads));
-            for(process_id i(0); i < num_threads; ++i)
-               process_list[i] = new process(i, schedulers[i]);
-         }
+      case SCHED_MPI_AND_THREADS_STATIC_LOCAL:
+         schedulers = sched::mpi_thread_static::start(num_threads);
          break;
-      case SCHED_UNKNOWN:
-         assert(0);
+      case SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL:
+         schedulers = sched::mpi_thread_dynamic::start(num_threads);
          break;
+      case SCHED_UNKNOWN: assert(false); break;
    }
+   
+   assert(schedulers.size() == num_threads);
+   
+   for(process_id i(0); i < num_threads; ++i)
+      process_list[i] = new process(i, schedulers[i]);
 }
 
 machine::~machine(void)

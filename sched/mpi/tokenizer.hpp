@@ -31,6 +31,9 @@ public:
    void messages_received(const size_t);
    inline void messages_transmitted(const size_t total) { tok.transmitted(total); }
    
+   // init function to be called after MPI subsystem is set up properly
+   void init(void);
+   
    explicit tokenizer(void);
    
    virtual ~tokenizer(void);

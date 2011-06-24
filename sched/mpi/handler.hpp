@@ -52,6 +52,8 @@ protected:
    
 public:
    
+   static void init(void);
+   
    void fetch_work(void);
    void assert_mpi(void) const { assert(msg_buf.empty()); }
    

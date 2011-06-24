@@ -232,6 +232,16 @@ tokenizer::token_terminate_iteration(void)
    
 tokenizer::tokenizer(void)
 {
+}
+
+tokenizer::~tokenizer(void)
+{
+   assert(tok.is_white());
+}
+
+void
+tokenizer::init(void)
+{
    if(remote::self->is_leader()) {
       has_global_tok = true;
       global_tok.set_white();
@@ -240,11 +250,5 @@ tokenizer::tokenizer(void)
    }
    tok.set_white();
 }
-
-tokenizer::~tokenizer(void)
-{
-   assert(tok.is_white());
-}
-
 
 }

@@ -5,6 +5,7 @@
 #include "process/router.hpp"
 #include "vm/state.hpp"
 #include "db/database.hpp"
+#include "sched/mpi/handler.hpp"
 
 using namespace process;
 using namespace boost;
@@ -18,7 +19,6 @@ namespace process
 {
    
 static mutex mpi_mutex;
-   
    
 void
 router::set_nodes_total(const size_t total)
@@ -249,6 +249,9 @@ router::base_constructor(const size_t num_threads, int argc, char **argv, const 
    remote::world_size = world_size;
    
    state::ROUTER = this;
+   
+   // other initializations
+   sched::mpi_handler::init();
 }
 
 router::router(void)
