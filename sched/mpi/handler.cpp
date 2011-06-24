@@ -22,6 +22,10 @@ namespace MPI {
 
 namespace sched
 {
+
+volatile bool mpi_handler::iteration_finished(false);
+tokenizer mpi_handler::token;
+boost::mutex mpi_handler::tok_mutex;
    
 void
 mpi_handler::fetch_work(void)

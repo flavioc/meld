@@ -2,6 +2,8 @@
 #ifndef SCHED_MPI_HANDLER_HPP
 #define SCHED_MPI_HANDLER_HPP
 
+#include <boost/thread/mutex.hpp>
+
 #include "conf.hpp"
 
 #include "sched/mpi/message_buffer.hpp"
@@ -24,9 +26,23 @@ private:
    
 protected:
    
+   static volatile bool iteration_finished;
+   static sched::tokenizer token;
+   static boost::mutex tok_mutex;
+   
    virtual void new_mpi_message(db::node *, db::simple_tuple *) = 0;
-   virtual void messages_were_transmitted(const size_t) = 0;
-   virtual void messages_were_received(const size_t) = 0;
+   
+   virtual void messages_were_transmitted(const size_t total)
+   {  
+      boost::mutex::scoped_lock lock(tok_mutex);
+      token.messages_transmitted(total);
+   }
+   
+   virtual void messages_were_received(const size_t total)
+   {
+      boost::mutex::scoped_lock lock(tok_mutex);
+      token.messages_received(total);
+   }
    
    inline void buffer_message(process::remote *rem, const db::node::node_id id, message *msg)
    {

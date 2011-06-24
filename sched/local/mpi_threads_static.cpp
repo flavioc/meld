@@ -14,10 +14,6 @@ using namespace utils;
 
 namespace sched
 {
-   
-volatile static bool iteration_finished;
-static tokenizer *token;
-static mutex tok_mutex;
 
 void
 mpi_thread_static::assert_end(void) const
@@ -33,20 +29,6 @@ mpi_thread_static::assert_end_iteration(void) const
    static_local::assert_end_iteration();
    assert(iteration_finished);
    assert_mpi();
-}
-
-void
-mpi_thread_static::messages_were_transmitted(const size_t total)
-{
-   mutex::scoped_lock lock(tok_mutex);
-   token->messages_transmitted(total);
-}
-
-void
-mpi_thread_static::messages_were_received(const size_t total)
-{
-   mutex::scoped_lock lock(tok_mutex);
-   token->messages_received(total);
 }
 
 void
@@ -110,7 +92,7 @@ mpi_thread_static::busy_wait(void)
       
       if(is_inactive() && !has_work() && leader_thread() && all_threads_finished()) {
          mutex::scoped_lock lock(tok_mutex);
-         if(!token->busy_loop_token(all_threads_finished())) {
+         if(!token.busy_loop_token(all_threads_finished())) {
             assert(all_threads_finished());
             assert(is_inactive());
             assert(!has_work());
@@ -167,7 +149,7 @@ mpi_thread_static::terminate_iteration(void)
    update_pending_messages(false); // just delete all requests
    
    if(leader_thread())
-      token->token_terminate_iteration();
+      token.token_terminate_iteration();
 
    assert(iteration_finished);
    assert(is_inactive());
@@ -202,9 +184,6 @@ vector<sched::base*>&
 mpi_thread_static::start(const size_t num_threads)
 {
    init_barriers(num_threads);
-   token = new sched::tokenizer();
-   
-   iteration_finished = false;
    
    for(process_id i(0); i < num_threads; ++i)
       add_thread(new mpi_thread_static(i));

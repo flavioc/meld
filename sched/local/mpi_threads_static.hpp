@@ -18,8 +18,6 @@ private:
    
    message_buffer msg_buf;
    
-   void messages_were_transmitted(const size_t);
-   void messages_were_received(const size_t);
    void new_mpi_message(db::node *, db::simple_tuple *);
    
    virtual bool busy_wait(void);

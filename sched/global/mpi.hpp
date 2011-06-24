@@ -4,7 +4,6 @@
 
 #include "sched/global/static.hpp"
 #include "sched/mpi/handler.hpp"
-#include "sched/mpi/tokenizer.hpp"
 
 namespace sched
 {
@@ -16,8 +15,6 @@ class mpi_static: public sched::sstatic,
 {
 private:
    
-   void messages_were_transmitted(const size_t);
-   void messages_were_received(const size_t);
    void new_mpi_message(db::node *, db::simple_tuple *);
    
    virtual void work_found(void);
@@ -37,9 +34,14 @@ public:
    
    static mpi_static *start(void);
    
-   explicit mpi_static(void);
-   
-   virtual ~mpi_static(void);
+   explicit mpi_static(void):
+      sstatic(0)
+   {
+   }
+
+   virtual ~mpi_static(void)
+   {
+   }
 };
 
 #endif
