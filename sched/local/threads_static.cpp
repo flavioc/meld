@@ -148,20 +148,8 @@ bool
 static_local::busy_wait(void)
 {
    while(!has_work()) {
-      if(is_active() && !has_work()) {
-         spinlock::scoped_lock l(lock);
-         if(!has_work()) {
-            if(is_active())
-               set_inactive(); // may be inactive from previous iteration
-         } else break;
-      }
-      
-      if(!has_work() && is_inactive() && all_threads_finished()) {
-         assert(!has_work());
-         assert(is_inactive());
-         assert(all_threads_finished());
-         return false;
-      }
+      BUSY_LOOP_MAKE_INACTIVE()
+      BUSY_LOOP_CHECK_TERMINATION_THREADS()
    }
    
    // since queue pushing and state setting are done in

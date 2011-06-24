@@ -236,7 +236,6 @@ tokenizer::tokenizer(void)
 
 tokenizer::~tokenizer(void)
 {
-   assert(tok.is_white());
 }
 
 void
@@ -249,6 +248,12 @@ tokenizer::init(void)
       has_global_tok = false;
    }
    tok.set_white();
+}
+
+void
+tokenizer::end(void)
+{
+   assert(tok.is_white());
 }
 
 }

@@ -273,6 +273,8 @@ router::~router(void)
    if(world && env) {
       delete world;
       delete env;
+      
+      sched::mpi_handler::end();
    
       MPI_Finalize(); // must call this since MPI_Init_thread is not supported by boost
       

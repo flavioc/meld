@@ -22,74 +22,100 @@ namespace sched
 void
 mpi_static::assert_end_iteration(void)
 {
-   sstatic::assert_end_iteration();
-   
+   static_global::assert_end_iteration();
    assert_mpi();
 }
 
 void
 mpi_static::assert_end(void)
 {
-   sstatic::assert_end();
-   
+   static_global::assert_end();
    assert_mpi();
 }
 
-void
-mpi_static::begin_get_work(void)
+bool
+mpi_static::get_work(work_unit& work)
 {
-   do_mpi_worker_cycle();
-   do_mpi_leader_cycle();
+   MPI_WORK_CYCLE()
+   
+   return static_global::get_work(work);
 }
 
 void
-mpi_static::new_mpi_message(node *node, simple_tuple *tpl)
+mpi_static::new_mpi_message(node *node, simple_tuple *stpl)
 {
-   new_work(NULL, node, tpl);
+   mpi_static *other((mpi_static*)find_scheduler(node->get_id()));
+
+   if(other == this) {
+      set_active_if_inactive();
+      new_work(NULL, node, stpl);
+      assert(is_active());
+   } else {
+      new_work_other(other, node, stpl);
+   }
 }
 
 bool
 mpi_static::busy_wait(void)
 {
-   transmit_messages();
-   fetch_work();
+   flush_buffered();
+   IDLE_MPI()
    
    while(!has_work()) {
-
-      update_pending_messages(true);
-      
-      if(!token.busy_loop_token(true))
-         return false;
-      
-      fetch_work();
+      BUSY_LOOP_MAKE_INACTIVE()
+      BUSY_LOOP_CHECK_INACTIVE_THREADS()
+      BUSY_LOOP_CHECK_INACTIVE_MPI()
+      BUSY_LOOP_FETCH_WORK()
+      if(leader_thread())
+         flush_buffered();
    }
+   
+   set_active_if_inactive();
    
    assert(has_work());
    
    return true;
 }
 
-void
-mpi_static::work_found(void)
-{
-   assert(has_work());
-}
-
 bool
 mpi_static::terminate_iteration(void)
 {
-   update_pending_messages(false);
-   token.token_terminate_iteration();
+   // this is needed since one thread can reach set_active
+   // and thus other threads waiting for all_finished will fail
+   // to get here
+   threads_synchronize();
+   update_pending_messages(false); // just delete all requests
    
-   generate_aggs();
-   
-   return state::ROUTER->reduce_continue(has_work());
-}
+   if(leader_thread())
+      token.token_terminate_iteration();
 
-void
-mpi_static::new_work_other(sched::base *scheduler, node *node, const simple_tuple *stuple)
-{
-   assert(false);
+   assert(iteration_finished);
+   assert(is_inactive());
+
+   generate_aggs();
+
+   if(has_work())
+      set_active();
+   
+   assert_thread_iteration(iteration);
+
+   // again, needed since we must wait if any thread
+   // is set to active in the previous if
+   threads_synchronize();
+   
+   if(leader_thread()) {
+      const bool more_work = state::ROUTER->reduce_continue(!all_threads_finished());
+      iteration_finished = !more_work;
+   }
+   
+   // threads must wait for the final answer between processes
+   threads_synchronize();
+
+   const bool ret(!iteration_finished);
+   
+   threads_synchronize();
+   
+   return ret;
 }
 
 void
@@ -97,18 +123,6 @@ mpi_static::new_work_remote(remote *rem, const node::node_id, message *msg)
 {
    // this is buffered as the 0 thread id, since only one thread per proc exists
    buffer_message(rem, 0, msg);
-}
-
-mpi_static*
-mpi_static::find_scheduler(const node::node_id)
-{
-   return this;
-}
-
-mpi_static*
-mpi_static::start(void)
-{
-   return new mpi_static();
 }
 
 #endif

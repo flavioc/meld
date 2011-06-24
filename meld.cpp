@@ -27,7 +27,7 @@ help(void)
    fprintf(stderr, "\t\t\ttsX static division with a queue per thread\n");
    fprintf(stderr, "\t\t\ttlX static division with a queue per node\n");
    fprintf(stderr, "\t\t\ttdX initial static division but allow work stealing\n");
-   fprintf(stderr, "\t\t\tmpi static division of work using mpi\n");
+   fprintf(stderr, "\t\t\tmpiX static division of work using mpi plus threads\n");
    fprintf(stderr, "\t\t\tmisX static division of work using mpi plus threads\n");
    fprintf(stderr, "\t\t\tmixX static division of work using mpi plus threads and work stealing\n");
    fprintf(stderr, "\t\t\tsinX no division of working using local queues\n");
@@ -54,13 +54,10 @@ parse_sched(char *sched)
       sched += 2;
       num_threads = (size_t)atoi(sched);
       sched_type = SCHED_THREADS_STATIC_GLOBAL;
-   } else if(strlen(sched) == 3 && strncmp(sched, "mpi", 3) == 0) {
-#ifndef COMPILE_MPI
-      fprintf(stderr, "Error: MPI support was not compiled\n");
-      exit(EXIT_FAILURE);
-#endif
-      sched_type = SCHED_MPI_UNI_STATIC;
-      num_threads = 1;
+   } else if(strlen(sched) > 3 && strncmp(sched, "mpi", 3) == 0) {
+      sched_type = SCHED_MPI_AND_THREADS_STATIC_GLOBAL;
+      sched += 3;
+      num_threads = (size_t)atoi(sched);
    } else if(strncmp(sched, "mis", 3) == 0 && strlen(sched) > 3) {
       sched_type = SCHED_MPI_AND_THREADS_STATIC_LOCAL;
       sched += 3;

@@ -1,10 +1,15 @@
-#!/bin/sh
+#!/bin/bash
 
 EXEC="../meld -d"
 TEST=${1}
 TYPE="${2}"
-FILE="files/$(basename $TEST .m).test"
 
+if test -z "${TEST}" -o -z "${TYPE}"; then
+	echo "Usage: test.sh <code file> <test type: serial, ts, tl, ...>"
+	exit 1
+fi
+
+FILE="files/$(basename $TEST .m).test"
 NODES=$(sh ./number_nodes.sh $TEST)
 
 do_exit ()
@@ -18,6 +23,11 @@ run_diff ()
 	TO_RUN="${1}"
 	${TO_RUN} > test.out
 	DIFF=`diff -u ${FILE} test.out`
+	RET=$?
+	if [ $RET -eq 1 ]; then
+		echo "Meld failed! See report"
+		exit 1
+	fi
 	if [ ! -z "${DIFF}" ]; then
 		echo "DIFFERENCES!!!"
 		diff -u ${FILE} test.out
@@ -31,15 +41,6 @@ do_test ()
 	NTHREADS=${1}
 	SCHED=${2}
 	TO_RUN="${EXEC} -f ${TEST} -c ${SCHED}${NTHREADS}"
-
-	run_diff "${TO_RUN}"
-}
-
-do_test_mpi ()
-{
-	NPROCS=${1}
-
-	TO_RUN="mpirun -n ${NPROCS} ${EXEC} -f ${TEST} -c mpi"
 
 	run_diff "${TO_RUN}"
 }
@@ -63,16 +64,6 @@ run_test_n ()
 	echo "Running ${TEST} ${TIMES} times with ${NTHREADS} threads (SCHED: ${SCHED})..."
 	for((I=1; I <= ${TIMES}; I++)); do
 		do_test ${NTHREADS} ${SCHED}
-	done
-}
-
-run_test_mpi_n ()
-{
-	NPROCS=${1}
-	TIMES=${2}
-	echo "Running ${TEST} ${TIMES} times with ${NPROCS} processes (SCHED: mpi)..."
-	for((I=1; I <= ${TIMES}; I++)); do
-		do_test_mpi ${NPROCS}
 	done
 }
 
@@ -113,31 +104,6 @@ loop_sched ()
 	fi
 	if [ $NODES -gt 7 ]; then
 		run_test_n 8 1 ${SCHED}
-	fi
-}
-
-loop_sched_mpi ()
-{
-	run_test_mpi_n 1 1
-	run_test_mpi_n 2 1
-	
-	if [ $NODES -gt 2 ]; then
-		run_test_mpi_n 3 1
-	fi
-	if [ $NODES -gt 3 ]; then
-		run_test_mpi_n 4 1
-	fi
-	if [ $NODES -gt 4 ]; then
-		run_test_mpi_n 5 1
-	fi
-	if [ $NODES -gt 5 ]; then
-		run_test_mpi_n 6 1
-	fi
-	if [ $NODES -gt 6 ]; then
-		run_test_mpi_n 7 1
-	fi
-	if [ $NODES -gt 7 ]; then
-		run_test_mpi_n 8 1
 	fi
 }
 
@@ -210,7 +176,7 @@ if [ "${TYPE}" = "td" ]; then
 fi
 
 if [ "${TYPE}" = "mpi" ]; then
-	loop_sched_mpi
+	loop_sched_mix mpi
 	exit 0
 fi
 

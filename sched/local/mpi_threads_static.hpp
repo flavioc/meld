@@ -5,6 +5,8 @@
 #include "sched/local/threads_static.hpp"
 #include "sched/mpi/tokenizer.hpp"
 #include "sched/mpi/handler.hpp"
+#include "utils/macros.hpp"
+#include "sched/thread/assert.hpp"
 
 namespace sched
 {
@@ -13,10 +15,6 @@ class mpi_thread_static: public sched::static_local,
                   private sched::mpi_handler
 {
 private:
-   
-   utils::byte _pad_mpi_thread1[128];
-   
-   message_buffer msg_buf;
    
    void new_mpi_message(db::node *, db::simple_tuple *);
    
@@ -30,7 +28,7 @@ public:
    virtual bool get_work(work_unit&);
    virtual void new_work_remote(process::remote *, const db::node::node_id, message *);
    
-   static std::vector<sched::base*>& start(const size_t);
+   DEFINE_START_FUNCTION(mpi_thread_static)
    
    static db::node *create_node(const db::node::node_id id, const db::node::node_id trans)
    {

@@ -95,24 +95,12 @@ dynamic_local::busy_wait(void)
          if(target->is_active()) {
             target->request_work_to(this);
             ++asked_now;
-						++asked_many;
+				++asked_many;
          }
       }
       
-      if(is_active() && !has_work()) {
-         spinlock::scoped_lock l(lock);
-         if(!has_work()) {
-            if(is_active())
-               set_inactive();
-         }
-      }
-      
-      if(is_inactive() && !has_work() && all_threads_finished()) {
-         assert(is_inactive());
-         assert(!has_work());
-         assert(all_threads_finished());
-         return false;
-      }
+      BUSY_LOOP_MAKE_INACTIVE()
+      BUSY_LOOP_CHECK_TERMINATION_THREADS()
    }
 
 	 if(asked_many > 0)

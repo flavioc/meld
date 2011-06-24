@@ -34,6 +34,9 @@ public:
    // init function to be called after MPI subsystem is set up properly
    void init(void);
    
+   // clean up function
+   void end(void);
+   
    explicit tokenizer(void);
    
    virtual ~tokenizer(void);

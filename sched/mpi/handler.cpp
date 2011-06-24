@@ -129,4 +129,10 @@ mpi_handler::init(void)
    token.init();
 }
 
+void
+mpi_handler::end(void)
+{
+   token.end();
+}
+
 }

@@ -89,6 +89,35 @@ public:
    }
 };
 
+#define DEFINE_START_FUNCTION(CLASS)                  \
+   static std::vector<sched::base*>&                  \
+   start(const size_t num_threads)                    \
+   {                                                  \
+      init_barriers(num_threads);                     \
+      for(vm::process_id i(0); i < num_threads; ++i)  \
+         add_thread(new CLASS(i));                    \
+      assert_thread_disable_work_count();             \
+      return ALL_THREADS;                             \
+   }
+
+#define BUSY_LOOP_MAKE_INACTIVE()         \
+   if(is_active() && !has_work()) {       \
+      spinlock::scoped_lock l(lock);      \
+      if(!has_work()) {                   \
+         if(is_active())                  \
+            set_inactive();               \
+      } else                              \
+         break;                           \
+   }
+   
+#define BUSY_LOOP_CHECK_TERMINATION_THREADS()   \
+   if(!has_work() && is_inactive() && all_threads_finished()) {      \
+      assert(!has_work());                                           \
+      assert(is_inactive());                                         \
+      assert(all_threads_finished());                                \
+      return false;                                                  \
+   }
+
 }
 
 #endif

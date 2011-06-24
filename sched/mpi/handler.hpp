@@ -53,9 +53,15 @@ protected:
 public:
    
    static void init(void);
+   static void end(void);
    
    void fetch_work(void);
-   void assert_mpi(void) const { assert(msg_buf.empty()); }
+   
+   void assert_mpi(void) const
+   {
+      assert(msg_buf.empty());
+      assert(iteration_finished);
+   }
    
    void transmit_messages(void);
    
@@ -68,6 +74,43 @@ public:
    
    ~mpi_handler(void) {}
 };
+
+#define BUSY_LOOP_CHECK_INACTIVE_THREADS() \
+   if(is_inactive() && !has_work() && leader_thread() && all_threads_finished()) {  \
+      mutex::scoped_lock lock(tok_mutex);                                           \
+      if(!token.busy_loop_token(all_threads_finished())) {                          \
+         assert(all_threads_finished());                                            \
+         assert(is_inactive());                                                     \
+         assert(!has_work());                                                       \
+         iteration_finished = true;                                                 \
+         return false;                                                              \
+      }                                                                             \
+   }
+   
+#define BUSY_LOOP_CHECK_INACTIVE_MPI() \
+   if(!leader_thread() && !has_work() && is_inactive() && all_threads_finished() && iteration_finished) {   \
+      assert(!leader_thread());                                                                             \
+      assert(is_inactive());                                                                                \
+      assert(!has_work());                                                                                  \
+      assert(iteration_finished);                                                                           \
+      assert(all_threads_finished());                                                                       \
+      return false;                                                                                         \
+   }
+   
+#define BUSY_LOOP_FETCH_WORK()   \
+   if(leader_thread())           \
+      fetch_work();
+      
+#define MPI_WORK_CYCLE()         \
+   do_mpi_worker_cycle();        \
+   if(leader_thread())           \
+      do_mpi_leader_cycle();
+
+#define IDLE_MPI()                  \
+   transmit_messages();             \
+   if(leader_thread())              \
+      fetch_work();                 \
+   update_pending_messages(true);
    
 }
 

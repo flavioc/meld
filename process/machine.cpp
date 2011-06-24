@@ -143,7 +143,7 @@ get_creation_function(const scheduler_type sched_type)
 {
    switch(sched_type) {
       case SCHED_THREADS_STATIC_GLOBAL:
-      case SCHED_MPI_UNI_STATIC:
+      case SCHED_MPI_AND_THREADS_STATIC_GLOBAL:
          return database::create_node_fn(sched::sstatic::create_node);
       case SCHED_THREADS_STATIC_LOCAL:
       case SCHED_THREADS_SINGLE_LOCAL:
@@ -182,8 +182,8 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
    vector<sched::base*> schedulers;
    
    switch(sched_type) {
-      case SCHED_MPI_UNI_STATIC:
-         schedulers.push_back(sched::mpi_static::start());
+      case SCHED_MPI_AND_THREADS_STATIC_GLOBAL:
+         schedulers = sched::mpi_static::start(num_threads);
          break;
       case SCHED_THREADS_STATIC_LOCAL:
          schedulers = sched::static_local::start(num_threads);

@@ -3,7 +3,6 @@
 #include "vm/state.hpp"
 #include "process/router.hpp"
 #include "utils/utils.hpp"
-#include "sched/thread/assert.hpp"
 
 using namespace std;
 using namespace vm;
@@ -43,11 +42,7 @@ mpi_thread_dynamic::new_mpi_message(node *_node, simple_tuple *stpl)
          node->set_in_queue(true);
          this->add_to_queue(node);
       }
-      if(is_inactive()) {
-         spinlock::scoped_lock l(lock);
-         if(is_inactive())
-            set_active();
-      }
+      set_active_if_inactive();
       assert(node->in_queue());
       assert(is_active());
    } else {
@@ -96,10 +91,7 @@ mpi_thread_dynamic::busy_wait(void)
 {
    size_t asked_many(0);
    
-   transmit_messages();
-   if(leader_thread())
-      fetch_work();
-   update_pending_messages(true);
+   IDLE_MPI()
    
    while(!has_work()) {
       
@@ -112,38 +104,10 @@ mpi_thread_dynamic::busy_wait(void)
          }
       }
       
-      if(is_active() && !has_work()) {
-         spinlock::scoped_lock l(lock);
-         if(!has_work()) {
-            if(is_active()) {
-               set_inactive();
-            }
-         } else
-            break;
-      }
-      
-      if(is_inactive() && !has_work() && leader_thread() && all_threads_finished()) {
-         mutex::scoped_lock lock(tok_mutex);
-         if(!token.busy_loop_token(all_threads_finished())) {
-            assert(all_threads_finished());
-            assert(is_inactive());
-            assert(!has_work());
-            iteration_finished = true;
-            return false;
-         }
-      }
-      
-      if(!leader_thread() && !has_work() && is_inactive() && all_threads_finished() && iteration_finished) {
-         assert(!leader_thread()); // leader thread does not finish here
-         assert(is_inactive());
-         assert(!has_work());
-         assert(iteration_finished);
-         assert(all_threads_finished());
-         return false;
-      }
-      
-      if(leader_thread())
-         fetch_work();
+      BUSY_LOOP_MAKE_INACTIVE()
+      BUSY_LOOP_CHECK_INACTIVE_THREADS()
+      BUSY_LOOP_CHECK_INACTIVE_MPI()
+      BUSY_LOOP_FETCH_WORK()
    }
    
    set_active_if_inactive();
@@ -163,10 +127,7 @@ mpi_thread_dynamic::new_work_remote(remote *rem, const node::node_id, message *m
 bool
 mpi_thread_dynamic::get_work(work_unit& work)
 {  
-   do_mpi_worker_cycle();
-   
-   if(leader_thread())
-      do_mpi_leader_cycle();
+   MPI_WORK_CYCLE()
    
    return dynamic_local::get_work(work);
 }
@@ -210,19 +171,6 @@ mpi_thread_dynamic::terminate_iteration(void)
    threads_synchronize();
    
    return ret;
-}
-   
-vector<sched::base*>&
-mpi_thread_dynamic::start(const size_t num_threads)
-{
-   init_barriers(num_threads);
-   
-   for(process_id i(0); i < num_threads; ++i)
-      add_thread(new mpi_thread_dynamic(i));
-      
-   assert_thread_disable_work_count();
-   
-   return ALL_THREADS;
 }
 
 }

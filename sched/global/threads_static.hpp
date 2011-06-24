@@ -9,6 +9,7 @@
 #include "sched/global/static.hpp"
 #include "sched/thread/threaded.hpp"
 #include "sched/thread/queue_buffer.hpp"
+#include "utils/macros.hpp"
 #include "vm/defs.hpp"
 
 namespace sched
@@ -19,14 +20,15 @@ class static_global : public sched::sstatic,
 {
 private:
    
-   utils::byte _pad_threads1[128];
+   DEFINE_PADDING;
    
    queue_buffer buf;
    
    void flush_queue(const vm::process_id, static_global *);
-   void flush_buffered(void);
    
 protected:
+   
+   void flush_buffered(void);
    
    virtual void assert_end_iteration(void) const;
    virtual void assert_end(void) const;

@@ -32,7 +32,6 @@ static_global::new_work(node *from, node *to, const simple_tuple *tpl, const boo
 void
 static_global::new_work_other(sched::base *scheduler, node *node, const simple_tuple *stuple)
 {
-   assert(is_active());
    assert(node != NULL);
    assert(stuple != NULL);
    assert(scheduler != NULL);
@@ -77,7 +76,6 @@ static_global::flush_queue(const process_id id, static_global *other)
    queue_buffer::queue& q(buf.get_queue(id));
    
    assert(this != other);
-   assert(is_active());
    assert(!q.empty());
    
    other->queue_work.snap(q);
@@ -96,8 +94,6 @@ static_global::flush_buffered(void)
 {
    if(buf.empty())
       return;
-      
-   assert(is_active());
    
    for(process_id i(0); i < (process_id)state::NUM_THREADS; ++i) {
       if(i != id && !buf.empty(i))
@@ -111,21 +107,8 @@ static_global::busy_wait(void)
    flush_buffered();
    
    while(!has_work()) {
-      
-      if(is_active() && !has_work()) {
-         mutex::scoped_lock l(mutex);
-         if(!has_work()) {
-            if(is_active()) // may be inactive from the previous iteration
-               set_inactive();
-         }
-      }
-      
-      if(!has_work() && is_inactive() && all_threads_finished()) {
-         assert(!has_work());
-         assert(all_threads_finished());
-         assert(is_inactive());
-         return false;
-      }
+      BUSY_LOOP_MAKE_INACTIVE()
+      BUSY_LOOP_CHECK_TERMINATION_THREADS()
    }
    
    set_active_if_inactive();

@@ -32,6 +32,8 @@ private:
    int total;
    size_t requests_per_round;
    
+   void clear(void);
+   
 public:
    
    inline const bool empty(void) const { return total == 0; }
