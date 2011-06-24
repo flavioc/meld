@@ -160,12 +160,8 @@ dynamic_local::handle_stealing(void)
       }
       
       assert(total_sent > 0);
-      
-      if(asker->is_inactive()) {
-         spinlock::scoped_lock lock(asker->lock);
-         if(asker->is_inactive() && asker->has_work())
-            asker->set_active();
-      }
+   
+      MAKE_OTHER_ACTIVE(asker);
    }
 }
 

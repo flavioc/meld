@@ -144,7 +144,7 @@ get_creation_function(const scheduler_type sched_type)
    switch(sched_type) {
       case SCHED_THREADS_STATIC_GLOBAL:
       case SCHED_MPI_AND_THREADS_STATIC_GLOBAL:
-         return database::create_node_fn(sched::sstatic::create_node);
+         return database::create_node_fn(sched::static_global::create_node);
       case SCHED_THREADS_STATIC_LOCAL:
       case SCHED_THREADS_SINGLE_LOCAL:
          return database::create_node_fn(sched::static_local::create_node);

@@ -24,7 +24,11 @@ static_global::new_work(node *from, node *to, const simple_tuple *tpl, const boo
 {
    assert(to != NULL);
    assert(tpl != NULL);
-   sstatic::new_work(from, to, tpl, is_agg);
+   
+   work_unit work = {to, tpl, is_agg};
+
+   queue_work.push(work, tpl->get_strat_level());
+   
    assert((!is_agg && is_active()) || is_agg);
    assert_thread_push_work();
 }
@@ -55,19 +59,19 @@ static_global::new_work_remote(remote *, const node::node_id, message *)
 void
 static_global::assert_end_iteration(void) const
 {
-   sstatic::assert_end_iteration();
    assert(is_inactive());
    assert(buf.empty());
    assert(all_threads_finished());
+   assert(!has_work());
 }
 
 void
 static_global::assert_end(void) const
 {
-   sstatic::assert_end();
    assert(is_inactive());
    assert(buf.empty());
    assert(all_threads_finished());
+   assert(!has_work());
 }
 
 void
@@ -80,11 +84,7 @@ static_global::flush_queue(const process_id id, static_global *other)
    
    other->queue_work.snap(q);
    
-   if(other->is_inactive()) {
-      spinlock::scoped_lock l(other->lock);
-      if(other->is_inactive() && other->has_work())
-         other->set_active();
-   }
+   MAKE_OTHER_ACTIVE(other);
    
    buf.clear_queue(id);
 }
@@ -122,29 +122,33 @@ static_global::busy_wait(void)
 bool
 static_global::get_work(work_unit& work)
 {
-   const bool ret(sstatic::get_work(work));
-   if(ret)
-      assert_thread_pop_work();
-      
-   return ret;
-}
+   if(!has_work()) {
+      if(!busy_wait())
+         return false;
 
-void
-static_global::begin_get_work(void)
-{
-}
-
-void
-static_global::work_found(void)
-{
-   assert(is_active());
-   assert(has_work());
+      assert(is_active());
+      assert(has_work());
+   }
+   
+   work = queue_work.pop();
+   
+   assert_thread_pop_work();
+   
+   return true;
 }
 
 void
 static_global::init(const size_t num_threads)
 {
-   sstatic::init(num_threads);
+   const node::node_id first(remote::self->find_first_node(id));
+   const node::node_id final(remote::self->find_last_node(id));
+   
+   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(first));
+   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(final));
+   
+   for(; it != end; ++it)
+      init_node(it->second);
+      
    buf.init(num_threads);
       
    assert(is_active());
@@ -153,8 +157,19 @@ static_global::init(const size_t num_threads)
 void
 static_global::end(void)
 {
-   sstatic::end();
    assert(is_inactive());
+}
+
+void
+static_global::generate_aggs(void)
+{
+   const node::node_id first(remote::self->find_first_node(id));
+   const node::node_id final(remote::self->find_last_node(id));
+   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(first));
+   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(final));
+   
+   for(; it != end; ++it)
+      node_iteration(it->second);
 }
 
 bool
@@ -198,7 +213,8 @@ static_global::find_scheduler(const node::node_id id)
 }
 
 static_global::static_global(const process_id _id):
-   sstatic(_id)
+   base(_id),
+   queue_work(vm::predicate::MAX_STRAT_LEVEL)
 {
 }
 

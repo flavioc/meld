@@ -6,19 +6,23 @@
 #include <boost/thread/mutex.hpp>
 #include <vector>
 
-#include "sched/global/static.hpp"
 #include "sched/thread/threaded.hpp"
 #include "sched/thread/queue_buffer.hpp"
 #include "utils/macros.hpp"
+#include "sched/queue/bounded_pqueue.hpp"
 #include "vm/defs.hpp"
 
 namespace sched
 {
    
-class static_global : public sched::sstatic,
+class static_global : public sched::base,
                        public sched::threaded
 {
 private:
+   
+   DEFINE_PADDING;
+   
+   safe_bounded_pqueue<work_unit>::type queue_work;
    
    DEFINE_PADDING;
    
@@ -28,13 +32,14 @@ private:
    
 protected:
    
+   inline const bool has_work(void) const { return !queue_work.empty(); }
+   
    void flush_buffered(void);
    
    virtual void assert_end_iteration(void) const;
    virtual void assert_end(void) const;
    virtual bool busy_wait(void);
-   virtual void begin_get_work(void);
-   virtual void work_found(void);
+   virtual void generate_aggs(void);
    
 public:
    
@@ -46,10 +51,16 @@ public:
    virtual void end(void);
    virtual bool terminate_iteration(void);
    virtual bool get_work(work_unit&);
+   virtual void finish_work(const work_unit&) {}
    
    static_global *find_scheduler(const db::node::node_id);
    
    static std::vector<sched::base*>& start(const size_t num_threads);
+   
+   static db::node* create_node(const db::node::node_id id, const db::node::node_id trans)
+   {
+      return new db::node(id, trans);
+   }
    
    explicit static_global(const vm::process_id);
    

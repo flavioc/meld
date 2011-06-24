@@ -117,6 +117,13 @@ public:
       assert(all_threads_finished());                                \
       return false;                                                  \
    }
+   
+#define MAKE_OTHER_ACTIVE(OTHER) \
+   if((OTHER)->is_inactive() && (OTHER)->has_work()) {   \
+      spinlock::scoped_lock l(OTHER->lock);              \
+      if((OTHER)->is_inactive() && (OTHER)->has_work())  \
+         (OTHER)->set_active();                          \
+   }
 
 }
 

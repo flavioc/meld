@@ -10,6 +10,7 @@
 #include "db/node.hpp"
 #include "vm/state.hpp"
 #include "sched/mpi/message.hpp"
+#include "utils/macros.hpp"
 
 namespace process {
    class remote;
@@ -30,7 +31,7 @@ protected:
    
    const vm::process_id id;
    
-   utils::byte _pad_base[128];
+   DEFINE_PADDING;
    
    size_t iteration;
    
