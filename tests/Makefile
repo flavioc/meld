@@ -16,8 +16,8 @@ test-mis:
 test-mix:
 	@bash test_all.sh mix
 
-test-mpi:
-	@bash test_all.sh mpi
+test-mpiglobal:
+	@bash test_all.sh mpiglobal
 
 test:
 	@bash test_all.sh all
