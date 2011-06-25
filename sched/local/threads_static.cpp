@@ -68,12 +68,12 @@ static_local::new_work(node *from, node *_to, const simple_tuple *tpl, const boo
    assert(tpl != NULL);
    
    assert_thread_push_work();
-   assert(is_active());
+   //assert(is_active());
    
    to->add_work(tpl, is_agg);
    
    if(!to->in_queue()) {
-      spinlock::scoped_lock lock(to->spin);
+      spinlock::scoped_lock l(to->spin);
       if(!to->in_queue()) {
          add_to_queue(to);
          to->set_in_queue(true);

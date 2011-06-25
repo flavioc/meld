@@ -31,48 +31,47 @@ mpi_thread_static::assert_end_iteration(void) const
 void
 mpi_thread_static::new_mpi_message(node *_node, simple_tuple *stpl)
 {
+   assert(remote::self->find_proc_owner(_node->get_id()) == get_id());
+   
    thread_node *node((thread_node*)_node);
-   spinlock::scoped_lock lnode(node->spin);
+   
+   assert(node->get_owner() == this);
+   
+   node->add_work(stpl, false);
+   
+   if(!node->in_queue()) {
+      spinlock::scoped_lock l(node->spin);
 
-   if(node->get_owner() == this) {
-      node->add_work(stpl, false);
       if(!node->in_queue()) {
          node->set_in_queue(true);
          this->add_to_queue(node);
       }
-      set_active_if_inactive();
-      assert(node->in_queue());
-      assert(is_active());
-   } else {
-      mpi_thread_static *owner = (mpi_thread_static*)node->get_owner();
-   
-      node->add_work(stpl, false);
-   
-      if(!node->in_queue()) {
-         node->set_in_queue(true);
-         owner->add_to_queue(node);
-      }
-   
-      assert(owner != NULL);
-   
-      if(owner->is_inactive()) {
-         spinlock::scoped_lock lock(owner->lock);
-         if(owner->is_inactive() && owner->has_work())
-            owner->set_active();
-      }
    }
+   
+   set_active_if_inactive();
+   
+   assert(node->in_queue());
+   assert(is_active());
 }
 
 bool
 mpi_thread_static::busy_wait(void)
 {
-   IDLE_MPI()
+   boost::function0<bool> f(boost::bind(&mpi_thread_static::all_threads_finished, this));
+   IDLE_MPI_ALL(get_id())
       
    while(!has_work()) {
       BUSY_LOOP_MAKE_INACTIVE()
-      BUSY_LOOP_CHECK_INACTIVE_THREADS()
-      BUSY_LOOP_CHECK_INACTIVE_MPI()
-      BUSY_LOOP_FETCH_WORK()
+      
+      if(attempt_token(f, leader_thread())) {
+         assert(all_threads_finished());
+         assert(is_inactive());
+         assert(!has_work());
+         assert(iteration_finished);
+         return false;
+      }
+      
+      fetch_work(get_id());
    }
    
    set_active_if_inactive();
@@ -84,15 +83,19 @@ mpi_thread_static::busy_wait(void)
 }
 
 void
-mpi_thread_static::new_work_remote(remote *rem, const node::node_id, message *msg)
+mpi_thread_static::new_work_remote(remote *rem, const node::node_id node_id, message *msg)
 {
-   buffer_message(rem, 0, msg);
+   const process_id target(rem->find_proc_owner(node_id));
+   
+   assert(rem != remote::self);
+   
+   buffer_message(rem, target, msg);
 }
 
 bool
 mpi_thread_static::get_work(work_unit& work)
 {  
-   MPI_WORK_CYCLE()
+   do_mpi_cycle(get_id());
    
    return static_local::get_work(work);
 }
