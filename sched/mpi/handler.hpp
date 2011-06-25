@@ -8,6 +8,7 @@
 
 #include "sched/mpi/message_buffer.hpp"
 #include "sched/mpi/tokenizer.hpp"
+#include "utils/atomic.hpp"
 
 namespace sched
 {
@@ -23,6 +24,8 @@ private:
    size_t round_trip_send;
    
    message_buffer msg_buf;
+   
+   static utils::atomic<size_t> inside_counter;
    
 protected:
    
@@ -50,9 +53,11 @@ protected:
          messages_were_transmitted(1);
    }
    
+   void attempt_token(boost::function0<bool>&, const bool);
+   
 public:
    
-   static void init(void);
+   static void init(const size_t);
    static void end(void);
    
    void fetch_work(void);

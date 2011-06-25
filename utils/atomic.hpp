@@ -59,11 +59,6 @@ public:
       return *this;
    }
    
-   /*
-   inline const bool operator==(const T& val) const {
-      return elem == val;
-   }*/
-   
    inline void operator=(const T val)
    {
       elem = val;

@@ -1,4 +1,6 @@
 
+#include <boost/thread/barrier.hpp>
+
 #include "sched/mpi/handler.hpp"
 #include "vm/state.hpp"
 #include "process/router.hpp"
@@ -6,6 +8,7 @@
 using namespace std;
 using namespace vm;
 using namespace db;
+using namespace utils;
 
 #ifdef IMPLEMENT_MISSING_MPI
 namespace MPI {
@@ -26,6 +29,8 @@ namespace sched
 volatile bool mpi_handler::iteration_finished(false);
 tokenizer mpi_handler::token;
 boost::mutex mpi_handler::tok_mutex;
+atomic<size_t> mpi_handler::inside_counter(0);
+static boost::barrier *inside_barrier(NULL);
    
 void
 mpi_handler::fetch_work(void)
@@ -113,6 +118,42 @@ mpi_handler::update_pending_messages(const bool test)
 {
    msg_buf.update_received(test);
 }
+
+void
+mpi_handler::attempt_token(boost::function0<bool>& finished, const bool main)
+{
+   if(!finished())
+      return;
+   if(iteration_finished)
+      return;
+
+   inside_counter--;
+   
+   while(inside_counter != 0) {
+      if(!finished() || iteration_finished) {
+         //printf("HERE fail\n");
+         inside_counter++;
+         return;
+      }
+   }
+   
+   assert(inside_counter == 0);
+   assert(finished());
+   
+   inside_barrier->wait();
+   
+   //printf("HERE\n");
+   
+   // all threads are now here!
+   if(main) {
+      // HERE
+      assert(inside_counter == 0);
+      inside_counter = state::NUM_THREADS;
+   }
+   
+   //printf("Gonna wait\n");
+   inside_barrier->wait();
+}
    
 mpi_handler::mpi_handler(void):
    step_fetch(MPI_DEFAULT_ROUND_TRIP_FETCH),
@@ -124,9 +165,11 @@ mpi_handler::mpi_handler(void):
 }
 
 void
-mpi_handler::init(void)
+mpi_handler::init(const size_t num_threads)
 {
    token.init();
+   inside_counter = num_threads;
+   inside_barrier = new boost::barrier(num_threads);
 }
 
 void

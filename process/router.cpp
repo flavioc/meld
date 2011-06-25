@@ -251,7 +251,7 @@ router::base_constructor(const size_t num_threads, int argc, char **argv, const 
    state::ROUTER = this;
    
    // other initializations
-   sched::mpi_handler::init();
+   sched::mpi_handler::init(num_threads);
 }
 
 router::router(void)

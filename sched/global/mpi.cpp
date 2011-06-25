@@ -1,4 +1,6 @@
 
+#include <functional>
+
 #include "sched/global/mpi.hpp"
 
 #ifdef COMPILE_MPI
@@ -68,6 +70,9 @@ mpi_static::busy_wait(void)
       BUSY_LOOP_FETCH_WORK()
       if(leader_thread())
          flush_buffered();
+      boost::function0<bool> f;
+      f = boost::bind(&mpi_static::all_threads_finished, this);
+      attempt_token(f, leader_thread());
    }
    
    set_active_if_inactive();
