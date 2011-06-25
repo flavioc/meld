@@ -8,6 +8,7 @@
 using namespace std;
 using namespace vm;
 using namespace db;
+using namespace process;
 using namespace utils;
 
 #ifdef IMPLEMENT_MISSING_MPI
@@ -33,7 +34,7 @@ atomic<size_t> mpi_handler::inside_counter(0);
 static boost::barrier *inside_barrier(NULL);
    
 void
-mpi_handler::fetch_work(void)
+mpi_handler::fetch_work(const process_id id)
 {
    if(!state::ROUTER->use_mpi())
       return;
@@ -41,13 +42,16 @@ mpi_handler::fetch_work(void)
    size_t total_received(0);
    message_set *ms;
       
-   while((ms = state::ROUTER->recv_attempt(0)) != NULL) {
+   while((ms = state::ROUTER->recv_attempt(id, recv_buf)) != NULL) {
       assert(!ms->empty());
       
       for(list_messages::const_iterator it(ms->begin()); it != ms->end(); ++it) {
          message *msg(*it);
          node *node(state::DATABASE->find_node(msg->id));
          simple_tuple *tpl(msg->data);
+         
+         assert(msg->id == node->get_id());
+         assert(remote::self->find_proc_owner(node->get_id()) == id);
 
          node->more_to_process(tpl->get_predicate_id());
          new_mpi_message(node, tpl);
@@ -108,7 +112,20 @@ mpi_handler::do_mpi_leader_cycle(void)
    ++round_trip_fetch;
    
    if(round_trip_fetch == step_fetch) {
-      fetch_work();
+      fetch_work(0);
+      round_trip_fetch = 0;
+   }
+}
+
+void
+mpi_handler::do_mpi_cycle(const process_id id)
+{
+   do_mpi_worker_cycle();
+   
+   ++round_trip_fetch;
+   
+   if(round_trip_fetch == step_fetch) {
+      fetch_work(id);
       round_trip_fetch = 0;
    }
 }

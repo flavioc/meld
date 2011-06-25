@@ -64,12 +64,10 @@ private:
    
    boost::mpi::environment *env;
    boost::mpi::communicator *world;
+   
 #ifdef DEBUG_SERIALIZATION_TIME
    utils::execution_time serial_time;
 #endif
-   list_state_reqs state_reqs;
-
-   utils::byte recv_buf[MPI_BUF_SIZE];
 #endif 
 
    void base_constructor(const size_t, int, char **, const bool);
@@ -88,7 +86,7 @@ public:
    
    const bool was_received(const size_t, MPI_Request *) const;
    
-   sched::message_set* recv_attempt(const vm::process_id);
+   sched::message_set* recv_attempt(const vm::process_id, utils::byte *);
 
    void send_token(const sched::token&);
    

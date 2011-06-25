@@ -53,8 +53,8 @@ router::send(remote *rem, const process_id& proc, const message_set& ms)
    assert(rem != NULL);
 
    const int tag(get_thread_tag(proc));
-
    const size_t msg_size(ms.get_storage_size());
+   
    byte *buf(allocator<byte>().allocate(msg_size));
    
    assert(msg_size < MPI_BUF_SIZE);
@@ -71,7 +71,9 @@ router::send(remote *rem, const process_id& proc, const message_set& ms)
    r.mem = buf;
    r.mem_size = msg_size;
    
-   mutex::scoped_lock lock(mpi_mutex);
+   mutex::scoped_lock l(mpi_mutex);
+   
+   // cout << "Sending with tag " << tag << endl;
    
    MPI_Isend(buf, msg_size, MPI_PACKED, rem->get_rank(), tag, *world, &r.mpi_req);
 
@@ -79,7 +81,7 @@ router::send(remote *rem, const process_id& proc, const message_set& ms)
 }
 
 message_set*
-router::recv_attempt(const process_id proc)
+router::recv_attempt(const process_id proc, byte *recv_buf)
 {
 #ifdef DEBUG_SERIALIZATION_TIME
    utils::execution_time::scope s(serial_time);
@@ -103,6 +105,8 @@ router::recv_attempt(const process_id proc)
          MPI_Recv(recv_buf, MPI_BUF_SIZE, MPI_PACKED, mpi::any_source, tag, *world, &stat.m_status);
       }
       
+      //cout << "Received with tag " << stat.m_status.MPI_TAG << " " << (int)proc << endl;
+      assert(stat.m_status.MPI_TAG == tag);
       message_set *ms(message_set::unpack(recv_buf, MPI_BUF_SIZE, *world));
       return ms;
    } else
@@ -210,7 +214,7 @@ router::base_constructor(const size_t num_threads, int argc, char **argv, const 
 {
 #ifdef COMPILE_MPI
    if(argv != NULL && argc > 0 && use_mpi) {
-      static const int mpi_required_support(MPI_THREAD_FUNNELED);
+      static const int mpi_required_support(MPI_THREAD_MULTIPLE);
       int mpi_thread_support;
       
       MPI_Init_thread(&argc, &argv, mpi_required_support, &mpi_thread_support);
@@ -229,6 +233,7 @@ router::base_constructor(const size_t num_threads, int argc, char **argv, const 
          if(i == world->rank())
             nthreads_other = num_threads;
          mpi::broadcast(*world, nthreads_other, i);
+         // cout << "Remote " << i << " threads " << nthreads_other << endl;
          remote_list[i] = new remote(i, nthreads_other);
       }
    

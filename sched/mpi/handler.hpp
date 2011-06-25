@@ -25,6 +25,8 @@ private:
    
    message_buffer msg_buf;
    
+   utils::byte recv_buf[MPI_BUF_SIZE];
+   
    static utils::atomic<size_t> inside_counter;
    
 protected:
@@ -60,7 +62,7 @@ public:
    static void init(const size_t);
    static void end(void);
    
-   void fetch_work(void);
+   void fetch_work(const vm::process_id);
    
    void assert_mpi(void) const
    {
@@ -74,6 +76,7 @@ public:
    
    void do_mpi_worker_cycle(void);
    void do_mpi_leader_cycle(void);
+   void do_mpi_cycle(const vm::process_id);
    
    explicit mpi_handler(void);
    
@@ -104,7 +107,7 @@ public:
    
 #define BUSY_LOOP_FETCH_WORK()   \
    if(leader_thread())           \
-      fetch_work();
+      fetch_work(0);
       
 #define MPI_WORK_CYCLE()         \
    do_mpi_worker_cycle();        \
@@ -114,9 +117,14 @@ public:
 #define IDLE_MPI()                  \
    transmit_messages();             \
    if(leader_thread())              \
-      fetch_work();                 \
+      fetch_work(0);                \
    update_pending_messages(true);
-   
+
+#define IDLE_MPI_ALL(ID)            \
+   transmit_messages();             \
+   fetch_work(ID);                  \
+   update_pending_messages(true);   \
+
 }
 
 #endif

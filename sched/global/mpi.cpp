@@ -38,7 +38,7 @@ mpi_static::assert_end(void)
 bool
 mpi_static::get_work(work_unit& work)
 {
-   MPI_WORK_CYCLE()
+   do_mpi_cycle(get_id());
    
    return static_global::get_work(work);
 }
@@ -46,30 +46,23 @@ mpi_static::get_work(work_unit& work)
 void
 mpi_static::new_mpi_message(node *node, simple_tuple *stpl)
 {
-   mpi_static *other((mpi_static*)find_scheduler(node->get_id()));
+   assert(remote::self->find_proc_owner(node->get_id()) == get_id());
 
-   if(other == this) {
-      set_active_if_inactive();
-      new_work(NULL, node, stpl);
-      assert(is_active());
-   } else {
-      new_work_other(other, node, stpl);
-   }
+   set_active_if_inactive();
+   new_work(NULL, node, stpl);
+   assert(is_active());
 }
 
 bool
 mpi_static::busy_wait(void)
 {
+   boost::function0<bool> f(boost::bind(&mpi_static::all_threads_finished, this));
+   
    flush_buffered();
-   IDLE_MPI()
+   IDLE_MPI_ALL(get_id())
    
    while(!has_work()) {
       BUSY_LOOP_MAKE_INACTIVE()
-      
-      /*BUSY_LOOP_CHECK_INACTIVE_THREADS()
-      BUSY_LOOP_CHECK_INACTIVE_MPI()*/
-      
-      boost::function0<bool> f(boost::bind(&mpi_static::all_threads_finished, this));
       
       if(attempt_token(f, leader_thread())) {
          assert(all_threads_finished());
@@ -79,9 +72,7 @@ mpi_static::busy_wait(void)
          return false;
       }
       
-      BUSY_LOOP_FETCH_WORK()
-      if(leader_thread())
-         flush_buffered();
+      fetch_work(get_id());
    }
    
    set_active_if_inactive();
@@ -133,10 +124,15 @@ mpi_static::terminate_iteration(void)
 }
 
 void
-mpi_static::new_work_remote(remote *rem, const node::node_id, message *msg)
+mpi_static::new_work_remote(remote *rem, const node::node_id node_id, message *msg)
 {
-   // this is buffered as the 0 thread id, since only one thread per proc exists
-   buffer_message(rem, 0, msg);
+   const process_id target(rem->find_proc_owner(node_id));
+   
+   assert(rem != remote::self);
+   
+   //cout << "node " << (int)node_id << " to thread " << (int)target << " in " << rem->get_rank() << endl;
+   
+   buffer_message(rem, target, msg);
 }
 
 #endif
