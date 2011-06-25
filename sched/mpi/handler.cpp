@@ -51,7 +51,6 @@ mpi_handler::fetch_work(const process_id id)
          simple_tuple *tpl(msg->data);
          
          assert(msg->id == node->get_id());
-         assert(remote::self->find_proc_owner(node->get_id()) == id);
 
          node->more_to_process(tpl->get_predicate_id());
          new_mpi_message(node, tpl);
