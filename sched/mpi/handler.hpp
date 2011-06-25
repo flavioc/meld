@@ -53,7 +53,7 @@ protected:
          messages_were_transmitted(1);
    }
    
-   void attempt_token(boost::function0<bool>&, const bool);
+   bool attempt_token(boost::function0<bool>&, const bool);
    
 public:
    

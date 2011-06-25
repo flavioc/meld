@@ -65,14 +65,23 @@ mpi_static::busy_wait(void)
    
    while(!has_work()) {
       BUSY_LOOP_MAKE_INACTIVE()
-      BUSY_LOOP_CHECK_INACTIVE_THREADS()
-      BUSY_LOOP_CHECK_INACTIVE_MPI()
+      
+      /*BUSY_LOOP_CHECK_INACTIVE_THREADS()
+      BUSY_LOOP_CHECK_INACTIVE_MPI()*/
+      
+      boost::function0<bool> f(boost::bind(&mpi_static::all_threads_finished, this));
+      
+      if(attempt_token(f, leader_thread())) {
+         assert(all_threads_finished());
+         assert(is_inactive());
+         assert(!has_work());
+         assert(iteration_finished);
+         return false;
+      }
+      
       BUSY_LOOP_FETCH_WORK()
       if(leader_thread())
          flush_buffered();
-      boost::function0<bool> f;
-      f = boost::bind(&mpi_static::all_threads_finished, this);
-      attempt_token(f, leader_thread());
    }
    
    set_active_if_inactive();
