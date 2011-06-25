@@ -19,6 +19,9 @@ test-mpistatic:
 test-mpiglobal:
 	@bash test_all.sh mpiglobal
 
+test-mpisingle:
+	@bash test_all.sh mpisingle
+
 test:
 	@bash test_all.sh all
 
