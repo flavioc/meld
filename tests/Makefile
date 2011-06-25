@@ -13,8 +13,8 @@ test-serial:
 test-mis:
 	@bash test_all.sh mis
 
-test-mix:
-	@bash test_all.sh mix
+test-mpistatic:
+	@bash test_all.sh mpistatic
 
 test-mpi:
 	@bash test_all.sh mpi
