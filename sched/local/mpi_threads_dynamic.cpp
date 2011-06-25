@@ -34,7 +34,7 @@ void
 mpi_thread_dynamic::new_mpi_message(node *_node, simple_tuple *stpl)
 {
    thread_node *node((thread_node*)_node);
-   spinlock::scoped_lock lnode(node->spin);
+   spinlock::scoped_lock l(node->spin);
 
    if(node->get_owner() == this) {
       node->add_work(stpl, false);
@@ -90,8 +90,9 @@ bool
 mpi_thread_dynamic::busy_wait(void)
 {
    size_t asked_many(0);
+   boost::function0<bool> f(boost::bind(&mpi_thread_dynamic::all_threads_finished, this));
    
-   IDLE_MPI()
+   IDLE_MPI_ALL(get_id())
    
    while(!has_work()) {
       
@@ -105,9 +106,16 @@ mpi_thread_dynamic::busy_wait(void)
       }
       
       BUSY_LOOP_MAKE_INACTIVE()
-      BUSY_LOOP_CHECK_INACTIVE_THREADS()
-      BUSY_LOOP_CHECK_INACTIVE_MPI()
-      BUSY_LOOP_FETCH_WORK()
+      
+      if(attempt_token(f, leader_thread())) {
+         assert(all_threads_finished());
+         assert(is_inactive());
+         assert(!has_work());
+         assert(iteration_finished);
+         return false;
+      }
+      
+      fetch_work(get_id());
    }
    
    set_active_if_inactive();
@@ -119,15 +127,19 @@ mpi_thread_dynamic::busy_wait(void)
 }
 
 void
-mpi_thread_dynamic::new_work_remote(remote *rem, const node::node_id, message *msg)
+mpi_thread_dynamic::new_work_remote(remote *rem, const node::node_id node_id, message *msg)
 {
-   buffer_message(rem, 0, msg);
+   const process_id target(rem->find_proc_owner(node_id));
+   
+   assert(rem != remote::self);
+   
+   buffer_message(rem, target, msg);
 }
 
 bool
 mpi_thread_dynamic::get_work(work_unit& work)
 {  
-   MPI_WORK_CYCLE()
+   do_mpi_cycle(get_id());
    
    return dynamic_local::get_work(work);
 }

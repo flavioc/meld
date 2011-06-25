@@ -10,8 +10,8 @@ test-ts:
 test-serial:
 	@bash test_all.sh serial
 
-test-mis:
-	@bash test_all.sh mis
+test-mpidynamic:
+	@bash test_all.sh mpidynamic
 
 test-mpistatic:
 	@bash test_all.sh mpistatic

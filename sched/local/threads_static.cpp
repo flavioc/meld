@@ -252,7 +252,7 @@ static_local::get_work(work_unit& work)
    if(!set_next_node())
       return false;
       
-   assert(is_active());
+   set_active_if_inactive();
    assert(current_node != NULL);
    assert(current_node->in_queue());
    assert(!current_node->no_more_work());
