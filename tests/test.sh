@@ -22,12 +22,12 @@ run_diff ()
 {
 	TO_RUN="${1}"
 	${TO_RUN} > test.out
-	DIFF=`diff -u ${FILE} test.out`
 	RET=$?
 	if [ $RET -eq 1 ]; then
 		echo "Meld failed! See report"
 		exit 1
 	fi
+	DIFF=`diff -u ${FILE} test.out`
 	if [ ! -z "${DIFF}" ]; then
 		echo "DIFFERENCES!!!"
 		diff -u ${FILE} test.out
