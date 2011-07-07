@@ -1,5 +1,6 @@
 0
 _init()@1
+edge(@1)@1
 pagerank(0, 0.5)@1
 pagerank(1, 0.85)@1
 pagerank(2, 0.85)@1
@@ -13,7 +14,6 @@ calcRank(4, 0, @0)@1
 calcRank(5, 0, @0)@1
 calcRank(6, 0, @0)@1
 numLinks(1)@1
-edge(@1)@1
 1
 ___egde(@0)@1
 _init()@1
