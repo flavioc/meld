@@ -26,7 +26,7 @@ help(void)
    fprintf(stderr, "meld: execute meld program\n");
    fprintf(stderr, "\t-f <name>\tmeld program\n");
    fprintf(stderr, "\t-c <scheduler>\tselect scheduling type\n");
-   fprintf(stderr, "\t\t\tserial simpler serial scheduler\n");
+   //fprintf(stderr, "\t\t\tserial simple serial scheduler\n");
    fprintf(stderr, "\t\t\ttsX static division with a queue per thread\n");
    fprintf(stderr, "\t\t\ttlX static division with a queue per node\n");
    fprintf(stderr, "\t\t\ttdX initial static division but allow work stealing\n");

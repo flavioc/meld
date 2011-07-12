@@ -61,7 +61,7 @@ private:
    
    typedef std::tr1::unordered_map<vm::predicate_id,
                            edge_set,
-                           std::hash<vm::predicate_id>,
+                           std::tr1::hash<vm::predicate_id>,
                            std::equal_to<vm::predicate_id>,
                            mem::allocator<std::pair<const vm::predicate_id, edge_set> > >
                   edge_map; 
