@@ -9,10 +9,12 @@ if len(sys.argv) < 2:
 	print "Usage: generate_cycle.py <num nodes> [weight]"
 	sys.exit(1)
 
-print "type route edge(node, node)."
 
 if len(sys.argv) == 3:
 	set_weight(int(sys.argv[2]))
+	print "type route edge(node, node, int)."
+else:
+	print "type route edge(node, node)."
 
 previous = 0
 for i in range(1, int(sys.argv[1])):

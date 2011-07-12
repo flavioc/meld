@@ -19,11 +19,13 @@ if len(sys.argv) < 2:
 	print "Usage: generate_binary_tree.py <num levels> [weight]"
 	sys.exit(1)
 
-print "type route edge(node, node)."
-
-levels = int(sys.argv[1])
 
 if len(sys.argv) == 3:
 	set_weight(int(sys.argv[2]))
+	print "type route edge(node, node, int)."
+else:
+	print "type route edge(node, node)."
+
+levels = int(sys.argv[1])
 
 generate_tree(get_id(), levels)
