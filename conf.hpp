@@ -22,6 +22,9 @@
 /* activate special code for testing trie matching */
 #define TRIE_MATCHING_ASSERT 1
 
+/* activate instrumentation code */
+#define INSTRUMENTATION 1
+
 //#define DEBUG_SAFRAS 1
 //#define DEBUG_REMOTE 1
 //#define DEBUG_ACTIVE 1

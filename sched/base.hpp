@@ -11,6 +11,7 @@
 #include "vm/state.hpp"
 #include "sched/mpi/message.hpp"
 #include "utils/macros.hpp"
+#include "stat/slice.hpp"
 
 namespace process {
    class remote;
@@ -24,7 +25,7 @@ struct work_unit {
    const db::simple_tuple *work_tpl;
    bool agg;
 };
-   
+
 class base
 {
 protected:
@@ -34,6 +35,11 @@ protected:
    DEFINE_PADDING;
    
    size_t iteration;
+   
+#ifdef INSTRUMENTATION
+   mutable utils::atomic<size_t> processed_facts;
+   mutable utils::atomic<size_t> sent_facts;
+#endif
    
    virtual bool terminate_iteration(void) = 0;
    
@@ -84,7 +90,13 @@ public:
    virtual void end(void) = 0;
    
    virtual bool get_work(work_unit&) = 0;
-   virtual void finish_work(const work_unit&) = 0;
+   
+   virtual void finish_work(const work_unit&)
+   {
+#ifdef INSTRUMENTATION
+      processed_facts++;
+#endif
+   }
    
    virtual void assert_end(void) const = 0;
    virtual void assert_end_iteration(void) const = 0;
@@ -99,9 +111,28 @@ public:
    
    inline const vm::process_id get_id(void) const { return id; }
    
-   explicit base(const vm::process_id _id): id(_id), iteration(0) {}
+   virtual void write_slice(stat::slice& sl) const
+   {
+#ifdef INSTRUMENTATION
+      sl.processed_facts = processed_facts;
+      sl.sent_facts = sent_facts;
+      
+      // reset stats
+      processed_facts = 0;
+      sent_facts = 0;
+#endif
+   }
    
-   virtual ~base(void) {
+   explicit base(const vm::process_id _id):
+      id(_id), iteration(0)
+#ifdef INSTRUMENTATION
+      , processed_facts(0), sent_facts(0)
+#endif
+   {
+   }
+   
+   virtual ~base(void)
+   {
       //std::cout << iteration << std::endl;
    }
 };

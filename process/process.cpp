@@ -88,8 +88,6 @@ process::do_work(node *node, const simple_tuple *_stuple, const bool ignore_agg)
    
    // cout << node->get_id() << " " << *stuple << " " << ignore_agg << endl;
    
-   ++total_processed;
-   
    if(count == 0)
       return;
       
@@ -170,8 +168,7 @@ process::process(const process_id _id, sched::base *_sched):
    id(_id),
    thread(NULL),
    scheduler(_sched),
-   state(this),
-   total_processed(0)
+   state(this)
 {
 }
 

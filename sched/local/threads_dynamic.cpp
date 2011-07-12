@@ -19,9 +19,9 @@ void
 dynamic_local::assert_end(void) const
 {
    static_local::assert_end();
+   
    for(node_set::iterator it(nodes->begin()); it != nodes->end(); ++it) {
       thread_node *node((thread_node*)*it);
-      
       node->assert_end();
    }
 }
@@ -31,7 +31,6 @@ dynamic_local::assert_end_iteration(void) const
 {
    for(node_set::iterator it(nodes->begin()); it != nodes->end(); ++it) {
       thread_node *node((thread_node*)*it);
-      
       node->assert_end_iteration();
    }
 }
@@ -79,7 +78,11 @@ dynamic_local::select_steal_target(void) const
 void
 dynamic_local::request_work_to(dynamic_local *asker)
 {
+#ifdef INSTRUMENTATION
+   steal_requests++;
+#endif
    steal.push(asker);
+   ++asked_many;
 }
 
 bool
@@ -95,7 +98,6 @@ dynamic_local::busy_wait(void)
          if(target->is_active()) {
             target->request_work_to(this);
             ++asked_now;
-				++asked_many;
          }
       }
       
@@ -131,6 +133,10 @@ dynamic_local::change_node(thread_node *node, dynamic_local *asker)
    assert(node->get_owner() == asker);
    
    asker->add_to_queue(node);
+
+#ifdef INSTRUMENTATION
+   asker->stealed_nodes++;
+#endif
 }
 
 void
@@ -170,6 +176,7 @@ dynamic_local::get_work(work_unit& work)
 {
    if(state::NUM_THREADS > 1)
       handle_stealing();
+      
    return static_local::get_work(work);
 }
    
@@ -178,7 +185,7 @@ dynamic_local::init(const size_t num_threads)
 {
    nodes_mutex = new spinlock();
    nodes = new node_set();
-   
+
    database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
    database::map_nodes::iterator end(state::DATABASE->get_node_iterator(remote::self->find_last_node(id)));
    
@@ -208,11 +215,27 @@ dynamic_local::generate_aggs(void)
    }
 }
 
+void
+dynamic_local::write_slice(stat::slice& sl) const
+{
+#ifdef INSTRUMENTATION
+   static_local::write_slice(sl);
+   sl.stealed_nodes = stealed_nodes;
+   stealed_nodes = 0;
+   sl.steal_requests = steal_requests;
+   steal_requests = 0;
+#endif
+}
+
 dynamic_local::dynamic_local(const process_id id):
    static_local(id),
    nodes(NULL),
    nodes_mutex(NULL),
 	asked_many(0)
+#ifdef INSTRUMENTATION
+   , stealed_nodes(0)
+   , steal_requests(0)
+#endif
 {
 }
    

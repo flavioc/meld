@@ -6,10 +6,13 @@
 #include <boost/thread/barrier.hpp>
 #include <vector>
 
+#include "vm/defs.hpp"
 #include "utils/types.hpp"
 #include "utils/spinlock.hpp"
 #include "sched/base.hpp"
 #include "sched/thread/termination_barrier.hpp"
+#include "stat/slice.hpp"
+#include "sched/thread/state.hpp"
 
 namespace sched
 {
@@ -20,13 +23,10 @@ private:
    
    static boost::barrier *thread_barrier;
    static termination_barrier *term_barrier;
+     
+   volatile thread_state state;
    
-   volatile enum {
-      THREAD_ACTIVE,
-      THREAD_INACTIVE
-   } state;
-   
-   utils::byte _pad_threaded[128];
+   DEFINE_PADDING;
    
 protected:
    
@@ -46,6 +46,11 @@ protected:
    
    static void init_barriers(const size_t);
 
+   inline void write_slice(stat::slice& sl) const
+   {
+      sl.state = state;
+   }
+   
    inline void set_active(void)
    {
       assert(state == THREAD_INACTIVE);

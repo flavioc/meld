@@ -6,6 +6,7 @@
 #include <boost/thread/mutex.hpp>
 #include <vector>
 
+#include "conf.hpp"
 #include "sched/thread/threaded.hpp"
 #include "sched/thread/queue_buffer.hpp"
 #include "utils/macros.hpp"
@@ -51,7 +52,6 @@ public:
    virtual void end(void);
    virtual bool terminate_iteration(void);
    virtual bool get_work(work_unit&);
-   virtual void finish_work(const work_unit&) {}
    
    static_global *find_scheduler(const db::node::node_id);
    
@@ -61,6 +61,8 @@ public:
    {
       return new db::node(id, trans);
    }
+   
+   virtual void write_slice(stat::slice&) const;
    
    explicit static_global(const vm::process_id);
    

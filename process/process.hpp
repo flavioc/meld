@@ -7,6 +7,8 @@
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 
+#include "conf.hpp"
+
 #include "vm/program.hpp"
 #include "vm/state.hpp"
 #include "db/node.hpp"
@@ -25,7 +27,6 @@ private:
    sched::base *scheduler;
    
    vm::state state;
-   size_t total_processed;
    
    void do_work(db::node *, const db::simple_tuple *, const bool);
    void do_tuple_add(db::node *, vm::tuple *, const vm::ref_count);

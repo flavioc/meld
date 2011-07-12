@@ -4,10 +4,12 @@
 #include "process/machine.hpp"
 #include "utils/utils.hpp"
 #include "process/router.hpp"
+#include "stat/stat.hpp"
 
 using namespace utils;
 using namespace process;
 using namespace std;
+using namespace sched;
 
 static size_t num_threads = 0;
 static char *program = NULL;
@@ -24,6 +26,7 @@ help(void)
    fprintf(stderr, "meld: execute meld program\n");
    fprintf(stderr, "\t-f <name>\tmeld program\n");
    fprintf(stderr, "\t-c <scheduler>\tselect scheduling type\n");
+   fprintf(stderr, "\t\t\tserial simpler serial scheduler\n");
    fprintf(stderr, "\t\t\ttsX static division with a queue per thread\n");
    fprintf(stderr, "\t\t\ttlX static division with a queue per node\n");
    fprintf(stderr, "\t\t\ttdX initial static division but allow work stealing\n");
@@ -34,6 +37,7 @@ help(void)
    fprintf(stderr, "\t\t\tmpisingleX no division of work with static processes\n");
    fprintf(stderr, "\t-t \t\ttime execution\n");
    fprintf(stderr, "\t-m \t\tmemory statistics\n");
+   fprintf(stderr, "\t-i <file>\tdump time statistics\n");
    fprintf(stderr, "\t-s \t\tshows database\n");
    fprintf(stderr, "\t-d \t\tdump database (debug option)\n");
    fprintf(stderr, "\t-h \t\tshow this screen\n");
@@ -80,14 +84,15 @@ parse_sched(char *sched)
       exit(EXIT_FAILURE);
    }
    
+   // attempt to parse the scheduler string
    match_mpi("mpiglobal", sched, SCHED_MPI_AND_THREADS_STATIC_GLOBAL) ||
-   match_mpi("mpistatic", sched, SCHED_MPI_AND_THREADS_STATIC_LOCAL) ||
-   match_mpi("mpidynamic", sched, SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL) ||
-   match_mpi("mpisingle", sched, SCHED_MPI_AND_THREADS_SINGLE_LOCAL) ||
-   match_threads("ts", sched, SCHED_THREADS_STATIC_GLOBAL) ||
-   match_threads("tl", sched, SCHED_THREADS_STATIC_LOCAL) ||
-   match_threads("td", sched, SCHED_THREADS_DYNAMIC_LOCAL) ||
-   match_threads("sin", sched, SCHED_THREADS_SINGLE_LOCAL) ||
+      match_mpi("mpistatic", sched, SCHED_MPI_AND_THREADS_STATIC_LOCAL) ||
+      match_mpi("mpidynamic", sched, SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL) ||
+      match_mpi("mpisingle", sched, SCHED_MPI_AND_THREADS_SINGLE_LOCAL) ||
+      match_threads("ts", sched, SCHED_THREADS_STATIC_GLOBAL) ||
+      match_threads("tl", sched, SCHED_THREADS_STATIC_LOCAL) ||
+      match_threads("td", sched, SCHED_THREADS_DYNAMIC_LOCAL) ||
+      match_threads("sin", sched, SCHED_THREADS_SINGLE_LOCAL) ||
    fail_sched(sched);
 }
 
@@ -129,6 +134,14 @@ read_arguments(int argc, char **argv)
             break;
          case 'm':
             memory_statistics = true;
+            break;
+         case 'i':
+            if(argc < 2)
+               help();
+               
+            stat::set_stat_file(string(argv[1]));
+            argc--;
+            argv++;
             break;
          case 'h':
             help();
@@ -192,21 +205,16 @@ main(int argc, char **argv)
       mac.start();
 
       if(time_execution) {
-         size_t ms;
-         
-#ifdef COMPILE_MPI
          if(is_mpi_sched(sched_type)) {
             double total_time(MPI_Wtime() - start_time);
-            ms = static_cast<size_t>(total_time * 1000);
+            size_t ms = static_cast<size_t>(total_time * 1000);
             
             if(remote::self->get_rank() == 0)
                cout << "Time: " << ms << " ms" << endl;
          }
-         else
-#endif
-         {
+         else {
             tm.stop();
-            ms = tm.milliseconds();
+            size_t ms = tm.milliseconds();
             
             cout << "Time: " << ms << " ms" << endl;
          }

@@ -18,7 +18,7 @@ using namespace utils;
 
 namespace sched
 {
-   
+
 safe_queue_multi<thread_node*> threads_single::queue_nodes;
 
 void
@@ -175,6 +175,8 @@ threads_single::terminate_iteration(void)
 void
 threads_single::finish_work(const work_unit& work)
 {
+   base::finish_work(work);
+   
    assert(current_node != NULL);
    assert(current_node->in_queue());
 }
@@ -269,6 +271,16 @@ threads_single::find_scheduler(const node::node_id id)
    return NULL;
 }
 
+void
+threads_single::write_slice(stat::slice& sl) const
+{
+#ifdef INSTRUMENTATION
+   base::write_slice(sl);
+   threaded::write_slice(sl);
+   sl.work_queue = queue_nodes.size();
+#endif
+}
+
 threads_single::threads_single(const vm::process_id _id):
    base(_id),
    current_node(NULL)
@@ -286,8 +298,8 @@ threads_single::start(const size_t num_threads)
    
    for(process_id i(0); i < num_threads; ++i)
       add_thread(new threads_single(i));
-      
+   
    return ALL_THREADS;
 }
-   
+
 }

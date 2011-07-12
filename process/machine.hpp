@@ -26,6 +26,7 @@
 #include "sched/local/mpi_threads_dynamic.hpp"
 #include "sched/local/mpi_threads_single.hpp"
 #include "sched/types.hpp"
+#include "stat/slice_set.hpp"
 
 namespace process
 {
@@ -39,7 +40,7 @@ private:
    
    const std::string filename;
    const size_t num_threads;
-   const scheduler_type sched_type;
+   const sched::scheduler_type sched_type;
    bool will_show_database;
    bool will_dump_database;
    bool will_show_memory;
@@ -48,11 +49,20 @@ private:
    
    router& rout;
    
+   boost::thread *alarm_thread;
+   stat::slice_set slices;
+   
+   void deactivate_signals(void);
+   void slice_function(void);
+   void set_timer(void);
+   
 public:
    
    void show_database(void) { will_show_database = true; }
    void dump_database(void) { will_dump_database = true; }
    void show_memory(void) { will_show_memory = true; }
+   
+   const sched::scheduler_type get_sched_type(void) const { return sched_type; }
    
    process *get_process(const vm::process_id id) { return process_list[id]; }
    
@@ -64,7 +74,7 @@ public:
    
    void start(void);
    
-   explicit machine(const std::string&, router&, const size_t, const scheduler_type);
+   explicit machine(const std::string&, router&, const size_t, const sched::scheduler_type);
                
    ~machine(void);
 };

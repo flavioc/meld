@@ -69,11 +69,13 @@ public:
    const T get_head(void) const { return head; }
    const list_ptr get_tail(void) const { return tail; }
    
-   inline void inc_refs(void) {
+   inline void inc_refs(void)
+	 {
       refs++;
    }
    
-   inline void dec_refs(void) {
+   inline void dec_refs(void)
+	 {
       assert(refs > 0);
       refs--;
       if(zero_refs())
@@ -109,12 +111,14 @@ public:
    
    static inline bool is_null(const list_ptr ls) { return ls == null_list(); }
    
-   static inline void dec_refs(list_ptr ls) {
+   static inline void dec_refs(list_ptr ls)
+	 {
       if(!is_null(ls))
          ls->dec_refs();
    }
    
-   static inline void inc_refs(list_ptr ls) {
+   static inline void inc_refs(list_ptr ls)
+	 {
       if(!is_null(ls))
          ls->inc_refs();
    }
@@ -145,7 +149,8 @@ public:
       return new cons(load_list(ar, false), head); 
    }
    
-   static inline size_t size_list(const list_ptr ptr, const size_t elem_size)
+   static inline
+	 size_t size_list(const list_ptr ptr, const size_t elem_size)
    {
       size_t ret(sizeof(utils::byte));
       
@@ -155,8 +160,9 @@ public:
          return ret + elem_size + size_list(ptr->get_tail(), elem_size);
    }
    
-   static inline void pack(const list_ptr ptr, MPI_Datatype typ,
-               utils::byte *buf, const size_t buf_size, int *pos, MPI_Comm comm)
+   static inline
+	 void pack(const list_ptr ptr, MPI_Datatype typ,
+          utils::byte *buf, const size_t buf_size, int *pos, MPI_Comm comm)
    {
       utils::byte more;
       
@@ -173,7 +179,8 @@ public:
       }
    }
    
-   static inline list_ptr unpack(MPI_Datatype typ, utils::byte *buf,
+   static inline
+	 list_ptr unpack(MPI_Datatype typ, utils::byte *buf,
                const size_t buf_size, int *pos, MPI_Comm comm)
    {
       utils::byte more;
@@ -191,14 +198,18 @@ public:
    }
 #endif
    
-   static inline void print(std::ostream& cout, list_ptr ls) {
+   static inline
+	 void print(std::ostream& cout, list_ptr ls)
+	 {
       if(is_null(ls))
          cout << "[]";
       else
          cout << *ls;
    }
    
-   static inline bool equal(const list_ptr l1, const list_ptr l2) {
+   static inline
+	 bool equal(const list_ptr l1, const list_ptr l2)
+	 {
       if(l1 == null_list() && l2 != null_list())
          return false;
       if(l1 != null_list() && l2 == null_list())
@@ -212,14 +223,18 @@ public:
       return equal(l1->get_tail(), l2->get_tail());
    }
    
-   static inline size_t length(const list_ptr ls) {
+   static inline
+	 size_t length(const list_ptr ls)
+	 {
       if(is_null(ls))
          return 0;
          
       return 1 + length(ls->get_tail());
    }
    
-   static inline T get(const list_ptr ls, const size_t pos, const T def) {
+   static inline
+	 T get(const list_ptr ls, const size_t pos, const T def)
+	 {
       if(is_null(ls))
          return def;
          

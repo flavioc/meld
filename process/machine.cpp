@@ -1,4 +1,5 @@
 #include <iostream>
+#include <signal.h>
 
 #include "process/machine.hpp"
 #include "vm/program.hpp"
@@ -8,6 +9,7 @@
 #include "sched/mpi/message.hpp"
 #include "mem/thread.hpp"
 #include "mem/stat.hpp"
+#include "stat/stat.hpp"
 
 using namespace process;
 using namespace db;
@@ -17,6 +19,7 @@ using namespace boost;
 using namespace sched;
 using namespace mem;
 using namespace utils;
+using namespace stat;
 
 namespace process
 {
@@ -84,14 +87,91 @@ get_output_filename(const string other, const remote::remote_id id)
 }
 
 void
+machine::deactivate_signals(void)
+{
+   sigset_t set;
+   
+   sigemptyset(&set);
+   sigaddset(&set, SIGALRM);
+   sigaddset(&set, SIGUSR1);
+   
+   sigprocmask(SIG_BLOCK, &set, NULL);
+}
+
+void
+machine::set_timer(void)
+{
+   // pre-compute the number of usecs from msecs
+   static long usec = SLICE_PERIOD * 1000;
+   struct itimerval t;
+   
+   t.it_interval.tv_sec = 0;
+   t.it_interval.tv_usec = 0;
+   t.it_value.tv_sec = 0;
+   t.it_value.tv_usec = usec;
+   
+   setitimer(ITIMER_REAL, &t, 0);
+}
+
+void
+machine::slice_function(void)
+{
+   bool tofinish(false);
+   
+   // enable SIGALRM and SIGUSR1
+   sigset_t set;
+   sigemptyset(&set);
+   sigaddset(&set, SIGALRM);
+   sigaddset(&set, SIGUSR1);
+   pthread_sigmask(SIG_UNBLOCK, &set, NULL);
+   
+   int sig;
+   
+   set_timer();
+   
+   while (true) {
+      
+      sigwait(&set, &sig);
+      
+      switch(sig) {
+         case SIGALRM:
+         if(tofinish)
+            return;
+         slices.beat();
+         set_timer();
+         break;
+         case SIGUSR1:
+         tofinish = true;
+         break;
+         default: assert(false);
+      }
+   }
+}
+
+void
 machine::start(void)
 {
+   deactivate_signals();
+   
+   if(stat_enabled()) {
+      // initiate alarm thread
+      alarm_thread = new boost::thread(bind(&machine::slice_function, this));
+   }
+   
    for(size_t i(1); i < num_threads; ++i)
       process_list[i]->start();
    process_list[0]->start();
    
    for(size_t i(1); i < num_threads; ++i)
       process_list[i]->join();
+   
+   if(alarm_thread) {
+      kill(getpid(), SIGUSR1);
+      alarm_thread->join();
+      delete alarm_thread;
+      alarm_thread = NULL;
+      slices.write(get_stat_file(), sched_type);
+   }
 
    const bool will_print(will_show_database || will_dump_database);
 
@@ -170,7 +250,9 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
    will_show_database(false),
    will_dump_database(false),
    will_show_memory(false),
-   rout(_rout)
+   rout(_rout),
+   alarm_thread(NULL),
+   slices(th)
 {  
    new program(filename);
    
@@ -224,6 +306,9 @@ machine::~machine(void)
    
    for(process_id i(0); i != num_threads; ++i)
       delete process_list[i];
+      
+   if(alarm_thread)
+      delete alarm_thread;
       
    mem::cleanup(num_threads);
 }

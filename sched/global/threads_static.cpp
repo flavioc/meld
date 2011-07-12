@@ -82,6 +82,10 @@ static_global::flush_queue(const process_id id, static_global *other)
    assert(this != other);
    assert(!q.empty());
    
+#ifdef INSTRUMENTATION
+   sent_facts += q.size();
+#endif
+
    other->queue_work.snap(q);
    
    MAKE_OTHER_ACTIVE(other);
@@ -210,6 +214,16 @@ static_global*
 static_global::find_scheduler(const node::node_id id)
 {
    return (static_global*)ALL_THREADS[remote::self->find_proc_owner(id)];
+}
+
+void
+static_global::write_slice(stat::slice& sl) const
+{
+#ifdef INSTRUMENTATION
+   base::write_slice(sl);
+   threaded::write_slice(sl);
+   sl.work_queue = queue_work.size();
+#endif
 }
 
 static_global::static_global(const process_id _id):

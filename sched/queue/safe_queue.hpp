@@ -4,6 +4,7 @@
 
 #include <boost/static_assert.hpp>
 
+#include "conf.hpp"
 #include "sched/queue/node.hpp"
 #include "sched/queue/unsafe_queue_count.hpp"
 
@@ -33,9 +34,15 @@ private:
    
    volatile node *head;
    utils::atomic_ref<special_node*> tail;
+#ifdef INSTRUMENTATION
+   utils::atomic<size_t> total;
+#endif
    
    inline void push_node(special_node *new_node)
    {
+#ifdef INSTRUMENTATION
+      total++;
+#endif
       assert(tail != NULL);
       assert(head != NULL);
       
@@ -58,6 +65,10 @@ private:
    
 public:
    
+#ifdef INSTRUMENTATION
+   inline const size_t size(void) const { return total; }
+#endif
+   
    inline const bool empty(void) const { return head == reinterpret_cast<node*>(tail.get()); }
    
    inline void push(T el)
@@ -72,6 +83,9 @@ public:
    
    inline T pop(void)
    {
+#ifdef INSTRUMENTATION
+      total--;
+#endif
       assert(tail != NULL);
       assert(head != NULL);
       assert(head->next != NULL);
@@ -94,6 +108,10 @@ public:
    {
       assert(q.size() > 0);
       assert(!q.empty());
+
+#ifdef INSTRUMENTATION
+      total += q.size();
+#endif
       
       assert(tail != NULL);
       assert(head != NULL);
@@ -120,6 +138,9 @@ public:
    
    explicit safe_queue(void):
       tail(NULL)
+#ifdef INSTRUMENTATION
+      , total(0)
+#endif
    {
       // sentinel node
       head = new node();

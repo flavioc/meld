@@ -90,7 +90,10 @@ OBJS = utils/utils.o \
 			 sched/mpi/tokenizer.o \
 			 sched/mpi/handler.o \
 			 external/math.o \
-			 external/utils.o
+			 external/utils.o \
+			 stat/stat.o \
+			 stat/slice.o \
+			 stat/slice_set.o
 
 all: meld print predicates
 
@@ -154,7 +157,8 @@ process/machine.o: process/machine.hpp process/machine.cpp \
 									sched/local/mpi_threads_single.hpp \
 									sched/types.hpp \
 									db/database.hpp \
-									vm/predicate.hpp
+									vm/predicate.hpp \
+									stat/stat.hpp
 
 process/remote.o: process/remote.hpp process/remote.cpp	\
 									vm/instr.hpp conf.hpp
@@ -289,6 +293,12 @@ sched/local/mpi_threads_single.o: sched/local/mpi_threads_single.hpp \
 
 external/math.o: external/math.hpp external/math.cpp
 external/utils.o: external/utils.hpp external/utils.cpp
+
+stat/stat.o: stat/stat.cpp stat/stat.hpp
+stat/slice.o: stat/slice.hpp stat/slice.cpp
+stat/slice_set.o: stat/slice_set.hpp stat/slice_set.cpp \
+									stat/slice.hpp stat/stat.hpp \
+									utils/csv_line.hpp
 
 clean:
 	find . -name '*.o' | xargs rm -f

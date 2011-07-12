@@ -63,6 +63,8 @@ public:
    
    static std::vector<sched::base*>& start(const size_t);
    
+   virtual void write_slice(stat::slice&) const;
+   
    explicit threads_single(const vm::process_id);
    
    virtual ~threads_single(void);

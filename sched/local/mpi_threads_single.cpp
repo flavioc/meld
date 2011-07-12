@@ -72,7 +72,7 @@ mpi_thread_single::new_work_remote(remote *rem, const node::node_id, message *ms
 
 bool
 mpi_thread_single::get_work(work_unit& work)
-{  
+{
    MPI_WORK_CYCLE()
    
    return threads_single::get_work(work);

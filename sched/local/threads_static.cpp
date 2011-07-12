@@ -125,6 +125,10 @@ static_local::new_work_other(sched::base *scheduler, node *node, const simple_tu
          
       assert(tnode->in_queue());
    }
+   
+#ifdef INSTRUMENTATION
+   sent_facts++;
+#endif
 }
 
 void
@@ -197,6 +201,8 @@ static_local::terminate_iteration(void)
 void
 static_local::finish_work(const work_unit& work)
 {
+   base::finish_work(work);
+   
    assert(current_node != NULL);
    assert(current_node->in_queue());
    assert(current_node->get_owner() == this);
@@ -300,6 +306,16 @@ static_local*
 static_local::find_scheduler(const node::node_id id)
 {
    return NULL;
+}
+
+void
+static_local::write_slice(stat::slice& sl) const
+{
+#ifdef INSTRUMENTATION
+   base::write_slice(sl);
+   threaded::write_slice(sl);
+   sl.work_queue = queue_nodes.size();
+#endif
 }
 
 static_local::static_local(const vm::process_id _id):

@@ -65,6 +65,8 @@ public:
    
    static std::vector<sched::base*>& start(const size_t);
    
+   virtual void write_slice(stat::slice&) const;
+   
    explicit static_local(const vm::process_id);
    
    virtual ~static_local(void);

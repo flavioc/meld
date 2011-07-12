@@ -4,6 +4,7 @@
 
 #include <tr1/unordered_set>
 
+#include "conf.hpp"
 #include "sched/local/threads_static.hpp"
 #include "sched/thread/steal_set.hpp"
 #include "utils/spinlock.hpp"
@@ -14,20 +15,27 @@ namespace sched
 class dynamic_local: public static_local
 {
 private:
-   utils::byte _paddl1[128];
+   DEFINE_PADDING;
    
    typedef std::tr1::unordered_set<db::node*, std::tr1::hash<db::node*>,
                      std::equal_to<db::node*>, mem::allocator<db::node*> > node_set;
    
    node_set *nodes;
 
-
    utils::spinlock *nodes_mutex;
    
-   utils::byte _paddl3[128];
+   DEFINE_PADDING;
+   
    steal_set steal;
-	 utils::byte _paddl2[128];
-	 size_t asked_many;
+	
+   DEFINE_PADDING;
+   
+	size_t asked_many;
+	
+#ifdef INSTRUMENTATION
+   mutable utils::atomic<size_t> stealed_nodes;
+   mutable utils::atomic<size_t> steal_requests;
+#endif
    
    virtual bool busy_wait(void);
    void handle_stealing(void);
@@ -49,6 +57,8 @@ public:
    virtual void end(void);
    
    virtual bool get_work(work_unit&);
+   
+   virtual void write_slice(stat::slice& sl) const;
    
    static db::node *create_node(const db::node::node_id id, const db::node::node_id trans)
    {
