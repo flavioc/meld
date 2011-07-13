@@ -13,7 +13,7 @@ class unsafe_queue
 {
 public:
    
-   typedef queue_node<T> node;
+   typedef unsafe_queue_node<T> node;
    node *head;
    node *tail;
    
@@ -48,7 +48,7 @@ public:
       if(head == tail)
          head = tail = NULL;
       else
-         head = head->next;
+         head = (node*)head->next;
       
       assert(head != take);
       assert(take->next == head);

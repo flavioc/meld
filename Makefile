@@ -73,11 +73,14 @@ OBJS = utils/utils.o \
 			 process/router.o \
 			 mem/thread.o \
 			 mem/stat.o \
+			 sched/common.o \
 			 sched/mpi/message.o \
 			 sched/mpi/message_buffer.o \
 			 sched/mpi/request.o \
+			 sched/global/serial.o \
 			 sched/global/threads_static.o \
 			 sched/global/mpi.o \
+			 sched/local/serial.o \
 			 sched/local/threads_static.o \
 			 sched/local/threads_dynamic.o \
 			 sched/local/threads_single.o \
@@ -209,6 +212,9 @@ sched/mpi/message_buffer.o: sched/mpi/message_buffer.hpp \
 
 sched/mpi/request.o: sched/mpi/request.hpp sched/mpi/request.cpp
 
+sched/global/serial.o: sched/global/serial.cpp sched/global/serial.hpp \
+											sched/queue/unsafe_queue.hpp sched/queue/bounded_pqueue.hpp
+
 sched/global/threads_static.o: sched/global/threads_static.cpp \
 								sched/global/threads_static.hpp \
 								sched/base.hpp \
@@ -225,6 +231,9 @@ sched/global/mpi.o: sched/global/mpi.hpp sched/global/mpi.cpp \
 						sched/mpi/token.hpp sched/mpi/tokenizer.hpp \
 						conf.hpp sched/mpi/message_buffer.hpp \
 						sched/mpi/handler.hpp
+
+sched/local/serial.o: sched/local/serial.cpp sched/local/serial.hpp \
+									sched/queue/unsafe_queue.hpp sched/serial/node.hpp
 
 sched/local/threads_static.o: sched/base.hpp sched/local/threads_static.hpp \
 								sched/local/threads_static.cpp sched/queue/node.hpp \
@@ -299,6 +308,8 @@ stat/slice.o: stat/slice.hpp stat/slice.cpp
 stat/slice_set.o: stat/slice_set.hpp stat/slice_set.cpp \
 									stat/slice.hpp stat/stat.hpp \
 									utils/csv_line.hpp
+
+sched/common.o: sched/common.hpp sched/common.cpp
 
 clean:
 	find . -name '*.o' | xargs rm -f

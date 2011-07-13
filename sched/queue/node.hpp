@@ -15,6 +15,15 @@ public:
    volatile queue_node *next;
 };
 
+// same as before, without the volatile
+template <class T>
+class unsafe_queue_node: public mem::base< unsafe_queue_node<T> >
+{
+public:
+   T data;
+   unsafe_queue_node *next;
+};
+
 }
 
 #endif

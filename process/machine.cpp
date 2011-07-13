@@ -236,6 +236,10 @@ get_creation_function(const scheduler_type sched_type)
          return database::create_node_fn(sched::mpi_thread_dynamic::create_node);
       case SCHED_MPI_AND_THREADS_SINGLE_LOCAL:
          return database::create_node_fn(sched::mpi_thread_single::create_node);
+      case SCHED_SERIAL_GLOBAL:
+         return database::create_node_fn(sched::serial_global::create_node);
+      case SCHED_SERIAL_LOCAL:
+         return database::create_node_fn(sched::serial_local::create_node);
       case SCHED_UNKNOWN:
          return NULL;
    }
@@ -289,6 +293,12 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
          break;
       case SCHED_MPI_AND_THREADS_SINGLE_LOCAL:
          schedulers = sched::mpi_thread_single::start(num_threads);
+         break;
+      case SCHED_SERIAL_GLOBAL:
+         schedulers.push_back(dynamic_cast<sched::base*>(new sched::serial_global()));
+         break;
+      case SCHED_SERIAL_LOCAL:
+         schedulers.push_back(dynamic_cast<sched::base*>(new sched::serial_local()));
          break;
       case SCHED_UNKNOWN: assert(false); break;
    }

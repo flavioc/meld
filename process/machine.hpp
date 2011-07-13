@@ -25,6 +25,8 @@
 #include "sched/local/mpi_threads_static.hpp"
 #include "sched/local/mpi_threads_dynamic.hpp"
 #include "sched/local/mpi_threads_single.hpp"
+#include "sched/global/serial.hpp"
+#include "sched/local/serial.hpp"
 #include "sched/types.hpp"
 #include "stat/slice_set.hpp"
 

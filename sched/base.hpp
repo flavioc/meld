@@ -26,6 +26,11 @@ struct work_unit {
    bool agg;
 };
 
+struct node_work_unit {
+   const db::simple_tuple *work_tpl;
+   bool agg;
+};
+
 class base
 {
 protected:

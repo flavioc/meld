@@ -7,6 +7,7 @@
 #include "process/remote.hpp"
 #include "sched/thread/assert.hpp"
 #include "vm/state.hpp"
+#include "sched/common.hpp"
 
 using namespace boost;
 using namespace std;
@@ -25,17 +26,7 @@ static_local::assert_end(void) const
    assert(is_inactive());
    assert(all_threads_finished());
    assert_thread_end_iteration();
-   
-   const node::node_id first(remote::self->find_first_node(id));
-   const node::node_id final(remote::self->find_last_node(id));
-   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(first));
-   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(final));
-
-   for(; it != end; ++it) {
-      thread_node *node((thread_node*)it->second);
-      assert(!node->in_queue());
-      node->assert_end();
-   }
+   assert_static_nodes(id);
 }
 
 void
@@ -45,17 +36,7 @@ static_local::assert_end_iteration(void) const
    assert(is_inactive());
    assert(all_threads_finished());
    assert_thread_end_iteration();
-   
-   const node::node_id first(remote::self->find_first_node(id));
-   const node::node_id final(remote::self->find_last_node(id));
-   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(first));
-   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(final));
-
-   for(; it != end; ++it) {
-      thread_node *node((thread_node*)it->second);
-      assert(!node->in_queue());
-      node->assert_end_iteration();
-   }
+   assert_static_nodes(id);
 }
 
 void
@@ -140,13 +121,7 @@ static_local::new_work_remote(remote *, const node::node_id, message *)
 void
 static_local::generate_aggs(void)
 {
-   const node::node_id first(remote::self->find_first_node(id));
-   const node::node_id final(remote::self->find_last_node(id));
-   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(first));
-   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(final));
-
-   for(; it != end; ++it)
-      node_iteration(it->second);
+   iterate_static_nodes(id);
 }
 
 bool

@@ -19,11 +19,11 @@ class static_local: public sched::base,
 {
 protected:
    
-   utils::byte _pad_threads1[128];
+   DEFINE_PADDING;
    
    safe_queue<thread_node*> queue_nodes;
    
-   utils::byte _pad_threads3[128];
+   DEFINE_PADDING;
    
    thread_node *current_node;
    

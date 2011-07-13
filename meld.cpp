@@ -26,7 +26,8 @@ help(void)
    fprintf(stderr, "meld: execute meld program\n");
    fprintf(stderr, "\t-f <name>\tmeld program\n");
    fprintf(stderr, "\t-c <scheduler>\tselect scheduling type\n");
-   //fprintf(stderr, "\t\t\tserial simple serial scheduler\n");
+   fprintf(stderr, "\t\t\tsg simple serial scheduler with a global queue\n");
+   fprintf(stderr, "\t\t\tsl simple serial scheduler with local queues\n");
    fprintf(stderr, "\t\t\ttsX static division with a queue per thread\n");
    fprintf(stderr, "\t\t\ttlX static division with a queue per node\n");
    fprintf(stderr, "\t\t\ttdX initial static division but allow work stealing\n");
@@ -50,7 +51,7 @@ match_mpi(const char *name, char *arg, const scheduler_type type)
 {
    const size_t len(strlen(name));
    
-   if(strncmp(name, arg, len) == 0 && strlen(arg) > len) {
+   if(strlen(arg) > len && strncmp(name, arg, len) == 0) {
       sched_type = type;
       arg += len;
       num_threads = (size_t)atoi(arg);
@@ -67,6 +68,20 @@ match_threads(const char *name, char *arg, const scheduler_type type)
 }
 
 static inline bool
+match_serial(const char *name, char *arg, const scheduler_type type)
+{
+   const size_t len(strlen(name));
+   
+   if(strlen(arg) == len && strncmp(name, arg, len) == 0) {
+      sched_type = type;
+      num_threads = 1;
+      return true;
+   }
+   
+   return false;
+}
+
+static inline bool
 fail_sched(char* sched)
 {
    fprintf(stderr, "Error: invalid scheduler %s\n", sched);
@@ -79,10 +94,8 @@ parse_sched(char *sched)
 {
    assert(sched != NULL);
    
-   if(strlen(sched) < 3) {
-      fprintf(stderr, "Error: invalid scheduler %s\n", sched);
-      exit(EXIT_FAILURE);
-   }
+   if(strlen(sched) < 2)
+      fail_sched(sched);
    
    // attempt to parse the scheduler string
    match_mpi("mpiglobal", sched, SCHED_MPI_AND_THREADS_STATIC_GLOBAL) ||
@@ -93,7 +106,9 @@ parse_sched(char *sched)
       match_threads("tl", sched, SCHED_THREADS_STATIC_LOCAL) ||
       match_threads("td", sched, SCHED_THREADS_DYNAMIC_LOCAL) ||
       match_threads("sin", sched, SCHED_THREADS_SINGLE_LOCAL) ||
-   fail_sched(sched);
+      match_serial("sg", sched, SCHED_SERIAL_GLOBAL) ||
+      match_serial("sl", sched, SCHED_SERIAL_LOCAL) ||
+      fail_sched(sched);
 }
 
 static void

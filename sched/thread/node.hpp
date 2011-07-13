@@ -7,6 +7,7 @@
 #include "sched/queue/bounded_pqueue.hpp"
 #include "db/tuple.hpp"
 #include "utils/spinlock.hpp"
+#include "sched/base.hpp"
 
 namespace sched
 {
@@ -18,11 +19,6 @@ class threads_single;
 class mpi_thread_dynamic;
 class mpi_thread_static;
 class mpi_thread_single;
-
-struct node_work_unit {
-   const db::simple_tuple *work_tpl;
-   bool agg;
-};
 
 class thread_node: public db::node
 {
@@ -69,12 +65,13 @@ public:
    virtual void assert_end(void) const
    {
       db::node::assert_end();
-      assert(queue.empty());
+      assert(no_more_work());
+      assert(!in_queue());
    }
    
    virtual void assert_end_iteration(void) const
    {
-      assert(queue.empty());
+      assert(no_more_work());
    }
    
    explicit thread_node(const db::node::node_id _id, const db::node::node_id _trans):

@@ -8,6 +8,7 @@
 #include "process/machine.hpp"
 #include "sched/thread/termination_barrier.hpp"
 #include "sched/thread/assert.hpp"
+#include "sched/common.hpp"
 
 using namespace boost;
 using namespace vm;
@@ -63,6 +64,7 @@ static_global::assert_end_iteration(void) const
    assert(buf.empty());
    assert(all_threads_finished());
    assert(!has_work());
+   assert_static_nodes(id);
 }
 
 void
@@ -72,6 +74,7 @@ static_global::assert_end(void) const
    assert(buf.empty());
    assert(all_threads_finished());
    assert(!has_work());
+   assert_static_nodes(id);
 }
 
 void
@@ -167,13 +170,7 @@ static_global::end(void)
 void
 static_global::generate_aggs(void)
 {
-   const node::node_id first(remote::self->find_first_node(id));
-   const node::node_id final(remote::self->find_last_node(id));
-   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(first));
-   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(final));
-   
-   for(; it != end; ++it)
-      node_iteration(it->second);
+   iterate_static_nodes(id);
 }
 
 bool

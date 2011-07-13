@@ -14,7 +14,7 @@ class unsafe_queue_count
 {
 public:
    
-   typedef queue_node<T> node;
+   typedef unsafe_queue_node<T> node;
    node *head;
    node *tail;
    size_t total;

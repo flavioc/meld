@@ -36,6 +36,14 @@ run_diff ()
 	rm test.out
 }
 
+do_serial ()
+{
+	SCHED=${1}
+	TO_RUN="${EXEC} -f ${TEST} -c ${SCHED}"
+	
+	run_diff "${TO_RUN}"
+}
+
 do_test ()
 {
 	NTHREADS=${1}
@@ -54,6 +62,17 @@ do_test_mix ()
 	TO_RUN="mpirun -n ${NPROCS} ${EXEC} -f ${TEST} -c ${MIX_TYPE}${NTHREADS}"
 
 	run_diff "${TO_RUN}"
+}
+
+run_serial_n ()
+{
+	SCHED=${1}
+	TIMES=${2}
+
+	echo "Running ${TEST} ${TIMES} times (SCHED: ${SCHED})..."
+	for((I=1; I <= ${TIMES}; I++)); do
+		do_serial ${SCHED}
+	done
 }
 
 run_test_n ()
@@ -157,7 +176,8 @@ if [ "${TYPE}" = "all" ]; then
 fi
 
 if [ "${TYPE}" = "serial" ]; then
-	run_test_n 1 1 ts
+	run_serial_n sg 1
+	run_serial_n sl 1
 	exit 0
 fi
 

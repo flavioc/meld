@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "sched/queue/safe_queue.hpp"
+#include "sched/queue/unsafe_queue.hpp"
 #include "sched/queue/simple_linear_pqueue.hpp"
 #include "utils/atomic.hpp"
 #include "utils/utils.hpp"
@@ -12,7 +13,7 @@
 namespace sched
 {
    
-template <class C, class A> // parameter is a container and counter
+template <class C, class A> // parameter is a container and a counter
 class queue_tree_node
 {
 public:
@@ -192,10 +193,16 @@ public:
 
 // XXX: must use C++0X
 
-template<typename T>
+template <typename T>
 struct safe_bounded_pqueue
 {
    typedef bounded_pqueue<T, safe_queue<T>, utils::atomic<size_t> > type;
+};
+
+template <typename T>
+struct unsafe_bounded_pqueue
+{
+   typedef bounded_pqueue<T, unsafe_queue<T>, size_t> type;
 };
 
 }
