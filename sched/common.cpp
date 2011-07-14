@@ -9,7 +9,8 @@ using namespace process;
 
 namespace sched
 {
-   
+
+#ifndef NDEBUG
 void
 assert_static_nodes(const process_id id)
 {
@@ -21,5 +22,6 @@ assert_static_nodes(const process_id id)
    for(; it != end; ++it)
       it->second->assert_end();
 }
+#endif
 
 }

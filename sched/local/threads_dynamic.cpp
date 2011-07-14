@@ -29,6 +29,8 @@ dynamic_local::assert_end(void) const
 void
 dynamic_local::assert_end_iteration(void) const
 {
+   static_local::assert_end_iteration();
+   
    for(node_set::iterator it(nodes->begin()); it != nodes->end(); ++it) {
       thread_node *node((thread_node*)*it);
       node->assert_end_iteration();

@@ -3,7 +3,7 @@
 #define SCHED_NODES_THREAD_HPP
 
 #include "mem/base.hpp"
-#include "db/node.hpp"
+#include "sched/nodes/in_queue.hpp"
 #include "sched/queue/bounded_pqueue.hpp"
 #include "db/tuple.hpp"
 #include "utils/spinlock.hpp"
@@ -20,7 +20,7 @@ class mpi_thread_dynamic;
 class mpi_thread_static;
 class mpi_thread_single;
 
-class thread_node: public db::node
+class thread_node: public in_queue_node
 {
 private:
    
@@ -32,20 +32,12 @@ private:
    friend class mpi_thread_single;
    
    sched::base *owner;
-   volatile bool i_am_on_queue;
 	utils::spinlock spin;
    safe_bounded_pqueue<node_work_unit>::type queue;
    
 public:
    
    inline void set_owner(sched::base *_owner) { owner = _owner; }
-   
-   inline bool in_queue(void) const { return i_am_on_queue; }
-   
-   inline void set_in_queue(const bool new_val) {
-      assert(i_am_on_queue != new_val);
-      i_am_on_queue = new_val;
-   }
    
    inline sched::base* get_owner(void) { return owner; }
    
@@ -64,20 +56,19 @@ public:
    
    virtual void assert_end(void) const
    {
-      db::node::assert_end();
+      in_queue_node::assert_end();
       assert(!has_work());
-      assert(!in_queue());
    }
    
    virtual void assert_end_iteration(void) const
    {
+      in_queue_node::assert_end_iteration();
       assert(!has_work());
    }
    
    explicit thread_node(const db::node::node_id _id, const db::node::node_id _trans):
-      db::node(_id, _trans),
+      in_queue_node(_id, _trans),
       owner(NULL),
-      i_am_on_queue(false), // must be false! node will be added to queue automatically
       queue(vm::predicate::MAX_STRAT_LEVEL)
    {}
    

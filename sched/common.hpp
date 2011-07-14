@@ -7,7 +7,11 @@
 namespace sched
 {
 
+#ifdef NDEBUG
+inline void assert_static_nodes(const vm::process_id) {}
+#else
 void assert_static_nodes(const vm::process_id);
+#endif
 
 #define iterate_static_nodes(ID)                                                 \
    const node::node_id first(remote::self->find_first_node(ID));                 \
