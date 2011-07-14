@@ -67,7 +67,7 @@ tuple_aggregate::generate(void)
    return ls;
 }
 
-const bool
+bool
 tuple_aggregate::no_changes(void) const
 {
    for(agg_trie::const_iterator it(vals.begin());

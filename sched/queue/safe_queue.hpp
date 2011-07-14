@@ -66,10 +66,10 @@ private:
 public:
    
 #ifdef INSTRUMENTATION
-   inline const size_t size(void) const { return total; }
+   inline size_t size(void) const { return total; }
 #endif
    
-   inline const bool empty(void) const { return head == reinterpret_cast<node*>(tail.get()); }
+   inline bool empty(void) const { return head == reinterpret_cast<node*>(tail.get()); }
    
    inline void push(T el)
    {

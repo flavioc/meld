@@ -40,8 +40,8 @@ public:
    trie_node* get_by_first_int(const vm::int_val) const;
    void convert_hash(const vm::field_type&);
 
-   inline const bool is_hashed(void) const { return hashed; }
-   inline const bool is_leaf(void) const { return (vm::ptr_val)child & 0x1; }
+   inline bool is_hashed(void) const { return hashed; }
+   inline bool is_leaf(void) const { return (vm::ptr_val)child & 0x1; }
 
    inline trie_node* get_next(void) const { return next; }
    inline trie_node* get_child(void) const { return (trie_node*)((vm::ptr_val)child & (~(vm::ptr_val)(0x1))); }
@@ -147,7 +147,7 @@ public:
    
    virtual void add_count(const vm::ref_count many) = 0;
    
-   virtual const bool to_delete(void) const = 0;
+   virtual bool to_delete(void) const = 0;
    
    explicit trie_leaf(void)
    {
@@ -177,7 +177,7 @@ public:
    
    virtual inline void add_count(const vm::ref_count many) { tpl->add_count(many); }
    
-   virtual inline const bool to_delete(void) const { return tpl->reached_zero(); }
+   virtual inline bool to_delete(void) const { return tpl->reached_zero(); }
    
    explicit tuple_trie_leaf(simple_tuple *_tpl):
       trie_leaf(),
@@ -206,12 +206,12 @@ public:
       return current_leaf->get_tuple();
    }
    
-   inline const bool operator==(const tuple_trie_iterator& it) const
+   inline bool operator==(const tuple_trie_iterator& it) const
    {
       return current_leaf == it.current_leaf;
    }
    
-   inline const bool operator!=(const tuple_trie_iterator& it) const { return !operator==(it); }
+   inline bool operator!=(const tuple_trie_iterator& it) const { return !operator==(it); }
    
    inline tuple_trie_iterator& operator++(void)
    {
@@ -279,7 +279,7 @@ public:
 
    public:
 
-      inline const bool to_delete(void) const { return to_del; }
+      inline bool to_delete(void) const { return to_del; }
 
       void operator()(void)
       {
@@ -299,8 +299,8 @@ public:
       }
    };
    
-   inline const bool empty(void) const { return total == 0; }
-   inline const size_t size(void) const { return total; }
+   inline bool empty(void) const { return total == 0; }
+   inline size_t size(void) const { return total; }
    
    void delete_by_first_int_arg(const vm::int_val);
    void wipeout(void);
@@ -377,9 +377,9 @@ public:
    
    virtual inline size_t get_count(void) const { return 1; }
    
-   virtual inline void add_count(const vm::ref_count many) { }
+   virtual inline void add_count(const vm::ref_count) { }
    
-   virtual inline const bool to_delete(void) const { return false; }
+   virtual inline bool to_delete(void) const { return false; }
    
    explicit agg_trie_leaf(agg_configuration *_conf):
       trie_leaf(),
@@ -407,12 +407,12 @@ public:
       return current_leaf->get_conf();
    }
    
-   inline const bool operator==(const agg_trie_iterator& it) const
+   inline bool operator==(const agg_trie_iterator& it) const
    {
       return current_leaf == it.current_leaf;
    }
    
-   inline const bool operator!=(const agg_trie_iterator& it) const { return !operator==(it); }
+   inline bool operator!=(const agg_trie_iterator& it) const { return !operator==(it); }
    
    inline agg_trie_iterator& operator++(void)
    {
@@ -442,7 +442,7 @@ class agg_trie: public trie, public mem::base<agg_trie>
 {
 private:
    
-   virtual trie_leaf* create_leaf(void *data, const vm::ref_count many)
+   virtual trie_leaf* create_leaf(void *, const vm::ref_count)
    {
       return new agg_trie_leaf(NULL);
    }

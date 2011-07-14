@@ -59,7 +59,7 @@ public:
 
    inline vm::ref_count get_count(void) const { return count; }
    
-   inline const bool reached_zero(void) const { return get_count() == 0; }
+   inline bool reached_zero(void) const { return get_count() == 0; }
 
    inline void inc_count(const vm::ref_count& inc) { assert(inc > 0); count += inc; }
 
@@ -68,7 +68,7 @@ public:
    inline void add_count(const vm::ref_count& inc) { count += inc; }
    
 #ifdef COMPILE_MPI
-   const size_t storage_size(void) const
+   inline size_t storage_size(void) const
    {
       return sizeof(vm::ref_count) + data->get_storage_size();
    }

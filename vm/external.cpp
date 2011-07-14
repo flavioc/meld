@@ -23,7 +23,6 @@ void
 external_function::set_arg_type(const size_t arg, const field_type typ)
 {
    assert(arg < num_args);
-   assert(arg >= 0);
    
    spec[arg] = typ;
 }
@@ -35,7 +34,7 @@ external_function::external_function(external_function_ptr _ptr,
    ptr(_ptr), ret(_ret),
    spec(new field_type[_num_args])
 {
-   assert(num_args >= 0);
+   assert(num_args <= EXTERNAL_ARG_LIMIT);
 }
 
 external_function::~external_function(void)

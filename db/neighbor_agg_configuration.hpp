@@ -19,7 +19,7 @@ private:
 public:
    
    // XXX need to find a better way to change the class allocator using inheritance
-   inline void* operator new(size_t size)
+   inline void* operator new(size_t)
    {
       return mem::allocator<neighbor_agg_configuration>().allocate(1);
    }

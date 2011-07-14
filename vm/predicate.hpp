@@ -68,13 +68,13 @@ public:
    }
    
    const std::vector<const predicate*>& get_local_agg_deps(void) const;
-   inline const bool agg_depends_remote(void) const { return agg_info->with_remote_pred; }
+   inline bool agg_depends_remote(void) const { return agg_info->with_remote_pred; }
    inline const predicate *get_remote_pred(void) const { return agg_info->remote_pred; }
    
-   inline const bool is_route_pred(void) const { return is_route || is_reverse_route; }
+   inline bool is_route_pred(void) const { return is_route || is_reverse_route; }
    
-   inline const field_num get_aggregate_field(void) const { return agg_info->field; }
-   inline const aggregate_type get_aggregate_type(void) const { return agg_info->type; }
+   inline field_num get_aggregate_field(void) const { return agg_info->field; }
+   inline aggregate_type get_aggregate_type(void) const { return agg_info->type; }
    
    inline predicate_id get_id(void) const { return id; }
    

@@ -67,7 +67,7 @@ private:
 public:
    
    const T get_head(void) const { return head; }
-   const list_ptr get_tail(void) const { return tail; }
+   list_ptr get_tail(void) const { return tail; }
    
    inline void inc_refs(void)
 	 {
@@ -82,7 +82,7 @@ public:
          destroy();
    }
    
-   inline const bool zero_refs(void) const { return refs == 0; }
+   inline bool zero_refs(void) const { return refs == 0; }
    
    inline void destroy(void)
    {
@@ -133,7 +133,7 @@ public:
          ptr->save(ar, 0);
    }
    
-   static list_ptr load_list(boost::mpi::packed_iarchive& ar, const bool first = true)
+   static list_ptr load_list(boost::mpi::packed_iarchive& ar)
    {  
       bool more;
       
@@ -146,7 +146,7 @@ public:
       
       ar & head;
       
-      return new cons(load_list(ar, false), head); 
+      return new cons(load_list(ar), head); 
    }
    
    static inline

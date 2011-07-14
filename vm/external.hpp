@@ -8,6 +8,8 @@
 
 namespace vm
 {
+   
+const size_t EXTERNAL_ARG_LIMIT(100);
 
 typedef utils::byte external_function_id;
 
@@ -35,10 +37,10 @@ private:
    
 public:
    
-   inline const size_t get_num_args(void) const { return num_args; }
+   inline size_t get_num_args(void) const { return num_args; }
    
-   inline const field_type get_return_type(void) const { return ret; }
-   inline const field_type get_arg_type(const size_t i) const { return spec[i]; }
+   inline field_type get_return_type(void) const { return ret; }
+   inline field_type get_arg_type(const size_t i) const { return spec[i]; }
    
    inline external_function_ptr get_fun_ptr(void) const { return ptr; }
    

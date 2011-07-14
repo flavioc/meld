@@ -69,7 +69,7 @@ protected:
    
 public:
    
-   inline const bool leader_thread(void) const { return get_id() == 0; }
+   inline bool leader_thread(void) const { return get_id() == 0; }
    
    // a new work was created for the current executing node
    inline void new_work_self(db::node *node, const db::simple_tuple *tpl, const bool is_agg = false)
@@ -114,7 +114,7 @@ public:
    
    virtual base* find_scheduler(const db::node::node_id) = 0;
    
-   inline const vm::process_id get_id(void) const { return id; }
+   inline vm::process_id get_id(void) const { return id; }
    
    virtual void write_slice(stat::slice& sl) const
    {

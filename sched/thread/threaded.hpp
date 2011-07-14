@@ -74,10 +74,10 @@ protected:
       }
    }
    
-   inline const bool is_inactive(void) const { return state == THREAD_INACTIVE; }
-   inline const bool is_active(void) const { return state == THREAD_ACTIVE; }
+   inline bool is_inactive(void) const { return state == THREAD_INACTIVE; }
+   inline bool is_active(void) const { return state == THREAD_ACTIVE; }
    
-   inline const bool all_threads_finished(void) const
+   inline bool all_threads_finished(void) const
    {
       return term_barrier->all_finished();
    }

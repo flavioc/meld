@@ -12,7 +12,7 @@
 
 namespace vm {
 
-typedef const unsigned char instr_val;
+typedef unsigned char instr_val;
 typedef unsigned char reg_num;
 
 namespace instr {

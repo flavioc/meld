@@ -40,7 +40,8 @@ protected:
 
 public:
    
-   inline void* operator new(size_t size)
+   // new and delete are needed in order to make subclasses work as expected
+   inline void* operator new(size_t)
    {
       return mem::allocator<agg_configuration>().allocate(1);
    }
@@ -54,15 +55,15 @@ public:
 
    void generate(const vm::aggregate_type, const vm::field_num, simple_tuple_list&);
 
-   const bool test(vm::tuple *, const vm::field_num) const;
+   bool test(vm::tuple *, const vm::field_num) const;
 
-   inline const bool has_changed(void) const { return changed; }
-   inline const bool is_empty(void) const { return vals.empty(); }
-   inline const size_t size(void) const { return vals.size(); }
+   inline bool has_changed(void) const { return changed; }
+   inline bool is_empty(void) const { return vals.empty(); }
+   inline size_t size(void) const { return vals.size(); }
 
    virtual void add_to_set(vm::tuple *, const vm::ref_count);
    
-   const bool matches_first_int_arg(const vm::int_val) const;
+   bool matches_first_int_arg(const vm::int_val) const;
 
    explicit agg_configuration(const vm::predicate *_pred):
       changed(false), corresponds(NULL), vals(_pred)

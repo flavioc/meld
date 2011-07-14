@@ -257,7 +257,7 @@ static_local::end(void)
 }
 
 void
-static_local::init(const size_t num_threads)
+static_local::init(const size_t)
 {
    database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
    database::map_nodes::iterator end(state::DATABASE->get_node_iterator(remote::self->find_last_node(id)));
@@ -278,7 +278,7 @@ static_local::init(const size_t num_threads)
 }
 
 static_local*
-static_local::find_scheduler(const node::node_id id)
+static_local::find_scheduler(const node::node_id)
 {
    return NULL;
 }

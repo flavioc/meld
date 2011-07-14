@@ -52,7 +52,7 @@ public:
    db::node::node_id id;
    db::simple_tuple *data;
 
-   const size_t get_storage_size(void) const
+   size_t get_storage_size(void) const
    {
       return sizeof(db::node::node_id) + data->storage_size();
    }
@@ -103,22 +103,24 @@ private:
    
 public:
    
-   void add(message *msg) {
+   void add(message *msg)
+   {
       lst.push_back(msg);
       assert(total_size > 0);
       total_size += msg->get_storage_size();
       assert(total_size > lst.size());
    }
    
-   inline const size_t size(void) const { return lst.size(); }
+   inline size_t size(void) const { return lst.size(); }
    
-   inline const bool empty(void) const {
+   inline bool empty(void) const
+   {
       if(lst.empty())
          assert(total_size == INITIAL_MESSAGE_SIZE);
       return lst.empty();
    }
    
-   const size_t get_storage_size(void) const { return total_size; }
+   size_t get_storage_size(void) const { return total_size; }
    
    void pack(utils::byte *, const size_t, MPI_Comm) const;
    
@@ -127,7 +129,8 @@ public:
    
    static message_set* unpack(utils::byte *, const size_t, MPI_Comm);
    
-   void wipeout(void) {
+   void wipeout(void)
+   {
       for(list_messages::iterator it(lst.begin()); it != lst.end(); ++it)
          message::wipeout(*it);
       lst.clear();

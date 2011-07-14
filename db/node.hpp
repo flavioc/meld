@@ -112,7 +112,7 @@ public:
    void match_predicate(const vm::predicate_id, tuple_vector&) const;
    void match_predicate(const vm::predicate_id, const vm::match&, tuple_vector&) const;
    
-   const size_t count_total(const vm::predicate_id) const;
+   size_t count_total(const vm::predicate_id) const;
    
    void print(std::ostream&) const;
    void dump(std::ostream&) const;

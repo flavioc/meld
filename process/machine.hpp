@@ -64,7 +64,7 @@ public:
    void dump_database(void) { will_dump_database = true; }
    void show_memory(void) { will_show_memory = true; }
    
-   const sched::scheduler_type get_sched_type(void) const { return sched_type; }
+   sched::scheduler_type get_sched_type(void) const { return sched_type; }
    
    process *get_process(const vm::process_id id) { return process_list[id]; }
    

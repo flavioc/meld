@@ -222,7 +222,7 @@ threads_single::get_work(work_unit& work)
 }
 
 void
-threads_single::init(const size_t num_threads)
+threads_single::init(const size_t)
 {
    database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
    database::map_nodes::iterator end(state::DATABASE->get_node_iterator(remote::self->find_last_node(id)));
@@ -241,7 +241,7 @@ threads_single::init(const size_t num_threads)
 }
 
 threads_single*
-threads_single::find_scheduler(const node::node_id id)
+threads_single::find_scheduler(const node::node_id)
 {
    return NULL;
 }

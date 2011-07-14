@@ -7,7 +7,7 @@
 namespace utils
 {
 
-const size_t number_cpus(void);
+size_t number_cpus(void);
 
 template <typename T>
 std::string to_string(const T& obj)
@@ -63,7 +63,7 @@ T power(const T base, const T exp)
    return ret;
 }
 
-const size_t random_unsigned(const size_t);
+size_t random_unsigned(const size_t);
 
 void file_print_and_remove(const std::string&);
 

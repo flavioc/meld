@@ -17,7 +17,7 @@ private:
    
 public:
    
-   inline const bool empty(void) const { return requests.empty(); }
+   inline bool empty(void) const { return requests.empty(); }
    
    inline sched::base *pop(void)
    {

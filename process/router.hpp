@@ -44,12 +44,12 @@ private:
    static const remote_tag TERMINATE_ITERATION_TAG = 201;
    static const remote_tag PRINT_TAG = 202;
    
-   static inline const remote_tag get_thread_tag(const vm::process_id id)
+   static inline remote_tag get_thread_tag(const vm::process_id id)
    {
       return THREAD_TAG + id;
    }
    
-   static inline const remote_tag get_thread_delay_tag(const vm::process_id id)
+   static inline remote_tag get_thread_delay_tag(const vm::process_id id)
    {
       return THREAD_DELAY_TAG + id;
    }
@@ -74,7 +74,7 @@ private:
    
 public:
    
-   inline const bool use_mpi(void) const { return world_size > 1; }
+   inline bool use_mpi(void) const { return world_size > 1; }
    
    void set_nodes_total(const size_t);
    
@@ -84,7 +84,7 @@ public:
    
    sched::req_obj send(remote *, const vm::process_id&, const sched::message_set&);
    
-   const bool was_received(const size_t, MPI_Request *) const;
+   bool was_received(const size_t, MPI_Request *) const;
    
    sched::message_set* recv_attempt(const vm::process_id, utils::byte *);
 

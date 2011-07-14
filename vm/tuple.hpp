@@ -75,10 +75,10 @@ public:
 
    inline const predicate* get_predicate(void) const { return pred; }
 
-   inline const predicate_id get_predicate_id(void) const { return pred->get_id(); }
+   inline predicate_id get_predicate_id(void) const { return pred->get_id(); }
    
 #ifdef COMPILE_MPI
-   const size_t get_storage_size(void) const;
+   size_t get_storage_size(void) const;
    
    void pack(utils::byte *, const size_t, int *, MPI_Comm) const;
    void load(utils::byte *, const size_t, int *, MPI_Comm);
@@ -104,7 +104,7 @@ public:
 
 #undef define_get
 
-   inline const bool is_aggregate(void) const { return pred->is_aggregate(); }
+   inline bool is_aggregate(void) const { return pred->is_aggregate(); }
    
    void print(std::ostream&) const;
    

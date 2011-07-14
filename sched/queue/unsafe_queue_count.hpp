@@ -19,12 +19,12 @@ public:
    node *tail;
    size_t total;
    
-   inline const bool empty(void) const
+   inline bool empty(void) const
    {
       return head == NULL;
    }
    
-   inline const size_t size(void) const
+   inline size_t size(void) const
    {
       return total;
    }

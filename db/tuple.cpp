@@ -13,14 +13,14 @@ namespace db
 
 #ifdef COMPILE_MPI
 void
-simple_tuple::save(mpi::packed_oarchive& ar, const unsigned int version) const
+simple_tuple::save(mpi::packed_oarchive& ar, const unsigned int) const
 {
    ar & *data;
    ar & count;
 }
 
 void
-simple_tuple::load(mpi::packed_iarchive& ar, const unsigned int version)
+simple_tuple::load(mpi::packed_iarchive& ar, const unsigned int)
 {
    data = new vm::tuple();
    

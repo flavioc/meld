@@ -28,8 +28,8 @@ public:
 
    agg_configuration* add_to_set(vm::tuple *, const vm::ref_count);
    
-   const bool no_changes(void) const;
-   inline const bool empty(void) const { return vals.empty(); }
+   bool no_changes(void) const;
+   inline bool empty(void) const { return vals.empty(); }
    
    void delete_by_first_int_arg(const vm::int_val);
 

@@ -24,7 +24,7 @@ write_header(ofstream& out, const string& header)
 
    line.set_header();
 
-   line << "time";
+   line << header;
 
    for(size_t i(0); i < state::NUM_THREADS; ++i)
       line << (string("thread") + to_string<size_t>(i));

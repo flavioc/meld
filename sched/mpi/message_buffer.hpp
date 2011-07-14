@@ -40,9 +40,9 @@ private:
    
 public:
    
-   inline const bool empty(void) const { return total == 0; }
+   inline bool empty(void) const { return total == 0; }
    
-   inline const bool all_received(void) const { return req_handler.empty(); }
+   inline bool all_received(void) const { return req_handler.empty(); }
    
    inline void update_received(const bool test)
    {

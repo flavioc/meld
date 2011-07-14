@@ -56,10 +56,10 @@ public:
    inline RET get_ ## WHAT (const reg_num& num) const { BODY; }
    
    define_get(reg, reg, return regs[num]);
-   define_get(int, const int_val, return *(int_val*)(regs + num));
-   define_get(float, const float_val, return *(float_val*)(regs + num));
-   define_get(ptr, const ptr_val, return *(ptr_val*)(regs + num));
-   define_get(bool, const bool_val, return get_int(num) ? true : false);
+   define_get(int, int_val, return *(int_val*)(regs + num));
+   define_get(float, float_val, return *(float_val*)(regs + num));
+   define_get(ptr, ptr_val, return *(ptr_val*)(regs + num));
+   define_get(bool, bool_val, return get_int(num) ? true : false);
    define_get(int_list, runtime::int_list*, return (runtime::int_list*)get_ptr(num));
    define_get(float_list, runtime::float_list*, return (runtime::float_list*)get_ptr(num));
    define_get(node_list, runtime::node_list*, return (runtime::node_list*)get_ptr(num));

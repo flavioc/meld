@@ -17,7 +17,7 @@ public:
    node *head;
    node *tail;
    
-   inline const bool empty(void) const
+   inline bool empty(void) const
    {
       return head == NULL;
    }

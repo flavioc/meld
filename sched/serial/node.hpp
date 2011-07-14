@@ -39,12 +39,12 @@ public:
       i_am_on_queue = val;
    }
    
-   inline const bool in_queue(void) const
+   inline bool in_queue(void) const
    {
       return i_am_on_queue;
    }
 
-   inline const bool has_work(void) const { return !queue.empty(); }
+   inline bool has_work(void) const { return !queue.empty(); }
 
    inline node_work_unit get_work(void)
    {

@@ -11,7 +11,7 @@ namespace sched
 {
 
 void
-serial_global::new_work(node *from, node *to, const simple_tuple *tpl, const bool is_agg)
+serial_global::new_work(node *, node *to, const simple_tuple *tpl, const bool is_agg)
 {
    assert(to != NULL);
    assert(tpl != NULL);

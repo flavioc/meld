@@ -22,9 +22,11 @@ private:
    
 public:
    
-   inline const bool empty(void) const { return total == 0; }
-   inline const size_t size(void) const { return total; }
-   inline queue& get_queue(const size_t prio) {
+   inline bool empty(void) const { return total == 0; }
+   inline size_t size(void) const { return total; }
+   
+   inline queue& get_queue(const size_t prio)
+   {
       assert(prio < queues.size());
       return queues[prio];
    }

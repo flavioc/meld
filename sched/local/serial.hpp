@@ -16,7 +16,7 @@ private:
    safe_queue<serial_node*> queue_nodes;
    serial_node *current_node;
    
-   inline const bool has_work(void) const { return !queue_nodes.empty(); }
+   inline bool has_work(void) const { return !queue_nodes.empty(); }
    
    virtual void assert_end(void) const;
    virtual void assert_end_iteration(void) const;

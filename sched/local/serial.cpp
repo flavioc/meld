@@ -12,7 +12,7 @@ namespace sched
 {
    
 void
-serial_local::new_work(node *from, node *_to, const simple_tuple *tpl, const bool is_agg)
+serial_local::new_work(node *, node *_to, const simple_tuple *tpl, const bool is_agg)
 {
    assert(_to != NULL);
    assert(tpl != NULL);

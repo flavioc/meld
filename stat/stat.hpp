@@ -11,7 +11,7 @@ namespace stat
 const unsigned int SLICE_PERIOD = 5;
 
 void set_stat_file(const std::string&);
-const bool stat_enabled(void);
+bool stat_enabled(void);
 const std::string get_stat_file(void);
 
 }

@@ -82,7 +82,7 @@ predicate::make_predicate_from_buf(byte *buf, code_size_t *code_size)
       
       buf++;
       
-      assert(remote_total >= 0 && remote_total <= 1);
+      assert(remote_total <= 1);
       if(remote_total == 1) {
          pred->agg_info->with_remote_pred = true;
          pred->agg_info->remote_pred_id = (predicate_id)(buf[0]);

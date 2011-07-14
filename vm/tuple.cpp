@@ -181,7 +181,7 @@ tuple::~tuple(void)
 
 #ifdef COMPILE_MPI
 void
-tuple::save(mpi::packed_oarchive & ar, const unsigned int version) const
+tuple::save(mpi::packed_oarchive & ar, const unsigned int) const
 {
    const predicate_id id(get_predicate_id());
    ar & id;
@@ -219,7 +219,7 @@ tuple::save(mpi::packed_oarchive & ar, const unsigned int version) const
 }
     
 void
-tuple::load(mpi::packed_iarchive& ar, const unsigned int version)
+tuple::load(mpi::packed_iarchive& ar, const unsigned int)
 {
    predicate_id pred_id;
    
@@ -267,7 +267,7 @@ tuple::load(mpi::packed_iarchive& ar, const unsigned int version)
    }
 }
 
-const size_t
+size_t
 tuple::get_storage_size(void) const
 {
    size_t ret(sizeof(predicate_id));

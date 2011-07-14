@@ -33,7 +33,7 @@ public:
       }
    }
    
-   inline const bool is_leaf(void) const { return right == NULL; }
+   inline bool is_leaf(void) const { return right == NULL; }
    
    explicit queue_tree_node(void):
       counter(0),
@@ -82,7 +82,6 @@ private:
       const size_t size(q.size());
       
       assert(size > 0);
-      assert(prio >= 0);
       assert(prio < leaves.size());
       
       tree_node *node(leaves[prio]);
@@ -101,15 +100,13 @@ private:
 public:
    
 #ifdef INSTRUMENTATION
-   inline const size_t size(void) const { return total; }
+   inline size_t size(void) const { return total; }
 #endif
    
-   inline const bool empty(void) const { return total == 0; }
+   inline bool empty(void) const { return total == 0; }
    
    void push(const T item, const size_t prio)
    {
-      assert(total >= 0);
-      assert(prio >= 0);
       assert(prio < leaves.size());
       
       tree_node *node = leaves[prio];
@@ -132,8 +129,6 @@ public:
       tree_node *node = root;
       
       while(!node->is_leaf()) {
-         assert(node->counter >= 0);
-         
          if(node->counter > 0) {
             node->counter--;
             node = node->left;
@@ -148,8 +143,6 @@ public:
       assert(total > 0);
       
       total--;
-      
-      assert(total >= 0);
       
       return ret;
    }

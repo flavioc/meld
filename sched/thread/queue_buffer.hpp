@@ -28,9 +28,10 @@ private:
    
 public:
    
-   inline const bool empty(void) const { return total == 0; }
+   inline bool empty(void) const { return total == 0; }
    
-   inline const bool empty(const vm::process_id id) const {
+   inline bool empty(const vm::process_id id) const
+   {
       assert(id < buffered_work.size());
       return buffered_work[id].empty();
    }

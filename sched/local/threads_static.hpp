@@ -41,7 +41,7 @@ protected:
       queue_nodes.push(node);
    }
    
-   inline const bool has_work(void) const { return !queue_nodes.empty(); }
+   inline bool has_work(void) const { return !queue_nodes.empty(); }
    
 public:
    

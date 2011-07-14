@@ -36,7 +36,7 @@ private:
    
 public:
    
-   inline const bool empty(void) const { return total == 0; }
+   inline bool empty(void) const { return total == 0; }
    
    void flush(const bool);
    

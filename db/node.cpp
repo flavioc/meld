@@ -134,7 +134,7 @@ node::match_predicate(const predicate_id id, const match& m, tuple_vector& vec) 
 }
 
 void
-node::delete_all(const predicate* pred)
+node::delete_all(const predicate*)
 {
    assert(false);
 }
@@ -154,7 +154,7 @@ node::delete_by_first_int_arg(const predicate *pred, const int_val arg)
    }
 }
 
-const size_t
+size_t
 node::count_total(const predicate_id id) const
 {
    simple_tuple_map::const_iterator it(tuples.find(id));

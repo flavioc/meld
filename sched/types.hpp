@@ -19,13 +19,13 @@ enum scheduler_type {
    SCHED_SERIAL_LOCAL
 };
 
-inline const bool is_serial_sched(const scheduler_type type)
+inline bool is_serial_sched(const scheduler_type type)
 {
    return type == SCHED_SERIAL_GLOBAL ||
       type == SCHED_SERIAL_LOCAL;
 }
 
-inline const bool is_mpi_sched(const scheduler_type type)
+inline bool is_mpi_sched(const scheduler_type type)
 {
    return type == SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL ||
       type == SCHED_MPI_AND_THREADS_STATIC_GLOBAL ||
@@ -33,7 +33,7 @@ inline const bool is_mpi_sched(const scheduler_type type)
       type == SCHED_MPI_AND_THREADS_SINGLE_LOCAL;
 }
 
-inline const bool is_work_stealing_sched(const scheduler_type type)
+inline bool is_work_stealing_sched(const scheduler_type type)
 {
    return type == SCHED_THREADS_DYNAMIC_LOCAL ||
       type == SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL;

@@ -40,7 +40,7 @@ public:
    
    inline void set_owner(sched::base *_owner) { owner = _owner; }
    
-   inline const bool in_queue(void) const { return i_am_on_queue; }
+   inline bool in_queue(void) const { return i_am_on_queue; }
    
    inline void set_in_queue(const bool new_val) {
       assert(i_am_on_queue != new_val);
@@ -55,7 +55,7 @@ public:
       queue.push(w, tpl->get_strat_level());
    }
    
-   inline const bool no_more_work(void) const { return queue.empty(); }
+   inline bool no_more_work(void) const { return queue.empty(); }
    
    inline node_work_unit get_work(void)
    {

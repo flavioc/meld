@@ -37,7 +37,7 @@ public:
       dur += (boost::posix_time::microsec_clock::local_time() - before);
    }
    
-   inline const size_t milliseconds(void) const { return dur.total_milliseconds(); }
+   inline size_t milliseconds(void) const { return dur.total_milliseconds(); }
    
    void print(std::ostream& cout) const { cout << milliseconds() << "ms"; }
    

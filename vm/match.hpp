@@ -42,7 +42,7 @@ private:
    
 public:
    
-   inline const bool has_any_exact(void) const { return any_exact; }
+   inline bool has_any_exact(void) const { return any_exact; }
    
    inline void get_val_stack(match_val_stack& stk) const {
       for(int i(vals.size()-1); i >= 0; --i)

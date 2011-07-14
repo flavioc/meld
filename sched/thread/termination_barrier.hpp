@@ -16,17 +16,19 @@ private:
    
 public:
    
-   inline void is_active(void) {
+   inline void is_active(void)
+   {
       assert(active_threads < vm::state::NUM_THREADS);
       active_threads++;
    }
    
-   inline void is_inactive(void) {
+   inline void is_inactive(void)
+   {
       assert(active_threads > 0);
       active_threads--;
    }
    
-   inline const bool all_finished(void) const { return active_threads == 0; }
+   inline bool all_finished(void) const { return active_threads == 0; }
    
    explicit termination_barrier(const size_t num_threads):
       active_threads(num_threads)

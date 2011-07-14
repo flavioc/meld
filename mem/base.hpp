@@ -14,7 +14,7 @@ class base
 {
 public:
    
-   inline void* operator new(size_t size)
+   inline void* operator new(size_t) // size
    {
       return allocator<T>().allocate(1);
    }

@@ -21,7 +21,7 @@ protected:
    
    static safe_queue_multi<thread_node*> queue_nodes;
    
-   utils::byte _pad_threads1[128];
+   DEFINE_PADDING;
    
    thread_node *current_node;
    
@@ -34,7 +34,7 @@ protected:
    virtual void generate_aggs(void);
    virtual bool busy_wait(void);
    
-   static inline const bool has_work(void) { return !queue_nodes.empty(); }
+   static inline bool has_work(void) { return !queue_nodes.empty(); }
    
    static inline void add_to_queue(thread_node *node)
    {

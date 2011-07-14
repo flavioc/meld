@@ -48,16 +48,16 @@ public:
    
    void add_count(const int plus) { count += plus; }
    
-   inline const bool is_zero(void) const { return count == 0; }
+   inline bool is_zero(void) const { return count == 0; }
    
    void reset_count(void) { count = 0; }
-   inline const int get_count(void) const { return count; }
+   inline int get_count(void) const { return count; }
    
    void set_white(void) { type = WHITE; }
    void set_black(void) { type = BLACK; }
    
-   inline const bool is_white(void) const { return type == WHITE; }
-   inline const bool is_black(void) const { return type == BLACK; }
+   inline bool is_white(void) const { return type == WHITE; }
+   inline bool is_black(void) const { return type == BLACK; }
    
    explicit token(void): type(BLACK), count(0) {}
    

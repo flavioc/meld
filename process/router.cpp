@@ -113,7 +113,7 @@ router::recv_attempt(const process_id proc, byte *recv_buf)
       return NULL;
 }
 
-const bool
+bool
 router::was_received(const size_t total, MPI_Request *reqs) const
 {
    mutex::scoped_lock lock(mpi_mutex);

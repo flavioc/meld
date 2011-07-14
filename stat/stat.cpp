@@ -25,7 +25,7 @@ get_stat_file(void)
    return debug_file_name;
 }
 
-const bool
+bool
 stat_enabled(void)
 {
 	return debug_file_set;

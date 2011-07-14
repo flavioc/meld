@@ -33,7 +33,7 @@ private:
    
 protected:
    
-   inline const bool has_work(void) const { return !queue_work.empty(); }
+   inline bool has_work(void) const { return !queue_work.empty(); }
    
    void flush_buffered(void);
    

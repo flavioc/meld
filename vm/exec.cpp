@@ -28,7 +28,7 @@ enum return_type {
 static inline return_type execute(pcounter, state&);
 
 static inline node_val
-get_node_val(pcounter& m, state& state)
+get_node_val(pcounter& m)
 {
    const node_val ret(pcounter_node(m));
    
@@ -40,7 +40,7 @@ get_node_val(pcounter& m, state& state)
 }
 
 static inline node_val
-get_node_val(const pcounter& m, state& state)
+get_node_val(const pcounter& m)
 {
    return pcounter_node(m);
 }
@@ -70,7 +70,7 @@ move_to_reg(const pcounter& m, state& state,
    } else if(val_is_host(from))
       state.set_node(reg, state.node->get_id());
    else if(val_is_node(from))
-      state.set_node(reg, get_node_val(m, state));
+      state.set_node(reg, get_node_val(m));
    else if(val_is_reg(from))
       state.copy_reg(val_reg(from), reg);
    else if(val_is_tuple(from))
@@ -100,7 +100,7 @@ move_to_field(pcounter m, state& state, const instr_val& from)
       
       tuple->set_int(val_field_num(m), i);
    } else if(val_is_node(from)) {
-      const node_val val(get_node_val(m, state));
+      const node_val val(get_node_val(m));
       
       tuple *tuple(state.get_tuple(val_field_reg(m)));
       
@@ -255,7 +255,7 @@ node_val get_op_function<node_val>(const instr_val& val, pcounter& m, state& sta
    if(val_is_host(val))
       return state.node->get_id();
    else if(val_is_node(val))
-      return get_node_val(m, state);
+      return get_node_val(m);
    else if(val_is_reg(val))
       return state.get_node(val_reg(val));
    else if(val_is_field(val)) {

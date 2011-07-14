@@ -181,7 +181,7 @@ dynamic_local::get_work(work_unit& work)
 }
    
 void
-dynamic_local::init(const size_t num_threads)
+dynamic_local::init(const size_t)
 {
    nodes_mutex = new spinlock();
    nodes = new node_set();
