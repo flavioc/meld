@@ -2,6 +2,7 @@
 #include "sched/global/serial.hpp"
 #include "process/remote.hpp"
 #include "vm/state.hpp"
+#include "sched/common.hpp"
 
 using namespace db;
 using namespace vm;
@@ -25,12 +26,14 @@ void
 serial_global::assert_end_iteration(void) const
 {
    assert(!has_work());
+   assert_static_nodes_end_iteration(id);
 }
 
 void
 serial_global::assert_end(void) const
 {
    assert(!has_work());
+   assert_static_nodes_end(id);
 }
 
 void

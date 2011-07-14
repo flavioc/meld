@@ -29,7 +29,7 @@ threads_single::assert_end(void) const
    assert(is_inactive());
    assert(all_threads_finished());
    assert_thread_end_iteration();
-   assert_static_nodes(id);
+   assert_static_nodes_end(id);
 }
 
 void
@@ -39,7 +39,7 @@ threads_single::assert_end_iteration(void) const
    assert(is_inactive());
    assert(all_threads_finished());
    assert_thread_end_iteration();
-   assert_static_nodes(id);
+   assert_static_nodes_end_iteration(id);
 }
 
 void

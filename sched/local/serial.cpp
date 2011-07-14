@@ -31,14 +31,14 @@ void
 serial_local::assert_end(void) const
 {
    assert(!has_work());
-   assert_static_nodes(id);
+   assert_static_nodes_end(id);
 }
 
 void
 serial_local::assert_end_iteration(void) const
 {
    assert(!has_work());
-   assert_static_nodes(id);
+   assert_static_nodes_end_iteration(id);
 }
 
 bool

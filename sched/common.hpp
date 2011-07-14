@@ -8,9 +8,11 @@ namespace sched
 {
 
 #ifdef NDEBUG
-inline void assert_static_nodes(const vm::process_id) {}
+inline void assert_static_nodes_end_iteration(const vm::process_id) {}
+inline void assert_static_nodes_end(const vm::process_id) {}
 #else
-void assert_static_nodes(const vm::process_id);
+void assert_static_nodes_end_iteration(const vm::process_id);
+void assert_static_nodes_end(const vm::process_id);
 #endif
 
 #define iterate_static_nodes(ID)                                                 \

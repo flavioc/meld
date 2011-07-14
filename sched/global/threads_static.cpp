@@ -64,7 +64,7 @@ static_global::assert_end_iteration(void) const
    assert(buf.empty());
    assert(all_threads_finished());
    assert(!has_work());
-   assert_static_nodes(id);
+   assert_static_nodes_end_iteration(id);
 }
 
 void
@@ -74,7 +74,7 @@ static_global::assert_end(void) const
    assert(buf.empty());
    assert(all_threads_finished());
    assert(!has_work());
-   assert_static_nodes(id);
+   assert_static_nodes_end(id);
 }
 
 void
