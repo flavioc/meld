@@ -86,7 +86,7 @@ static_local::new_work_other(sched::base *scheduler, node *node, const simple_tu
    tnode->add_work(stuple, false);
    
 	spinlock::scoped_lock l(tnode->spin);
-   if(!tnode->in_queue() && !tnode->no_more_work()) {
+   if(!tnode->in_queue() && tnode->has_work()) {
 		static_local *owner(dynamic_cast<static_local*>(tnode->get_owner()));
 		
 		tnode->set_in_queue(true);
@@ -186,10 +186,10 @@ static_local::finish_work(const work_unit& work)
 bool
 static_local::check_if_current_useless(void)
 {
-   if(current_node->no_more_work()) {
+   if(!current_node->has_work()) {
       spinlock::scoped_lock lock(current_node->spin);
       
-      if(current_node->no_more_work()) {
+      if(!current_node->has_work()) {
          current_node->set_in_queue(false);
          assert(!current_node->in_queue());
          current_node = NULL;
@@ -197,7 +197,7 @@ static_local::check_if_current_useless(void)
       }
    }
    
-   assert(!current_node->no_more_work());
+   assert(current_node->has_work());
    return false;
 }
 
@@ -236,7 +236,7 @@ static_local::get_work(work_unit& work)
    set_active_if_inactive();
    assert(current_node != NULL);
    assert(current_node->in_queue());
-   assert(!current_node->no_more_work());
+   assert(current_node->has_work());
    
    node_work_unit unit(current_node->get_work());
    
@@ -271,7 +271,7 @@ static_local::init(const size_t)
       
       assert(cur_node->get_owner() == this);
       assert(cur_node->in_queue());
-      assert(!cur_node->no_more_work());
+      assert(cur_node->has_work());
    }
    
    threads_synchronize();

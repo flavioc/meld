@@ -55,7 +55,7 @@ public:
       queue.push(w, tpl->get_strat_level());
    }
    
-   inline bool no_more_work(void) const { return queue.empty(); }
+   inline bool has_work(void) const { return !queue.empty(); }
    
    inline node_work_unit get_work(void)
    {
@@ -65,13 +65,13 @@ public:
    virtual void assert_end(void) const
    {
       db::node::assert_end();
-      assert(no_more_work());
+      assert(!has_work());
       assert(!in_queue());
    }
    
    virtual void assert_end_iteration(void) const
    {
-      assert(no_more_work());
+      assert(!has_work());
    }
    
    explicit thread_node(const db::node::node_id _id, const db::node::node_id _trans):

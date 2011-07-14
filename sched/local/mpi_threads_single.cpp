@@ -37,11 +37,9 @@ mpi_thread_single::new_mpi_message(node *_node, simple_tuple *stpl)
    
    spinlock::scoped_lock l(node->spin);
    
-   if(!node->in_queue() && !node->no_more_work()) {
-      if(!node->no_more_work()) {
-         node->set_in_queue(true);
-         add_to_queue(node);
-      }
+   if(!node->in_queue() && node->has_work()) {
+      node->set_in_queue(true);
+      add_to_queue(node);
    }
 }
 

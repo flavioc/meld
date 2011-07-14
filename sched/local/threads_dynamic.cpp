@@ -199,7 +199,7 @@ dynamic_local::init(const size_t)
       init_node(cur_node);
       
       assert(cur_node->in_queue());
-      assert(!cur_node->no_more_work());
+      assert(cur_node->has_work());
    }
    
    threads_synchronize();

@@ -55,9 +55,9 @@ threads_single::new_work(node *from, node *_to, const simple_tuple *tpl, const b
    
    to->add_work(tpl, is_agg);
    
-   if(!to->in_queue() && !to->no_more_work()) {
+   if(!to->in_queue() && to->has_work()) {
       spinlock::scoped_lock l(to->spin);
-      if(!to->in_queue() && !to->no_more_work()) {
+      if(!to->in_queue() && to->has_work()) {
          to->set_in_queue(true);
          add_to_queue(to);
       }
@@ -77,9 +77,9 @@ threads_single::new_work_other(sched::base *scheduler, node *node, const simple_
    
    tnode->add_work(stuple, false);
    
-   if(!tnode->in_queue() && !tnode->no_more_work()) {
+   if(!tnode->in_queue() && tnode->has_work()) {
       spinlock::scoped_lock l(tnode->spin);
-      if(!tnode->in_queue() && !tnode->no_more_work()) {
+      if(!tnode->in_queue() && tnode->has_work()) {
          tnode->set_in_queue(true);
          add_to_queue(tnode);
          assert(tnode->in_queue());
@@ -159,10 +159,10 @@ threads_single::finish_work(const work_unit& work)
 bool
 threads_single::check_if_current_useless(void)
 {
-   if(current_node->no_more_work()) {
+   if(!current_node->has_work()) {
       spinlock::scoped_lock l(current_node->spin);
       
-      if(current_node->no_more_work()) {
+      if(!current_node->has_work()) {
          current_node->set_in_queue(false);
          assert(!current_node->in_queue());
          current_node = NULL;
@@ -206,7 +206,7 @@ threads_single::get_work(work_unit& work)
       
    assert(current_node != NULL);
    assert(current_node->in_queue());
-   assert(!current_node->no_more_work());
+   assert(current_node->has_work());
    
    node_work_unit unit(current_node->get_work());
    
@@ -234,7 +234,7 @@ threads_single::init(const size_t)
       init_node(cur_node);
       
       assert(cur_node->in_queue());
-      assert(!cur_node->no_more_work());
+      assert(cur_node->has_work());
    }
    
    threads_synchronize();
