@@ -233,13 +233,13 @@ sched/global/mpi.o: sched/global/mpi.hpp sched/global/mpi.cpp \
 						sched/mpi/handler.hpp
 
 sched/local/serial.o: sched/local/serial.cpp sched/local/serial.hpp \
-									sched/queue/unsafe_queue.hpp sched/serial/node.hpp
+									sched/queue/unsafe_queue.hpp sched/nodes/serial.hpp
 
 sched/local/threads_static.o: sched/base.hpp sched/local/threads_static.hpp \
 								sched/local/threads_static.cpp sched/queue/node.hpp \
 								sched/thread/termination_barrier.hpp \
 								utils/atomic.hpp \
-								sched/thread/node.hpp sched/queue/unsafe_queue_count.hpp \
+								sched/nodes/thread.hpp sched/queue/unsafe_queue_count.hpp \
 								sched/queue/safe_queue.hpp \
 								sched/thread/threaded.hpp \
 								sched/queue/bounded_pqueue.hpp \
@@ -249,7 +249,7 @@ sched/local/threads_single.o: sched/base.hpp sched/local/threads_single.hpp \
 								sched/local/threads_single.cpp sched/queue/node.hpp \
 								sched/thread/termination_barrier.hpp \
 								utils/atomic.hpp \
-								sched/thread/node.hpp sched/queue/unsafe_queue_count.hpp \
+								sched/nodes/thread.hpp sched/queue/unsafe_queue_count.hpp \
 								sched/queue/safe_queue_multi.hpp \
 								sched/thread/threaded.hpp \
 								sched/queue/bounded_pqueue.hpp \
@@ -258,7 +258,7 @@ sched/local/threads_single.o: sched/base.hpp sched/local/threads_single.hpp \
 sched/local/threads_dynamic.o: sched/base.hpp sched/local/threads_static.hpp \
 											sched/local/threads_dynamic.hpp \
 											sched/local/threads_dynamic.cpp \
-											sched/thread/node.hpp sched/thread/termination_barrier.hpp \
+											sched/nodes/thread.hpp sched/thread/termination_barrier.hpp \
 											sched/queue/node.hpp sched/thread/steal_set.hpp \
 											sched/queue/safe_queue.hpp \
 											sched/thread/threaded.hpp \

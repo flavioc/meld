@@ -1,6 +1,6 @@
 
-#ifndef SCHED_SERIAL_NODE_HPP
-#define SCHED_SERIAL_NODE_HPP
+#ifndef SCHED_NODES_SERIAL_HPP
+#define SCHED_NODES_SERIAL_HPP
 
 #include "mem/base.hpp"
 #include "db/node.hpp"

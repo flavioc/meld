@@ -3,7 +3,7 @@
 #define SCHED_LOCAL_SERIAL_HPP
 
 #include "sched/base.hpp"
-#include "sched/serial/node.hpp"
+#include "sched/nodes/serial.hpp"
 #include "sched/queue/unsafe_queue.hpp"
 
 namespace sched

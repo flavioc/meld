@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "sched/base.hpp"
-#include "sched/thread/node.hpp"
+#include "sched/nodes/thread.hpp"
 #include "sched/queue/safe_queue.hpp"
 #include "sched/thread/threaded.hpp"
 #include "sched/thread/queue_buffer.hpp"

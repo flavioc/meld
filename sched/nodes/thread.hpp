@@ -1,6 +1,6 @@
 
-#ifndef SCHED_THREAD_NODE_HPP
-#define SCHED_THREAD_NODE_HPP
+#ifndef SCHED_NODES_THREAD_HPP
+#define SCHED_NODES_THREAD_HPP
 
 #include "mem/base.hpp"
 #include "db/node.hpp"
