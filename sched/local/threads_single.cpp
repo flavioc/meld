@@ -8,6 +8,7 @@
 #include "sched/thread/assert.hpp"
 #include "vm/state.hpp"
 #include "utils/time.hpp"
+#include "sched/common.hpp"
 
 using namespace boost;
 using namespace std;

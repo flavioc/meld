@@ -241,7 +241,8 @@ agg_configuration::generate_sum_list_float(const field_num field) const
    
    for(size_t i(0); it != end; ++it) {
       simple_tuple *stpl(*it);
-      for(size_t j(0); j < stpl->get_count(); ++j) {
+      size_t count(size_t (stpl->get_count()));
+      for(size_t j(0); j < count; ++j) {
          lists[i++] = stpl->get_tuple()->get_float_list(field);
          assert(float_list::length(lists[i-1]) == len);
       }

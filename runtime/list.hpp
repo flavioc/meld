@@ -166,7 +166,7 @@ public:
    {
       utils::byte more;
       
-      assert(*pos < buf_size);
+      assert(*pos < (int)buf_size);
       
       if(is_null(ptr)) {
          more = 0;

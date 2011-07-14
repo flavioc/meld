@@ -24,7 +24,7 @@ PROFILING = #-pg
 OPTIMIZATIONS = -O0
 ARCH = -march=x86-64
 DEBUG = -g
-WARNINGS = -Wall -Wno-sign-compare
+WARNINGS = -Wall
 C0X = -std=c++0x
 
 CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) $(COX)

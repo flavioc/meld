@@ -18,7 +18,7 @@ request_handler::clear(void)
 {
    remote::remote_id self(remote::self->get_rank());
    
-   for(size_t i(0); i < remote::world_size; ++i) {
+   for(remote::remote_id i(0); i < (remote::remote_id)remote::world_size; ++i) {
       if(i != self) {
          for(list_reqs::iterator it(all_reqs[i].begin()); it != all_reqs[i].end(); ++it) {
             req_obj& obj(*it);
@@ -38,7 +38,7 @@ request_handler::flush(const bool test)
    
    remote::remote_id self(remote::self->get_rank());
    
-   for(size_t i(0); i < remote::world_size; ++i) {
+   for(remote::remote_id i(0); i < (remote::remote_id)remote::world_size; ++i) {
       if(i != self) {
          list_reqs& ls(all_reqs[i]);
          

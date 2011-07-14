@@ -41,7 +41,7 @@ public:
    void flush(const bool);
    
    inline void add_request(const process::remote* rem, req_obj& req) {
-      assert(rem->get_rank() < all_reqs.size());
+      assert(rem->get_rank() < (int)all_reqs.size());
       ++total;
       all_reqs[rem->get_rank()].push_back(req);
    }

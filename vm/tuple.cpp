@@ -301,9 +301,9 @@ tuple::pack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm) const
 {
    const predicate_id id(get_predicate_id());
    
-   assert(*pos <= buf_size);
+   assert(*pos <= (int)buf_size);
    MPI_Pack((void*)&id, 1, MPI_UNSIGNED_CHAR, buf, buf_size, pos, comm);
-   assert(*pos <= buf_size);
+   assert(*pos <= (int)buf_size);
    
    for(field_num i(0); i < num_fields(); ++i) {
       switch(get_field_type(i)) {
@@ -334,7 +334,7 @@ tuple::pack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm) const
          default:
             throw type_error("unsupported field type to pack");
       }
-      assert(*pos <= buf_size);
+      assert(*pos <= (int)buf_size);
    }
 }
 

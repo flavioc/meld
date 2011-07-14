@@ -146,7 +146,9 @@ tokenizer::do_collective_end_iteration(size_t stage)
       if(remote::self->get_rank() < power<remote::remote_id>(2, stage - 1)) {
          const remote::remote_id dest(remote::self->get_rank() + power<remote::remote_id>(2, stage - 1));
          
-         if(dest < remote::world_size)
+         assert(dest >= 0);
+         
+         if((size_t)dest < remote::world_size)
             state::ROUTER->send_end_iteration(stage, dest);
       } else if(remote::self->get_rank() >= power<remote::remote_id>(2, stage - 1)
                   && remote::self->get_rank() < power<remote::remote_id>(2, stage))
