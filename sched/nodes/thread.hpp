@@ -8,6 +8,7 @@
 #include "db/tuple.hpp"
 #include "utils/spinlock.hpp"
 #include "sched/base.hpp"
+#include "process/work.hpp"
 
 namespace sched
 {
@@ -33,7 +34,7 @@ private:
    
    sched::base *owner;
 	utils::spinlock spin;
-   safe_bounded_pqueue<node_work_unit>::type queue;
+   safe_bounded_pqueue<process::node_work>::type queue;
    
 public:
    
@@ -41,15 +42,14 @@ public:
    
    inline sched::base* get_owner(void) { return owner; }
    
-   inline void add_work(const db::simple_tuple *tpl, const bool is_agg = false)
+   inline void add_work(process::node_work& new_work)
    {
-      node_work_unit w = {tpl, is_agg};
-      queue.push(w, tpl->get_strat_level());
+      queue.push(new_work, new_work.get_strat_level());
    }
    
    inline bool has_work(void) const { return !queue.empty(); }
    
-   inline node_work_unit get_work(void)
+   inline process::node_work get_work(void)
    {
       return queue.pop();
    }

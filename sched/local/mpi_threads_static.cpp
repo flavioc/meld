@@ -33,16 +33,18 @@ mpi_thread_static::new_mpi_message(node *_node, simple_tuple *stpl)
 {
    assert(remote::self->find_proc_owner(_node->get_id()) == get_id());
    
-   thread_node *node((thread_node*)_node);
+   thread_node *node(dynamic_cast<thread_node*>(_node));
    
    assert(node->get_owner() == this);
    
-   node->add_work(stpl, false);
+   node_work unit(stpl);
    
-   if(!node->in_queue()) {
+   node->add_work(unit);
+   
+   if(!node->in_queue() && node->has_work()) {
       spinlock::scoped_lock l(node->spin);
 
-      if(!node->in_queue()) {
+      if(!node->in_queue() && node->has_work()) {
          node->set_in_queue(true);
          this->add_to_queue(node);
       }
@@ -93,11 +95,11 @@ mpi_thread_static::new_work_remote(remote *rem, const node::node_id node_id, mes
 }
 
 bool
-mpi_thread_static::get_work(work_unit& work)
+mpi_thread_static::get_work(work& new_work)
 {  
    do_mpi_cycle(get_id());
    
-   return static_local::get_work(work);
+   return static_local::get_work(new_work);
 }
 
 bool

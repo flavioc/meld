@@ -56,7 +56,7 @@ public:
    virtual void init(const size_t);
    virtual void end(void);
    
-   virtual bool get_work(work_unit&);
+   virtual bool get_work(process::work&);
    
    virtual void write_slice(stat::slice& sl) const;
    

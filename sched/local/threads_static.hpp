@@ -47,12 +47,12 @@ public:
    
    virtual void init(const size_t);
    
-   virtual void new_work(db::node *, db::node *, const db::simple_tuple*, const bool is_agg = false);
-   virtual void new_work_other(sched::base *, db::node *, const db::simple_tuple *);
+   virtual void new_work(const db::node *, process::work&);
+   virtual void new_work_other(sched::base *, process::work&);
    virtual void new_work_remote(process::remote *, const db::node::node_id, message *);
    
-   virtual bool get_work(work_unit&);
-   virtual void finish_work(const work_unit&);
+   virtual bool get_work(process::work&);
+   virtual void finish_work(const process::work&);
    virtual void end(void);
    virtual bool terminate_iteration(void);
    

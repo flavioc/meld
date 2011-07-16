@@ -16,19 +16,18 @@ class serial_node: public in_queue_node
 {
 private:
 
-   unsafe_bounded_pqueue<node_work_unit>::type queue;
+   unsafe_bounded_pqueue<process::node_work>::type queue;
 
 public:
    
-   inline void add_work(const db::simple_tuple *tpl, const bool is_agg)
+   inline void add_work(process::node_work& new_work)
    {
-      node_work_unit w = {tpl, is_agg};
-      queue.push(w, tpl->get_strat_level());
+      queue.push(new_work, new_work.get_strat_level());
    }
    
    inline bool has_work(void) const { return !queue.empty(); }
 
-   inline node_work_unit get_work(void)
+   inline process::node_work get_work(void)
    {
       assert(in_queue());
       return queue.pop();

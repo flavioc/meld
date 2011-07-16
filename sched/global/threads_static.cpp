@@ -21,31 +21,23 @@ namespace sched
 {
 
 void
-static_global::new_work(node *, node *to, const simple_tuple *tpl, const bool is_agg)
-{
-   assert(to != NULL);
-   assert(tpl != NULL);
+static_global::new_work(const node *, work& new_work)
+{  
+   queue_work.push(new_work, new_work.get_strat_level());
    
-   work_unit work = {to, tpl, is_agg};
-
-   queue_work.push(work, tpl->get_strat_level());
-   
-   assert((!is_agg && is_active()) || is_agg);
+   assert((!new_work.force_aggregate() && is_active()) || new_work.force_aggregate());
    assert_thread_push_work();
 }
 
 void
-static_global::new_work_other(sched::base *scheduler, node *node, const simple_tuple *stuple)
+static_global::new_work_other(sched::base *scheduler, work& new_work)
 {
-   assert(node != NULL);
-   assert(stuple != NULL);
    assert(scheduler != NULL);
    
    static_global *other((static_global*)scheduler);
-   work_unit work = {node, stuple, false};
    const process_id other_id(other->id);
    
-   if(buf.push(other_id, work))
+   if(buf.push(other_id, new_work))
       flush_queue(other_id, other);
       
    assert_thread_push_work();
@@ -127,7 +119,7 @@ static_global::busy_wait(void)
 }
 
 bool
-static_global::get_work(work_unit& work)
+static_global::get_work(work& new_work)
 {
    if(!has_work()) {
       if(!busy_wait())
@@ -137,7 +129,7 @@ static_global::get_work(work_unit& work)
       assert(has_work());
    }
    
-   work = queue_work.pop();
+   new_work = queue_work.pop();
    
    assert_thread_pop_work();
    

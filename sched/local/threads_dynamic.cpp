@@ -174,12 +174,12 @@ dynamic_local::handle_stealing(void)
 }
 
 bool
-dynamic_local::get_work(work_unit& work)
+dynamic_local::get_work(work& new_work)
 {
    if(state::NUM_THREADS > 1)
       handle_stealing();
       
-   return static_local::get_work(work);
+   return static_local::get_work(new_work);
 }
    
 void

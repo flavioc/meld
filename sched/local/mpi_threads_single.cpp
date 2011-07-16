@@ -31,9 +31,11 @@ mpi_thread_single::assert_end_iteration(void) const
 void
 mpi_thread_single::new_mpi_message(node *_node, simple_tuple *stpl)
 {
-   thread_node *node((thread_node*)_node);
+   thread_node *node(dynamic_cast<thread_node*>(_node));
    
-   node->add_work(stpl, false);
+   node_work unit(stpl);
+   
+   node->add_work(unit);
    
    spinlock::scoped_lock l(node->spin);
    
@@ -69,11 +71,11 @@ mpi_thread_single::new_work_remote(remote *rem, const node::node_id, message *ms
 }
 
 bool
-mpi_thread_single::get_work(work_unit& work)
+mpi_thread_single::get_work(work& new_work)
 {
    MPI_WORK_CYCLE()
    
-   return threads_single::get_work(work);
+   return threads_single::get_work(new_work);
 }
 
 bool

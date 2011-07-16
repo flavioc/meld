@@ -33,11 +33,13 @@ mpi_thread_dynamic::assert_end_iteration(void) const
 void
 mpi_thread_dynamic::new_mpi_message(node *_node, simple_tuple *stpl)
 {
-   thread_node *node((thread_node*)_node);
+   thread_node *node(dynamic_cast<thread_node*>(_node));
+   node_work unit(stpl);
+   
    spinlock::scoped_lock l(node->spin);
 
    if(node->get_owner() == this) {
-      node->add_work(stpl, false);
+      node->add_work(unit);
       if(!node->in_queue()) {
          node->set_in_queue(true);
          this->add_to_queue(node);
@@ -48,7 +50,7 @@ mpi_thread_dynamic::new_mpi_message(node *_node, simple_tuple *stpl)
    } else {
       mpi_thread_dynamic *owner = (mpi_thread_dynamic*)node->get_owner();
    
-      node->add_work(stpl, false);
+      node->add_work(unit);
    
       if(!node->in_queue()) {
          node->set_in_queue(true);
@@ -137,11 +139,11 @@ mpi_thread_dynamic::new_work_remote(remote *rem, const node::node_id node_id, me
 }
 
 bool
-mpi_thread_dynamic::get_work(work_unit& work)
+mpi_thread_dynamic::get_work(work& new_work)
 {  
    do_mpi_cycle(get_id());
    
-   return dynamic_local::get_work(work);
+   return dynamic_local::get_work(new_work);
 }
 
 bool

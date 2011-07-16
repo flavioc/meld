@@ -40,18 +40,16 @@ static_local::assert_end_iteration(void) const
 }
 
 void
-static_local::new_work(node *from, node *_to, const simple_tuple *tpl, const bool is_agg)
+static_local::new_work(const node *, work& new_work)
 {
-   (void)from;
-   thread_node *to((thread_node*)_to);
-    
-   assert(to != NULL);
-   assert(tpl != NULL);
+   thread_node *to(dynamic_cast<thread_node*>(new_work.get_node()));
    
    assert_thread_push_work();
    //assert(is_active());
    
-   to->add_work(tpl, is_agg);
+   node_work node_new_work(new_work);
+   
+   to->add_work(node_new_work);
    
    if(!to->in_queue()) {
       spinlock::scoped_lock l(to->spin);
@@ -70,20 +68,19 @@ static_local::new_work(node *from, node *_to, const simple_tuple *tpl, const boo
 }
 
 void
-static_local::new_work_other(sched::base *scheduler, node *node, const simple_tuple *stuple)
+static_local::new_work_other(sched::base *scheduler, work& new_work)
 {
    assert(is_active());
-   assert(node != NULL);
-   assert(stuple != NULL);
    assert(scheduler == NULL);
    
-   thread_node *tnode((thread_node*)node);
+   thread_node *tnode(dynamic_cast<thread_node*>(new_work.get_node()));
    
    assert(tnode->get_owner() != NULL);
    
    assert_thread_push_work();
    
-   tnode->add_work(stuple, false);
+   node_work node_new_work(new_work);
+   tnode->add_work(node_new_work);
    
 	spinlock::scoped_lock l(tnode->spin);
    if(!tnode->in_queue() && tnode->has_work()) {
@@ -174,7 +171,7 @@ static_local::terminate_iteration(void)
 }
 
 void
-static_local::finish_work(const work_unit& work)
+static_local::finish_work(const work& work)
 {
    base::finish_work(work);
    
@@ -228,7 +225,7 @@ static_local::set_next_node(void)
 }
 
 bool
-static_local::get_work(work_unit& work)
+static_local::get_work(work& new_work)
 {  
    if(!set_next_node())
       return false;
@@ -238,13 +235,11 @@ static_local::get_work(work_unit& work)
    assert(current_node->in_queue());
    assert(current_node->has_work());
    
-   node_work_unit unit(current_node->get_work());
+   node_work unit(current_node->get_work());
    
-   work.work_tpl = unit.work_tpl;
-   work.agg = unit.agg;
-   work.work_node = current_node;
+   new_work.copy_from_node(current_node, unit);
    
-   assert(work.work_node == current_node);
+   assert(new_work.get_node() == current_node);
    
    assert_thread_pop_work();
    

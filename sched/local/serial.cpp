@@ -12,14 +12,13 @@ namespace sched
 {
    
 void
-serial_local::new_work(node *, node *_to, const simple_tuple *tpl, const bool is_agg)
+serial_local::new_work(const node *, work& new_work)
 {
-   assert(_to != NULL);
-   assert(tpl != NULL);
+   serial_node *to(dynamic_cast<serial_node*>(new_work.get_node()));
    
-   serial_node *to(dynamic_cast<serial_node*>(_to));
+   node_work n_work(new_work);
    
-   to->add_work(tpl, is_agg);
+   to->add_work(n_work);
    
    if(!to->in_queue()) {
       to->set_in_queue(true);
@@ -42,7 +41,7 @@ serial_local::assert_end_iteration(void) const
 }
 
 bool
-serial_local::get_work(work_unit& work)
+serial_local::get_work(work& new_work)
 {  
    if(current_node != NULL) {
       // holding a node
@@ -64,11 +63,9 @@ serial_local::get_work(work_unit& work)
    assert(current_node->has_work());
    assert(current_node->in_queue());
    
-   node_work_unit unit(current_node->get_work());
+   node_work unit(current_node->get_work());
    
-   work.work_tpl = unit.work_tpl;
-   work.agg = unit.agg;
-   work.work_node = current_node;
+   new_work.copy_from_node(current_node, unit);
    
    return true;
 }

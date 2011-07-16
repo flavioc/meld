@@ -197,7 +197,7 @@ execute_send(const pcounter& pc, state& state)
    const reg_num dest(send_dest(pc));
    const node_val dest_val(state.get_node(dest));
    tuple *tuple(state.get_tuple(msg));
-   const simple_tuple *stuple(new simple_tuple(tuple, state.count));
+   simple_tuple *stuple(new simple_tuple(tuple, state.count));
 
    if(msg == dest)
       state::MACHINE->route_self(state.proc, state.node, stuple);

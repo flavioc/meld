@@ -16,7 +16,7 @@ class serial_global: public sched::base
 {
 private:
    
-   unsafe_bounded_pqueue<work_unit>::type queue_work;
+   unsafe_bounded_pqueue<process::work>::type queue_work;
    
    void generate_aggs(void);
    
@@ -27,9 +27,9 @@ private:
    
 public:
    
-   virtual void new_work(db::node *, db::node *, const db::simple_tuple*, const bool is_agg = false);
+   virtual void new_work(const db::node *, process::work&);
    
-   virtual void new_work_other(sched::base *, db::node *, const db::simple_tuple *)
+   virtual void new_work_other(sched::base *, process::work&)
    {
       assert(false);
    }
@@ -43,7 +43,7 @@ public:
    
    virtual void init(const size_t);
    virtual void end(void);
-   virtual bool get_work(work_unit&);
+   virtual bool get_work(process::work&);
    
    serial_global *find_scheduler(const db::node::node_id) { return this; }
    

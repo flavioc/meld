@@ -37,10 +37,10 @@ process::do_agg_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
 {
    const predicate *pred(tuple->get_predicate()); // get predicate here since tuple can be deleted!
    agg_configuration *conf(node->add_agg_tuple(tuple, count));
-   
+
    if(pred->has_agg_term_info()) {
       const vector<const predicate*>& local_deps(pred->get_local_agg_deps());
-   
+
       if(!local_deps.empty() && !pred->agg_depends_remote()) {
          for(size_t i(0); i < local_deps.size(); ++i) {
             const predicate *pred(local_deps[i]);
@@ -76,7 +76,7 @@ process::do_agg_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
          
       for(simple_tuple_list::iterator it(list.begin()); it != list.end(); ++it) {
          simple_tuple *tpl(*it);
-            
+         
          // cout << node->get_id() << " AUTO GENERATING " << *tpl << endl;
          assert(tpl->get_count() > 0);
          scheduler->new_work_agg(node, tpl);
@@ -85,11 +85,12 @@ process::do_agg_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
 }
 
 void
-process::do_work(node *node, const simple_tuple *_stuple, const bool ignore_agg)
+process::do_work(work& w)
 {
-   auto_ptr<const simple_tuple> stuple(_stuple);
+   auto_ptr<const simple_tuple> stuple(w.get_tuple()); // this will delete tuple automatically
    vm::tuple *tuple = stuple->get_tuple();
    ref_count count = stuple->get_count();
+   node *node(w.get_node());
    
    // cout << node->get_id() << " " << *stuple << " " << ignore_agg << endl;
    
@@ -99,14 +100,14 @@ process::do_work(node *node, const simple_tuple *_stuple, const bool ignore_agg)
    node->less_to_process(tuple->get_predicate_id());
    
    if(count > 0) {
-      if(tuple->is_aggregate() && !ignore_agg)
+      if(tuple->is_aggregate() && !w.force_aggregate())
          do_agg_tuple_add(node, tuple, count);
       else
          do_tuple_add(node, tuple, count);
    } else {
       count = -count;
       
-      if(tuple->is_aggregate() && !ignore_agg) {
+      if(tuple->is_aggregate() && !w.force_aggregate()) {
          node->remove_agg_tuple(tuple, count);
       } else {
          node::delete_info deleter(node->delete_tuple(tuple, count));
@@ -126,12 +127,11 @@ process::do_work(node *node, const simple_tuple *_stuple, const bool ignore_agg)
 void
 process::do_loop(void)
 {
-   sched::work_unit work;
-
+   work w;
    while(true) {
-      while(scheduler->get_work(work)) {
-         do_work(work.work_node, work.work_tpl, work.agg);
-         scheduler->finish_work(work);
+      while(scheduler->get_work(w)) {
+         do_work(w);
+         scheduler->finish_work(w);
       }
    
       scheduler->assert_end_iteration();

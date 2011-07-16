@@ -40,13 +40,15 @@ machine::same_place(const node::node_id id1, const node::node_id id2) const
 }
 
 void
-machine::route_self(process *proc, node *node, const simple_tuple *stpl)
+machine::route_self(process *proc, node *node, simple_tuple *stpl)
 {
-   proc->get_scheduler()->new_work_self(node, stpl, false);
+   work new_work(node, stpl);
+   
+   proc->get_scheduler()->new_work_self(new_work);
 }
 
 void
-machine::route(process *caller, const node::node_id id, const simple_tuple* stuple)
+machine::route(process *caller, const node::node_id id, simple_tuple* stuple)
 {  
    remote* rem(rout.find_remote(id));
    sched::base *sched_caller(caller->get_scheduler());
@@ -62,10 +64,12 @@ machine::route(process *caller, const node::node_id id, const simple_tuple* stup
       
       node->more_to_process(stuple->get_predicate_id());
       
+      work new_work(node, stuple);
+      
       if(sched_caller == sched_other)
-         sched_caller->new_work(NULL, node, stuple);
+         sched_caller->new_work(NULL, new_work);
       else
-         sched_caller->new_work_other(sched_other, node, stuple);
+         sched_caller->new_work_other(sched_other, new_work);
    }
 #ifdef COMPILE_MPI
    else {

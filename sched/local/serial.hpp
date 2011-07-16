@@ -24,8 +24,9 @@ private:
    
 public:
    
-   virtual void new_work(db::node *, db::node *, const db::simple_tuple*, const bool is_agg = false);
-   virtual void new_work_other(sched::base *, db::node *, const db::simple_tuple *)
+   virtual void new_work(const db::node *, process::work&);
+   
+   virtual void new_work_other(sched::base *, process::work&)
    {
       assert(false);
    }
@@ -35,7 +36,7 @@ public:
       assert(false);
    }
    
-   virtual bool get_work(work_unit&);
+   virtual bool get_work(process::work&);
    
    virtual void init(const size_t);
    virtual void end(void) {}

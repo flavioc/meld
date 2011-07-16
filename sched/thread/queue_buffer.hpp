@@ -18,7 +18,7 @@ class queue_buffer
 {
 public:
    
-   typedef simple_linear_pqueue<work_unit> queue;
+   typedef simple_linear_pqueue<process::work> queue;
    
 private:
   
@@ -43,7 +43,7 @@ public:
    
    void clear_queue(const vm::process_id);
    
-   bool push(const vm::process_id, work_unit&);
+   bool push(const vm::process_id, process::work&);
    
    void init(const size_t);
    

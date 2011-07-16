@@ -12,14 +12,9 @@ namespace sched
 {
 
 void
-serial_global::new_work(node *, node *to, const simple_tuple *tpl, const bool is_agg)
+serial_global::new_work(const node *, work& new_work)
 {
-   assert(to != NULL);
-   assert(tpl != NULL);
-
-   work_unit work = {to, tpl, is_agg};
-
-   queue_work.push(work, tpl->get_strat_level());
+   queue_work.push(new_work, new_work.get_strat_level());
 }
 
 void
@@ -43,12 +38,12 @@ serial_global::end(void)
 }
 
 bool
-serial_global::get_work(work_unit& work)
+serial_global::get_work(work& new_work)
 {
    if(!has_work())
       return false;
    
-   work = queue_work.pop();
+   new_work = queue_work.pop();
    
    return true;
 }

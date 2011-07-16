@@ -143,7 +143,7 @@ db/database.o: db/database.cpp db/database.hpp vm/instr.hpp \
 
 process/process.o: process/process.cpp process/process.hpp vm/instr.hpp \
 									db/node.hpp sched/mpi/message_buffer.hpp \
-									db/trie.hpp
+									db/trie.hpp process/work.hpp
 
 process/machine.o: process/machine.hpp process/machine.cpp \
 									vm/state.hpp process/remote.hpp process/process.hpp \

@@ -12,6 +12,7 @@
 #include "sched/mpi/message.hpp"
 #include "utils/macros.hpp"
 #include "stat/slice.hpp"
+#include "process/work.hpp"
 
 namespace process {
    class remote;
@@ -19,17 +20,6 @@ namespace process {
 
 namespace sched
 {
-
-struct work_unit {
-   db::node *work_node;
-   const db::simple_tuple *work_tpl;
-   bool agg;
-};
-
-struct node_work_unit {
-   const db::simple_tuple *work_tpl;
-   bool agg;
-};
 
 class base
 {
@@ -63,7 +53,8 @@ protected:
    inline void init_node(db::node *node)
    {
       db::simple_tuple *stpl(db::simple_tuple::create_new(new vm::tuple(vm::state::PROGRAM->get_init_predicate())));
-      new_work_self(node, stpl, false);
+      process::work work(node, stpl);
+      new_work_self(work);
       node->init();
    }
    
@@ -72,31 +63,32 @@ public:
    inline bool leader_thread(void) const { return get_id() == 0; }
    
    // a new work was created for the current executing node
-   inline void new_work_self(db::node *node, const db::simple_tuple *tpl, const bool is_agg = false)
+   inline void new_work_self(process::work& work)
    {
-      node->new_auto_tuple(tpl);
-      new_work(node, node, tpl, is_agg);
+      work.get_node()->new_auto_tuple(work.get_tuple());
+      new_work(work.get_node(), work);
    }
    
    // a new aggregate is to be inserted into the work queue
-   inline void new_work_agg(db::node *node, const db::simple_tuple *tpl)
+   inline void new_work_agg(db::node *node, db::simple_tuple *tpl, const process::work_modifier mod = process::mods::NOTHING)
    {
-      new_work_self(node, tpl, true);
+      process::work work(node, tpl, process::mods::FORCE_AGGREGATE | mod);
+      new_work_self(work);
    }
    
    // work to be sent to the same thread
-   virtual void new_work(db::node *, db::node *, const db::simple_tuple *, const bool is_agg = false) = 0;
+   virtual void new_work(const db::node *, process::work&) = 0;
    // work to be sent to a different thread
-   virtual void new_work_other(sched::base *, db::node *, const db::simple_tuple *) = 0;
+   virtual void new_work_other(sched::base *, process::work&) = 0;
    // work to be sent to a MPI process
    virtual void new_work_remote(process::remote *, const db::node::node_id, sched::message *) = 0;
    
    virtual void init(const size_t) = 0;
    virtual void end(void) = 0;
    
-   virtual bool get_work(work_unit&) = 0;
+   virtual bool get_work(process::work&) = 0;
    
-   virtual void finish_work(const work_unit&)
+   virtual void finish_work(const process::work&)
    {
 #ifdef INSTRUMENTATION
       processed_facts++;

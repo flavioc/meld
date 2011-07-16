@@ -8,7 +8,6 @@
 #include <boost/thread/mutex.hpp>
 
 #include "conf.hpp"
-
 #include "vm/program.hpp"
 #include "vm/state.hpp"
 #include "db/node.hpp"
@@ -28,7 +27,7 @@ private:
    
    vm::state state;
    
-   void do_work(db::node *, const db::simple_tuple *, const bool);
+   void do_work(work&);
    void do_tuple_add(db::node *, vm::tuple *, const vm::ref_count);
    void do_agg_tuple_add(db::node *, vm::tuple *, const vm::ref_count);
    void do_loop(void);

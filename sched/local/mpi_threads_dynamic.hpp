@@ -26,7 +26,7 @@ private:
    
 public:
    
-   virtual bool get_work(work_unit&);
+   virtual bool get_work(process::work&);
    virtual void new_work_remote(process::remote *, const db::node::node_id, message *);
    
    DEFINE_START_FUNCTION(mpi_thread_dynamic)

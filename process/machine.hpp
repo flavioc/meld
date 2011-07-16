@@ -70,9 +70,9 @@ public:
    
    bool same_place(const db::node::node_id, const db::node::node_id) const;
    
-   void route_self(process *, db::node *, const db::simple_tuple *);
+   void route_self(process *, db::node *, db::simple_tuple *);
    
-   void route(process *, const db::node::node_id, const db::simple_tuple*);
+   void route(process *, const db::node::node_id, db::simple_tuple*);
    
    void start(void);
    

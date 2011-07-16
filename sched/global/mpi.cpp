@@ -36,11 +36,11 @@ mpi_static::assert_end(void)
 }
 
 bool
-mpi_static::get_work(work_unit& work)
+mpi_static::get_work(work& new_work)
 {
    do_mpi_cycle(get_id());
    
-   return static_global::get_work(work);
+   return static_global::get_work(new_work);
 }
 
 void
@@ -49,7 +49,11 @@ mpi_static::new_mpi_message(node *node, simple_tuple *stpl)
    assert(remote::self->find_proc_owner(node->get_id()) == get_id());
 
    set_active_if_inactive();
-   new_work(NULL, node, stpl);
+   
+   work w(node, stpl);
+   
+   new_work(NULL, w);
+   
    assert(is_active());
 }
 
