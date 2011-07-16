@@ -3,9 +3,17 @@
 import csv
 import sys
 
-reader = csv.reader(open('letter-recognition.data', 'rb'), delimiter=',')
+if len(sys.argv) < 3:
+	print "usage: transform_letter_data.py <input file> [letter]"
+	sys.exit(1)
 
-END = 'J'
+input = sys.argv[1]
+reader = csv.reader(open(input, 'rb'), delimiter=',')
+
+if len(sys.argv) == 3:
+	END = sys.argv[2]
+else:
+	END = 'J'
 
 for row in reader:
 	letter = row[0]

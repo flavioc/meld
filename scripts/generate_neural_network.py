@@ -7,13 +7,18 @@ OUTPUT_BASE = 200
 import sys
 import csv
 
-if len(sys.argv) != 5:
-	print "Usage: generate_neural_network.py <input neurons> <hidden neurons> <output neurons> <file>"
+if len(sys.argv) < 5:
+	print "Usage: generate_neural_network.py <input neurons> <hidden neurons> <output neurons> <file> [max data]"
 	sys.exit(1)
 
 num_input = int(sys.argv[1])
 num_hidden = int(sys.argv[2])
 num_output = int(sys.argv[3])
+
+if num_input >= 100 or num_hidden >= 100:
+	print "num_input or num_hidden can't be greater than 100"
+	sys.exit(1)
+
 file = sys.argv[4]
 
 print "type route link(node, node)."
@@ -74,7 +79,10 @@ for h in range(num_hidden + 1):
    print
 print
 
-MAX_READ = 500
+if len(sys.argv) == 6:
+	MAX_READ = int(sys.argv[5])
+else:
+	MAX_READ = 500
 
 reader = csv.reader(open(file, 'rb'), delimiter=',')
 count = 0

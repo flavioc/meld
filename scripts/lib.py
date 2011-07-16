@@ -20,3 +20,5 @@ def write_edge(a, b):
 		sys.stdout.write("," + str(weight))
 	print ")."
 
+def simple_write_edge(a, b):
+	sys.stdout.write("edge(@" + str(a) + ",@" + str(b) + ").\n")
