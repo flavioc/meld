@@ -5,7 +5,7 @@ type calcRank(node, int, sum float [<- edge]).
 type numLinks(node, sum int).
 
 const damping = 0.85.
-const iterations = 2.
+const iterations = 35.
 const pages = @world.
 
 numLinks(A, 0).
@@ -24,7 +24,5 @@ calcRank(A, I + 1, O / float(C)) :-
 	pagerank(B, I, O),
 	numLinks(B, C).
 
-edge(@0,@1).
-edge(@0,@2).
-edge(@1,@0).
-
+edge(@0, @1).
+edge(@1, @2).

@@ -1,5 +1,5 @@
 
-include #data/bp.meld
+include #data/bp4.meld
 
 type route edge(node, node).
 type coord(node, int).
@@ -16,7 +16,7 @@ extern list float divide(list float, list float).
 extern list float convolve(list float, list float).
 extern list float addfloatlists(list float, list float).
 
-const iterations = 5.
+const iterations = 10.
 const damping = 0.1.
 
 beliefmul(A, I + 1, L) :- edge(A, B), message(B, I, A, L).
