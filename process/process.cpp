@@ -64,6 +64,11 @@ process::do_agg_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
          
          if(!neighbor_conf->all_present(edges))
             return;
+            
+         if(pred->agg_depends_home()) {
+            if(!neighbor_conf->is_present(node->get_id()))
+               return;
+         }
       }
       
       simple_tuple_list list;

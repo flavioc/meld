@@ -32,6 +32,7 @@ public:
    virtual void add_to_set(vm::tuple *, const vm::ref_count);
    
    bool all_present(const edge_set&) const;
+   bool is_present(const vm::node_val&) const;
    
    explicit neighbor_agg_configuration(const vm::predicate *_pred):
       agg_configuration(_pred)

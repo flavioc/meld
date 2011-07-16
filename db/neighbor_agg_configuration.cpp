@@ -36,6 +36,12 @@ neighbor_agg_configuration::all_present(const edge_set& edges) const
    return true;
 }
 
+bool
+neighbor_agg_configuration::is_present(const node_val& val) const
+{
+   return sent.find(val) != sent.end();
+}
+
 vm::tuple*
 neighbor_agg_configuration::do_generate(const aggregate_type typ, const field_num num)
 {

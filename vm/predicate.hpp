@@ -43,6 +43,7 @@ private:
       bool with_remote_pred;
       predicate_id remote_pred_id;
       predicate *remote_pred;
+      bool require_home_in_remote;
    } aggregate_info;
    
    aggregate_info *agg_info;
@@ -69,6 +70,7 @@ public:
    
    const std::vector<const predicate*>& get_local_agg_deps(void) const;
    inline bool agg_depends_remote(void) const { return agg_info->with_remote_pred; }
+   inline bool agg_depends_home(void) const { return agg_depends_remote() && agg_info->require_home_in_remote; }
    inline const predicate *get_remote_pred(void) const { return agg_info->remote_pred; }
    
    inline bool is_route_pred(void) const { return is_route || is_reverse_route; }

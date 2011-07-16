@@ -88,6 +88,8 @@ predicate::make_predicate_from_buf(byte *buf, code_size_t *code_size)
          pred->agg_info->remote_pred_id = (predicate_id)(buf[0]);
          buf++;
       }
+      pred->agg_info->require_home_in_remote = buf[0];
+      buf++;
    }
    
    return pred;
@@ -191,8 +193,12 @@ predicate::print(ostream& cout) const
          }
          cout << "]";
       }
-      if(agg_info->with_remote_pred)
-         cout << "[remote_dep=" << agg_info->remote_pred->get_name() << "]";
+      if(agg_info->with_remote_pred) {
+         cout << "[remote_dep=" << agg_info->remote_pred->get_name();
+         if(agg_info->require_home_in_remote)
+            cout << "+home";
+         cout << "]";
+      }
    }
 }
 
