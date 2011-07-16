@@ -46,7 +46,6 @@ delta(A, I, B, lrate * V * G) :-
 	hiddengrad(B, I, G).
 
 weight(A, I + 1, B, O + D) :-
-	activated(A, I, V),
 	weight(A, I, B, O),
 	delta(A, I, B, D).
 
