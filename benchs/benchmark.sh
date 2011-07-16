@@ -58,15 +58,6 @@ do_time_thread ()
 	time_run_n "${TO_RUN}" "$(basename ${FILE} .m) ${SCHEDULER} ${THREADS}"
 }
 
-do_time_mpi ()
-{
-	FILE="${1}"
-	PROCS="${2}"
-
-	TO_RUN="mpirun -np ${PROCS} ${EXEC} ${FILE} -c mpi"
-	time_run_n "${TO_RUN}" "$(basename ${FILE} .m) mpi ${PROCS}"
-}
-
 do_time_mix ()
 {
 	FILE="${1}"
@@ -152,8 +143,6 @@ time_file ()
 {
 	if [ -n "${IS_MIX}" ]; then
 		time_mix $*
-	elif [ -n "${IS_MPI}" ]; then
-		time_mpi $*
 	else
 		time_thread $*
 	fi
