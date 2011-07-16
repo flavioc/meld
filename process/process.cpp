@@ -37,50 +37,42 @@ process::do_agg_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
 {
    const predicate *pred(tuple->get_predicate()); // get predicate here since tuple can be deleted!
    agg_configuration *conf(node->add_agg_tuple(tuple, count));
-
-   if(pred->has_agg_term_info()) {
-      const vector<const predicate*>& local_deps(pred->get_local_agg_deps());
-
-      if(!local_deps.empty() && !pred->agg_depends_remote()) {
-         for(size_t i(0); i < local_deps.size(); ++i) {
-            const predicate *pred(local_deps[i]);
-            //cout << "Checking predicate " << local_deps[i]->get_name() << endl;
-            if(!node->no_more_to_process(pred->get_id())) {
-               //printf("FAILED!\n");
-               return;
-            }
+   const aggregate_safeness safeness(pred->get_agg_safeness());
+   
+   switch(safeness) {
+      case AGG_UNSAFE: return;
+      case AGG_LOCALLY_GENERATED: {
+         const strat_level level(pred->get_agg_strat_level());
+         
+         if(node->get_local_strat_level() != level) {
+            //cout << "Not there yet " << (int)node->get_local_strat_level() << endl;
+            return;
          }
       }
-      
-      if(pred->agg_depends_remote()) {
+      break;
+      case AGG_NEIGHBORHOOD:
+      case AGG_NEIGHBORHOOD_AND_SELF: {
          const predicate *remote_pred(pred->get_remote_pred());
-         
-         if(!node->no_more_to_process(remote_pred->get_id()))
-            return;
-         
-         const neighbor_agg_configuration *neighbor_conf((neighbor_agg_configuration*)conf);
-         
+         const neighbor_agg_configuration *neighbor_conf(dynamic_cast<neighbor_agg_configuration*>(conf));
          const edge_set& edges(node->get_edge_set(remote_pred->get_id()));
-         
          if(!neighbor_conf->all_present(edges))
             return;
-            
-         if(pred->agg_depends_home()) {
-            if(!neighbor_conf->is_present(node->get_id()))
-               return;
-         }
+         if(safeness == AGG_NEIGHBORHOOD_AND_SELF && !neighbor_conf->is_present(node->get_id()))
+            return;
       }
+      break;
+      default: return;
+   }
+
+   simple_tuple_list list;
+   conf->generate(pred->get_aggregate_type(), pred->get_aggregate_field(), list);
       
-      simple_tuple_list list;
-      conf->generate(pred->get_aggregate_type(), pred->get_aggregate_field(), list);
-         
-      for(simple_tuple_list::iterator it(list.begin()); it != list.end(); ++it) {
-         simple_tuple *tpl(*it);
-         
-         // cout << node->get_id() << " AUTO GENERATING " << *tpl << endl;
-         assert(tpl->get_count() > 0);
-         scheduler->new_work_agg(node, tpl);
-      }
+   for(simple_tuple_list::iterator it(list.begin()); it != list.end(); ++it) {
+      simple_tuple *tpl(*it);
+      
+      // cout << node->get_id() << " AUTO GENERATING " << *tpl << endl;
+      assert(tpl->get_count() > 0);
+      scheduler->new_work_agg(node, tpl);
    }
 }
 
@@ -92,13 +84,14 @@ process::do_work(work& w)
    ref_count count = stuple->get_count();
    node *node(w.get_node());
    
-   // cout << node->get_id() << " " << *stuple << " " << ignore_agg << endl;
+   //cout << node->get_id() << " " << *stuple << endl;
    
    if(count == 0)
       return;
-      
-   node->less_to_process(tuple->get_predicate_id());
    
+   if(w.locally_generated())
+      node->pop_auto(stuple.get());
+      
    if(count > 0) {
       if(tuple->is_aggregate() && !w.force_aggregate())
          do_agg_tuple_add(node, tuple, count);

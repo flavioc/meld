@@ -14,6 +14,7 @@ namespace mods
 {   
 const work_modifier FORCE_AGGREGATE(0x01);
 const work_modifier IS_LOCAL(0x02);
+const work_modifier LOCAL_TUPLE(0x04);
 const work_modifier NOTHING(0x00);
 }
 
@@ -33,6 +34,7 @@ public:
    inline db::simple_tuple* get_tuple(void) const { return tuple; }
    inline vm::strat_level get_strat_level(void) const { return tuple->get_strat_level(); }
    inline bool force_aggregate(void) const { return mod & mods::FORCE_AGGREGATE; }
+   inline bool locally_generated(void) const { return mod & mods::LOCAL_TUPLE; }
    
    explicit node_work(db::simple_tuple *_tuple, const work_modifier _mod):
       tuple(_tuple), mod(_mod)

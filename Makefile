@@ -143,7 +143,7 @@ db/database.o: db/database.cpp db/database.hpp vm/instr.hpp \
 
 process/process.o: process/process.cpp process/process.hpp vm/instr.hpp \
 									db/node.hpp sched/mpi/message_buffer.hpp \
-									db/trie.hpp process/work.hpp
+									db/trie.hpp process/work.hpp vm/strata.hpp
 
 process/machine.o: process/machine.hpp process/machine.cpp \
 									vm/state.hpp process/remote.hpp process/process.hpp \
@@ -161,7 +161,8 @@ process/machine.o: process/machine.hpp process/machine.cpp \
 									sched/types.hpp \
 									db/database.hpp \
 									vm/predicate.hpp \
-									stat/stat.hpp
+									stat/stat.hpp \
+									vm/strata.hpp
 
 process/remote.o: process/remote.hpp process/remote.cpp	\
 									vm/instr.hpp conf.hpp

@@ -21,7 +21,7 @@ tuple_aggregate::add_to_set(vm::tuple *tpl, const ref_count many)
    agg_configuration *conf;
    
    if(leaf->get_conf() == NULL) {
-      if(pred->agg_depends_remote())
+      if(aggregate_safeness_uses_neighborhood(pred->get_agg_safeness()))
          conf = new neighbor_agg_configuration(pred);
       else
          conf = new agg_configuration(pred);

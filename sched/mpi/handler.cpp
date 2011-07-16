@@ -52,7 +52,6 @@ mpi_handler::fetch_work(const process_id id)
          
          assert(msg->id == node->get_id());
 
-         node->more_to_process(tpl->get_predicate_id());
          new_mpi_message(node, tpl);
          
          delete msg;

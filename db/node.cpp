@@ -82,12 +82,6 @@ node::remove_agg_tuple(vm::tuple *tuple, const ref_count many)
 simple_tuple_list
 node::end_iteration(void)
 {
-   // reset counters
-   for(size_t i(0); i < state::NUM_PREDICATES; ++i) {
-      auto_generated[i] = 0;
-      to_proc[i] = 0;
-   }
-   
    // generate possible aggregates
    simple_tuple_list ret;
    
@@ -181,18 +175,10 @@ node::assert_end(void) const
 node::node(const node_id _id, const node_id _trans):
    id(_id), translation(_trans)
 {
-   for(size_t i(0); i < state::NUM_PREDICATES; ++i) {
-      to_proc.push_back(0);
-      auto_generated.push_back(0);
-   }
 }
 
 node::~node(void)
 {
-   for(size_t i(0); i < state::NUM_PREDICATES; ++i) {
-      assert(auto_generated[i] == 0);
-      assert(to_proc[i] == 0);
-   }
 }
 
 void

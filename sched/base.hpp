@@ -53,8 +53,7 @@ protected:
    inline void init_node(db::node *node)
    {
       db::simple_tuple *stpl(db::simple_tuple::create_new(new vm::tuple(vm::state::PROGRAM->get_init_predicate())));
-      process::work work(node, stpl);
-      new_work_self(work);
+      new_work_self(node, stpl);
       node->init();
    }
    
@@ -63,17 +62,17 @@ public:
    inline bool leader_thread(void) const { return get_id() == 0; }
    
    // a new work was created for the current executing node
-   inline void new_work_self(process::work& work)
+   inline void new_work_self(db::node *node, db::simple_tuple *stpl, const process::work_modifier mod = process::mods::NOTHING)
    {
-      work.get_node()->new_auto_tuple(work.get_tuple());
-      new_work(work.get_node(), work);
+      process::work work(node, stpl, process::mods::LOCAL_TUPLE | mod);
+      node->push_auto(stpl);
+      new_work(node, work);
    }
    
    // a new aggregate is to be inserted into the work queue
-   inline void new_work_agg(db::node *node, db::simple_tuple *tpl, const process::work_modifier mod = process::mods::NOTHING)
+   inline void new_work_agg(db::node *node, db::simple_tuple *stpl)
    {
-      process::work work(node, tpl, process::mods::FORCE_AGGREGATE | mod);
-      new_work_self(work);
+      new_work_self(node, stpl, process::mods::FORCE_AGGREGATE);
    }
    
    // work to be sent to the same thread

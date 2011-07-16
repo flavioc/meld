@@ -42,9 +42,7 @@ machine::same_place(const node::node_id id1, const node::node_id id2) const
 void
 machine::route_self(process *proc, node *node, simple_tuple *stpl)
 {
-   work new_work(node, stpl);
-   
-   proc->get_scheduler()->new_work_self(new_work);
+   proc->get_scheduler()->new_work_self(node, stpl);
 }
 
 void
@@ -61,8 +59,6 @@ machine::route(process *caller, const node::node_id id, simple_tuple* stuple)
       node *node(state::DATABASE->find_node(id));
       
       sched::base *sched_other(sched_caller->find_scheduler(id));
-      
-      node->more_to_process(stuple->get_predicate_id());
       
       work new_work(node, stuple);
       
