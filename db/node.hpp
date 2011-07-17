@@ -105,7 +105,7 @@ public:
       return edge_info.find(id)->second;
    }
    
-   void delete_by_first_int_arg(const vm::predicate*, const vm::int_val);
+   void delete_by_index(const vm::predicate*, const vm::match&);
    void delete_all(const vm::predicate*);
    
    virtual void assert_end(void) const;

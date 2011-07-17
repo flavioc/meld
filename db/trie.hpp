@@ -37,10 +37,14 @@ public:
    bool hashed;
    trie_node **bucket;
    
-   trie_node* get_by_first_int(const vm::int_val) const;
+   trie_node* get_by_int(const vm::int_val) const;
+   trie_node* get_by_float(const vm::float_val) const;
+   trie_node* get_by_node(const vm::node_val) const;
+   
    void convert_hash(const vm::field_type&);
 
    inline bool is_hashed(void) const { return hashed; }
+   inline trie_hash* get_hash(void) const { return (trie_hash*)child; }
    inline bool is_leaf(void) const { return (vm::ptr_val)child & 0x1; }
 
    inline trie_node* get_next(void) const { return next; }
@@ -260,7 +264,7 @@ protected:
    }
    
    void commit_delete(trie_node *);
-   void delete_branch(trie_node *);
+   size_t delete_branch(trie_node *);
    void delete_path(trie_node *);
    
    virtual trie_leaf* create_leaf(void *data, const vm::ref_count many) = 0;
@@ -302,7 +306,7 @@ public:
    inline bool empty(void) const { return total == 0; }
    inline size_t size(void) const { return total; }
    
-   void delete_by_first_int_arg(const vm::int_val);
+   void delete_by_index(const vm::match&);
    void wipeout(void);
    
    explicit trie(void);

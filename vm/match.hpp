@@ -42,6 +42,8 @@ private:
    
 public:
    
+   inline size_t size(void) const { return types.size(); }
+   
    inline bool has_any_exact(void) const { return any_exact; }
    
    inline void get_val_stack(match_val_stack& stk) const {

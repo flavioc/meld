@@ -134,17 +134,17 @@ node::delete_all(const predicate*)
 }
 
 void
-node::delete_by_first_int_arg(const predicate *pred, const int_val arg)
+node::delete_by_index(const predicate *pred, const match& m)
 {
    tuple_trie *tr(get_storage(pred));
    
-   tr->delete_by_first_int_arg(arg);
+   tr->delete_by_index(m);
    
    aggregate_map::iterator it(aggs.find(pred->get_id()));
    
    if(it != aggs.end()) {
       tuple_aggregate *agg(it->second);
-      agg->delete_by_first_int_arg(arg);
+      agg->delete_by_index(m);
    }
 }
 

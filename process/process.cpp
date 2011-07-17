@@ -98,6 +98,7 @@ process::do_work(work& w)
       else
          do_tuple_add(node, tuple, count);
    } else {
+		 assert(false);
       count = -count;
       
       if(tuple->is_aggregate() && !w.force_aggregate()) {

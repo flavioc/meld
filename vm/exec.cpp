@@ -806,14 +806,36 @@ execute_delete(const pcounter pc, state& state)
    const predicate_id id(delete_predicate(pc));
    const predicate *pred(state::PROGRAM->get_predicate(id));
    pcounter m(pc + DELETE_BASE);
-   const instr_val fil_val(delete_filter(pc));
-   const int_val fil(get_op_function<int_val>(fil_val, m, state));
+   const size_t num_args(delete_num_args(pc));
+   match mobj(pred);
    
    assert(state.node != NULL);
+   assert(num_args > 0);
    
-   //cout << state.node->get_id() << " Dumping id " << pred->get_name() << " indexed " << fil << endl;
+   //cout << "NUM ARGS " << (int) num_args << endl;
+   for(size_t i(0); i < num_args; ++i) {
+      const field_num fil_ind(delete_index(m));
+      const instr_val fil_val(delete_val(m));
+      
+      assert(fil_ind == i);
+      
+      m += index_size + val_size;
+      
+      switch(pred->get_field_type(fil_ind)) {
+         case FIELD_INT:
+            mobj.match_int(fil_ind, get_op_function<int_val>(fil_val, m, state));
+            break;
+         case FIELD_FLOAT:
+            mobj.match_float(fil_ind, get_op_function<float_val>(fil_val, m, state));
+            break;
+         case FIELD_NODE:
+            mobj.match_node(fil_ind, get_op_function<node_val>(fil_val, m, state));
+            break;
+         default: assert(false);
+      }
+   }
    
-   state.node->delete_by_first_int_arg(pred, fil);
+   state.node->delete_by_index(pred, mobj);
 }
 
 static inline void
@@ -1010,7 +1032,7 @@ eval_loop:
             break;
             
          case DELETE_INSTR:
-            // execute_delete(pc, state);
+            execute_delete(pc, state);
             break;
             
          case CALL_INSTR:

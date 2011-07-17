@@ -31,7 +31,7 @@ public:
    bool no_changes(void) const;
    inline bool empty(void) const { return vals.empty(); }
    
-   void delete_by_first_int_arg(const vm::int_val);
+   void delete_by_index(const vm::match&);
 
    explicit tuple_aggregate(const vm::predicate *_pred): pred(_pred) {}
 

@@ -27,6 +27,7 @@ const size_t reg_size = 0;
 const size_t host_size = 0;
 const size_t nil_size = 0;
 const size_t tuple_size = 0;
+const size_t index_size = 1;
 
 const size_t SEND_BASE           = 3;
 const size_t OP_BASE             = 5;
@@ -146,7 +147,8 @@ inline code_offset_t jump_get(pcounter x, size_t off) { return pcounter_code_siz
 inline reg_num reg_get(pcounter x, size_t off) { return (reg_num)(*(x + off) & 0x1f); }
 inline instr_val val_get(pcounter x, size_t off) { return (instr_val)(*(x + off) & 0x3f); }
 inline predicate_id predicate_get(pcounter x, size_t off) { return (predicate_id)(*(x + off) & 0x7f); }
-inline utils::byte byte_get(pcounter x, size_t off) { return *(utils::byte*)(x + off); } 
+inline utils::byte byte_get(pcounter x, size_t off) { return *(utils::byte*)(x + off); }
+inline field_num field_num_get(pcounter x, size_t off) { return (field_num)*(x + off); }
 
 /* IF reg THEN ... ENDIF */
 
@@ -264,7 +266,9 @@ inline reg_num colocated_dest(const pcounter pc) { return reg_get(pc, 3); }
 /* DELETE predicate */
 
 inline predicate_id delete_predicate(const pcounter pc) { return predicate_get(pc, 1); }
-inline instr_val delete_filter(const pcounter pc) { return val_get(pc, 2); }
+inline size_t delete_num_args(pcounter pc) { return (size_t)byte_get(pc, 2); }
+inline instr_val delete_val(pcounter pc) { return val_get(pc, index_size); }
+inline field_num delete_index(pcounter pc) { return field_num_get(pc, 0); }
 
 /* advance function */
 
@@ -444,8 +448,23 @@ instr_call_args_size(pcounter arg, size_t num)
    size_t size;
    size_t total = 0;
    
-   for(size_t i = 0; i < num; ++i) {
-      size = 1 + arg_size<ARGUMENT_ANYTHING>(call_val(arg));
+   for(size_t i(0); i < num; ++i) {
+      size = val_size + arg_size<ARGUMENT_ANYTHING>(call_val(arg));
+      arg += size;
+      total += size;
+   }
+   
+   return total;
+}
+
+inline size_t
+instr_delete_args_size(pcounter arg, size_t num)
+{
+   size_t size;
+   size_t total = 0;
+   
+   for(size_t i(0); i < num; ++i) {
+      size = index_size + val_size + arg_size<ARGUMENT_ANYTHING>(delete_val(arg));
       arg += size;
       total += size;
    }
@@ -486,6 +505,10 @@ advance(pcounter pc)
       case CALL_INSTR:
          return pc + CALL_BASE
                    + instr_call_args_size(pc + CALL_BASE, call_num_args(pc));
+                   
+      case DELETE_INSTR:
+         return pc + DELETE_BASE
+                   + instr_delete_args_size(pc + DELETE_BASE, delete_num_args(pc));
                    
       case IF_INSTR:
          return pc + IF_BASE;
@@ -536,10 +559,6 @@ advance(pcounter pc)
          return pc + COLOCATED_BASE
                    + arg_size<ARGUMENT_NODE>(colocated_first(pc))
                    + arg_size<ARGUMENT_NODE>(colocated_second(pc));
-                   
-      case DELETE_INSTR:
-         return pc + DELETE_BASE
-                   + arg_size<ARGUMENT_INT>(delete_filter(pc));
          
       case ELSE_INSTR:
       case REMOVE_INSTR:

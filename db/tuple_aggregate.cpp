@@ -84,15 +84,9 @@ tuple_aggregate::no_changes(void) const
 }
 
 void
-tuple_aggregate::delete_by_first_int_arg(const int_val val)
+tuple_aggregate::delete_by_index(const match& m)
 {
-   /*
-   cout << "Before " << val << endl;
-   print(cout);*/
-   
-   vals.delete_by_first_int_arg(val);
-   /*cout << "After" << endl;
-   print(cout);*/
+   vals.delete_by_index(m);
 }
 
 tuple_aggregate::~tuple_aggregate(void)

@@ -61,31 +61,78 @@ trie_node::count_refs(void) const
 }
 
 trie_node*
-trie_node::get_by_first_int(const int_val val) const
+trie_node::get_by_int(const int_val val) const
 {
    assert(!is_leaf());
+   assert(get_child() != NULL);
    
-   if(get_child() == NULL)
-      return NULL;
-   
-   trie_node *cur(get_child());
+   trie_node *node(NULL);
    
    if(is_hashed()) {
-      trie_hash *hash((trie_hash*)cur);
-      
-      cur = hash->get_int(val);
-   }
+      trie_hash *hash(get_hash());
+      node = hash->get_int(val);
+   } else
+      node = get_child();
    
-   while (cur) {
-      if(cur->data.int_field == val) {
+   while (node) {
+      if(node->data.int_field == val)
          // found it !
-         return cur;
-      }
+         return node;
       
-      cur = cur->get_next();
+      node = node->get_next();
    }
    
-   return 0;
+   return NULL;
+}
+
+trie_node*
+trie_node::get_by_float(const float_val val) const
+{
+   assert(!is_leaf());
+   assert(get_child() != NULL);
+   
+   trie_node *node(NULL);
+   
+   if(is_hashed()) {
+      trie_hash *hash(get_hash());
+      node = hash->get_float(val);
+   } else
+      node = get_child();
+   
+   while (node) {
+      if(node->data.float_field == val)
+         // found it !
+         return node;
+      
+      node = node->get_next();
+   }
+   
+   return NULL;
+}
+
+trie_node*
+trie_node::get_by_node(const node_val val) const
+{
+   assert(!is_leaf());
+   assert(get_child() != NULL);
+   
+   trie_node *node(NULL);
+   
+   if(is_hashed()) {
+      trie_hash *hash(get_hash());
+      node = hash->get_node(val);
+   } else
+      node = get_child();
+   
+   while (node) {
+      if(node->data.node_field == val)
+         // found it !
+         return node;
+      
+      node = node->get_next();
+   }
+   
+   return NULL;
 }
 
 trie_node*
@@ -395,6 +442,7 @@ trie_hash::~trie_hash(void)
    allocator<trie_node*>().deallocate(buckets, num_buckets);
 }
 
+// deletes the node and also any upper nodes if they lead to this node alone
 void
 trie::delete_path(trie_node *node)
 {  
@@ -412,7 +460,7 @@ trie::delete_path(trie_node *node)
       node->next->prev = node->prev;
       
    if(node->bucket != NULL) {
-      trie_hash *hash((trie_hash*)parent->child);
+      trie_hash *hash(parent->get_hash());
       hash->total--;
    }
    
@@ -420,7 +468,7 @@ trie::delete_path(trie_node *node)
       if(node->bucket != NULL) {
          *(node->bucket) = node->next;
          
-         trie_hash *hash((trie_hash*)parent->child);
+         trie_hash *hash(parent->get_hash());
          
          if(hash->total == 0) {
             delete hash;
@@ -443,9 +491,12 @@ trie::delete_path(trie_node *node)
    delete node;
 }
 
-void
+// deletes everything below the 'node'
+size_t
 trie::delete_branch(trie_node *node)
 {
+   size_t count;
+   
    if(node->is_leaf()) {
       trie_leaf *leaf(node->get_leaf());
       
@@ -459,11 +510,17 @@ trie::delete_branch(trie_node *node)
       if(leaf == last_leaf)
          last_leaf = leaf->prev;
       
+      count = leaf->get_count();
+      
       delete leaf;
-      return;
+      node->child = NULL;
+      
+      return count;
    }
    
    trie_node *next(node->get_child());
+   
+   count = 0;
    
    if(node->is_hashed()) {
       trie_hash *hash((trie_hash*)next);
@@ -475,7 +532,7 @@ trie::delete_branch(trie_node *node)
             while(next != NULL) {
                trie_node *tmp(next->next);
 
-               delete_branch(next);
+               count += delete_branch(next);
                delete next;
 
                next = tmp;
@@ -486,12 +543,16 @@ trie::delete_branch(trie_node *node)
       while(next != NULL) {
          trie_node *tmp(next->get_next());
          
-         delete_branch(next);
+         count += delete_branch(next);
          delete next;
          
          next = tmp;
       }
    }
+   
+   node->child = NULL;
+   
+   return count;
 }
 
 trie_node*
@@ -545,7 +606,7 @@ trie::check_insert(void *data, const ref_count many, val_stack& vals, type_stack
             assert(parent->is_hashed());
          } else if (parent->is_hashed() && count > TRIE_HASH_MAX_NODES_PER_BUCKET) {
             assert(parent->is_hashed());
-            ((trie_hash*)parent->child)->expand();
+            parent->get_hash()->expand();
          }
          
          parent = parent->insert(field, typ, vals, typs);
@@ -665,39 +726,53 @@ trie::commit_delete(trie_node *node)
 }
 
 void
-trie::delete_by_first_int_arg(const int_val val)
+trie::delete_by_index(const match& m)
 {
    basic_invariants();
    
-   trie_node *node(root->get_by_first_int(val));
+   const size_t stack_size(m.size() + STACK_EXTRA_SIZE);
+   match_val_stack vals(stack_size);
+   match_type_stack typs(stack_size);
+   
+   trie_node *node(root);
+   
+   // initialize stacks
+   m.get_type_stack(typs);
+   m.get_val_stack(vals);
+   
+   while(!vals.empty()) {
+      match_field mtype(typs.top());
+      tuple_field mfield(vals.top());
+      
+      typs.pop();
+      vals.pop();
+      
+      if(!mtype.exact)
+         break;
+      
+      switch(mtype.type) {
+         case FIELD_INT:
+            node = node->get_by_int(mfield.int_field);
+            break;
+         case FIELD_FLOAT:
+            node = node->get_by_float(mfield.float_field);
+            break;
+         case FIELD_NODE:
+            node = node->get_by_node(mfield.node_field);
+            break;
+         default: assert(false);
+      }
+      if(node == NULL)
+         return; // not found
+   }
+   
+   assert(node != NULL);
 
-   if(node == NULL)
-      return;
-   
-   if(node->prev != NULL)
-      node->prev->next = node->next;
-   if(node->next != NULL)
-      node->next->prev = node->prev;
-      
-   if(node->bucket != NULL) {
-      trie_hash *hash((trie_hash*)node->parent->child);
-      hash->total--;
-   }
-   
-   if(node->prev == NULL) {
-      if(node->bucket != NULL)
-         *(node->bucket) = node->next;
-      else
-         node->parent->child = node->next;
-   }
-   
-   total -= node->count_refs();
-      
-   delete_branch(node);
-   
+   // update number of tuples in this trie
+   total -= delete_branch(node);
+   delete_path(node);
+
    basic_invariants();
-   
-   delete node;
 }
 
 void
@@ -875,7 +950,7 @@ tuple_trie::match_predicate(const match& m, tuple_vector& vec) const
       return;
    }
    
-   const size_t stack_size(pred->num_fields() + STACK_EXTRA_SIZE);
+   const size_t stack_size(m.size() + STACK_EXTRA_SIZE);
    match_val_stack vals(stack_size);
    match_type_stack typs(stack_size);
    continuation_stack cont(stack_size);
@@ -1007,7 +1082,7 @@ match_begin:
             // must continue traversing the hash table
             assert(parent->child != node);
             
-            trie_hash *hash((trie_hash*)parent->child);
+            trie_hash *hash(parent->get_hash());
             
             assert(hash != NULL);
             
