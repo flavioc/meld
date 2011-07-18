@@ -4,10 +4,14 @@
 
 namespace mem
 {
+   
+class chunkgroup;
 
 class chunk
 {
 private:
+   
+   friend class chunkgroup;
    
    static const size_t NUM_ELEMS = 64;
    
@@ -50,8 +54,6 @@ public:
    ~chunk(void)
    {
       delete []bottom;
-      if(next_chunk)
-         delete next_chunk;
    }
 };
 

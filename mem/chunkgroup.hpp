@@ -69,8 +69,13 @@ public:
    
    ~chunkgroup(void)
    {
-      // this will delete everything else
-      delete first_chunk;
+      chunk *cur(first_chunk);
+      
+      while (cur) {
+         chunk *next(cur->next_chunk);
+         delete cur;
+         cur = next;
+      }
    }
 };
 
