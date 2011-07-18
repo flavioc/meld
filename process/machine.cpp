@@ -164,6 +164,13 @@ machine::start(void)
    
    for(size_t i(1); i < num_threads; ++i)
       process_list[i]->join();
+      
+#ifndef NDEBUG
+   for(size_t i(1); i < num_threads; ++i)
+      assert(process_list[i-1]->num_iterations() == process_list[i]->num_iterations());
+   if(state::PROGRAM->is_safe())
+      assert(process_list[0]->num_iterations() == 1);
+#endif
    
    if(alarm_thread) {
       kill(getpid(), SIGUSR1);

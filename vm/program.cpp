@@ -64,8 +64,12 @@ program::program(const string& filename)
          route_predicates.push_back(predicates[i]);
    }
    
-   for(size_t i(0); i < num_predicates; ++i)
+   safe = true;
+   for(size_t i(0); i < num_predicates; ++i) {
       predicates[i]->cache_info();
+      if(predicates[i]->is_aggregate() && predicates[i]->is_unsafe_agg())
+         safe = false;
+   }
    
    // read predicate code
    for(size_t i(0); i < num_predicates; ++i) {
@@ -130,9 +134,12 @@ program::print_bytecode(ostream& cout) const
 void
 program::print_predicates(ostream& cout) const
 {
-   for(size_t i(0); i < num_predicates(); ++i) {
+   if(is_safe())
+      cout << ">> Safe program" << endl;
+   else
+      cout << ">> Unsafe program" << endl;
+   for(size_t i(0); i < num_predicates(); ++i)
       cout << *predicates[i] << endl;
-   }
 }
 
 predicate*

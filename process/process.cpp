@@ -55,8 +55,13 @@ process::do_agg_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
          const predicate *remote_pred(pred->get_remote_pred());
          const neighbor_agg_configuration *neighbor_conf(dynamic_cast<neighbor_agg_configuration*>(conf));
          const edge_set& edges(node->get_edge_set(remote_pred->get_id()));
-         if(!neighbor_conf->all_present(edges))
+         if(!neighbor_conf->all_present(edges)) {
+            /*
+            cout << "Not all present for " << pred->get_name() << " node " << (int)node->get_id() <<
+               " count " << neighbor_conf->size() << " need " << edges.size() << endl;
+            */
             return;
+         }
          if(safeness == AGG_NEIGHBORHOOD_AND_SELF && !neighbor_conf->is_present(node->get_id()))
             return;
       }
@@ -64,12 +69,16 @@ process::do_agg_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
       default: return;
    }
 
+   //cout << "Generating " << pred->get_name() << " for " << (int)node->get_id() << endl;
    simple_tuple_list list;
    conf->generate(pred->get_aggregate_type(), pred->get_aggregate_field(), list);
       
    for(simple_tuple_list::iterator it(list.begin()); it != list.end(); ++it) {
       simple_tuple *tpl(*it);
       
+      if(tpl->get_count() <= 0) {
+         cout << *tpl << endl;
+      }
       // cout << node->get_id() << " AUTO GENERATING " << *tpl << endl;
       assert(tpl->get_count() > 0);
       scheduler->new_work_agg(node, tpl);
@@ -84,7 +93,7 @@ process::do_work(work& w)
    ref_count count = stuple->get_count();
    node *node(w.get_node());
    
-   //cout << node->get_id() << " " << *stuple << endl;
+   // cout << node->get_id() << " " << *stuple << endl;
    
    if(count == 0)
       return;
@@ -98,7 +107,6 @@ process::do_work(work& w)
       else
          do_tuple_add(node, tuple, count);
    } else {
-		 assert(false);
       count = -count;
       
       if(tuple->is_aggregate() && !w.force_aggregate()) {
@@ -130,7 +138,7 @@ process::do_loop(void)
    
       scheduler->assert_end_iteration();
       
-      // cout << id << " -------- END ITERATION ---------" << endl;
+      //cout << id << " -------- END ITERATION ---------" << endl;
       
       // false from end_iteration ends program
       if(!scheduler->end_iteration())

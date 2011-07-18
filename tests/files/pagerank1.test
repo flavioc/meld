@@ -1,15 +1,8 @@
 0
 _init()@1
 edge(@1)@1
-pagerank(0, 0.5)@1
-pagerank(1, 0.85)@1
-pagerank(2, 0.85)@1
-pagerank(3, 0.85)@1
 pagerank(4, 0.85)@1
 pagerank(5, 0.85)@1
-calcRank(1, 0, @0)@1
-calcRank(2, 0, @0)@1
-calcRank(3, 0, @0)@1
 calcRank(4, 0, @0)@1
 calcRank(5, 0, @0)@1
 calcRank(6, 0, @0)@1
@@ -17,15 +10,8 @@ numLinks(1)@1
 1
 ___egde(@0)@1
 _init()@1
-pagerank(0, 0.5)@1
-pagerank(1, 0.925)@1
-pagerank(2, 0.9775)@1
-pagerank(3, 0.9775)@1
 pagerank(4, 0.9775)@1
 pagerank(5, 0.9775)@1
-calcRank(1, 0.5, @0)@1
-calcRank(2, 0.85, @0)@1
-calcRank(3, 0.85, @0)@1
 calcRank(4, 0.85, @0)@1
 calcRank(5, 0.85, @0)@1
 calcRank(6, 0.85, @0)@1

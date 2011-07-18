@@ -9,6 +9,8 @@ namespace db
 void
 neighbor_agg_configuration::add_to_set(vm::tuple *tuple, const vm::ref_count count)
 {
+   const size_t old_size(size());
+   
    const predicate *pred(tuple->get_predicate());
    const size_t last_field(pred->num_fields()-1);
    
@@ -19,6 +21,8 @@ neighbor_agg_configuration::add_to_set(vm::tuple *tuple, const vm::ref_count cou
    if(it == sent.end()) {
       agg_configuration::add_to_set(tuple, count);
       sent.insert(node);
+      
+      assert(size() > old_size);
    } else {
    }
 }

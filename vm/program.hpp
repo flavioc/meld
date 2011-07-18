@@ -28,6 +28,8 @@ private:
    
    std::vector<predicate*> route_predicates;
    
+   bool safe;
+   
 public:
    
    predicate *get_predicate_by_name(const std::string&) const;
@@ -48,6 +50,8 @@ public:
    size_t num_route_predicates(void) const { return route_predicates.size(); }
    
    tuple* new_tuple(const predicate_id&) const;
+   
+   inline bool is_safe(void) const { return safe; }
    
    explicit program(const std::string&);
    

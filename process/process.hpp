@@ -35,11 +35,14 @@ private:
 
 public:
    
+   inline size_t num_iterations(void) const { return get_scheduler()->num_iterations(); }
+   
    void start(void);
       
    inline void join(void) { thread->join(); }
    
-   sched::base *get_scheduler(void) { return scheduler; }
+   inline const sched::base *get_scheduler(void) const { return scheduler; }
+   inline sched::base *get_scheduler(void) { return scheduler; }
    
    explicit process(const vm::process_id, sched::base *);
    

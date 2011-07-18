@@ -107,6 +107,8 @@ public:
    
    inline vm::process_id get_id(void) const { return id; }
    
+   inline size_t num_iterations(void) const { return iteration; }
+   
    virtual void write_slice(stat::slice& sl) const
    {
 #ifdef INSTRUMENTATION

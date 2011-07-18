@@ -22,7 +22,7 @@ private:
 
    bool changed;
    vm::tuple *corresponds;
-
+   
    vm::tuple *generate_max_int(const vm::field_num) const;
    vm::tuple *generate_min_int(const vm::field_num) const;
    vm::tuple *generate_sum_int(const vm::field_num) const;

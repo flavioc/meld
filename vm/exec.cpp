@@ -811,8 +811,8 @@ execute_delete(const pcounter pc, state& state)
    
    assert(state.node != NULL);
    assert(num_args > 0);
+   int_val idx;
    
-   //cout << "NUM ARGS " << (int) num_args << endl;
    for(size_t i(0); i < num_args; ++i) {
       const field_num fil_ind(delete_index(m));
       const instr_val fil_val(delete_val(m));
@@ -823,7 +823,8 @@ execute_delete(const pcounter pc, state& state)
       
       switch(pred->get_field_type(fil_ind)) {
          case FIELD_INT:
-            mobj.match_int(fil_ind, get_op_function<int_val>(fil_val, m, state));
+            idx = get_op_function<int_val>(fil_val, m, state);
+            mobj.match_int(fil_ind, idx);
             break;
          case FIELD_FLOAT:
             mobj.match_float(fil_ind, get_op_function<float_val>(fil_val, m, state));
@@ -834,6 +835,8 @@ execute_delete(const pcounter pc, state& state)
          default: assert(false);
       }
    }
+   
+   //cout << "Removing from " << pred->get_name() << " iteration " << idx << " node " << state.node->get_id() << endl;
    
    state.node->delete_by_index(pred, mobj);
 }
