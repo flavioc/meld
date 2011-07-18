@@ -250,6 +250,8 @@ threads_single::write_slice(stat::slice& sl) const
    base::write_slice(sl);
    threaded::write_slice(sl);
    sl.work_queue = queue_nodes.size();
+#else
+   (void)sl;
 #endif
 }
 

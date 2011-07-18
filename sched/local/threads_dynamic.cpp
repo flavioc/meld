@@ -226,6 +226,8 @@ dynamic_local::write_slice(stat::slice& sl) const
    stealed_nodes = 0;
    sl.steal_requests = steal_requests;
    steal_requests = 0;
+#else
+   (void)sl;
 #endif
 }
 

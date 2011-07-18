@@ -638,6 +638,8 @@ execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples)
     
 #if defined(TRIE_MATCHING_ASSERT) && defined(TRIE_MATCHING)
       assert(do_matches(pc, match_tuple, state));
+#else
+      (void)pc;
 #endif
 
 #ifdef TRIE_MATCHING

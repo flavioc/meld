@@ -212,6 +212,8 @@ static_global::write_slice(stat::slice& sl) const
    base::write_slice(sl);
    threaded::write_slice(sl);
    sl.work_queue = queue_work.size();
+#else
+   (void)sl;
 #endif
 }
 

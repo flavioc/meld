@@ -118,6 +118,8 @@ public:
       // reset stats
       processed_facts = 0;
       sent_facts = 0;
+#else
+      (void)sl;
 #endif
    }
    
