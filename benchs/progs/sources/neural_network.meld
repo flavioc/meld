@@ -1,10 +1,10 @@
 
 type activated(node, int, float).
 type expected(node, int, float).
-
 type receive(node, int, sum float [<- link]).
-type allgradient(node, int, sum float [-> link]).
-type gradient(node, int, float).
+type hiddengrad(node, int, float).
+type allhiddengrad(node, int, sum float [-> link]).
+type outgrad(node, int, float).
 type delta(node, int, node, float).
 
 extern float sigmoid(float).
@@ -19,24 +19,33 @@ receive(A, I, W * V) :-
 activated(A, I, sigmoid(V)) :-
 	receive(A, I, V).
 
-allgradient(A, I, W * G) :-
-	weight(A, I, B, W),
-	hidden(A),
-	link(A, B),
-	gradient(B, I, G).
-
-gradient(A, I, V * ((1 - V) * S)) :-
+delta(A, I, B, lrate * V * G) :-
 	hidden(A),
 	activated(A, I, V),
-	allgradient(A, I, S).
-gradient(A, I, G * (1.0 - G) * (E - G)) :-
-	output(A),
+	link(A, B),
+	outgrad(B, I, G).
+
+outgrad(A, I, G * (1.0 - G) * (E - G)) :-
 	expected(A, I, E),
 	activated(A, I, G).
 
-weight(A, I + 1, B, O + (lrate * V * G)) :-
-	weight(A, I, B, O),
+allhiddengrad(A, I, V * W) :-
+	hidden(A),
+	link(A, B),
+	weight(A, I, B, W),
+	outgrad(B, I, V).
+
+hiddengrad(A, I, V * (1.0 - V) * T) :-
+	activated(A, I, V),
+	allhiddengrad(A, I, T).
+
+delta(A, I, B, lrate * V * G) :-
+	input(A),
 	activated(A, I, V),
 	link(A, B),
-	gradient(B, I, G).
+	hiddengrad(B, I, G).
+
+weight(A, I + 1, B, O + D) :-
+	weight(A, I, B, O),
+	delta(A, I, B, D).
 
