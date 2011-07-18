@@ -25,26 +25,21 @@ time_run_n ()
 	CMD="${1}"
 	DESC="${2}"
 
-	echo -n "${DESC} "
+	echo -n "${DESC}"
 
 	local time=()
 	
 	for((I = 0; I < ${RUNS}; I++)); do
 		time[${I}]="$(time_run ${CMD})"
+		echo -n " ${time[$I]}"
 	done
 
 	total=0
-	str="("
 	for((I = 0; I < ${#time[@]}; I++)); do
 		total=`expr ${time[$I]} + ${total}`
-		if [ $I -gt 0 ]; then
-			str="${str}/"
-		fi
-		str="${str}${time[$I]}"
 	done
-	str="${str})"
 	average=`expr ${total} / ${#time[@]}`
-	echo "- ${average} ${str}"
+	echo " -> ${average}"
 }
 
 do_time_thread ()
