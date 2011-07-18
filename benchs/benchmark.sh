@@ -3,18 +3,16 @@
 
 EXEC="../meld -t -f"
 SCHEDULER="${1}"
-RUNS="${2}"
+FILE="${2}"
+RUNS="${3}"
 
-if [ -z "${SCHEDULER}" ] || [ -z "${RUNS}" ]; then
-	echo "Usage. benchmark.sh <scheduler> <number of runs to avg>"
+if [ -z "${RUNS}" ]; then
+	RUNS=3
+fi
+
+if [ -z "${SCHEDULER}" ] || [ -z "${FILE}" ]; then
+	echo "Usage. benchmark.sh <scheduler> <file> [num runs=3]"
 	exit 1
-fi
-
-if [ "${SCHEDULER}" = "mpi" ]; then
-	IS_MPI="true"
-fi
-if [ "${SCHEDULER}" = "mix" ]; then
-	IS_MIX="true"
 fi
 
 time_run ()
@@ -56,6 +54,14 @@ do_time_thread ()
 
 	TO_RUN="${EXEC} ${FILE} -c ${SCHEDULER}${THREADS}"
 	time_run_n "${TO_RUN}" "$(basename ${FILE} .m) ${SCHEDULER} ${THREADS}"
+}
+
+do_time_sched ()
+{
+	FILE="${1}"
+	
+	TO_RUN="${EXEC} ${FILE} -c ${SCHEDULER}"
+	time_run_n "${TO_RUN}" "$(basename ${FILE} .m) ${SCHEDULER}"
 }
 
 do_time_mix ()
@@ -139,15 +145,4 @@ time_mix ()
 	do_time_mix ${FILE} 2 10
 }
 
-time_file ()
-{
-	if [ -n "${IS_MIX}" ]; then
-		time_mix $*
-	else
-		time_thread $*
-	fi
-}
-
-for file in code/*.m; do
-	time_file "${file}"
-done
+do_time_sched "${FILE}"
