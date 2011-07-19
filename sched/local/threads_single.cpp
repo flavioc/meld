@@ -76,13 +76,15 @@ threads_single::new_work_other(sched::base *scheduler, work& new_work)
    
    tnode->add_work(new_node_work);
    
-   if(!tnode->in_queue() && tnode->has_work()) {
+   {
       spinlock::scoped_lock l(tnode->spin);
+      
       if(!tnode->in_queue() && tnode->has_work()) {
          tnode->set_in_queue(true);
          add_to_queue(tnode);
-         assert(tnode->in_queue());
       }
+      
+      assert(tnode->in_queue());
    }
 }
 

@@ -13,7 +13,7 @@ class serial_local: public sched::base
 {
 private:
    
-   safe_queue<serial_node*> queue_nodes;
+   unsafe_queue<serial_node*> queue_nodes;
    serial_node *current_node;
    
    inline bool has_work(void) const { return !queue_nodes.empty(); }
