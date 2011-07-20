@@ -22,6 +22,9 @@ test-mpiglobal:
 test-mpisingle:
 	@bash test_all.sh mpisingle
 
+test-single:
+	@bash test_all.sh sin
+
 test:
 	@bash test_all.sh all
 
