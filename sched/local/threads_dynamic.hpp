@@ -65,6 +65,8 @@ public:
       return new thread_node(id, trans);
    }
    
+   dynamic_local *find_scheduler(const db::node *);
+   
    static std::vector<sched::base*>& start(const size_t);
    
    explicit dynamic_local(const vm::process_id);

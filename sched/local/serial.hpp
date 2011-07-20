@@ -47,7 +47,7 @@ public:
       return dynamic_cast<db::node*>(new sched::serial_node(id, trans));
    }
    
-   serial_local *find_scheduler(const db::node::node_id) { return this; }
+   serial_local *find_scheduler(const db::node *) { return this; }
    
    explicit serial_local(void):
       sched::base(0),

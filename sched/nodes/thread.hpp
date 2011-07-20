@@ -41,6 +41,7 @@ public:
    inline void set_owner(sched::base *_owner) { owner = _owner; }
    
    inline sched::base* get_owner(void) { return owner; }
+   inline const sched::base* get_owner(void) const { return owner; }
    
    inline void add_work(process::node_work& new_work)
    {

@@ -231,6 +231,17 @@ dynamic_local::write_slice(stat::slice& sl) const
 #endif
 }
 
+dynamic_local*
+dynamic_local::find_scheduler(const node *n)
+{
+   const thread_node *tn(dynamic_cast<const thread_node*>(n));
+   
+   if(tn->get_owner() == this)
+      return this;
+   else
+      return NULL;
+}
+
 dynamic_local::dynamic_local(const process_id id):
    static_local(id),
    nodes(NULL),

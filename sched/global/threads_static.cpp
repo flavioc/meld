@@ -200,9 +200,9 @@ static_global::terminate_iteration(void)
 }
 
 static_global*
-static_global::find_scheduler(const node::node_id id)
+static_global::find_scheduler(const node* n)
 {
-   return (static_global*)ALL_THREADS[remote::self->find_proc_owner(id)];
+   return (static_global*)ALL_THREADS[remote::self->find_proc_owner(n->get_id())];
 }
 
 void

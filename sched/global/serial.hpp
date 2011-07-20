@@ -45,7 +45,7 @@ public:
    virtual void end(void);
    virtual bool get_work(process::work&);
    
-   serial_global *find_scheduler(const db::node::node_id) { return this; }
+   serial_global *find_scheduler(const db::node*) { return this; }
    
    static db::node* create_node(const db::node::node_id id, const db::node::node_id trans)
    {
