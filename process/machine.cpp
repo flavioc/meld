@@ -58,7 +58,7 @@ machine::route(process *caller, const node::node_id id, simple_tuple* stuple)
       
       node *node(state::DATABASE->find_node(id));
       
-      sched::base *sched_other(sched_caller->find_scheduler(id));
+      sched::base *sched_other(sched_caller->find_scheduler(node));
       
       work new_work(node, stuple);
       

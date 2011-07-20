@@ -53,7 +53,7 @@ public:
    virtual bool terminate_iteration(void);
    virtual bool get_work(process::work&);
    
-   static_global *find_scheduler(const db::node::node_id);
+   static_global *find_scheduler(const db::node*);
    
    static std::vector<sched::base*>& start(const size_t num_threads);
    

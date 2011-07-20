@@ -7,6 +7,12 @@ all:
 test-ts:
 	@bash test_all.sh ts
 
+test-tl:
+	@bash test_all.sh tl
+
+test-td:
+	@bash test_all.sh td
+
 test-serial:
 	@bash test_all.sh serial
 

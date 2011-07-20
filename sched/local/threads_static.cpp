@@ -68,10 +68,9 @@ static_local::new_work(const node *, work& new_work)
 }
 
 void
-static_local::new_work_other(sched::base *scheduler, work& new_work)
+static_local::new_work_other(sched::base *, work& new_work)
 {
    assert(is_active());
-   assert(scheduler == NULL);
    
    thread_node *tnode(dynamic_cast<thread_node*>(new_work.get_node()));
    
@@ -88,7 +87,7 @@ static_local::new_work_other(sched::base *scheduler, work& new_work)
 		
 		tnode->set_in_queue(true);
 		owner->add_to_queue(tnode);
-         
+
       if(this != owner) {
          spinlock::scoped_lock l2(owner->lock);
          
@@ -273,9 +272,9 @@ static_local::init(const size_t)
 }
 
 static_local*
-static_local::find_scheduler(const node::node_id)
+static_local::find_scheduler(const node *n)
 {
-   return NULL;
+   return (static_local*)ALL_THREADS[remote::self->find_proc_owner(n->get_id())];
 }
 
 void

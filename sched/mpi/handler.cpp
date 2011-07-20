@@ -11,19 +11,6 @@ using namespace db;
 using namespace process;
 using namespace utils;
 
-#ifdef IMPLEMENT_MISSING_MPI
-namespace MPI {
-
-   void Comm::Set_errhandler(MPI::Errhandler const&) {
-      assert(0);
-   }
-
-   void Win::Set_errhandler(MPI::Errhandler const&) {
-      assert(0);
-   }
-}
-#endif
-
 namespace sched
 {
 

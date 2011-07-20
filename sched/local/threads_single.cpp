@@ -238,7 +238,7 @@ threads_single::init(const size_t)
 }
 
 threads_single*
-threads_single::find_scheduler(const node::node_id)
+threads_single::find_scheduler(const node *)
 {
    return NULL;
 }

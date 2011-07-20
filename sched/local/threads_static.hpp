@@ -56,7 +56,7 @@ public:
    virtual void end(void);
    virtual bool terminate_iteration(void);
    
-   static_local *find_scheduler(const db::node::node_id);
+   static_local *find_scheduler(const db::node *);
    
    static db::node *create_node(const db::node::node_id id, const db::node::node_id trans)
    {
