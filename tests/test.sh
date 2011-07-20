@@ -196,6 +196,11 @@ if [ "${TYPE}" = "td" ]; then
 	exit 0
 fi
 
+if [ "${TYPE}" = "sin" ]; then
+	loop_sched sin
+	exit 0
+fi
+
 if [ "${TYPE}" = "mpiglobal" ]; then
 	loop_sched_mix mpiglobal
 	exit 0
