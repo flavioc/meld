@@ -83,8 +83,6 @@ threads_single::new_work_other(sched::base *scheduler, work& new_work)
          tnode->set_in_queue(true);
          add_to_queue(tnode);
       }
-      
-      assert(tnode->in_queue());
    }
 }
 
