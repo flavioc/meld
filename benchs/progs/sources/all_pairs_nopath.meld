@@ -1,0 +1,8 @@
+
+type path(node, node, min int).
+
+path(A, A, 0).
+
+path(A, B, D + W) :-
+	edge(A, C, W),
+	path(C, B, D).
