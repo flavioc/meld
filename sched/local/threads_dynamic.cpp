@@ -80,12 +80,12 @@ dynamic_local::end(void)
 dynamic_local*
 dynamic_local::select_steal_target(void) const
 {
-   size_t idx(random_unsigned(ALL_THREADS.size()));
+   size_t idx(random_unsigned(state::NUM_THREADS));
    
    while(ALL_THREADS[idx] == this)
-      idx = random_unsigned(ALL_THREADS.size());
+      idx = random_unsigned(state::NUM_THREADS);
    
-   return (dynamic_local*)ALL_THREADS[idx];
+   return dynamic_cast<dynamic_local*>(ALL_THREADS[idx]);
 }
 
 void
@@ -95,31 +95,80 @@ dynamic_local::request_work_to(dynamic_local *asker)
    steal_requests++;
 #endif
    steal.push(asker);
-   ++asked_many;
+}
+
+static inline size_t
+find_max_steal_attempts(void)
+{
+   switch(state::NUM_THREADS) {
+      case 2: return 2;
+      case 3: return 4;
+      default: return state::NUM_THREADS + state::NUM_THREADS/2;
+   }
+}
+
+static inline size_t
+find_max_ask_steal_round(void)
+{
+   switch(state::NUM_THREADS) {
+      case 2: return 1;
+      case 3: return 2;
+      case 4: return 2;
+      default: return (state::NUM_THREADS-1)/2;
+   }
+}
+
+void
+dynamic_local::steal_nodes(size_t& asked_this_round)
+{
+   if(state::NUM_THREADS == 1)
+      return;
+   
+   if(next_steal_cycle > 0) {
+      next_steal_cycle--;
+      if(next_steal_cycle > 0)
+         return;
+   }
+      
+   if(is_active())
+      return;
+   
+   if(asked_this_round > find_max_ask_steal_round())
+      return;
+   
+   dynamic_local *selected_target(NULL);
+   
+   for(size_t attempts(0); attempts < find_max_steal_attempts(); ++attempts) {
+      dynamic_local *target(select_steal_target());
+      
+      if(target->is_active()) {
+         selected_target = target;
+         break;
+      }
+   }
+   
+   if(selected_target == NULL) {
+      next_steal_cycle += DELAY_STEAL_CYCLE;
+      // I should stop asking
+      return;
+   }
+   
+   selected_target->request_work_to(this);
+   ++asked_this_round;
 }
 
 bool
 dynamic_local::busy_wait(void)
 {
-   size_t asked_now(0);
+   size_t asked_this_round(0);
    
    while(!has_work()) {
       
-      if(is_inactive() && state::NUM_THREADS > 1 && asked_now < MAX_ASK_STEAL_ROUND && asked_many < MAX_ASK_STEAL) {
-         dynamic_local *target(select_steal_target());
-         
-         if(target->is_active()) {
-            target->request_work_to(this);
-            ++asked_now;
-         }
-      }
+      steal_nodes(asked_this_round);
       
       BUSY_LOOP_MAKE_INACTIVE()
       BUSY_LOOP_CHECK_TERMINATION_THREADS()
    }
-
-	 if(asked_many > 0)
-		 --asked_many;
    
    set_active_if_inactive();
    
@@ -163,7 +212,7 @@ dynamic_local::handle_stealing(void)
       assert(!steal.empty());
       assert(has_work());
       
-      dynamic_local *asker((dynamic_local*)steal.pop());
+      dynamic_local *asker(dynamic_cast<dynamic_local*>(steal.pop()));
       
       assert(asker != NULL);
       
@@ -270,7 +319,7 @@ dynamic_local::dynamic_local(const process_id id):
    nodes(NULL),
    nodes_mutex(NULL),
 #endif
-	asked_many(0)
+	next_steal_cycle(0)
 #ifdef INSTRUMENTATION
    , stealed_nodes(0)
    , steal_requests(0)

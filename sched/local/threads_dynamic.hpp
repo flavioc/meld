@@ -34,7 +34,7 @@ private:
 	
    DEFINE_PADDING;
    
-	size_t asked_many;
+   size_t next_steal_cycle;
 	
 #ifdef INSTRUMENTATION
    mutable utils::atomic<size_t> stealed_nodes;
@@ -50,10 +50,13 @@ protected:
    virtual void assert_end_iteration(void) const;
    virtual void generate_aggs(void);
    dynamic_local *select_steal_target(void) const;
+#ifdef MARK_OWNED_NODES
    void add_node(db::node *);
    void remove_node(db::node *);
+#endif
    void request_work_to(dynamic_local *);
    virtual void change_node(thread_node *, dynamic_local *);
+   void steal_nodes(size_t&);
    
 public:
    

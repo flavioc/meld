@@ -93,21 +93,14 @@ mpi_thread_dynamic::change_node(thread_node *node, dynamic_local *_asker)
 bool
 mpi_thread_dynamic::busy_wait(void)
 {
-   size_t asked_many(0);
+   size_t asked_this_round(0);
    boost::function0<bool> f(boost::bind(&mpi_thread_dynamic::all_threads_finished, this));
    
    IDLE_MPI_ALL(get_id())
    
    while(!has_work()) {
       
-      if(is_inactive() && state::NUM_THREADS > 1 && asked_many < MAX_ASK_STEAL) {
-         mpi_thread_dynamic *target((mpi_thread_dynamic*)select_steal_target());
-         
-         if(target->is_active()) {
-            target->request_work_to(this);
-            ++asked_many;
-         }
-      }
+      steal_nodes(asked_this_round);
       
       BUSY_LOOP_MAKE_INACTIVE()
       
