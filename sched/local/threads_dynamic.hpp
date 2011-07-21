@@ -9,7 +9,7 @@
 #include "sched/thread/steal_set.hpp"
 #include "utils/spinlock.hpp"
 
-//#define MARK_OWNED_NODES
+#define MARK_OWNED_NODES
 
 namespace sched
 {
@@ -64,6 +64,7 @@ public:
    
    virtual void init(const size_t);
    virtual void end(void);
+   virtual bool terminate_iteration(void);
    
    virtual bool get_work(process::work&);
    

@@ -158,6 +158,10 @@ mpi_thread_dynamic::terminate_iteration(void)
 
    generate_aggs();
 
+#ifndef MARK_OWNED_NODES
+	 threads_synchronize();
+#endif
+
    if(has_work())
       set_active();
    

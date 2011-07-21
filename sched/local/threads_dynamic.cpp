@@ -5,6 +5,7 @@
 #include "process/remote.hpp"
 #include "utils/utils.hpp"
 #include "sched/common.hpp"
+#include "sched/thread/assert.hpp"
 
 using namespace vm;
 using namespace utils;
@@ -91,7 +92,8 @@ dynamic_local::new_agg(work& new_work)
    
    if(!to->in_queue()) {
       // note the 'get_owner'
-      to->get_owner()->add_to_queue(to);
+		  dynamic_local *owner(dynamic_cast<dynamic_local*>(to->get_owner()));
+      owner->add_to_queue(to);
       to->set_in_queue(true);
    }
 }
@@ -211,13 +213,10 @@ dynamic_local::change_node(thread_node *node, dynamic_local *asker)
    asker->add_node(node);
 #endif
    
-   {
-      spinlock::scoped_lock l(node->spin);
-      node->set_owner(dynamic_cast<static_local*>(asker));
-      assert(node->in_queue());
-      assert(node->get_owner() == asker);
-   }
-	 asker->add_to_queue(node);
+		node->set_owner(dynamic_cast<static_local*>(asker));
+		assert(node->in_queue());
+		assert(node->get_owner() == asker);
+		asker->add_to_queue(node);
 
 #ifdef INSTRUMENTATION
    asker->stealed_nodes++;
@@ -307,6 +306,41 @@ dynamic_local::generate_aggs(void)
 #else
    iterate_static_nodes(id);
 #endif
+}
+
+bool
+dynamic_local::terminate_iteration(void)
+{
+   // this is needed since one thread can reach set_active
+   // and thus other threads waiting for all_finished will fail
+   // to get here
+   
+   assert_thread_end_iteration();
+   
+   threads_synchronize();
+
+   assert(is_inactive());
+
+   generate_aggs();
+
+#ifndef MARK_OWNED_NODES
+	 threads_synchronize();
+#endif
+
+   if(has_work())
+      set_active();
+
+   assert_thread_iteration(iteration);
+
+   // again, needed since we must wait if any thread
+   // is set to active in the previous if
+   threads_synchronize();
+
+   const bool ret(!all_threads_finished());
+   
+   threads_synchronize();
+   
+   return ret;
 }
 
 void
