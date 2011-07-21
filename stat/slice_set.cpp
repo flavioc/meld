@@ -40,10 +40,14 @@ slice_set::write_general(const string& file, const string& title,
    
    write_header(out, title);
    
-   vector<iter> iters;
-   
-   for(size_t i(0); i < state::NUM_THREADS; ++i)
+   vector<iter> iters(state::NUM_THREADS, iter());
+
+	 assert(slices.size() == state::NUM_THREADS);
+
+   for(size_t i(0); i < state::NUM_THREADS; ++i) {
+		  assert(num_slices == slices[i].size());
       iters[i] = slices[i].begin();
+	 }
       
    for(size_t slice(0); slice < num_slices; ++slice) {
       csv_line line;
@@ -116,7 +120,7 @@ slice_set::beat_thread(const process_id id, slice& sl)
 void
 slice_set::beat(void)
 {
-   for(size_t i(0); i < slices.size(); ++i) {
+   for(size_t i(0); i < state::NUM_THREADS; ++i) {
       slice sl;
       
       beat_thread(i, sl);
