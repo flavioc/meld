@@ -1,7 +1,7 @@
 #!/bin/bash
 # Runs meld and takes execution times
+# EXTRA_ARGS variable can be used to pass other arguments to the executable.
 
-EXEC="../meld -t -f"
 SCHEDULER="${1}"
 FILE="${2}"
 RUNS="${3}"
@@ -15,14 +15,11 @@ if [ -z "${SCHEDULER}" ] || [ -z "${FILE}" ]; then
 	exit 1
 fi
 
-time_run ()
-{
-	$* | awk {'print $2'}
-}
+source $PWD/lib/common.sh
 
 time_run_n ()
 {
-	CMD="${1}"
+	CMD="${1} ${EXTRA_ARGS}"
 	DESC="${2}"
 
 	echo -n "${DESC}"
