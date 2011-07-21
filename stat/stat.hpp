@@ -8,7 +8,7 @@ namespace stat
 {
 
 // frequency in milliseconds to take a slice of thread information   
-const unsigned int SLICE_PERIOD = 5;
+const unsigned int SLICE_PERIOD = 15;
 
 void set_stat_file(const std::string&);
 bool stat_enabled(void);

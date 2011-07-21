@@ -118,20 +118,21 @@ machine::slice_function(void)
 {
    bool tofinish(false);
    
-   // enable SIGALRM and SIGUSR1
+   // add SIGALRM and SIGUSR1 to sigset
+	 // to be used by sigwait
    sigset_t set;
    sigemptyset(&set);
    sigaddset(&set, SIGALRM);
    sigaddset(&set, SIGUSR1);
-   pthread_sigmask(SIG_UNBLOCK, &set, NULL);
-   
+
    int sig;
    
    set_timer();
    
    while (true) {
       
-      sigwait(&set, &sig);
+      const int ret(sigwait(&set, &sig));
+			assert(ret == 0);
       
       switch(sig) {
          case SIGALRM:
