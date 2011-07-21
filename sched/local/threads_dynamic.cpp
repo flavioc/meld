@@ -36,7 +36,8 @@ dynamic_local::assert_end_iteration(void) const
       node->assert_end_iteration();
    }
 }
-   
+
+#ifdef MARK_OWNED_NODES
 void
 dynamic_local::add_node(node *node)
 {
@@ -58,6 +59,7 @@ dynamic_local::remove_node(node *node)
 
    nodes->erase(node);
 }
+#endif
 
 void
 dynamic_local::end(void)
@@ -126,8 +128,10 @@ dynamic_local::change_node(thread_node *node, dynamic_local *asker)
    
    // change ownership
    
+#ifdef MARK_OWNED_NODES
    remove_node(node);
    asker->add_node(node);
+#endif
    
    node->set_owner((static_local*)asker);
    
@@ -185,8 +189,10 @@ dynamic_local::get_work(work& new_work)
 void
 dynamic_local::init(const size_t)
 {
+#ifdef MARK_OWNED_NODES
    nodes_mutex = new spinlock();
    nodes = new node_set();
+#endif
 
    database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
    database::map_nodes::iterator end(state::DATABASE->get_node_iterator(remote::self->find_last_node(id)));
@@ -196,8 +202,11 @@ dynamic_local::init(const size_t)
       thread_node *cur_node((thread_node*)it->second);
      
       cur_node->set_owner(this);
-      nodes->insert(cur_node);
       
+#ifdef MARK_OWNED_NODES
+      nodes->insert(cur_node);
+#endif   
+   
       init_node(cur_node);
       
       assert(cur_node->in_queue());
@@ -244,8 +253,10 @@ dynamic_local::find_scheduler(const node *n)
 
 dynamic_local::dynamic_local(const process_id id):
    static_local(id),
+#ifdef MARK_OWNED_NODES
    nodes(NULL),
    nodes_mutex(NULL),
+#endif
 	asked_many(0)
 #ifdef INSTRUMENTATION
    , stealed_nodes(0)
@@ -256,11 +267,13 @@ dynamic_local::dynamic_local(const process_id id):
    
 dynamic_local::~dynamic_local(void)
 {
+#ifdef MARK_OWNED_NODES
    assert(nodes != NULL);
    assert(nodes_mutex != NULL);
    
    delete nodes;
    delete nodes_mutex;
+#endif
 }
 
 vector<sched::base*>&

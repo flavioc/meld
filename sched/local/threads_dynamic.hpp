@@ -9,6 +9,8 @@
 #include "sched/thread/steal_set.hpp"
 #include "utils/spinlock.hpp"
 
+#define MARK_OWNED_NODES
+
 namespace sched
 {
    
@@ -17,13 +19,15 @@ class dynamic_local: public static_local
 private:
    DEFINE_PADDING;
    
+#ifdef MARK_OWNED_NODES
    typedef std::tr1::unordered_set<db::node*, std::tr1::hash<db::node*>,
                      std::equal_to<db::node*>, mem::allocator<db::node*> > node_set;
    
    node_set *nodes;
 
    utils::spinlock *nodes_mutex;
-   
+#endif
+
    DEFINE_PADDING;
    
    steal_set steal;

@@ -120,7 +120,7 @@ machine::slice_function(void)
    bool tofinish(false);
    
    // add SIGALRM and SIGUSR1 to sigset
-	 // to be used by sigwait
+	// to be used by sigwait
    sigset_t set;
    sigemptyset(&set);
    sigaddset(&set, SIGALRM);

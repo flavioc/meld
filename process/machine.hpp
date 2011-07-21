@@ -72,7 +72,7 @@ public:
    
    void route_self(process *, db::node *, db::simple_tuple *);
    
-   void route(process *, const db::node::node_id, db::simple_tuple*);
+   void route(const db::node *, process *, const db::node::node_id, db::simple_tuple*);
    
    void start(void);
    
