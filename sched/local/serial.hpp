@@ -24,6 +24,7 @@ private:
    
 public:
    
+   virtual void new_agg(process::work&);
    virtual void new_work(const db::node *, process::work&);
    
    virtual void new_work_other(sched::base *, process::work&)

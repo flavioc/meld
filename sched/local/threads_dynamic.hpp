@@ -53,6 +53,8 @@ protected:
 #ifdef MARK_OWNED_NODES
    void add_node(db::node *);
    void remove_node(db::node *);
+#else
+   virtual void new_agg(process::work&);
 #endif
    void request_work_to(dynamic_local *);
    virtual void change_node(thread_node *, dynamic_local *);

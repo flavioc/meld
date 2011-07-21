@@ -47,6 +47,7 @@ public:
    
    virtual void init(const size_t);
    
+   virtual void new_agg(process::work&);
    virtual void new_work(const db::node *, process::work&);
    virtual void new_work_other(sched::base *, process::work&);
    virtual void new_work_remote(process::remote *, const db::node::node_id, message *);

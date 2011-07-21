@@ -16,6 +16,9 @@ endif
 ifeq (exists, $(shell test -d /usr/include/openmpi-x86_64 && echo exists))
 	INCLUDE_DIRS += -I/usr/include/openmpi-x86_64/
 endif
+ifeq (exists, $(shell test -d /opt/local/include/openmpi && echo exists))
+	INCLUDE_DIRS += -I/opt/local/include/openmpi/
+endif
 ifeq (exists, $(shell test -d /usr/lib64/openmpi/lib && echo exists))
 	LIBRARY_DIRS += -L/usr/lib64/openmpi/lib
 endif

@@ -12,6 +12,12 @@ namespace sched
 {
 
 void
+serial_global::new_agg(work& w)
+{
+   new_work(w.get_node(), w);
+}
+
+void
 serial_global::new_work(const node *, work& new_work)
 {
    queue_work.push(new_work, new_work.get_strat_level());

@@ -40,6 +40,22 @@ static_local::assert_end_iteration(void) const
 }
 
 void
+static_local::new_agg(work& new_work)
+{
+   thread_node *to(dynamic_cast<thread_node*>(new_work.get_node()));
+   
+   assert_thread_push_work();
+   
+   node_work node_new_work(new_work);
+   to->add_work(node_new_work);
+   
+   if(!to->in_queue()) {
+      add_to_queue(to);
+      to->set_in_queue(true);
+   }
+}
+
+void
 static_local::new_work(const node *, work& new_work)
 {
    thread_node *to(dynamic_cast<thread_node*>(new_work.get_node()));

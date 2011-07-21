@@ -10,7 +10,13 @@ using namespace process;
 
 namespace sched
 {
-   
+
+void
+serial_local::new_agg(work& w)
+{
+   new_work(w.get_node(), w);
+}
+
 void
 serial_local::new_work(const node *, work& new_work)
 {

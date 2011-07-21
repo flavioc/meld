@@ -19,6 +19,13 @@ using namespace utils;
 
 namespace sched
 {
+   
+void
+static_global::new_agg(work& new_work)
+{
+   queue_work.push(new_work, new_work.get_strat_level());
+   assert_thread_push_work();
+}
 
 void
 static_global::new_work(const node *, work& new_work)

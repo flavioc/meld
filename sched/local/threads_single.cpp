@@ -43,6 +43,24 @@ threads_single::assert_end_iteration(void) const
 }
 
 void
+threads_single::new_agg(work& new_work)
+{
+   thread_node *to(dynamic_cast<thread_node*>(new_work.get_node()));
+   
+   assert(to != NULL);
+   
+   assert_thread_push_work();
+   
+   node_work new_node_work(new_work);
+   to->add_work(new_node_work);
+   
+   if(!to->in_queue()) {
+      to->set_in_queue(true);
+      add_to_queue(to);
+   }
+}
+
+void
 threads_single::new_work(const node *, work& new_work)
 {
    thread_node *to(dynamic_cast<thread_node*>(new_work.get_node()));

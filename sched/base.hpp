@@ -72,11 +72,15 @@ public:
    // a new aggregate is to be inserted into the work queue
    inline void new_work_agg(db::node *node, db::simple_tuple *stpl)
    {
-      new_work_self(node, stpl, process::mods::FORCE_AGGREGATE);
+      process::work work(node, stpl, process::mods::LOCAL_TUPLE | process::mods::FORCE_AGGREGATE);
+      node->push_auto(stpl);
+      new_agg(work);
    }
    
    // work to be sent to the same thread
    virtual void new_work(const db::node *, process::work&) = 0;
+   // new aggregate
+   virtual void new_agg(process::work&) = 0;
    // work to be sent to a different thread
    virtual void new_work_other(sched::base *, process::work&) = 0;
    // work to be sent to a MPI process

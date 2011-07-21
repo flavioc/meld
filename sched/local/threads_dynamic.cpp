@@ -15,7 +15,7 @@ using namespace process;
 
 namespace sched
 {
-   
+
 void
 dynamic_local::assert_end(void) const
 {
@@ -76,6 +76,26 @@ dynamic_local::end(void)
    // cleanup the steal set
    steal.clear();
 }
+
+#ifndef MARK_OWNED_NODES
+void
+dynamic_local::new_agg(work& new_work)
+{
+   thread_node *to(dynamic_cast<thread_node*>(new_work.get_node()));
+   
+   assert_thread_push_work();
+   
+   node_work node_new_work(new_work);
+   
+   to->add_work(node_new_work);
+   
+   if(!to->in_queue()) {
+      // note the 'get_owner'
+      to->get_owner()->add_to_queue(to);
+      to->set_in_queue(true);
+   }
+}
+#endif
 
 dynamic_local*
 dynamic_local::select_steal_target(void) const
@@ -191,14 +211,12 @@ dynamic_local::change_node(thread_node *node, dynamic_local *asker)
    asker->add_node(node);
 #endif
    
-	 {
-		 spinlock::scoped_lock l(node->spin);
-		 node->set_owner(dynamic_cast<static_local*>(asker));
-   
-		 assert(node->in_queue());
-		 assert(node->get_owner() == asker);
-   
-	 }
+   {
+      spinlock::scoped_lock l(node->spin);
+      node->set_owner(dynamic_cast<static_local*>(asker));
+      assert(node->in_queue());
+      assert(node->get_owner() == asker);
+   }
 	 asker->add_to_queue(node);
 
 #ifdef INSTRUMENTATION
