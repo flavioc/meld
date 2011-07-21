@@ -17,6 +17,8 @@ remote *state::REMOTE = NULL;
 router *state::ROUTER = NULL;
 size_t state::NUM_THREADS = 0;
 size_t state::NUM_PREDICATES = 0;
+size_t state::NUM_NODES = 0;
+size_t state::NUM_NODES_PER_PROCESS = 0;
 
 void
 state::purge_lists(void)

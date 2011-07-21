@@ -54,8 +54,8 @@ const size_t MPI_BUFFER_THRESHOLD(MPI_BUF_SIZE);
 
 /* rounds to delay after we fail to find an active worker */
 const size_t DELAY_STEAL_CYCLE(10);
-/* number of nodes to send to other threads */
-const size_t MAX_SEND_PER_TIME(5);
+/* factor to compute the number of nodes to send to another worker when stealing */
+const size_t STEAL_NODES_FACTOR(1000);
 
 /* threshold to use in global/threads_static to flush work to other threads */
 const size_t THREADS_GLOBAL_WORK_FLUSH(20);

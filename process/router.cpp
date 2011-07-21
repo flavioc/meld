@@ -27,7 +27,10 @@ router::set_nodes_total(const size_t total)
    
    if(nodes_per_remote == 0)
       throw database_error("Number of nodes is less than the number of remote machines");
-      
+
+   state::NUM_NODES = total;
+   state::NUM_NODES_PER_PROCESS = nodes_per_remote;
+   
    // cache values for each remote
    
    for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i)

@@ -51,6 +51,8 @@ public:
    static process::router *ROUTER;
    static size_t NUM_THREADS;
    static size_t NUM_PREDICATES;
+   static size_t NUM_NODES;
+   static size_t NUM_NODES_PER_PROCESS;
    
 #define define_get(WHAT, RET, BODY) \
    inline RET get_ ## WHAT (const reg_num& num) const { BODY; }

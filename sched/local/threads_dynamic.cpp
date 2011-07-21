@@ -223,6 +223,12 @@ dynamic_local::change_node(thread_node *node, dynamic_local *asker)
 #endif
 }
 
+static inline size_t
+get_max_send_nodes_per_time(void)
+{
+   return max((size_t)1, state::NUM_NODES_PER_PROCESS / STEAL_NODES_FACTOR);
+}
+
 void
 dynamic_local::handle_stealing(void)
 {
@@ -239,7 +245,7 @@ dynamic_local::handle_stealing(void)
       //cout << "Answering request of " << (int)asker->get_id() << endl;
       size_t total_sent(0);
       
-      while(has_work() && total_sent < MAX_SEND_PER_TIME) {
+      while(has_work() && total_sent < num_nodes_to_send) {
          thread_node *node(queue_nodes.pop());
 
          assert(node != NULL);
@@ -374,7 +380,8 @@ dynamic_local::dynamic_local(const process_id id):
    nodes(NULL),
    nodes_mutex(NULL),
 #endif
-	next_steal_cycle(0)
+	next_steal_cycle(0),
+	num_nodes_to_send(get_max_send_nodes_per_time())
 #ifdef INSTRUMENTATION
    , stealed_nodes(0)
    , steal_requests(0)

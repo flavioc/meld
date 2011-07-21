@@ -35,6 +35,7 @@ private:
    DEFINE_PADDING;
    
    size_t next_steal_cycle;
+   size_t num_nodes_to_send;
 	
 #ifdef INSTRUMENTATION
    mutable utils::atomic<size_t> stealed_nodes;
