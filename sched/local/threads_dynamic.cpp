@@ -4,6 +4,7 @@
 #include "db/database.hpp"
 #include "process/remote.hpp"
 #include "utils/utils.hpp"
+#include "sched/common.hpp"
 
 using namespace vm;
 using namespace utils;
@@ -20,10 +21,14 @@ dynamic_local::assert_end(void) const
 {
    static_local::assert_end();
    
+#ifdef MARK_OWNED_NODES
    for(node_set::iterator it(nodes->begin()); it != nodes->end(); ++it) {
       thread_node *node((thread_node*)*it);
       node->assert_end();
    }
+#else
+   assert_static_nodes_end(id);
+#endif
 }
 
 void
@@ -31,10 +36,14 @@ dynamic_local::assert_end_iteration(void) const
 {
    static_local::assert_end_iteration();
    
+#ifdef MARK_OWNED_NODES
    for(node_set::iterator it(nodes->begin()); it != nodes->end(); ++it) {
       thread_node *node((thread_node*)*it);
       node->assert_end_iteration();
    }
+#else
+	 assert_static_nodes_end_iteration(id);
+#endif
 }
 
 #ifdef MARK_OWNED_NODES
@@ -219,11 +228,15 @@ dynamic_local::init(const size_t)
 void
 dynamic_local::generate_aggs(void)
 {
+#ifdef MARK_OWNED_NODES
    for(node_set::iterator it(nodes->begin()); it != nodes->end(); ++it) {
       node *node(*it);
       assert(((thread_node*)node)->get_owner() == this);
       node_iteration(node);
    }
+#else
+   iterate_static_nodes(id);
+#endif
 }
 
 void

@@ -75,8 +75,10 @@ mpi_thread_dynamic::change_node(thread_node *node, dynamic_local *_asker)
    assert(node != current_node);
    assert(node->get_owner() == this);
    
+#ifdef MARK_OWNED_NODES
    remove_node(node);
    asker->add_node(node);
+#endif
    
    {
       spinlock::scoped_lock lock(node->spin);
