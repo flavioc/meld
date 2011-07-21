@@ -191,12 +191,15 @@ dynamic_local::change_node(thread_node *node, dynamic_local *asker)
    asker->add_node(node);
 #endif
    
-   node->set_owner((static_local*)asker);
+	 {
+		 spinlock::scoped_lock l(node->spin);
+		 node->set_owner(dynamic_cast<static_local*>(asker));
    
-   assert(node->in_queue());
-   assert(node->get_owner() == asker);
+		 assert(node->in_queue());
+		 assert(node->get_owner() == asker);
    
-   asker->add_to_queue(node);
+	 }
+	 asker->add_to_queue(node);
 
 #ifdef INSTRUMENTATION
    asker->stealed_nodes++;

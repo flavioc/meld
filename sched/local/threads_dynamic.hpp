@@ -9,7 +9,7 @@
 #include "sched/thread/steal_set.hpp"
 #include "utils/spinlock.hpp"
 
-#define MARK_OWNED_NODES
+//#define MARK_OWNED_NODES
 
 namespace sched
 {

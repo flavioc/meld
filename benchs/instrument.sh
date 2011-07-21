@@ -26,11 +26,12 @@ do_run ()
 
 	TO_RUN="${EXEC} ${FILE} -c ${SCHEDULER}${NUM_THREADS} -i $SUBSUBDIR/data"
 	echo -n "$FILEBASENAME sched:${SCHEDULER} ${NUM_THREADS} "
-	TIME=`time_run "${TO_RUN}"`
+	TIME=`time_run ${TO_RUN}`
 	echo $TIME
 }
 
+do_run 2
 do_run 4
-do_run 8
-do_run 16
+#do_run 8
+#do_run 16
 
