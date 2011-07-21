@@ -203,7 +203,7 @@ execute_send(const pcounter& pc, state& state)
       state::MACHINE->route_self(state.proc, state.node, stuple);
    else {
       // cout << "sending " << *stuple << " to " << dest_val << endl;
-      state::MACHINE->route(state.proc, (node::node_id)dest_val, stuple);
+      state::MACHINE->route(state.node, state.proc, (node::node_id)dest_val, stuple);
    }
 }
 

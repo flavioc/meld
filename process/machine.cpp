@@ -46,11 +46,12 @@ machine::route_self(process *proc, node *node, simple_tuple *stpl)
 }
 
 void
-machine::route(process *caller, const node::node_id id, simple_tuple* stuple)
+machine::route(const node* from, process *caller, const node::node_id id, simple_tuple* stuple)
 {  
    remote* rem(rout.find_remote(id));
    sched::base *sched_caller(caller->get_scheduler());
    
+   assert(sched_caller != NULL);
    assert(id <= state::DATABASE->max_id());
    
    if(rem == remote::self) {
@@ -63,7 +64,7 @@ machine::route(process *caller, const node::node_id id, simple_tuple* stuple)
       work new_work(node, stuple);
       
       if(sched_caller == sched_other)
-         sched_caller->new_work(NULL, new_work);
+         sched_caller->new_work(from, new_work);
       else
          sched_caller->new_work_other(sched_other, new_work);
    }
