@@ -13,6 +13,9 @@ test-tl:
 test-td:
 	@bash test_all.sh td
 
+test-tx:
+	@bash test_all.sh tx
+
 test-serial:
 	@bash test_all.sh serial
 

@@ -30,6 +30,9 @@
 //#define DEBUG_ACTIVE 1
 //#define DEBUG_SERIALIZATION_TIME 1
 
+/* build hash table of nodes for work stealing schedulers */
+#define MARK_OWNED_NODES
+
 /* use memory pools for each thread or not */
 const bool USE_ALLOCATOR = true;
 

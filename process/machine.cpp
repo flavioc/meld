@@ -239,6 +239,8 @@ get_creation_function(const scheduler_type sched_type)
          return database::create_node_fn(sched::static_local::create_node);
       case SCHED_THREADS_DYNAMIC_LOCAL:
          return database::create_node_fn(sched::dynamic_local::create_node);
+      case SCHED_THREADS_DIRECT_LOCAL:
+         return database::create_node_fn(sched::direct_local::create_node);
       case SCHED_MPI_AND_THREADS_STATIC_LOCAL:
          return database::create_node_fn(sched::mpi_thread_static::create_node);
       case SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL:
@@ -293,6 +295,9 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
          break;
       case SCHED_THREADS_DYNAMIC_LOCAL:
          schedulers = sched::dynamic_local::start(num_threads);
+         break;
+      case SCHED_THREADS_DIRECT_LOCAL:
+         schedulers = sched::direct_local::start(num_threads);
          break;
       case SCHED_MPI_AND_THREADS_STATIC_LOCAL:
          schedulers = sched::mpi_thread_static::start(num_threads);

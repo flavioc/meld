@@ -1,20 +1,30 @@
 
-#ifndef SCHED_LOCAL_THREADS_DYNAMIC_HPP
-#define SCHED_LOCAL_THREADS_DYNAMIC_HPP
+#ifndef SCHED_LOCAL_THREADS_DIRECT_HPP
+#define SCHED_LOCAL_THREADS_DIRECT_HPP
 
 #include <tr1/unordered_set>
 
 #include "conf.hpp"
-#include "sched/local/threads_static.hpp"
-#include "sched/thread/steal_set.hpp"
+#include "sched/queue/safe_queue_multi.hpp"
 #include "utils/spinlock.hpp"
+#include "sched/nodes/thread.hpp"
+#include "sched/thread/threaded.hpp"
 
 namespace sched
 {
    
-class dynamic_local: public static_local
+class direct_local: public sched::base,
+                    public sched::threaded
 {
 private:
+   DEFINE_PADDING;
+   
+   safe_queue_multi<thread_node*> queue_nodes;
+   
+   DEFINE_PADDING;
+   
+   thread_node *current_node;
+   
    DEFINE_PADDING;
    
 #ifdef MARK_OWNED_NODES
@@ -28,36 +38,41 @@ private:
 
    DEFINE_PADDING;
    
-   steal_set steal;
-	
-   DEFINE_PADDING;
-   
-   size_t next_steal_cycle;
-   size_t num_nodes_to_send;
-	
 #ifdef INSTRUMENTATION
    mutable utils::atomic<size_t> stealed_nodes;
    mutable utils::atomic<size_t> steal_requests;
 #endif
    
    virtual bool busy_wait(void);
-   void handle_stealing(void);
+   direct_local *select_steal_target(void) const;
+   
+   inline bool has_work(void) const { return !queue_nodes.empty(); }
+   inline void add_to_queue(thread_node *node)
+   {
+      queue_nodes.push(node);
+   }
+   
+   bool check_if_current_useless();
+   bool set_next_node(void);
+   void try_to_steal(void);
    
 protected:
    
    virtual void assert_end(void) const;
    virtual void assert_end_iteration(void) const;
    virtual void generate_aggs(void);
-   dynamic_local *select_steal_target(void) const;
 #ifdef MARK_OWNED_NODES
    void add_node(db::node *);
    void remove_node(db::node *);
-#else
-   virtual void new_agg(process::work&);
 #endif
-   void request_work_to(dynamic_local *);
-   virtual void change_node(thread_node *, dynamic_local *);
-   void steal_nodes(size_t&);
+   virtual void new_agg(process::work&);
+   virtual void new_work(const db::node *, process::work&);
+   virtual void new_work_other(sched::base *, process::work&);
+   virtual void new_work_remote(process::remote *, const db::node::node_id, message *)
+   {
+      assert(false);
+   }
+   virtual void change_node(thread_node *, direct_local *);
    
 public:
    
@@ -74,13 +89,13 @@ public:
       return new thread_node(id, trans);
    }
    
-   dynamic_local *find_scheduler(const db::node *);
+   direct_local *find_scheduler(const db::node *);
    
    static std::vector<sched::base*>& start(const size_t);
    
-   explicit dynamic_local(const vm::process_id);
+   explicit direct_local(const vm::process_id);
    
-   virtual ~dynamic_local(void);
+   virtual ~direct_local(void);
 };
 
 }

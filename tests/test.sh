@@ -196,6 +196,11 @@ if [ "${TYPE}" = "td" ]; then
 	exit 0
 fi
 
+if [ "${TYPE}" = "tx" ]; then
+   loop_sched tx
+   exit 0
+fi
+
 if [ "${TYPE}" = "sin" ]; then
 	loop_sched sin
 	exit 0

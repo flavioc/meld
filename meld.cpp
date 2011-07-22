@@ -31,6 +31,7 @@ help(void)
    fprintf(stderr, "\t\t\ttsX static division with a queue per thread\n");
    fprintf(stderr, "\t\t\ttlX static division with a queue per node\n");
    fprintf(stderr, "\t\t\ttdX initial static division but allow work stealing\n");
+   fprintf(stderr, "\t\t\ttxX initial static division but allow direct work stealing\n");
    fprintf(stderr, "\t\t\tsinX no division of work using local queues\n");
    fprintf(stderr, "\t\t\tmpiglobalX static division of work using mpi plus threads\n");
    fprintf(stderr, "\t\t\tmpistaticX static division of work using mpi plus threads\n");
@@ -105,6 +106,7 @@ parse_sched(char *sched)
       match_threads("ts", sched, SCHED_THREADS_STATIC_GLOBAL) ||
       match_threads("tl", sched, SCHED_THREADS_STATIC_LOCAL) ||
       match_threads("td", sched, SCHED_THREADS_DYNAMIC_LOCAL) ||
+      match_threads("tx", sched, SCHED_THREADS_DIRECT_LOCAL) ||
       match_threads("sin", sched, SCHED_THREADS_SINGLE_LOCAL) ||
       match_serial("sg", sched, SCHED_SERIAL_GLOBAL) ||
       match_serial("sl", sched, SCHED_SERIAL_LOCAL) ||
