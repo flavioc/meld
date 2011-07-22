@@ -362,8 +362,7 @@ direct_local::set_next_node(void)
       
       assert(current_node->in_queue());
       assert(current_node != NULL);
-      
-      check_if_current_useless();
+      assert(current_node->has_work());
    }
    
    assert(current_node != NULL);
