@@ -173,19 +173,13 @@ direct_local::select_steal_target(void) const
 static inline size_t
 find_max_steal_attempts(void)
 {
-   switch(state::NUM_THREADS) {
-      case 2: return 2;
-      case 3: return 4;
-      default: return state::NUM_THREADS + state::NUM_THREADS/2;
-   }
+   return state::NUM_THREADS + state::NUM_THREADS/2;
 }
 
 static inline size_t
 get_max_send_nodes_per_time(void)
 {
-   if(state::NUM_NODES_PER_PROCESS > STEAL_NODES_FACTOR * 5)
-      return 5;
-   return max((size_t)1, state::NUM_NODES_PER_PROCESS / STEAL_NODES_FACTOR);
+   return min((size_t)10, max((size_t)2, state::NUM_NODES_PER_PROCESS / STEAL_NODES_FACTOR));
 }
 
 void
@@ -202,12 +196,11 @@ direct_local::try_to_steal(void)
       if(target->is_active()) {
          thread_node *new_node(NULL);
          assert(target != NULL);
-         while(target->queue_nodes.pop(new_node)) {
+         if(target->queue_nodes.pop(new_node)) {
             change_node(new_node, target);
-            --total;
+            if(--total == 0)
+               return;
          }
-         if(total == 0)
-            return; // EXIT
       }
    }
 }
@@ -415,6 +408,8 @@ direct_local::write_slice(stat::slice& sl) const
 {
 #ifdef INSTRUMENTATION
    base::write_slice(sl);
+   threaded::write_slice(sl);
+   sl.work_queue = queue_nodes.size();
    sl.stealed_nodes = stealed_nodes;
    stealed_nodes = 0;
 #else
@@ -435,9 +430,9 @@ direct_local::find_scheduler(const node *n)
 
 direct_local::direct_local(const process_id id):
    base(id),
-   current_node(NULL),
+   current_node(NULL)
 #ifdef MARK_OWNED_NODES
-   nodes(NULL),
+   , nodes(NULL),
    nodes_mutex(NULL)
 #endif
 #ifdef INSTRUMENTATION
