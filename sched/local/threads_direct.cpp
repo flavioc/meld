@@ -102,7 +102,6 @@ direct_local::new_work(const node *, work& new_work)
    thread_node *to(dynamic_cast<thread_node*>(new_work.get_node()));
    
    assert_thread_push_work();
-   //assert(is_active());
    
    node_work node_new_work(new_work);
    
@@ -221,8 +220,6 @@ direct_local::busy_wait(void)
    while(!has_work()) {
       BUSY_LOOP_MAKE_INACTIVE()
       BUSY_LOOP_CHECK_TERMINATION_THREADS()
-      
-      try_to_steal();
    }
    
    set_active_if_inactive();
@@ -235,9 +232,11 @@ direct_local::busy_wait(void)
 void
 direct_local::change_node(thread_node *node, direct_local *from)
 {
+   assert(is_active());
    assert(node != NULL);
    assert(from != NULL);
    assert(node != current_node);
+   assert(node->has_work());
    assert(node->get_owner() == from);
    assert(node->in_queue()); // not in a real queue but marked as being in a queue
    
@@ -248,8 +247,13 @@ direct_local::change_node(thread_node *node, direct_local *from)
    add_node(node);
 #endif
    
-	node->set_owner(dynamic_cast<base*>(this));
-	assert(node->get_owner() == this);
+   {
+      utils::spinlock l(node->spin);
+
+      node->set_owner(dynamic_cast<base*>(this));
+      assert(node->get_owner() == this);
+   }
+
 	add_to_queue(node);
 
 #ifdef INSTRUMENTATION
@@ -331,6 +335,11 @@ direct_local::terminate_iteration(void)
 
    const bool ret(!all_threads_finished());
    
+   threads_synchronize();
+
+   if(!all_threads_finished())
+      set_active_if_inactive();
+
    threads_synchronize();
    
    return ret;
