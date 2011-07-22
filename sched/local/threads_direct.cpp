@@ -217,7 +217,6 @@ direct_local::busy_wait(void)
    set_active_if_inactive();
    
    assert(is_active());
-   assert(has_work());
    
    return true;
 }
