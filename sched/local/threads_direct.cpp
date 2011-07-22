@@ -181,25 +181,36 @@ find_max_steal_attempts(void)
    }
 }
 
+static inline size_t
+get_max_send_nodes_per_time(void)
+{
+   if(state::NUM_NODES_PER_PROCESS > STEAL_NODES_FACTOR * 5)
+      return 5;
+   return max((size_t)1, state::NUM_NODES_PER_PROCESS / STEAL_NODES_FACTOR);
+}
+
 void
 direct_local::try_to_steal(void)
 {
    if(state::NUM_THREADS == 1)
       return;
       
+   size_t total(get_max_send_nodes_per_time());
+      
    for(size_t attempt(0); attempt < find_max_steal_attempts(); ++attempt) {
       direct_local *target(select_steal_target());
       
       if(target->is_active()) {
          thread_node *new_node(NULL);
-         if(!target->queue_nodes.pop(new_node))
-            continue;
          assert(target != NULL);
-         change_node(new_node, target);
-         return; // EXIT
+         while(target->queue_nodes.pop(new_node)) {
+            change_node(new_node, target);
+            --total;
+         }
+         if(total == 0)
+            return; // EXIT
       }
    }
-   
 }
 
 bool
