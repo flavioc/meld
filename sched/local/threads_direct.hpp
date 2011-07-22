@@ -40,7 +40,6 @@ private:
    
 #ifdef INSTRUMENTATION
    mutable utils::atomic<size_t> stealed_nodes;
-   mutable utils::atomic<size_t> steal_requests;
 #endif
    
    virtual bool busy_wait(void);

@@ -41,6 +41,12 @@ inline bool is_work_stealing_sched(const scheduler_type type)
       type == SCHED_THREADS_DIRECT_LOCAL;
 }
 
+inline bool is_indirect_work_stealing_sched(const scheduler_type type)
+{
+   return type == SCHED_THREADS_DYNAMIC_LOCAL ||
+      type == SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL;
+}
+
 }
 
 #endif

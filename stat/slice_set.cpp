@@ -105,10 +105,10 @@ slice_set::write(const string& file, const scheduler_type type) const
    write_work_queue(file);
    write_processed_facts(file);
    write_sent_facts(file);
-   if(is_work_stealing_sched(type)) {
+   if(is_work_stealing_sched(type))
       write_stealed_nodes(file);
+   if(is_indirect_work_stealing_sched(type))
       write_steal_requests(file);
-   }
 }
    
 void

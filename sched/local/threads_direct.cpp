@@ -423,7 +423,6 @@ direct_local::direct_local(const process_id id):
 #endif
 #ifdef INSTRUMENTATION
    , stealed_nodes(0)
-   , steal_requests(0)
 #endif
 {
 }
