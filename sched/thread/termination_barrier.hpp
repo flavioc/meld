@@ -28,6 +28,8 @@ public:
       active_threads--;
    }
    
+   inline size_t num_active(void) const { return active_threads; }
+   
    inline bool all_finished(void) const { return active_threads == 0; }
    
    explicit termination_barrier(const size_t num_threads):

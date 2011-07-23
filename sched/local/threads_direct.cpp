@@ -162,14 +162,38 @@ direct_local::new_work_other(sched::base *, work& new_work)
 direct_local*
 direct_local::select_steal_target(void) const
 {
-   size_t idx(random_unsigned(state::NUM_THREADS));
+   size_t active(num_active());
    
-   while(ALL_THREADS[idx] == this)
-      idx = random_unsigned(state::NUM_THREADS);
-   
-   return dynamic_cast<direct_local*>(ALL_THREADS[idx]);
-}
+   if(active <= 1)
+      return NULL;
+      
+   if(active <= state::NUM_THREADS/2) {
+      direct_local *ptrs[active];
+      size_t total(0);
+      
+      for(size_t i(0); i < state::NUM_THREADS; ++i) {
+         if(ALL_THREADS[i] == this)
+            continue;
+            
+         direct_local *th(dynamic_cast<direct_local*>(ALL_THREADS[i]));
+         
+         if(th->is_active())
+            ptrs[total++] = th;
+      }
+      
+      if(total == 0)
+         return NULL; // no actives now?
+      
+      return ptrs[random_unsigned(total)];
+   } else {
+      size_t idx(random_unsigned(state::NUM_THREADS));
 
+      while(ALL_THREADS[idx] == this)
+         idx = random_unsigned(state::NUM_THREADS);
+
+      return dynamic_cast<direct_local*>(ALL_THREADS[idx]);
+   }
+}
 static inline size_t
 find_max_steal_attempts(void)
 {

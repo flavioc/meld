@@ -74,6 +74,8 @@ protected:
       }
    }
    
+   static inline size_t num_active(void) { return term_barrier->num_active(); }
+   
    inline bool is_inactive(void) const { return state == THREAD_INACTIVE; }
    inline bool is_active(void) const { return state == THREAD_ACTIVE; }
    
