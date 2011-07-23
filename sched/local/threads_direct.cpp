@@ -211,6 +211,7 @@ direct_local::select_steal_target(void) const
       return dynamic_cast<direct_local*>(ALL_THREADS[idx]);
    }
 }
+
 static inline size_t
 find_max_steal_attempts(void)
 {

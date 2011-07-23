@@ -102,12 +102,54 @@ dynamic_local::new_agg(work& new_work)
 dynamic_local*
 dynamic_local::select_steal_target(void) const
 {
-   size_t idx(random_unsigned(state::NUM_THREADS));
+   size_t active(num_active());
    
-   while(ALL_THREADS[idx] == this)
-      idx = random_unsigned(state::NUM_THREADS);
+   if(active <= 1)
+      return NULL;
+      
+   const size_t three_quarters(state::NUM_THREADS-state::NUM_THREADS/4);
    
-   return dynamic_cast<dynamic_local*>(ALL_THREADS[idx]);
+   if(active <= three_quarters) {
+      dynamic_local *ptrs[active];
+      size_t total(0);
+      
+      for(size_t i(0); i < state::NUM_THREADS; ++i) {
+         if(ALL_THREADS[i] == this)
+            continue;
+            
+         dynamic_local *th(dynamic_cast<dynamic_local*>(ALL_THREADS[i]));
+         
+         if(th->is_active())
+            ptrs[total++] = th;
+      }
+      
+      if(total == 0)
+         return NULL; // no actives now?
+      
+      return ptrs[random_unsigned(total)];
+   } else {
+      size_t idx(random_unsigned(state::NUM_THREADS));
+      bool flip(false);
+      
+      while (true) {
+         idx = random_unsigned(state::NUM_THREADS);
+         flip = !flip;
+         
+         if(ALL_THREADS[idx] == this)
+            continue;
+            
+         if(flip) {
+            dynamic_local *th(dynamic_cast<dynamic_local*>(ALL_THREADS[idx]));
+            if(th->is_inactive())
+               flip = !flip;
+            else
+               return th;
+         } else
+            break; // return this
+      }
+
+      return dynamic_cast<dynamic_local*>(ALL_THREADS[idx]);
+   }
 }
 
 void
@@ -163,7 +205,7 @@ dynamic_local::steal_nodes(size_t& asked_this_round)
    for(size_t attempts(0); attempts < find_max_steal_attempts(); ++attempts) {
       dynamic_local *target(select_steal_target());
       
-      if(target->is_active()) {
+      if(target != NULL && target->is_active()) {
          selected_target = target;
          break;
       }
