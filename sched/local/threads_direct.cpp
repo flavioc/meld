@@ -167,7 +167,9 @@ direct_local::select_steal_target(void) const
    if(active <= 1)
       return NULL;
       
-   if(active <= state::NUM_THREADS/2) {
+   const size_t three_quarters(state::NUM_THREADS-state::NUM_THREADS/4);
+   
+   if(active <= three_quarters) {
       direct_local *ptrs[active];
       size_t total(0);
       
@@ -187,9 +189,24 @@ direct_local::select_steal_target(void) const
       return ptrs[random_unsigned(total)];
    } else {
       size_t idx(random_unsigned(state::NUM_THREADS));
-
-      while(ALL_THREADS[idx] == this)
+      bool flip(false);
+      
+      while (true) {
          idx = random_unsigned(state::NUM_THREADS);
+         flip = !flip;
+         
+         if(ALL_THREADS[idx] == this)
+            continue;
+            
+         if(flip) {
+            direct_local *th(dynamic_cast<direct_local*>(ALL_THREADS[idx]));
+            if(th->is_inactive())
+               flip = !flip;
+            else
+               return th;
+         } else
+            break; // return this
+      }
 
       return dynamic_cast<direct_local*>(ALL_THREADS[idx]);
    }
@@ -217,6 +234,9 @@ direct_local::try_to_steal(void)
    for(size_t attempt(0); attempt < find_max_steal_attempts(); ++attempt) {
       direct_local *target(select_steal_target());
       
+      if(target == NULL)
+         continue;
+         
       if(target->is_active()) {
          thread_node *new_node(NULL);
          assert(target != NULL);
