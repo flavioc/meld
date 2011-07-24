@@ -6,7 +6,7 @@ MIN="${3}"
 MAX="${4}"
 
 if [ -z "${SCHEDULER}" ] || [ -z "${FILE}" ]; then
-	echo "Usage: bench_even.sh <scheduler> <file> [min=2] [max=16]"
+	echo "Usage: mpi_even.sh <scheduler> <file> [min=2] [max=16]"
 	exit 1
 fi
 
@@ -18,12 +18,12 @@ if [ -z "${MAX}" ]; then
 fi
 
 
-RUN="bash ./benchmark.sh"
+RUN="bash ./mpi.sh"
 
 do_run ()
 {
-	NUM_THREADS="${1}"
-	$RUN "${SCHEDULER}${NUM_THREADS}" ${FILE}
+	NUM_PROCS="${1}"
+	$RUN "${SCHEDULER}" "${NUM_PROCS}" ${FILE}
 }
 
 do_run 1
