@@ -231,7 +231,9 @@ direct_local::try_to_steal(void)
       return;
       
    size_t total(get_max_send_nodes_per_time());
-      
+   
+   set_active_if_inactive();
+   
    for(size_t attempt(0); attempt < find_max_steal_attempts(); ++attempt) {
       direct_local *target(select_steal_target());
       
@@ -373,11 +375,6 @@ direct_local::terminate_iteration(void)
 
    const bool ret(!all_threads_finished());
    
-   threads_synchronize();
-
-   if(!all_threads_finished())
-      set_active_if_inactive();
-
    threads_synchronize();
    
    return ret;
