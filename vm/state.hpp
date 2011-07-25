@@ -8,7 +8,6 @@
 #include "db/node.hpp"
 #include "vm/program.hpp"
 #include "vm/instr.hpp"
-#include "utils/random.hpp"
 
 // forward declaration
 namespace process {
@@ -42,7 +41,6 @@ public:
    db::node *node;
    ref_count count;
    process::process *proc;
-   utils::randgen random;
    
    static program *PROGRAM;
    static db::database *DATABASE;
