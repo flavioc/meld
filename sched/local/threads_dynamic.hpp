@@ -8,6 +8,7 @@
 #include "sched/local/threads_static.hpp"
 #include "sched/thread/steal_set.hpp"
 #include "utils/spinlock.hpp"
+#include "utils/random.hpp"
 
 namespace sched
 {
@@ -34,6 +35,7 @@ private:
    
    size_t next_steal_cycle;
    size_t num_nodes_to_send;
+   mutable utils::randgen random;
 	
 #ifdef INSTRUMENTATION
    mutable utils::atomic<size_t> stealed_nodes;

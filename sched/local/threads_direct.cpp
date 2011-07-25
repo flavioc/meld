@@ -186,13 +186,13 @@ direct_local::select_steal_target(void) const
       if(total == 0)
          return NULL; // no actives now?
       
-      return ptrs[random_unsigned(total)];
+      return ptrs[random(total)];
    } else {
-      size_t idx(random_unsigned(state::NUM_THREADS));
+      size_t idx(random(state::NUM_THREADS));
       bool flip(false);
       
       while (true) {
-         idx = random_unsigned(state::NUM_THREADS);
+         idx = random(state::NUM_THREADS);
          flip = !flip;
          
          if(ALL_THREADS[idx] == this)
@@ -287,14 +287,9 @@ direct_local::change_node(thread_node *node, direct_local *from)
    add_node(node);
 #endif
    
-   {
-      utils::spinlock l(node->spin);
-
-      node->set_owner(dynamic_cast<base*>(this));
-      assert(node->get_owner() == this);
-   }
-
-	add_to_queue(node);
+   node->set_owner(dynamic_cast<base*>(this));
+   assert(node->get_owner() == this);
+   add_to_queue(node);
 
 #ifdef INSTRUMENTATION
    stealed_nodes++;
