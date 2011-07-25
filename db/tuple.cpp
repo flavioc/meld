@@ -13,23 +13,6 @@ namespace db
 
 #ifdef COMPILE_MPI
 void
-simple_tuple::save(mpi::packed_oarchive& ar, const unsigned int) const
-{
-   ar & *data;
-   ar & count;
-}
-
-void
-simple_tuple::load(mpi::packed_iarchive& ar, const unsigned int)
-{
-   data = new vm::tuple();
-   
-   ar & *data;
-   ar & count;
-}
-
-
-void
 simple_tuple::pack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm) const
 {
    MPI_Pack((void*)&count, 1, MPI_SHORT, buf, buf_size, pos, comm);
@@ -48,7 +31,6 @@ simple_tuple::unpack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm)
    
    return new simple_tuple(tpl, count);
 }
-
 #endif
 
 simple_tuple::~simple_tuple(void)

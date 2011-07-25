@@ -4,13 +4,6 @@
 
 #include "conf.hpp"
 
-#ifdef COMPILE_MPI
-#include <boost/serialization/serialization.hpp>
-#include <boost/mpi/packed_iarchive.hpp>
-#include <boost/mpi/packed_oarchive.hpp>
-#include <boost/serialization/vector.hpp>
-#endif
-
 #include <vector>
 #include <ostream>
 
@@ -28,25 +21,6 @@ namespace sched
 class message: public mem::base<message>
 {
 private:
-
-   friend class boost::serialization::access;
-   
-   inline void save(boost::mpi::packed_oarchive& ar, const unsigned int) const
-   {
-      ar & id;
-      ar & *data;
-   }
-   
-   inline void load(boost::mpi::packed_iarchive& ar, const unsigned int)
-   {
-      data = new db::simple_tuple();
-      
-      ar & id;
-      ar & *data;
-   }
-   
-   BOOST_SERIALIZATION_SPLIT_MEMBER()
-
 public:
    
    db::node::node_id id;
@@ -82,20 +56,6 @@ typedef std::vector<message*, mem::allocator<message*> > list_messages;
 class message_set: public mem::base<message_set>
 {
 private:
-   friend class boost::serialization::access;
-
-   inline void save(boost::mpi::packed_oarchive& ar, const unsigned int) const
-   {
-      ar & lst;
-   }
-
-   inline void load(boost::mpi::packed_iarchive& ar, const unsigned int)
-   {
-      ar & lst;
-   }
-
-   BOOST_SERIALIZATION_SPLIT_MEMBER()
-   
    static const size_t INITIAL_MESSAGE_SIZE = sizeof(unsigned short int); /* size of number of messages */
       
    list_messages lst;

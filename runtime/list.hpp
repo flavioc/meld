@@ -8,9 +8,6 @@
 #include <stack>
 #ifdef COMPILE_MPI
 #include <boost/mpi.hpp>
-#include <boost/serialization/serialization.hpp>
-#include <boost/mpi/packed_iarchive.hpp>
-#include <boost/mpi/packed_oarchive.hpp>
 #endif
 #include "utils/types.hpp"
 #include "utils/atomic.hpp"
@@ -36,33 +33,13 @@ private:
    
    utils::atomic<size_t> refs;
    
-#ifdef COMPILE_MPI
-   friend class boost::serialization::access;
-   
-   enum list_serialize { END_LIST = 0, ANOTHER_LIST = 1 };
-   
-   void save(boost::mpi::packed_oarchive& ar, const unsigned int version) const
+   inline void set_tail(list_ptr t)
    {
-      (void)version;
+      tail = t;
       
-      bool more = true;
-      
-      ar & more;
-      ar & head;
-      
-      if(is_null(tail)) {
-         more = false;
-         ar & more;
-      } else
-         tail->save(ar, version);
+      if(!is_null(tail))
+         tail->inc_refs();
    }
-   
-   void load(boost::mpi::packed_iarchive& ar, const unsigned int version)
-   {
-   }
-   
-   BOOST_SERIALIZATION_SPLIT_MEMBER()
-#endif
 
 public:
    
@@ -124,58 +101,30 @@ public:
    }
    
 #ifdef COMPILE_MPI
-   static void save_list(boost::mpi::packed_oarchive& ar, const list_ptr ptr)
+   static inline
+	size_t size_list(const list_ptr ptr, const size_t elem_size)
    {
-      if(is_null(ptr)) {
-         bool more = false;
-         ar & more;
-      } else
-         ptr->save(ar, 0);
-   }
-   
-   static list_ptr load_list(boost::mpi::packed_iarchive& ar)
-   {  
-      bool more;
-      
-      ar & more;
-      
-      if(!more)
-         return null_list();
-      
-      T head;
-      
-      ar & head;
-      
-      return new cons(load_list(ar), head); 
+      return sizeof(unsigned int) + elem_size * length(ptr);
    }
    
    static inline
-	 size_t size_list(const list_ptr ptr, const size_t elem_size)
-   {
-      size_t ret(sizeof(utils::byte));
-      
-      if(is_null(ptr))
-         return ret;
-      else
-         return ret + elem_size + size_list(ptr->get_tail(), elem_size);
-   }
-   
-   static inline
-	 void pack(const list_ptr ptr, MPI_Datatype typ,
+	void pack(const list_ptr ptr, MPI_Datatype typ,
           utils::byte *buf, const size_t buf_size, int *pos, MPI_Comm comm)
    {
-      utils::byte more;
+      const size_t len(length(ptr));
+      
+      MPI_Pack((void*)&len, 1, MPI_UNSIGNED, buf, buf_size, pos, comm);
+      
+      list_ptr p(ptr);
       
       assert(*pos < (int)buf_size);
       
-      if(is_null(ptr)) {
-         more = 0;
-         MPI_Pack(&more, 1, MPI_UNSIGNED_CHAR, buf, buf_size, pos, comm);
-      } else {
-         more = 1;
-         MPI_Pack(&more, 1, MPI_UNSIGNED_CHAR, buf, buf_size, pos, comm);
-         MPI_Pack((void *)&(ptr->head), 1, typ, buf, buf_size, pos, comm);
-         pack(ptr->get_tail(), typ, buf, buf_size, pos, comm);
+      for(size_t i(0); i < len; ++i) {
+         if(is_null(p))
+            return;
+         
+         MPI_Pack((void *)&(p->head), 1, typ, buf, buf_size, pos, comm);
+         p = p->get_tail();
       }
    }
    
@@ -183,18 +132,31 @@ public:
 	 list_ptr unpack(MPI_Datatype typ, utils::byte *buf,
                const size_t buf_size, int *pos, MPI_Comm comm)
    {
-      utils::byte more;
+      size_t len(0);
       
-      MPI_Unpack(buf, buf_size, pos, &more, 1, MPI_UNSIGNED_CHAR, comm);
+      MPI_Unpack(buf, buf_size, pos, &len, 1, MPI_UNSIGNED, comm);
       
-      if(more == 0)
-         return null_list();
+      list_ptr prev(null_list());
+      list_ptr init(null_list());
       
-      T head;
+      while(len > 0) {
+         T head;
+
+         MPI_Unpack(buf, buf_size, pos, &head, 1, typ, comm);
+         
+         list_ptr n(new cons(null_list(), head));
+         
+         if(is_null(prev))
+            init = n;
+         else
+            prev->set_tail(n);
+         
+         prev = n;
+         
+         --len;
+      }
       
-      MPI_Unpack(buf, buf_size, pos, &head, 1, typ, comm);
-      
-      return new cons(unpack(typ, buf, buf_size, pos, comm), head);
+      return init;
    }
 #endif
    
@@ -224,8 +186,8 @@ public:
    }
    
    static inline
-	 size_t length(const list_ptr ls)
-	 {
+	size_t length(const list_ptr ls)
+	{
       if(is_null(ls))
          return 0;
          
@@ -233,8 +195,8 @@ public:
    }
    
    static inline
-	 T get(const list_ptr ls, const size_t pos, const T def)
-	 {
+	T get(const list_ptr ls, const size_t pos, const T def)
+	{
       if(is_null(ls))
          return def;
          
@@ -245,10 +207,9 @@ public:
    }
    
    explicit cons(list_ptr _tail, const T _head):
-      tail(_tail), head(_head), refs(0)
+      head(_head), refs(0)
    {
-      if(!is_null(tail))
-         tail->inc_refs();
+      set_tail(_tail);
    }
 };
 

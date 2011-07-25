@@ -10,9 +10,6 @@
 
 #ifdef COMPILE_MPI
 #include <boost/mpi.hpp>
-#include <boost/serialization/serialization.hpp>
-#include <boost/mpi/packed_iarchive.hpp>
-#include <boost/mpi/packed_oarchive.hpp>
 #endif
 
 #include "vm/defs.hpp"
@@ -29,17 +26,7 @@ class simple_tuple: public mem::base<simple_tuple>
 {
 private:
    vm::tuple *data;
-
    vm::ref_count count;
-
-#ifdef COMPILE_MPI
-   friend class boost::serialization::access;
-
-   void save(boost::mpi::packed_oarchive&, const unsigned int) const;
-   void load(boost::mpi::packed_iarchive&, const unsigned int);
-
-   BOOST_SERIALIZATION_SPLIT_MEMBER()
-#endif
 
 public:
 
@@ -98,9 +85,5 @@ std::ostream& operator<<(std::ostream&, const simple_tuple&);
 typedef std::list<simple_tuple*, mem::allocator<simple_tuple*> > simple_tuple_list;
 
 }
-
-#ifdef COMPILE_MPI
-BOOST_CLASS_TRACKING(db::simple_tuple, boost::serialization::track_never)
-#endif
 
 #endif

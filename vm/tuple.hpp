@@ -7,9 +7,6 @@
 #include <list>
 
 #ifdef COMPILE_MPI
-#include <boost/serialization/serialization.hpp>
-#include <boost/mpi/packed_iarchive.hpp>
-#include <boost/mpi/packed_oarchive.hpp>
 #include <mpi.h>
 #endif
 
@@ -36,15 +33,6 @@ private:
 
 	predicate* pred;
    tuple_field *fields;
-   
-#ifdef COMPILE_MPI
-   friend class boost::serialization::access;
-   
-   void save(boost::mpi::packed_oarchive&, const unsigned int) const;    
-   void load(boost::mpi::packed_iarchive&, const unsigned int);
-   
-   BOOST_SERIALIZATION_SPLIT_MEMBER()
-#endif
 
    void copy_field(tuple *, const field_num) const;
 
@@ -122,9 +110,5 @@ std::ostream& operator<<(std::ostream& cout, const tuple& pred);
 typedef std::list<tuple*, mem::allocator<vm::tuple*> > tuple_list;
 
 }
-
-#ifdef COMPILE_MPI
-BOOST_CLASS_TRACKING(vm::tuple, boost::serialization::track_never)
-#endif
 
 #endif
