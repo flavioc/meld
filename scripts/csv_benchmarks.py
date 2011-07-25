@@ -31,6 +31,8 @@ def get_sched_name(sched):
       return 'td'
    if sched[:2] == 'tx':
       return 'tx'
+   if sched[:9] == 'mpistatic':
+      return 'mpi'
    return 'sin'
       
 def get_sched_threads(sched):
@@ -38,6 +40,10 @@ def get_sched_threads(sched):
    part = sched[:2]
    if part == 'tl' or part == 'td' or part == 'tx':
       return int(sched[2:])
+   elif sched[:9] == 'mpistatic':
+      rest = sched[9:]
+      vec = rest.split('/')
+      return int(vec[0])
    else:
       return int(sched[3:])
       
@@ -96,20 +102,25 @@ def make_efficiency(time, serial, cpu):
    return my_round((serial / time) / float(cpu))
    
 CPUS = [1, 2, 4, 6, 8, 10, 12, 14, 16]
+
+def write_header(writer):
+   writer.writerow(['#cpu', 'tl', 'td', 'tx', 'sin', 'mpi'])
    
 def write_time_file(file, bench, bench_data):
    global CPUS
    writer = csv.writer(open(file, 'wb'), delimiter=' ')
-   writer.writerow(['#cpu', 'tl', 'td', 'tx', 'sin'])
+   write_header(writer)
    for cpu in CPUS:
       tl = bench_data['tl'][cpu]
       td = bench_data['td'][cpu]
       tx = bench_data['tx'][cpu]
       sin = bench_data['sin'][cpu]
+      mpi = bench_data['mpi'][cpu]
       writer.writerow([cpu, my_round(tl),
                             my_round(td),
                             my_round(tx),
-                            my_round(sin)])
+                            my_round(sin),
+                            my_round(mpi)])
                            
 def write_speedup_file(file, bench, bench_data):
    global CPUS
@@ -120,16 +131,18 @@ def write_speedup_file(file, bench, bench_data):
       print "Fail to get serial time for " + bench
       sys.exit(1)
    writer = csv.writer(open(file, 'wb'), delimiter=' ')
-   writer.writerow(['#cpu', 'tl', 'td', 'tx', 'sin'])
+   write_header(writer)
    for cpu in CPUS:
       tl = bench_data['tl'][cpu]
       td = bench_data['td'][cpu]
       tx = bench_data['tx'][cpu]
       sin = bench_data['sin'][cpu]
+      mpi = bench_data['mpi'][cpu]
       writer.writerow([cpu, make_speedup(tl, serial),
                             make_speedup(td, serial),
                             make_speedup(tx, serial),
-                            make_speedup(sin, serial)])
+                            make_speedup(sin, serial),
+                            make_speedup(mpi, serial)])
 
 def write_efficiency_file(file, bench, bench_data):
    global CPUS
@@ -140,16 +153,18 @@ def write_efficiency_file(file, bench, bench_data):
       print "Fail to get serial time for " + bench
       sys.exit(1)
    writer = csv.writer(open(file, 'wb'), delimiter=' ')
-   writer.writerow(['#cpu', 'tl', 'td', 'tx', 'sin'])
+   write_header(writer)
    for cpu in CPUS:
       tl = bench_data['tl'][cpu]
       td = bench_data['td'][cpu]
       tx = bench_data['tx'][cpu]
       sin = bench_data['sin'][cpu]
+      mpi = bench_data['mpi'][cpu]
       writer.writerow([cpu, make_efficiency(tl, serial, cpu),
                             make_efficiency(td, serial, cpu),
                             make_efficiency(tx, serial, cpu),
-                            make_efficiency(sin, serial, cpu)])
+                            make_efficiency(sin, serial, cpu),
+                            make_efficiency(mpi, serial, cpu)])
                             
 def write_speedup_files():
    for bench, bench_data in data.iteritems():
