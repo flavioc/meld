@@ -9,6 +9,7 @@
 #include "utils/spinlock.hpp"
 #include "sched/nodes/thread.hpp"
 #include "sched/thread/threaded.hpp"
+#include "utils/random.hpp"
 
 namespace sched
 {
@@ -24,6 +25,7 @@ private:
    DEFINE_PADDING;
    
    thread_node *current_node;
+   mutable utils::randgen random;
    
    DEFINE_PADDING;
    
