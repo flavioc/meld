@@ -129,8 +129,8 @@ public:
    }
    
    static inline
-	 list_ptr unpack(MPI_Datatype typ, utils::byte *buf,
-               const size_t buf_size, int *pos, MPI_Comm comm)
+	list_ptr unpack(MPI_Datatype typ, utils::byte *buf,
+            const size_t buf_size, int *pos, MPI_Comm comm)
    {
       size_t len(0);
       
@@ -159,6 +159,26 @@ public:
       return init;
    }
 #endif
+
+   static inline
+   list_ptr copy(list_ptr ptr)
+   {
+      if(is_null(ptr))
+         return null_list();
+         
+      list_ptr init(new cons(null_list(), ptr->get_head()));
+      list_ptr cur(init);
+      
+      ptr = ptr->get_tail();
+   
+      while (!is_null(ptr)) {
+         cur->set_tail(new cons(null_list(), ptr->get_head()));
+         cur = cur->get_tail();
+         ptr = ptr->get_tail();
+      }
+      
+      return init;
+   }
    
    static inline
 	 void print(std::ostream& cout, list_ptr ls)
