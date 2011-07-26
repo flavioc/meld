@@ -11,7 +11,6 @@
 #include "utils/spinlock.hpp"
 #include "sched/base.hpp"
 #include "sched/thread/termination_barrier.hpp"
-#include "stat/slice.hpp"
 #include "sched/thread/state.hpp"
 
 namespace sched
@@ -45,11 +44,6 @@ protected:
    }
    
    static void init_barriers(const size_t);
-
-   inline void write_slice(stat::slice& sl) const
-   {
-      sl.state = state;
-   }
    
    inline void set_active(void)
    {

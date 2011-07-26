@@ -4,7 +4,7 @@
 
 #include <ostream>
 
-#include "sched/thread/state.hpp"
+#include "stat/stat.hpp"
 #include "utils/csv_line.hpp"
 
 namespace stat
@@ -14,7 +14,7 @@ class slice
 {
 public:
   
-   sched::thread_state state;
+   sched_state state;
    size_t work_queue;
    size_t processed_facts;
    size_t sent_facts;
@@ -29,7 +29,7 @@ public:
    void print_steal_requests(utils::csv_line&) const;
    
    explicit slice(void):
-      state(sched::THREAD_INACTIVE),
+      state(NOW_IDLE),
       work_queue(0),
       processed_facts(0),
       sent_facts(0),

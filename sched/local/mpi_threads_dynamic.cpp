@@ -96,11 +96,13 @@ mpi_thread_dynamic::busy_wait(void)
    size_t asked_this_round(0);
    boost::function0<bool> f(boost::bind(&mpi_thread_dynamic::all_threads_finished, this));
    
+   ins_sched;
    IDLE_MPI_ALL(get_id())
    
    while(!has_work()) {
       
       steal_nodes(asked_this_round);
+      ins_idle;
       
       BUSY_LOOP_MAKE_INACTIVE()
       
@@ -144,6 +146,8 @@ mpi_thread_dynamic::get_work(work& new_work)
 bool
 mpi_thread_dynamic::terminate_iteration(void)
 {
+   ins_round;
+   
    // this is needed since one thread can reach set_active
    // and thus other threads waiting for all_finished will fail
    // to get here

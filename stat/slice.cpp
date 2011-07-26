@@ -14,11 +14,17 @@ void
 slice::print_state(csv_line& csv) const
 {
    switch(state) {
-      case sched::THREAD_ACTIVE:
+      case NOW_ACTIVE:
          csv << "1";
          break;
-      case sched::THREAD_INACTIVE:
+      case NOW_IDLE:
          csv << "0";
+         break;
+      case NOW_SCHED:
+         csv << "2";
+         break;
+      case NOW_ROUND:
+         csv << "3";
          break;
       default: assert(false);
    }

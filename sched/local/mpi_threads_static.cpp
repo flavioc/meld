@@ -60,7 +60,12 @@ bool
 mpi_thread_static::busy_wait(void)
 {
    boost::function0<bool> f(boost::bind(&mpi_thread_static::all_threads_finished, this));
+   
+   ins_sched;
+   
    IDLE_MPI_ALL(get_id())
+   
+   ins_idle;
       
    while(!has_work()) {
       BUSY_LOOP_MAKE_INACTIVE()
@@ -105,6 +110,8 @@ mpi_thread_static::get_work(work& new_work)
 bool
 mpi_thread_static::terminate_iteration(void)
 {
+   ins_round;
+   
    // this is needed since one thread can reach set_active
    // and thus other threads waiting for all_finished will fail
    // to get here

@@ -112,11 +112,14 @@ static_global::busy_wait(void)
 {
    flush_buffered();
    
+   ins_idle;
+   
    while(!has_work()) {
       BUSY_LOOP_MAKE_INACTIVE()
       BUSY_LOOP_CHECK_TERMINATION_THREADS()
    }
    
+   ins_active;
    set_active_if_inactive();
    
    assert(is_active());
@@ -135,6 +138,8 @@ static_global::get_work(work& new_work)
       assert(is_active());
       assert(has_work());
    }
+   
+   ins_active;
    
    new_work = queue_work.pop();
    
@@ -175,6 +180,8 @@ static_global::generate_aggs(void)
 bool
 static_global::terminate_iteration(void)
 {
+   ins_round;
+   
    // this is needed since one thread can reach make_active
    // and thus other threads waiting for all_finished will fail
    // to get here
@@ -217,7 +224,6 @@ static_global::write_slice(stat::slice& sl) const
 {
 #ifdef INSTRUMENTATION
    base::write_slice(sl);
-   threaded::write_slice(sl);
    sl.work_queue = queue_work.size();
 #else
    (void)sl;

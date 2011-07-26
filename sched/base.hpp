@@ -13,6 +13,7 @@
 #include "utils/macros.hpp"
 #include "stat/slice.hpp"
 #include "process/work.hpp"
+#include "stat/stat.hpp"
 
 namespace process {
    class remote;
@@ -34,6 +35,20 @@ protected:
 #ifdef INSTRUMENTATION
    mutable utils::atomic<size_t> processed_facts;
    mutable utils::atomic<size_t> sent_facts;
+   mutable stat::sched_state ins_state;
+   
+#define ins_active ins_state = stat::NOW_ACTIVE
+#define ins_idle ins_state = stat::NOW_IDLE
+#define ins_sched ins_state = stat::NOW_SCHED
+#define ins_round ins_state = stat::NOW_ROUND
+
+#else
+
+#define ins_active
+#define ins_idle
+#define ins_sched
+#define ins_round
+
 #endif
    
    virtual bool terminate_iteration(void) = 0;
@@ -116,6 +131,7 @@ public:
    virtual void write_slice(stat::slice& sl) const
    {
 #ifdef INSTRUMENTATION
+      sl.state = ins_state;
       sl.processed_facts = processed_facts;
       sl.sent_facts = sent_facts;
       

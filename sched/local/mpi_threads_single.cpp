@@ -48,7 +48,10 @@ mpi_thread_single::new_mpi_message(node *_node, simple_tuple *stpl)
 bool
 mpi_thread_single::busy_wait(void)
 {
+   ins_sched;
    IDLE_MPI()
+      
+   ins_idle;
       
    while(!has_work()) {
       BUSY_LOOP_MAKE_INACTIVE()
@@ -81,6 +84,8 @@ mpi_thread_single::get_work(work& new_work)
 bool
 mpi_thread_single::terminate_iteration(void)
 {
+   ins_round;
+   
    // this is needed since one thread can reach set_active
    // and thus other threads waiting for all_finished will fail
    // to get here

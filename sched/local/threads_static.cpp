@@ -139,6 +139,8 @@ static_local::generate_aggs(void)
 bool
 static_local::busy_wait(void)
 {
+   ins_idle;
+   
    while(!has_work()) {
       BUSY_LOOP_MAKE_INACTIVE()
       BUSY_LOOP_CHECK_TERMINATION_THREADS()
@@ -147,7 +149,7 @@ static_local::busy_wait(void)
    // since queue pushing and state setting are done in
    // different exclusive regions, this may be needed
    set_active_if_inactive();
-   
+   ins_active;
    assert(is_active());
    assert(has_work());
    
@@ -157,6 +159,8 @@ static_local::busy_wait(void)
 bool
 static_local::terminate_iteration(void)
 {
+   ins_round;
+   
    // this is needed since one thread can reach set_active
    // and thus other threads waiting for all_finished will fail
    // to get here
@@ -235,7 +239,10 @@ static_local::set_next_node(void)
       check_if_current_useless();
    }
    
+   ins_active;
+   
    assert(current_node != NULL);
+   
    return true;
 }
 
@@ -298,7 +305,6 @@ static_local::write_slice(stat::slice& sl) const
 {
 #ifdef INSTRUMENTATION
    base::write_slice(sl);
-   threaded::write_slice(sl);
    sl.work_queue = queue_nodes.size();
 #else
    (void)sl;

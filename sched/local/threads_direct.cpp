@@ -230,6 +230,8 @@ direct_local::try_to_steal(void)
    if(state::NUM_THREADS == 1)
       return;
       
+   ins_sched;
+      
    size_t total(get_max_send_nodes_per_time());
    
    set_active_if_inactive();
@@ -258,6 +260,8 @@ direct_local::busy_wait(void)
    try_to_steal();
    
    while(!has_work()) {
+      ins_idle;
+      
       BUSY_LOOP_MAKE_INACTIVE()
       BUSY_LOOP_CHECK_TERMINATION_THREADS()
    }
@@ -343,6 +347,8 @@ direct_local::generate_aggs(void)
 bool
 direct_local::terminate_iteration(void)
 {
+   ins_round;
+   
    // this is needed since one thread can reach set_active
    // and thus other threads waiting for all_finished will fail
    // to get here
@@ -425,6 +431,8 @@ direct_local::get_work(work& new_work)
    if(!set_next_node())
       return false;
    
+   ins_active;
+   
    assert(current_node != NULL);
    assert(current_node->in_queue());
    assert(current_node->has_work());
@@ -445,7 +453,6 @@ direct_local::write_slice(stat::slice& sl) const
 {
 #ifdef INSTRUMENTATION
    base::write_slice(sl);
-   threaded::write_slice(sl);
    sl.work_queue = queue_nodes.size();
    sl.stealed_nodes = stealed_nodes;
    stealed_nodes = 0;

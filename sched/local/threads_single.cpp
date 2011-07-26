@@ -119,7 +119,9 @@ threads_single::generate_aggs(void)
 bool
 threads_single::busy_wait(void)
 {
-   while(!has_work()) {
+   ins_idle;
+   
+   while(!has_work()) {   
       BUSY_LOOP_MAKE_INACTIVE()
       BUSY_LOOP_CHECK_TERMINATION_THREADS()
    }
@@ -136,6 +138,8 @@ threads_single::busy_wait(void)
 bool
 threads_single::terminate_iteration(void)
 {
+   ins_round;
+   
    // this is needed since one thread can reach set_active
    // and thus other threads waiting for all_finished will fail
    // to get here
@@ -221,6 +225,8 @@ threads_single::get_work(work& new_work)
    if(!set_next_node())
       return false;
       
+   ins_active;
+   
    assert(current_node != NULL);
    assert(current_node->in_queue());
    assert(current_node->has_work());
@@ -266,7 +272,6 @@ threads_single::write_slice(stat::slice& sl) const
 {
 #ifdef INSTRUMENTATION
    base::write_slice(sl);
-   threaded::write_slice(sl);
    sl.work_queue = queue_nodes.size();
 #else
    (void)sl;

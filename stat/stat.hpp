@@ -4,8 +4,18 @@
 
 #include <string>
 
+#include "conf.hpp"
+
 namespace stat
 {
+
+enum sched_state
+{
+   NOW_ACTIVE,
+   NOW_IDLE,
+   NOW_SCHED,
+   NOW_ROUND
+};
 
 // frequency in milliseconds to take a slice of thread information   
 const unsigned int SLICE_PERIOD = 15;

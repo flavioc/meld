@@ -187,6 +187,8 @@ dynamic_local::steal_nodes(size_t& asked_this_round)
 {
    if(state::NUM_THREADS == 1)
       return;
+      
+   ins_sched;
    
    if(next_steal_cycle > 0) {
       next_steal_cycle--;
@@ -229,11 +231,13 @@ dynamic_local::busy_wait(void)
    while(!has_work()) {
       
       steal_nodes(asked_this_round);
+      ins_idle;
       
       BUSY_LOOP_MAKE_INACTIVE()
       BUSY_LOOP_CHECK_TERMINATION_THREADS()
    }
    
+   ins_active;
    set_active_if_inactive();
    
    assert(is_active());
@@ -277,6 +281,7 @@ dynamic_local::handle_stealing(void)
    assert(state::NUM_THREADS > 1);
    
    while(!steal.empty() && has_work()) {
+      ins_sched;
       assert(!steal.empty());
       assert(has_work());
       
@@ -359,6 +364,8 @@ dynamic_local::generate_aggs(void)
 bool
 dynamic_local::terminate_iteration(void)
 {
+   ins_round;
+   
    // this is needed since one thread can reach set_active
    // and thus other threads waiting for all_finished will fail
    // to get here
