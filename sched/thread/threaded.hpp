@@ -12,6 +12,7 @@
 #include "sched/base.hpp"
 #include "sched/thread/termination_barrier.hpp"
 #include "sched/thread/state.hpp"
+#include "utils/tree_barrier.hpp"
 
 namespace sched
 {
@@ -20,7 +21,6 @@ class threaded
 {
 private:
    
-   static boost::barrier *thread_barrier;
    static termination_barrier *term_barrier;
      
    volatile thread_state state;
@@ -28,6 +28,10 @@ private:
    DEFINE_PADDING;
    
 protected:
+   
+   static utils::tree_barrier *thread_barrier;
+   
+   DEFINE_PADDING;
    
 	utils::spinlock lock;
    
@@ -38,10 +42,7 @@ protected:
       ALL_THREADS[add->get_id()] = add;
    }
    
-   static inline void threads_synchronize(void)
-   {
-      thread_barrier->wait();
-   }
+#define threads_synchronize() thread_barrier->wait(get_id())
    
    static void init_barriers(const size_t);
    

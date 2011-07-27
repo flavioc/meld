@@ -284,7 +284,7 @@ sched/local/threads_direct.o: sched/base.hpp sched/local/threads_direct.hpp     
 
 sched/thread/threaded.o: sched/thread/termination_barrier.hpp \
 									sched/thread/threaded.hpp sched/thread/threaded.cpp \
-									utils/atomic.hpp
+									utils/atomic.hpp utils/tree_barrier.hpp
 
 sched/thread/queue_buffer.o: sched/thread/queue_buffer.hpp \
 														sched/thread/queue_buffer.cpp \
