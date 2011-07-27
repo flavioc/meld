@@ -119,6 +119,9 @@ mpi_thread_static::terminate_iteration(void)
    
    START_ROUND();
    
+   if(has_work())
+      set_active();
+   
    END_ROUND(
       more_work = state::ROUTER->reduce_continue(num_active() > 0);
       iteration_finished = !more_work;
