@@ -166,8 +166,6 @@ static_local::terminate_iteration(void)
    // to get here
    
    assert_thread_end_iteration();
-   
-   threads_synchronize();
 
    assert(is_inactive());
 
@@ -175,20 +173,38 @@ static_local::terminate_iteration(void)
 
    if(has_work())
       set_active();
+   if(!leader_thread())
+      total_in_agg--;
 
    assert_thread_iteration(iteration);
 
    // again, needed since we must wait if any thread
    // is set to active in the previous if
-   threads_synchronize();
 
-   const bool ret(num_active() > 0);
-   if(leader_thread() && ret)
-      reset_barrier();
-   
-   threads_synchronize();
-   
-   return ret;
+   if(leader_thread()) {
+      while(total_in_agg != 1) {}
+      
+      if(num_active() > 0) {
+         reset_barrier();
+         total_in_agg = state::NUM_THREADS;
+         round_state = (round_state + 2) % 3; // +2 and continue round
+         return true;
+      } else {
+         round_state = (round_state + 1) % 3; // +1 and stop computation
+         return false;
+      }
+   } else {
+      while(round_state == thread_round_state) {}
+      
+      const bool ret(round_state == ((thread_round_state + 2) % 3));
+      
+      if(ret) {
+         thread_round_state = round_state;
+         
+         return true;
+      } else
+         return false;
+   }
 }
 
 void

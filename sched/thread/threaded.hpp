@@ -9,6 +9,7 @@
 #include "vm/defs.hpp"
 #include "utils/types.hpp"
 #include "utils/spinlock.hpp"
+#include "utils/atomic.hpp"
 #include "sched/base.hpp"
 #include "sched/thread/termination_barrier.hpp"
 #include "sched/thread/state.hpp"
@@ -34,6 +35,10 @@ protected:
    DEFINE_PADDING;
    
 	utils::spinlock lock;
+	
+   static volatile size_t round_state;
+   size_t thread_round_state;
+   static utils::atomic<size_t> total_in_agg;
    
    static std::vector<sched::base*> ALL_THREADS;
    
@@ -83,7 +88,8 @@ protected:
    
 public:
    
-   explicit threaded(void): state(THREAD_ACTIVE)
+   explicit threaded(void): state(THREAD_ACTIVE),
+      thread_round_state(0)
    {
    }
    
