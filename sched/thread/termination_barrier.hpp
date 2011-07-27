@@ -15,16 +15,9 @@ private:
    
    utils::atomic<size_t> active_threads;
    
-   DEFINE_PADDING;
-   
-   volatile bool done;
-   
 public:
    
-   inline void reset(void)
-   {
-      done = false;
-   }
+   inline void reset(void) {}
    
    inline void is_active(void)
    {
@@ -35,22 +28,16 @@ public:
    inline void is_inactive(void)
    {
       assert(active_threads > 0);
-      if(active_threads == 1) {
-         active_threads--;
-         done = true;
-      } else {
-         active_threads--;
-      }
+      active_threads--;
    }
    
    inline size_t num_active(void) const { return active_threads; }
    
-   inline bool all_finished(void) const { return done; }
+   inline bool all_finished(void) const { return active_threads == 0; }
    
    explicit termination_barrier(const size_t num_threads):
       active_threads(num_threads)
    {
-      done = false;
    }
    
    ~termination_barrier(void) {}
