@@ -204,8 +204,10 @@ static_global::terminate_iteration(void)
    
    threads_synchronize();
    
-   const bool ret(!all_threads_finished());
-   
+   const bool ret(num_active() > 0);
+   if(leader_thread() && ret)
+      reset_barrier();
+      
    // if we don't synchronize here we risk that other threads get ahead
    // and turn into inactive and we have work to do
    threads_synchronize();

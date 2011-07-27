@@ -176,8 +176,15 @@ mpi_thread_dynamic::terminate_iteration(void)
    threads_synchronize();
    
    if(leader_thread()) {
-      const bool more_work = state::ROUTER->reduce_continue(!all_threads_finished());
+      const bool we_have_work(num_active() > 0);
+      const bool more_work = state::ROUTER->reduce_continue(we_have_work);
       iteration_finished = !more_work;
+      
+      if(more_work) {
+         if(!we_have_work)
+            set_active();
+         reset_barrier();
+      }
    }
    
    // threads must wait for the final answer between processes

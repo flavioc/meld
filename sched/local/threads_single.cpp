@@ -160,8 +160,11 @@ threads_single::terminate_iteration(void)
 
    const bool ret(has_work());
    
-   if(ret)
+   if(ret) {
+      if(leader_thread())
+         reset_barrier();
       set_active();
+   }
    
    threads_synchronize();
    

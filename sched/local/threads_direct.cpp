@@ -373,9 +373,11 @@ direct_local::terminate_iteration(void)
    // again, needed since we must wait if any thread
    // is set to active in the previous if
    threads_synchronize();
-
-   const bool ret(!all_threads_finished());
    
+   const bool ret(num_active() > 0);
+   if(leader_thread())
+      reset_barrier();
+      
    threads_synchronize();
    
    return ret;
