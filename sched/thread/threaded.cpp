@@ -12,7 +12,7 @@ vector<base*> threaded::ALL_THREADS;
 tree_barrier* threaded::thread_barrier(NULL);
 termination_barrier* threaded::term_barrier(NULL);
 atomic<size_t> threaded::total_in_agg(0);
-volatile size_t threaded::round_state(0);
+volatile size_t threaded::round_state(1);
 
 void
 threaded::init_barriers(const size_t num_threads)

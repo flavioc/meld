@@ -89,7 +89,7 @@ protected:
 public:
    
    explicit threaded(void): state(THREAD_ACTIVE),
-      thread_round_state(0)
+      thread_round_state(1)
    {
    }
    

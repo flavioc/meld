@@ -168,39 +168,41 @@ static_local::terminate_iteration(void)
    assert_thread_end_iteration();
 
    assert(is_inactive());
+   
+   threads_synchronize();
 
    generate_aggs();
 
    if(has_work())
       set_active();
-   if(!leader_thread())
-      total_in_agg--;
+   
+   assert(total_in_agg > 0);
+   total_in_agg--;
 
    assert_thread_iteration(iteration);
-
-   // again, needed since we must wait if any thread
-   // is set to active in the previous if
-
+   
    if(leader_thread()) {
-      while(total_in_agg != 1) {}
+      while(total_in_agg != 0) {}
       
+#define GET_NEXT(x) ((x) == 1 ? 2 : 1)
+
       if(num_active() > 0) {
-         reset_barrier();
          total_in_agg = state::NUM_THREADS;
-         round_state = (round_state + 2) % 3; // +2 and continue round
+         reset_barrier();
+         round_state = GET_NEXT(round_state);
          return true;
       } else {
-         round_state = (round_state + 1) % 3; // +1 and stop computation
+         round_state = 0;
          return false;
       }
    } else {
+      const size_t supos(GET_NEXT(thread_round_state));
+      
       while(round_state == thread_round_state) {}
       
-      const bool ret(round_state == ((thread_round_state + 2) % 3));
-      
-      if(ret) {
-         thread_round_state = round_state;
-         
+      if(round_state == supos) {
+         thread_round_state = supos;
+         assert(thread_round_state == round_state);
          return true;
       } else
          return false;
