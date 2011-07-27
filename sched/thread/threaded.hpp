@@ -137,4 +137,42 @@ public:
 
 }
 
+#define START_ROUND()   {           \
+   ins_round;                       \
+   threads_synchronize();           \
+   assert_thread_end_iteration();   \
+   assert(is_inactive());           \
+   generate_aggs();                 \
+}
+
+#define GET_NEXT(x) ((x) == 1 ? 2 : 1)
+#define END_ROUND(COMPUTE_MORE_WORK) {                   \
+   assert(total_in_agg > 0);                             \
+   total_in_agg--;                                       \
+   assert_thread_iteration(iteration);                   \
+   if(leader_thread()) {                                 \
+      while(total_in_agg != 0) {}                        \
+      bool more_work(false);                             \
+      COMPUTE_MORE_WORK                                  \
+      if(more_work) {                                    \
+         total_in_agg = state::NUM_THREADS;              \
+         round_state = GET_NEXT(round_state);            \
+         return true;                                    \
+      } else {                                           \
+         round_state = 0;                                \
+         return false;                                   \
+      }                                                  \
+   } else {                                              \
+      const size_t supos(GET_NEXT(thread_round_state));  \
+      while(round_state == thread_round_state) {}        \
+      if(round_state == supos) {                         \
+         thread_round_state = supos;                     \
+         assert(thread_round_state == round_state);      \
+         return true;                                    \
+      } else                                             \
+         return false;                                   \
+   }                                                     \
+}
+   
+
 #endif
