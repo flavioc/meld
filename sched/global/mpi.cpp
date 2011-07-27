@@ -91,51 +91,24 @@ mpi_static::busy_wait(void)
 bool
 mpi_static::terminate_iteration(void)
 {
-   ins_round;
-   
-   // this is needed since one thread can reach set_active
-   // and thus other threads waiting for all_finished will fail
-   // to get here
-   threads_synchronize();
    update_pending_messages(false); // just delete all requests
    
    if(leader_thread())
       token.token_terminate_iteration();
-
+   
+   START_ROUND();
+   
    assert(iteration_finished);
-   assert(is_inactive());
-
-   generate_aggs();
-
+   
    if(has_work())
       set_active();
    
-   assert_thread_iteration(iteration);
-
-   // again, needed since we must wait if any thread
-   // is set to active in the previous if
-   threads_synchronize();
-   
-   if(leader_thread()) {
+   END_ROUND(
       const bool we_have_work(num_active() > 0);
-      const bool more_work = state::ROUTER->reduce_continue(we_have_work);
-      iteration_finished = !more_work;
+      more_work = state::ROUTER->reduce_continue(we_have_work);
       
-      if(more_work) {
-         if(!we_have_work)
-            set_active();
-         reset_barrier();
-      }
-   }
-   
-   // threads must wait for the final answer between processes
-   threads_synchronize();
-
-   const bool ret(!iteration_finished);
-   
-   threads_synchronize();
-   
-   return ret;
+      iteration_finished = !more_work;
+   );
 }
 
 void

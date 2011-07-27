@@ -180,39 +180,16 @@ static_global::generate_aggs(void)
 bool
 static_global::terminate_iteration(void)
 {
-   ins_round;
-   
-   // this is needed since one thread can reach make_active
-   // and thus other threads waiting for all_finished will fail
-   // to get here
-   
-   assert_thread_end_iteration();
-   threads_synchronize();
+   START_ROUND();
    
    assert(buf.empty());
-   assert(is_inactive());
-   
-   generate_aggs();
    
    if(has_work())
       set_active();
-      
-   assert_thread_iteration(iteration);
    
-   // again, needed since we must wait if any thread
-   // is set to active in the previous if
-   
-   threads_synchronize();
-   
-   const bool ret(num_active() > 0);
-   if(leader_thread() && ret)
-      reset_barrier();
-      
-   // if we don't synchronize here we risk that other threads get ahead
-   // and turn into inactive and we have work to do
-   threads_synchronize();
-   
-   return ret;
+   END_ROUND(
+      more_work = num_active() > 0;
+   );
 }
 
 static_global*
