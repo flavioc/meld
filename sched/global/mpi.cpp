@@ -104,8 +104,7 @@ mpi_static::terminate_iteration(void)
       set_active();
    
    END_ROUND(
-      const bool we_have_work(num_active() > 0);
-      more_work = state::ROUTER->reduce_continue(we_have_work);
+      more_work = state::ROUTER->reduce_continue(num_active() > 0);
       
       iteration_finished = !more_work;
    );
