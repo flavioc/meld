@@ -146,7 +146,7 @@ public:
 }
 
 #define GET_NEXT(x) ((x) == 1 ? 2 : 1)
-#define END_ROUND(COMPUTE_MORE_WORK) {                   \
+#define DO_END_ROUND(COMPUTE_MORE_WORK, IF_TRUE) {       \
    assert(total_in_agg > 0);                             \
    total_in_agg--;                                       \
    assert_thread_iteration(iteration);                   \
@@ -157,6 +157,7 @@ public:
       if(more_work) {                                    \
          total_in_agg = state::NUM_THREADS;              \
          round_state = GET_NEXT(round_state);            \
+         IF_TRUE                                         \
          return true;                                    \
       } else {                                           \
          round_state = 0;                                \
@@ -168,11 +169,13 @@ public:
       if(round_state == supos) {                         \
          thread_round_state = supos;                     \
          assert(thread_round_state == round_state);      \
+         IF_TRUE                                         \
          return true;                                    \
       } else                                             \
          return false;                                   \
    }                                                     \
 }
-   
+
+#define END_ROUND(COMPUTE_MORE_WORK) DO_END_ROUND(COMPUTE_MORE_WORK, );
 
 #endif

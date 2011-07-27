@@ -138,37 +138,13 @@ threads_single::busy_wait(void)
 bool
 threads_single::terminate_iteration(void)
 {
-   ins_round;
+   START_ROUND();
    
-   // this is needed since one thread can reach set_active
-   // and thus other threads waiting for all_finished will fail
-   // to get here
-   
-   assert_thread_end_iteration();
-   
-   threads_synchronize();
-
-   assert(is_inactive());
-
-   generate_aggs();
-
-   assert_thread_iteration(iteration);
-
-   // again, needed since we must wait if any thread
-   // is set to active in the previous if
-   threads_synchronize();
-
-   const bool ret(has_work());
-   
-   if(ret) {
-      if(leader_thread())
-         reset_barrier();
+   DO_END_ROUND(
+      more_work = has_work();
+   ,
       set_active();
-   }
-   
-   threads_synchronize();
-   
-   return ret;
+   );
 }
 
 void
