@@ -146,7 +146,7 @@ public:
    explicit base(const vm::process_id _id):
       id(_id), iteration(0)
 #ifdef INSTRUMENTATION
-      , processed_facts(0), sent_facts(0)
+      , processed_facts(0), sent_facts(0), ins_state(stat::NOW_ACTIVE)
 #endif
    {
    }
