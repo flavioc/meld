@@ -39,7 +39,7 @@ public:
    }
    
    // prefix version of --atomic
-   inline T& operator-- () {
+   inline T operator-- () {
       return sub_and_fetch(1);
    }
    

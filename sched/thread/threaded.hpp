@@ -155,6 +155,7 @@ public:
       bool more_work(false);                             \
       COMPUTE_MORE_WORK                                  \
       if(more_work) {                                    \
+         reset_barrier();                                \
          total_in_agg = state::NUM_THREADS;              \
          round_state = GET_NEXT(round_state);            \
          IF_TRUE                                         \
