@@ -139,7 +139,6 @@ public:
 
 #define START_ROUND()   {           \
    ins_round;                       \
-   threads_synchronize();           \
    assert_thread_end_iteration();   \
    assert(is_inactive());           \
    generate_aggs();                 \
