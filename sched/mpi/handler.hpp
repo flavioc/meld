@@ -9,6 +9,7 @@
 #include "sched/mpi/message_buffer.hpp"
 #include "sched/mpi/tokenizer.hpp"
 #include "utils/atomic.hpp"
+#include "sched/thread/termination_barrier.hpp"
 
 namespace sched
 {
@@ -55,7 +56,7 @@ protected:
          messages_were_transmitted(1);
    }
    
-   bool attempt_token(boost::function0<bool>&, const bool);
+   bool attempt_token(termination_barrier *, const bool);
    
 public:
    

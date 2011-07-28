@@ -122,9 +122,9 @@ mpi_handler::update_pending_messages(const bool test)
 }
 
 bool
-mpi_handler::attempt_token(boost::function0<bool>& finished, const bool main)
+mpi_handler::attempt_token(termination_barrier *barrier, const bool main)
 {
-   if(!finished())
+   if(!barrier->zero_active_threads())
       return false;
    if(iteration_finished)
       return true;
@@ -132,7 +132,7 @@ mpi_handler::attempt_token(boost::function0<bool>& finished, const bool main)
    inside_counter--;
    
    while(inside_counter != 0) {
-      if(!finished() || iteration_finished) {
+      if(!barrier->zero_active_threads() || iteration_finished) {
          //printf("HERE fail\n");
          inside_counter++;
          return iteration_finished;
@@ -140,7 +140,7 @@ mpi_handler::attempt_token(boost::function0<bool>& finished, const bool main)
    }
    
    assert(inside_counter == 0);
-   assert(finished());
+   assert(barrier->zero_active_threads());
    
    inside_barrier->wait();
    
@@ -152,7 +152,8 @@ mpi_handler::attempt_token(boost::function0<bool>& finished, const bool main)
       boost::mutex::scoped_lock lock(tok_mutex);
       
       if(!token.busy_loop_token(true)) {
-         assert(finished());
+         assert(barrier->zero_active_threads());
+         barrier->set_done();
          iteration_finished = true;
       }
       

@@ -29,7 +29,7 @@ private:
 public:
    
    // prefix version of ++atomic
-   inline T& operator++ () {
+   inline T operator++ () {
       return add_and_fetch(1);
    }
    

@@ -21,8 +21,6 @@ namespace sched
 class threaded
 {
 private:
-   
-   static termination_barrier *term_barrier;
      
    volatile thread_state state;
    
@@ -30,6 +28,7 @@ private:
    
 protected:
    
+   static termination_barrier *term_barrier;
    static utils::tree_barrier *thread_barrier;
    
    DEFINE_PADDING;

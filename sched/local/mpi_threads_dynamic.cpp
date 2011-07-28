@@ -94,7 +94,6 @@ bool
 mpi_thread_dynamic::busy_wait(void)
 {
    size_t asked_this_round(0);
-   boost::function0<bool> f(boost::bind(&mpi_thread_dynamic::all_threads_finished, this));
    
    ins_sched;
    IDLE_MPI_ALL(get_id())
@@ -106,7 +105,7 @@ mpi_thread_dynamic::busy_wait(void)
       
       BUSY_LOOP_MAKE_INACTIVE()
       
-      if(attempt_token(f, leader_thread())) {
+      if(attempt_token(term_barrier, leader_thread())) {
          assert(all_threads_finished());
          assert(is_inactive());
          assert(!has_work());
