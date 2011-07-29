@@ -31,7 +31,8 @@ enum aggregate_safeness {
    AGG_LOCALLY_GENERATED = 1,
    AGG_NEIGHBORHOOD = 2,
    AGG_NEIGHBORHOOD_AND_SELF = 3,
-   AGG_UNSAFE = 4
+   AGG_IMMEDIATE = 4,
+   AGG_UNSAFE = 5
 };
 
 size_t field_type_size(field_type type);

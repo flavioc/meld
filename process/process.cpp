@@ -41,6 +41,18 @@ process::do_agg_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
    
    switch(safeness) {
       case AGG_UNSAFE: return;
+      case AGG_IMMEDIATE: {
+         simple_tuple_list list;
+         
+         conf->generate(pred->get_aggregate_type(), pred->get_aggregate_field(), list);
+
+         for(simple_tuple_list::iterator it(list.begin()); it != list.end(); ++it) {
+            simple_tuple *tpl(*it);
+            scheduler->new_work_agg(node, tpl);
+         }
+         return;
+      }
+      break;
       case AGG_LOCALLY_GENERATED: {
          const strat_level level(pred->get_agg_strat_level());
          

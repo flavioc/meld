@@ -62,7 +62,7 @@ public:
    inline bool is_aggregate(void) const { return agg_info != NULL; }
    
    inline aggregate_safeness get_agg_safeness(void) const { return agg_info->safeness; }
-   inline bool is_unsafe_agg(void) const { return get_agg_safeness() == AGG_UNSAFE; }
+   inline bool is_unsafe_agg(void) const { return get_agg_safeness() == AGG_UNSAFE || get_agg_safeness() == AGG_IMMEDIATE; }
    inline const predicate *get_remote_pred(void) const { return agg_info->remote_pred; }
    strat_level get_agg_strat_level(void) const { return agg_info->local_level; }
    

@@ -16,6 +16,7 @@ namespace vm {
 #define PRED_AGG_LOCAL 0x01
 #define PRED_AGG_REMOTE 0x02
 #define PRED_AGG_REMOTE_AND_SELF 0x04
+#define PRED_AGG_IMMEDIATE 0x08
 #define PRED_AGG_UNSAFE 0x00
 
 predicate_id predicate::current_id = 0;
@@ -72,19 +73,22 @@ predicate::make_predicate_from_buf(byte *buf, code_size_t *code_size)
    buf += PRED_NAME_SIZE_MAX;
    
    if(pred->is_aggregate()) {
-      if(buf[0] & PRED_AGG_LOCAL) {
+      if(buf[0] == PRED_AGG_LOCAL) {
          buf++;
          pred->agg_info->safeness = AGG_LOCALLY_GENERATED;
          pred->agg_info->local_level = (strat_level)(buf[0]);
-      } else if(buf[0] & PRED_AGG_REMOTE) {
+      } else if(buf[0] == PRED_AGG_REMOTE) {
          buf++;
          pred->agg_info->safeness = AGG_NEIGHBORHOOD;
          pred->agg_info->remote_pred_id = (predicate_id)(buf[0]);
-      } else if(buf[0] & PRED_AGG_REMOTE_AND_SELF) {
+      } else if(buf[0] == PRED_AGG_REMOTE_AND_SELF) {
          buf++;
          pred->agg_info->safeness = AGG_NEIGHBORHOOD_AND_SELF;
          pred->agg_info->remote_pred_id = (predicate_id)(buf[0]);
-      } else if(buf[0] & AGG_UNSAFE) {
+      } else if(buf[0] == PRED_AGG_IMMEDIATE) {
+         buf++;
+         pred->agg_info->safeness = AGG_IMMEDIATE;
+      } else if(buf[0] & PRED_AGG_UNSAFE) {
          buf++;
          pred->agg_info->safeness = AGG_UNSAFE;
       }
@@ -183,6 +187,9 @@ predicate::print(ostream& cout) const
             break;
          case AGG_UNSAFE:
             cout << "unsafe";
+            break;
+         case AGG_IMMEDIATE:
+            cout << "immediate";
             break;
          default: assert(false); break;
       }
