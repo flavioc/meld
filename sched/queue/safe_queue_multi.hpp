@@ -46,6 +46,43 @@ public:
    
    inline bool empty(void) const { return head == tail; }
    
+   inline bool pop_if_not_empty(T& data)
+   {
+      assert(tail != NULL);
+      assert(head != NULL);
+      
+      if(empty())
+         return false;
+         
+      utils::spinlock::scoped_lock l(mtx);
+      
+      if(empty())
+         return false;
+         
+      assert(head->next != NULL);
+      assert(!empty());
+      
+      if(head->next->next == NULL)
+         return false; // we must leave this queue with at least one element
+      
+      node *take((node*)head->next);
+      node *old((node*)head);
+      
+      head = take;
+      
+      delete old;
+      
+      assert(head == take);
+      assert(take != NULL);
+      
+      data = take->data;
+
+#ifdef INSTRUMENTATION
+      total--;
+#endif
+      return true;
+   }
+   
    inline bool pop(T& data)
    {
       assert(tail != NULL);

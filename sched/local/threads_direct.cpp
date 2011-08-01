@@ -243,7 +243,7 @@ direct_local::try_to_steal(void)
       if(target->is_active()) {
          thread_node *new_node(NULL);
          assert(target != NULL);
-         if(target->queue_nodes.pop(new_node)) {
+         if(target->queue_nodes.pop_if_not_empty(new_node)) {
             change_node(new_node, target);
             if(--total == 0)
                return;
