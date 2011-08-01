@@ -20,7 +20,7 @@ using namespace utils;
 namespace sched
 {
 
-safe_queue_multi<thread_node*> threads_single::queue_nodes;
+safe_queue_multi<thread_node*> *threads_single::queue_nodes(NULL);
 
 void
 threads_single::assert_end(void) const
@@ -66,6 +66,7 @@ threads_single::new_work(const node *, work& new_work)
    thread_node *to(dynamic_cast<thread_node*>(new_work.get_node()));
     
    assert(to != NULL);
+   assert(is_active());
    
    assert_thread_push_work();
    
@@ -85,6 +86,7 @@ void
 threads_single::new_work_other(sched::base *scheduler, work& new_work)
 {
    assert(scheduler == NULL);
+   assert(is_active());
    
    thread_node *tnode(dynamic_cast<thread_node*>(new_work.get_node()));
    
@@ -121,7 +123,7 @@ threads_single::busy_wait(void)
 {
    ins_idle;
    
-   while(!has_work()) {   
+   while(!has_work()) {
       BUSY_LOOP_MAKE_INACTIVE()
       BUSY_LOOP_CHECK_TERMINATION_THREADS()
    }
@@ -138,6 +140,8 @@ threads_single::busy_wait(void)
 bool
 threads_single::terminate_iteration(void)
 {
+   threads_synchronize();
+   
    START_ROUND();
    
    DO_END_ROUND(
@@ -185,7 +189,7 @@ threads_single::set_next_node(void)
             return false;
       }
             
-      if(!queue_nodes.pop(current_node))
+      if(!queue_nodes->pop(current_node))
          continue;
       
       assert(current_node->in_queue());
@@ -251,7 +255,7 @@ threads_single::write_slice(stat::slice& sl) const
 {
 #ifdef INSTRUMENTATION
    base::write_slice(sl);
-   sl.work_queue = queue_nodes.size();
+   sl.work_queue = queue_nodes->size();
 #else
    (void)sl;
 #endif
@@ -274,6 +278,8 @@ threads_single::start(const size_t num_threads)
    
    for(process_id i(0); i < num_threads; ++i)
       add_thread(new threads_single(i));
+      
+   queue_nodes = new safe_queue_multi<thread_node*>();
    
    return ALL_THREADS;
 }

@@ -118,13 +118,11 @@ public:
       } else                              \
          break;                           \
    }
-   
+
 #define BUSY_LOOP_CHECK_TERMINATION_THREADS()   \
-   if(!has_work() && is_inactive() && all_threads_finished()) {      \
-      assert(!has_work());                                           \
-      assert(is_inactive());                                         \
-      assert(all_threads_finished());                                \
-      return false;                                                  \
+   if(all_threads_finished()) {                 \
+      assert(is_inactive());                    \
+      return false;                             \
    }
    
 #define MAKE_OTHER_ACTIVE(OTHER) \
@@ -133,7 +131,7 @@ public:
       if((OTHER)->is_inactive() && (OTHER)->has_work())  \
          (OTHER)->set_active();                          \
    }
-
+   
 }
 
 #define START_ROUND()   {           \

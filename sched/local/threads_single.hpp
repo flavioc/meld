@@ -19,7 +19,7 @@ class threads_single: public sched::base,
 {
 protected:
    
-   static safe_queue_multi<thread_node*> queue_nodes;
+   static safe_queue_multi<thread_node*> *queue_nodes;
    
    DEFINE_PADDING;
    
@@ -34,11 +34,11 @@ protected:
    virtual void generate_aggs(void);
    virtual bool busy_wait(void);
    
-   static inline bool has_work(void) { return !queue_nodes.empty(); }
+   static inline bool has_work(void) { return !queue_nodes->empty(); }
    
    static inline void add_to_queue(thread_node *node)
    {
-      queue_nodes.push(node);
+      queue_nodes->push(node);
    }
    
 public:

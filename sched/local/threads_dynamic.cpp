@@ -364,11 +364,9 @@ dynamic_local::generate_aggs(void)
 bool
 dynamic_local::terminate_iteration(void)
 {
-   START_ROUND();
+   threads_synchronize();
    
-#ifndef MARK_OWNED_NODES
-	 threads_synchronize();
-#endif
+   START_ROUND();
 
    if(has_work())
       set_active();

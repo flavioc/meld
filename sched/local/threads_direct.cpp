@@ -345,11 +345,8 @@ direct_local::generate_aggs(void)
 bool
 direct_local::terminate_iteration(void)
 {
+   threads_synchronize();
    START_ROUND();
-   
-#ifndef MARK_OWNED_NODES
-	 threads_synchronize();
-#endif
 
    if(has_work())
       set_active();
