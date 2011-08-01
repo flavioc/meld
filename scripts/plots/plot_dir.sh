@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# Plots a directory with results from instrumentation.
+#
 
 DIR="${1}"
 
@@ -18,7 +21,7 @@ plot_part ()
 	fi
 
 	if [ ! -f "${FILE}" ]; then
-		echo "Cannot find file."
+		echo "Cannot find file ${FILE}."
 		exit 1
 	fi
 
