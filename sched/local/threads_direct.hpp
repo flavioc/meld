@@ -26,6 +26,7 @@ private:
    
    thread_node *current_node;
    mutable utils::randgen random;
+   bool added_any;
    
    DEFINE_PADDING;
    

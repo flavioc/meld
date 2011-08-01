@@ -36,6 +36,7 @@ private:
    size_t next_steal_cycle;
    size_t num_nodes_to_send;
    mutable utils::randgen random;
+   bool added_any;
 	
 #ifdef INSTRUMENTATION
    mutable utils::atomic<size_t> stealed_nodes;

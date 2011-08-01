@@ -39,7 +39,7 @@ direct_local::assert_end_iteration(void) const
       node->assert_end_iteration();
    }
 #else
-	 assert_static_nodes_end_iteration(id);
+   assert_static_nodes_end_iteration(id);
 #endif
 }
 
@@ -90,9 +90,10 @@ direct_local::new_agg(work& new_work)
       assert(this == to->get_owner());
 #else
       // note the 'get_owner'
-		direct_local *owner(dynamic_cast<direct_local*>(to->get_owner()));
+      direct_local *owner(dynamic_cast<direct_local*>(to->get_owner()));
       owner->add_to_queue(to);
 #endif
+      added_any = true;
    }
 }
 
@@ -345,10 +346,10 @@ direct_local::generate_aggs(void)
 bool
 direct_local::terminate_iteration(void)
 {
-   threads_synchronize();
+   added_any = false;
    START_ROUND();
 
-   if(has_work())
+   if(added_any)
       set_active();
 
    DO_END_ROUND(
@@ -451,7 +452,8 @@ direct_local::find_scheduler(const node *n)
 
 direct_local::direct_local(const process_id id):
    base(id),
-   current_node(NULL)
+   current_node(NULL),
+   added_any(false)
 #ifdef MARK_OWNED_NODES
    , nodes(NULL),
    nodes_mutex(NULL)

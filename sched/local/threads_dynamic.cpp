@@ -92,9 +92,10 @@ dynamic_local::new_agg(work& new_work)
    
    if(!to->in_queue()) {
       // note the 'get_owner'
-		  dynamic_local *owner(dynamic_cast<dynamic_local*>(to->get_owner()));
+      dynamic_local *owner(dynamic_cast<dynamic_local*>(to->get_owner()));
       owner->add_to_queue(to);
       to->set_in_queue(true);
+      added_any = true;
    }
 }
 #endif
@@ -365,10 +366,14 @@ bool
 dynamic_local::terminate_iteration(void)
 {
    threads_synchronize();
-   
+
+   added_any = false;
    START_ROUND();
 
-   if(has_work())
+#ifdef MARK_OWNED_NODES
+   added_any = has_work();
+#endif
+   if(added_any)
       set_active();
 
    END_ROUND(
@@ -408,7 +413,8 @@ dynamic_local::dynamic_local(const process_id id):
    nodes_mutex(NULL),
 #endif
 	next_steal_cycle(0),
-	num_nodes_to_send(get_max_send_nodes_per_time())
+	num_nodes_to_send(get_max_send_nodes_per_time()),
+	added_any(false)
 #ifdef INSTRUMENTATION
    , stealed_nodes(0)
    , steal_requests(0)
