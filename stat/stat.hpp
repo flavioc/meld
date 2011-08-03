@@ -14,7 +14,8 @@ enum sched_state
    NOW_ACTIVE,
    NOW_IDLE,
    NOW_SCHED,
-   NOW_ROUND
+   NOW_ROUND,
+   NOW_COMM
 };
 
 // frequency in milliseconds to take a slice of thread information   

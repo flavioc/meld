@@ -41,6 +41,7 @@ protected:
 #define ins_idle ins_state = stat::NOW_IDLE
 #define ins_sched ins_state = stat::NOW_SCHED
 #define ins_round ins_state = stat::NOW_ROUND
+#define ins_comm ins_state = stat::NOW_COMM
 
 #else
 
@@ -48,6 +49,7 @@ protected:
 #define ins_idle
 #define ins_sched
 #define ins_round
+#define ins_comm
 
 #endif
    
@@ -112,6 +114,16 @@ public:
       processed_facts++;
 #endif
    }
+   
+#ifdef INSTRUMENTATION
+   inline void instr_set_active(void) { ins_active; }
+   inline void instr_set_comm(void) { ins_comm; }
+#define sched_active(SCHED) (SCHED)->instr_set_active()
+#define sched_comm(SCHED)   (SCHED)->instr_set_comm()
+#else
+#define sched_active(SCHED)
+#define sched_comm(SCHED)
+#endif
    
    virtual void assert_end(void) const = 0;
    virtual void assert_end_iteration(void) const = 0;

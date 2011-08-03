@@ -65,8 +65,11 @@ machine::route(const node* from, process *caller, const node::node_id id, simple
       
       if(sched_caller == sched_other)
          sched_caller->new_work(from, new_work);
-      else
+      else {
+         sched_comm(sched_caller);
          sched_caller->new_work_other(sched_other, new_work);
+         sched_active(sched_caller);
+      }
    }
 #ifdef COMPILE_MPI
    else {
@@ -76,7 +79,9 @@ machine::route(const node* from, process *caller, const node::node_id id, simple
       
       message *msg(new message(id, stuple));
       
+      sched_comm(sched_caller);
       sched_caller->new_work_remote(rem, id, msg);
+      sched_active(sched_caller);
    }
 #endif
 }
