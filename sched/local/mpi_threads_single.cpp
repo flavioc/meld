@@ -55,8 +55,15 @@ mpi_thread_single::busy_wait(void)
       
    while(!has_work()) {
       BUSY_LOOP_MAKE_INACTIVE()
-      BUSY_LOOP_CHECK_INACTIVE_THREADS()
-      BUSY_LOOP_CHECK_INACTIVE_MPI()
+      
+      if(attempt_token(term_barrier, leader_thread())) {
+         assert(all_threads_finished());
+         assert(is_inactive());
+         assert(!has_work());
+         assert(iteration_finished);
+         return false;
+      }
+      
       BUSY_LOOP_FETCH_WORK()
    }
    
