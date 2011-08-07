@@ -28,7 +28,7 @@ public:
    virtual bool get_work(process::work&);
    virtual void new_work_remote(process::remote *, const db::node::node_id, message *);
    
-   DEFINE_START_FUNCTION(mpi_thread_single)
+   static std::vector<sched::base*>& start(const size_t);
    
    static db::node *create_node(const db::node::node_id id, const db::node::node_id trans)
    {

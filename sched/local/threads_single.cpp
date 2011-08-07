@@ -270,17 +270,22 @@ threads_single::threads_single(const vm::process_id _id):
 threads_single::~threads_single(void)
 {
 }
+
+void
+threads_single::start_base(const size_t num_threads)
+{
+   init_barriers(num_threads);
+   queue_nodes = new safe_queue_multi<thread_node*>();
+}
    
 vector<sched::base*>&
 threads_single::start(const size_t num_threads)
 {
-   init_barriers(num_threads);
+   start_base(num_threads);
    
    for(process_id i(0); i < num_threads; ++i)
       add_thread(new threads_single(i));
-      
-   queue_nodes = new safe_queue_multi<thread_node*>();
-   
+
    return ALL_THREADS;
 }
 

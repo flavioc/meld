@@ -91,6 +91,7 @@ mpi_thread_single::terminate_iteration(void)
 
    assert(iteration_finished);
    
+   threads_synchronize();
    START_ROUND();
    
    DO_END_ROUND(
@@ -99,6 +100,18 @@ mpi_thread_single::terminate_iteration(void)
    ,
       set_active();
    );
+}
+
+vector<sched::base*>&
+mpi_thread_single::start(const size_t num_threads)
+{
+   threads_single::start_base(num_threads);
+   assert_thread_disable_work_count();
+   
+   for(process_id i(0); i < num_threads; ++i)
+      add_thread(new mpi_thread_single(i));
+   
+   return ALL_THREADS;
 }
 
 }

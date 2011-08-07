@@ -41,6 +41,8 @@ protected:
       queue_nodes->push(node);
    }
    
+   static void start_base(const size_t);
+   
 public:
    
    virtual void init(const size_t);
