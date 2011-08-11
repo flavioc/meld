@@ -28,3 +28,13 @@ time_run_n ()
 	echo " -> ${average}"
 }
 
+do_time_mpi ()
+{
+	FILE="${1}"
+	PROCS="${2}"
+	THREADS="${3}"
+
+	TO_RUN="mpirun -np ${PROCS} ${EXEC} ${FILE} -c ${SCHEDULER}${THREADS}"
+	time_run_n "${TO_RUN}" "$(basename ${FILE} .m) ${SCHEDULER}${PROCS}/${THREADS}"
+}
+
