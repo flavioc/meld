@@ -35,6 +35,14 @@ for i in `seq 2 $NUMCOLS`; do
 	PLOTSTR="$PLOTSTR\n$NOW"
 done
 
+# comm
+for i in `seq 2 $NUMCOLS`; do
+	POSITION=`echo "$SLICE * ($i-1)" | bc -l`
+	NOW="plot \"${FILE}\" every :10 using 1:(\$$i == 4 ? $POSITION-$INTERVAL : 1/0):(0):($INTERVAL + $INTERVAL)
+			title \"thread`expr $i - 1`\" with vectors arrowstyle 5"
+	PLOTSTR="$PLOTSTR\n$NOW"
+done
+
 gnuplot <<EOF
 set output "$FILE.pdf"
 load 'base.plt'
@@ -50,6 +58,7 @@ set style arrow 1 nohead ls 3 lc rgb "green"
 set style arrow 2 nohead ls 2 lc rgb "red"
 set style arrow 3 nohead ls 2 lc rgb "blue"
 set style arrow 4 nohead ls 2 lc rgb "black"
+set style arrow 5 nohead ls 2 lc rgb "yellow"
 
 set multiplot
 

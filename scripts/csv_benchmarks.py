@@ -33,6 +33,8 @@ def get_sched_name(sched):
       return 'tx'
    if sched[:9] == 'mpistatic':
       return 'mpi'
+   if sched[:9] == 'mpisingle':
+      return 'mix'
    return 'sin'
       
 def get_sched_threads(sched):
@@ -44,6 +46,8 @@ def get_sched_threads(sched):
       rest = sched[9:]
       vec = rest.split('/')
       return int(vec[0])
+   elif sched[:9] == 'mpisingle':
+      return sched[9:]
    else:
       return int(sched[3:])
       
@@ -104,7 +108,7 @@ def make_efficiency(time, serial, cpu):
 CPUS = [1, 2, 4, 6, 8, 10, 12, 14, 16]
 
 def write_header(writer):
-   writer.writerow(['#cpu', 'tl', 'td', 'tx', 'sin', 'mpi'])
+   writer.writerow(['#cpu', 'tl', 'tx', 'sin', 'mpi'])
    
 def write_time_file(file, bench, bench_data):
    global CPUS
@@ -112,12 +116,10 @@ def write_time_file(file, bench, bench_data):
    write_header(writer)
    for cpu in CPUS:
       tl = bench_data['tl'][cpu]
-      td = bench_data['td'][cpu]
       tx = bench_data['tx'][cpu]
       sin = bench_data['sin'][cpu]
       mpi = bench_data['mpi'][cpu]
       writer.writerow([cpu, my_round(tl),
-                            my_round(td),
                             my_round(tx),
                             my_round(sin),
                             my_round(mpi)])
@@ -134,12 +136,10 @@ def write_speedup_file(file, bench, bench_data):
    write_header(writer)
    for cpu in CPUS:
       tl = bench_data['tl'][cpu]
-      td = bench_data['td'][cpu]
       tx = bench_data['tx'][cpu]
       sin = bench_data['sin'][cpu]
       mpi = bench_data['mpi'][cpu]
       writer.writerow([cpu, make_speedup(tl, serial),
-                            make_speedup(td, serial),
                             make_speedup(tx, serial),
                             make_speedup(sin, serial),
                             make_speedup(mpi, serial)])
@@ -150,22 +150,42 @@ def write_efficiency_file(file, bench, bench_data):
    try:
       serial = lookup_serial_result(bench)
    except KeyError:
-      print "Fail to get serial time for " + bench
+      print "Failed to get serial time for " + bench
       sys.exit(1)
    writer = csv.writer(open(file, 'wb'), delimiter=' ')
    write_header(writer)
    for cpu in CPUS:
       tl = bench_data['tl'][cpu]
-      td = bench_data['td'][cpu]
       tx = bench_data['tx'][cpu]
       sin = bench_data['sin'][cpu]
       mpi = bench_data['mpi'][cpu]
       writer.writerow([cpu, make_efficiency(tl, serial, cpu),
-                            make_efficiency(td, serial, cpu),
                             make_efficiency(tx, serial, cpu),
                             make_efficiency(sin, serial, cpu),
                             make_efficiency(mpi, serial, cpu)])
-                            
+
+def write_mix_speedup_file(file, bench, bench_data):
+   global CPUS
+   serial = 0
+   try:
+      serial = lookup_serial_result(bench)
+   except KeyError:
+      print "Failed to get serial time for " + bench
+      sys.exit(1)
+   writer = csv.writer(open(file + "_curves", 'wb'), delimiter=' ')
+   writer.writerow(['#cpu', 'mpi', 'sin'])
+   for cpu in CPUS:
+      mpi = bench_data['mpi'][cpu]
+      sin = bench_data['sin'][cpu]
+      writer.writerow([cpu, make_speedup(mpi, serial), make_speedup(sin, serial)])
+   writer = csv.writer(open(file + "_points", 'wb'), delimiter=' ')
+   writer.writerow(['#total', 'speedup', 'type'])
+   for cpu, time in bench_data['mix'].iteritems():
+      vec = cpu.split('/')
+      proc = int(vec[0])
+      threads = int(vec[1])
+      writer.writerow([proc * threads, make_speedup(time, serial), str(proc) + "x" + str(threads)])
+   
 def write_speedup_files():
    for bench, bench_data in data.iteritems():
       write_speedup_file(dir + "/speedup." + bench, bench, bench_data)
@@ -177,6 +197,14 @@ def write_time_files():
 def write_efficiency_files():
    for bench, bench_data in data.iteritems():
       write_efficiency_file(dir + "/efficiency." + bench, bench, bench_data)
+      
+def write_mix_speedup_files():
+   for bench, bench_data in data.iteritems():
+      try:
+         mix = bench_data['mix']
+         write_mix_speedup_file(dir + "/mix." + bench, bench, bench_data)
+      except KeyError:
+         continue
       
 if len(sys.argv) < 3:
    print "Usage: genenerate_speedup_data.py <output dir> <bench file>"
@@ -195,9 +223,11 @@ for line in f:
    sched_name = get_sched_name(sched)
    sched_threads = get_sched_threads(sched)
    result = build_results(vec)
+   print sched_name, sched_threads
    add_result(name, sched_name, sched_threads, result)
 
 mkdir_p(dir)
 write_speedup_files()
 write_time_files()
 write_efficiency_files()
+write_mix_speedup_files()
