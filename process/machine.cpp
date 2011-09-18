@@ -236,14 +236,13 @@ static inline database::create_node_fn
 get_creation_function(const scheduler_type sched_type)
 {
    switch(sched_type) {
-      case SCHED_THREADS_STATIC_GLOBAL:
-      case SCHED_MPI_AND_THREADS_STATIC_GLOBAL:
-         return database::create_node_fn(sched::static_global::create_node);
       case SCHED_THREADS_STATIC_LOCAL:
       case SCHED_THREADS_SINGLE_LOCAL:
          return database::create_node_fn(sched::static_local::create_node);
       case SCHED_THREADS_DYNAMIC_LOCAL:
          return database::create_node_fn(sched::dynamic_local::create_node);
+      case SCHED_THREADS_PROGRAMMABLE_LOCAL:
+         return database::create_node_fn(sched::programmable_local::create_node);
       case SCHED_THREADS_DIRECT_LOCAL:
          return database::create_node_fn(sched::direct_local::create_node);
       case SCHED_MPI_AND_THREADS_STATIC_LOCAL:
@@ -252,8 +251,6 @@ get_creation_function(const scheduler_type sched_type)
          return database::create_node_fn(sched::mpi_thread_dynamic::create_node);
       case SCHED_MPI_AND_THREADS_SINGLE_LOCAL:
          return database::create_node_fn(sched::mpi_thread_single::create_node);
-      case SCHED_SERIAL_GLOBAL:
-         return database::create_node_fn(sched::serial_global::create_node);
       case SCHED_SERIAL_LOCAL:
          return database::create_node_fn(sched::serial_local::create_node);
       case SCHED_UNKNOWN:
@@ -286,14 +283,8 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
    vector<sched::base*> schedulers;
    
    switch(sched_type) {
-      case SCHED_MPI_AND_THREADS_STATIC_GLOBAL:
-         schedulers = sched::mpi_static::start(num_threads);
-         break;
       case SCHED_THREADS_STATIC_LOCAL:
          schedulers = sched::static_local::start(num_threads);
-         break;
-      case SCHED_THREADS_STATIC_GLOBAL:
-         schedulers = sched::static_global::start(num_threads);
          break;
       case SCHED_THREADS_SINGLE_LOCAL:
          schedulers = sched::threads_single::start(num_threads);
@@ -313,11 +304,11 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
       case SCHED_MPI_AND_THREADS_SINGLE_LOCAL:
          schedulers = sched::mpi_thread_single::start(num_threads);
          break;
-      case SCHED_SERIAL_GLOBAL:
-         schedulers.push_back(dynamic_cast<sched::base*>(new sched::serial_global()));
-         break;
       case SCHED_SERIAL_LOCAL:
          schedulers.push_back(dynamic_cast<sched::base*>(new sched::serial_local()));
+         break;
+      case SCHED_THREADS_PROGRAMMABLE_LOCAL:
+         schedulers = sched::programmable_local::start(num_threads);
          break;
       case SCHED_UNKNOWN: assert(false); break;
    }

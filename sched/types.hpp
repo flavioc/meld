@@ -7,8 +7,6 @@ namespace sched
    
 enum scheduler_type {
    SCHED_UNKNOWN,
-   SCHED_THREADS_STATIC_GLOBAL,
-   SCHED_MPI_AND_THREADS_STATIC_GLOBAL,
    SCHED_THREADS_STATIC_LOCAL,
    SCHED_THREADS_SINGLE_LOCAL,
    SCHED_THREADS_DYNAMIC_LOCAL,
@@ -16,20 +14,18 @@ enum scheduler_type {
    SCHED_MPI_AND_THREADS_STATIC_LOCAL,
    SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL,
    SCHED_MPI_AND_THREADS_SINGLE_LOCAL,
-   SCHED_SERIAL_GLOBAL,
+   SCHED_THREADS_PROGRAMMABLE_LOCAL,
    SCHED_SERIAL_LOCAL
 };
 
 inline bool is_serial_sched(const scheduler_type type)
 {
-   return type == SCHED_SERIAL_GLOBAL ||
-      type == SCHED_SERIAL_LOCAL;
+   return type == SCHED_SERIAL_LOCAL;
 }
 
 inline bool is_mpi_sched(const scheduler_type type)
 {
    return type == SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL ||
-      type == SCHED_MPI_AND_THREADS_STATIC_GLOBAL ||
       type == SCHED_MPI_AND_THREADS_STATIC_LOCAL ||
       type == SCHED_MPI_AND_THREADS_SINGLE_LOCAL;
 }

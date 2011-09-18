@@ -4,9 +4,6 @@ VM = ../meld -d -f
 all:
 	@echo "Type 'make test' to test. Or type 'make compiled' to recompile tests."
 
-test-ts:
-	@bash test_all.sh ts
-
 test-tl:
 	@bash test_all.sh tl
 
@@ -24,9 +21,6 @@ test-mpidynamic:
 
 test-mpistatic:
 	@bash test_all.sh mpistatic
-
-test-mpiglobal:
-	@bash test_all.sh mpiglobal
 
 test-mpisingle:
 	@bash test_all.sh mpisingle

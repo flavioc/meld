@@ -80,13 +80,11 @@ OBJS = utils/utils.o \
 			 sched/mpi/message.o \
 			 sched/mpi/message_buffer.o \
 			 sched/mpi/request.o \
-			 sched/global/serial.o \
-			 sched/global/threads_static.o \
-			 sched/global/mpi.o \
 			 sched/local/serial.o \
 			 sched/local/threads_static.o \
 			 sched/local/threads_dynamic.o \
 			 sched/local/threads_direct.o \
+			 sched/local/threads_programmable.o \
 			 sched/local/threads_single.o \
 			 sched/local/mpi_threads_static.o \
 			 sched/local/mpi_threads_dynamic.o \
@@ -153,9 +151,6 @@ process/machine.o: process/machine.hpp process/machine.cpp \
 									vm/state.hpp process/remote.hpp process/process.hpp \
 									vm/instr.hpp conf.hpp \
 									sched/mpi/message.hpp \
-									sched/global/threads_static.hpp \
-									sched/global/mpi.hpp \
-									sched/global/threads_static.hpp \
 									sched/local/threads_static.hpp \
 									sched/local/threads_single.hpp \
 									sched/local/threads_dynamic.hpp \
@@ -218,26 +213,6 @@ sched/mpi/message_buffer.o: sched/mpi/message_buffer.hpp \
 
 sched/mpi/request.o: sched/mpi/request.hpp sched/mpi/request.cpp
 
-sched/global/serial.o: sched/global/serial.cpp sched/global/serial.hpp \
-											sched/queue/unsafe_queue.hpp sched/queue/bounded_pqueue.hpp
-
-sched/global/threads_static.o: sched/global/threads_static.cpp \
-								sched/global/threads_static.hpp \
-								sched/base.hpp \
-								sched/queue/node.hpp \
-								sched/queue/unsafe_queue_count.hpp \
-								sched/queue/safe_queue.hpp \
-								sched/thread/termination_barrier.hpp \
-								utils/atomic.hpp \
-								sched/thread/queue_buffer.hpp \
-								sched/thread/assert.hpp
-
-sched/global/mpi.o: sched/global/mpi.hpp sched/global/mpi.cpp \
-						sched/base.hpp \
-						sched/mpi/token.hpp sched/mpi/tokenizer.hpp \
-						conf.hpp sched/mpi/message_buffer.hpp \
-						sched/mpi/handler.hpp
-
 sched/local/serial.o: sched/local/serial.cpp sched/local/serial.hpp \
 									sched/queue/unsafe_queue.hpp sched/nodes/serial.hpp
 
@@ -274,6 +249,16 @@ sched/local/threads_dynamic.o: sched/base.hpp sched/local/threads_static.hpp \
 
 sched/local/threads_direct.o: sched/base.hpp sched/local/threads_direct.hpp                  \
 											sched/local/threads_direct.cpp                              \
+											sched/nodes/thread.hpp sched/thread/termination_barrier.hpp \
+											sched/queue/node.hpp sched/thread/steal_set.hpp             \
+											sched/queue/safe_queue_multi.hpp                            \
+											sched/thread/threaded.hpp                                   \
+											conf.hpp utils/atomic.hpp                                   \
+											sched/queue/bounded_pqueue.hpp                              \
+											sched/thread/assert.hpp
+
+sched/local/threads_programmable.o: sched/base.hpp sched/local/threads_programmable.hpp      \
+											sched/local/threads_programmable.cpp                        \
 											sched/nodes/thread.hpp sched/thread/termination_barrier.hpp \
 											sched/queue/node.hpp sched/thread/steal_set.hpp             \
 											sched/queue/safe_queue_multi.hpp                            \

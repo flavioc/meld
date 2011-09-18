@@ -176,7 +176,6 @@ if [ "${TYPE}" = "all" ]; then
 fi
 
 if [ "${TYPE}" = "serial" ]; then
-	run_serial_n sg 1
 	run_serial_n sl 1
 	exit 0
 fi

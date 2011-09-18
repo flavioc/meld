@@ -26,14 +26,12 @@ help(void)
    fprintf(stderr, "meld: execute meld program\n");
    fprintf(stderr, "\t-f <name>\tmeld program\n");
    fprintf(stderr, "\t-c <scheduler>\tselect scheduling type\n");
-   fprintf(stderr, "\t\t\tsg simple serial scheduler with a global queue\n");
-   fprintf(stderr, "\t\t\tsl simple serial scheduler with local queues\n");
-   fprintf(stderr, "\t\t\ttsX static division with a queue per thread\n");
-   fprintf(stderr, "\t\t\ttlX static division with a queue per node\n");
+   fprintf(stderr, "\t\t\tsl simple serial scheduler\n");
+   fprintf(stderr, "\t\t\ttlX static division with threads\n");
    fprintf(stderr, "\t\t\ttdX initial static division but allow work stealing\n");
    fprintf(stderr, "\t\t\ttxX initial static division but allow direct work stealing\n");
    fprintf(stderr, "\t\t\tsinX no division of work using local queues\n");
-   fprintf(stderr, "\t\t\tmpiglobalX static division of work using mpi plus threads\n");
+   fprintf(stderr, "\t\t\tprX programmable scheduler\n");
    fprintf(stderr, "\t\t\tmpistaticX static division of work using mpi plus threads\n");
    fprintf(stderr, "\t\t\tmpidynamicX static division of work using mpi plus threads and work stealing\n");
    fprintf(stderr, "\t\t\tmpisingleX no division of work with static processes\n");
@@ -99,16 +97,14 @@ parse_sched(char *sched)
       fail_sched(sched);
    
    // attempt to parse the scheduler string
-   match_mpi("mpiglobal", sched, SCHED_MPI_AND_THREADS_STATIC_GLOBAL) ||
-      match_mpi("mpistatic", sched, SCHED_MPI_AND_THREADS_STATIC_LOCAL) ||
+   match_mpi("mpistatic", sched, SCHED_MPI_AND_THREADS_STATIC_LOCAL) ||
       match_mpi("mpidynamic", sched, SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL) ||
       match_mpi("mpisingle", sched, SCHED_MPI_AND_THREADS_SINGLE_LOCAL) ||
-      match_threads("ts", sched, SCHED_THREADS_STATIC_GLOBAL) ||
       match_threads("tl", sched, SCHED_THREADS_STATIC_LOCAL) ||
       match_threads("td", sched, SCHED_THREADS_DYNAMIC_LOCAL) ||
       match_threads("tx", sched, SCHED_THREADS_DIRECT_LOCAL) ||
       match_threads("sin", sched, SCHED_THREADS_SINGLE_LOCAL) ||
-      match_serial("sg", sched, SCHED_SERIAL_GLOBAL) ||
+      match_threads("pr", sched, SCHED_THREADS_PROGRAMMABLE_LOCAL) ||
       match_serial("sl", sched, SCHED_SERIAL_LOCAL) ||
       fail_sched(sched);
 }
