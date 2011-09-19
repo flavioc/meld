@@ -56,6 +56,11 @@ public:
    
    virtual bool get_work(process::work&);
    
+   static db::node *create_node(const db::node::node_id id, const db::node::node_id trans)
+   {
+      return new db::node(id, trans);
+   }
+   
    static std::vector<sched::base*>& start(const size_t);
    
    virtual void write_slice(stat::slice&) const;

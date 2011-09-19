@@ -139,7 +139,8 @@ machine::slice_function(void)
    while (true) {
       
       const int ret(sigwait(&set, &sig));
-			assert(ret == 0);
+		
+		assert(ret == 0);
       
       switch(sig) {
          case SIGALRM:
@@ -237,8 +238,9 @@ static inline database::create_node_fn
 get_creation_function(const scheduler_type sched_type)
 {
    switch(sched_type) {
-      case SCHED_THREADS_STATIC_LOCAL:
       case SCHED_THREADS_STATIC_BUFF:
+         return database::create_node_fn(sched::static_buff::create_node);
+      case SCHED_THREADS_STATIC_LOCAL:
       case SCHED_THREADS_SINGLE_LOCAL:
          return database::create_node_fn(sched::static_local::create_node);
       case SCHED_THREADS_DYNAMIC_LOCAL:
