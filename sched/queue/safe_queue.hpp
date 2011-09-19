@@ -63,6 +63,25 @@ private:
       }
    }
    
+   inline void snap_headtail(special_node* qhead, special_node* qtail)
+   {
+      while (true) {
+         special_node *last(tail.get());
+         special_node *next(last->next.get());
+         
+         if(last == tail.get()) {
+            if(next == NULL) {
+               if(last->next.compare_test_set(next, qhead)) {
+                  tail.compare_and_set(last, qtail);
+                  return;
+               }
+            } else {
+               tail.compare_and_set(last, next);
+            }
+         }
+      }
+   }
+   
 public:
    
 #ifdef INSTRUMENTATION
@@ -116,24 +135,7 @@ public:
       assert(tail != NULL);
       assert(head != NULL);
       
-      special_node *new_tail = (special_node*)q.tail;
-      special_node *new_next = (special_node*)q.head;
-      
-      while (true) {
-         special_node *last(tail.get());
-         special_node *next(last->next.get());
-         
-         if(last == tail.get()) {
-            if(next == NULL) {
-               if(last->next.compare_test_set(next, new_next)) {
-                  tail.compare_and_set(last, new_tail);
-                  return;
-               }
-            } else {
-               tail.compare_and_set(last, next);
-            }
-         }
-      }
+      snap_headtail((special_node*)q.head, (special_node*)q.tail);
    }
    
    explicit safe_queue(void):
