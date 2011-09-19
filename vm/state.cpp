@@ -35,4 +35,12 @@ state::purge_lists(void)
    PURGE_LIST(node);
 }
 
+void
+state::setup(vm::tuple *tpl, db::node *n, const ref_count count)
+{
+   this->tuple = tpl;
+   this->node = n;
+   this->count = count;
+}
+
 }

@@ -94,6 +94,8 @@ public:
    inline void add_node_list(runtime::node_list *ls) { free_node_list.push_back(ls); }
    void purge_lists(void);
    
+   void setup(vm::tuple*, db::node*, const ref_count);
+   
    explicit state(process::process *_proc):
       proc(_proc)
    {

@@ -14,6 +14,7 @@ typedef float float_val;
 typedef unsigned long int ptr_val;
 typedef unsigned long int all_val;
 typedef uint32_t node_val;
+typedef uint32_t worker_val;
 typedef bool bool_val;
 typedef unsigned char predicate_id;
 typedef unsigned short process_id;

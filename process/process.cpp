@@ -24,9 +24,7 @@ process::do_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
 
    if(is_new) {
       // set vm state
-      state.tuple = tuple;
-      state.node = node;
-      state.count = count;
+      state.setup(tuple, node, count);
       execute_bytecode(state.PROGRAM->get_bytecode(tuple->get_predicate_id()), state);
    } else
       delete tuple;
@@ -127,9 +125,7 @@ process::do_work(work& w)
          node::delete_info deleter(node->delete_tuple(tuple, count));
          
          if(deleter.to_delete()) { // to be removed
-            state.tuple = tuple;
-            state.node = node;
-            state.count = -count;
+            state.setup(tuple, node, -count);
             execute_bytecode(state.PROGRAM->get_bytecode(tuple->get_predicate_id()), state);
             deleter();
          } else
