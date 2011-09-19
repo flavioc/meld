@@ -213,7 +213,7 @@ static_buff::flush_buffer(void)
 }
 
 bool
-static_buff::get_work(process::work& w)
+static_buff::get_work(work& w)
 {
    round_trip_send++;
    
