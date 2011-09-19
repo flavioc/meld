@@ -44,7 +44,7 @@ static_buff::assert_end_iteration(void) const
 void
 static_buff::new_agg(work& new_work)
 {
-   thread_node *to(dynamic_cast<thread_node*>(new_work.get_node()));
+   unsafe_static_node *to(dynamic_cast<unsafe_static_node*>(new_work.get_node()));
    
    assert_thread_push_work();
    
@@ -60,10 +60,9 @@ static_buff::new_agg(work& new_work)
 void
 static_buff::new_work(const node *, work& new_work)
 {
-   thread_node *to(dynamic_cast<thread_node*>(new_work.get_node()));
+   unsafe_static_node *to(dynamic_cast<unsafe_static_node*>(new_work.get_node()));
    
    assert_thread_push_work();
-   //assert(is_active());
    
    node_work node_new_work(new_work);
    
@@ -78,22 +77,16 @@ static_buff::new_work(const node *, work& new_work)
 }
 
 void
-static_buff::new_work_other(sched::base *, work& new_work)
+static_buff::new_work_other(sched::base *target, work& new_work)
 {
    assert(is_active());
-   
-   thread_node *tnode(dynamic_cast<thread_node*>(new_work.get_node()));
-   
-   assert(tnode->get_owner() != NULL);
-   
    assert_thread_push_work();
    
-   // NEW
-   
-   map_buffer::iterator it(tuples_buf.find(tnode->get_owner()));
+   map_buffer::iterator it(tuples_buf.find(target));
    
    if(it == tuples_buf.end()) {
-      pair<map_buffer::iterator, bool> res(tuples_buf.insert(pair<sched::base*, queue_buffer>(tnode->get_owner(), queue_buffer())));
+      pair<map_buffer::iterator, bool> res(
+         tuples_buf.insert(pair<sched::base*, queue_buffer>(target, queue_buffer())));
       
       it = res.first;
    }
@@ -101,35 +94,6 @@ static_buff::new_work_other(sched::base *, work& new_work)
    queue_buffer& q(it->second);
    
    q.push(new_work);
-   
-   // END NEW
-#if 0
-   node_work node_new_work(new_work);
-   tnode->add_work(node_new_work);
-   
-	spinlock::scoped_lock l(tnode->spin);
-   if(!tnode->in_queue() && tnode->has_work()) {
-		static_buff *owner(dynamic_cast<static_buff*>(tnode->get_owner()));
-		
-		tnode->set_in_queue(true);
-		owner->add_to_queue(tnode);
-
-      if(this != owner) {
-         spinlock::scoped_lock l2(owner->lock);
-         
-         if(owner->is_inactive() && owner->has_work())
-         {
-            owner->set_active();
-            assert(owner->is_active());
-         }
-      } else {
-         assert(is_active());
-      }
-         
-      assert(tnode->in_queue());
-   }
-#endif
-   
 #ifdef INSTRUMENTATION
    sent_facts++;
 #endif
@@ -143,7 +107,7 @@ static_buff::process_incoming(void)
       
    do {
       work w(incoming.pop());
-      thread_node *node((thread_node*)w.get_node());
+      unsafe_static_node *node(dynamic_cast<unsafe_static_node*>(w.get_node()));
       
       node_work node_new_work(w);
       node->add_work(node_new_work);
@@ -212,8 +176,46 @@ static_buff::flush_buffer(void)
    }
 }
 
+void
+static_buff::generate_aggs(void)
+{
+   iterate_static_nodes(id);
+}
+
 bool
-static_buff::get_work(work& w)
+static_buff::set_next_node(void)
+{
+   if(current_node != NULL) {
+      if(current_node->has_work())
+         return true;
+      current_node->set_in_queue(false);
+      current_node = NULL;
+   }
+   
+   while (current_node == NULL) {   
+      if(!has_work()) {
+         if(!busy_wait())
+            return false;
+      }
+      
+      assert(has_work());
+      
+      current_node = queue_nodes.pop();
+      
+      assert(current_node->in_queue());
+      assert(current_node != NULL);
+      assert(current_node->has_work());
+   }
+   
+   ins_active;
+   
+   assert(current_node != NULL);
+   
+   return true;
+}
+
+bool
+static_buff::get_work(work& new_work)
 {
    round_trip_send++;
    
@@ -229,7 +231,61 @@ static_buff::get_work(work& w)
       process_incoming();
    }
    
-   return static_local::get_work(w);
+   if(!set_next_node())
+      return false;
+   
+   set_active_if_inactive();
+   assert(current_node != NULL);
+   assert(current_node->in_queue());
+   assert(current_node->has_work());
+   
+   node_work unit(current_node->get_work());
+   
+   new_work.copy_from_node(current_node, unit);
+   
+   assert(new_work.get_node() == current_node);
+   
+   assert_thread_pop_work();
+   
+   return true;
+}
+
+void
+static_buff::init(const size_t)
+{
+   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
+   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(remote::self->find_last_node(id)));
+   
+   for(; it != end; ++it)
+   {
+      unsafe_static_node *cur_node(dynamic_cast<unsafe_static_node*>(it->second));
+      
+      init_node(cur_node);
+      
+      assert(cur_node->in_queue());
+      assert(cur_node->has_work());
+   }
+   
+   threads_synchronize();
+}
+
+bool
+static_buff::terminate_iteration(void)
+{
+   START_ROUND();
+   
+   if(has_work())
+      set_active();
+   
+   END_ROUND(
+      more_work = num_active() > 0;
+   );
+}
+
+static_buff*
+static_buff::find_scheduler(const node *n)
+{
+   return (static_buff*)ALL_THREADS[remote::self->find_proc_owner(n->get_id())];
 }
 
 void
@@ -244,7 +300,8 @@ static_buff::write_slice(stat::slice& sl) const
 }
 
 static_buff::static_buff(const vm::process_id _id):
-   static_local(_id),
+   base(_id),
+   current_node(NULL),
    step_receive(DEFAULT_ROUND_TRIP_RECEIVE),
    round_trip_receive(0),
    step_send(MPI_DEFAULT_ROUND_TRIP_SEND),
