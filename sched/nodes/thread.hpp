@@ -15,9 +15,11 @@ namespace sched
 
 // forward declarations
 class static_local; 
+class static_buff;
 class dynamic_local;
 class direct_local;
 class threads_single;
+class programmable_local;
 class mpi_thread_dynamic;
 class mpi_thread_static;
 class mpi_thread_single;
@@ -27,9 +29,11 @@ class thread_node: public in_queue_node
 private:
    
    friend class static_local;
+   friend class static_buff;
    friend class dynamic_local;
    friend class direct_local;
    friend class threads_single;
+   friend class programmable_local;
    friend class mpi_thread_static;
    friend class mpi_thread_dynamic;
    friend class mpi_thread_single;

@@ -7,6 +7,9 @@ all:
 test-tl:
 	@bash test_all.sh tl
 
+test-tb:
+	@bash test_all.sh tb
+
 test-td:
 	@bash test_all.sh td
 

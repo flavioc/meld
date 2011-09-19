@@ -190,6 +190,11 @@ if [ "${TYPE}" = "tl" ]; then
 	exit 0
 fi
 
+if [ "${TYPE}" = "tb" ]; then
+   loop_sched tb
+   exit 0
+fi
+
 if [ "${TYPE}" = "td" ]; then
 	loop_sched td
 	exit 0

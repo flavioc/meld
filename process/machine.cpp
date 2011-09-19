@@ -10,6 +10,7 @@
 #include "mem/thread.hpp"
 #include "mem/stat.hpp"
 #include "stat/stat.hpp"
+#include "sched/local/threads_buff.hpp"
 
 using namespace process;
 using namespace db;
@@ -237,6 +238,7 @@ get_creation_function(const scheduler_type sched_type)
 {
    switch(sched_type) {
       case SCHED_THREADS_STATIC_LOCAL:
+      case SCHED_THREADS_STATIC_BUFF:
       case SCHED_THREADS_SINGLE_LOCAL:
          return database::create_node_fn(sched::static_local::create_node);
       case SCHED_THREADS_DYNAMIC_LOCAL:
@@ -285,6 +287,9 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
    switch(sched_type) {
       case SCHED_THREADS_STATIC_LOCAL:
          schedulers = sched::static_local::start(num_threads);
+         break;
+      case SCHED_THREADS_STATIC_BUFF:
+         schedulers = sched::static_buff::start(num_threads);
          break;
       case SCHED_THREADS_SINGLE_LOCAL:
          schedulers = sched::threads_single::start(num_threads);

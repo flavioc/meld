@@ -82,6 +82,7 @@ OBJS = utils/utils.o \
 			 sched/mpi/request.o \
 			 sched/local/serial.o \
 			 sched/local/threads_static.o \
+			 sched/local/threads_buff.o \
 			 sched/local/threads_dynamic.o \
 			 sched/local/threads_direct.o \
 			 sched/local/threads_programmable.o \
@@ -218,6 +219,16 @@ sched/local/serial.o: sched/local/serial.cpp sched/local/serial.hpp \
 
 sched/local/threads_static.o: sched/base.hpp sched/local/threads_static.hpp \
 								sched/local/threads_static.cpp sched/queue/node.hpp \
+								sched/thread/termination_barrier.hpp \
+								utils/atomic.hpp \
+								sched/nodes/thread.hpp sched/queue/unsafe_queue_count.hpp \
+								sched/queue/safe_queue.hpp \
+								sched/thread/threaded.hpp \
+								sched/queue/bounded_pqueue.hpp \
+								sched/thread/assert.hpp
+
+sched/local/threads_buff.o: sched/base.hpp sched/local/threads_buff.hpp \
+								sched/local/threads_buff.cpp sched/queue/node.hpp \
 								sched/thread/termination_barrier.hpp \
 								utils/atomic.hpp \
 								sched/nodes/thread.hpp sched/queue/unsafe_queue_count.hpp \
