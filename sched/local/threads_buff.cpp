@@ -14,8 +14,6 @@ using namespace vm;
 using namespace db;
 using namespace utils;
 
-#define DEFAULT_ROUND_TRIP_RECEIVE MPI_DEFAULT_ROUND_TRIP_SEND
-
 namespace sched
 {
 
@@ -94,6 +92,7 @@ static_buff::new_work_other(sched::base *target, work& new_work)
    queue_buffer& q(it->second);
    
    q.push(new_work);
+   
 #ifdef INSTRUMENTATION
    sent_facts++;
 #endif
@@ -102,10 +101,9 @@ static_buff::new_work_other(sched::base *target, work& new_work)
 void
 static_buff::process_incoming(void)
 {
-   if(incoming.empty())
-      return;
-      
-   do {
+   const bool got_something(!incoming.empty());
+   
+   while (!incoming.empty()) {
       work w(incoming.pop());
       unsafe_static_node *node(dynamic_cast<unsafe_static_node*>(w.get_node()));
       
@@ -116,7 +114,19 @@ static_buff::process_incoming(void)
          node->set_in_queue(true);
 		   add_to_queue(node);
 		}
-   } while (!incoming.empty());
+	}
+   
+   if(got_something) {
+      if(step_fetch > MPI_MIN_ROUND_TRIP_FETCH)
+		   step_fetch -= MPI_DECREASE_ROUND_TRIP_FETCH;
+		
+		step_fetch = max(step_fetch, MPI_MIN_ROUND_TRIP_FETCH);
+	} else {
+	   if(step_fetch < MPI_MAX_ROUND_TRIP_FETCH)
+		   step_fetch += MPI_INCREASE_ROUND_TRIP_FETCH;
+   }
+
+   step_fetch = max(step_fetch, MPI_MIN_ROUND_TRIP_FETCH);
 }
 
 bool
@@ -226,7 +236,7 @@ static_buff::get_work(work& new_work)
    
    round_trip_receive++;
    
-   if(round_trip_receive == step_receive) {
+   if(round_trip_receive == step_fetch) {
       round_trip_receive = 0;
       process_incoming();
    }
@@ -302,7 +312,7 @@ static_buff::write_slice(stat::slice& sl) const
 static_buff::static_buff(const vm::process_id _id):
    base(_id),
    current_node(NULL),
-   step_receive(DEFAULT_ROUND_TRIP_RECEIVE),
+   step_fetch(MPI_DEFAULT_ROUND_TRIP_FETCH),
    round_trip_receive(0),
    step_send(MPI_DEFAULT_ROUND_TRIP_SEND),
    round_trip_send(0)

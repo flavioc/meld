@@ -56,10 +56,11 @@ mpi_handler::fetch_work(const process_id id)
    
       if(step_fetch > MPI_MIN_ROUND_TRIP_FETCH)
 		   step_fetch -= MPI_DECREASE_ROUND_TRIP_FETCH;
-	   else if(step_fetch < MPI_MAX_ROUND_TRIP_FETCH)
+		
+		step_fetch = max(step_fetch, MPI_MIN_ROUND_TRIP_FETCH);
+	} else {
+	   if(step_fetch < MPI_MAX_ROUND_TRIP_FETCH)
 		   step_fetch += MPI_INCREASE_ROUND_TRIP_FETCH;
-
-      step_fetch = max(step_fetch,MPI_MIN_ROUND_TRIP_FETCH);
    }
    
    assert(ms == NULL);
