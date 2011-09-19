@@ -442,12 +442,7 @@ direct_local::write_slice(stat::slice& sl) const
 direct_local*
 direct_local::find_scheduler(const node *n)
 {
-   const thread_node *tn(dynamic_cast<const thread_node*>(n));
-   
-   if(tn->get_owner() == this)
-      return this;
-   else
-      return NULL;
+   return NULL;
 }
 
 direct_local::direct_local(const process_id id):
