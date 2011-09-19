@@ -17,7 +17,7 @@ public:
    node *head;
    node *tail;
 #ifdef INSTRUMENTATION
-   size_t size;
+   size_t total;
 #endif
    
    inline bool empty(void) const
@@ -25,11 +25,18 @@ public:
       return head == NULL;
    }
    
+#ifdef INSTRUMENTATION
+   inline size_t size(void) const
+   {
+      return total;
+   }
+#endif
+   
    inline void clear(void)
    {
       head = tail = NULL;
 #ifdef INSTRUMENTATION
-      size = 0;
+      total = 0;
 #endif
    }
    
@@ -48,7 +55,7 @@ public:
       }
       
 #ifdef INSTRUMENTATION
-      size++;
+      total++;
 #endif
       
       assert(tail == new_node);
@@ -73,7 +80,7 @@ public:
       delete take;
       
 #ifdef INSTRUMENTATION
-      size--;
+      total--;
 #endif
       
       return el;
@@ -82,7 +89,7 @@ public:
    explicit unsafe_queue(void):
       head(NULL), tail(NULL)
 #ifdef INSTRUMENTATION
-      , size(0)
+      , total(0)
 #endif
    {}
    
@@ -91,7 +98,7 @@ public:
       assert(head == NULL);
       assert(tail == NULL);
 #ifdef INSTRUMENTATION
-      size = 0;
+      assert(total == 0);
 #endif
    }
 };

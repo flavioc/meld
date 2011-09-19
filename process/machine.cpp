@@ -204,6 +204,7 @@ machine::start(void)
             ofstream fp(filename.c_str());
             state::DATABASE->dump_db(fp);
          }
+         
          rout.barrier();
          
          // read and output files
