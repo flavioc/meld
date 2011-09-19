@@ -28,7 +28,7 @@ protected:
    
    DEFINE_PADDING;
    
-   size_t step_receive;
+   size_t step_fetch;
    size_t round_trip_receive;
    size_t step_send;
    size_t round_trip_send;
