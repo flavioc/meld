@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "vm/defs.hpp"
+#include "utils/macros.hpp"
 #include "utils/types.hpp"
 #include "utils/spinlock.hpp"
 #include "utils/atomic.hpp"
