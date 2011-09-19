@@ -6,6 +6,7 @@
 
 #include "conf.hpp"
 #include "sched/queue/node.hpp"
+#include "sched/queue/unsafe_queue.hpp"
 #include "sched/queue/unsafe_queue_count.hpp"
 
 namespace sched
@@ -132,6 +133,20 @@ public:
       total += q.size();
 #endif
       
+      assert(tail != NULL);
+      assert(head != NULL);
+      
+      snap_headtail((special_node*)q.head, (special_node*)q.tail);
+   }
+   
+   inline void snap(unsafe_queue<T>& q)
+   {
+      assert(!q.empty());
+
+#ifdef INSTRUMENTATION
+      total += q.size();
+#endif
+
       assert(tail != NULL);
       assert(head != NULL);
       

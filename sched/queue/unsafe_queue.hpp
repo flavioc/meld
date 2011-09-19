@@ -16,10 +16,21 @@ public:
    typedef unsafe_queue_node<T> node;
    node *head;
    node *tail;
+#ifdef INSTRUMENTATION
+   size_t size;
+#endif
    
    inline bool empty(void) const
    {
       return head == NULL;
+   }
+   
+   inline void clear(void)
+   {
+      head = tail = NULL;
+#ifdef INSTRUMENTATION
+      size = 0;
+#endif
    }
    
    inline void push(T el)
@@ -35,6 +46,10 @@ public:
          tail->next = new_node;
          tail = new_node;
       }
+      
+#ifdef INSTRUMENTATION
+      size++;
+#endif
       
       assert(tail == new_node);
    }
@@ -57,15 +72,27 @@ public:
       
       delete take;
       
+#ifdef INSTRUMENTATION
+      size--;
+#endif
+      
       return el;
    }
    
-   explicit unsafe_queue(void): head(NULL), tail(NULL) {}
+   explicit unsafe_queue(void):
+      head(NULL), tail(NULL)
+#ifdef INSTRUMENTATION
+      , size(0)
+#endif
+   {}
    
    ~unsafe_queue(void)
    {
       assert(head == NULL);
       assert(tail == NULL);
+#ifdef INSTRUMENTATION
+      size = 0;
+#endif
    }
 };
 
