@@ -15,8 +15,6 @@ private:
    
    friend class chunkgroup;
    
-   static const size_t NUM_ELEMS = 64;
-   
    chunk *next_chunk;
    
    unsigned char *cur;
@@ -42,10 +40,10 @@ public:
       return old_cur;
    }
    
-   explicit chunk(const size_t size):
+   explicit chunk(const size_t size, const size_t num_elems):
       next_chunk(NULL)
    {
-      const size_t total(size * NUM_ELEMS);
+      const size_t total(size * num_elems);
       
       bottom = new unsigned char[total];
       cur = bottom;

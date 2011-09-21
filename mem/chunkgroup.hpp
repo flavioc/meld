@@ -2,6 +2,8 @@
 #ifndef MEM_CHUNKGROUP_HPP
 #define MEM_CHUNKGROUP_HPP
 
+#include <limits>
+
 #include "mem/chunk.hpp"
 
 namespace mem
@@ -18,7 +20,10 @@ private:
    const size_t size;
    chunk *first_chunk;
    chunk *new_chunk; // chunk with readily usable objects
-   mem_node *free_chunk; // list of freed objects
+   mem_node *free_objs; // list of freed objects
+   
+   static const size_t INITIAL_NUM_ELEMS = 64;
+   size_t num_elems_per_chunk;
 
 public:
    
@@ -26,16 +31,16 @@ public:
    {
       void *ret;
       
-      if(free_chunk != NULL) {
+      if(free_objs != NULL) {
          // use a free chunk node
-         ret = free_chunk;
-         free_chunk = free_chunk->next;
+         ret = free_objs;
+         free_objs = free_objs->next;
          return ret;
       }
       
       if(new_chunk == NULL) {
          // this is the first chunk
-         new_chunk = first_chunk = new chunk(size);
+         new_chunk = first_chunk = new chunk(size, num_elems_per_chunk);
          return new_chunk->allocate(size);
       }
 
@@ -43,7 +48,9 @@ public:
 
       if(ret == NULL) { // chunk full!
          chunk *old_chunk(new_chunk);
-         new_chunk = new chunk(size);
+         if(num_elems_per_chunk < std::numeric_limits<std::size_t>::max()/2)
+            num_elems_per_chunk *= 2; // increase number of elements
+         new_chunk = new chunk(size, num_elems_per_chunk);
          old_chunk->set_next(new_chunk);
          return new_chunk->allocate(size);
       } else {
@@ -56,13 +63,14 @@ public:
    {
       mem_node *new_node((mem_node*)ptr);
       
-      new_node->next = free_chunk;
-      free_chunk = new_node;
+      new_node->next = free_objs;
+      free_objs = new_node;
    }
    
    explicit chunkgroup(const size_t _size):
       size(_size), first_chunk(NULL),
-      new_chunk(NULL), free_chunk(NULL)
+      new_chunk(NULL), free_objs(NULL),
+      num_elems_per_chunk(INITIAL_NUM_ELEMS)
    {
    }
    
