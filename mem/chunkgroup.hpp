@@ -56,7 +56,6 @@ public:
    {
       mem_node *new_node((mem_node*)ptr);
       
-      //printf("Adding new node (deallocate)\n");
       new_node->next = free_chunk;
       free_chunk = new_node;
    }

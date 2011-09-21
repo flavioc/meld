@@ -2,6 +2,8 @@
 #ifndef MEM_CHUNK_HPP
 #define MEM_CHUNK_HPP
 
+#include "mem/stat.hpp"
+
 namespace mem
 {
    
@@ -44,11 +46,12 @@ public:
       next_chunk(NULL)
    {
       const size_t total(size * NUM_ELEMS);
-      //printf("Asked for %d bytes of mem\n", total); 
       
       bottom = new unsigned char[total];
       cur = bottom;
       top = bottom + total;
+      
+      register_malloc();
    }
    
    ~chunk(void)
