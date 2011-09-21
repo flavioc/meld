@@ -134,7 +134,6 @@ mpi_handler::attempt_token(termination_barrier *barrier, const bool main)
    
    while(inside_counter != 0) {
       if(!barrier->zero_active_threads() || iteration_finished) {
-         //printf("HERE fail\n");
          inside_counter++;
          return iteration_finished;
       }
@@ -145,11 +144,7 @@ mpi_handler::attempt_token(termination_barrier *barrier, const bool main)
    
    inside_barrier->wait();
    
-   //printf("HERE\n");
-   
-   // all threads are now here!
    if(main) {
-      // HERE
       boost::mutex::scoped_lock lock(tok_mutex);
       
       if(!token.busy_loop_token(true)) {
@@ -162,7 +157,6 @@ mpi_handler::attempt_token(termination_barrier *barrier, const bool main)
       inside_counter = state::NUM_THREADS;
    }
    
-   //printf("Gonna wait\n");
    inside_barrier->wait();
    
    return iteration_finished;
