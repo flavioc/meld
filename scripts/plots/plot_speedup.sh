@@ -18,9 +18,9 @@ if [ -f "${FILE}.pdf" ];then
    rm -f "${FILE}.pdf"
 fi
 
-echo "Generating ${FILE}.pdf..."
 BASE_OUTPUT="$(echo $FILE | sed -e 's/\./_/g')"
-TITLE="${TITLE}" FILE="${FILE}" OUTPUT="$OUTPUT.pdf" gnuplot plot_speedup.plt
-sleep 0.1
+echo "Generating ${BASE_OUTPUT}.pdf..."
+TITLE="${TITLE}" FILE="${FILE}" OUTPUT="$BASE_OUTPUT.pdf" gnuplot plot_speedup.plt
+sleep 0.2
 pdfcrop "${BASE_OUTPUT}.pdf"
 mv "${BASE_OUTPUT}-crop.pdf" "${BASE_OUTPUT}.pdf"
