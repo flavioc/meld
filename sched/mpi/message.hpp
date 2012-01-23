@@ -18,10 +18,12 @@ namespace sched
    
 #ifdef COMPILE_MPI
 
-class message: public mem::base<message>
+class message: public mem::base
 {
 private:
 public:
+
+   MEM_METHODS(message)
    
    db::node::node_id id;
    db::simple_tuple *data;
@@ -53,7 +55,7 @@ std::ostream& operator<<(std::ostream& cout, const message& msg);
 
 typedef std::vector<message*, mem::allocator<message*> > list_messages;
 
-class message_set: public mem::base<message_set>
+class message_set: public mem::base
 {
 private:
    static const size_t INITIAL_MESSAGE_SIZE = sizeof(unsigned short int); /* size of number of messages */
@@ -62,6 +64,8 @@ private:
    size_t total_size;
    
 public:
+
+   MEM_METHODS(message_set)
    
    void add(message *msg)
    {

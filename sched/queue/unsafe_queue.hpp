@@ -66,7 +66,7 @@ public:
       node *take(head);
       
       assert(head != NULL);
-   
+      
       if(head == tail)
          head = tail = NULL;
       else
@@ -93,7 +93,7 @@ public:
 #endif
    {}
    
-   ~unsafe_queue(void)
+   virtual ~unsafe_queue(void)
    {
       assert(head == NULL);
       assert(tail == NULL);

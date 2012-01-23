@@ -6,14 +6,10 @@
 #include <tr1/unordered_set>
 
 #include "conf.hpp"
+#include "mem/center.hpp"
 #include "mem/thread.hpp"
 #include "mem/stat.hpp"
 #include <iostream>
-
-#ifdef ALLOCATOR_ASSERT
-extern boost::mutex allocator_mtx;
-extern std::tr1::unordered_set<void*> mem_set; 
-#endif
 
 namespace mem
 {
@@ -54,41 +50,12 @@ public:
    inline pointer allocate(size_type cnt,
       typename std::allocator<void>::const_pointer = 0)
    {
-      pointer p;
-      
-      register_allocation(cnt, sizeof(T));
-      
-      if(USE_ALLOCATOR)
-         p = reinterpret_cast<pointer>(get_pool()->allocate(cnt * sizeof(T)));
-      else
-         p = reinterpret_cast<pointer>(::operator new(cnt * sizeof(T)));
-         
-      //std::cout << "New memory " << p << " " << cnt * sizeof(T) << " for " << typeid(T).name() << std::endl;
-      
-#ifdef ALLOCATOR_ASSERT
-      allocator_mtx.lock();
-      assert(mem_set.find(p) == mem_set.end());
-      mem_set.insert(p);
-      allocator_mtx.unlock();
-#endif
-      return p;
+      return reinterpret_cast<pointer>(mem::center::allocate(cnt, sizeof(T)));
    }
    
    inline void deallocate(pointer p, size_type cnt)
-   {  
-#ifdef ALLOCATOR_ASSERT
-      allocator_mtx.lock();
-      assert(mem_set.find(p) != mem_set.end());  
-      mem_set.erase(p);
-      allocator_mtx.unlock();
-#endif
-
-      register_deallocation(cnt, sizeof(T));
-
-      if(USE_ALLOCATOR)
-         get_pool()->deallocate(p, cnt * sizeof(T));
-      else
-         ::operator delete(p);
+   {
+      mem::center::deallocate(p, cnt, sizeof(T));
    }
    
    inline size_type max_size() const {

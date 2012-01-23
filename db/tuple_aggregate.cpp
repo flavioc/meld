@@ -9,31 +9,24 @@ namespace db
 {
    
 agg_configuration*
+tuple_aggregate::create_configuration(void) const
+{
+   return new agg_configuration(pred);
+}
+   
+agg_configuration*
 tuple_aggregate::add_to_set(vm::tuple *tpl, const ref_count many)
 {
-   /*
-   cout << "Adding " << *tpl << endl;
-   cout << "Before" << endl;
-   print(cout);
-   */
-   
    agg_trie_leaf *leaf(vals.find_configuration(tpl));
    agg_configuration *conf;
    
    if(leaf->get_conf() == NULL) {
-      if(aggregate_safeness_uses_neighborhood(pred->get_agg_safeness()))
-         conf = new neighbor_agg_configuration(pred);
-      else
-         conf = new agg_configuration(pred);
+      conf = create_configuration();
       leaf->set_conf(conf);
    } else {
       conf = leaf->get_conf();
    }
    
-   /*
-   cout << "After\n";
-   print(cout);
-   */
    conf->add_to_set(tpl, many);
    
    return conf;

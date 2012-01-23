@@ -13,7 +13,7 @@
 namespace db
 {
    
-class agg_configuration
+class agg_configuration: public mem::base
 {
 private:
    
@@ -39,17 +39,8 @@ protected:
    virtual vm::tuple *do_generate(const vm::aggregate_type, const vm::field_num);
 
 public:
-   
-   // new and delete are needed in order to make subclasses work as expected
-   inline void* operator new(size_t)
-   {
-      return mem::allocator<agg_configuration>().allocate(1);
-   }
-   
-   static inline void operator delete(void *ptr)
-   {
-      mem::allocator<agg_configuration>().deallocate((agg_configuration*)ptr, 1);
-   }
+
+   MEM_METHODS(agg_configuration)
 
    void print(std::ostream&) const;
 

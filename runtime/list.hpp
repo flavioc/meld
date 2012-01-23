@@ -19,12 +19,14 @@ namespace runtime
 {
 
 template <typename T>
-class cons: public mem::base< cons<T> >
+class cons: public mem::base
 {
 public:
    
    typedef cons* list_ptr;
    typedef list_ptr ptr;
+
+   MEM_METHODS(cons<T>)
    
 private:
    

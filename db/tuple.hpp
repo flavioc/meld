@@ -22,13 +22,15 @@
 namespace db
 {
    
-class simple_tuple: public mem::base<simple_tuple>
+class simple_tuple: public mem::base
 {
 private:
    vm::tuple *data;
    vm::ref_count count;
 
 public:
+
+   MEM_METHODS(simple_tuple)
 
    inline vm::tuple* get_tuple(void) const { return data; }
    

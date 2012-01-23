@@ -67,6 +67,7 @@ OBJS = utils/utils.o \
 			 db/tuple.o \
 			 db/agg_configuration.o \
 			 db/tuple_aggregate.o \
+			 db/neighbor_tuple_aggregate.o \
 			 db/database.o \
 			 db/trie.o \
 			 db/neighbor_agg_configuration.o \
@@ -135,6 +136,9 @@ db/neighbor_agg_configuration.o: db/tuple.hpp db/agg_configuration.hpp \
 db/tuple_aggregate.o: db/tuple.hpp db/agg_configuration.hpp \
 											db/tuple_aggregate.hpp db/tuple_aggregate.cpp \
 											db/trie.hpp
+
+db/neighbor_tuple_aggregate.o: db/tuple_aggregate.hpp db/neighbor_tuple_aggregate.hpp \
+											db/neighbor_tuple_aggregate.cpp
 
 db/node.o: db/node.cpp db/node.hpp \
 					db/tuple.hpp db/trie.hpp \

@@ -4,6 +4,7 @@
 
 #include "db/node.hpp"
 #include "vm/state.hpp"
+#include "db/neighbor_tuple_aggregate.hpp"
 
 using namespace db;
 using namespace std;
@@ -59,14 +60,24 @@ agg_configuration*
 node::add_agg_tuple(vm::tuple *tuple, const ref_count many)
 {
    const predicate *pred(tuple->get_predicate());
-   predicate_id id(pred->get_id());
-   aggregate_map::iterator it(aggs.find(id));
+   predicate_id pred_id(pred->get_id());
+   aggregate_map::iterator it(aggs.find(pred_id));
    tuple_aggregate *agg;
    
    if(it == aggs.end()) {
       // add new
-      agg = new tuple_aggregate(pred);
-      aggs[id] = agg;
+      
+      if(aggregate_safeness_uses_neighborhood(pred->get_agg_safeness())) {
+         const predicate *remote_pred(pred->get_remote_pred());
+         edge_set edges(get_edge_set(remote_pred->get_id()));
+         if(pred->get_agg_safeness() == AGG_NEIGHBORHOOD_AND_SELF) {
+            edges.insert(id);
+         }
+         agg = new neighbor_tuple_aggregate(pred, edges);
+      } else
+         agg = new tuple_aggregate(pred);
+            
+      aggs[pred_id] = agg;
    } else
       agg = it->second;
 

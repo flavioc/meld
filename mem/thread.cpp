@@ -9,8 +9,10 @@ using namespace boost;
 using namespace std;
 using namespace std::tr1;
 
+#ifndef ALLOCATOR_ASSERT
 mutex allocator_mtx;
 unordered_set<void*> mem_set;
+#endif
 
 namespace mem
 {
@@ -62,6 +64,11 @@ cleanup(const size_t num_threads)
 {
    for(size_t i(0); i < num_threads; ++i)
       delete vec[i];
+
+#ifdef ALLOCATOR_ASSERT
+   /// XXX
+   /// assert(mem_set.size() == 0);
+#endif
 }
 
 }

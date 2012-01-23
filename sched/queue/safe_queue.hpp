@@ -14,9 +14,11 @@ namespace sched
   
 /* special node to use during lock-free operations */ 
 template <class T>
-class special_queue_node
+class special_queue_node: public mem::base
 {
 public:
+   MEM_METHODS(special_queue_node<T>)
+
    T data;
    utils::atomic_ref<special_queue_node*> next;
 };

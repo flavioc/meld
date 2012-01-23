@@ -27,7 +27,7 @@ typedef union {
 	ptr_val ptr_field;
 } tuple_field;
 
-class tuple: public mem::base<tuple>
+class tuple: public mem::base
 {
 private:
 
@@ -37,6 +37,8 @@ private:
    void copy_field(tuple *, const field_num) const;
 
 public:
+
+   MEM_METHODS(tuple)
 
    bool field_equal(const tuple&, const field_num) const;
 

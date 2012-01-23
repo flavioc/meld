@@ -9,13 +9,15 @@
 namespace sched
 {
    
-class steal_set: public mem::base<steal_set>
+class steal_set: public mem::base
 {
 private:
    
    safe_queue<sched::base*> requests;
    
 public:
+
+   MEM_METHODS(steal_set)
    
    inline bool empty(void) const { return requests.empty(); }
    

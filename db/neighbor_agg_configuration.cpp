@@ -16,21 +16,34 @@ neighbor_agg_configuration::add_to_set(vm::tuple *tuple, const vm::ref_count cou
    
    const node_val node(tuple->get_node(last_field));
    
+#ifdef USE_OLD_NEIGHBOR_CHECK
    edge_set::iterator it(sent.find(node));
    
    if(it == sent.end()) {
       agg_configuration::add_to_set(tuple, count);
+      
       sent.insert(node);
       
       assert(size() > old_size);
-   } else {
    }
+#else
+   edge_set::iterator it(target.find(node));
+   
+   if(it != target.end()) {
+      agg_configuration::add_to_set(tuple, count);
+      
+      target.erase(it);
+      
+      assert(size() > old_size);
+   }
+#endif
 }
 
 bool
-neighbor_agg_configuration::all_present(const edge_set& edges) const
+neighbor_agg_configuration::all_present(void) const
 {
-   for(edge_set::const_iterator it(edges.begin()); it != edges.end(); ++it) {
+#ifdef USE_OLD_NEIGHBOR_CHECK
+   for(edge_set::const_iterator it(target.begin()); it != target.end(); ++it) {
       const node_val node(*it);
       
       if(sent.find(node) == sent.end())
@@ -38,12 +51,9 @@ neighbor_agg_configuration::all_present(const edge_set& edges) const
    }
    
    return true;
-}
-
-bool
-neighbor_agg_configuration::is_present(const node_val& val) const
-{
-   return sent.find(val) != sent.end();
+#else
+   return target.empty();
+#endif
 }
 
 vm::tuple*

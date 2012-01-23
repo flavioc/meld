@@ -25,7 +25,7 @@ typedef utils::stack<vm::field_type> type_stack;
 typedef utils::stack<match_field> match_type_stack;
 typedef val_stack match_val_stack;
 
-class match: public mem::base<match>
+class match: public mem::base
 {
 private:
    
@@ -41,6 +41,8 @@ private:
    }
    
 public:
+
+   MEM_METHODS(match)
    
    inline size_t size(void) const { return types.size(); }
    

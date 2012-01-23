@@ -12,15 +12,23 @@
 
 namespace db
 {
-   
-class tuple_aggregate: public mem::base<tuple_aggregate>
+
+class tuple_aggregate: public mem::base
 {
+protected:
+   const vm::predicate *pred;
+   
 private:
 
-   const vm::predicate *pred;
    agg_trie vals;
 
+protected:
+   
+   virtual agg_configuration* create_configuration(void) const;
+   
 public:
+
+   MEM_METHODS(tuple_aggregate)
 
    void print(std::ostream&) const;
 

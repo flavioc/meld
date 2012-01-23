@@ -62,17 +62,9 @@ process::do_agg_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
       break;
       case AGG_NEIGHBORHOOD:
       case AGG_NEIGHBORHOOD_AND_SELF: {
-         const predicate *remote_pred(pred->get_remote_pred());
          const neighbor_agg_configuration *neighbor_conf(dynamic_cast<neighbor_agg_configuration*>(conf));
-         const edge_set& edges(node->get_edge_set(remote_pred->get_id()));
-         if(!neighbor_conf->all_present(edges)) {
-            /*
-            cout << "Not all present for " << pred->get_name() << " node " << (int)node->get_id() <<
-               " count " << neighbor_conf->size() << " need " << edges.size() << endl;
-            */
-            return;
-         }
-         if(safeness == AGG_NEIGHBORHOOD_AND_SELF && !neighbor_conf->is_present(node->get_id()))
+   
+         if(!neighbor_conf->all_present())
             return;
       }
       break;

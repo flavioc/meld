@@ -23,9 +23,11 @@ typedef std::vector<vm::tuple*, mem::allocator<vm::tuple*> > tuple_vector;
 class trie_hash;
 class trie_leaf;
 
-class trie_node: public mem::base<trie_node>
+class trie_node: public mem::base
 {
 public:
+
+   MEM_METHODS(trie_node)
 
    trie_node *parent;
    trie_node *next;
@@ -93,7 +95,7 @@ public:
    ~trie_node(void);
 };
 
-class trie_hash: public mem::base<trie_hash>
+class trie_hash: public mem::base
 {
 private:
    
@@ -112,6 +114,8 @@ private:
    inline size_t hash_item(const size_t item) const { return item & (num_buckets-1); }
    
 public:
+
+   MEM_METHODS(trie_hash)
    
    size_t count_refs(void) const;
    
@@ -130,7 +134,7 @@ public:
    ~trie_hash(void);
 };
 
-class trie_leaf
+class trie_leaf: public mem::base
 {
 private:
    
@@ -162,7 +166,7 @@ public:
    }
 };
 
-class tuple_trie_leaf: public trie_leaf, public mem::base<tuple_trie_leaf>
+class tuple_trie_leaf: public trie_leaf
 {
 private:
    
@@ -174,6 +178,8 @@ private:
    simple_tuple* tpl;
    
 public:
+
+   MEM_METHODS(tuple_trie_leaf)
    
    inline simple_tuple *get_tuple(void) const { return tpl; }
    
@@ -195,13 +201,15 @@ public:
    }
 };
 
-class tuple_trie_iterator: public mem::base<tuple_trie_iterator>
+class tuple_trie_iterator: public mem::base
 {
 private:
    
    tuple_trie_leaf *current_leaf;
    
 public:
+
+   MEM_METHODS(tuple_trie_iterator)
    
    inline simple_tuple* operator*(void) const
    {
@@ -314,7 +322,7 @@ public:
    virtual ~trie(void);
 };
 
-class tuple_trie: public trie, public mem::base<tuple_trie>
+class tuple_trie: public trie, public mem::base
 {
 private:
    
@@ -328,6 +336,8 @@ private:
    trie_node* check_insert(vm::tuple *, const vm::ref_count, bool&);
    
 public:
+
+   MEM_METHODS(tuple_trie)
    
    typedef tuple_trie_iterator iterator;
    typedef tuple_trie_iterator const_iterator;
@@ -362,7 +372,7 @@ public:
 
 class agg_configuration;
 
-class agg_trie_leaf: public trie_leaf, public mem::base<tuple_trie_leaf>
+class agg_trie_leaf: public trie_leaf
 {
 private:
    
@@ -374,6 +384,8 @@ private:
    agg_configuration *conf;
    
 public:
+
+   MEM_METHODS(agg_trie_leaf)
    
    inline void set_conf(agg_configuration* _conf) { conf = _conf; }
    
@@ -394,7 +406,7 @@ public:
    virtual ~agg_trie_leaf(void);
 };
 
-class agg_trie_iterator: public mem::base<agg_trie_iterator>
+class agg_trie_iterator: public mem::base
 {
 private:
    
@@ -403,6 +415,8 @@ private:
    agg_trie_leaf *current_leaf;
    
 public:
+
+   MEM_METHODS(agg_trie_iterator)
    
    inline agg_configuration* operator*(void) const
    {
@@ -442,7 +456,7 @@ public:
    }
 };
 
-class agg_trie: public trie, public mem::base<agg_trie>
+class agg_trie: public trie, public mem::base
 {
 private:
    
@@ -452,6 +466,8 @@ private:
    }
    
 public:
+
+   MEM_METHODS(agg_trie)
    
    typedef agg_trie_iterator iterator;
    typedef agg_trie_iterator const_iterator;

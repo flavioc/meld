@@ -5,25 +5,29 @@
 #include <iostream>
 
 #include "mem/allocator.hpp"
+#include "mem/center.hpp"
 
 namespace mem
 {
 
-template <class T>
 class base
 {
 public:
    
-   inline void* operator new(size_t) // size
+   static inline void* operator new(size_t sz)
    {
-      return allocator<T>().allocate(1);
+      return mem::center::allocate(sz, 1);
    }
    
-   static inline void operator delete(void *ptr)
+   static inline void operator delete(void *ptr, size_t sz)
    {
-      allocator<T>().deallocate((T*)ptr, 1);
+      mem::center::deallocate(ptr, sz, 1);
    }
+   
+   virtual ~base(void) {}
 };
+
+#define MEM_METHODS(TYPE)
 
 }
 

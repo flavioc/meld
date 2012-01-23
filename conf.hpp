@@ -8,19 +8,22 @@
 // #define ASSERT_THREADS 1
 
 /* when this is active the allocator checks for allocate/dealloc correctness */
-//#define ALLOCATOR_ASSERT 1
+// #define ALLOCATOR_ASSERT 1
 
 /* when this is active it activates extra trie checking code */
-#define TRIE_ASSERT 1
+// #define TRIE_ASSERT 1
 
 /* activate this to collect statistics on memory use */
-// #define MEMORY_STATISTICS 1
+//#define MEMORY_STATISTICS 1
 
 /* activate tuple matching using the trie structure */
 #define TRIE_MATCHING 1
 
 /* activate special code for testing trie matching */
 #define TRIE_MATCHING_ASSERT 1
+
+/* use old method of counting neighborhood aggregates */
+#define USE_OLD_NEIGHBOR_CHECK 1
 
 /* activate instrumentation code */
 #define INSTRUMENTATION 1

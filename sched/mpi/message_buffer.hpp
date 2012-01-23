@@ -23,7 +23,7 @@ namespace sched
 
 #ifdef COMPILE_MPI
 
-class message_buffer: public mem::base<message_buffer>
+class message_buffer: public mem::base
 {
 private:
    
@@ -39,6 +39,8 @@ private:
    void transmit_list(process::remote *, const vm::process_id, message_set&);
    
 public:
+
+   MEM_METHODS(message_buffer)
    
    inline bool empty(void) const { return total == 0; }
    

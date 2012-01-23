@@ -4,6 +4,7 @@
 
 #include "db/edge_set.hpp"
 #include "db/agg_configuration.hpp"
+#include "mem/base.hpp"
 
 namespace db
 {
@@ -12,30 +13,23 @@ class neighbor_agg_configuration: public agg_configuration
 {
 private:
    
+#ifdef USE_OLD_NEIGHBOR_CHECK
    edge_set sent;
+#endif
+   edge_set target;
    
    virtual vm::tuple *do_generate(const vm::aggregate_type, const vm::field_num);
    
 public:
    
-   // XXX need to find a better way to change the class allocator using inheritance
-   inline void* operator new(size_t)
-   {
-      return mem::allocator<neighbor_agg_configuration>().allocate(1);
-   }
-   
-   static inline void operator delete(void *ptr)
-   {
-      mem::allocator<neighbor_agg_configuration>().deallocate((neighbor_agg_configuration*)ptr, 1);
-   }
+   MEM_METHODS(neighbor_agg_configuration)
    
    virtual void add_to_set(vm::tuple *, const vm::ref_count);
+
+   bool all_present(void) const;
    
-   bool all_present(const edge_set&) const;
-   bool is_present(const vm::node_val&) const;
-   
-   explicit neighbor_agg_configuration(const vm::predicate *_pred):
-      agg_configuration(_pred)
+   explicit neighbor_agg_configuration(const vm::predicate *_pred, const edge_set& _target):
+      agg_configuration(_pred), target(_target)
    {
    }
 
