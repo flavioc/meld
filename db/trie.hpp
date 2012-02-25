@@ -16,12 +16,13 @@
 
 namespace db
 {
-
-typedef std::list<simple_tuple*, mem::allocator<simple_tuple*> > simple_tuple_list;
-typedef std::vector<vm::tuple*, mem::allocator<vm::tuple*> > tuple_vector;
-
+   
 class trie_hash;
 class trie_leaf;
+class tuple_trie_leaf;
+
+typedef std::list<simple_tuple*, mem::allocator<simple_tuple*> > simple_tuple_list;
+typedef std::vector<tuple_trie_leaf*, mem::allocator<tuple_trie_leaf*> > tuple_vector;
 
 class trie_node: public mem::base
 {
@@ -211,6 +212,11 @@ public:
 
    MEM_METHODS(tuple_trie_iterator)
    
+   inline tuple_trie_leaf* get_leaf(void) const
+   {
+      return current_leaf;
+   }
+   
    inline simple_tuple* operator*(void) const
    {
       assert(current_leaf != NULL);
@@ -314,6 +320,7 @@ public:
    inline bool empty(void) const { return total == 0; }
    inline size_t size(void) const { return total; }
    
+   void delete_by_leaf(trie_leaf *);
    void delete_by_index(const vm::match&);
    void wipeout(void);
    

@@ -8,6 +8,7 @@
 #include "db/node.hpp"
 #include "vm/program.hpp"
 #include "vm/instr.hpp"
+#include "db/trie.hpp"
 
 // forward declaration
 namespace process {
@@ -30,6 +31,7 @@ private:
    static const size_t NUM_REGS = 32;
    typedef all_val reg;
    reg regs[NUM_REGS];
+   db::tuple_trie_leaf *saved_leafs[NUM_REGS];
    
    std::list<runtime::float_list*, mem::allocator<runtime::float_list*> > free_float_list;
    std::list<runtime::int_list*, mem::allocator<runtime::int_list*> > free_int_list;
@@ -38,9 +40,11 @@ private:
 public:
    
    vm::tuple *tuple;
+   db::tuple_trie_leaf *tuple_leaf;
    db::node *node;
    ref_count count;
    process::process *proc;
+   bool is_linear;
    
    static program *PROGRAM;
    static db::database *DATABASE;
@@ -84,6 +88,9 @@ public:
 #undef define_set
    
    inline void set_nil(const reg_num& num) { set_ptr(num, null_ptr_val); }
+   
+   inline void set_leaf(const reg_num& num, db::tuple_trie_leaf* leaf) { saved_leafs[num] = leaf; }
+   inline db::tuple_trie_leaf* get_leaf(const reg_num& num) const { return saved_leafs[num]; }
    
    inline void copy_reg(const reg_num& reg_from, const reg_num& reg_to) {
       regs[reg_to] = regs[reg_from];

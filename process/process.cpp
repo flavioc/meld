@@ -17,17 +17,33 @@ using namespace boost;
 
 namespace process {
 
+static inline byte_code
+get_bytecode(vm::tuple *tuple)
+{
+   return state::PROGRAM->get_bytecode(tuple->get_predicate_id());
+}
+
 void
 process::do_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
 {
-   const bool is_new(node->add_tuple(tuple, count));
-
-   if(is_new) {
-      // set vm state
+   if(tuple->is_linear()) {
       state.setup(tuple, node, count);
-      execute_bytecode(state.PROGRAM->get_bytecode(tuple->get_predicate_id()), state);
-   } else
-      delete tuple;
+      const execution_return ret(execute_bytecode(get_bytecode(tuple), state));
+      
+      if(ret == EXECUTION_CONSUMED)
+         delete tuple;
+      else
+         node->add_tuple(tuple, count);
+   } else {
+      const bool is_new(node->add_tuple(tuple, count));
+
+      if(is_new) {
+         // set vm state
+         state.setup(tuple, node, count);
+         execute_bytecode(get_bytecode(tuple), state);
+      } else
+         delete tuple;
+   }
 }
 
 void

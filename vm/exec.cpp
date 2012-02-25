@@ -22,7 +22,10 @@ namespace vm
 enum return_type {
    RETURN_OK,
    RETURN_SELECT,
-   RETURN_NEXT
+   RETURN_NEXT,
+   RETURN_LINEAR,
+   RETURN_DERIVED,
+   RETURN_NO_RETURN
 };
 
 static inline return_type execute(pcounter, state&);
@@ -73,9 +76,10 @@ move_to_reg(const pcounter& m, state& state,
       state.set_node(reg, get_node_val(m));
    else if(val_is_reg(from))
       state.copy_reg(val_reg(from), reg);
-   else if(val_is_tuple(from))
+   else if(val_is_tuple(from)) {
+      state.set_leaf(reg, state.tuple_leaf);
       state.set_tuple(reg, state.tuple);
-   else {
+   } else {
       throw vm_exec_error("invalid move to reg");
    }
 }
@@ -199,9 +203,9 @@ execute_send(const pcounter& pc, state& state)
    tuple *tuple(state.get_tuple(msg));
    simple_tuple *stuple(new simple_tuple(tuple, state.count));
 
-   if(msg == dest)
+   if(msg == dest) {
       state::MACHINE->route_self(state.proc, state.node, stuple);
-   else {
+   } else {
       // cout << "sending " << *stuple << " to " << dest_val << endl;
       state::MACHINE->route(state.node, state.proc, (node::node_id)dest_val, stuple);
    }
@@ -627,14 +631,17 @@ build_match_object(match& m, pcounter pc, state& state, const predicate *pred)
    } while(!iter_match_end(match));
 }
 
-static inline void
+static inline return_type
 execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples)
 {
+   const bool old_is_linear = state.is_linear;
+   
    for(tuple_vector::iterator it(tuples.begin());
       it != tuples.end();
       ++it)
    {
-      tuple *match_tuple(*it);
+      tuple_trie_leaf *tuple_leaf(*it);
+      tuple *match_tuple(tuple_leaf->get_tuple()->get_tuple());
     
 #if defined(TRIE_MATCHING_ASSERT) && defined(TRIE_MATCHING)
       assert(do_matches(pc, match_tuple, state));
@@ -642,26 +649,40 @@ execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples)
       (void)pc;
 #endif
 
-#ifdef TRIE_MATCHING
       tuple *old_tuple = state.tuple;
-            
+      tuple_trie_leaf *old_tuple_leaf = state.tuple_leaf;
+      const bool this_is_linear = match_tuple->is_linear();
+      return_type ret;
+      
+      // set new tuple
       state.tuple = match_tuple;
+      state.tuple_leaf = tuple_leaf;
       
-      execute(first, state);
-      
-      state.tuple = old_tuple;
+      state.is_linear = this_is_linear || state.is_linear;
+
+#ifdef TRIE_MATCHING
+      ret = execute(first, state);
 #else
-      if(do_matches(pc, match_tuple, state)) {
-         tuple *old_tuple = state.tuple;
-         
-         state.tuple = match_tuple;
-         
-         execute(first, state);
-         
-         state.tuple = old_tuple;
-      }
+      if(do_matches(pc, match_tuple, state))
+         ret = execute(first, state);
+      else
+         ret = RETURN_OK;
 #endif
+
+      // restore old tuple
+      state.tuple = old_tuple;
+      state.tuple_leaf = old_tuple_leaf;
+      state.is_linear = old_is_linear;
+      
+      if(ret == RETURN_LINEAR)
+         return ret;
+      if(ret == RETURN_DERIVED && state.is_linear) {
+         //printf("Some previous tuple was linear\n");
+         return RETURN_NO_RETURN;
+      }
    }
+   
+   return RETURN_NO_RETURN;
 }
 
 static inline void
@@ -877,6 +898,23 @@ read_call_arg(argument& arg, const field_type type, pcounter& m, state& state)
 }
 
 static inline void
+execute_remove(pcounter pc, state& state)
+{
+   const reg_num reg(remove_source(pc));
+   
+   tuple_trie_leaf *leaf(state.get_leaf(reg));
+   
+   assert(leaf != NULL);
+   
+#if 0
+   tuple *tpl(leaf->get_tuple()->get_tuple());
+   cout << "Removing " << *tpl << endl;
+#endif
+
+   state.node->delete_by_leaf(state.get_tuple(reg)->get_predicate(), leaf);
+}
+
+static inline void
 execute_call(pcounter pc, state& state)
 {
    pcounter m(pc + CALL_BASE);
@@ -944,6 +982,10 @@ eval_loop:
          case RETURN_INSTR: return RETURN_OK;
          
          case NEXT_INSTR: return RETURN_NEXT;
+
+         case RETURN_LINEAR_INSTR: return RETURN_LINEAR;
+         
+         case RETURN_DERIVED_INSTR: return RETURN_DERIVED;
          
          case RETURN_SELECT_INSTR:
             pc += return_select_jump(pc);
@@ -974,16 +1016,21 @@ eval_loop:
                state.node->match_predicate(pred_id, matches);
 #endif
 
-               if(!matches.empty())
-                  execute_iter(pc + ITER_BASE, advance(pc), state, matches);
+               if(!matches.empty()) {
+                  const return_type ret(execute_iter(pc + ITER_BASE, advance(pc), state, matches));
+                  
+                  if(ret == RETURN_LINEAR)
+                     return ret;
+               }
                
                pc += iter_jump(pc);
                goto eval_loop;
             }
             
          case REMOVE_INSTR:
-            throw vm_exec_error("REMOVE instruction not supported");
-         
+            execute_remove(pc, state);
+            break;
+            
          case MOVE_INSTR:
             execute_move(pc, state);
             break;
@@ -1049,11 +1096,16 @@ eval_loop:
    }
 }
    
-void
+execution_return
 execute_bytecode(byte_code code, state& state)
 {
-   execute((pcounter)code, state);
+   const return_type ret(execute((pcounter)code, state));
    state.purge_lists();
+   
+   if(ret == RETURN_LINEAR)
+      return EXECUTION_CONSUMED;
+   else
+      return EXECUTION_OK;
 }
 
 }

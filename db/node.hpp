@@ -106,6 +106,7 @@ public:
    }
    
    void delete_by_index(const vm::predicate*, const vm::match&);
+   void delete_by_leaf(const vm::predicate*, tuple_trie_leaf*);
    void delete_all(const vm::predicate*);
    
    virtual void assert_end(void) const;

@@ -13,6 +13,7 @@ namespace vm {
 #define PRED_AGG 0x01
 #define PRED_ROUTE 0x02
 #define PRED_REVERSE_ROUTE 0x04
+#define PRED_LINEAR 0x08
 #define PRED_AGG_LOCAL 0x01
 #define PRED_AGG_REMOTE 0x02
 #define PRED_AGG_REMOTE_AND_SELF 0x04
@@ -39,6 +40,7 @@ predicate::make_predicate_from_buf(byte *buf, code_size_t *code_size)
       pred->agg_info = new predicate::aggregate_info;
    else
       pred->agg_info = NULL;
+   pred->is_linear = prop & PRED_LINEAR;
    pred->is_route = prop & PRED_ROUTE;
    pred->is_reverse_route = prop & PRED_REVERSE_ROUTE;
    buf++;
@@ -170,6 +172,8 @@ predicate::print(ostream& cout) const
       cout << ",route";
    if(is_reverse_route)
       cout << ",reverse_route";
+   if(is_linear)
+      cout << ",linear";
    
    cout << "]";
    

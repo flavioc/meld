@@ -189,6 +189,16 @@ INSTRUCTION & BYTE FORMAT & ARGS\\
 0&0&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$} {i,v1}\\
 & deletes the tuples of type $i$ with the first argument as value $v_1$\\
 \\
+\inst{REMOVE} {1&0&0&0&0&0&0&0\\\hline
+0&0&0&r&r&r&r&r} {reg} \\
+& deletes tuple reg from the database\\
+\\
+\inst{RETURN-LINEAR} {1&1&0&1&0&0&0&0} {} \\
+& linear fact was used, execution must terminate\\
+\\
+\inst{RETURN-DERIVED} {1&1&1&1&0&0&0&0} {} \\
+& head of rule was derived, return if some linear fact was used\\
+\\
 \end{tabular}
 
 \begin{tabular}{lll}

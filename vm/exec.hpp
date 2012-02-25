@@ -10,8 +10,13 @@
 
 namespace vm
 {
+   
+typedef enum {
+   EXECUTION_OK,
+   EXECUTION_CONSUMED
+} execution_return;
 
-void execute_bytecode(byte_code, state&);
+execution_return execute_bytecode(byte_code, state&);
 
 class vm_exec_error : public std::runtime_error {
  public:

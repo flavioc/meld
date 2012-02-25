@@ -679,8 +679,14 @@ trie::commit_delete(trie_node *node)
 
    assert(node->is_leaf());
 
-   trie_leaf *leaf(node->get_leaf());
+   delete_by_leaf(node->get_leaf());
+}
 
+void
+trie::delete_by_leaf(trie_leaf *leaf)
+{
+   trie_node *node(leaf->node);
+   
    if(leaf->next)
       leaf->next->prev = leaf->prev;
    if(leaf->prev)
@@ -723,6 +729,8 @@ trie::commit_delete(trie_node *node)
    
    basic_invariants();
 #endif
+
+   --total;
 }
 
 void
@@ -929,7 +937,7 @@ tuple_trie::match_predicate(tuple_vector& vec) const
       it != end();
       it++)
    {
-      vec.push_back((*it)->get_tuple());
+      vec.push_back(it.get_leaf());
    }
 }
 
@@ -949,6 +957,9 @@ tuple_trie::match_predicate(const match& m, tuple_vector& vec) const
       match_predicate(vec);
       return;
    }
+   
+   if(total == 0)
+      return;
    
    const size_t stack_size(m.size() + STACK_EXTRA_SIZE);
    match_val_stack vals(stack_size);
@@ -987,6 +998,7 @@ match_begin:
    
    mtype = typs.top();
    
+   assert(total != 0);
    assert(node != NULL);
    assert(parent != NULL);
    
@@ -1170,11 +1182,11 @@ leaf_found:
    // printf("Got here\n");
    assert(node != NULL);
    assert(node->is_leaf());
-      
+
    tuple_trie_leaf *leaf((tuple_trie_leaf*)node->get_leaf());
-   vm::tuple *tpl(leaf->get_tuple()->get_tuple());
+   //vm::tuple *tpl(leaf->get_tuple()->get_tuple());
    // cout << "Added " << *tpl << endl;
-   vec.push_back(tpl);
+   vec.push_back(leaf);
    goto try_again;
 }
 
@@ -1215,7 +1227,6 @@ agg_trie::erase(agg_trie_iterator& it)
    trie_node *node(leaf->node);
    
    commit_delete(node);
-   total--;
    
    return agg_trie_iterator(next_leaf);
 }

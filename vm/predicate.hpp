@@ -47,6 +47,7 @@ private:
    aggregate_info *agg_info;
    
    bool is_route;
+   bool is_linear;
    bool is_reverse_route;
    
    void build_field_info(void);
@@ -67,6 +68,8 @@ public:
    strat_level get_agg_strat_level(void) const { return agg_info->local_level; }
    
    inline bool is_route_pred(void) const { return is_route || is_reverse_route; }
+
+   inline bool is_linear_pred(void) const { return is_linear; }
    
    inline field_num get_aggregate_field(void) const { return agg_info->field; }
    inline aggregate_type get_aggregate_type(void) const { return agg_info->type; }

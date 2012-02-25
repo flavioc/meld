@@ -109,6 +109,12 @@ instr_print(pcounter pc, const bool recurse, const program *prog, ostream& cout)
       case RETURN_INSTR:
          cout << "RETURN" << endl;
 			break;
+      case RETURN_LINEAR_INSTR:
+         cout << "RETURN LINEAR" << endl;
+         break;
+      case RETURN_DERIVED_INSTR:
+         cout << "RETURN DERIVED" << endl;
+         break;
 	   case IF_INSTR: {
             cout << "IF (" << reg_string(if_reg(pc)) << ") THEN" << endl;
 				if(recurse) {
@@ -240,6 +246,10 @@ instr_print(pcounter pc, const bool recurse, const program *prog, ostream& cout)
             cout << endl; 
          }
          break;
+      case REMOVE_INSTR: {
+            cout << "REMOVE " << reg_string(remove_source(pc)) << endl;
+         }
+         break;
    	case CONS_INSTR: {
    			pcounter m = pc + CONS_BASE;
             const string head(val_string(cons_head(pc), &m));
@@ -304,7 +314,6 @@ instr_print(pcounter pc, const bool recurse, const program *prog, ostream& cout)
             
          }
          break;
-      case REMOVE_INSTR:
     	case ELSE_INSTR:
          throw malformed_instr_error("unknown instruction code");
 	}

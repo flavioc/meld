@@ -49,6 +49,9 @@ const size_t SELECT_BASE         = 9;
 const size_t RETURN_SELECT_BASE  = 5;
 const size_t COLOCATED_BASE      = 4;
 const size_t DELETE_BASE         = 3;
+const size_t REMOVE_BASE         = 2;
+const size_t RETURN_LINEAR_BASE  = 1;
+const size_t RETURN_DERIVED_BASE = 1;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -72,7 +75,9 @@ enum instr_type {
    MOVE_NIL_INSTR	      =  0x70,
    REMOVE_INSTR 	      =  0x80,
    ITER_INSTR		      =  0xA0,
-   OP_INSTR			      =  0xC0
+   OP_INSTR			      =  0xC0,
+   RETURN_LINEAR_INSTR  =  0xD0,
+   RETURN_DERIVED_INSTR =  0xF0
 };
 
 enum instr_op {
@@ -269,6 +274,10 @@ inline predicate_id delete_predicate(const pcounter pc) { return predicate_get(p
 inline size_t delete_num_args(pcounter pc) { return (size_t)byte_get(pc, 2); }
 inline instr_val delete_val(pcounter pc) { return val_get(pc, index_size); }
 inline field_num delete_index(pcounter pc) { return field_num_get(pc, 0); }
+
+/* REMOVE */
+
+inline reg_num remove_source(const pcounter pc) { return reg_get(pc, 1); }
 
 /* advance function */
 
@@ -545,7 +554,13 @@ advance(pcounter pc)
                    
       case RETURN_INSTR:
          return pc + RETURN_BASE;
+
+      case RETURN_LINEAR_INSTR:
+         return pc + RETURN_LINEAR_BASE;
          
+      case RETURN_DERIVED_INSTR:
+         return pc + RETURN_DERIVED_BASE;
+      
       case NEXT_INSTR:
          return pc + NEXT_BASE;
          
@@ -559,9 +574,11 @@ advance(pcounter pc)
          return pc + COLOCATED_BASE
                    + arg_size<ARGUMENT_NODE>(colocated_first(pc))
                    + arg_size<ARGUMENT_NODE>(colocated_second(pc));
+
+      case REMOVE_INSTR:
+         return pc + REMOVE_BASE;
          
       case ELSE_INSTR:
-      case REMOVE_INSTR:
       default:
          throw malformed_instr_error("unknown instruction code");
    }

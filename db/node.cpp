@@ -143,6 +143,14 @@ node::delete_all(const predicate*)
 }
 
 void
+node::delete_by_leaf(const predicate *pred, tuple_trie_leaf *leaf)
+{
+   tuple_trie *tr(get_storage(pred));
+   
+   tr->delete_by_leaf(leaf);
+}
+
+void
 node::delete_by_index(const predicate *pred, const match& m)
 {
    tuple_trie *tr(get_storage(pred));

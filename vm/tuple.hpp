@@ -95,6 +95,7 @@ public:
 #undef define_get
 
    inline bool is_aggregate(void) const { return pred->is_aggregate(); }
+   inline bool is_linear(void) const { return pred->is_linear_pred(); }
    
    void print(std::ostream&) const;
    
