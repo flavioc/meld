@@ -642,6 +642,14 @@ execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples)
    {
       tuple_trie_leaf *tuple_leaf(*it);
       tuple *match_tuple(tuple_leaf->get_tuple()->get_tuple());
+      
+      const bool this_is_linear = match_tuple->is_linear();
+      
+      if(this_is_linear) {
+         if(state.linear_tuple_is_being_used(match_tuple))
+            continue;
+         state.using_new_linear_tuple(match_tuple);
+      }
     
 #if defined(TRIE_MATCHING_ASSERT) && defined(TRIE_MATCHING)
       assert(do_matches(pc, match_tuple, state));
@@ -651,7 +659,6 @@ execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples)
 
       tuple *old_tuple = state.tuple;
       tuple_trie_leaf *old_tuple_leaf = state.tuple_leaf;
-      const bool this_is_linear = match_tuple->is_linear();
       return_type ret;
       
       // set new tuple
@@ -673,6 +680,10 @@ execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples)
       state.tuple = old_tuple;
       state.tuple_leaf = old_tuple_leaf;
       state.is_linear = old_is_linear;
+      
+      if(this_is_linear) {
+         state.no_longer_using_linear_tuple(match_tuple);
+      }
       
       if(ret == RETURN_LINEAR)
          return ret;
@@ -1007,8 +1018,6 @@ eval_loop:
                const predicate *pred(state::PROGRAM->get_predicate(pred_id));
                match mobj(pred);
                
-               //cout << *pred << endl;
-               
 #ifdef TRIE_MATCHING
                build_match_object(mobj, pc + ITER_BASE, state, pred);
                state.node->match_predicate(pred_id, mobj, matches);
@@ -1100,7 +1109,8 @@ execution_return
 execute_bytecode(byte_code code, state& state)
 {
    const return_type ret(execute((pcounter)code, state));
-   state.purge_lists();
+   
+   state.cleanup();
    
    if(ret == RETURN_LINEAR)
       return EXECUTION_CONSUMED;

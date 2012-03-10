@@ -45,6 +45,7 @@ public:
    ref_count count;
    process::process *proc;
    bool is_linear;
+   std::list<vm::tuple*> used_linear_tuples;
    
    static program *PROGRAM;
    static db::database *DATABASE;
@@ -102,6 +103,10 @@ public:
    void purge_lists(void);
    
    void setup(vm::tuple*, db::node*, const ref_count);
+   void cleanup(void);
+   bool linear_tuple_is_being_used(vm::tuple *) const;
+   void using_new_linear_tuple(vm::tuple *);
+   void no_longer_using_linear_tuple(vm::tuple *);
    
    explicit state(process::process *_proc):
       proc(_proc)

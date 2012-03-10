@@ -20,6 +20,44 @@ size_t state::NUM_PREDICATES = 0;
 size_t state::NUM_NODES = 0;
 size_t state::NUM_NODES_PER_PROCESS = 0;
 
+bool
+state::linear_tuple_is_being_used(vm::tuple *tpl) const
+{
+   for(list<vm::tuple*>::const_iterator it(used_linear_tuples.begin()), end(used_linear_tuples.end());
+      it != end;
+      it++)
+   {
+      if(*it == tpl)
+         return true;
+   }
+   
+   return false;
+}
+
+void
+state::using_new_linear_tuple(vm::tuple *tpl)
+{
+   used_linear_tuples.push_front(tpl);
+}
+
+void
+state::no_longer_using_linear_tuple(vm::tuple *tpl)
+{
+   for(list<vm::tuple*>::iterator it(used_linear_tuples.begin()), end(used_linear_tuples.end());
+      it != end;
+      it++)
+   {
+      if(*it == tpl) {
+         used_linear_tuples.erase(it);
+         return;
+      }
+      
+      assert(false);
+   }
+   
+   assert(false);
+}
+
 void
 state::purge_lists(void)
 {
@@ -36,6 +74,13 @@ state::purge_lists(void)
 }
 
 void
+state::cleanup(void)
+{
+   purge_lists();
+   assert(used_linear_tuples.empty());
+}
+
+void
 state::setup(vm::tuple *tpl, db::node *n, const ref_count count)
 {
    this->tuple = tpl;
@@ -43,6 +88,8 @@ state::setup(vm::tuple *tpl, db::node *n, const ref_count count)
    this->node = n;
    this->count = count;
    this->is_linear = tpl->is_linear();
+   assert(used_linear_tuples.empty());
+   this->used_linear_tuples.clear();
 }
 
 }

@@ -262,7 +262,7 @@ protected:
    typedef trie_node node;
    
    node *root;
-   size_t total;
+   size_t number_of_references;
    trie_leaf *first_leaf;
    trie_leaf *last_leaf;
    
@@ -270,18 +270,23 @@ protected:
    {
       assert(root != NULL);
       assert(root->parent == NULL);
-      assert((root->child == NULL && total == 0) || (root->child != NULL && total > 0));
+      if(number_of_references == 0) {
+         assert(root->child == NULL);
+      } else {
+         assert(root->child != NULL);
+      }
       assert(root->prev == NULL);
       assert(root->next == NULL);
       assert((root->child == NULL && first_leaf == NULL && last_leaf == NULL)
          || (root->child != NULL && first_leaf != NULL && last_leaf != NULL));
    }
    
-   void commit_delete(trie_node *);
+   void commit_delete(trie_node *, vm::ref_count);
    size_t delete_branch(trie_node *);
    void delete_path(trie_node *);
    
    virtual trie_leaf* create_leaf(void *data, const vm::ref_count many) = 0;
+   void inner_delete_by_leaf(trie_leaf *);
    
    trie_node *check_insert(void *, const vm::ref_count, vm::val_stack&, vm::type_stack&, bool&);
    
@@ -294,6 +299,7 @@ public:
       trie *tr;
       bool to_del;
       trie_node *tr_node;
+      vm::ref_count many;
 
    public:
 
@@ -301,13 +307,14 @@ public:
 
       void operator()(void)
       {
-         tr->commit_delete(tr_node);
+         tr->commit_delete(tr_node, many);
       }
       
       explicit delete_info(trie *_tr,
             const bool _to_del,
-            trie_node *_tr_node):
-         tr(_tr), to_del(_to_del), tr_node(_tr_node)
+            trie_node *_tr_node,
+            vm::ref_count _many):
+         tr(_tr), to_del(_to_del), tr_node(_tr_node), many(_many)
       {
       }
       
@@ -317,9 +324,10 @@ public:
       }
    };
    
-   inline bool empty(void) const { return total == 0; }
-   inline size_t size(void) const { return total; }
+   inline bool empty(void) const { return number_of_references == 0; }
+   inline size_t size(void) const { return number_of_references; }
    
+   // if second argument is 0, the leaf is ensured to be deleted
    void delete_by_leaf(trie_leaf *);
    void delete_by_index(const vm::match&);
    void wipeout(void);
