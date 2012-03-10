@@ -286,7 +286,7 @@ protected:
    void delete_path(trie_node *);
    
    virtual trie_leaf* create_leaf(void *data, const vm::ref_count many) = 0;
-   void inner_delete_by_leaf(trie_leaf *);
+   void inner_delete_by_leaf(trie_leaf *, const vm::ref_count);
    
    trie_node *check_insert(void *, const vm::ref_count, vm::val_stack&, vm::type_stack&, bool&);
    

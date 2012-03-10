@@ -1,0 +1,14 @@
+type b(node, int).
+type linear a(node, int).
+type linear c(node, int).
+
+b(@1, 2).
+a(@1, 3).
+a(@1, 3).
+c(@1, 5).
+
+b(A, N) :-
+   b(A, 2),
+   c(A, 5),
+   a(A, N),
+   a(A, N).

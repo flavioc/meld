@@ -676,20 +676,30 @@ trie::commit_delete(trie_node *node, ref_count many)
    assert(node->is_leaf());
 
    number_of_references -= many;
-   inner_delete_by_leaf(node->get_leaf());
+   inner_delete_by_leaf(node->get_leaf(), 0);
 }
 
 void
 trie::delete_by_leaf(trie_leaf *leaf)
 {
    number_of_references -= leaf->get_count();
-   inner_delete_by_leaf(leaf);
+   inner_delete_by_leaf(leaf, 1);
 }
 
 // we assume that number_of_references was decrement previous to this
 void
-trie::inner_delete_by_leaf(trie_leaf *leaf)
+trie::inner_delete_by_leaf(trie_leaf *leaf, const ref_count count)
 {
+   if(count != 0) {
+      assert(count > 0);
+      leaf->add_count(-count);
+   }
+   
+   if(!leaf->to_delete())
+      return;
+ 
+   assert(leaf->to_delete());
+   
    trie_node *node(leaf->node);
    
    if(leaf->next)
@@ -880,7 +890,7 @@ tuple_trie::delete_tuple(vm::tuple *tpl, const ref_count many)
 void
 tuple_trie::print(ostream& cout) const
 {
-   assert(!empty());
+   //assert(!empty());
    
    cout << " " << *pred << ":" << endl;
    

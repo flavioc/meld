@@ -37,6 +37,9 @@ private:
    std::list<runtime::int_list*, mem::allocator<runtime::int_list*> > free_int_list;
    std::list<runtime::node_list*, mem::allocator<runtime::node_list*> > free_node_list;
    
+   typedef std::pair<vm::tuple *, vm::ref_count> pair_linear;
+   typedef std::list<pair_linear> list_linear;
+   
 public:
    
    vm::tuple *tuple;
@@ -45,7 +48,7 @@ public:
    ref_count count;
    process::process *proc;
    bool is_linear;
-   std::list<vm::tuple*> used_linear_tuples;
+   list_linear used_linear_tuples;
    
    static program *PROGRAM;
    static db::database *DATABASE;
@@ -104,7 +107,7 @@ public:
    
    void setup(vm::tuple*, db::node*, const ref_count);
    void cleanup(void);
-   bool linear_tuple_is_being_used(vm::tuple *) const;
+   bool linear_tuple_can_be_used(vm::tuple *, const vm::ref_count) const;
    void using_new_linear_tuple(vm::tuple *);
    void no_longer_using_linear_tuple(vm::tuple *);
    

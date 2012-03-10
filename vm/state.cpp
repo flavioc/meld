@@ -21,38 +21,55 @@ size_t state::NUM_NODES = 0;
 size_t state::NUM_NODES_PER_PROCESS = 0;
 
 bool
-state::linear_tuple_is_being_used(vm::tuple *tpl) const
+state::linear_tuple_can_be_used(vm::tuple *tpl, const vm::ref_count max) const
 {
-   for(list<vm::tuple*>::const_iterator it(used_linear_tuples.begin()), end(used_linear_tuples.end());
+   for(list_linear::const_iterator it(used_linear_tuples.begin()), end(used_linear_tuples.end());
       it != end;
       it++)
    {
-      if(*it == tpl)
-         return true;
+      const pair_linear& p(*it);
+      
+      if(p.first == tpl)
+         return p.second < max;
    }
    
-   return false;
+   return true; // not found, first time
 }
 
 void
 state::using_new_linear_tuple(vm::tuple *tpl)
 {
-   used_linear_tuples.push_front(tpl);
+   for(list_linear::iterator it(used_linear_tuples.begin()), end(used_linear_tuples.end());
+      it != end;
+      it++)
+   {
+      pair_linear& p(*it);
+      
+      if(p.first == tpl) {
+         p.second++;
+         return;
+      }
+   }
+   
+   // new
+   used_linear_tuples.push_front(pair_linear(tpl, 1));
 }
 
 void
 state::no_longer_using_linear_tuple(vm::tuple *tpl)
 {
-   for(list<vm::tuple*>::iterator it(used_linear_tuples.begin()), end(used_linear_tuples.end());
+   for(list_linear::iterator it(used_linear_tuples.begin()), end(used_linear_tuples.end());
       it != end;
       it++)
    {
-      if(*it == tpl) {
-         used_linear_tuples.erase(it);
+      pair_linear &p(*it);
+      
+      if(p.first == tpl) {
+         p.second--;
+         if(p.second == 0)
+            used_linear_tuples.erase(it);
          return;
       }
-      
-      assert(false);
    }
    
    assert(false);

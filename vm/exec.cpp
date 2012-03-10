@@ -646,7 +646,7 @@ execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples)
       const bool this_is_linear = match_tuple->is_linear();
       
       if(this_is_linear) {
-         if(state.linear_tuple_is_being_used(match_tuple))
+         if(!state.linear_tuple_can_be_used(match_tuple, tuple_leaf->get_count()))
             continue;
          state.using_new_linear_tuple(match_tuple);
       }
