@@ -1,0 +1,16 @@
+0
+_init()@1
+edge(@1)@2
+edge(@2)@1
+visited()@1
+1
+_init()@1
+visited()@1
+2
+_init()@1
+edge(@1)@1
+edge(@3)@1
+visited()@1
+3
+_init()@1
+visited()@1

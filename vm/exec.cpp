@@ -1012,6 +1012,22 @@ eval_loop:
          case ELSE_INSTR:
             throw vm_exec_error("ELSE instruction not supported");
          
+         case RESET_LINEAR_INSTR:
+            {
+               const bool old_is_linear(state.is_linear);
+               
+               state.is_linear = false;
+               
+               execute(pc + RESET_LINEAR_BASE, state);
+               
+               state.is_linear = old_is_linear;
+               
+               pc += reset_linear_jump(pc);
+               
+               goto eval_loop;
+            }
+            break;
+            
          case ITER_INSTR: {
                tuple_vector matches;
                const predicate_id pred_id(iter_predicate(pc));

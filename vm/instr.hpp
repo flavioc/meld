@@ -28,6 +28,7 @@ const size_t host_size = 0;
 const size_t nil_size = 0;
 const size_t tuple_size = 0;
 const size_t index_size = 1;
+const size_t jump_size = 4;
 
 const size_t SEND_BASE           = 3;
 const size_t OP_BASE             = 5;
@@ -35,7 +36,7 @@ const size_t MOVE_BASE           = 3;
 const size_t ITER_BASE           = 6;
 const size_t ALLOC_BASE          = 3;
 const size_t CALL_BASE           = 4;
-const size_t IF_BASE             = 6;
+const size_t IF_BASE             = 2 + jump_size;
 const size_t MOVE_NIL_BASE       = 2;
 const size_t TEST_NIL_BASE       = 3;
 const size_t CONS_BASE           = 5;
@@ -52,6 +53,7 @@ const size_t DELETE_BASE         = 3;
 const size_t REMOVE_BASE         = 2;
 const size_t RETURN_LINEAR_BASE  = 1;
 const size_t RETURN_DERIVED_BASE = 1;
+const size_t RESET_LINEAR_BASE   = 1 + jump_size;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -68,6 +70,7 @@ enum instr_type {
    RETURN_SELECT_INSTR  =  0x0B,
    COLOCATED_INSTR      =  0x0C,
    DELETE_INSTR         =  0x0D,
+   RESET_LINEAR_INSTR   =  0x0E,
    CALL_INSTR		      =  0x20,
    MOVE_INSTR		      =  0x30,
    ALLOC_INSTR		      =  0x40,
@@ -278,6 +281,10 @@ inline field_num delete_index(pcounter pc) { return field_num_get(pc, 0); }
 /* REMOVE */
 
 inline reg_num remove_source(const pcounter pc) { return reg_get(pc, 1); }
+
+/* RESET LINEAR */
+
+inline code_offset_t reset_linear_jump(const pcounter pc) { return jump_get(pc, 1); }
 
 /* advance function */
 
@@ -566,7 +573,7 @@ advance(pcounter pc)
          
       case RETURN_SELECT_INSTR:
          return pc + RETURN_SELECT_BASE;
-         
+
       case SELECT_INSTR:
          return pc + SELECT_BASE + select_hash_size(pc)*sizeof(code_size_t);
          
@@ -577,6 +584,9 @@ advance(pcounter pc)
 
       case REMOVE_INSTR:
          return pc + REMOVE_BASE;
+         
+      case RESET_LINEAR_INSTR:
+         return pc + RESET_LINEAR_BASE;
          
       case ELSE_INSTR:
       default:

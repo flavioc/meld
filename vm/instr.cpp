@@ -115,6 +115,9 @@ instr_print(pcounter pc, const bool recurse, const program *prog, ostream& cout)
       case RETURN_DERIVED_INSTR:
          cout << "RETURN DERIVED" << endl;
          break;
+      case RESET_LINEAR_INSTR:
+         cout << "RESET LINEAR" << endl;
+         break;
 	   case IF_INSTR: {
             cout << "IF (" << reg_string(if_reg(pc)) << ") THEN" << endl;
 				if(recurse) {
