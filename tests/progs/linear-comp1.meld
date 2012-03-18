@@ -13,8 +13,6 @@ edge(@1, @4).
 unvisited(@1). unvisited(@2). unvisited(@3). unvisited(@4).
 visit(@1).
 
-{edge(A, B)} visit(B), visited(A) :-
-   visit(A),
-   unvisited(A).
+visit(A), unvisited(A) -o {B | edge(A, B) | visit(B)}, visited(A).
 
-visited(A) :- visit(A), visited(A).
+visit(A), visited(A) -o visited(A).
