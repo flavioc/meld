@@ -5,7 +5,5 @@ type linear b(node, int).
 a(@1, 2).
 b(@1, 2).
 
-b(A, 5) :-
-   a(A, 2)$,
-   b(A, 2).
+$a(A, 2), b(A, 2) -o b(A, 5).
 
