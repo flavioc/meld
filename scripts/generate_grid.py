@@ -15,19 +15,27 @@ if len(sys.argv) == 3:
 else:
 	print "type route edge(node, node)."
 
-length = int(sys.argv[1])
+arg = sys.argv[1]
+lenvec = arg.split('@', 2)
+
+if len(lenvec) == 2:
+   width = int(lenvec[0])
+   height = int(lenvec[1])
+else:
+   width = int(lenvec[0])
+   height = width
 
 def write_line(line):
-	for column in range(0, length):
-		id = line * length + column
-		if line < length-1:
-			southid = id + length
+	for column in range(0, width):
+		id = line * width + column
+		if line < height-1:
+			southid = id + width
 			write_edge(southid, id)
 			write_edge(id, southid)
-		if column < length-1:
+		if column < width-1:
 			eastid = id + 1
 			write_edge(eastid, id)
 			write_edge(id, eastid)
 			
-for line in range(0, length):
+for line in range(0, height):
 	write_line(line)
