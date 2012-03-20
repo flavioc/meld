@@ -13,78 +13,8 @@ import sys
 import csv
 import os
 import errno
+from lib_csv import *
 
-def mkdir_p(path):
-    try:
-        os.makedirs(path)
-    except OSError as exc: # Python >2.5
-        if exc.errno == errno.EEXIST:
-            pass
-        else: raise
-
-def get_sched_name(sched):
-   if sched == 'sl':
-      return 'sl'
-   if sched[:2] == 'tl':
-      return 'tl'
-   if sched[:2] == 'td':
-      return 'td'
-   if sched[:2] == 'tx':
-      return 'tx'
-   if sched[:9] == 'mpistatic':
-      return 'mpi'
-   if sched[:9] == 'mpisingle':
-      return 'mix'
-   return 'sin'
-      
-def get_sched_threads(sched):
-   if sched == 'sl': return 1
-   part = sched[:2]
-   if part == 'tl' or part == 'td' or part == 'tx':
-      return int(sched[2:])
-   elif sched[:9] == 'mpistatic':
-      rest = sched[9:]
-      vec = rest.split('/')
-      return int(vec[0])
-   elif sched[:9] == 'mpisingle':
-      return sched[9:]
-   else:
-      return int(sched[3:])
-      
-def build_results(vec):
-   new_vec = vec[2:]
-   sum = 0
-   i = 0
-   total = 0
-   while True:
-      n = new_vec[i]
-      i = i + 1
-      if n == '':
-         continue
-      if n == '->':
-         return float(sum / total)
-      sum = sum + int(n)
-      total = total + 1
-      
-data = {}
-
-def add_result(name, sched, threads, result):
-   global data
-   if result == 0:
-      result = 1
-   try:
-      bench_data = data[name]
-      try:
-         sched_data = bench_data[sched]
-         sched_data[threads] = result
-      except KeyError:
-         sched_data = {threads: result}
-         bench_data[sched] = sched_data
-   except KeyError:
-      sched_data = {threads: result}
-      bench_data = {sched: sched_data}
-      data[name] = bench_data
-      
 def print_results():
    global data
    for bench, bench_data in data.iteritems():
@@ -105,8 +35,6 @@ def make_speedup(time, serial):
 def make_efficiency(time, serial, cpu):
    return my_round((serial / time) / float(cpu))
    
-CPUS = [1, 2, 4, 6, 8, 10, 12, 14, 16]
-
 def write_header(writer):
    writer.writerow(['#cpu', 'tl', 'tx', 'sin', 'mpi'])
    
@@ -213,18 +141,7 @@ if len(sys.argv) < 3:
 dir = str(sys.argv[1])
 file = str(sys.argv[2])
 
-f = open(file, 'rb')
-
-for line in f:
-   line = line.rstrip('\n')
-   vec = line.split(' ')
-   name = vec[0]
-   sched = vec[1]
-   sched_name = get_sched_name(sched)
-   sched_threads = get_sched_threads(sched)
-   result = build_results(vec)
-   print sched_name, sched_threads
-   add_result(name, sched_name, sched_threads, result)
+read_csv_file(file)
 
 mkdir_p(dir)
 write_speedup_files()
