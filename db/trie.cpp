@@ -676,13 +676,15 @@ trie::commit_delete(trie_node *node, ref_count many)
    assert(node->is_leaf());
 
    number_of_references -= many;
+   assert(number_of_references >= 0);
    inner_delete_by_leaf(node->get_leaf(), 0);
 }
 
 void
 trie::delete_by_leaf(trie_leaf *leaf)
 {
-   number_of_references -= leaf->get_count();
+   --number_of_references;
+   assert(number_of_references >= 0);
    inner_delete_by_leaf(leaf, 1);
 }
 
@@ -790,6 +792,7 @@ trie::delete_by_index(const match& m)
 
    // update number of tuples in this trie
    number_of_references -= delete_branch(node);
+   assert(number_of_references >= 0);
    delete_path(node);
    
    basic_invariants();

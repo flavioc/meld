@@ -70,7 +70,7 @@ process::do_agg_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
       case AGG_LOCALLY_GENERATED: {
          const strat_level level(pred->get_agg_strat_level());
          
-         if(node->get_local_strat_level() != level) {
+         if(node->get_local_strat_level() < level) {
             //cout << "Not there yet " << (int)node->get_local_strat_level() << endl;
             return;
          }
@@ -80,8 +80,9 @@ process::do_agg_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
       case AGG_NEIGHBORHOOD_AND_SELF: {
          const neighbor_agg_configuration *neighbor_conf(dynamic_cast<neighbor_agg_configuration*>(conf));
    
-         if(!neighbor_conf->all_present())
+         if(!neighbor_conf->all_present()) {
             return;
+         }
       }
       break;
       default: return;
@@ -154,7 +155,7 @@ process::do_loop(void)
    
       scheduler->assert_end_iteration();
       
-      //cout << id << " -------- END ITERATION ---------" << endl;
+      // cout << id << " -------- END ITERATION ---------" << endl;
       
       // false from end_iteration ends program
       if(!scheduler->end_iteration())

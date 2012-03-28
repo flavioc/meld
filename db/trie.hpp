@@ -262,21 +262,26 @@ protected:
    typedef trie_node node;
    
    node *root;
-   size_t number_of_references;
+   int number_of_references;
    trie_leaf *first_leaf;
    trie_leaf *last_leaf;
    
    inline void basic_invariants(void)
    {
       assert(root != NULL);
+      
       assert(root->parent == NULL);
+      
       if(number_of_references == 0) {
          assert(root->child == NULL);
       } else {
          assert(root->child != NULL);
       }
+      
       assert(root->prev == NULL);
+      
       assert(root->next == NULL);
+      
       assert((root->child == NULL && first_leaf == NULL && last_leaf == NULL)
          || (root->child != NULL && first_leaf != NULL && last_leaf != NULL));
    }
