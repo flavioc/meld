@@ -175,6 +175,10 @@ program::get_init_predicate(void) const
    
    if(init == NULL) {
       init = get_predicate(INIT_PREDICATE_ID);
+      if(init->get_name() != "_init") {
+         cerr << "_init program should be predicate #" << (int)INIT_PREDICATE_ID << endl;
+         init = get_predicate_by_name("_init");
+      }
       assert(init->get_name() == "_init");
    }
 

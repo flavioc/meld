@@ -500,8 +500,6 @@ trie::delete_path(trie_node *node)
 size_t
 trie::delete_branch(trie_node *node)
 {
-   printf("CALLED DELETE BRANCH\n");
-
    size_t count;
    
    if(node->is_leaf()) {

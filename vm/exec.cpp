@@ -204,10 +204,10 @@ execute_send(const pcounter& pc, state& state)
    simple_tuple *stuple(new simple_tuple(tuple, state.count));
 
    if(msg == dest) {
-      cout << "sending " << *stuple << " to self" << endl;
+      //cout << "sending " << *stuple << " to self" << endl;
       state::MACHINE->route_self(state.proc, state.node, stuple);
    } else {
-      cout << "sending " << *stuple << " to " << dest_val << endl;
+      //cout << "sending " << *stuple << " to " << dest_val << endl;
       state::MACHINE->route(state.node, state.proc, (node::node_id)dest_val, stuple);
    }
 }
@@ -662,8 +662,6 @@ execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples)
       tuple_trie_leaf *old_tuple_leaf = state.tuple_leaf;
       return_type ret;
 
-      cout << "Using " << *match_tuple << endl;
-      
       // set new tuple
       state.tuple = match_tuple;
       state.tuple_leaf = tuple_leaf;

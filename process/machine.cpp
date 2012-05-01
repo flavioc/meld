@@ -160,8 +160,6 @@ machine::slice_function(void)
 void
 machine::start(void)
 {
-   state::PROGRAM->print_predicates(cout);
-
    deactivate_signals();
    
    if(stat_enabled()) {
