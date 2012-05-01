@@ -55,6 +55,7 @@ LDFLAGS = $(PROFILING) $(LIBRARY_DIRS) $(LIBRARIES)
 COMPILE = $(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS)
 
 OBJS = utils/utils.o \
+		 	utils/types.o \
 			 vm/program.o \
 			 vm/predicate.o \
 			 vm/types.o \
@@ -83,6 +84,7 @@ OBJS = utils/utils.o \
 			 sched/mpi/request.o \
 			 sched/local/serial.o \
 			 sched/local/threads_static.o \
+			 sched/local/threads_static_prio.o \
 			 sched/local/threads_buff.o \
 			 sched/local/threads_dynamic.o \
 			 sched/local/threads_direct.o \
@@ -97,6 +99,7 @@ OBJS = utils/utils.o \
 			 sched/mpi/tokenizer.o \
 			 sched/mpi/handler.o \
 			 external/math.o \
+			 external/lists.o \
 			 external/utils.o \
 			 stat/stat.o \
 			 stat/slice.o \
@@ -120,6 +123,8 @@ meld.o: meld.cpp process/machine.hpp \
 print.o: print.cpp vm/program.hpp
 
 utils/utils.o: utils/utils.cpp utils/utils.hpp
+
+utils/types.o: utils/types.cpp utils/types.hpp
 
 vm/instr.o: vm/instr.cpp vm/instr.hpp \
 						utils/utils.hpp
@@ -231,6 +236,16 @@ sched/local/threads_static.o: sched/base.hpp sched/local/threads_static.hpp \
 								sched/queue/bounded_pqueue.hpp \
 								sched/thread/assert.hpp
 
+sched/local/threads_static_prio.o: sched/base.hpp sched/local/threads_static_prio.hpp \
+								sched/local/threads_static_prio.cpp sched/queue/node.hpp \
+								sched/thread/termination_barrier.hpp \
+								utils/atomic.hpp \
+								sched/nodes/thread.hpp sched/queue/unsafe_queue_count.hpp \
+								sched/queue/safe_queue.hpp \
+								sched/thread/threaded.hpp \
+								sched/queue/bounded_pqueue.hpp \
+								sched/thread/assert.hpp
+
 sched/local/threads_buff.o: sched/base.hpp sched/local/threads_buff.hpp \
 								sched/local/threads_buff.cpp sched/queue/node.hpp \
 								sched/thread/termination_barrier.hpp \
@@ -318,6 +333,7 @@ sched/local/mpi_threads_single.o: sched/local/mpi_threads_single.hpp \
 
 external/math.o: external/math.hpp external/math.cpp
 external/utils.o: external/utils.hpp external/utils.cpp
+external/lists.o: external/lists.hpp external/lists.cpp
 
 stat/stat.o: stat/stat.cpp stat/stat.hpp
 stat/slice.o: stat/slice.hpp stat/slice.cpp

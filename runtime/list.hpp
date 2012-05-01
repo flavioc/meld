@@ -248,14 +248,16 @@ typedef cons<vm::int_val> int_list;
 typedef cons<vm::float_val> float_list;
 typedef cons<vm::node_val> node_list;
 typedef std::stack<vm::float_val, std::deque<vm::float_val, mem::allocator<vm::float_val> > > stack_float_list;
+typedef std::stack<vm::int_val, std::deque<vm::int_val, mem::allocator<vm::int_val> > > stack_int_list;
 
-static inline float_list*
-from_stack_to_list(stack_float_list& stk)
+template <class TStack, class TList>
+static inline TList*
+from_stack_to_list(TStack& stk)
 {
-   float_list *ptr(float_list::null_list());
+   TList *ptr(TList::null_list());
    
    while(!stk.empty()) {
-      ptr = new float_list(ptr, stk.top());
+      ptr = new TList(ptr, stk.top());
       stk.pop();
    }
    

@@ -18,6 +18,7 @@
 #include "db/tuple.hpp"
 #include "db/node.hpp"
 #include "sched/local/threads_static.hpp"
+#include "sched/local/threads_static_prio.hpp"
 #include "sched/local/threads_single.hpp"
 #include "sched/local/threads_dynamic.hpp"
 #include "sched/local/threads_direct.hpp"

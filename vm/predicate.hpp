@@ -49,6 +49,7 @@ private:
    bool is_route;
    bool is_linear;
    bool is_reverse_route;
+   bool is_action;
    
    void build_field_info(void);
    void build_aggregate_info(void);
@@ -70,6 +71,8 @@ public:
    inline bool is_route_pred(void) const { return is_route || is_reverse_route; }
 
    inline bool is_linear_pred(void) const { return is_linear; }
+
+   inline bool is_action_pred(void) const { return is_action; }
    
    inline field_num get_aggregate_field(void) const { return agg_info->field; }
    inline aggregate_type get_aggregate_type(void) const { return agg_info->type; }

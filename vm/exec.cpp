@@ -204,9 +204,10 @@ execute_send(const pcounter& pc, state& state)
    simple_tuple *stuple(new simple_tuple(tuple, state.count));
 
    if(msg == dest) {
+      cout << "sending " << *stuple << " to self" << endl;
       state::MACHINE->route_self(state.proc, state.node, stuple);
    } else {
-      // cout << "sending " << *stuple << " to " << dest_val << endl;
+      cout << "sending " << *stuple << " to " << dest_val << endl;
       state::MACHINE->route(state.node, state.proc, (node::node_id)dest_val, stuple);
    }
 }
@@ -660,6 +661,8 @@ execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples)
       tuple *old_tuple = state.tuple;
       tuple_trie_leaf *old_tuple_leaf = state.tuple_leaf;
       return_type ret;
+
+      cout << "Using " << *match_tuple << endl;
       
       // set new tuple
       state.tuple = match_tuple;
@@ -903,6 +906,11 @@ read_call_arg(argument& arg, const field_type type, pcounter& m, state& state)
          TO_ARG(val, arg);
       }
       break;
+      case FIELD_LIST_INT: {
+         const int_list *val(get_op_function<int_list*>(val_type, m, state));
+         TO_ARG(val, arg);
+      }
+      break;
       default:
          throw vm_exec_error("can't read this external function argument");
    }
@@ -912,14 +920,16 @@ static inline void
 execute_remove(pcounter pc, state& state)
 {
    const reg_num reg(remove_source(pc));
-   
+
    tuple_trie_leaf *leaf(state.get_leaf(reg));
    
    assert(leaf != NULL);
    
+
 #if 0
+   cout << leaf->get_tuple()->get_tuple() << endl;
    tuple *tpl(leaf->get_tuple()->get_tuple());
-   cout << "Removing " << *tpl << endl;
+   const predicate *p(tpl->get_predicate());
 #endif
 
    state.node->delete_by_leaf(state.get_tuple(reg)->get_predicate(), leaf);
@@ -971,10 +981,22 @@ execute_call(pcounter pc, state& state)
       case FIELD_NODE:
          state.set_node(reg, FROM_ARG(ret, node_val));
          break;
-      case FIELD_LIST_FLOAT:
+      case FIELD_LIST_FLOAT: {
+         float_list *l(FROM_ARG(ret, float_list*));
+
          state.set_float_list(reg, FROM_ARG(ret, float_list*));
-         state.add_float_list(FROM_ARG(ret, float_list*));
-      break;
+         if(!float_list::is_null(l))
+            state.add_float_list(FROM_ARG(ret, float_list*));
+         break;
+      }
+      case FIELD_LIST_INT: {
+         int_list *l(FROM_ARG(ret, int_list*));
+         state.set_int_list(reg, l);
+
+         if(!int_list::is_null(l))
+            state.add_int_list(l);
+         break;
+      }
       default:
          throw vm_exec_error("invalid return type in call");
    }
@@ -987,7 +1009,7 @@ execute(pcounter pc, state& state)
    {
 eval_loop:
 
-      // instr_print_simple(pc, state.PROGRAM, cout);
+      //instr_print_simple(pc, state.PROGRAM, cout);
       
       switch(fetch(pc)) {
          case RETURN_INSTR: return RETURN_OK;
@@ -1023,7 +1045,7 @@ eval_loop:
                state.is_linear = old_is_linear;
                
                pc += reset_linear_jump(pc);
-               
+
                goto eval_loop;
             }
             break;

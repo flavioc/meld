@@ -81,6 +81,7 @@ state::purge_lists(void)
 #define PURGE_LIST(TYPE) \
    for(list<TYPE ## _list*>::iterator it(free_ ## TYPE ## _list.begin()); it != free_ ## TYPE ## _list.end(); ++it) { \
       TYPE ## _list *ls(*it); \
+      assert(ls != NULL); \
       if(ls->zero_refs()) { ls->destroy(); } \
    } \
    free_ ## TYPE ## _list.clear()

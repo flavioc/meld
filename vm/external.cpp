@@ -5,6 +5,7 @@
 #include "vm/external.hpp"
 #include "external/math.hpp"
 #include "external/utils.hpp"
+#include "external/lists.hpp"
 
 using namespace std;
 using namespace std::tr1;
@@ -116,6 +117,9 @@ init_external_functions(void)
    register_external_function(EXTERNAL2(divide, FIELD_LIST_FLOAT, FIELD_LIST_FLOAT, FIELD_LIST_FLOAT));
    register_external_function(EXTERNAL2(convolve, FIELD_LIST_FLOAT, FIELD_LIST_FLOAT, FIELD_LIST_FLOAT));
    register_external_function(EXTERNAL2(addfloatlists, FIELD_LIST_FLOAT, FIELD_LIST_FLOAT, FIELD_LIST_FLOAT));
+   register_external_function(EXTERNAL1(intlistlength, FIELD_INT, FIELD_LIST_INT));
+   register_external_function(EXTERNAL2(intlistdiff, FIELD_LIST_INT, FIELD_LIST_INT, FIELD_LIST_INT));
+   register_external_function(EXTERNAL2(intlistnth, FIELD_INT, FIELD_LIST_INT, FIELD_INT));
    
    return true;
 }

@@ -60,7 +60,7 @@ normalize(EXTERNAL_ARG(x))
       ptr = ptr->get_tail();  
    }
    
-   float_list *ls(from_stack_to_list(vals));
+   float_list *ls(from_stack_to_list<stack_float_list, float_list>(vals));
    
    RETURN_ARG(ls);
 }
@@ -95,7 +95,7 @@ damp(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2), EXTERNAL_ARG(fact))
       ptr2 = ptr2->get_tail();
    }
    
-   float_list *ptr(from_stack_to_list(vals));
+   float_list *ptr(from_stack_to_list<stack_float_list,float_list>(vals));
    
    RETURN_ARG(ptr);
 }
@@ -118,7 +118,7 @@ divide(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
       ptr2 = ptr2->get_tail();
    }
    
-   float_list *ptr(from_stack_to_list(vals));
+   float_list *ptr(from_stack_to_list<stack_float_list, float_list>(vals));
       
    RETURN_ARG(ptr);
 }
@@ -153,7 +153,7 @@ convolve(EXTERNAL_ARG(bin_fact), EXTERNAL_ARG(ls))
       vals.push(sum);
    }
    
-   float_list *ptr(from_stack_to_list(vals));
+   float_list *ptr(from_stack_to_list<stack_float_list, float_list>(vals));
       
    RETURN_ARG(ptr);
 }
@@ -176,7 +176,7 @@ addfloatlists(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
       ptr2 = ptr2->get_tail();
    }
    
-   float_list *ptr(from_stack_to_list(vals));
+   float_list *ptr(from_stack_to_list<stack_float_list, float_list>(vals));
       
    RETURN_ARG(ptr);
 }

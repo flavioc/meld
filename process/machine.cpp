@@ -160,6 +160,8 @@ machine::slice_function(void)
 void
 machine::start(void)
 {
+   state::PROGRAM->print_predicates(cout);
+
    deactivate_signals();
    
    if(stat_enabled()) {
@@ -245,6 +247,9 @@ get_creation_function(const scheduler_type sched_type)
       case SCHED_THREADS_STATIC_LOCAL:
       case SCHED_THREADS_SINGLE_LOCAL:
          return database::create_node_fn(sched::static_local::create_node);
+      case SCHED_THREADS_STATIC_LOCAL_PRIO:
+      printf("here\n");
+         return database::create_node_fn(sched::static_local_prio::create_node);
       case SCHED_THREADS_DYNAMIC_LOCAL:
          return database::create_node_fn(sched::dynamic_local::create_node);
       case SCHED_THREADS_PROGRAMMABLE_LOCAL:
@@ -291,6 +296,9 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
    switch(sched_type) {
       case SCHED_THREADS_STATIC_LOCAL:
          schedulers = sched::static_local::start(num_threads);
+         break;
+      case SCHED_THREADS_STATIC_LOCAL_PRIO:
+         schedulers = sched::static_local_prio::start(num_threads);
          break;
       case SCHED_THREADS_STATIC_BUFF:
          schedulers = sched::static_buff::start(num_threads);

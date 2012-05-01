@@ -61,7 +61,6 @@ static_local::new_work(const node *, work& new_work)
    thread_node *to(dynamic_cast<thread_node*>(new_work.get_node()));
    
    assert_thread_push_work();
-   //assert(is_active());
    
    node_work node_new_work(new_work);
    

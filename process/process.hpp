@@ -28,6 +28,7 @@ private:
    vm::state state;
    
    void do_work(work&);
+   void do_tuple_action(db::node *, vm::tuple *, const vm::ref_count);
    void do_tuple_add(db::node *, vm::tuple *, const vm::ref_count);
    void do_agg_tuple_add(db::node *, vm::tuple *, const vm::ref_count);
    void do_loop(void);

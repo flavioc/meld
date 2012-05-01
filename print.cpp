@@ -11,7 +11,7 @@ using namespace std;
 int
 main(int argc, char **argv)
 {
-   if(argc != 2) {
+   if(argc < 2) {
       fprintf(stderr, "usage: print <bytecode file>\n");
       return EXIT_FAILURE;
    }
@@ -20,7 +20,13 @@ main(int argc, char **argv)
    
    program prog(file);
    
-   prog.print_bytecode(cout);
+   if(argc == 2)
+      prog.print_bytecode(cout);
+   else {
+      for(int i(2); i < argc; ++i) {
+         prog.print_bytecode_by_predicate(cout, string(argv[i]));
+      }
+   }
    
    return EXIT_SUCCESS;
 }

@@ -11,7 +11,7 @@ namespace vm
    
 const size_t EXTERNAL_ARG_LIMIT(100);
 
-typedef utils::byte external_function_id;
+typedef size_t external_function_id;
 
 typedef all_val argument;
 typedef argument (*external_function_ptr0)();

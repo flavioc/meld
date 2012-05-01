@@ -28,6 +28,7 @@ help(void)
    fprintf(stderr, "\t-c <scheduler>\tselect scheduling type\n");
    fprintf(stderr, "\t\t\tsl simple serial scheduler\n");
    fprintf(stderr, "\t\t\ttlX static division with threads\n");
+   fprintf(stderr, "\t\t\ttlpX static division with threads\n");
    fprintf(stderr, "\t\t\ttbX static division with threads and buffering\n");
    fprintf(stderr, "\t\t\ttdX initial static division but allow work stealing\n");
    fprintf(stderr, "\t\t\ttxX initial static division but allow direct work stealing\n");
@@ -101,6 +102,7 @@ parse_sched(char *sched)
    match_mpi("mpistatic", sched, SCHED_MPI_AND_THREADS_STATIC_LOCAL) ||
       match_mpi("mpidynamic", sched, SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL) ||
       match_mpi("mpisingle", sched, SCHED_MPI_AND_THREADS_SINGLE_LOCAL) ||
+      match_threads("tlp", sched, SCHED_THREADS_STATIC_LOCAL_PRIO) ||
       match_threads("tl", sched, SCHED_THREADS_STATIC_LOCAL) ||
       match_threads("tb", sched, SCHED_THREADS_STATIC_BUFF) ||
       match_threads("td", sched, SCHED_THREADS_DYNAMIC_LOCAL) ||

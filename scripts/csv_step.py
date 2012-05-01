@@ -20,10 +20,12 @@ out_file = str(sys.argv[2])
 
 def parse_bench_size(bench):
    vec = bench.split('_')
-   size = vec[1]
+   size = vec[len(vec)-2]
    if len(size) == 2:
       return size[0]
-   else:
+   elif len(size) == 3:
+      return size[:2]
+   elif len(size) == 4:
       return size[:2]
 
 def write_header(w):
@@ -44,6 +46,7 @@ def output_file(outfile):
    serial = None
    for bench, bench_data in natural_dict_sort(data):
       size = parse_bench_size(bench)
+      print size
       if serial is None:
          serial = bench_data['sl'][1]
       output_bench_data(int(size), serial, writer, bench_data)

@@ -146,7 +146,7 @@ void
 node::delete_by_leaf(const predicate *pred, tuple_trie_leaf *leaf)
 {
    tuple_trie *tr(get_storage(pred));
-   
+
    tr->delete_by_leaf(leaf);
 }
 

@@ -289,6 +289,7 @@ protected:
    void commit_delete(trie_node *, vm::ref_count);
    size_t delete_branch(trie_node *);
    void delete_path(trie_node *);
+   void sanity_check(void) const;
    
    virtual trie_leaf* create_leaf(void *data, const vm::ref_count many) = 0;
    void inner_delete_by_leaf(trie_leaf *, const vm::ref_count);

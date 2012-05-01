@@ -4,7 +4,7 @@ set output "| ps2pdf - `echo $OUTPUT`"
 load 'speedup.plt'
 load 'linestyles.plt'
 
-set xlabel "Size / Workers" font "Helvetica,25" offset 0,-1
+set xlabel "Workers (Dataset Size)" font "Helvetica,25" offset 0,-1
 set ylabel "Execution Time" font "Helvetica,25"
 
 set noytics

@@ -6,6 +6,8 @@ namespace utils
 {
    
 typedef unsigned char byte;
+
+void print_byte(byte);
    
 }
 

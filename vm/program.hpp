@@ -16,6 +16,9 @@ namespace process {
 }
 
 namespace vm {
+
+const size_t INIT_PREDICATE_ID(0);
+const size_t SETPRIO_PREDICATE_ID(1);
    
 class program
 {
@@ -29,6 +32,8 @@ private:
    std::vector<predicate*> route_predicates;
    
    bool safe;
+
+   void print_predicate_code(std::ostream&, predicate*) const;
    
 public:
    
@@ -40,6 +45,7 @@ public:
    
    void print_bytecode(std::ostream&) const;
    void print_predicates(std::ostream&) const;
+   void print_bytecode_by_predicate(std::ostream&, const std::string&) const;
    
    predicate* get_predicate(const predicate_id&) const;
    predicate* get_route_predicate(const size_t&) const;

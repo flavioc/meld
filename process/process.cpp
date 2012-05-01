@@ -24,15 +24,34 @@ get_bytecode(vm::tuple *tuple)
 }
 
 void
+process::do_tuple_action(node *node, vm::tuple *tuple, const ref_count count)
+{
+   assert(count == 1);
+   
+   switch(tuple->get_predicate_id()) {
+      case vm::SETPRIO_PREDICATE_ID: {
+         const int new_priority(tuple->get_int(0));
+         cout << "new priority: " << new_priority << endl;
+         scheduler->set_node_priority(node, new_priority);
+      }   
+      break;
+      default:
+         assert(false);
+   }
+   
+   delete tuple;
+}
+
+void
 process::do_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
 {
    if(tuple->is_linear()) {
       state.setup(tuple, node, count);
       const execution_return ret(execute_bytecode(get_bytecode(tuple), state));
       
-      if(ret == EXECUTION_CONSUMED)
+      if(ret == EXECUTION_CONSUMED) {
          delete tuple;
-      else
+      } else
          node->add_tuple(tuple, count);
    } else {
       const bool is_new(node->add_tuple(tuple, count));
@@ -112,7 +131,7 @@ process::do_work(work& w)
    ref_count count = stuple->get_count();
    node *node(w.get_node());
    
-   // cout << node->get_id() << " " << *stuple << endl;
+   cout << node->get_id() << " " << *tuple << endl;
    
    if(count == 0)
       return;
@@ -121,11 +140,15 @@ process::do_work(work& w)
       node->pop_auto(stuple.get());
       
    if(count > 0) {
-      if(tuple->is_aggregate() && !w.force_aggregate())
+      if(tuple->is_action())
+         do_tuple_action(node, tuple, count);
+      else if(tuple->is_aggregate() && !w.force_aggregate())
          do_agg_tuple_add(node, tuple, count);
       else
          do_tuple_add(node, tuple, count);
    } else {
+      assert(!tuple->is_action());
+      
       count = -count;
       
       if(tuple->is_aggregate() && !w.force_aggregate()) {

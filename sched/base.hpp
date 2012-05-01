@@ -103,6 +103,9 @@ public:
    // work to be sent to a MPI process
    virtual void new_work_remote(process::remote *, const db::node::node_id, sched::message *) = 0;
    
+   // ACTIONS
+   virtual void set_node_priority(db::node *, const int) { printf("set prio\n"); }
+   
    virtual void init(const size_t) = 0;
    virtual void end(void) = 0;
    

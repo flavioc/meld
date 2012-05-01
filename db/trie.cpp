@@ -252,9 +252,11 @@ trie_node::insert(const tuple_field& field, const field_type& type, val_stack& v
    assert(!is_leaf());
    
    new_child->parent = this;
-   
+
    if(is_hashed()) {
-      trie_hash *hash((trie_hash*)child);
+		assert(child);
+		
+		trie_hash *hash((trie_hash*)child);
       
       hash->total++;
       
@@ -311,7 +313,8 @@ trie_node::convert_hash(const field_type& type)
    
    hash->total = total;
    child = (trie_node*)hash;
-   hashed = true;
+	assert(!is_hashed());
+	hashed = true;
    
    assert(is_hashed());
 }
@@ -450,7 +453,7 @@ trie::delete_path(trie_node *node)
    
    if(node == root) // reached root
       return;
-      
+   
    assert(node->child == NULL);
    
    if(node->prev != NULL)
@@ -472,6 +475,8 @@ trie::delete_path(trie_node *node)
          
          if(hash->total == 0) {
             delete hash;
+				node->hashed = false;
+				node->bucket = NULL;
             assert(parent != (trie_node*)hash);
             parent->child = NULL;
             delete_path(parent);
@@ -495,6 +500,8 @@ trie::delete_path(trie_node *node)
 size_t
 trie::delete_branch(trie_node *node)
 {
+   printf("CALLED DELETE BRANCH\n");
+
    size_t count;
    
    if(node->is_leaf()) {
@@ -523,7 +530,7 @@ trie::delete_branch(trie_node *node)
    count = 0;
    
    if(node->is_hashed()) {
-      trie_hash *hash((trie_hash*)next);
+      trie_hash *hash(node->get_hash());
       
       for(size_t i(0); i < hash->num_buckets; ++i) {
          if(hash->buckets[i]) {
@@ -553,6 +560,12 @@ trie::delete_branch(trie_node *node)
    node->child = NULL;
    
    return count;
+}
+
+void
+trie::sanity_check(void) const
+{
+   assert(root->count_refs() == number_of_references);
 }
 
 trie_node*
@@ -683,9 +696,11 @@ trie::commit_delete(trie_node *node, ref_count many)
 void
 trie::delete_by_leaf(trie_leaf *leaf)
 {
+   sanity_check();
    --number_of_references;
    assert(number_of_references >= 0);
    inner_delete_by_leaf(leaf, 1);
+   sanity_check();
 }
 
 // we assume that number_of_references was decrement previous to this
@@ -835,12 +850,17 @@ tuple_trie::check_insert(vm::tuple *tpl, const ref_count many, bool& found)
       }
    }
    
-   return trie::check_insert((void*)tpl, many, vals, typs, found);
+   trie_node *ret(trie::check_insert((void*)tpl, many, vals, typs, found));
+
+
+   return ret;
 }
 
 bool
 tuple_trie::insert_tuple(vm::tuple *tpl, const ref_count many)
 {
+   sanity_check();
+
    bool found;
    check_insert(tpl, many, found);
    
@@ -851,6 +871,7 @@ tuple_trie::insert_tuple(vm::tuple *tpl, const ref_count many)
  
    number_of_references += many;
    
+   sanity_check();
    basic_invariants();
    
    const bool is_new(!found);

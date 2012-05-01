@@ -116,7 +116,16 @@ program::get_bytecode(const predicate_id& id) const
 }
 
 void
-program::print_bytecode(ostream& cout) const
+program::print_predicate_code(ostream& out, predicate* p) const
+{
+   out << "PROCESS " << p->get_name()
+      << " (" << code_size[p->get_id()] << "):" << endl;
+   instrs_print(code[p->get_id()], code_size[p->get_id()], this, out);
+   out << "END PROCESS;" << endl;
+}
+
+void
+program::print_bytecode(ostream& out) const
 {
    for(size_t i = 0; i < num_predicates(); ++i) {
       predicate_id id = (predicate_id)i;
@@ -124,11 +133,14 @@ program::print_bytecode(ostream& cout) const
       if(i != 0)
          cout << endl;
          
-      cout << "PROCESS " << get_predicate(id)->get_name()
-           << " (" << code_size[i] << "):" << endl;
-      instrs_print(code[i], code_size[i], this, cout);
-      cout << "END PROCESS;" << endl;
+      print_predicate_code(out, get_predicate(id));
    }
+}
+
+void
+program::print_bytecode_by_predicate(ostream& out, const string& name) const
+{
+   print_predicate_code(out, get_predicate_by_name(name));
 }
 
 void
@@ -138,8 +150,9 @@ program::print_predicates(ostream& cout) const
       cout << ">> Safe program" << endl;
    else
       cout << ">> Unsafe program" << endl;
-   for(size_t i(0); i < num_predicates(); ++i)
-      cout << *predicates[i] << endl;
+   for(size_t i(0); i < num_predicates(); ++i) {
+      cout << predicates[i] << " " << *predicates[i] << endl;
+   }
 }
 
 predicate*
@@ -160,8 +173,12 @@ program::get_init_predicate(void) const
 {
    static predicate *init(NULL);
    
-   if(init == NULL)
-      init = get_predicate_by_name("_init");
+   if(init == NULL) {
+      init = get_predicate(INIT_PREDICATE_ID);
+      assert(init->get_name() == "_init");
+   }
+
+   assert(init != NULL);
       
    return init;
 }

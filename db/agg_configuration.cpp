@@ -267,7 +267,7 @@ agg_configuration::generate_sum_list_float(const field_num field) const
    for(size_t j(0); j < num_lists; ++j)
       assert(float_list::is_null(lists[j]));
    
-   float_list *ptr(from_stack_to_list(vals));
+   float_list *ptr(from_stack_to_list<stack_float_list, float_list>(vals));
    
    ret->set_float_list(field, ptr);
    
