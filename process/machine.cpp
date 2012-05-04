@@ -336,16 +336,29 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
 
 machine::~machine(void)
 {
-   delete state::PROGRAM;
+   // when deleting database, we need to access the program,
+   // so we must delete this in correct order
    delete state::DATABASE;
    
    for(process_id i(0); i != num_threads; ++i)
       delete process_list[i];
+
+   delete state::PROGRAM;
       
    if(alarm_thread)
       delete alarm_thread;
       
    mem::cleanup(num_threads);
+
+   state::PROGRAM = NULL;
+   state::DATABASE = NULL;
+   state::MACHINE = NULL;
+   state::REMOTE = NULL;
+   state::ROUTER = NULL;
+   state::NUM_THREADS = 0;
+   state::NUM_PREDICATES = 0;
+   state::NUM_NODES = 0;
+   state::NUM_NODES_PER_PROCESS = 0;
 }
 
 }
