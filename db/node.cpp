@@ -196,6 +196,8 @@ node::node(const node_id _id, const node_id _trans):
 
 node::~node(void)
 {
+   for(simple_tuple_map::iterator it(tuples.begin()), end(tuples.end()); it != end; it++)
+      delete it->second;
 }
 
 void
