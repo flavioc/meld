@@ -87,9 +87,11 @@ show_inter_help(void)
 	cout << "Meld server command line" << endl;
 	
 	cout << "Commands:" << endl;
-	cout << "\tversion\t show version" << endl;
-	cout << "\thelp\t show this text" << endl;
-	cout << "\texit\t exit the server" << endl;
+	cout << "\tload <file>\t loads file and runs it" << endl;
+	cout << "\tstatus\t\t show server status" << endl;
+	cout << "\tversion\t\t show version" << endl;
+	cout << "\thelp\t\t show this text" << endl;
+	cout << "\texit\t\t exit the server" << endl;
 }
 
 static void
@@ -208,6 +210,7 @@ main(int argc, char **argv)
 		
 		command_type cmd(parse_command(string(input)));
 
+      add_history(input);
       delete input;
 		
 		switch(cmd) {
