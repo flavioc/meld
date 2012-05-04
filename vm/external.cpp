@@ -15,9 +15,11 @@ namespace vm
    
 using namespace external;
 
+typedef unordered_map<external_function_id, external_function*> hash_external_type;
+
 static bool init_external_functions(void);
 static external_function_id external_counter(0);   
-static unordered_map<external_function_id, external_function*> hash_external;
+static hash_external_type hash_external;
 static bool dummy(init_external_functions());
 
 void
@@ -100,6 +102,13 @@ external3(external_function_ptr ptr, const field_type ret, const field_type arg1
    return f;
 }
 
+static void
+cleanup_externals(void)
+{
+   for(hash_external_type::iterator it(hash_external.begin()), end(hash_external.end()); it != end; it++)
+      delete it->second;
+}
+
 static bool
 init_external_functions(void)
 {
@@ -120,6 +129,8 @@ init_external_functions(void)
    register_external_function(EXTERNAL1(intlistlength, FIELD_INT, FIELD_LIST_INT));
    register_external_function(EXTERNAL2(intlistdiff, FIELD_LIST_INT, FIELD_LIST_INT, FIELD_LIST_INT));
    register_external_function(EXTERNAL2(intlistnth, FIELD_INT, FIELD_LIST_INT, FIELD_INT));
+
+   atexit(cleanup_externals);
    
    return true;
 }
