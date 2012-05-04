@@ -198,6 +198,8 @@ node::~node(void)
 {
    for(simple_tuple_map::iterator it(tuples.begin()), end(tuples.end()); it != end; it++)
       delete it->second;
+   for(aggregate_map::iterator it(aggs.begin()), end(aggs.end()); it != end; it++)
+      delete it->second;
 }
 
 void
