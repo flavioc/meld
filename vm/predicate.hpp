@@ -56,10 +56,10 @@ private:
    void cache_info(void);
    
    explicit predicate(void);
+
+   virtual ~predicate(void);
    
 public:
-   
-   static strat_level MAX_STRAT_LEVEL;
    
    inline bool is_aggregate(void) const { return agg_info != NULL; }
    
@@ -92,7 +92,7 @@ public:
    
    void print(std::ostream&) const;
    
-   static predicate* make_predicate_from_buf(utils::byte *buf, code_size_t *code_size);
+   static predicate* make_predicate_from_buf(utils::byte *buf, code_size_t *code_size, const predicate_id);
 };
 
 std::ostream& operator<<(std::ostream&, const predicate&);

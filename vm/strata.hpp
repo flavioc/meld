@@ -6,7 +6,7 @@
 #include <iostream>
 
 #include "conf.hpp"
-#include "vm/predicate.hpp"
+#include "vm/program.hpp"
 
 namespace vm
 {
@@ -27,7 +27,7 @@ public:
       
       size_t cur(current_level);
       
-      while(current_level < predicate::MAX_STRAT_LEVEL && vec[cur] == 0) {
+      while(current_level < program::MAX_STRAT_LEVEL && vec[cur] == 0) {
          cur++;
       }
       
@@ -47,12 +47,12 @@ public:
    }
    
    explicit strata(void):
-      vec(predicate::MAX_STRAT_LEVEL),
+      vec(program::MAX_STRAT_LEVEL),
       current_level(0)
    {
-      vec.resize(predicate::MAX_STRAT_LEVEL);
+      vec.resize(program::MAX_STRAT_LEVEL);
 #ifndef NDEBUG
-      assert(vec.size() == predicate::MAX_STRAT_LEVEL);
+      assert(vec.size() == program::MAX_STRAT_LEVEL);
       for(size_t i(0); i < vec.size(); ++i) {
          assert(vec[i] == 0);
       }

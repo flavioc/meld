@@ -7,7 +7,7 @@
 using namespace std;
 using namespace utils;
 
-namespace stat
+namespace statistics
 {
 
 void

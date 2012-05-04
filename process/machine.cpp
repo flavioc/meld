@@ -11,6 +11,7 @@
 #include "mem/stat.hpp"
 #include "stat/stat.hpp"
 #include "sched/local/threads_buff.hpp"
+#include "interface.hpp"
 
 using namespace process;
 using namespace db;
@@ -20,7 +21,7 @@ using namespace boost;
 using namespace sched;
 using namespace mem;
 using namespace utils;
-using namespace stat;
+using namespace statistics;
 
 namespace process
 {
@@ -189,17 +190,17 @@ machine::start(void)
       slices.write(get_stat_file(), sched_type);
    }
 
-   const bool will_print(will_show_database || will_dump_database);
+   const bool will_print(show_database || dump_database);
 
    if(will_print) {
       if(rout.use_mpi()) {
-         if(will_show_database) {
+         if(show_database) {
             const string filename(get_output_filename("db", remote::self->get_rank()));
             ofstream fp(filename.c_str());
             
             state::DATABASE->print_db(fp);
          }
-         if(will_dump_database) {
+         if(dump_database) {
             const string filename(get_output_filename("dump", remote::self->get_rank()));
             ofstream fp(filename.c_str());
             state::DATABASE->dump_db(fp);
@@ -209,24 +210,24 @@ machine::start(void)
          
          // read and output files
          if(remote::self->is_leader()) {
-            if(will_show_database) {
+            if(show_database) {
                for(size_t i(0); i < remote::world_size; ++i)
                   file_print_and_remove(get_output_filename("db", i));
             }
-            if(will_dump_database) {
+            if(dump_database) {
                for(size_t i(0); i < remote::world_size; ++i)
                   file_print_and_remove(get_output_filename("dump", i));
             }
          }
       } else {
-         if(will_show_database)
+         if(show_database)
             state::DATABASE->print_db(cout);
-         if(will_dump_database)
+         if(dump_database)
             state::DATABASE->dump_db(cout);
       }
    }
 
-   if(will_show_memory) {
+   if(memory_statistics) {
 #ifdef MEMORY_STATISTICS
       cout << "Total memory in use: " << get_memory_in_use() / 1024 << "KB" << endl;
       cout << "Malloc()'s called: " << get_num_mallocs() << endl;
@@ -273,9 +274,6 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
    filename(file),
    num_threads(th),
    sched_type(_sched_type),
-   will_show_database(false),
-   will_dump_database(false),
-   will_show_memory(false),
    rout(_rout),
    alarm_thread(NULL),
    slices(th)

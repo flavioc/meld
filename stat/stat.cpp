@@ -5,7 +5,7 @@
 
 using namespace std;
 
-namespace stat
+namespace statistics
 {
 
 static bool debug_file_set(false);

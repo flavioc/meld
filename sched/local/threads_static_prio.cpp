@@ -296,7 +296,7 @@ static_local_prio::find_scheduler(const node *n)
 }
 
 void
-static_local_prio::write_slice(stat::slice& sl) const
+static_local_prio::write_slice(statistics::slice& sl) const
 {
 #ifdef INSTRUMENTATION
    base::write_slice(sl);

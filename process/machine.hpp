@@ -43,26 +43,19 @@ private:
    const std::string filename;
    const size_t num_threads;
    const sched::scheduler_type sched_type;
-   bool will_show_database;
-   bool will_dump_database;
-   bool will_show_memory;
    
    std::vector<process*> process_list;
    
    router& rout;
    
    boost::thread *alarm_thread;
-   stat::slice_set slices;
+   statistics::slice_set slices;
    
    void deactivate_signals(void);
    void slice_function(void);
    void set_timer(void);
    
 public:
-   
-   void show_database(void) { will_show_database = true; }
-   void dump_database(void) { will_dump_database = true; }
-   void show_memory(void) { will_show_memory = true; }
    
    sched::scheduler_type get_sched_type(void) const { return sched_type; }
    

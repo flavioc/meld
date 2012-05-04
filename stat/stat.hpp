@@ -6,7 +6,7 @@
 
 #include "conf.hpp"
 
-namespace stat
+namespace statistics
 {
 
 enum sched_state

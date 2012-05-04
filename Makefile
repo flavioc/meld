@@ -31,7 +31,7 @@ WARNINGS = -Wall -Wextra #-Werror
 C0X = -std=c++0x
 
 CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) $(COX)
-LIBRARIES = -lpthread -lm -lboost_thread-mt
+LIBRARIES = -lpthread -lm -lboost_thread-mt -lpion-net -lssl -lboost_system-mt -lcrypto -lpion-common
 
 #ifneq ($(COMPILE_MPI),)
 	LIBRARIES += -lmpi -lmpi_cxx -lboost_serialization-mt -lboost_mpi-mt
@@ -77,6 +77,7 @@ OBJS = utils/utils.o \
 			 process/remote.o \
 			 process/router.o \
 			 mem/thread.o \
+			 mem/center.o \
 			 mem/stat.o \
 			 sched/common.o \
 			 sched/mpi/message.o \
@@ -103,9 +104,10 @@ OBJS = utils/utils.o \
 			 external/utils.o \
 			 stat/stat.o \
 			 stat/slice.o \
-			 stat/slice_set.o
+			 stat/slice_set.o \
+			 interface.o
 
-all: meld print predicates
+all: meld print predicates server
 
 meld: $(OBJS) meld.o
 	$(COMPILE) meld.o -o meld
@@ -116,8 +118,18 @@ print: $(OBJS) print.o
 predicates: $(OBJS) predicates.o
 	$(COMPILE) predicates.o -o predicates
 
+server: $(OBJS) server.o
+	$(COMPILE) server.o -o server -lreadline
+	
 meld.o: meld.cpp process/machine.hpp \
 				process/router.hpp \
+				interface.hpp
+
+server.o: server.cpp process/machine.hpp \
+			process/router.hpp \
+			interface.hpp
+
+interface.o: interface.cpp interface.hpp \
 				sched/types.hpp
 
 print.o: print.cpp vm/program.hpp
@@ -207,6 +219,8 @@ mem/thread.o: mem/thread.cpp mem/thread.hpp \
 							mem/base.hpp mem/chunk.hpp
 
 mem/stat.o: mem/stat.cpp mem/stat.hpp
+
+mem/center.o: mem/center.cpp mem/center.hpp
 
 db/trie.o: db/trie.cpp db/trie.hpp \
 					utils/utils.hpp utils/stack.hpp

@@ -14,7 +14,7 @@ using namespace sched;
 using namespace std;
 using namespace utils;
 
-namespace stat
+namespace statistics
 {
 
 static void
@@ -54,7 +54,7 @@ slice_set::write_general(const string& file, const string& title,
       line << to_string<unsigned long>(slice * SLICE_PERIOD);
       for(size_t proc(0); proc < state::NUM_THREADS; ++proc) {
          assert(iters[proc] != slices[proc].end());
-         const stat::slice& sl(*iters[proc]);
+         const statistics::slice& sl(*iters[proc]);
          CALL_MEMBER_FN(sl, fun)(line);
          iters[proc]++;
       }

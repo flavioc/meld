@@ -40,6 +40,7 @@ op_string(const instr_op op)
 		case OP_DIVF: return string("FLOAT DIV"); 
 		case OP_NEQA: return string("ADDR NOT EQUAL"); 
 		case OP_EQA: return string("ADDR EQUAL"); 
+      case OP_GREATERA: return string("ADDR GREATER");
 	}
 	
    return string("");
@@ -89,22 +90,45 @@ val_string(const instr_val v, pcounter *pm)
 using namespace vm::instr;
 
 static inline void
-instrs_print_until_return_select(byte_code code, const program* prog, ostream& cout)
+instrs_print_until_return_select(byte_code code, const int tabcount, const program* prog, ostream& cout)
 {
    pcounter pc = code;
    pcounter new_pc;
    
 	while (true) {
-		new_pc = instr_print(pc, true, prog, cout);
+		new_pc = instr_print(pc, true, tabcount, prog, cout);
 		if(fetch(pc) == RETURN_SELECT_INSTR)
          return;
       pc = new_pc;
 	}
 }
 
-pcounter
-instr_print(pcounter pc, const bool recurse, const program *prog, ostream& cout)
+static inline pcounter
+instrs_print_until_end_linear(byte_code code, const int tabcount, const program* prog, ostream& cout)
 {
+   pcounter pc = code;
+   pcounter new_pc;
+
+   while (true) {
+      new_pc = instr_print(pc, true, tabcount, prog, cout);
+      if(fetch(pc) == END_LINEAR_INSTR)
+         return pc;
+      pc = new_pc;
+   }
+}
+
+static inline void
+print_tab(const int tabcount)
+{
+   for(int i = 0; i < tabcount; ++i)
+      cout << "  ";
+}
+
+pcounter
+instr_print(pcounter pc, const bool recurse, const int tabcount, const program *prog, ostream& cout)
+{
+   print_tab(tabcount);
+
    switch(fetch(pc)) {
       case RETURN_INSTR:
          cout << "RETURN" << endl;
@@ -115,14 +139,19 @@ instr_print(pcounter pc, const bool recurse, const program *prog, ostream& cout)
       case RETURN_DERIVED_INSTR:
          cout << "RETURN DERIVED" << endl;
          break;
+      case END_LINEAR_INSTR:
+         cout << "END LINEAR" << endl;
+         break;
       case RESET_LINEAR_INSTR:
          cout << "RESET LINEAR" << endl;
+         pc = instrs_print_until_end_linear(advance(pc), tabcount + 1, prog, cout);
          break;
 	   case IF_INSTR: {
             cout << "IF (" << reg_string(if_reg(pc)) << ") THEN" << endl;
 				if(recurse) {
                pcounter cont = instrs_print(advance(pc), if_jump(pc) - (advance(pc) - pc),
-                                       prog, cout);
+                                       tabcount + 1, prog, cout);
+               print_tab(tabcount);
                cout << "ENDIF" << endl;
 					return cont;
 				}
@@ -194,7 +223,9 @@ instr_print(pcounter pc, const bool recurse, const program *prog, ostream& cout)
                   
                   m += iter_match_size;
                   
-                  cout << endl << "  (match)." << iter_match_field(match)
+                  cout << endl;
+                  print_tab(tabcount);
+                  cout << "  (match)." << iter_match_field(match)
                        << "=" << val_string(iter_match_val(match), &m);
                   if(iter_match_end(match))
                      break;
@@ -301,7 +332,7 @@ instr_print(pcounter pc, const bool recurse, const program *prog, ostream& cout)
                const code_size_t hashed(select_hash(hash_start, i));
                
                if(hashed != 0)
-                  instrs_print_until_return_select(select_hash_code(hash_start, elems, hashed), prog, cout);
+                  instrs_print_until_return_select(select_hash_code(hash_start, elems, hashed), tabcount + 1, prog, cout);
             }
             
             return pc + select_size(pc);
@@ -327,17 +358,17 @@ instr_print(pcounter pc, const bool recurse, const program *prog, ostream& cout)
 pcounter
 instr_print_simple(pcounter pc, const program *prog, ostream& cout)
 {
-   return instr_print(pc, false, prog, cout);
+   return instr_print(pc, false, 0, prog, cout);
 }
  
 byte_code
-instrs_print(byte_code code, const code_size_t len, const program* prog, ostream& cout)
+instrs_print(byte_code code, const code_size_t len, const int tabcount, const program* prog, ostream& cout)
 {
    pcounter pc = code;
    pcounter until = code + len;
    
 	for (; pc < until; ) {
-		pc = instr_print(pc, true, prog, cout);
+		pc = instr_print(pc, true, tabcount, prog, cout);
 	}
 	
    return until;

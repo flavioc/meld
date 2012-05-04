@@ -21,15 +21,12 @@ namespace vm {
 #define PRED_AGG_IMMEDIATE 0x08
 #define PRED_AGG_UNSAFE 0x00
 
-predicate_id predicate::current_id = 0;
-strat_level predicate::MAX_STRAT_LEVEL = 0;
-
 predicate*
-predicate::make_predicate_from_buf(byte *buf, code_size_t *code_size)
+predicate::make_predicate_from_buf(byte *buf, code_size_t *code_size, const predicate_id id)
 {
    predicate *pred = new predicate();
    
-   pred->id = current_id++;
+   pred->id = id;
 
    // get code size
    *code_size = (code_size_t)*((code_size_t*)buf);
@@ -62,7 +59,6 @@ predicate::make_predicate_from_buf(byte *buf, code_size_t *code_size)
    
    // read stratification level
    pred->level = (strat_level)buf[0];
-   MAX_STRAT_LEVEL = max(pred->level + 1, MAX_STRAT_LEVEL);
    buf++;
 
    // read number of fields
@@ -147,6 +143,11 @@ predicate::predicate(void)
 {
    tuple_size = 0;
    agg_info = NULL;
+}
+
+predicate::~predicate(void)
+{
+   delete agg_info;
 }
 
 void

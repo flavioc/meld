@@ -333,7 +333,7 @@ programmable_local::get_work(work& new_work)
 }
 
 void
-programmable_local::write_slice(stat::slice& sl) const
+programmable_local::write_slice(statistics::slice& sl) const
 {
 #ifdef INSTRUMENTATION
    base::write_slice(sl);

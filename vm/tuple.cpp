@@ -96,6 +96,8 @@ tuple::copy_field(tuple *ret, const field_num i) const
       case FIELD_LIST_NODE:
          ret->set_node_list(i, get_node_list(i));
          break;
+      default:
+         throw type_error("Unrecognized field type " + to_string((int)i) + ": " + to_string(get_field_type(i)));
    }
 }
 

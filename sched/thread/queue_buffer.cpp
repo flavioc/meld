@@ -38,7 +38,7 @@ queue_buffer::init(const size_t num_threads)
 {
    // init buffered queues
    for(size_t i(0); i < num_threads; ++i)
-      buffered_work.push_back(queue(predicate::MAX_STRAT_LEVEL));
+      buffered_work.push_back(queue(program::MAX_STRAT_LEVEL));
 }
 
 }

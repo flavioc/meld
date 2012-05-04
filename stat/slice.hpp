@@ -7,7 +7,7 @@
 #include "stat/stat.hpp"
 #include "utils/csv_line.hpp"
 
-namespace stat
+namespace statistics
 {
 
 class slice

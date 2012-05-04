@@ -299,7 +299,7 @@ static_buff::find_scheduler(const node *n)
 }
 
 void
-static_buff::write_slice(stat::slice& sl) const
+static_buff::write_slice(statistics::slice& sl) const
 {
 #ifdef INSTRUMENTATION
    base::write_slice(sl);

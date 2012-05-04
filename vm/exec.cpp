@@ -25,6 +25,7 @@ enum return_type {
    RETURN_NEXT,
    RETURN_LINEAR,
    RETURN_DERIVED,
+	RETURN_END_LINEAR,
    RETURN_NO_RETURN
 };
 
@@ -68,6 +69,7 @@ move_to_reg(const pcounter& m, state& state,
          case FIELD_LIST_FLOAT: state.set_float_list(reg, tuple->get_float_list(field)); break;
          case FIELD_LIST_NODE: state.set_node_list(reg, tuple->get_node_list(field)); break;
          case FIELD_NODE: state.set_node(reg, tuple->get_node(field)); break;
+         default: throw vm_exec_error("don't know how to move this field (move_to_reg)");
       }
       
    } else if(val_is_host(from))
@@ -137,6 +139,8 @@ move_to_field(pcounter m, state& state, const instr_val& from)
          case FIELD_NODE:
             to_tuple->set_node(to_field, from_tuple->get_node(from_field));
             break;
+         default:
+            throw vm_exec_error("don't know how to move to field (move_to_field)");
       }
    } else {
       tuple* tuple(state.get_tuple(val_field_reg(m)));
@@ -204,10 +208,10 @@ execute_send(const pcounter& pc, state& state)
    simple_tuple *stuple(new simple_tuple(tuple, state.count));
 
    if(msg == dest) {
-      //cout << "sending " << *stuple << " to self" << endl;
+      cout << "sending " << *stuple << " to self" << endl;
       state::MACHINE->route_self(state.proc, state.node, stuple);
    } else {
-      //cout << "sending " << *stuple << " to " << dest_val << endl;
+      cout << "sending " << *stuple << " to " << dest_val << endl;
       state::MACHINE->route(state.node, state.proc, (node::node_id)dest_val, stuple);
    }
 }
@@ -493,6 +497,8 @@ execute_op(const pcounter& pc, state& state)
       case OP_DIVI: implement_operation(int_val, int_val, v1 / v2);
       case OP_NEQA: implement_operation(node_val, bool_val, v1 != v2);
       case OP_EQA: implement_operation(node_val, bool_val, v1 == v2);
+      case OP_GREATERA: implement_operation(node_val, bool_val, v1 > v2);
+      default: throw vm_exec_error("unknown operation (execute_op)");
    }
 #undef implement_operation
 }
@@ -633,10 +639,10 @@ build_match_object(match& m, pcounter pc, state& state, const predicate *pred)
 }
 
 static inline return_type
-execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples)
+execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples, const predicate *pred)
 {
    const bool old_is_linear = state.is_linear;
-   
+
    for(tuple_vector::iterator it(tuples.begin());
       it != tuples.end();
       ++it)
@@ -689,7 +695,6 @@ execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples)
       if(ret == RETURN_LINEAR)
          return ret;
       if(ret == RETURN_DERIVED && state.is_linear) {
-         //printf("Some previous tuple was linear\n");
          return RETURN_NO_RETURN;
       }
    }
@@ -922,13 +927,6 @@ execute_remove(pcounter pc, state& state)
    tuple_trie_leaf *leaf(state.get_leaf(reg));
    
    assert(leaf != NULL);
-   
-
-#if 0
-   cout << leaf->get_tuple()->get_tuple() << endl;
-   tuple *tpl(leaf->get_tuple()->get_tuple());
-   const predicate *p(tpl->get_predicate());
-#endif
 
    state.node->delete_by_leaf(state.get_tuple(reg)->get_predicate(), leaf);
 }
@@ -1032,14 +1030,19 @@ eval_loop:
          case ELSE_INSTR:
             throw vm_exec_error("ELSE instruction not supported");
          
+			case END_LINEAR_INSTR:
+				return RETURN_END_LINEAR;
+			
          case RESET_LINEAR_INSTR:
             {
                const bool old_is_linear(state.is_linear);
                
                state.is_linear = false;
                
-               execute(pc + RESET_LINEAR_BASE, state);
-               
+               return_type ret(execute(pc + RESET_LINEAR_BASE, state));
+
+					assert(ret == RETURN_END_LINEAR);
+
                state.is_linear = old_is_linear;
                
                pc += reset_linear_jump(pc);
@@ -1062,7 +1065,7 @@ eval_loop:
 #endif
 
                if(!matches.empty()) {
-                  const return_type ret(execute_iter(pc + ITER_BASE, advance(pc), state, matches));
+                  const return_type ret(execute_iter(pc + ITER_BASE, advance(pc), state, matches, pred));
                   
                   if(ret == RETURN_LINEAR)
                      return ret;

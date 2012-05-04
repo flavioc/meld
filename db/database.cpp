@@ -61,6 +61,7 @@ database::~database(void)
 {
    for(map_nodes::iterator it(nodes.begin()); it != nodes.end(); ++it)
       delete it->second;
+   nodes_total = 0;
 }
 
 node*

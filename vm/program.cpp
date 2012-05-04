@@ -24,8 +24,10 @@ static const size_t PREDICATE_DESCRIPTOR_SIZE = sizeof(code_size_t) +
                                                 PRED_ARGS_MAX +
                                                 PRED_NAME_SIZE_MAX +
                                                 PRED_AGG_INFO_MAX;
+strat_level program::MAX_STRAT_LEVEL(0);
 
-program::program(const string& filename)
+program::program(const string& filename):
+   init(NULL)
 {
    state::PROGRAM = this;
    
@@ -51,14 +53,16 @@ program::program(const string& filename)
    fp.read((char*)&num_nodes, sizeof(int_val));
    
    fp.seekg(num_nodes * database::node_size, ios_base::cur);
-   
+
    // read predicate information
    for(size_t i(0); i < num_predicates; ++i) {
       code_size_t size;
       fp.read((char*)buf, PREDICATE_DESCRIPTOR_SIZE);
       
-      predicates[i] = predicate::make_predicate_from_buf((unsigned char*)buf, &size);
+      predicates[i] = predicate::make_predicate_from_buf((unsigned char*)buf, &size, (predicate_id)i);
       code_size[i] = size;
+
+      MAX_STRAT_LEVEL = max(predicates[i]->get_strat_level() + 1, MAX_STRAT_LEVEL);
       
       if(predicates[i]->is_route_pred())
          route_predicates.push_back(predicates[i]);
@@ -86,6 +90,7 @@ program::~program(void)
       delete predicates[i];
       delete [] code[i];
    }
+   MAX_STRAT_LEVEL = 0;
 }
 
 predicate*
@@ -120,7 +125,7 @@ program::print_predicate_code(ostream& out, predicate* p) const
 {
    out << "PROCESS " << p->get_name()
       << " (" << code_size[p->get_id()] << "):" << endl;
-   instrs_print(code[p->get_id()], code_size[p->get_id()], this, out);
+   instrs_print(code[p->get_id()], code_size[p->get_id()], 0, this, out);
    out << "END PROCESS;" << endl;
 }
 
@@ -140,6 +145,12 @@ program::print_bytecode(ostream& out) const
 void
 program::print_bytecode_by_predicate(ostream& out, const string& name) const
 {
+	predicate *p(get_predicate_by_name(name));
+	
+	if(p == NULL) {
+		cerr << "Predicate " << name << " not found." << endl;
+		return;
+	}
    print_predicate_code(out, get_predicate_by_name(name));
 }
 
@@ -171,8 +182,6 @@ program::get_predicate_by_name(const string& name) const
 predicate*
 program::get_init_predicate(void) const
 {
-   static predicate *init(NULL);
-   
    if(init == NULL) {
       init = get_predicate(INIT_PREDICATE_ID);
       if(init->get_name() != "_init") {

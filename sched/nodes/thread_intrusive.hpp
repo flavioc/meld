@@ -23,7 +23,7 @@ private:
 	
 	prio_queue pqueue;
 	
-	size_t prio_count;
+	int prio_count;
 	
 public:
 	

@@ -563,7 +563,7 @@ trie::delete_branch(trie_node *node)
 void
 trie::sanity_check(void) const
 {
-   assert(root->count_refs() == number_of_references);
+   assert(root->count_refs() == (size_t)number_of_references);
 }
 
 trie_node*

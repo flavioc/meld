@@ -14,7 +14,7 @@ namespace sched
 {
    
 template <class C, class A> // parameter is a container and a counter
-class queue_tree_node
+class queue_tree_node: public mem::base
 {
 public:
    typedef queue_tree_node<C, A> tree_node;

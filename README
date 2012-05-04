@@ -3,6 +3,7 @@ Dependencies:
 	- Boost
 		- MPI
 		- Threads
+   - libreadline
 	- A compiler
 		G++ 4.4/4.2, maybe 4.6
 		LLVM/Clang also works

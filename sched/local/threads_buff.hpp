@@ -91,7 +91,7 @@ public:
    
    static std::vector<sched::base*>& start(const size_t);
    
-   virtual void write_slice(stat::slice&) const;
+   virtual void write_slice(statistics::slice&) const;
    
    explicit static_buff(const vm::process_id);
    

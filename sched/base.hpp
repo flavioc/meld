@@ -35,13 +35,13 @@ protected:
 #ifdef INSTRUMENTATION
    mutable utils::atomic<size_t> processed_facts;
    mutable utils::atomic<size_t> sent_facts;
-   mutable stat::sched_state ins_state;
+   mutable statistics::sched_state ins_state;
    
-#define ins_active ins_state = stat::NOW_ACTIVE
-#define ins_idle ins_state = stat::NOW_IDLE
-#define ins_sched ins_state = stat::NOW_SCHED
-#define ins_round ins_state = stat::NOW_ROUND
-#define ins_comm ins_state = stat::NOW_COMM
+#define ins_active ins_state = statistics::NOW_ACTIVE
+#define ins_idle ins_state = statistics::NOW_IDLE
+#define ins_sched ins_state = statistics::NOW_SCHED
+#define ins_round ins_state = statistics::NOW_ROUND
+#define ins_comm ins_state = statistics::NOW_COMM
 
 #else
 
@@ -143,7 +143,7 @@ public:
    
    inline size_t num_iterations(void) const { return iteration; }
    
-   virtual void write_slice(stat::slice& sl) const
+   virtual void write_slice(statistics::slice& sl) const
    {
 #ifdef INSTRUMENTATION
       sl.state = ins_state;
@@ -161,7 +161,7 @@ public:
    explicit base(const vm::process_id _id):
       id(_id), iteration(0)
 #ifdef INSTRUMENTATION
-      , processed_facts(0), sent_facts(0), ins_state(stat::NOW_ACTIVE)
+      , processed_facts(0), sent_facts(0), ins_state(statistics::NOW_ACTIVE)
 #endif
    {
    }

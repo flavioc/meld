@@ -84,7 +84,7 @@ public:
    
    virtual bool get_work(process::work&);
    
-   virtual void write_slice(stat::slice& sl) const;
+   virtual void write_slice(statistics::slice& sl) const;
    
    static db::node *create_node(const db::node::node_id id, const db::node::node_id trans)
    {

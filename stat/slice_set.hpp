@@ -12,7 +12,7 @@
 #include "vm/defs.hpp"
 #include "sched/types.hpp"
 
-namespace stat
+namespace statistics
 {
    
 class slice_set

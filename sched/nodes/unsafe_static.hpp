@@ -47,7 +47,7 @@ public:
    
    explicit unsafe_static_node(const db::node::node_id _id, const db::node::node_id _trans):
       in_queue_node(_id, _trans),
-      queue(vm::predicate::MAX_STRAT_LEVEL)
+      queue(vm::program::MAX_STRAT_LEVEL)
    {}
    
    virtual ~unsafe_static_node(void) { }

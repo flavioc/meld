@@ -19,7 +19,7 @@ namespace vm {
 
 const size_t INIT_PREDICATE_ID(0);
 const size_t SETPRIO_PREDICATE_ID(1);
-   
+
 class program
 {
 private:
@@ -33,10 +33,14 @@ private:
    
    bool safe;
 
+   mutable predicate *init;
+
    void print_predicate_code(std::ostream&, predicate*) const;
    
 public:
-   
+
+   static strat_level MAX_STRAT_LEVEL;
+
    predicate *get_predicate_by_name(const std::string&) const;
    
    predicate *get_init_predicate(void) const;

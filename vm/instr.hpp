@@ -54,6 +54,7 @@ const size_t REMOVE_BASE         = 2;
 const size_t RETURN_LINEAR_BASE  = 1;
 const size_t RETURN_DERIVED_BASE = 1;
 const size_t RESET_LINEAR_BASE   = 1 + jump_size;
+const size_t END_LINEAR_BASE     = 1;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -71,6 +72,7 @@ enum instr_type {
    COLOCATED_INSTR      =  0x0C,
    DELETE_INSTR         =  0x0D,
    RESET_LINEAR_INSTR   =  0x0E,
+   END_LINEAR_INSTR     =  0x0F,
    CALL_INSTR		      =  0x20,
    MOVE_INSTR		      =  0x30,
    ALLOC_INSTR		      =  0x40,
@@ -588,6 +590,9 @@ advance(pcounter pc)
          
       case RESET_LINEAR_INSTR:
          return pc + RESET_LINEAR_BASE;
+
+      case END_LINEAR_INSTR:
+         return pc + END_LINEAR_BASE;
          
       case ELSE_INSTR:
       default:
@@ -601,9 +606,9 @@ std::string val_string(const instr_val, pcounter *);
 }
 
 /* byte code print functions */
-pcounter instr_print(pcounter, const bool, const program *, std::ostream&);
-pcounter instr_print_simple(pcounter, const program *, std::ostream&);
-byte_code instrs_print(const byte_code, const code_size_t, const program*, std::ostream&);
+pcounter instr_print(pcounter, const bool, const int, const program *, std::ostream&);
+pcounter instr_print_simple(pcounter, const int, const program *, std::ostream&);
+byte_code instrs_print(const byte_code, const code_size_t, const int, const program*, std::ostream&);
 
 }
 

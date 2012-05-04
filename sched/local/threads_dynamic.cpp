@@ -382,7 +382,7 @@ dynamic_local::terminate_iteration(void)
 }
 
 void
-dynamic_local::write_slice(stat::slice& sl) const
+dynamic_local::write_slice(statistics::slice& sl) const
 {
 #ifdef INSTRUMENTATION
    static_local::write_slice(sl);

@@ -427,7 +427,7 @@ direct_local::get_work(work& new_work)
 }
 
 void
-direct_local::write_slice(stat::slice& sl) const
+direct_local::write_slice(statistics::slice& sl) const
 {
 #ifdef INSTRUMENTATION
    base::write_slice(sl);

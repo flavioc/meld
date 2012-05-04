@@ -251,7 +251,7 @@ threads_single::find_scheduler(const node *)
 }
 
 void
-threads_single::write_slice(stat::slice& sl) const
+threads_single::write_slice(statistics::slice& sl) const
 {
 #ifdef INSTRUMENTATION
    base::write_slice(sl);
