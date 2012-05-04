@@ -181,6 +181,7 @@ public:
       assert(empty());
       
       root->delete_all();
+		delete root;
    }
 };
 
