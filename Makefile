@@ -31,7 +31,8 @@ WARNINGS = -Wall -Wextra #-Werror
 C0X = -std=c++0x
 
 CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) $(COX)
-LIBRARIES = -lpthread -lm -lboost_thread-mt -lpion-net -lssl -lboost_system-mt -lcrypto -lpion-common
+LIBRARIES = -lpthread -lm -lboost_thread-mt -lboost_system-mt -lwebsocketpp \
+				-lboost_date_time-mt -lboost_regex-mt -ljson_spirit
 
 #ifneq ($(COMPILE_MPI),)
 	LIBRARIES += -lmpi -lmpi_cxx -lboost_serialization-mt -lboost_mpi-mt
@@ -84,12 +85,12 @@ OBJS = utils/utils.o \
 			 sched/mpi/message_buffer.o \
 			 sched/mpi/request.o \
 			 sched/local/serial.o \
+			 sched/local/serial_ui.o \
 			 sched/local/threads_static.o \
 			 sched/local/threads_static_prio.o \
 			 sched/local/threads_buff.o \
 			 sched/local/threads_dynamic.o \
 			 sched/local/threads_direct.o \
-			 sched/local/threads_programmable.o \
 			 sched/local/threads_single.o \
 			 sched/local/mpi_threads_static.o \
 			 sched/local/mpi_threads_dynamic.o \
@@ -97,6 +98,7 @@ OBJS = utils/utils.o \
 			 sched/thread/threaded.o \
 			 sched/thread/queue_buffer.o \
 			 sched/thread/assert.o \
+			 sched/thread/prio_queue.o \
 			 sched/mpi/tokenizer.o \
 			 sched/mpi/handler.o \
 			 external/math.o \
@@ -105,6 +107,8 @@ OBJS = utils/utils.o \
 			 stat/stat.o \
 			 stat/slice.o \
 			 stat/slice_set.o \
+			 ui/manager.o \
+			 ui/client.o \
 			 interface.o
 
 all: meld print predicates server
@@ -131,6 +135,11 @@ server.o: server.cpp process/machine.hpp \
 
 interface.o: interface.cpp interface.hpp \
 				sched/types.hpp
+
+ui/manager.o: ui/manager.hpp ui/manager.cpp \
+		ui/client.hpp
+
+ui/client.o: ui/client.hpp ui/client.cpp
 
 print.o: print.cpp vm/program.hpp
 
@@ -177,10 +186,13 @@ process/machine.o: process/machine.hpp process/machine.cpp \
 									sched/local/threads_single.hpp \
 									sched/local/threads_dynamic.hpp \
 									sched/local/threads_direct.hpp \
+									sched/local/serial.hpp \
+									sched/local/serial_ui.hpp \
 									sched/local/mpi_threads_dynamic.hpp \
 									sched/local/mpi_threads_static.hpp \
 									sched/local/mpi_threads_single.hpp \
 									sched/types.hpp \
+									sched/base.hpp \
 									db/database.hpp \
 									vm/predicate.hpp \
 									stat/stat.hpp \
@@ -240,6 +252,9 @@ sched/mpi/request.o: sched/mpi/request.hpp sched/mpi/request.cpp
 sched/local/serial.o: sched/local/serial.cpp sched/local/serial.hpp \
 									sched/queue/unsafe_queue.hpp sched/nodes/serial.hpp
 
+sched/local/serial_ui.o: sched/local/serial_ui.cpp sched/local/serial_ui.hpp \
+							sched/local/serial.hpp sched/local/serial.cpp
+
 sched/local/threads_static.o: sched/base.hpp sched/local/threads_static.hpp \
 								sched/local/threads_static.cpp sched/queue/node.hpp \
 								sched/thread/termination_barrier.hpp \
@@ -258,7 +273,8 @@ sched/local/threads_static_prio.o: sched/base.hpp sched/local/threads_static_pri
 								sched/queue/safe_queue.hpp \
 								sched/thread/threaded.hpp \
 								sched/queue/bounded_pqueue.hpp \
-								sched/thread/assert.hpp
+								sched/thread/assert.hpp \
+								sched/queue/double_queue.hpp
 
 sched/local/threads_buff.o: sched/base.hpp sched/local/threads_buff.hpp \
 								sched/local/threads_buff.cpp sched/queue/node.hpp \
@@ -301,16 +317,6 @@ sched/local/threads_direct.o: sched/base.hpp sched/local/threads_direct.hpp     
 											sched/queue/bounded_pqueue.hpp                              \
 											sched/thread/assert.hpp
 
-sched/local/threads_programmable.o: sched/base.hpp sched/local/threads_programmable.hpp      \
-											sched/local/threads_programmable.cpp                        \
-											sched/nodes/thread.hpp sched/thread/termination_barrier.hpp \
-											sched/queue/node.hpp sched/thread/steal_set.hpp             \
-											sched/queue/safe_queue_multi.hpp                            \
-											sched/thread/threaded.hpp                                   \
-											conf.hpp utils/atomic.hpp                                   \
-											sched/queue/bounded_pqueue.hpp                              \
-											sched/thread/assert.hpp
-
 sched/thread/threaded.o: sched/thread/termination_barrier.hpp \
 									sched/thread/threaded.hpp sched/thread/threaded.cpp \
 									utils/atomic.hpp utils/tree_barrier.hpp
@@ -321,6 +327,9 @@ sched/thread/queue_buffer.o: sched/thread/queue_buffer.hpp \
 
 sched/thread/assert.o: sched/thread/assert.hpp \
 											sched/thread/assert.cpp
+
+sched/thread/prio_queue.o: sched/thread/prio_queue.hpp \
+								sched/thread/prio_queue.cpp
 
 sched/mpi/tokenizer.o: sched/mpi/token.hpp sched/mpi/tokenizer.cpp \
 									 sched/mpi/tokenizer.hpp process/remote.hpp

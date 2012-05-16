@@ -70,6 +70,8 @@ public:
    
    inline bool is_route_pred(void) const { return is_route || is_reverse_route; }
 
+	inline bool is_reverse_route_pred(void) const { return is_reverse_route; }
+
    inline bool is_linear_pred(void) const { return is_linear; }
 
    inline bool is_action_pred(void) const { return is_action; }

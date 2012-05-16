@@ -208,10 +208,10 @@ execute_send(const pcounter& pc, state& state)
    simple_tuple *stuple(new simple_tuple(tuple, state.count));
 
    if(msg == dest) {
-      cout << "sending " << *stuple << " to self" << endl;
+      //cout << "sending " << *stuple << " to self" << endl;
       state::MACHINE->route_self(state.proc, state.node, stuple);
    } else {
-      cout << "sending " << *stuple << " to " << dest_val << endl;
+      //cout << "sending " << *stuple << " to " << dest_val << endl;
       state::MACHINE->route(state.node, state.proc, (node::node_id)dest_val, stuple);
    }
 }
@@ -1001,11 +1001,13 @@ execute_call(pcounter pc, state& state)
 static inline return_type
 execute(pcounter pc, state& state)
 {
+	const int zero(0);
+
    for(; ; pc = advance(pc))
    {
 eval_loop:
 
-      //instr_print_simple(pc, state.PROGRAM, cout);
+      //instr_print_simple(pc, zero, state.PROGRAM, cout);
       
       switch(fetch(pc)) {
          case RETURN_INSTR: return RETURN_OK;
@@ -1151,10 +1153,11 @@ execute_bytecode(byte_code code, state& state)
    
    state.cleanup();
    
-   if(ret == RETURN_LINEAR)
+   if(ret == RETURN_LINEAR) {
       return EXECUTION_CONSUMED;
-   else
+	} else {
       return EXECUTION_OK;
+	}
 }
 
 }

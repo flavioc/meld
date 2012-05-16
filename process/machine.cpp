@@ -44,11 +44,20 @@ machine::same_place(const node::node_id id1, const node::node_id id2) const
 void
 machine::route_self(process *proc, node *node, simple_tuple *stpl)
 {
-   proc->get_scheduler()->new_work_self(node, stpl);
+	sched::base *sched(proc->get_scheduler());
+
+	if(stpl->get_predicate_id() == SETPRIO_PREDICATE_ID) {
+		vm::tuple *tpl(stpl->get_tuple());
+		sched->set_node_priority(node, tpl->get_int(0));
+		delete tpl;
+		delete stpl;
+	} else {
+		sched->new_work_self(node, stpl);
+	}
 }
 
 void
-machine::route(const node* from, process *caller, const node::node_id id, simple_tuple* stuple)
+machine::route(const node* from, process *caller, const node::node_id id, simple_tuple* stpl)
 {  
    remote* rem(rout.find_remote(id));
    sched::base *sched_caller(caller->get_scheduler());
@@ -62,16 +71,23 @@ machine::route(const node* from, process *caller, const node::node_id id, simple
       node *node(state::DATABASE->find_node(id));
       
       sched::base *sched_other(sched_caller->find_scheduler(node));
+
+		if(stpl->get_predicate_id() == SETPRIO_PREDICATE_ID) {
+			vm::tuple *tpl(stpl->get_tuple());
+			sched_other->set_node_priority(node, tpl->get_int(0));
+			delete tpl;
+			delete stpl;
+		} else {
+			work new_work(node, stpl);
       
-      work new_work(node, stuple);
-      
-      if(sched_caller == sched_other)
-         sched_caller->new_work(from, new_work);
-      else {
-         sched_comm(sched_caller);
-         sched_caller->new_work_other(sched_other, new_work);
-         sched_active(sched_caller);
-      }
+			if(sched_caller == sched_other)
+				sched_caller->new_work(from, new_work);
+			else {
+				sched_comm(sched_caller);
+				sched_caller->new_work_other(sched_other, new_work);
+				sched_active(sched_caller);
+			}
+		}
    }
 #ifdef COMPILE_MPI
    else {
@@ -79,7 +95,7 @@ machine::route(const node* from, process *caller, const node::node_id id, simple
       
       assert(rout.use_mpi());
       
-      message *msg(new message(id, stuple));
+      message *msg(new message(id, stpl));
       
       sched_comm(sched_caller);
       sched_caller->new_work_remote(rem, id, msg);
@@ -247,12 +263,9 @@ get_creation_function(const scheduler_type sched_type)
       case SCHED_THREADS_SINGLE_LOCAL:
          return database::create_node_fn(sched::static_local::create_node);
       case SCHED_THREADS_STATIC_LOCAL_PRIO:
-      printf("here\n");
          return database::create_node_fn(sched::static_local_prio::create_node);
       case SCHED_THREADS_DYNAMIC_LOCAL:
          return database::create_node_fn(sched::dynamic_local::create_node);
-      case SCHED_THREADS_PROGRAMMABLE_LOCAL:
-         return database::create_node_fn(sched::programmable_local::create_node);
       case SCHED_THREADS_DIRECT_LOCAL:
          return database::create_node_fn(sched::direct_local::create_node);
       case SCHED_MPI_AND_THREADS_STATIC_LOCAL:
@@ -263,6 +276,8 @@ get_creation_function(const scheduler_type sched_type)
          return database::create_node_fn(sched::mpi_thread_single::create_node);
       case SCHED_SERIAL_LOCAL:
          return database::create_node_fn(sched::serial_local::create_node);
+		case SCHED_SERIAL_UI_LOCAL:
+			return database::create_node_fn(sched::serial_ui_local::create_node);
       case SCHED_UNKNOWN:
          return NULL;
    }
@@ -320,9 +335,9 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
       case SCHED_SERIAL_LOCAL:
          schedulers.push_back(dynamic_cast<sched::base*>(new sched::serial_local()));
          break;
-      case SCHED_THREADS_PROGRAMMABLE_LOCAL:
-         schedulers = sched::programmable_local::start(num_threads);
-         break;
+		case SCHED_SERIAL_UI_LOCAL:
+			schedulers.push_back(dynamic_cast<sched::base*>(new sched::serial_ui_local()));
+			break;
       case SCHED_UNKNOWN: assert(false); break;
    }
    

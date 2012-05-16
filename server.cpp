@@ -2,12 +2,10 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <exception>
 #include <readline/readline.h>
 #include <boost/algorithm/string.hpp>
-#include <pion/net/HTTPServer.hpp>
-#include <pion/net/HTTPTypes.hpp>
-#include <pion/net/HTTPRequest.hpp>
-#include <pion/net/HTTPResponseWriter.hpp>
+#include <boost/thread.hpp>
 
 #include "process/machine.hpp"
 #include "utils/utils.hpp"
@@ -15,25 +13,26 @@
 #include "interface.hpp"
 #include "version.hpp"
 #include "utils/atomic.hpp"
+#include "ui/client.hpp"
+#include "ui/manager.hpp"
 
 using namespace utils;
 using namespace process;
 using namespace std;
 using namespace sched;
 using namespace boost;
-using namespace pion;
-using namespace pion::net;
 using namespace utils;
+using namespace websocketpp;
+using namespace ui;
 
 static char *progname = NULL;
 static int port = 0;
-static atomic<int> num_users(0);
 
 static void
 help(void)
 {
 	cerr << "server: execute meld server" << endl;
-	cerr << "\t\t-p \t\tset server port" << endl;
+	cerr << "\t-p \t\tset server port" << endl;
 	help_schedulers();
    cerr << "\t-h \t\tshow this screen" << endl;
 
@@ -150,33 +149,33 @@ parse_command(string cmd)
 	return COMMAND_NONE;
 }
 
-void
-handleRoot(HTTPRequestPtr& request, TCPConnectionPtr& tcp_conn)
-{
-	num_users++;
-	
-	HTTPResponseWriterPtr writer(HTTPResponseWriter::create(tcp_conn, *request,
-	                                             boost::bind(&TCPConnection::finish, tcp_conn)));
-	
-	writer->getResponse().setContentType(HTTPTypes::CONTENT_TYPE_TEXT);
-	writer->getResponse().setStatusCode(HTTPTypes::RESPONSE_CODE_OK);
-	writer->getResponse().setStatusMessage(HTTPTypes::RESPONSE_MESSAGE_OK);
-	
-	writer->write(string("<html><body>Hello World!</body></html>"));
-	
-	writer->send();
-	
-	sleep(10);
-	
-	num_users--;
-}
-
 static void
 show_status(void)
 {
 	show_version();
 	cout << "Port: " << port << endl;
-	cout << "# Users: " << num_users << endl;
+	cout << "# Users: " << man->num_clients() << endl;
+}
+
+static void
+run_server(void)
+{
+   server::handler::ptr h(man);
+   server endpoint(h);
+
+#if 0
+   printf("Running server...\n");
+   endpoint.alog().unset_level(websocketpp::log::alevel::ALL);
+   endpoint.elog().unset_level(websocketpp::log::elevel::ALL);
+                   
+   endpoint.alog().set_level(websocketpp::log::alevel::CONNECT);
+   endpoint.alog().set_level(websocketpp::log::alevel::DISCONNECT);
+                                   
+   endpoint.elog().set_level(websocketpp::log::elevel::RERROR);
+   endpoint.elog().set_level(websocketpp::log::elevel::FATAL);
+#endif
+
+   endpoint.listen(port);
 }
 
 int
@@ -189,8 +188,6 @@ main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 	
-	show_version();
-	
 	const int readline_ret(rl_initialize());
 	
 	if(readline_ret != 0) {
@@ -198,35 +195,42 @@ main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 	
-	HTTPServerPtr server(new HTTPServer(port));
-	server->addResource("/", &handleRoot);
-	server->start();
-	
-	while (true) {
-		char *input(readline("> "));
-		
-		if(input == NULL)
-			continue;
-		
-		command_type cmd(parse_command(string(input)));
+	try {
+      man = new ui::manager();
 
-      add_history(input);
-      delete input;
+		show_version();
+
+      thread aux(run_server);
+			
+		while (true) {
+			char *input(readline("\n>> "));
 		
-		switch(cmd) {
-			case COMMAND_EXIT: return EXIT_SUCCESS;
-			case COMMAND_VERSION: show_version(); break;
-			case COMMAND_HELP: show_inter_help(); break;
-			case COMMAND_STATUS: show_status(); break;
-			case COMMAND_NONE: cout << "Command not recognized" << endl; break;
-			case COMMAND_LOAD: {
-				const string filename(command_args[1]);
+			if(input == NULL)
+				continue;
+		
+			command_type cmd(parse_command(string(input)));
+
+      	add_history(input);
+      	delete input;
+
+			switch(cmd) {
+				case COMMAND_EXIT: return EXIT_SUCCESS;
+				case COMMAND_VERSION: show_version(); break;
+				case COMMAND_HELP: show_inter_help(); break;
+				case COMMAND_STATUS: show_status(); break;
+				case COMMAND_NONE: cout << "Command not recognized" << endl; break;
+				case COMMAND_LOAD: {
+					const string filename(command_args[1]);
 				
-				run_program(argc, argv, filename.c_str());
+					run_program(argc, argv, filename.c_str());
+				}
+				break;
+				default: break;
 			}
-			break;
-			default: break;
 		}
+	} catch(std::exception& e) {
+		cerr << "Failed to initiate server: " << e.what() << endl;
+		return EXIT_FAILURE;
 	}
 
    return EXIT_SUCCESS;

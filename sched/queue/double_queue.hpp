@@ -149,33 +149,35 @@ public:
    inline void move_up(node_type node)
    {
       utils::spinlock::scoped_lock l(mtx);
-      
-      if(in_queue(node)) {
-         node_type prev(PREV(node));
+    
+  		if(!in_queue(node))
+			return;
+			
+      node_type prev(PREV(node));
          
-         if(prev == NULL) {
-            assert(node == head);
-            return;
-         }
-      
-         node_type next(NEXT(node));
-            
-         if(prev)
-            NEXT(prev) = next;
-         if(next)
-            PREV(next) = prev;
-            
-         if(next == NULL)
-            tail = prev;
-         
-         assert(tail != NULL);
+      if(prev == NULL) {
+         assert(node == head);
+         return;
       }
       
+      node_type next(NEXT(node));
+         
+      NEXT(prev) = next;
+      if(next)
+       	PREV(next) = prev;
+            
+      if(next == NULL)
+       	tail = prev;
+         
+      assert(tail != NULL);
+      
       // now we put it in the head
-      NEXT(node) = head;
       PREV(node) = NULL;
+		NEXT(node) = head;
       IN_QUEUE(node) = true;
+		PREV(head) = node;
       head = node;
+
       if(tail == NULL)
          tail = node;
    }

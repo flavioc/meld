@@ -10,6 +10,10 @@
 #include <mpi.h>
 #endif
 
+#ifdef USE_UI
+#include <json_spirit.h>
+#endif
+
 #include "vm/defs.hpp"
 #include "vm/predicate.hpp"
 #include "runtime/list.hpp"
@@ -99,6 +103,9 @@ public:
    inline bool is_action(void) const { return pred->is_action_pred(); }
    
    void print(std::ostream&) const;
+#ifdef USE_UI
+	json_spirit::Value dump_json(void) const;
+#endif
    
    tuple *copy_except(const field_num) const;
    tuple *copy(void) const;

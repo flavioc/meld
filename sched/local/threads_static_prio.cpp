@@ -232,7 +232,8 @@ static_local_prio::set_next_node(void)
 bool
 static_local_prio::get_work(work& new_work)
 {  
-   printf("here\n");
+	check_prioqueue();
+	
    if(!set_next_node())
       return false;
       
@@ -258,14 +259,42 @@ static_local_prio::end(void)
 }
 
 void
-static_local_prio::set_node_priority(node *_n, const int prio)
+static_local_prio::check_prioqueue(void)
 {
-   thread_intrusive_node *n((thread_intrusive_node*)_n);
+	while(!prioqueue.empty()) {
+		prio_obj p(prioqueue.remove());
+		thread_intrusive_node *n((thread_intrusive_node*)p.get_node());
+		
+		if(n->in_queue())
+			queue_nodes.move_up(n);
+		else
+			prioqueue.save(p);
+	}
+	
+	for(prio_queue::prio_iterator it(prioqueue.begin_saved()), end(prioqueue.end_saved()); it != end;) {
+		prio_obj p(*it);
+		
+		thread_intrusive_node *n((thread_intrusive_node*)p.get_node());
+		
+		if(n->in_queue()) {
+			queue_nodes.move_up(n);
+			it = prioqueue.delete_saved(it);
+		} else
+			it++;
+	}
+}
+
+void
+static_local_prio::set_node_priority(node *n, const int prio)
+{
+	prioqueue.add(n, prio);
+	
+   //thread_intrusive_node *n((thread_intrusive_node*)_n);
    
-   assert(n->in_queue());
+   //assert(n->in_queue());
    
-   printf("jumped up\n");
-   queue_nodes.move_up(n);
+   //printf("jumped up\n");
+   //queue_nodes.move_up(n);
 }
 
 void

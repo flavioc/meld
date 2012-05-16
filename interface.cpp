@@ -10,6 +10,7 @@
 #include "stat/stat.hpp"
 #include "utils/time.hpp"
 #include "process/machine.hpp"
+#include "ui/manager.hpp"
 
 using namespace process;
 using namespace sched;
@@ -22,6 +23,8 @@ bool show_database = false;
 bool dump_database = false;
 bool time_execution = false;
 bool memory_statistics = false;
+bool running = false;
+char *program_running = NULL;
 
 static inline bool
 match_mpi(const char *name, char *arg, const scheduler_type type)
@@ -84,8 +87,8 @@ parse_sched(char *sched)
       match_threads("td", sched, SCHED_THREADS_DYNAMIC_LOCAL) ||
       match_threads("tx", sched, SCHED_THREADS_DIRECT_LOCAL) ||
       match_threads("sin", sched, SCHED_THREADS_SINGLE_LOCAL) ||
-      match_threads("pr", sched, SCHED_THREADS_PROGRAMMABLE_LOCAL) ||
       match_serial("sl", sched, SCHED_SERIAL_LOCAL) ||
+		match_serial("ui", sched, SCHED_SERIAL_UI_LOCAL) ||
       fail_sched(sched);
 
 	if (num_threads == 0) {
@@ -98,14 +101,14 @@ void
 help_schedulers(void)
 {
 	cerr << "\t-c <scheduler>\tselect scheduling type" << endl;
-	cerr << "\t\t\tsl simple serial scheduler\n" << endl;
+	cerr << "\t\t\tsl simple serial scheduler" << endl;
+	cerr << "\t\t\tui serial scheduler + ui" << endl;
    cerr << "\t\t\ttlX static division with threads" << endl;
    cerr << "\t\t\ttlpX static division with threads" << endl;
 	cerr << "\t\t\ttbX static division with threads and buffering" << endl;
 	cerr << "\t\t\ttdX initial static division but allow work stealing" << endl;
 	cerr << "\t\t\ttxX initial static division but allow direct work stealing" << endl;
 	cerr << "\t\t\tsinX no division of work using local queues" << endl;
-	cerr << "\t\t\tprX programmable scheduler" << endl;
 	cerr << "\t\t\tmpistaticX static division of work using mpi plus threads" << endl;
 	cerr << "\t\t\tmpidynamicX static division of work using mpi plus threads and work stealing" << endl;
 	cerr << "\t\t\tmpisingleX no division of work with static processes" << endl;
@@ -131,6 +134,10 @@ run_program(int argc, char **argv, const char *program)
       machine mac(program, rout, num_threads, sched_type);
       mac.start();
 
+		running = true;
+		program_running = (char*)program;
+		LOG_PROGRAM_RUNNING();
+
       if(time_execution) {
          if(is_mpi_sched(sched_type)) {
             double total_time(MPI_Wtime() - start_time);
@@ -151,4 +158,8 @@ run_program(int argc, char **argv, const char *program)
       cerr << "Database error: " << err.what() << endl;
       exit(EXIT_FAILURE);
    }
+
+	running = false;
+	program_running = NULL;
+	LOG_PROGRAM_STOPPED();
 }

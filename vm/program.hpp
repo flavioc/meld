@@ -2,6 +2,8 @@
 #ifndef PROGRAM_HPP
 #define PROGRAM_HPP
 
+#include "conf.hpp"
+
 #include <string>
 #include <vector>
 #include <stdexcept>
@@ -10,6 +12,9 @@
 #include "vm/predicate.hpp"
 #include "vm/defs.hpp"
 #include "vm/tuple.hpp"
+#ifndef USE_UI
+#include <json_spirit.h>
+#endif
 
 namespace process {
    class router;
@@ -18,7 +23,7 @@ namespace process {
 namespace vm {
 
 const size_t INIT_PREDICATE_ID(0);
-const size_t SETPRIO_PREDICATE_ID(1);
+extern size_t SETPRIO_PREDICATE_ID;
 
 class program
 {
@@ -50,6 +55,9 @@ public:
    void print_bytecode(std::ostream&) const;
    void print_predicates(std::ostream&) const;
    void print_bytecode_by_predicate(std::ostream&, const std::string&) const;
+#ifdef USE_UI
+	json_spirit::Value dump_json(void) const;
+#endif
    
    predicate* get_predicate(const predicate_id&) const;
    predicate* get_route_predicate(const size_t&) const;

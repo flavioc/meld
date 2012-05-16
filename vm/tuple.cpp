@@ -5,6 +5,9 @@
 #include "db/node.hpp"
 #include "utils/utils.hpp"
 #include "vm/state.hpp"
+#ifdef USE_UI
+#include "ui/macros.hpp"
+#endif
 
 using namespace vm;
 using namespace std;
@@ -166,6 +169,39 @@ tuple::print(ostream& cout) const
    
    cout << ")";
 }
+
+#ifdef USE_UI
+using namespace json_spirit;
+
+Value
+tuple::dump_json(void) const
+{
+	Object ret;
+
+	UI_ADD_FIELD(ret, "predicate", (int)get_predicate_id());
+	Array fields;
+
+	for(field_num i = 0; i < num_fields(); ++i) {
+		switch(get_field_type(i)) {
+			case FIELD_INT:
+				UI_ADD_ELEM(fields, get_int(i));
+				break;
+			case FIELD_FLOAT:
+				UI_ADD_ELEM(fields, get_float(i));
+				break;
+			case FIELD_NODE:
+				UI_ADD_ELEM(fields, (int)get_node(i));
+				break;
+			default:
+				throw type_error("Unrecognized field type " + to_string(i));
+		}
+	}
+
+	UI_ADD_FIELD(ret, "fields", fields);
+
+	return ret;
+}
+#endif
 
 tuple::~tuple(void)
 {

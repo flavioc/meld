@@ -26,15 +26,11 @@ get_bytecode(vm::tuple *tuple)
 void
 process::do_tuple_action(node *node, vm::tuple *tuple, const ref_count count)
 {
+	(void)node;
+
    assert(count == 1);
    
    switch(tuple->get_predicate_id()) {
-      case vm::SETPRIO_PREDICATE_ID: {
-         const int new_priority(tuple->get_int(0));
-         cout << "new priority: " << new_priority << endl;
-         scheduler->set_node_priority(node, new_priority);
-      }   
-      break;
       default:
          assert(false);
    }
@@ -55,6 +51,8 @@ process::do_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
          node->add_tuple(tuple, count);
    } else {
       const bool is_new(node->add_tuple(tuple, count));
+
+		scheduler->new_persistent_derivation(node, tuple);
 
       if(is_new) {
          // set vm state

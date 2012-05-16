@@ -356,9 +356,9 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
 }
 
 pcounter
-instr_print_simple(pcounter pc, const program *prog, ostream& cout)
+instr_print_simple(pcounter pc, const int tabcount, const program *prog, ostream& cout)
 {
-   return instr_print(pc, false, 0, prog, cout);
+   return instr_print(pc, false, tabcount, prog, cout);
 }
  
 byte_code

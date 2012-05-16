@@ -9,6 +9,9 @@
 #include "db/database.hpp"
 #include "utils/types.hpp"
 #include "vm/state.hpp"
+#ifdef USE_UI
+#include "ui/macros.hpp"
+#endif
 
 using namespace std;
 using namespace db;
@@ -25,6 +28,7 @@ static const size_t PREDICATE_DESCRIPTOR_SIZE = sizeof(code_size_t) +
                                                 PRED_NAME_SIZE_MAX +
                                                 PRED_AGG_INFO_MAX;
 strat_level program::MAX_STRAT_LEVEL(0);
+size_t SETPRIO_PREDICATE_ID(1);
 
 program::program(const string& filename):
    init(NULL)
@@ -63,6 +67,9 @@ program::program(const string& filename):
       code_size[i] = size;
 
       MAX_STRAT_LEVEL = max(predicates[i]->get_strat_level() + 1, MAX_STRAT_LEVEL);
+
+		if(predicates[i]->get_name() == "setprio")
+			SETPRIO_PREDICATE_ID = i;
       
       if(predicates[i]->is_route_pred())
          route_predicates.push_back(predicates[i]);
@@ -166,10 +173,55 @@ program::print_predicates(ostream& cout) const
    }
 }
 
+#ifdef USE_UI
+using namespace json_spirit;
+
+Value
+program::dump_json(void) const
+{
+	Array preds_json;
+
+	for(size_t i(0); i < num_predicates(); ++i) {
+		Object obj;
+		predicate *pred(get_predicate((predicate_id)i));
+
+		UI_ADD_FIELD(obj, "name", pred->get_name());
+
+		Array field_types;
+
+		for(size_t j(0); j < pred->num_fields(); ++j) {
+			switch(pred->get_field_type(j)) {
+				case FIELD_INT:
+					UI_ADD_ELEM(field_types, "int");
+					break;
+				case FIELD_FLOAT:
+					UI_ADD_ELEM(field_types, "float");
+					break;
+				case FIELD_NODE:
+					UI_ADD_ELEM(field_types, "node");
+					break;
+				default:
+					throw type_error("Unrecognized field type " + to_string(j));
+			}
+		}
+		UI_ADD_FIELD(obj, "fields", field_types);
+
+		UI_ADD_FIELD(obj, "route",
+				pred->is_route_pred() ? UI_YES : UI_NIL);
+		UI_ADD_FIELD(obj, "reverse_route",
+				pred->is_reverse_route_pred() ? UI_YES : UI_NIL);
+
+		UI_ADD_ELEM(preds_json, obj);
+	}
+
+	return preds_json;
+}
+#endif
+
 predicate*
 program::get_predicate_by_name(const string& name) const
 {
-   for(size_t i = 0; i < num_predicates(); ++i) {
+   for(size_t i(0); i < num_predicates(); ++i) {
       predicate *pred(get_predicate((predicate_id)i));
       
       if(pred->get_name() == name)

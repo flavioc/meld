@@ -9,7 +9,13 @@
 #include <stdexcept>
 #include <boost/function.hpp>
 
+#include "conf.hpp"
 #include "db/node.hpp"
+
+#ifdef USE_UI
+#include <json_spirit.h>
+#include "ui/macros.hpp"
+#endif
 
 namespace db
 {
@@ -43,6 +49,9 @@ public:
    
    void print_db(std::ostream&) const;
    void dump_db(std::ostream&) const;
+#ifdef USE_UI
+	json_spirit::Value dump_json(void) const;
+#endif
    
    void print(std::ostream&) const;
    

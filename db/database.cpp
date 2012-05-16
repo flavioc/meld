@@ -96,6 +96,34 @@ database::dump_db(ostream& cout) const
    }
 }
 
+#ifdef USE_UI
+using namespace json_spirit;
+
+Value
+database::dump_json(void) const
+{
+	Object root;
+	
+	UI_ADD_FIELD(root, "num_nodes", (int)num_nodes());
+	
+	Array nodes_data;
+	
+	for(map_nodes::const_iterator it(nodes.begin()), end(nodes.end()); it != end; it++) {
+		Object node_data;
+		const node *n(it->second);
+		
+		UI_ADD_FIELD(node_data, "id", (int)n->get_id());
+		UI_ADD_FIELD(node_data, "translated_id", (int)n->get_translated_id());
+
+		UI_ADD_ELEM(nodes_data, node_data);
+	}
+	
+	UI_ADD_FIELD(root, "nodes", nodes_data);
+	
+	return root;
+}
+#endif
+
 void
 database::print(ostream& cout) const
 {

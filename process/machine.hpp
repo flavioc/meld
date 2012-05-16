@@ -22,11 +22,11 @@
 #include "sched/local/threads_single.hpp"
 #include "sched/local/threads_dynamic.hpp"
 #include "sched/local/threads_direct.hpp"
-#include "sched/local/threads_programmable.hpp"
 #include "sched/local/mpi_threads_static.hpp"
 #include "sched/local/mpi_threads_dynamic.hpp"
 #include "sched/local/mpi_threads_single.hpp"
 #include "sched/local/serial.hpp"
+#include "sched/local/serial_ui.hpp"
 #include "sched/types.hpp"
 #include "stat/slice_set.hpp"
 
