@@ -7,6 +7,7 @@
       <script src="http://jquery-websocket.googlecode.com/files/jquery.websocket-0.0.1.js"></script>
 		<script src="https://raw.github.com/dhotson/springy/master/springy.js"></script>
 		<script src="https://raw.github.com/dhotson/springy/master/springyui.js"></script>
+		<script src="ui.js"></script>
 		<style type="text/css">
 		.btn{display:inline-block;padding:4px 10px 4px;font-size:13px;line-height:18px;color:#333333;text-align:center;text-shadow:0 1px 1px rgba(255, 255, 255, 0.75);background-color:#fafafa;background-image:-webkit-gradient(linear, 0 0, 0 100%, from(#ffffff), color-stop(25%, #ffffff), to(#e6e6e6));background-image:-webkit-linear-gradient(#ffffff, #ffffff 25%, #e6e6e6);background-image:-moz-linear-gradient(top, #ffffff, #ffffff 25%, #e6e6e6);background-image:-ms-linear-gradient(#ffffff, #ffffff 25%, #e6e6e6);background-image:-o-linear-gradient(#ffffff, #ffffff 25%, #e6e6e6);background-image:linear-gradient(#ffffff, #ffffff 25%, #e6e6e6);background-repeat:no-repeat;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#e6e6e6', GradientType=0);border:1px solid #ccc;border-bottom-color:#bbb;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;-webkit-box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.2),0 1px 2px rgba(0, 0, 0, 0.05);-moz-box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.2),0 1px 2px rgba(0, 0, 0, 0.05);box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.2),0 1px 2px rgba(0, 0, 0, 0.05);cursor:pointer;*margin-left:.3em;}.btn:first-child{*margin-left:0;}
 		.btn:hover{color:#333333;text-decoration:none;background-color:#e6e6e6;background-position:0 -15px;-webkit-transition:background-position 0.1s linear;-moz-transition:background-position 0.1s linear;-ms-transition:background-position 0.1s linear;-o-transition:background-position 0.1s linear;transition:background-position 0.1s linear;}
@@ -20,126 +21,6 @@ margin-top: 10px;
 	</style>
 </head>
 <body>
-<script>
-		var predicates = null;
-		var mapnodes = {};
-		var graph = null;
-
-		function disable_controls()
-		{
-			$('#button-next').attr('disabled', 'disabled');
-		}
-
-		function activate_controls()
-		{
-			$('#button-next').removeAttr('disabled');
-		}
-
-		function tuple_to_string(tpl)
-		{
-			var pred_id = tpl.predicate;
-			var pred = predicates[pred_id];
-			var ret = pred.name + "(";
-
-			for(var i = 0; i < pred.fields.length; ++i) {
-				var type = pred.fields[i];
-
-				if(type == "int") {
-					ret = ret + tpl.fields[i].toString();
-				} else if (type == "float") {
-					ret = ret + tpl.fields[i].toString();
-				} else if (type == "node") {
-					ret = ret + tpl.fields[i].toString();
-				} else {
-					ret = ret + "PROBLEM";
-				}
-
-				if(i < pred.fields.length - 1) {
-					ret = ret + ", ";
-				}
-			}
-
-			ret = ret + ")";
-
-			return ret;
-		}
-
-		$(document).ready(function () {
-			var sock = new WebSocket("ws://127.0.0.1:8080");
-
-			sock.onopen = function () { }
-			sock.onmessage = function (input) {
-				var msg = $.evalJSON(input.data);
-				var typ = msg.msg;
-
-				if(typ == "init") {
-					var running = msg.running;
-
-					if(running == null) {
-						$('#content').text("no program running at the moment");
-					} else {
-						$('#content').text("running " + running);
-					}
-				} else if(typ == "program_running") {
-					var running = msg.running;
-
-					$('#content').text("running " + running);
-					activate_controls();
-				} else if(typ == "program_stopped") {
-					$('#content').text("no program running at the moment");
-					disable_controls();
-				} else if(typ == "database") {
-					var db = msg.database;
-					var nodes = db.nodes;
-
-					graph = new Graph();
-
-					for(var i = 0; i < nodes.length; i++) {
-						var node = nodes[i];
-						var id = node.id;
-						var translated_id = node.translated_id;
-						mapnodes[id] = graph.newNode({label: translated_id});
-					}
-
-					$('#graph').springy({ graph: graph });
-
-					$('#database').text("number of nodes: " + msg.database.num_nodes);
-				} else if(typ == 'program') {
-					var program = msg.program;
-
-					predicates = msg.program;
-				} else if(typ == 'persistent_derivation') {
-					var node = msg.node;
-					var tpl = msg.tuple;
-					var predid = tpl.predicate;
-					var pred = predicates[predid];
-
-					if(pred.route && !pred.reverse_route) {
-						var dest = tpl.fields[0];
-						var node_orig = mapnodes[node];
-						var node_dest = mapnodes[dest];
-
-						graph.newEdge(node_orig, node_dest, {color: '#00A0B0'});
-					}
-
-					var tuple_str = tuple_to_string(tpl);
-
-					$('#content').text("Derived tuple " + tuple_str + " at node " + node);
-				}
-
-				$('#version').text("Meld Virtual Machine " + msg.version);
-			}
-
-			disable_controls();
-
-			$('#button-next').click(function () {
-					var msg = {msg: 'next'};
-					alert('yes');
-					sock.send($.toJSON(msg));
-					return false;
-			});
-		});
-	</script>
 		<p id="log"></p>
       <p id="content"></p>
 		<p id="database"></p>
