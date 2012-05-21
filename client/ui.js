@@ -1,7 +1,10 @@
 ((function () {
+var SERVER_URL = "ws://127.0.0.1:8080";
+var RECONNECT_INTERVAL = 2000;
 var predicates = null;
 var mapnodes = {};
-var graph = null;
+var graph = new Graph();
+var sock = null;
 
 function disable_controls()
 {
@@ -11,6 +14,17 @@ function disable_controls()
 function activate_controls()
 {
 	$('#button-next').removeAttr('disabled');
+}
+
+function clear_everything()
+{
+	var canvas = document.getElementById('graph');
+	var context = canvas.getContext('2d');
+
+	disable_controls();
+	graph.reset();
+	$('#log').text('');
+	$('#database').text('');
 }
 
 function tuple_to_string(tpl)
@@ -42,11 +56,17 @@ function tuple_to_string(tpl)
 	return ret;
 }
 
-$(document).ready(function () {
-
-	var sock = new WebSocket("ws://127.0.0.1:8080");
+function init_connection ()
+{
+	sock = new WebSocket(SERVER_URL);
 
 	sock.onopen = function () { }
+	sock.onclose = function () {
+		$('#content').text("Server " + SERVER_URL + " disconnected.");
+		clear_everything();
+		setTimeout(function () { init_connection(); }, RECONNECT_INTERVAL);
+		return true;
+	};
 	sock.onmessage = function (input) {
 		var msg = $.evalJSON(input.data);
 		var typ = msg.msg;
@@ -71,7 +91,7 @@ $(document).ready(function () {
 			var db = msg.database;
 			var nodes = db.nodes;
 
-			graph = new Graph();
+			graph.reset();
 
 			for(var i = 0; i < nodes.length; i++) {
 				var node = nodes[i];
@@ -79,8 +99,6 @@ $(document).ready(function () {
 				var translated_id = node.translated_id;
 				mapnodes[id] = graph.newNode({label: translated_id});
 			}
-
-			$('#graph').springy({ graph: graph });
 
 			$('#database').text("number of nodes: " + msg.database.num_nodes);
 		} else if(typ == 'program') {
@@ -104,16 +122,22 @@ $(document).ready(function () {
 			var tuple_str = tuple_to_string(tpl);
 
 			$('#content').text("Derived tuple " + tuple_str + " at node " + node);
+		} else {
+			alert('Received message of type ' + typ);
 		}
 
 		$('#version').text("Meld Virtual Machine " + msg.version);
 	}
+}
 
+$(document).ready(function () {
+
+	$('#graph').springy({ graph: graph });
+	init_connection();
 	disable_controls();
 
 	$('#button-next').click(function () {
 			var msg = {msg: 'next'};
-			alert('yes');
 			sock.send($.toJSON(msg));
 			return false;
 	});
