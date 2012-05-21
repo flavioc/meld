@@ -8,29 +8,44 @@
 		<script src="springy.js"></script>
 		<script src="springyui.js"></script>
 		<script src="ui.js"></script>
-		<style type="text/css">
-		.btn{display:inline-block;padding:4px 10px 4px;font-size:13px;line-height:18px;color:#333333;text-align:center;text-shadow:0 1px 1px rgba(255, 255, 255, 0.75);background-color:#fafafa;background-image:-webkit-gradient(linear, 0 0, 0 100%, from(#ffffff), color-stop(25%, #ffffff), to(#e6e6e6));background-image:-webkit-linear-gradient(#ffffff, #ffffff 25%, #e6e6e6);background-image:-moz-linear-gradient(top, #ffffff, #ffffff 25%, #e6e6e6);background-image:-ms-linear-gradient(#ffffff, #ffffff 25%, #e6e6e6);background-image:-o-linear-gradient(#ffffff, #ffffff 25%, #e6e6e6);background-image:linear-gradient(#ffffff, #ffffff 25%, #e6e6e6);background-repeat:no-repeat;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#e6e6e6', GradientType=0);border:1px solid #ccc;border-bottom-color:#bbb;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;-webkit-box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.2),0 1px 2px rgba(0, 0, 0, 0.05);-moz-box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.2),0 1px 2px rgba(0, 0, 0, 0.05);box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.2),0 1px 2px rgba(0, 0, 0, 0.05);cursor:pointer;*margin-left:.3em;}.btn:first-child{*margin-left:0;}
-		.btn:hover{color:#333333;text-decoration:none;background-color:#e6e6e6;background-position:0 -15px;-webkit-transition:background-position 0.1s linear;-moz-transition:background-position 0.1s linear;-ms-transition:background-position 0.1s linear;-o-transition:background-position 0.1s linear;transition:background-position 0.1s linear;}
-		.btn:focus{outline:thin dotted;outline:5px auto -webkit-focus-ring-color;outline-offset:-2px;}
-		.btn.active,.btn:active{background-image:none;-webkit-box-shadow:inset 0 2px 4px rgba(0, 0, 0, 0.15),0 1px 2px rgba(0, 0, 0, 0.05);-moz-box-shadow:inset 0 2px 4px rgba(0, 0, 0, 0.15),0 1px 2px rgba(0, 0, 0, 0.05);box-shadow:inset 0 2px 4px rgba(0, 0, 0, 0.15),0 1px 2px rgba(0, 0, 0, 0.05);background-color:#e6e6e6;background-color:#d9d9d9 \9;color:rgba(0, 0, 0, 0.5);outline:0;}
-		.btn.disabled,.btn[disabled]{cursor:default;background-image:none;background-color:#e6e6e6;opacity:0.65;filter:alpha(opacity=65);-webkit-box-shadow:none;-moz-box-shadow:none;box-shadow:none;}
-#graph {
-border: solid black 1px;
-margin-top: 10px;
-}
-	</style>
+		<link href="style.css" rel="stylesheet" type="text/css"></link>
 </head>
-<body>
-		<p id="log"></p>
-      <p id="content"></p>
-		<p id="database"></p>
-		<div id="controls">
-			<button id="button-next" class="btn">Next</button>
-		</div>
-		<div>
-			<canvas id="graph" width="640" height="480" />
-		</div>
-		<p id="version"></p>
-   </body>
+  <body>
+    <div id="wrap">
+      <div id="main">
+        <div id="graph-parent">
+  			  <canvas id="graph" width="640" height="480"/>
+  			</div>
+  			<div id="controls">
+  			  <button id="button-next" class="btn">Next</button>
+  		  </div>
+  			<p id="log"></p>
+        <p id="content"></p>
+  		  <p id="database"></p>
+  		</div>
+  		<div id="side">
+  		  <h1>HTML Ipsum Presents</h1>
+
+        <p><strong>Pellentesque habitant morbi tristique</strong> senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper. <em>Aenean ultricies mi vitae est.</em> Mauris placerat eleifend leo. Quisque sit amet est et sapien ullamcorper pharetra. Vestibulum erat wisi, condimentum sed, <code>commodo vitae</code>, ornare sit amet, wisi. Aenean fermentum, elit eget tincidunt condimentum, eros ipsum rutrum orci, sagittis tempus lacus enim ac dui. <a href="#">Donec non enim</a> in turpis pulvinar facilisis. Ut felis.</p>
+
+        <h2>Header Level 2</h2>
+
+        <ol>
+           <li>Lorem ipsum dolor sit amet, consectetuer adipiscing elit.</li>
+           <li>Aliquam tincidunt mauris eu risus.</li>
+        </ol>
+
+        <blockquote><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus magna. Cras in mi at felis aliquet congue. Ut a est eget ligula molestie gravida. Curabitur massa. Donec eleifend, libero at sagittis mollis, tellus est malesuada tellus, at luctus turpis elit sit amet quam. Vivamus pretium ornare est.</p></blockquote>
+
+        <h3>Header Level 3</h3>
+
+        <ul>
+           <li>Lorem ipsum dolor sit amet, consectetuer adipiscing elit.</li>
+           <li>Aliquam tincidunt mauris eu risus.</li>
+        </ul>
+  		</div>
+  		<p id="version"></p>
+  	</div>
+  </body>
 </html>
 

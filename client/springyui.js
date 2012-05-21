@@ -242,6 +242,7 @@ jQuery.fn.springy = function(params) {
 
 			var boxWidth = node.getWidth();
 			var boxHeight = node.getHeight();
+			var background = node.data.color;
 
 			// fill background
 			ctx.clearRect(s.x - boxWidth/2, s.y - 10, boxWidth, 20);
@@ -252,7 +253,10 @@ jQuery.fn.springy = function(params) {
 			} else if (nearest !== null && nearest.node !== null && nearest.node.id === node.id) {
 				ctx.fillStyle = "#EEEEEE";
 			} else {
-				ctx.fillStyle = "#FFFFFF";
+				if(background !== null)
+					ctx.fillStyle = background;
+				else
+					ctx.fillStyle = "#FFFFFF";
 			}
 
 			ctx.fillRect(s.x - boxWidth/2, s.y - 10, boxWidth, 20);

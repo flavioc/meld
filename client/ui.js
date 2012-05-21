@@ -97,7 +97,7 @@ function init_connection ()
 				var node = nodes[i];
 				var id = node.id;
 				var translated_id = node.translated_id;
-				mapnodes[id] = graph.newNode({label: translated_id});
+				mapnodes[id] = graph.newNode({label: translated_id, color: 'red'});
 			}
 
 			$('#database').text("number of nodes: " + msg.database.num_nodes);
