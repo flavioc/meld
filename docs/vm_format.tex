@@ -18,10 +18,11 @@
 
 
 A VM program starts with a byte indicating the number of predicates $P$ in the
-program. Next, there are three main components:
+program. Next, there are four main components:
 
 \begin{itemize}
 	\item An unsigned integer indicating the number $N$ of nodes to instantiate, followed by $2N$ unsigned integers corresponding to one pair of unsigned integers one for node. The first value is the node ID to use during execution and the second one the ID given by the user.
+	\item An unsigned integer indicating the number $S$ of constant strings in the program followed by $S$ pairs containing the length of the string and the string itself.
 	\item A set of $P$ \emph{predicate descriptors}, with 69 bytes each.
 	\item A set of $P$ byte-code instructions, one for each predicate.
 \end{itemize}
@@ -266,6 +267,10 @@ VALUE & BYTE FORMAT & ARGS\\
 \val{}{X&X&X&X&f&f&f&f\\\hline X&X&X&r&r&r&r&r} {field, reg}
 & with {\it reg} indicating a register with a tuple value\\
 & and {\it field} indicating the tuple's field number. \\
+\\
+\val{STRING} {0&0&0&1&1&0} {size, content}
+& the next 4 bytes indicate the length of the string\\
+& which are followed by the string itself \\
 \end{tabular}
 \vspace{0.3in}\\
 
@@ -322,6 +327,7 @@ TYPE & BYTE FORMAT\\
 \op{int\ set}{0&1&1&0}
 \op{float\ set}{0&1&1&1}
 \op{type}{1&0&0&0}
+\op{string}{1&0&0&1}
 \end{tabular}
 \vspace{0.3in}\\
 

@@ -24,13 +24,15 @@ field_type_size(field_type type)
          return sizeof(float_val);
       case FIELD_NODE:
          return sizeof(node_val);
+		case FIELD_STRING:
+			return sizeof(ptr_val);
       case FIELD_LIST_INT:
       case FIELD_LIST_FLOAT:
       case FIELD_LIST_NODE:
          return sizeof(ptr_val);
       
       default:
-         throw type_error("Unrecognized field type " + to_string(type));
+         throw type_error("Unrecognized field type " + to_string(type) + " (field_type_size)");
    }
    
    return 0;
@@ -47,8 +49,9 @@ field_type_string(field_type type)
       case FIELD_LIST_FLOAT: return string("float list");
 		case FIELD_LIST_NODE: return string("node list");
       case FIELD_WORKER: return string("worker");
+		case FIELD_STRING: return string("string");
       default:
-         throw type_error("Unrecognized field type " + to_string(type));
+         throw type_error("Unrecognized field type " + to_string(type) + " (field_type_string)");
 	}
 	
    assert(false);

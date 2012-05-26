@@ -162,8 +162,11 @@ tuple::print(ostream& cout) const
          case FIELD_NODE:
             cout << "@" << get_node(i);
             break;
+			case FIELD_STRING:
+				cout << '"' << get_string(i)->get_content() << '"';
+				break;
          default:
-            throw type_error("Unrecognized field type " + to_string(i));
+            throw type_error("Unrecognized field type " + to_string(i) + " (print)");
       }
    }
    

@@ -6,6 +6,7 @@
 #include "external/math.hpp"
 #include "external/utils.hpp"
 #include "external/lists.hpp"
+#include "external/strings.hpp"
 
 using namespace std;
 using namespace std::tr1;
@@ -129,6 +130,7 @@ init_external_functions(void)
    register_external_function(EXTERNAL1(intlistlength, FIELD_INT, FIELD_LIST_INT));
    register_external_function(EXTERNAL2(intlistdiff, FIELD_LIST_INT, FIELD_LIST_INT, FIELD_LIST_INT));
    register_external_function(EXTERNAL2(intlistnth, FIELD_INT, FIELD_LIST_INT, FIELD_INT));
+	register_external_function(EXTERNAL2(concatenate, FIELD_STRING, FIELD_STRING, FIELD_STRING));
 
    atexit(cleanup_externals);
    

@@ -12,6 +12,7 @@
 #include "vm/predicate.hpp"
 #include "vm/defs.hpp"
 #include "vm/tuple.hpp"
+#include "runtime/string.hpp"
 #ifndef USE_UI
 #include <json_spirit.h>
 #endif
@@ -25,6 +26,7 @@ namespace vm {
 const size_t INIT_PREDICATE_ID(0);
 extern size_t SETPRIO_PREDICATE_ID;
 extern size_t SETCOLOR_PREDICATE_ID;
+extern size_t SETEDGELABEL_PREDICATE_ID;
 
 class program
 {
@@ -40,6 +42,10 @@ private:
    bool safe;
 
    mutable predicate *init;
+
+	typedef std::vector<runtime::rstring::ptr> string_store;
+	
+	string_store default_strings;
 
    void print_predicate_code(std::ostream&, predicate*) const;
    
@@ -67,6 +73,11 @@ public:
    
    size_t num_predicates(void) const { return predicates.size(); }
    size_t num_route_predicates(void) const { return route_predicates.size(); }
+
+	inline runtime::rstring::ptr get_default_string(const size_t i) const
+	{
+		return default_strings[i];
+	}
    
    tuple* new_tuple(const predicate_id&) const;
    

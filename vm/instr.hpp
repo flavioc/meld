@@ -21,8 +21,10 @@ const size_t field_size = 2;
 const size_t iter_match_size = 2;
 const size_t val_size = 1;
 const size_t int_size = sizeof(int_val);
+const size_t uint_size = sizeof(int_val);
 const size_t float_size = sizeof(float_val);
 const size_t node_size = sizeof(node_val);
+const size_t string_size = sizeof(int_val);
 const size_t reg_size = 0;
 const size_t host_size = 0;
 const size_t nil_size = 0;
@@ -134,21 +136,24 @@ inline bool val_is_field(const instr_val x) { return x == 0x02; }
 inline bool val_is_host(const instr_val x) { return x == 0x03; }
 inline bool val_is_nil(const instr_val x) { return x == 0x04; }
 inline bool val_is_node(const instr_val x) { return x == 0x05; }
-
-inline reg_num val_reg(const instr_val x) { return x & 0x1f; }
-inline field_num val_field_num(const pcounter x) { return *x & 0xff; }
-inline reg_num val_field_reg(const pcounter x) { return *(x + 1) & 0x1f; }
+inline bool val_is_string(const instr_val x) { return x == 0x06; }
 
 inline int_val pcounter_int(pcounter pc) { return *(int_val *)pc; }
 inline code_size_t pcounter_code_size(pcounter pc) { return *(code_size_t *)pc; }
 inline float_val pcounter_float(pcounter pc) { return *(float_val *)pc; }
 inline node_val pcounter_node(pcounter pc) { return *(node_val *)pc; }
+inline uint_val pcounter_uint(pcounter pc) { return *(uint_val *)pc; }
+
+inline reg_num val_reg(const instr_val x) { return x & 0x1f; }
+inline field_num val_field_num(const pcounter x) { return *x & 0xff; }
+inline reg_num val_field_reg(const pcounter x) { return *(x + 1) & 0x1f; }
 
 inline void pcounter_move_field(pcounter *pc) { *pc = *pc + field_size; }
 inline void pcounter_move_int(pcounter *pc) { *pc = *pc + int_size; }
 inline void pcounter_move_float(pcounter *pc) { *pc = *pc + float_size; }
 inline void pcounter_move_match(pcounter *pc) { *pc = *pc + iter_match_size; }
 inline void pcounter_move_node(pcounter *pc) { *pc = *pc + node_size; }
+inline void pcounter_move_uint(pcounter *pc) { *pc = *pc + uint_size; }
 
 /* common instruction functions */
 
@@ -330,6 +335,8 @@ STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING>(const instr_val v)
       return tuple_size;
    else if(val_is_node(v))
       return node_size;
+	else if(val_is_string(v))
+		return string_size;
    else
       throw malformed_instr_error("invalid instruction argument value");
 }
@@ -351,6 +358,8 @@ STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING_NOT_NIL>(const instr_val v)
       return tuple_size;
    else if(val_is_node(v))
       return node_size;
+	else if(val_is_string(v))
+		return string_size;
    else {
       throw malformed_instr_error("invalid instruction argument value");
    }
@@ -409,6 +418,8 @@ STATIC_INLINE size_t arg_size<ARGUMENT_NON_LIST>(const instr_val v)
       return host_size;
    else if(val_is_node(v))
       return node_size;
+	else if(val_is_string(v))
+		return string_size;
    else
       throw malformed_instr_error("invalid instruction non-list value");
 }

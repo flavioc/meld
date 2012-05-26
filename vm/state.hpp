@@ -36,6 +36,7 @@ private:
    std::list<runtime::float_list*, mem::allocator<runtime::float_list*> > free_float_list;
    std::list<runtime::int_list*, mem::allocator<runtime::int_list*> > free_int_list;
    std::list<runtime::node_list*, mem::allocator<runtime::node_list*> > free_node_list;
+	std::list<runtime::rstring::ptr, mem::allocator<runtime::rstring::ptr> > free_rstring;
    
    typedef std::pair<vm::tuple *, vm::ref_count> pair_linear;
    typedef std::list<pair_linear> list_linear;
@@ -68,6 +69,7 @@ public:
    define_get(float, float_val, return *(float_val*)(regs + num));
    define_get(ptr, ptr_val, return *(ptr_val*)(regs + num));
    define_get(bool, bool_val, return get_int(num) ? true : false);
+	define_get(string, runtime::rstring::ptr, return (runtime::rstring::ptr)get_ptr(num););
    define_get(int_list, runtime::int_list*, return (runtime::int_list*)get_ptr(num));
    define_get(float_list, runtime::float_list*, return (runtime::float_list*)get_ptr(num));
    define_get(node_list, runtime::node_list*, return (runtime::node_list*)get_ptr(num));
@@ -83,6 +85,7 @@ public:
    define_set(int, const int_val&, *(int_val*)(regs + num) = val);
    define_set(ptr, const ptr_val&, *(ptr_val*)(regs + num) = val);
    define_set(bool, const bool_val&, set_int(num, val ? 1 : 0));
+	define_set(string, const runtime::rstring::ptr, set_ptr(num, (ptr_val)val));
    define_set(int_list, runtime::int_list*, set_ptr(num, (ptr_val)val));
    define_set(float_list, runtime::float_list*, set_ptr(num, (ptr_val)val));
    define_set(node_list, runtime::node_list*, set_ptr(num, (ptr_val)val));
@@ -103,7 +106,8 @@ public:
    inline void add_float_list(runtime::float_list *ls) { free_float_list.push_back(ls); }
    inline void add_int_list(runtime::int_list *ls) { free_int_list.push_back(ls); }
    inline void add_node_list(runtime::node_list *ls) { free_node_list.push_back(ls); }
-   void purge_lists(void);
+	inline void add_string(runtime::rstring::ptr str) { free_rstring.push_back(str); }
+   void purge_runtime_objects(void);
    
    void setup(vm::tuple*, db::node*, const ref_count);
    void cleanup(void);

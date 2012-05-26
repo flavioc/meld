@@ -76,25 +76,33 @@ state::no_longer_using_linear_tuple(vm::tuple *tpl)
 }
 
 void
-state::purge_lists(void)
+state::purge_runtime_objects(void)
 {
-#define PURGE_LIST(TYPE) \
-   for(list<TYPE ## _list*>::iterator it(free_ ## TYPE ## _list.begin()); it != free_ ## TYPE ## _list.end(); ++it) { \
-      TYPE ## _list *ls(*it); \
-      assert(ls != NULL); \
-      if(ls->zero_refs()) { ls->destroy(); } \
+#define PURGE_OBJ(TYPE) \
+   for(list<TYPE*>::iterator it(free_ ## TYPE.begin()); it != free_ ## TYPE .end(); ++it) { \
+      TYPE *x(*it); \
+      assert(x != NULL); \
+		if(x->zero_refs()) { x->destroy(); } \
    } \
-   free_ ## TYPE ## _list.clear()
-   
+   free_ ## TYPE .clear()
+
+#define PURGE_LIST(TYPE) \
+	PURGE_OBJ(TYPE ## _list)
+
    PURGE_LIST(float);
    PURGE_LIST(int);
    PURGE_LIST(node);
+#undef PURGE_LIST
+	
+	PURGE_OBJ(rstring);
+	
+#undef PURGE_OBJ
 }
 
 void
 state::cleanup(void)
 {
-   purge_lists();
+   purge_runtime_objects();
    assert(used_linear_tuples.empty());
 }
 

@@ -69,6 +69,7 @@ move_to_reg(const pcounter& m, state& state,
          case FIELD_LIST_FLOAT: state.set_float_list(reg, tuple->get_float_list(field)); break;
          case FIELD_LIST_NODE: state.set_node_list(reg, tuple->get_node_list(field)); break;
          case FIELD_NODE: state.set_node(reg, tuple->get_node(field)); break;
+			case FIELD_STRING: state.set_string(reg, tuple->get_string(field)); break;
          default: throw vm_exec_error("don't know how to move this field (move_to_reg)");
       }
       
@@ -111,6 +112,14 @@ move_to_field(pcounter m, state& state, const instr_val& from)
       tuple *tuple(state.get_tuple(val_field_reg(m)));
       
       tuple->set_node(val_field_num(m), val);
+	} else if(val_is_string(from)) {
+		const uint_val id(pcounter_uint(m));
+		
+		pcounter_move_uint(&m);
+		
+		tuple *tuple(state.get_tuple(val_field_reg(m)));
+		
+		tuple->set_string(val_field_num(m), state::PROGRAM->get_default_string(id));
    } else if(val_is_field(from)) {
       const tuple *from_tuple(state.get_tuple(val_field_reg(m)));
       const field_num from_field(val_field_num(m));
@@ -146,6 +155,8 @@ move_to_field(pcounter m, state& state, const instr_val& from)
       tuple* tuple(state.get_tuple(val_field_reg(m)));
       const field_num field(val_field_num(m));
       
+cout << field << endl;
+
       if(val_is_host(from))
          tuple->set_node(field, state.node->get_id());
       else if(val_is_reg(from)) {
@@ -170,10 +181,13 @@ move_to_field(pcounter m, state& state, const instr_val& from)
             case FIELD_LIST_NODE:
                tuple->set_node_list(field, state.get_node_list(reg));
                break;
+				case FIELD_STRING:
+					tuple->set_string(field, state.get_string(reg));
+					break;
             default: throw vm_exec_error("do not know how to move reg to this tuple field");
          }
       } else
-         throw vm_exec_error("invalid move to field");
+         throw vm_exec_error("invalid move to field (move_to_field)");
    }
 }
 
@@ -346,6 +360,28 @@ node_list* get_op_function<node_list*>(const instr_val& val, pcounter& m, state&
       return node_list::null_list();
    else
       throw vm_exec_error("unable to get an addr list");
+}
+
+template <>
+rstring::ptr get_op_function<rstring::ptr>(const instr_val& val, pcounter& m, state& state)
+{
+	if(val_is_reg(val))
+		return state.get_string(val_reg(val));
+	else if(val_is_field(val)) {
+		const tuple *tuple(state.get_tuple(val_field_reg(m)));
+		const field_num field(val_field_num(m));
+		
+		pcounter_move_field(&m);
+		
+		return tuple->get_string(field);
+	} else if(val_is_string(val)) {
+		const uint_val id(pcounter_uint(m));
+		
+		pcounter_move_uint(&m);
+		
+		return state::PROGRAM->get_default_string(id);
+	} else
+		throw vm_exec_error("unable to get a string");
 }
 
 template <typename T>
@@ -641,6 +677,8 @@ build_match_object(match& m, pcounter pc, state& state, const predicate *pred)
 static inline return_type
 execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples, const predicate *pred)
 {
+	(void)pred;
+	
    const bool old_is_linear = state.is_linear;
 
    for(tuple_vector::iterator it(tuples.begin());
@@ -914,8 +952,13 @@ read_call_arg(argument& arg, const field_type type, pcounter& m, state& state)
          TO_ARG(val, arg);
       }
       break;
+		case FIELD_STRING: {
+			const rstring::ptr val(get_op_function<rstring::ptr>(val_type, m, state));
+			TO_ARG(val, arg);
+		}
+		break;
       default:
-         throw vm_exec_error("can't read this external function argument");
+         throw vm_exec_error("can't read this external function argument (read_call_arg)");
    }
 }
 
@@ -982,6 +1025,14 @@ execute_call(pcounter pc, state& state)
       case FIELD_NODE:
          state.set_node(reg, FROM_ARG(ret, node_val));
          break;
+		case FIELD_STRING: {
+			rstring::ptr s(FROM_ARG(ret, rstring::ptr));
+			
+			state.set_string(reg, s);
+			state.add_string(s);
+			
+			break;
+		}
       case FIELD_LIST_FLOAT: {
          float_list *l(FROM_ARG(ret, float_list*));
 
@@ -1006,13 +1057,11 @@ execute_call(pcounter pc, state& state)
 static inline return_type
 execute(pcounter pc, state& state)
 {
-	const int zero(0);
-
    for(; ; pc = advance(pc))
    {
 eval_loop:
 
-      //instr_print_simple(pc, zero, state.PROGRAM, cout);
+      instr_print_simple(pc, 0, state.PROGRAM, cout);
       
       switch(fetch(pc)) {
          case RETURN_INSTR: return RETURN_OK;

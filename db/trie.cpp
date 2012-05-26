@@ -154,9 +154,10 @@ trie_node::match(const tuple_field& field, const field_type& typ,
          case FIELD_INT: next = hash->get_int(field.int_field); break;
          case FIELD_FLOAT: next = hash->get_float(field.float_field); break;
          case FIELD_NODE: next = hash->get_node(field.node_field); break;
+			case FIELD_STRING: next = hash->get_uint(field.ptr_field); break;
 #define HASH_LIST(LIST_TYPE) { \
             LIST_TYPE *ls((LIST_TYPE*)field.ptr_field);  \
-            next = hash->get_int(LIST_TYPE::is_null(ls) ? 0 : 1); \
+            next = hash->get_uint(LIST_TYPE::is_null(ls) ? 0 : 1); \
          }
          case FIELD_LIST_INT: HASH_LIST(int_list); break;
          case FIELD_LIST_FLOAT: HASH_LIST(float_list); break;
@@ -185,6 +186,10 @@ trie_node::match(const tuple_field& field, const field_type& typ,
             if(f.node_field == field.node_field)
                return next;
             break;
+			case FIELD_STRING:
+				if(f.node_field == field.ptr_field)
+					return next;
+				break;
             
 #define MATCH_LIST(LIST_TYPE, FIELD_LIST_TYPE, FIELD_ITEM_TYPE, ITEM_FIELD) { \
             LIST_TYPE *ls((LIST_TYPE*)field.ptr_field);  \
@@ -226,9 +231,9 @@ trie_node::insert(const tuple_field& field, const field_type& type, val_stack& v
 #define INSERT_LIST(LIST_TYPE, FIELD_LIST_TYPE, FIELD_ITEM_TYPE, ITEM_FIELD) { \
       LIST_TYPE *ls((LIST_TYPE*)field.ptr_field); \
       if(LIST_TYPE::is_null(ls)) { \
-         f.int_field = 0; \
+         f.ptr_field = 0; \
       } else { \
-         f.int_field = 1; \
+         f.ptr_field = 1; \
          tuple_field head, tail; \
          head.ITEM_FIELD = ls->get_head(); \
          tail.ptr_field = (ptr_val)ls->get_tail(); \
@@ -264,6 +269,9 @@ trie_node::insert(const tuple_field& field, const field_type& type, val_stack& v
          case FIELD_LIST_INT:
          case FIELD_LIST_FLOAT:
          case FIELD_LIST_NODE:
+			case FIELD_STRING:
+				hash->insert_uint(f.ptr_field, new_child);
+				break;
          case FIELD_INT: hash->insert_int(f.int_field, new_child); break;
          case FIELD_FLOAT: hash->insert_float(f.float_field, new_child); break;
          case FIELD_NODE: hash->insert_node(f.node_field, new_child); break;
@@ -301,6 +309,9 @@ trie_node::convert_hash(const field_type& type)
          case FIELD_LIST_INT:
          case FIELD_LIST_FLOAT:
          case FIELD_LIST_NODE:
+			case FIELD_STRING:
+				hash->insert_uint(next->data.ptr_field, next);
+				break;
          case FIELD_INT: hash->insert_int(next->data.int_field, next); break;
          case FIELD_FLOAT: hash->insert_float(next->data.float_field, next); break;
          case FIELD_NODE: hash->insert_node(next->data.node_field, next); break;
@@ -344,10 +355,36 @@ trie_hash::get_node(const node_val& val) const
    return buckets[bucket];
 }
 
+trie_node*
+trie_hash::get_uint(const uint_val& val) const
+{
+	const size_t bucket(hash_item(std::tr1::hash<uint_val>()(val)));
+	return buckets[bucket];
+}
+
 void
 trie_hash::insert_int(const int_val& val, trie_node *node)
 {
    const size_t bucket(hash_item(std::tr1::hash<int_val>()(val)));
+   
+   assert(num_buckets > 0);
+   assert(bucket < num_buckets);
+   
+   trie_node *old(buckets[bucket]);
+   
+   node->prev = NULL;
+   node->next = old;
+   if(old)
+      old->prev = node;
+   node->bucket = buckets + bucket;
+   
+   buckets[bucket] = node;
+}
+
+void
+trie_hash::insert_uint(const uint_val& val, trie_node *node)
+{
+	const size_t bucket(hash_item(std::tr1::hash<uint_val>()(val)));
    
    assert(num_buckets > 0);
    assert(bucket < num_buckets);
@@ -419,6 +456,9 @@ trie_hash::expand(void)
             case FIELD_LIST_INT:
             case FIELD_LIST_FLOAT:
             case FIELD_LIST_NODE:
+				case FIELD_STRING:
+					insert_uint(next->data.ptr_field, next);
+					break;
             case FIELD_INT: insert_int(next->data.int_field, next); break;
             case FIELD_FLOAT: insert_float(next->data.float_field, next); break;
             case FIELD_NODE: insert_node(next->data.node_field, next); break;
@@ -1155,6 +1195,7 @@ match_begin:
          case FIELD_INT:
          case FIELD_FLOAT:
          case FIELD_NODE:
+			case FIELD_STRING:
             goto match_succeeded_and_pop;
          default: goto match_succeeded;
       }

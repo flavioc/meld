@@ -32,6 +32,8 @@ process::do_tuple_action(node *node, vm::tuple *tuple, const ref_count count)
 
 	if(pred_id == SETCOLOR_PREDICATE_ID)
 		scheduler->set_node_color(node, tuple->get_int(0), tuple->get_int(1), tuple->get_int(2));
+	else if(pred_id == SETEDGELABEL_PREDICATE_ID)
+		scheduler->set_edge_label(node, tuple->get_node(0), tuple->get_string(1));
    else {
    	switch(tuple->get_predicate_id()) {
       	default:
@@ -136,7 +138,7 @@ process::do_work(work& w)
    ref_count count = stuple->get_count();
    node *node(w.get_node());
    
-   //cout << node->get_id() << " " << *tuple << endl;
+   cout << node->get_id() << " " << *tuple << endl;
    
    if(count == 0)
       return;

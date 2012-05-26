@@ -121,13 +121,15 @@ public:
    size_t count_refs(void) const;
    
    void insert_int(const vm::int_val&, trie_node *);
+	void insert_uint(const vm::uint_val&, trie_node *);
    void insert_float(const vm::float_val&, trie_node *);
    void insert_node(const vm::node_val&, trie_node *);
    
    trie_node *get_int(const vm::int_val&) const;
    trie_node *get_float(const vm::float_val&) const;
    trie_node *get_node(const vm::node_val&) const;
-   
+	trie_node *get_uint(const vm::uint_val&) const;   
+
    void expand(void);
    
    explicit trie_hash(const vm::field_type&, trie_node*);

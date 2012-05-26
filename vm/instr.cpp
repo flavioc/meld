@@ -53,7 +53,7 @@ reg_string(const reg_num num)
 }
 
 string
-val_string(const instr_val v, pcounter *pm)
+val_string(const instr_val v, pcounter *pm, const program *prog)
 {
    if(val_is_tuple(v))
       return string("tuple");
@@ -80,7 +80,12 @@ val_string(const instr_val v, pcounter *pm)
       const string ret(string("@") + to_string(pcounter_node(*pm)));
       pcounter_move_node(pm);
       return ret;
-   }
+	} else if(val_is_string(v)) {
+		const string ret(string("\"") + prog->get_default_string(pcounter_uint(*pm))->get_content() + "\"");
+		pcounter_move_uint(pm);
+		return ret;
+   } else
+		throw type_error("Unrecognized val type " + to_string(v) + " (val_string)");
    
    return string("");
 }
@@ -159,16 +164,16 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
 			break;
 		case TEST_NIL_INSTR: {
 				pcounter m = pc + TEST_NIL_BASE;
-            const string op(val_string(test_nil_op(pc), &m));
-            const string dest(val_string(test_nil_dest(pc), &m));
+            const string op(val_string(test_nil_op(pc), &m, prog));
+            const string dest(val_string(test_nil_dest(pc), &m, prog));
 
             cout << "TEST-NIL " << op << " TO " << dest << endl;
 			}
 			break;
       case MOVE_INSTR: {
 				pcounter m = pc + MOVE_BASE;
-            const string from(val_string(move_from(pc), &m));
-            const string to(val_string(move_to(pc), &m));
+            const string from(val_string(move_from(pc), &m, prog));
+            const string to(val_string(move_to(pc), &m, prog));
 
             cout << "MOVE " << from << " TO " << to << endl;
 		   }
@@ -177,7 +182,7 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
    			pcounter m = pc + MOVE_NIL_BASE;
 
             cout << "MOVE-NIL TO "
-                 << val_string(move_nil_dest(pc), &m)
+                 << val_string(move_nil_dest(pc), &m, prog)
                  << endl;
    		}
    		break;
@@ -188,9 +193,9 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
    		break;
    	case OP_INSTR: {
    			pcounter m = pc + OP_BASE;
-            const string arg1(val_string(op_arg1(pc), &m));
-            const string arg2(val_string(op_arg2(pc), &m));
-            const string dest(val_string(op_dest(pc), &m));
+            const string arg1(val_string(op_arg1(pc), &m, prog));
+            const string arg2(val_string(op_arg2(pc), &m, prog));
+            const string dest(val_string(op_dest(pc), &m, prog));
 
             cout << "OP " << arg1 << " " << op_string(op_op(pc))
                  << " " << arg2 << " TO " << dest
@@ -199,8 +204,8 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
    		break;
    	case FLOAT_INSTR: {
             pcounter m = pc + FLOAT_BASE;
-            const string op(val_string(float_op(pc), &m));
-            const string dest(val_string(float_dest(pc), &m));
+            const string op(val_string(float_op(pc), &m, prog));
+            const string dest(val_string(float_dest(pc), &m, prog));
             
    	      cout << "FLOAT " << op
                  << " TO " << dest << endl;
@@ -226,7 +231,7 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
                   cout << endl;
                   print_tab(tabcount);
                   cout << "  (match)." << iter_match_field(match)
-                       << "=" << val_string(iter_match_val(match), &m);
+                       << "=" << val_string(iter_match_val(match), &m, prog);
                   if(iter_match_end(match))
                      break;
                }
@@ -252,7 +257,7 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
                
                pcounter val_ptr(m);
                m += val_size;
-               cout << val_string(call_val(val_ptr), &m);
+               cout << val_string(call_val(val_ptr), &m, prog);
             }
             cout << ")" << endl;
    		}
@@ -275,7 +280,7 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
                
                m += index_size + val_size; // skip index and value bytes of this arg
                
-               cout << val_string(delete_val(val_ptr), &m);
+               cout << val_string(delete_val(val_ptr), &m, prog);
             }
             cout << endl; 
          }
@@ -286,33 +291,33 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          break;
    	case CONS_INSTR: {
    			pcounter m = pc + CONS_BASE;
-            const string head(val_string(cons_head(pc), &m));
-            const string tail(val_string(cons_tail(pc), &m));
-            const string dest(val_string(cons_dest(pc), &m));
+            const string head(val_string(cons_head(pc), &m, prog));
+            const string tail(val_string(cons_tail(pc), &m, prog));
+            const string dest(val_string(cons_dest(pc), &m, prog));
    			
             cout << "CONS (" << head << "::" << tail << ") TO " << dest << endl;
    		}
    		break;
    	case HEAD_INSTR: {
    			pcounter m = pc + HEAD_BASE;
-            const string cons(val_string(head_cons(pc), &m));
-            const string dest(val_string(head_dest(pc), &m));
+            const string cons(val_string(head_cons(pc), &m, prog));
+            const string dest(val_string(head_dest(pc), &m, prog));
 
             cout << "HEAD " << cons << " TO " << dest << endl;
    	   }
    	   break;
     	case TAIL_INSTR: {
     			pcounter m = pc + TAIL_BASE;
-            const string cons(val_string(tail_cons(pc), &m));
-            const string dest(val_string(tail_dest(pc), &m));
+            const string cons(val_string(tail_cons(pc), &m, prog));
+            const string dest(val_string(tail_dest(pc), &m, prog));
     			
             cout << "TAIL " << cons << " TO " << dest << endl;
     		}
     		break;
     	case NOT_INSTR: {
     			pcounter m = pc + NOT_BASE;
-            const string op(val_string(not_op(pc), &m));
-            const string dest(val_string(not_dest(pc), &m));
+            const string op(val_string(not_op(pc), &m, prog));
+            const string dest(val_string(not_dest(pc), &m, prog));
 
             cout << "NOT " << op << " TO " << dest << endl;
     		}
@@ -340,8 +345,8 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          break;
       case COLOCATED_INSTR: {
             pcounter m = pc + COLOCATED_BASE;
-            const string first(val_string(colocated_first(pc), &m));
-            const string second(val_string(colocated_second(pc), &m));
+            const string first(val_string(colocated_first(pc), &m, prog));
+            const string second(val_string(colocated_second(pc), &m, prog));
          
             cout << "COLOCATED (" << first << ", " << second
                << ") TO " << reg_string(colocated_dest(pc)) << endl;

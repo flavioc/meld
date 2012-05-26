@@ -30,6 +30,7 @@ static const size_t PREDICATE_DESCRIPTOR_SIZE = sizeof(code_size_t) +
 strat_level program::MAX_STRAT_LEVEL(0);
 size_t SETPRIO_PREDICATE_ID(1);
 size_t SETCOLOR_PREDICATE_ID(2);
+size_t SETEDGELABEL_PREDICATE_ID(3);
 
 program::program(const string& filename):
    init(NULL)
@@ -59,6 +60,23 @@ program::program(const string& filename):
    
    fp.seekg(num_nodes * database::node_size, ios_base::cur);
 
+	// read string constants
+	int_val num_strings;
+	fp.read((char*)&num_strings, sizeof(int_val));
+	
+	default_strings.reserve(num_strings);
+	
+	for(int i(0); i < num_strings; ++i) {
+		int_val length;
+		
+		fp.read((char*)&length, sizeof(int_val));
+		
+		char str[length + 1];
+		fp.read(str, sizeof(char) * length);
+		str[length] = '\0';
+		default_strings.push_back(runtime::rstring::make_default_string(str));
+	}
+
    // read predicate information
    for(size_t i(0); i < num_predicates; ++i) {
       code_size_t size;
@@ -75,6 +93,8 @@ program::program(const string& filename):
 			SETPRIO_PREDICATE_ID = i;
 		else if(name == "setcolor")
 			SETCOLOR_PREDICATE_ID = i;
+		else if(name == "setedgelabel")
+			SETEDGELABEL_PREDICATE_ID = i;
       
       if(predicates[i]->is_route_pred())
          route_predicates.push_back(predicates[i]);

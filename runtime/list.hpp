@@ -183,8 +183,8 @@ public:
    }
    
    static inline
-	 void print(std::ostream& cout, list_ptr ls)
-	 {
+	void print(std::ostream& cout, list_ptr ls)
+	{
       if(is_null(ls))
          cout << "[]";
       else
@@ -192,8 +192,8 @@ public:
    }
    
    static inline
-	 bool equal(const list_ptr l1, const list_ptr l2)
-	 {
+	bool equal(const list_ptr l1, const list_ptr l2)
+	{
       if(l1 == null_list() && l2 != null_list())
          return false;
       if(l1 != null_list() && l2 == null_list())

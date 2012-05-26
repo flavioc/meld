@@ -104,6 +104,7 @@ OBJS = utils/utils.o \
 			 external/math.o \
 			 external/lists.o \
 			 external/utils.o \
+			 external/strings.o \
 			 stat/stat.o \
 			 stat/slice.o \
 			 stat/slice_set.o \
@@ -358,6 +359,7 @@ sched/local/mpi_threads_single.o: sched/local/mpi_threads_single.hpp \
 external/math.o: external/math.hpp external/math.cpp
 external/utils.o: external/utils.hpp external/utils.cpp
 external/lists.o: external/lists.hpp external/lists.cpp
+external/strings.o: external/strings.hpp external/strings.cpp
 
 stat/stat.o: stat/stat.cpp stat/stat.hpp
 stat/slice.o: stat/slice.hpp stat/slice.cpp
