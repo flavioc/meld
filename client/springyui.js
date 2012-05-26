@@ -24,8 +24,13 @@ Copyright (c) 2010 Dennis Hotson
 */
 
 (function() {
+	
+jQuery.fn.springyUpdate = function () {
+	var canvas = this[0];
+	canvas.renderer.start();
+};
 
-jQuery.fn.springy = function(params) {
+jQuery.fn.springy = function(params, node_selected) {
 
 	var stiffness = params.stiffness || 400.0;
 	var repulsion = params.repulsion || 400.0;
@@ -35,7 +40,7 @@ jQuery.fn.springy = function(params) {
 	var ctx = canvas.getContext("2d");
 
 	canvas.renderer = null;
-	canvas.graph = this.graph = params.graph || new Graph();
+	canvas.graph = this.graph = params.graph;
 
 	var layout = this.layout = new Layout.ForceDirected(canvas.graph, stiffness, repulsion, damping);
 
@@ -76,6 +81,26 @@ jQuery.fn.springy = function(params) {
 	var selected = null;
 	var nearest = null;
 	var dragged = null;
+	var moved = false;
+	
+	jQuery(canvas).click(function (e) {
+		// click is called after mousemove if at all
+		if(moved == true) {
+			moved = false;
+			return true;
+		}
+		
+		var pos = jQuery(this).offset();
+		var p = fromScreen({x: e.pageX - pos.left, y: e.pageY - pos.top});
+		var sel = layout.nearest(p);
+
+		if (sel.node !== null) {
+			if(typeof(node_selected !== 'undefined'))
+				node_selected(sel.node);
+		}
+		
+		return true;
+	});
 
 	jQuery(canvas).mousedown(function(e) {
 		jQuery('.actions').hide();
@@ -90,7 +115,7 @@ jQuery.fn.springy = function(params) {
 			dragged.point.m = 10000.0;
 		}
 
-		canvas.renderer.start();
+		//canvas.renderer.start();
 	});
 
 	jQuery(canvas).mousemove(function(e) {
@@ -101,6 +126,7 @@ jQuery.fn.springy = function(params) {
 		if (dragged !== null && dragged.node !== null) {
 			dragged.point.p.x = p.x;
 			dragged.point.p.y = p.y;
+			moved = true;
 		}
 
 		canvas.renderer.start();
@@ -223,13 +249,13 @@ jQuery.fn.springy = function(params) {
 
 			// label
 
-			if (typeof(edge.data.label) !== 'undefined') {
+			if (typeof(edge.data.label) !== 'undefined' && edge.data.label !== '') {
 				text = edge.data.label
 				ctx.save();
 				ctx.textAlign = "center";
 				ctx.textBaseline = "top";
-				ctx.font = "10px Helvetica, sans-serif";
-				ctx.fillStyle = "#5BA6EC";
+				ctx.font = "16px Helvetica, sans-serif";
+				ctx.fillStyle = "black";
 				ctx.fillText(text, (x1+x2)/2, (y1+y2)/2);
 				ctx.restore();
 			}
@@ -248,9 +274,9 @@ jQuery.fn.springy = function(params) {
 			ctx.clearRect(s.x - boxWidth/2, s.y - 10, boxWidth, 20);
 
 			// fill background
-			if (selected !== null && nearest.node !== null && selected.node !== null && selected.node.id === node.id) {
+			if (false && selected !== null && nearest.node !== null && selected.node !== null && selected.node.id === node.id) {
 				ctx.fillStyle = "#FFFFE0";
-			} else if (nearest !== null && nearest.node !== null && nearest.node.id === node.id) {
+			} else if (false && nearest !== null && nearest.node !== null && nearest.node.id === node.id) {
 				ctx.fillStyle = "#EEEEEE";
 			} else {
 				if(background !== null)

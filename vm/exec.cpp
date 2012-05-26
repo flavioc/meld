@@ -928,6 +928,11 @@ execute_remove(pcounter pc, state& state)
    
    assert(leaf != NULL);
 
+#ifdef USE_UI
+	sched::base *sched_caller(state.proc->get_scheduler());
+	sched_caller->new_linear_consumption(state.node, state.get_tuple(reg));
+#endif
+
    state.node->delete_by_leaf(state.get_tuple(reg)->get_predicate(), leaf);
 }
 

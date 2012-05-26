@@ -253,7 +253,8 @@ sched/local/serial.o: sched/local/serial.cpp sched/local/serial.hpp \
 									sched/queue/unsafe_queue.hpp sched/nodes/serial.hpp
 
 sched/local/serial_ui.o: sched/local/serial_ui.cpp sched/local/serial_ui.hpp \
-							sched/local/serial.hpp sched/local/serial.cpp
+							sched/local/serial.hpp sched/local/serial.cpp \
+							ui/manager.hpp
 
 sched/local/threads_static.o: sched/base.hpp sched/local/threads_static.hpp \
 								sched/local/threads_static.cpp sched/queue/node.hpp \

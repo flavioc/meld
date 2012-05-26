@@ -105,9 +105,12 @@ public:
    
    // ACTIONS
    virtual void set_node_priority(db::node *, const int) { }
+	virtual void set_node_color(db::node *, const int, const int, const int) { }
 
 	// INFORMATION
 	virtual void new_persistent_derivation(db::node *, vm::tuple *) { }
+	virtual void new_linear_derivation(db::node *, vm::tuple *) { }
+	virtual void new_linear_consumption(db::node *, vm::tuple *) { }
    
    virtual void init(const size_t) = 0;
    virtual void end(void) = 0;

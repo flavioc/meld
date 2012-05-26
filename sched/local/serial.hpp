@@ -11,10 +11,12 @@ namespace sched
    
 class serial_local: public sched::base
 {
+protected:
+	
+	serial_node *current_node;
+	unsafe_queue<serial_node*> queue_nodes;
+	
 private:
-   
-   unsafe_queue<serial_node*> queue_nodes;
-   serial_node *current_node;
    
    inline bool has_work(void) const { return !queue_nodes.empty(); }
    

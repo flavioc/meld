@@ -402,7 +402,8 @@ Layout.requestAnimationFrame = __bind(window.requestAnimationFrame ||
 Layout.ForceDirected.prototype.start = function(interval, render, done) {
 	var t = this;
 
-	if (this._started) return;
+	if (this._started) { return; }
+	
 	this._started = true;
 
 	Layout.requestAnimationFrame(function step() {
@@ -430,7 +431,6 @@ Layout.ForceDirected.prototype.stop = function () {
 	if(!this._started) return;
 
 	this._started = false;
-	alert('stop');
 };
 
 // Find the nearest point to a particular position
@@ -559,9 +559,10 @@ Renderer.prototype.graphChanged = function(e) {
 
 Renderer.prototype.start = function() {
 	var t = this;
+	
 	this.layout.start(50, function render() {
 		t.clear();
-
+		
 		t.layout.eachEdge(function(edge, spring) {
 			t.drawEdge(edge, spring.point1.p, spring.point2.p);
 		});

@@ -55,8 +55,8 @@ class bounded_pqueue
 private:
    
    typedef queue_tree_node<C, A> tree_node;
-   
-   std::vector<tree_node*> leaves;
+	typedef std::vector<tree_node*> leaves_vector;
+   leaves_vector leaves;
    tree_node *root;
    
    A total;
@@ -159,6 +159,76 @@ public:
             push_queue(q, i);
       }
    }
+
+	class const_iterator
+	{
+	private:
+		
+		const leaves_vector *leaves;
+		bool is_end;
+		size_t cur_pos;
+		bool started_cur;
+		typename C::const_iterator sub;
+		
+		inline void advance(void)
+		{
+			if(started_cur) {
+				//printf("Next sub iterator\n");
+				++sub;
+			} else {
+				//printf("Get iterator from leaf %d\n", cur_pos);
+				sub = (*leaves)[cur_pos]->bin.begin();
+				started_cur = true;
+			}
+				
+			if(sub == (*leaves)[cur_pos]->bin.end()) {
+				cur_pos++;
+				started_cur = false;
+				//printf("Reached end ... to %d\n", cur_pos);
+				if(cur_pos >= leaves->size()) {
+					is_end = true;
+					return;
+				} else {
+					//printf("Call ++ again...\n");
+					this->operator++(); // call it again
+				}
+			}
+		}
+		
+	public:
+		
+		inline T operator*(void) { return *sub; }
+		
+		inline void operator++(void)
+		{
+			if(is_end)
+				return;
+			
+			advance();
+		}
+		
+		inline bool operator==(const const_iterator& it) const
+		{
+			return it.is_end && is_end;
+		}
+		
+		inline bool operator!=(const const_iterator& it) const
+		{
+			return !operator==(it);
+		}
+		
+		explicit const_iterator(const leaves_vector& v):
+				leaves(&v), is_end(false), cur_pos(0), started_cur(false)
+		{
+			advance();
+		}
+		
+		explicit const_iterator(): is_end(true) {}
+		
+	};
+	
+	inline const_iterator begin(void) const { return const_iterator(leaves); }
+	inline const_iterator end(void) const { return const_iterator(); }
    
    explicit bounded_pqueue(const size_t _range):
       total(0),

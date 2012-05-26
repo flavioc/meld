@@ -29,6 +29,7 @@ static const size_t PREDICATE_DESCRIPTOR_SIZE = sizeof(code_size_t) +
                                                 PRED_AGG_INFO_MAX;
 strat_level program::MAX_STRAT_LEVEL(0);
 size_t SETPRIO_PREDICATE_ID(1);
+size_t SETCOLOR_PREDICATE_ID(2);
 
 program::program(const string& filename):
    init(NULL)
@@ -67,9 +68,13 @@ program::program(const string& filename):
       code_size[i] = size;
 
       MAX_STRAT_LEVEL = max(predicates[i]->get_strat_level() + 1, MAX_STRAT_LEVEL);
-
-		if(predicates[i]->get_name() == "setprio")
+		
+		const string name(predicates[i]->get_name());
+		
+		if(name == "setprio")
 			SETPRIO_PREDICATE_ID = i;
+		else if(name == "setcolor")
+			SETCOLOR_PREDICATE_ID = i;
       
       if(predicates[i]->is_route_pred())
          route_predicates.push_back(predicates[i]);
@@ -210,6 +215,8 @@ program::dump_json(void) const
 				pred->is_route_pred() ? UI_YES : UI_NIL);
 		UI_ADD_FIELD(obj, "reverse_route",
 				pred->is_reverse_route_pred() ? UI_YES : UI_NIL);
+		UI_ADD_FIELD(obj, "linear",
+			pred->is_linear_pred() ? UI_YES : UI_NIL);
 
 		UI_ADD_ELEM(preds_json, obj);
 	}

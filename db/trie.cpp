@@ -1197,7 +1197,6 @@ try_again:
    goto match_begin;
    
 leaf_found:
-   // printf("Got here\n");
    assert(node != NULL);
    assert(node->is_leaf());
 

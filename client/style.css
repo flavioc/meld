@@ -4,13 +4,14 @@ html {
 	padding: 0;
 	color: #000;
 	font-family: sans-serif, "Times New Roman",Georgia,Serif;
-	background: rgb(235, 209, 176);
+	background-image:url('stripe.png');
+	background-repeat:repeat-x repeat-y;
 }
 
 #wrap {
-	width: 80%;
+	width: 85%;
 	margin: 0 auto;
-	background: rgb(83, 102, 130);
+	background: rgba(83, 102, 130, 0.7);
 	border: solid rgb(181, 44, 56) 7px;
 	margin-top: 30px;
 	padding-bottom: 30px;
@@ -22,27 +23,17 @@ html {
 	margin-left: 50px;
 	margin-top: 50px;
 	float: left;
-	width: 640px;
+	width: 50%;
 	border-top: 50px;
 	margin-bottom: 50px;
 }
 
-#graph {
-	border: solid black 4px;
-	width: 640;
-	height: 480;
-	background: rgb(255, 255, 255);
+#graph, #side-log, #node-window {
+	border: solid black 3px;
 }
 
-#side {
-	margin-right: 50px;
-	margin-top: 50px;
-	background: rgb(217, 150, 75);
-	border: dashed rgb(222, 104, 70) 4px;
-	float: right;
-	width: 31%;
-	padding: 10px;
-	color: rgb(0, 0, 0);
+#graph {
+	background: rgba(255, 255, 255, 0.8);
 }
 
 #version {
@@ -52,6 +43,100 @@ html {
 
 #controls {
 	margin-top: 15px;
+}
+
+#side-log {
+	float: right;
+	width: 32%;
+	margin-right: 50px;
+	margin-top: 50px;
+	margin-bottom: 50px;
+	background: rgba(217, 150, 75, 0.8);
+}
+
+#side-log, #node-log {
+	font-size: 75%;
+}
+
+#main-log, #log-message {
+	padding-left: 5px;
+	margin-left: 15px;
+}
+
+#main-log {
+	list-style-type: square;
+	list-style-position: inside;
+	padding-right: 5px;
+	padding-bottom: 5px;
+	display: inline-block;
+	overflow:auto;
+	width: 90%;
+}
+
+#main-log:after {
+ visibility: hidden;
+ display: block;
+ font-size: 0;
+ content: &quot; &quot;;
+ height: 0;
+}
+
+#main-log li {
+	margin: 0;
+	padding: 0;
+}
+
+.log-left {
+	float: left;
+}
+
+.log-right {
+	float: right;
+}
+
+.clear {
+	clear: both;
+	display: block;
+}
+
+.node-link {
+	text-decoration: underline;
+}
+
+li.hr {
+	margin-bottom: 10px;
+	height: 5px;
+  	background: rgb(181, 44, 56);
+}
+
+div.hr hr {
+	display: none;
+}
+
+#node-window {
+	margin-top: 30px;
+	padding: 25px;
+	background: rgba(217, 150, 75, 0.8);
+	color: rgb(0, 0, 0);
+	margin-bottom: 50px;
+	width: 640px;
+}
+
+#node-controls {
+	margin-top: 20px;
+}
+
+#node-log {
+	width: 50%;
+	background: #DE6846;
+	border: 1px dashed gray;
+	margin-left: 20px;
+	padding: 15px;
+}
+
+#log-message-parent {
+	font-style: italic;
+	margin-top: 20px;
 }
 
 .btn{display:inline-block;padding:4px 10px 4px;font-size:13px;line-height:18px;color:#333333;text-align:center;text-shadow:0 1px 1px rgba(255, 255, 255, 0.75);background-color:#fafafa;background-image:-webkit-gradient(linear, 0 0, 0 100%, from(#ffffff), color-stop(25%, #ffffff), to(#e6e6e6));background-image:-webkit-linear-gradient(#ffffff, #ffffff 25%, #e6e6e6);background-image:-moz-linear-gradient(top, #ffffff, #ffffff 25%, #e6e6e6);background-image:-ms-linear-gradient(#ffffff, #ffffff 25%, #e6e6e6);background-image:-o-linear-gradient(#ffffff, #ffffff 25%, #e6e6e6);background-image:linear-gradient(#ffffff, #ffffff 25%, #e6e6e6);background-repeat:no-repeat;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#e6e6e6', GradientType=0);border:1px solid #ccc;border-bottom-color:#bbb;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;-webkit-box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.2),0 1px 2px rgba(0, 0, 0, 0.05);-moz-box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.2),0 1px 2px rgba(0, 0, 0, 0.05);box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.2),0 1px 2px rgba(0, 0, 0, 0.05);cursor:pointer;*margin-left:.3em;}.btn:first-child{*margin-left:0;}

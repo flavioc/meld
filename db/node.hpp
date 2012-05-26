@@ -2,6 +2,8 @@
 #ifndef NODE_HPP
 #define NODE_HPP
 
+#include "conf.hpp"
+
 #include <list>
 #include <map>
 #include <ostream>
@@ -20,6 +22,10 @@
 #include "vm/match.hpp"
 #include "utils/atomic.hpp"
 #include "db/edge_set.hpp"
+
+#ifdef USE_UI
+#include <json_spirit.h>
+#endif
 
 namespace sched { class base; class mpi_handler; }
 namespace process { class process; class machine; }
@@ -120,6 +126,9 @@ public:
    
    void print(std::ostream&) const;
    void dump(std::ostream&) const;
+#ifdef USE_UI
+	json_spirit::Value dump_json(void) const;
+#endif
    
    explicit node(const node_id, const node_id);
    

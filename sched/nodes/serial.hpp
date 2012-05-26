@@ -16,9 +16,15 @@ class serial_node: public in_queue_node
 {
 private:
 
-   unsafe_bounded_pqueue<process::node_work>::type queue;
+	typedef unsafe_bounded_pqueue<process::node_work>::type queue_type;
+   queue_type queue;
 
 public:
+	
+	typedef queue_type::const_iterator queue_iterator;
+	
+	inline queue_iterator begin(void) const { return queue.begin(); }
+	inline queue_iterator end(void) const { return queue.end(); }
    
    inline void add_work(process::node_work& new_work)
    {

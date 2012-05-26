@@ -26,14 +26,18 @@ get_bytecode(vm::tuple *tuple)
 void
 process::do_tuple_action(node *node, vm::tuple *tuple, const ref_count count)
 {
-	(void)node;
+	predicate_id pred_id(tuple->get_predicate_id());
 
    assert(count == 1);
-   
-   switch(tuple->get_predicate_id()) {
-      default:
-         assert(false);
-   }
+
+	if(pred_id == SETCOLOR_PREDICATE_ID)
+		scheduler->set_node_color(node, tuple->get_int(0), tuple->get_int(1), tuple->get_int(2));
+   else {
+   	switch(tuple->get_predicate_id()) {
+      	default:
+         	assert(false);
+   	}
+	}
    
    delete tuple;
 }
@@ -46,9 +50,12 @@ process::do_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
       const execution_return ret(execute_bytecode(get_bytecode(tuple), state));
       
       if(ret == EXECUTION_CONSUMED) {
+			scheduler->new_linear_consumption(node, tuple);
          delete tuple;
-      } else
+      } else {
+			scheduler->new_linear_derivation(node, tuple);
          node->add_tuple(tuple, count);
+		}
    } else {
       const bool is_new(node->add_tuple(tuple, count));
 

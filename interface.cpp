@@ -129,14 +129,14 @@ run_program(int argc, char **argv, const char *program)
             tm.start();
          }
       }
-		
-      router rout(num_threads, argc, argv, is_mpi_sched(sched_type));
-      machine mac(program, rout, num_threads, sched_type);
-      mac.start();
 
 		running = true;
 		program_running = (char*)program;
 		LOG_PROGRAM_RUNNING();
+		
+      router rout(num_threads, argc, argv, is_mpi_sched(sched_type));
+      machine mac(program, rout, num_threads, sched_type);
+      mac.start();
 
       if(time_execution) {
          if(is_mpi_sched(sched_type)) {

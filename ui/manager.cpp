@@ -9,6 +9,8 @@
 #include "vm/tuple.hpp"
 #include "vm/program.hpp"
 #include "ui/macros.hpp"
+#include "vm/state.hpp"
+#include "sched/local/serial_ui.hpp"
 
 using namespace std;
 using namespace websocketpp;
@@ -20,7 +22,8 @@ namespace ui
 manager *man;
 
 manager::manager(void):
-	next_set(1)
+	next_set(1),
+	done(false)
 {
 }
 
@@ -30,17 +33,25 @@ manager::~manager(void)
       delete it->second;
 }
 
-#define ADD_FIELD(P1, P2) \
+#define ADD_FIELD(P1, P2) 								\
 	UI_ADD_FIELD(main_obj, P1, P2)
-#define DECLARE_JSON(TYPE) \
-	Object main_obj; \
-	ADD_FIELD("version", VERSION); \
+#define DECLARE_JSON(TYPE) 							\
+	Object main_obj; 										\
+	ADD_FIELD("version", VERSION); 					\
 	ADD_FIELD("msg", TYPE)
+#define ADD_NODE_FIELD(NODE) 							\
+	UI_ADD_NODE_FIELD(main_obj, NODE)
+#define ADD_TUPLE_FIELD(TPL) 							\
+	UI_ADD_TUPLE_FIELD(main_obj, TPL)
 
-#define SEND_JSON(CONN) \
+#define SEND_JSON(CONN) 								\
 	(CONN)->send(write(main_obj))
-#define SEND_CLIENT_JSON(CLIENT) \
+#define SEND_CLIENT_JSON(CLIENT) 					\
 	SEND_JSON((CLIENT)->conn)
+	
+#define SEND_ALL_CLIENTS() \
+	for(client_list::iterator it(clients.begin()), end(clients.end()); it != end; it++) \
+		SEND_CLIENT_JSON(it->second)
 	
 void
 manager::on_open(connection_ptr conn)
@@ -52,6 +63,12 @@ manager::on_open(connection_ptr conn)
 	ADD_FIELD("running", running ? Value(program_running) : Value());
 
 	SEND_JSON(conn);
+	
+	if(running) {
+		event_program(vm::state::PROGRAM);
+		event_database(vm::state::DATABASE);
+		// XXX: send all route facts
+	}
 }
 
 void
@@ -85,6 +102,12 @@ is_string(Value& v)
 	return v.type() == str_type;
 }
 
+static inline bool
+is_int(Value& v)
+{
+	return v.type() == int_type;
+}
+
 void
 manager::on_message(connection_ptr conn, message_ptr msg)
 {
@@ -97,7 +120,47 @@ manager::on_message(connection_ptr conn, message_ptr msg)
 		Value type(get_field_from_obj(obj, "msg"));
 
 		if(is_string(type)) {
-			next_set--;
+			const string& str(type.get_str());
+			
+			if(str == "next")
+				next_set--;
+			else if(str == "get_node") {
+				if(!running)
+					return;
+					
+				Value node(get_field_from_obj(obj, "node"));
+				
+				if(is_int(node)) {
+					db::node::node_id id((db::node::node_id)node.get_int());
+
+					DECLARE_JSON("node");
+					
+					ADD_FIELD("node", (int)id);
+					ADD_FIELD("info", sched::serial_ui_local::dump_node(id));
+					
+					SEND_JSON(conn);
+				}
+			} else if(str == "change_node") {
+				if(!running)
+					return;
+					
+				Value node(get_field_from_obj(obj, "node"));
+				
+				if(is_int(node)) {
+					db::node::node_id id((db::node::node_id)node.get_int());
+
+					sched::serial_ui_local::change_node(id);
+					
+					DECLARE_JSON("changed_node");
+					ADD_FIELD("node", (int)id);
+					SEND_ALL_CLIENTS();
+				}
+			} else if(str == "terminate") {
+				if(!done)
+					done = true;
+			} else {
+				cerr << "Message not recognized: " << str << endl;
+			}
 		}
 	}
 }
@@ -105,15 +168,28 @@ manager::on_message(connection_ptr conn, message_ptr msg)
 void
 manager::wait_for_next(void)
 {
-	while(next_set > 0) {
-		usleep(100);
+	if(!no_clients()) {
+		while(next_set > 0) {
+			if(no_clients())
+				return;
+			usleep(100);
+		}
+		next_set++;
 	}
-	next_set++;
 }
 
-#define SEND_ALL_CLIENTS() \
-	for(client_list::iterator it(clients.begin()), end(clients.end()); it != end; it++) \
-		SEND_CLIENT_JSON(it->second)
+void
+manager::wait_for_done(void)
+{
+	if(!no_clients()) {
+		while(!done) {
+			if(no_clients())
+				return;
+			usleep(100);
+		}
+		done = false;
+	}
+}
 
 void
 manager::event_program_running(void)
@@ -154,16 +230,90 @@ manager::event_program(vm::program *pgrm)
 }
 
 void
-manager::event_persistent_derivation(db::node *n, vm::tuple *tpl)
+manager::event_persistent_derivation(const db::node *n, const vm::tuple *tpl)
 {
 	DECLARE_JSON("persistent_derivation");
 
-	ADD_FIELD("node", (int)n->get_id());
+	ADD_NODE_FIELD(n);
+	ADD_TUPLE_FIELD(tpl);
+	
+	SEND_ALL_CLIENTS();
+}
 
-	Value tpljson(tpl->dump_json());
+void
+manager::event_linear_derivation(const db::node *n, const vm::tuple *tpl)
+{
+	DECLARE_JSON("linear_derivation");
+	
+	ADD_NODE_FIELD(n);
+	ADD_TUPLE_FIELD(tpl);
+	
+	SEND_ALL_CLIENTS();
+}
 
-	ADD_FIELD("tuple", tpljson);
+void
+manager::event_tuple_send(const db::node *from, const db::node *to, const vm::tuple *tpl)
+{
+	DECLARE_JSON("tuple_send");
+	
+	ADD_FIELD("from", (int)(from->get_id()));
+	ADD_FIELD("to", (int)(to->get_id()));
+	ADD_TUPLE_FIELD(tpl);
+	
+	SEND_ALL_CLIENTS();
+}
 
+void
+manager::event_linear_consumption(const db::node *node, const vm::tuple *tpl)
+{
+	DECLARE_JSON("linear_consumption");
+	
+	ADD_NODE_FIELD(node);
+	ADD_TUPLE_FIELD(tpl);
+	
+	SEND_ALL_CLIENTS();
+}
+
+void
+manager::event_step_done(const db::node *n)
+{
+	DECLARE_JSON("step_done");
+	
+	if(n)
+		ADD_NODE_FIELD(n);
+	
+	SEND_ALL_CLIENTS();
+}
+
+void
+manager::event_step_start(const db::node *n, const vm::tuple *tpl)
+{
+	DECLARE_JSON("step_start");
+	
+	ADD_NODE_FIELD(n);
+	ADD_TUPLE_FIELD(tpl);
+	
+	SEND_ALL_CLIENTS();
+}
+
+void
+manager::event_program_termination(void)
+{
+	DECLARE_JSON("program_termination");
+	
+	SEND_ALL_CLIENTS();
+}
+
+void
+manager::event_set_color(const db::node *n, const int r, const int g, const int b)
+{
+	DECLARE_JSON("set_color");
+	
+	ADD_NODE_FIELD(n);
+	ADD_FIELD("r", r);
+	ADD_FIELD("g", g);
+	ADD_FIELD("b", b);
+	
 	SEND_ALL_CLIENTS();
 }
 
