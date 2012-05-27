@@ -290,7 +290,8 @@ function handle_node(msg)
 	
 	// restore events
 	$('#node-log').empty();
-	add_events_to_list('#node-log', node_events[node]);
+	if(typeof(node_events[node]) !== 'undefined')
+		add_events_to_list('#node-log', node_events[node]);
 	
 	$('#node-info').empty().html(txt);
 	$('#node-controls').show();

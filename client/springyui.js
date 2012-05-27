@@ -24,7 +24,9 @@ Copyright (c) 2010 Dennis Hotson
 */
 
 (function() {
-	
+
+var NODE_FONT = "25px Verdana, sans-serif";
+
 jQuery.fn.springyUpdate = function () {
 	var canvas = this[0];
 	canvas.renderer.start();
@@ -115,7 +117,7 @@ jQuery.fn.springy = function(params, node_selected) {
 			dragged.point.m = 10000.0;
 		}
 
-		//canvas.renderer.start();
+		canvas.renderer.start();
 	});
 
 	jQuery(canvas).mousemove(function(e) {
@@ -145,7 +147,7 @@ jQuery.fn.springy = function(params, node_selected) {
 			return this._width[text];
 
 		ctx.save();
-		ctx.font = "16px Verdana, sans-serif";
+		ctx.font = NODE_FONT;
 		var width = ctx.measureText(text).width + 10;
 		ctx.restore();
 
@@ -157,7 +159,7 @@ jQuery.fn.springy = function(params, node_selected) {
 
 	Node.prototype.getHeight = function() {
 		// Magic number with no explanation.
-		return 20;
+		return 35;
 	};
 
 	canvas.renderer = new Renderer(1, layout,
@@ -194,14 +196,13 @@ jQuery.fn.springy = function(params, node_selected) {
 			var s1 = toScreen(p1).add(offset);
 			var s2 = toScreen(p2).add(offset);
 
-			var boxWidth = edge.target.getWidth();
-			var boxHeight = edge.target.getHeight();
+			var boxWidth = edge.target.getWidth() + 8.0;
+			var boxHeight = edge.target.getHeight() + 8.0;
 
 			var intersection = intersect_line_box(s1, s2, {x: x2-boxWidth/2.0, y: y2-boxHeight/2.0}, boxWidth, boxHeight);
 
-			if (!intersection) {
+			if (!intersection)
 				intersection = s2;
-			}
 
 			var stroke = typeof(edge.data.color) !== 'undefined' ? edge.data.color : '#000000';
 
@@ -211,8 +212,8 @@ jQuery.fn.springy = function(params, node_selected) {
 			var weight = typeof(edge.data.weight) !== 'undefined' ? edge.data.weight : 1.0;
 
 			ctx.lineWidth = Math.max(weight *  2, 0.1);
-			arrowWidth = 1 + ctx.lineWidth;
-			arrowLength = 8;
+			arrowWidth = 5 + ctx.lineWidth;
+			arrowLength = 20;
 
 			var directional = typeof(edge.data.directional) !== 'undefined' ? edge.data.directional : true;
 
@@ -254,7 +255,7 @@ jQuery.fn.springy = function(params, node_selected) {
 				ctx.save();
 				ctx.textAlign = "center";
 				ctx.textBaseline = "top";
-				ctx.font = "16px Helvetica, sans-serif";
+				ctx.font = "20px Helvetica, sans-serif";
 				ctx.fillStyle = "black";
 				ctx.fillText(text, (x1+x2)/2, (y1+y2)/2);
 				ctx.restore();
@@ -269,29 +270,56 @@ jQuery.fn.springy = function(params, node_selected) {
 			var boxWidth = node.getWidth();
 			var boxHeight = node.getHeight();
 			var background = node.data.color;
+			
+			var inner_x = s.x - boxWidth / 2;
+			var inner_y = s.y - 12;
+			var inner_width = boxWidth;
+			var inner_height = boxHeight;
+			
+			var extra_outer = 6;
+			var outer_x = inner_x - extra_outer;
+			var outer_y = inner_y - extra_outer;
+			var outer_width = inner_width + 2 * extra_outer;
+			var outer_height = inner_height + 2 * extra_outer;
 
 			// fill background
-			ctx.clearRect(s.x - boxWidth/2, s.y - 10, boxWidth, 20);
-
-			// fill background
-			if (false && selected !== null && nearest.node !== null && selected.node !== null && selected.node.id === node.id) {
-				ctx.fillStyle = "#FFFFE0";
-			} else if (false && nearest !== null && nearest.node !== null && nearest.node.id === node.id) {
-				ctx.fillStyle = "#EEEEEE";
-			} else {
-				if(background !== null)
-					ctx.fillStyle = background;
-				else
-					ctx.fillStyle = "#FFFFFF";
+			ctx.clearRect(outer_x, outer_y, outer_width, outer_height);
+			
+			var is_selected = selected !== null && nearest.node !== null && selected.node !== null && selected.node.id === node.id;
+			var is_close = nearest !== null && nearest.node !== null && nearest.node.id === node.id;
+			
+			if(is_selected) {
+				ctx.lineWidth = 1.8;
+				ctx.strokeStyle = "#000000";
+				ctx.strokeRect(outer_x, outer_y, outer_width, outer_height);
+			} else if(is_close) {
+				ctx.strokeStyle = "#DAA520";
+				ctx.strokeRect(outer_x, outer_y, outer_width, outer_height);
 			}
+			
+			ctx.save();
+			
+			ctx.globalAlpha = 0.7;
+			
+			// fill background
+			if(background !== null)
+				ctx.fillStyle = background;
+			else
+				ctx.fillStyle = "#FFFFFF";
 
-			ctx.fillRect(s.x - boxWidth/2, s.y - 10, boxWidth, 20);
+			ctx.beginPath();
+			ctx.arc(inner_x + inner_width/2, inner_y + inner_height/2, inner_height/2.0, 0, Math.PI * 2, false);
+			ctx.closePath();
+			ctx.fill();
+			ctx.restore();
+			
+			//ctx.fillRect(inner_x, inner_y, inner_width, inner_height);
 
 			ctx.textAlign = "left";
 			ctx.textBaseline = "top";
-			ctx.font = "16px Verdana, sans-serif";
-			ctx.fillStyle = "#000000";
-			ctx.font = "16px Verdana, sans-serif";
+			ctx.font = NODE_FONT;
+			ctx.fillStyle = "#FFFFFF";
+			ctx.font = NODE_FONT;
 			var text = typeof(node.data.label) !== 'undefined' ? node.data.label : node.id;
 			ctx.fillText(text, s.x - boxWidth/2 + 5, s.y - 8);
 
