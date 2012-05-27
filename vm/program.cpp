@@ -225,8 +225,11 @@ program::dump_json(void) const
 				case FIELD_NODE:
 					UI_ADD_ELEM(field_types, "node");
 					break;
+				case FIELD_STRING:
+					UI_ADD_ELEM(field_types, "string");
+					break;
 				default:
-					throw type_error("Unrecognized field type " + to_string(j));
+					throw type_error("Unrecognized field type " + to_string(j) + " (program::dump_json)");
 			}
 		}
 		UI_ADD_FIELD(obj, "fields", field_types);

@@ -322,6 +322,25 @@ function handle_set_color(msg)
 	update_graph();
 }
 
+function handle_set_edge_label(msg)
+{
+	var fromid = msg.from;
+	var toid = msg.to;
+	
+	var from = mapnodes[fromid];
+	var to = mapnodes[toid];
+	
+	var label = msg.label;
+	
+	var edges = graph.getEdges(from, to);
+	
+	$.each(edges, function (i, edge) {
+		edge.data.label = label;
+	});
+	
+	update_graph();
+}
+
 function setup_message_handlers()
 {
 	message_handlers['init'] = handle_init;
@@ -339,6 +358,7 @@ function setup_message_handlers()
 	message_handlers['changed_node'] = handle_changed_node;
 	message_handlers['program_termination'] = handle_program_termination;
 	message_handlers['set_color'] = handle_set_color;
+	message_handlers['set_edge_label'] = handle_set_edge_label;
 }
 
 function disable_controls()

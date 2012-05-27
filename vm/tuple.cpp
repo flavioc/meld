@@ -195,8 +195,11 @@ tuple::dump_json(void) const
 			case FIELD_NODE:
 				UI_ADD_ELEM(fields, (int)get_node(i));
 				break;
+			case FIELD_STRING:
+				UI_ADD_ELEM(fields, get_string(i));
+				break;
 			default:
-				throw type_error("Unrecognized field type " + to_string(i));
+				throw type_error("Unrecognized field type " + to_string(i) + " (dump_json)");
 		}
 	}
 

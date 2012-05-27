@@ -317,4 +317,16 @@ manager::event_set_color(const db::node *n, const int r, const int g, const int 
 	SEND_ALL_CLIENTS();
 }
 
+void
+manager::event_set_edge_label(const vm::node_val from, const vm::node_val to, const string& label)
+{
+	DECLARE_JSON("set_edge_label");
+	
+	ADD_FIELD("from", (int)from);
+	ADD_FIELD("to", (int)to);
+	ADD_FIELD("label", label);
+	
+	SEND_ALL_CLIENTS();
+}
+
 }

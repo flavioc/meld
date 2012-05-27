@@ -8,6 +8,7 @@
 #include <map>
 
 #include "conf.hpp"
+#include "vm/defs.hpp"
 #include "ui/client.hpp"
 #include "utils/atomic.hpp"
 
@@ -66,6 +67,7 @@ class manager: public websocketpp::server::handler
 		void event_step_start(const db::node *, const vm::tuple *);
 		void event_program_termination(void);
 		void event_set_color(const db::node *, const int, const int, const int);
+		void event_set_edge_label(const vm::node_val, const vm::node_val, const std::string&);
 		
 		bool no_clients(void) const { return num_clients() == 0; }
       size_t num_clients(void) const { return clients.size(); }
@@ -90,6 +92,7 @@ extern manager *man;
 #define LOG_STEP_START(NODE, TPL) LOG_RUN(event_step_start(NODE, TPL))
 #define LOG_PROGRAM_TERMINATION()	LOG_RUN(event_program_termination())
 #define LOG_SET_COLOR(NODE, R, G, B)	LOG_RUN(event_set_color(NODE, R, G, B))
+#define LOG_SET_EDGE_LABEL(FROM, TO, LABEL) LOG_RUN(event_set_edge_label(FROM, TO, LABEL))
 #define WAIT_FOR_NEXT()	LOG_RUN(wait_for_next())
 #define WAIT_FOR_DONE() LOG_RUN(wait_for_done())
 #else
@@ -105,6 +108,7 @@ extern manager *man;
 #define LOG_STEP_START(NODE, TPL)
 #define LOG_PROGRAM_TERMINATION()
 #define LOG_SET_COLOR(NODE, R, G, B)
+#define LOG_SET_EDGE_LABEL(FROM, TO, LABEL)
 #define WAIT_FOR_NEXT()
 #define WAIT_FOR_DONE()
 #endif

@@ -14,6 +14,7 @@
 #include "stat/slice.hpp"
 #include "process/work.hpp"
 #include "stat/stat.hpp"
+#include "runtime/string.hpp"
 
 namespace process {
    class remote;
@@ -106,6 +107,7 @@ public:
    // ACTIONS
    virtual void set_node_priority(db::node *, const int) { }
 	virtual void set_node_color(db::node *, const int, const int, const int) { }
+	virtual void set_edge_label(db::node *, const db::node::node_id, const runtime::rstring::ptr) {}
 
 	// INFORMATION
 	virtual void new_persistent_derivation(db::node *, vm::tuple *) { }

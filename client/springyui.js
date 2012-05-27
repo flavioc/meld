@@ -250,7 +250,7 @@ jQuery.fn.springy = function(params, node_selected) {
 			// label
 
 			if (typeof(edge.data.label) !== 'undefined' && edge.data.label !== '') {
-				text = edge.data.label
+				text = edge.data.label;
 				ctx.save();
 				ctx.textAlign = "center";
 				ctx.textBaseline = "top";
