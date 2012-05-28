@@ -2,7 +2,7 @@
 #ifndef SCHED_QUEUE_UNSAFE_QUEUE_COUNT_HPP
 #define SCHED_QUEUE_UNSAFE_QUEUE_COUNT_HPP
 
-#include "sched/queue/node.hpp"
+#include "queue/node.hpp"
 
 namespace sched
 {

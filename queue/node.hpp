@@ -1,6 +1,6 @@
 
-#ifndef SCHED_QUEUE_NODE_HPP
-#define SCHED_QUEUE_NODE_HPP
+#ifndef QUEUE_NODE_HPP
+#define QUEUE_NODE_HPP
 
 #include "mem/base.hpp"
 
@@ -22,7 +22,7 @@ template <class T>
 class unsafe_queue_node: public mem::base
 {
 public:
-   //MEM_METHODS(unsafe_queue_node<T>)
+   MEM_METHODS(unsafe_queue_node<T>)
 
    virtual size_t mem_size(void) const { return 8; }
 

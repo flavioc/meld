@@ -258,7 +258,7 @@ sched/local/serial_ui.o: sched/local/serial_ui.cpp sched/local/serial_ui.hpp \
 							ui/manager.hpp
 
 sched/local/threads_static.o: sched/base.hpp sched/local/threads_static.hpp \
-								sched/local/threads_static.cpp sched/queue/node.hpp \
+								sched/local/threads_static.cpp queue/node.hpp \
 								sched/thread/termination_barrier.hpp \
 								utils/atomic.hpp \
 								sched/nodes/thread.hpp sched/queue/unsafe_queue_count.hpp \
@@ -268,7 +268,7 @@ sched/local/threads_static.o: sched/base.hpp sched/local/threads_static.hpp \
 								sched/thread/assert.hpp
 
 sched/local/threads_static_prio.o: sched/base.hpp sched/local/threads_static_prio.hpp \
-								sched/local/threads_static_prio.cpp sched/queue/node.hpp \
+								sched/local/threads_static_prio.cpp queue/node.hpp \
 								sched/thread/termination_barrier.hpp \
 								utils/atomic.hpp \
 								sched/nodes/thread.hpp sched/queue/unsafe_queue_count.hpp \
@@ -279,7 +279,7 @@ sched/local/threads_static_prio.o: sched/base.hpp sched/local/threads_static_pri
 								sched/queue/double_queue.hpp
 
 sched/local/threads_buff.o: sched/base.hpp sched/local/threads_buff.hpp \
-								sched/local/threads_buff.cpp sched/queue/node.hpp \
+								sched/local/threads_buff.cpp queue/node.hpp \
 								sched/thread/termination_barrier.hpp \
 								utils/atomic.hpp \
 								sched/nodes/thread.hpp sched/queue/unsafe_queue_count.hpp \
@@ -289,7 +289,7 @@ sched/local/threads_buff.o: sched/base.hpp sched/local/threads_buff.hpp \
 								sched/thread/assert.hpp
 
 sched/local/threads_single.o: sched/base.hpp sched/local/threads_single.hpp \
-								sched/local/threads_single.cpp sched/queue/node.hpp \
+								sched/local/threads_single.cpp queue/node.hpp \
 								sched/thread/termination_barrier.hpp \
 								utils/atomic.hpp \
 								sched/nodes/thread.hpp sched/queue/unsafe_queue_count.hpp \
@@ -302,7 +302,7 @@ sched/local/threads_dynamic.o: sched/base.hpp sched/local/threads_static.hpp \
 											sched/local/threads_dynamic.hpp \
 											sched/local/threads_dynamic.cpp \
 											sched/nodes/thread.hpp sched/thread/termination_barrier.hpp \
-											sched/queue/node.hpp sched/thread/steal_set.hpp \
+											queue/node.hpp sched/thread/steal_set.hpp \
 											sched/queue/safe_queue.hpp \
 											sched/thread/threaded.hpp \
 											conf.hpp utils/atomic.hpp \
@@ -312,7 +312,7 @@ sched/local/threads_dynamic.o: sched/base.hpp sched/local/threads_static.hpp \
 sched/local/threads_direct.o: sched/base.hpp sched/local/threads_direct.hpp                  \
 											sched/local/threads_direct.cpp                              \
 											sched/nodes/thread.hpp sched/thread/termination_barrier.hpp \
-											sched/queue/node.hpp sched/thread/steal_set.hpp             \
+											queue/node.hpp sched/thread/steal_set.hpp             \
 											sched/queue/safe_queue_multi.hpp                            \
 											sched/thread/threaded.hpp                                   \
 											conf.hpp utils/atomic.hpp                                   \

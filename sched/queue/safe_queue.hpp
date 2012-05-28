@@ -6,7 +6,7 @@
 
 #include "conf.hpp"
 #include "utils/atomic.hpp"
-#include "sched/queue/node.hpp"
+#include "queue/node.hpp"
 #include "sched/queue/unsafe_queue.hpp"
 #include "sched/queue/unsafe_queue_count.hpp"
 
