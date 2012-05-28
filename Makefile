@@ -251,7 +251,7 @@ sched/mpi/message_buffer.o: sched/mpi/message_buffer.hpp \
 sched/mpi/request.o: sched/mpi/request.hpp sched/mpi/request.cpp
 
 sched/local/serial.o: sched/local/serial.cpp sched/local/serial.hpp \
-									queue/unsafe_queue.hpp sched/nodes/serial.hpp
+									queue/unsafe_linear_queue.hpp sched/nodes/serial.hpp
 
 sched/local/serial_ui.o: sched/local/serial_ui.cpp sched/local/serial_ui.hpp \
 							sched/local/serial.hpp sched/local/serial.cpp \
@@ -276,7 +276,7 @@ sched/local/threads_static_prio.o: sched/base.hpp sched/local/threads_static_pri
 								sched/thread/threaded.hpp \
 								queue/bounded_pqueue.hpp \
 								sched/thread/assert.hpp \
-								queue/double_queue.hpp
+								queue/safe_double_queue.hpp
 
 sched/local/threads_buff.o: sched/base.hpp sched/local/threads_buff.hpp \
 								sched/local/threads_buff.cpp queue/node.hpp \
