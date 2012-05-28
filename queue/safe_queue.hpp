@@ -1,6 +1,6 @@
 
-#ifndef SCHED_QUEUE_SAFE_QUEUE_HPP
-#define SCHED_QUEUE_SAFE_QUEUE_HPP
+#ifndef QUEUE_SAFE_QUEUE_HPP
+#define QUEUE_SAFE_QUEUE_HPP
 
 #include <boost/static_assert.hpp>
 
