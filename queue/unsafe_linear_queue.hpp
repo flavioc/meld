@@ -2,11 +2,12 @@
 #ifndef QUEUE_UNSAFE_LINEAR_QUEUE_HPP
 #define QUEUE_UNSAFE_LINEAR_QUEUE_HPP
 
+#include "queue/macros.hpp"
 #include "queue/node.hpp"
 
 namespace queue
 {
-   
+
 // no safety of operations for this queue
 template <class T>
 class unsafe_linear_queue
@@ -50,9 +51,7 @@ public:
 	
    node *head;
    node *tail;
-#ifdef INSTRUMENTATION
-   size_t total;
-#endif
+	QUEUE_DEFINE_TOTAL_SERIAL();
 
 	inline const_iterator begin(void) const { return const_iterator(head); }
 	inline const_iterator end(void) const { return const_iterator(NULL); }
@@ -62,19 +61,12 @@ public:
       return head == NULL;
    }
    
-#ifdef INSTRUMENTATION
-   inline size_t size(void) const
-   {
-      return total;
-   }
-#endif
+	QUEUE_DEFINE_TOTAL_SIZE();
    
    inline void clear(void)
    {
       head = tail = NULL;
-#ifdef INSTRUMENTATION
-      total = 0;
-#endif
+		QUEUE_ZERO_TOTAL();
    }
    
    inline void push(T el)
@@ -93,9 +85,7 @@ public:
          tail = new_node;
       }
       
-#ifdef INSTRUMENTATION
-      total++;
-#endif
+		QUEUE_INCREMENT_TOTAL();
       
       assert(head != NULL);
       assert(tail == new_node);
@@ -119,27 +109,107 @@ public:
       
       delete take;
       
-#ifdef INSTRUMENTATION
-      total--;
-#endif
+		QUEUE_DECREMENT_TOTAL();
 
       return el;
    }
    
    explicit unsafe_linear_queue(void):
       head(NULL), tail(NULL)
-#ifdef INSTRUMENTATION
-      , total(0)
-#endif
-   {}
+   {
+		QUEUE_ZERO_TOTAL();
+	}
    
    virtual ~unsafe_linear_queue(void)
    {
       assert(head == NULL);
       assert(tail == NULL);
-#ifdef INSTRUMENTATION
+		QUEUE_ASSERT_TOTAL_ZERO();
+   }
+};
+
+// no safety of operations for this queue
+// also does counting of elements
+template <class T>
+class unsafe_linear_queue_count
+{
+public:
+   
+   typedef unsafe_queue_node<T> node;
+   node *head;
+   node *tail;
+   size_t total;
+   
+   inline bool empty(void) const
+   {
+      return head == NULL;
+   }
+   
+   inline size_t size(void) const
+   {
+      return total;
+   }
+   
+   inline void push(T el)
+   {
+      node *new_node(new node());
+      
+      new_node->data = el;
+      new_node->next = NULL;
+      
+      if(head == NULL) {
+         assert(tail == NULL);
+         head = tail = new_node;
+      } else {
+         tail->next = new_node;
+         tail = new_node;
+      }
+      
+      assert(tail == new_node);
+      
+      ++total;
+   }
+   
+   inline T pop(void)
+   {
+      node *take(head);
+      
+      assert(head != NULL);
+   
+      if(head == tail)
+         head = tail = NULL;
+      else
+         head = head->next;
+      
+      assert(head != take);
+      assert(take->next == head);
+      
+      T el(take->data);
+      
+      delete take;
+      
+      --total;
+      
+      return el;
+   }
+   
+   inline void clear(void)
+   {
+      head = tail = NULL;
+      total = 0;
+      
+      assert(head == NULL);
+      assert(tail == NULL);
       assert(total == 0);
-#endif
+   }
+   
+   explicit unsafe_linear_queue_count(void): head(NULL), tail(NULL), total(0) {}
+   
+   ~unsafe_linear_queue_count(void)
+   {
+      assert(head == NULL);
+      assert(tail == NULL);
+      assert(total == 0);
    }
 };
 

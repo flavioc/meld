@@ -261,7 +261,7 @@ sched/local/threads_static.o: sched/base.hpp sched/local/threads_static.hpp \
 								sched/local/threads_static.cpp queue/node.hpp \
 								sched/thread/termination_barrier.hpp \
 								utils/atomic.hpp \
-								sched/nodes/thread.hpp queue/unsafe_queue_count.hpp \
+								sched/nodes/thread.hpp \
 								queue/safe_queue.hpp \
 								sched/thread/threaded.hpp \
 								queue/bounded_pqueue.hpp \
@@ -271,7 +271,7 @@ sched/local/threads_static_prio.o: sched/base.hpp sched/local/threads_static_pri
 								sched/local/threads_static_prio.cpp queue/node.hpp \
 								sched/thread/termination_barrier.hpp \
 								utils/atomic.hpp \
-								sched/nodes/thread.hpp queue/unsafe_queue_count.hpp \
+								sched/nodes/thread.hpp \
 								queue/safe_queue.hpp \
 								sched/thread/threaded.hpp \
 								queue/bounded_pqueue.hpp \
@@ -282,7 +282,7 @@ sched/local/threads_buff.o: sched/base.hpp sched/local/threads_buff.hpp \
 								sched/local/threads_buff.cpp queue/node.hpp \
 								sched/thread/termination_barrier.hpp \
 								utils/atomic.hpp \
-								sched/nodes/thread.hpp queue/unsafe_queue_count.hpp \
+								sched/nodes/thread.hpp \
 								queue/safe_queue.hpp \
 								sched/thread/threaded.hpp \
 								queue/bounded_pqueue.hpp \
@@ -292,7 +292,7 @@ sched/local/threads_single.o: sched/base.hpp sched/local/threads_single.hpp \
 								sched/local/threads_single.cpp queue/node.hpp \
 								sched/thread/termination_barrier.hpp \
 								utils/atomic.hpp \
-								sched/nodes/thread.hpp queue/unsafe_queue_count.hpp \
+								sched/nodes/thread.hpp \
 								queue/safe_queue_multi.hpp \
 								sched/thread/threaded.hpp \
 								queue/bounded_pqueue.hpp \

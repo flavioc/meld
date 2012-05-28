@@ -7,7 +7,6 @@
 
 #include "sched/local/threads_static.hpp"
 #include "queue/unsafe_linear_queue.hpp"
-#include "queue/unsafe_queue_count.hpp"
 #include "sched/nodes/unsafe_static.hpp"
 
 namespace sched
