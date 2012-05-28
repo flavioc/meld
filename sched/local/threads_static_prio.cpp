@@ -16,6 +16,8 @@ using namespace vm;
 using namespace db;
 using namespace utils;
 
+static atomic<size_t> prio_count(0);
+
 namespace sched
 {
 
@@ -256,6 +258,7 @@ static_local_prio::get_work(work& new_work)
 void
 static_local_prio::end(void)
 {
+	cout << prio_count << endl;
 }
 
 void
@@ -287,7 +290,14 @@ static_local_prio::check_prioqueue(void)
 void
 static_local_prio::set_node_priority(node *n, const int prio)
 {
-	prioqueue.add(n, prio);
+	thread_intrusive_node *tn((thread_intrusive_node*)n);
+	if(tn->in_queue())
+		queue_nodes.move_up(tn);
+	else {
+		tn->mark_priority();
+		//prioqueue.add(n, prio);
+	}
+	prio_count++;
 	
    //thread_intrusive_node *n((thread_intrusive_node*)_n);
    
