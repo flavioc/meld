@@ -1,0 +1,43 @@
+/* made up by me, probably not correct. */
+
+type route edge(node, node).
+type weight(node, node, float).
+type linear outbound(node, sum int).
+type linear initpagerank(node, float).
+type linear startpagerank(node, float).
+type linear pagerank(node, float).
+type linear delta(node, float).
+type linear new_diff(node, float).
+type linear delta_was(node, float).
+
+const pages = @world.
+const alpha = 0.85.
+const epsilon = 0.05.
+const epsilonbig = 0.1.
+const term_bound = 0.00001.
+const baseweight = 1.0.
+
+fun rank(float X) : float = (1-alpha)/float(pages) + alpha * X.
+fun abs(float X) : float = if X >= 0.0 then 1 * X else -1.0 * X end.
+
+!edge(@1, @2). !weight(@1, @2, baseweight).
+!edge(@1, @3). !weight(@1, @3, baseweight).
+!edge(@2, @3). !weight(@2, @3, baseweight).
+!edge(@3, @1). !weight(@3, @1, baseweight).
+
+initpagerank(A, 1.0).
+
+[sum => R | B, W, P | !edge(B, A), !weight(B, A, W), $initpagerank(B, P), R = P * W]
+   -o startpagerank(A, R).
+
+initpagerank(A, O), startpagerank(A, R), D = rank(O) - rank(R) -o
+   pagerank(A, R), delta(A, 0), {B, W | !edge(A, B), !weight(A, B, W) | new_diff(B, D * W)}.
+
+new_diff(A, D), pagerank(A, R), delta(A, T) -o
+   pagerank(A, R + D), delta(A, T + (rank(D) - rank(R + D))).
+
+delta(A, D), abs(D) > term_bound -o
+   delta_was(A, abs(D)), {B, W | !edge(A, B), !weight(A, B, W) | new_diff(B, D * W)}, delta(A, 0).
+
+delta_was(A, D) -o
+   {B, W | !edge(A, B), !weight(A, B, W), D * W > term_bound | setprio(B, 10)}.

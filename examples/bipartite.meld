@@ -1,0 +1,25 @@
+
+type route edge(node, node).
+type linear visit(node, int).
+type linear unchecked(node).
+type linear checked(node, int).
+type linear fail(node).
+
+fun next(int X) : int = if X <> 1 then 1 else 2 end.
+
+!edge(@1, @2).
+!edge(@2, @3).
+!edge(@3, @2).
+!edge(@3, @1).
+
+unchecked(@1). unchecked(@2). unchecked(@3).
+
+visit(@1, 1).
+
+visit(A, P), unchecked(A)
+   -o {B | !edge(A, B) | visit(B, next(P))}, checked(A, P).
+
+visit(A, P1), checked(A, P2), P1 <> P2
+   -o fail(A).
+visit(A, P), checked(A, P) -o checked(A, P).
+visit(A, P), fail(A) -o fail(A).

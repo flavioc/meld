@@ -1,0 +1,86 @@
+
+type route edge(node, node).
+type linear set(node, int, int).
+type linear myset(node, int, int, int).
+type linear changedcolor(node).
+type linear color(node, int, int).
+type linear edgecolor(node, node, int, int).
+type linear neighborchangedcolor(node, node, int, int).
+type linear usablecolors(node, list int, int, int).
+type linear waitfornew(node, int, int).
+
+prio neighborchangedcolor < set.
+prio neighborchangedcolor < myset.
+prio neighborchangedcolor < changedcolor.
+prio neighborchangedcolor < color.
+
+extern int randint(int).
+extern list int intlistdiff(list int, list int).
+extern int intlistnth(list int, int).
+extern int intlistlength(list int).
+
+const numcolors = 3.
+const nocolor = 0.
+const red = 1.
+const blue = 2.
+const green = 3.
+const false = 0.
+const true = 1.
+const firstphase = 0.
+const secondphase = 1.
+const thirdphase = 2.
+const urgent = 1.
+const noturgent = 0.
+const allcolors = [red, blue, green].
+const maxiterations = 1000.
+
+!edge(@1, @2). !edge(@2, @1).
+!edge(@2, @3). !edge(@3, @2).
+!edge(@2, @4). !edge(@4, @2).
+!edge(@4, @5). !edge(@5, @4).
+!edge(@5, @3). !edge(@3, @5).
+color(A, randint(numcolors) + 1, 1).
+changedcolor(A).
+
+!edge(A, B) -o edgecolor(A, B, nocolor, 0).
+
+changedcolor(A),
+$color(A, New, I)
+   -o {B | !edge(A, B) | neighborchangedcolor(B, A, New, I)}.
+
+neighborchangedcolor(A, B, New, I),
+edgecolor(A, B, Old, _)
+   -o edgecolor(A, B, New, I).
+
+waitfornew(A, Cur, Phase),
+$neighborchangedcolor(A, _, _, _),
+color(A, _, _)
+   -o myset(A, Cur, nocolor, firstphase).
+
+waitfornew(A, Cur, firstphase),
+color(A, _, _)
+   -o myset(A, Cur, nocolor, secondphase).
+
+waitfornew(A, Cur, secondphase)
+   -o {B, C, It | !edge(A, B), $edgecolor(A, B, C, It), B > A | set(B, It, urgent)}, waitfornew(A, Cur, thirdphase).
+
+myset(A, Cur, Mine, Phase), Cur < maxiterations -o
+   [collect => X | B, I | !edge(A, B), $edgecolor(A, B, X, I), X <> Mine | usablecolors(A, intlistdiff(intlistdiff(allcolors, X), [Mine]), Cur, Phase)].
+
+set(A, Cur, noturgent), color(A, Mine, Cur) -o
+   [collect => X | B, I | !edge(A, B), $edgecolor(A, B, X, I), X <> Mine | usablecolors(A, intlistdiff(intlistdiff(allcolors, X), [Mine]), Cur, firstphase)].
+set(A, _, urgent), color(A, Mine, Cur) -o
+   [collect => X | B, I | !edge(A, B), $edgecolor(A, B, X, I), X <> Mine | usablecolors(A, intlistdiff(intlistdiff(allcolors, X), [Mine]), Cur, firstphase)].
+
+set(A, _, _) -o .
+
+usablecolors(A, [], I, Phase) -o changedcolor(A), color(A, nocolor, I), waitfornew(A, I, Phase).
+usablecolors(A, L, I, _) -o changedcolor(A), color(A, intlistnth(L, randint(intlistlength(L))), I + 1).
+
+!edge(A, B),
+$edgecolor(A, B, C, EIt),
+color(A, C, MyIt),
+B > A,
+C <> nocolor
+   -o myset(A, MyIt, C, firstphase), set(B, EIt, noturgent).
+

@@ -1,0 +1,35 @@
+/* based on pagerank example from GraphLab 2 */
+
+type route edge(node, node).
+type outbound(node, sum int).
+type linear pagerank(node, float).
+type linear delta(node, float).
+type linear new_delta_was(node, float).
+type linear compute_outbound(node).
+
+const pages = @world.
+const term_bound = 0.00001.
+const reset_prio = 0.15.
+
+fun fabs(float X) : float = if X >= 0.0 then 1 * X else -1.0 * X end.
+
+!edge(@1, @2).
+!edge(@1, @3).
+!edge(@2, @3).
+!edge(@3, @1).
+compute_outbound(A).
+
+compute_outbound(A) -o
+   [count => Total | B | !edge(A, B) | !outbound(A, Total)].
+
+pagerank(A, 0.0).
+delta(A, reset_prio).
+
+delta(A, Delta), pagerank(A, Old), !outbound(A, NOut),
+NewDelta = ((Delta + Old) - Old) * 1.0/float(NOut) * (1 - reset_prio)
+   -o pagerank(A, Old + Delta), new_delta_was(A, NewDelta).
+
+new_delta_was(A, NewDelta), fabs(NewDelta) > term_bound
+   -o {B | !edge(A, B) | delta(B, NewDelta)}.
+
+new_delta_was(A, _) -o .

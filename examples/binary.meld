@@ -1,0 +1,35 @@
+
+type route edge(node, node).
+type linear inc(node).
+type linear bit(node, int).
+type linear value(node, int).
+
+const one = 1.
+const zero = 0.
+const mark = 2.
+
+!edge(@0, @1).
+!edge(@1, @2).
+!edge(@2, @3).
+!edge(@3, @4).
+
+bit(@0, one). value(@0, 3).
+bit(@1, one). value(@1, 1).
+bit(@2, zero). value(@2, 0).
+bit(@3, zero). value(@3, 0).
+bit(@4, mark).
+
+inc(@0).
+
+value(A, N),
+inc(A),
+bit(A, zero)
+	-o bit(A, one), value(A, N + 1).
+
+value(A, N),
+inc(A),
+bit(A, one),
+!edge(A, B)
+	-o inc(B), bit(A, zero), value(A, N + 1).
+
+
