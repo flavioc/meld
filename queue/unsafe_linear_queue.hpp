@@ -16,6 +16,10 @@ public:
    
    typedef unsafe_queue_node<T> node;
 
+   node *head;
+   node *tail;
+	QUEUE_DEFINE_TOTAL_SERIAL();
+
 	class const_iterator
 	{
 		private:
@@ -49,10 +53,6 @@ public:
 			explicit const_iterator(void): cur(NULL) {}
 	};
 	
-   node *head;
-   node *tail;
-	QUEUE_DEFINE_TOTAL_SERIAL();
-
 	inline const_iterator begin(void) const { return const_iterator(head); }
 	inline const_iterator end(void) const { return const_iterator(NULL); }
    
@@ -61,7 +61,7 @@ public:
       return head == NULL;
    }
    
-	QUEUE_DEFINE_TOTAL_SIZE();
+	QUEUE_DEFINE_TOTAL_SIZE(); // total()
    
    inline void clear(void)
    {

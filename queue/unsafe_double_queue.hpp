@@ -2,8 +2,7 @@
 #ifndef QUEUE_UNSAFE_DOUBLE_QUEUE_HPP
 #define QUEUE_UNSAFE_DOUBLE_QUEUE_HPP
 
-#include "queue/macros.hpp"
-#include "queue/intrusive.hpp"
+#include "queue/intrusive_implementation.hpp"
 
 namespace queue
 {

@@ -5,6 +5,7 @@
 #include "sched/base.hpp"
 #include "sched/nodes/serial.hpp"
 #include "queue/unsafe_double_queue.hpp"
+#include "queue/intrusive.hpp"
 
 namespace sched
 {
