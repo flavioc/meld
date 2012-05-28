@@ -5,7 +5,7 @@
 #include <tr1/unordered_set>
 
 #include "conf.hpp"
-#include "sched/queue/safe_queue_multi.hpp"
+#include "queue/safe_queue_multi.hpp"
 #include "utils/spinlock.hpp"
 #include "sched/nodes/thread.hpp"
 #include "sched/thread/threaded.hpp"

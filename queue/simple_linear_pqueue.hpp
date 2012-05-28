@@ -1,8 +1,8 @@
 
-#ifndef SCHED_QUEUE_SIMPLE_LINEAR_PQUEUE_HPP
-#define SCHED_QUEUE_SIMPLE_LINEAR_PQUEUE_HPP
+#ifndef QUEUE_SIMPLE_LINEAR_PQUEUE_HPP
+#define QUEUE_SIMPLE_LINEAR_PQUEUE_HPP
 
-#include "sched/queue/unsafe_queue_count.hpp"
+#include "queue/unsafe_queue_count.hpp"
 
 // simple linear bounded priority queue
 // not thread safe

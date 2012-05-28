@@ -3,7 +3,7 @@
 #define SCHED_THREAD_STEAL_SET_HPP
 
 #include "mem/base.hpp"
-#include "sched/queue/safe_queue.hpp"
+#include "queue/safe_queue.hpp"
 #include "sched/base.hpp"
 
 namespace sched

@@ -1,12 +1,12 @@
 
-#ifndef SCHED_QUEUE_BOUNDED_PQUEUE_HPP
-#define SCHED_QUEUE_BOUNDED_PQUEUE_HPP
+#ifndef QUEUE_BOUNDED_PQUEUE_HPP
+#define QUEUE_BOUNDED_PQUEUE_HPP
 
 #include <vector>
 
-#include "sched/queue/safe_queue.hpp"
+#include "queue/safe_queue.hpp"
 #include "queue/unsafe_queue.hpp"
-#include "sched/queue/simple_linear_pqueue.hpp"
+#include "queue/simple_linear_pqueue.hpp"
 #include "utils/atomic.hpp"
 #include "utils/utils.hpp"
 

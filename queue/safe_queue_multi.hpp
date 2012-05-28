@@ -1,6 +1,6 @@
 
-#ifndef SCHED_QUEUE_SAFE_QUEUE_MULTI_HPP
-#define SCHED_QUEUE_SAFE_QUEUE_MULTI_HPP
+#ifndef QUEUE_SAFE_QUEUE_MULTI_HPP
+#define QUEUE_SAFE_QUEUE_MULTI_HPP
 
 #include "conf.hpp"
 #include "utils/spinlock.hpp"

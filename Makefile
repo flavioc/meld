@@ -261,20 +261,20 @@ sched/local/threads_static.o: sched/base.hpp sched/local/threads_static.hpp \
 								sched/local/threads_static.cpp queue/node.hpp \
 								sched/thread/termination_barrier.hpp \
 								utils/atomic.hpp \
-								sched/nodes/thread.hpp sched/queue/unsafe_queue_count.hpp \
-								sched/queue/safe_queue.hpp \
+								sched/nodes/thread.hpp queue/unsafe_queue_count.hpp \
+								queue/safe_queue.hpp \
 								sched/thread/threaded.hpp \
-								sched/queue/bounded_pqueue.hpp \
+								queue/bounded_pqueue.hpp \
 								sched/thread/assert.hpp
 
 sched/local/threads_static_prio.o: sched/base.hpp sched/local/threads_static_prio.hpp \
 								sched/local/threads_static_prio.cpp queue/node.hpp \
 								sched/thread/termination_barrier.hpp \
 								utils/atomic.hpp \
-								sched/nodes/thread.hpp sched/queue/unsafe_queue_count.hpp \
-								sched/queue/safe_queue.hpp \
+								sched/nodes/thread.hpp queue/unsafe_queue_count.hpp \
+								queue/safe_queue.hpp \
 								sched/thread/threaded.hpp \
-								sched/queue/bounded_pqueue.hpp \
+								queue/bounded_pqueue.hpp \
 								sched/thread/assert.hpp \
 								queue/double_queue.hpp
 
@@ -282,20 +282,20 @@ sched/local/threads_buff.o: sched/base.hpp sched/local/threads_buff.hpp \
 								sched/local/threads_buff.cpp queue/node.hpp \
 								sched/thread/termination_barrier.hpp \
 								utils/atomic.hpp \
-								sched/nodes/thread.hpp sched/queue/unsafe_queue_count.hpp \
-								sched/queue/safe_queue.hpp \
+								sched/nodes/thread.hpp queue/unsafe_queue_count.hpp \
+								queue/safe_queue.hpp \
 								sched/thread/threaded.hpp \
-								sched/queue/bounded_pqueue.hpp \
+								queue/bounded_pqueue.hpp \
 								sched/thread/assert.hpp
 
 sched/local/threads_single.o: sched/base.hpp sched/local/threads_single.hpp \
 								sched/local/threads_single.cpp queue/node.hpp \
 								sched/thread/termination_barrier.hpp \
 								utils/atomic.hpp \
-								sched/nodes/thread.hpp sched/queue/unsafe_queue_count.hpp \
-								sched/queue/safe_queue_multi.hpp \
+								sched/nodes/thread.hpp queue/unsafe_queue_count.hpp \
+								queue/safe_queue_multi.hpp \
 								sched/thread/threaded.hpp \
-								sched/queue/bounded_pqueue.hpp \
+								queue/bounded_pqueue.hpp \
 								sched/thread/assert.hpp
 
 sched/local/threads_dynamic.o: sched/base.hpp sched/local/threads_static.hpp \
@@ -303,20 +303,20 @@ sched/local/threads_dynamic.o: sched/base.hpp sched/local/threads_static.hpp \
 											sched/local/threads_dynamic.cpp \
 											sched/nodes/thread.hpp sched/thread/termination_barrier.hpp \
 											queue/node.hpp sched/thread/steal_set.hpp \
-											sched/queue/safe_queue.hpp \
+											queue/safe_queue.hpp \
 											sched/thread/threaded.hpp \
 											conf.hpp utils/atomic.hpp \
-											sched/queue/bounded_pqueue.hpp \
+											queue/bounded_pqueue.hpp \
 											sched/thread/assert.hpp
 
 sched/local/threads_direct.o: sched/base.hpp sched/local/threads_direct.hpp                  \
 											sched/local/threads_direct.cpp                              \
 											sched/nodes/thread.hpp sched/thread/termination_barrier.hpp \
 											queue/node.hpp sched/thread/steal_set.hpp             \
-											sched/queue/safe_queue_multi.hpp                            \
+											queue/safe_queue_multi.hpp                            \
 											sched/thread/threaded.hpp                                   \
 											conf.hpp utils/atomic.hpp                                   \
-											sched/queue/bounded_pqueue.hpp                              \
+											queue/bounded_pqueue.hpp                              \
 											sched/thread/assert.hpp
 
 sched/thread/threaded.o: sched/thread/termination_barrier.hpp \
@@ -342,19 +342,19 @@ sched/local/mpi_threads_dynamic.o: sched/local/mpi_threads_dynamic.hpp \
 										sched/local/mpi_threads_dynamic.cpp \
 										sched/mpi/tokenizer.hpp sched/local/threads_dynamic.hpp \
 										sched/mpi/token.hpp conf.hpp sched/mpi/message_buffer.hpp \
-										sched/queue/bounded_pqueue.hpp sched/mpi/handler.hpp
+										queue/bounded_pqueue.hpp sched/mpi/handler.hpp
 
 sched/local/mpi_threads_static.o: sched/local/mpi_threads_static.hpp \
 										sched/local/mpi_threads_static.cpp \
 										sched/mpi/tokenizer.hpp sched/local/threads_static.hpp \
 										sched/mpi/token.hpp conf.hpp sched/mpi/message_buffer.hpp \
-										sched/queue/bounded_pqueue.hpp sched/mpi/handler.hpp
+										queue/bounded_pqueue.hpp sched/mpi/handler.hpp
 
 sched/local/mpi_threads_single.o: sched/local/mpi_threads_single.hpp \
 										sched/local/mpi_threads_single.cpp \
 										sched/mpi/tokenizer.hpp sched/local/threads_single.hpp \
 										sched/mpi/token.hpp conf.hpp sched/mpi/message_buffer.hpp \
-										sched/queue/bounded_pqueue.hpp sched/mpi/handler.hpp
+										queue/bounded_pqueue.hpp sched/mpi/handler.hpp
 
 external/math.o: external/math.hpp external/math.cpp
 external/utils.o: external/utils.hpp external/utils.cpp

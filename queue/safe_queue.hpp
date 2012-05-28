@@ -1,6 +1,6 @@
 
-#ifndef SCHED_QUEUE_SAFE_QUEUE_HPP
-#define SCHED_QUEUE_SAFE_QUEUE_HPP
+#ifndef QUEUE_SAFE_QUEUE_HPP
+#define QUEUE_SAFE_QUEUE_HPP
 
 #include <boost/static_assert.hpp>
 
@@ -8,7 +8,7 @@
 #include "utils/atomic.hpp"
 #include "queue/node.hpp"
 #include "queue/unsafe_queue.hpp"
-#include "sched/queue/unsafe_queue_count.hpp"
+#include "queue/unsafe_queue_count.hpp"
 
 namespace sched
 {
