@@ -6,7 +6,7 @@
 
 #include "queue/safe_queue.hpp"
 #include "queue/unsafe_queue.hpp"
-#include "sched/queue/simple_linear_pqueue.hpp"
+#include "queue/simple_linear_pqueue.hpp"
 #include "utils/atomic.hpp"
 #include "utils/utils.hpp"
 

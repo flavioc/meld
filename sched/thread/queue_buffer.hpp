@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "vm/predicate.hpp"
-#include "sched/queue/simple_linear_pqueue.hpp"
+#include "queue/simple_linear_pqueue.hpp"
 #include "sched/base.hpp"
 #include "mem/allocator.hpp"
 
