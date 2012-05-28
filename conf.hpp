@@ -20,13 +20,13 @@
 #define TRIE_MATCHING 1
 
 /* activate special code for testing trie matching */
-#define TRIE_MATCHING_ASSERT 1
+// #define TRIE_MATCHING_ASSERT 1
 
 /* use old method of counting neighborhood aggregates */
-#define USE_OLD_NEIGHBOR_CHECK 1
+// #define USE_OLD_NEIGHBOR_CHECK 1
 
 /* activate instrumentation code */
-#define INSTRUMENTATION 1
+// #define INSTRUMENTATION 1
 
 //#define DEBUG_SAFRAS 1
 //#define DEBUG_REMOTE 1
