@@ -4,7 +4,7 @@
 
 #include <vector>
 
-#include "queue/safe_queue.hpp"
+#include "queue/safe_linear_queue.hpp"
 #include "queue/unsafe_linear_queue.hpp"
 #include "queue/unsafe_double_queue.hpp"
 #include "queue/simple_linear_pqueue.hpp"

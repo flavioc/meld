@@ -4,7 +4,7 @@
 
 #include <list>
 
-#include "queue/safe_queue.hpp"
+#include "queue/safe_linear_queue.hpp"
 #include "db/node.hpp"
 
 namespace sched
