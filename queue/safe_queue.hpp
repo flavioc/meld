@@ -7,7 +7,7 @@
 #include "conf.hpp"
 #include "utils/atomic.hpp"
 #include "queue/node.hpp"
-#include "queue/unsafe_queue.hpp"
+#include "queue/unsafe_linear_queue.hpp"
 #include "queue/unsafe_queue_count.hpp"
 
 namespace queue
@@ -142,7 +142,7 @@ public:
       snap_headtail((special_node*)q.head, (special_node*)q.tail);
    }
    
-   inline void snap(unsafe_queue<T>& q)
+   inline void snap(unsafe_linear_queue<T>& q)
    {
       assert(!q.empty());
 

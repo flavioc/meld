@@ -1,6 +1,6 @@
 
-#ifndef QUEUE_UNSAFE_QUEUE_HPP
-#define QUEUE_UNSAFE_QUEUE_HPP
+#ifndef QUEUE_UNSAFE_LINEAR_QUEUE_HPP
+#define QUEUE_UNSAFE_LINEAR_QUEUE_HPP
 
 #include "queue/node.hpp"
 
@@ -9,7 +9,7 @@ namespace queue
    
 // no safety of operations for this queue
 template <class T>
-class unsafe_queue
+class unsafe_linear_queue
 {
 public:
    
@@ -126,14 +126,14 @@ public:
       return el;
    }
    
-   explicit unsafe_queue(void):
+   explicit unsafe_linear_queue(void):
       head(NULL), tail(NULL)
 #ifdef INSTRUMENTATION
       , total(0)
 #endif
    {}
    
-   virtual ~unsafe_queue(void)
+   virtual ~unsafe_linear_queue(void)
    {
       assert(head == NULL);
       assert(tail == NULL);

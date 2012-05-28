@@ -251,7 +251,7 @@ sched/mpi/message_buffer.o: sched/mpi/message_buffer.hpp \
 sched/mpi/request.o: sched/mpi/request.hpp sched/mpi/request.cpp
 
 sched/local/serial.o: sched/local/serial.cpp sched/local/serial.hpp \
-									queue/unsafe_queue.hpp sched/nodes/serial.hpp
+									queue/unsafe_linear_queue.hpp sched/nodes/serial.hpp
 
 sched/local/serial_ui.o: sched/local/serial_ui.cpp sched/local/serial_ui.hpp \
 							sched/local/serial.hpp sched/local/serial.cpp \
