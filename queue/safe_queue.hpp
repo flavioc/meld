@@ -8,7 +8,6 @@
 #include "utils/atomic.hpp"
 #include "queue/node.hpp"
 #include "queue/unsafe_linear_queue.hpp"
-#include "queue/unsafe_queue_count.hpp"
 
 namespace queue
 {
@@ -127,7 +126,7 @@ public:
    }
    
    // append an unsafe queue on this queue
-   inline void snap(unsafe_queue_count<T>& q)
+   inline void snap(unsafe_linear_queue_count<T>& q)
    {
       assert(q.size() > 0);
       assert(!q.empty());

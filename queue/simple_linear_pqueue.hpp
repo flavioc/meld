@@ -2,7 +2,7 @@
 #ifndef QUEUE_SIMPLE_LINEAR_PQUEUE_HPP
 #define QUEUE_SIMPLE_LINEAR_PQUEUE_HPP
 
-#include "queue/unsafe_queue_count.hpp"
+#include "queue/unsafe_linear_queue.hpp"
 
 // simple linear bounded priority queue
 // not thread safe
@@ -15,7 +15,7 @@ class simple_linear_pqueue
 {
 private:
    
-   typedef unsafe_queue_count<T> queue;
+   typedef unsafe_linear_queue_count<T> queue;
    
    std::vector<queue> queues;
    size_t total;

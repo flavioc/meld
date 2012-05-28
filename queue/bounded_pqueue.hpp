@@ -78,7 +78,7 @@ private:
       return root;
    }
    
-   void push_queue(unsafe_queue_count<T>& q, const size_t prio)
+   void push_queue(unsafe_linear_queue_count<T>& q, const size_t prio)
    {
       const size_t size(q.size());
       
@@ -154,7 +154,7 @@ public:
       assert(other.size() > 0);
       
       for(size_t i(0); i < range; ++i) {
-         unsafe_queue_count<T>& q(other.get_queue(i));
+         unsafe_linear_queue_count<T>& q(other.get_queue(i));
          
          if(!q.empty())
             push_queue(q, i);
