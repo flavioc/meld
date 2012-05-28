@@ -8,7 +8,7 @@
 #include "utils/atomic.hpp"
 #include "queue/node.hpp"
 #include "queue/unsafe_queue.hpp"
-#include "sched/queue/unsafe_queue_count.hpp"
+#include "queue/unsafe_queue_count.hpp"
 
 namespace sched
 {
