@@ -2,6 +2,7 @@
 
 import sys
 import random
+from lib import *
 
 def list_has(list, x):
 	try:
@@ -11,18 +12,16 @@ def list_has(list, x):
 		return False
 
 if len(sys.argv) < 2:
-	print "Usage: generate_pagerank.py <num nodes> [weight]"
+	print "Usage: generate_random_graph.py <num nodes> [weight]"
 	sys.exit(1)
 
 total = int(sys.argv[1])
-weight = None
 
 if len(sys.argv) > 2:
-   weight = float(sys.argv[2])
-
-print "type route edge(node, node)."
-if weight is not None:
-	print "type weight(node, node, float)."
+	set_weight(float(sys.argv[2]))
+	print "type route edge(node, node, float)."
+else:
+	print "type route edge(node, node)."
 
 for i in range(total):
 	links = random.randint(1, int(total*0.75))
@@ -34,7 +33,5 @@ for i in range(total):
 		if not list_has(list, link):
 			list.append(link)
 	for link in list:
-		print "!edge(@" + str(i) + ",@" + str(link) + ")."
-		if weight is not None:
-			print "!weight(@" + str(i) + ",@" + str(link) + "," + str(weight) + ")."
+		write_edge(i, link)
 		
