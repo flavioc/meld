@@ -17,7 +17,7 @@ class unsafe_static_node: public in_queue_node
 {
 private:
    
-   unsafe_bounded_pqueue<process::node_work>::type queue;
+	queue::unsafe_bounded_pqueue<process::node_work>::type queue;
    
 public:
    

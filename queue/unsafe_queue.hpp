@@ -5,7 +5,7 @@
 #include "queue/node.hpp"
 #include "queue/intrusive.hpp"
 
-namespace sched
+namespace queue
 {
 	
 template <class T>

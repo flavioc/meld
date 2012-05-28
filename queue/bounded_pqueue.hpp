@@ -10,7 +10,7 @@
 #include "utils/atomic.hpp"
 #include "utils/utils.hpp"
 
-namespace sched
+namespace queue
 {
    
 template <class C, class A> // parameter is a container and a counter

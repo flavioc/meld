@@ -20,7 +20,7 @@ class direct_local: public sched::base,
 private:
    DEFINE_PADDING;
    
-   safe_queue_multi<thread_node*> queue_nodes;
+	queue::safe_queue_multi<thread_node*> queue_nodes;
    
    DEFINE_PADDING;
    

@@ -42,7 +42,7 @@ private:
    
    sched::base *owner;
 	utils::spinlock spin;
-   safe_bounded_pqueue<process::node_work>::type queue;
+	queue::safe_bounded_pqueue<process::node_work>::type queue;
    
 public:
    

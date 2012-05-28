@@ -7,7 +7,7 @@
 // simple linear bounded priority queue
 // not thread safe
 
-namespace sched
+namespace queue
 {
 
 template <class T>

@@ -20,7 +20,7 @@ using namespace utils;
 namespace sched
 {
 
-safe_queue_multi<thread_node*> *threads_single::queue_nodes(NULL);
+queue::safe_queue_multi<thread_node*> *threads_single::queue_nodes(NULL);
 
 void
 threads_single::assert_end(void) const
@@ -275,7 +275,7 @@ void
 threads_single::start_base(const size_t num_threads)
 {
    init_barriers(num_threads);
-   queue_nodes = new safe_queue_multi<thread_node*>();
+   queue_nodes = new queue::safe_queue_multi<thread_node*>();
 }
    
 vector<sched::base*>&

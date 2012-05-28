@@ -19,7 +19,7 @@ class threads_single: public sched::base,
 {
 protected:
    
-   static safe_queue_multi<thread_node*> *queue_nodes;
+   static queue::safe_queue_multi<thread_node*> *queue_nodes;
    
    DEFINE_PADDING;
    

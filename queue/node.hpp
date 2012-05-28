@@ -4,7 +4,7 @@
 
 #include "mem/base.hpp"
 
-namespace sched
+namespace queue
 {
    
 template <class T>

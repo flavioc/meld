@@ -20,7 +20,7 @@ protected:
    
    DEFINE_PADDING;
    
-   unsafe_queue<unsafe_static_node*> queue_nodes;
+	queue::unsafe_queue<unsafe_static_node*> queue_nodes;
    
    DEFINE_PADDING;
    
@@ -35,7 +35,7 @@ protected:
 
    DEFINE_PADDING;
    
-   typedef unsafe_queue<process::work> queue_buffer;
+   typedef queue::unsafe_queue<process::work> queue_buffer;
    typedef std::pair<const sched::base*, queue_buffer> map_pair;
    typedef std::tr1::unordered_map<sched::base*, queue_buffer,
       std::tr1::hash<sched::base*>, std::equal_to<sched::base*>, mem::allocator< map_pair > > map_buffer;
@@ -44,7 +44,7 @@ protected:
    
    DEFINE_PADDING;
    
-   safe_queue<process::work> incoming;
+	queue::safe_queue<process::work> incoming;
    
    virtual void assert_end(void) const;
    virtual void assert_end_iteration(void) const;

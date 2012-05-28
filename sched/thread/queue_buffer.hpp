@@ -18,7 +18,7 @@ class queue_buffer
 {
 public:
    
-   typedef simple_linear_pqueue<process::work> queue;
+   typedef queue::simple_linear_pqueue<process::work> queue;
    
 private:
   
