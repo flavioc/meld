@@ -1,6 +1,6 @@
 
-#ifndef SCHED_QUEUE_DOUBLE_QUEUE_HPP
-#define SCHED_QUEUE_DOUBLE_QUEUE_HPP
+#ifndef QUEUE_DOUBLE_QUEUE_HPP
+#define QUEUE_DOUBLE_QUEUE_HPP
 
 #include "conf.hpp"
 #include "utils/spinlock.hpp"

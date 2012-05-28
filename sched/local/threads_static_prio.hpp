@@ -7,7 +7,7 @@
 
 #include "sched/base.hpp"
 #include "sched/nodes/thread_intrusive.hpp"
-#include "sched/queue/double_queue.hpp"
+#include "queue/double_queue.hpp"
 #include "sched/thread/threaded.hpp"
 #include "sched/thread/queue_buffer.hpp"
 #include "sched/thread/prio_queue.hpp"
