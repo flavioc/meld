@@ -1,6 +1,6 @@
 
-#ifndef SCHED_QUEUE_UNSAFE_QUEUE_HPP
-#define SCHED_QUEUE_UNSAFE_QUEUE_HPP
+#ifndef QUEUE_UNSAFE_QUEUE_HPP
+#define QUEUE_UNSAFE_QUEUE_HPP
 
 #include "queue/node.hpp"
 #include "queue/intrusive.hpp"

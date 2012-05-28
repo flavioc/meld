@@ -4,7 +4,7 @@
 
 #include "sched/base.hpp"
 #include "sched/nodes/serial.hpp"
-#include "sched/queue/unsafe_queue.hpp"
+#include "queue/unsafe_queue.hpp"
 
 namespace sched
 {

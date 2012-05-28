@@ -6,7 +6,7 @@
 #include <tr1/unordered_map>
 
 #include "sched/local/threads_static.hpp"
-#include "sched/queue/unsafe_queue.hpp"
+#include "queue/unsafe_queue.hpp"
 #include "sched/queue/unsafe_queue_count.hpp"
 #include "sched/nodes/unsafe_static.hpp"
 
