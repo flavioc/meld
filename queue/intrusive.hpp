@@ -1,6 +1,6 @@
 
-#ifndef SCHED_LOCAL_INTRUSIVE_HPP
-#define SCHED_LOCAL_INTRUSIVE_HPP
+#ifndef QUEUE_INTRUSIVE_HPP
+#define QUEUE_INTRUSIVE_HPP
 
 #include "conf.hpp"
 

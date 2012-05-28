@@ -5,7 +5,7 @@
 #include "conf.hpp"
 #include "utils/spinlock.hpp"
 #include "utils/atomic.hpp"
-#include "sched/queue/intrusive.hpp"
+#include "queue/intrusive.hpp"
 
 namespace sched
 {

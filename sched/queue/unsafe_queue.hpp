@@ -3,7 +3,7 @@
 #define SCHED_QUEUE_UNSAFE_QUEUE_HPP
 
 #include "queue/node.hpp"
-#include "sched/queue/intrusive.hpp"
+#include "queue/intrusive.hpp"
 
 namespace sched
 {
