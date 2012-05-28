@@ -44,7 +44,7 @@ class prio_queue
 	
 	private:
 		
-		safe_queue<prio_obj> queue;
+		queue::safe_queue<prio_obj> queue;
 		prio_list saved;
 		
 	public:

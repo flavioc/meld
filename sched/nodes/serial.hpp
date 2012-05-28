@@ -16,7 +16,7 @@ class serial_node: public in_queue_node
 {
 private:
 
-	typedef unsafe_bounded_pqueue<process::node_work>::type queue_type;
+	typedef queue::unsafe_bounded_pqueue<process::node_work>::type queue_type;
    queue_type queue;
 
 public:

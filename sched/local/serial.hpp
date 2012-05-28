@@ -14,7 +14,7 @@ class serial_local: public sched::base
 protected:
 	
 	serial_node *current_node;
-	intrusive_double_unsafe_queue<serial_node> queue_nodes;
+	queue::intrusive_double_unsafe_queue<serial_node> queue_nodes;
 	
 private:
    

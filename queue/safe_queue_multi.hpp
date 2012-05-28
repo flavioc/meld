@@ -7,7 +7,7 @@
 #include "utils/atomic.hpp"
 #include "queue/node.hpp"
 
-namespace sched
+namespace queue
 {
    
 template <class T>

@@ -4,7 +4,7 @@
 
 #include "queue/node.hpp"
 
-namespace sched
+namespace queue
 {
    
 // no safety of operations for this queue

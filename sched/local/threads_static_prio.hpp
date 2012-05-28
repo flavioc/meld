@@ -22,7 +22,7 @@ protected:
    
    DEFINE_PADDING;
    
-   typedef double_queue<thread_intrusive_node> queue;
+   typedef queue::double_queue<thread_intrusive_node> queue;
    queue queue_nodes;
    
    DEFINE_PADDING;

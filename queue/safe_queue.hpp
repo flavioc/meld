@@ -10,7 +10,7 @@
 #include "queue/unsafe_queue.hpp"
 #include "queue/unsafe_queue_count.hpp"
 
-namespace sched
+namespace queue
 {
   
 /* special node to use during lock-free operations */ 
