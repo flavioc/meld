@@ -9,6 +9,7 @@
 #include "queue/node.hpp"
 #include "queue/unsafe_linear_queue.hpp"
 #include "queue/macros.hpp"
+#include "utils/spinlock.hpp"
 
 namespace queue
 {
@@ -27,7 +28,7 @@ public:
 // this queue ensures safety for multiple threads
 // doing push and one thread doing pop
 template <class T>
-class safe_queue
+class push_safe_linear_queue
 {
 private:
    
@@ -88,7 +89,10 @@ public:
    
 	QUEUE_DEFINE_TOTAL_SIZE(); // size()
    
-   inline bool empty(void) const { return head == reinterpret_cast<node*>(tail.get()); }
+   inline bool empty(void) const
+	{
+		return head == reinterpret_cast<node*>(tail.get());
+	}
    
    inline void push(T el)
    {
@@ -147,7 +151,7 @@ public:
       snap_headtail((special_node*)q.head, (special_node*)q.tail);
    }
    
-   explicit safe_queue(void):
+   explicit push_safe_linear_queue(void):
       tail(NULL)
    {
       // sentinel node
@@ -157,11 +161,142 @@ public:
 		QUEUE_ZERO_TOTAL();
    }
    
-   ~safe_queue(void)
+   virtual ~push_safe_linear_queue(void)
    {
       assert(empty());
       delete head;
 		QUEUE_ASSERT_TOTAL_ZERO();
+   }
+};
+
+// allows multiple pushers and poppers
+template <class T>
+class safe_linear_queue
+{
+private:
+   
+   typedef queue_node<T> node;
+   
+   volatile node *head;
+   volatile node *tail;
+
+	utils::spinlock mtx;
+	
+	QUEUE_DEFINE_TOTAL();
+
+   inline void push_node(node *new_node)
+   {
+		QUEUE_INCREMENT_TOTAL();
+		
+      assert(tail != NULL);
+      assert(head != NULL);
+
+      tail->next = new_node;
+      tail = new_node;
+      assert(tail->next == NULL);
+   }
+   
+public:
+   
+	QUEUE_DEFINE_TOTAL_SIZE(); // size()
+   
+   inline bool empty(void) const { return head == tail; }
+   
+   inline bool pop_if_not_empty(T& data)
+   {
+      assert(tail != NULL);
+      assert(head != NULL);
+      
+      if(empty())
+         return false;
+         
+      utils::spinlock::scoped_lock l(mtx);
+    
+      if(empty())
+         return false;
+         
+      assert(head->next != NULL);
+      assert(!empty());
+      
+      if(head->next->next == NULL)
+         return false; // we must leave this queue with at least one element
+      
+      node *take((node*)head->next);
+      node *old((node*)head);
+      
+      head = take;
+      
+      delete old;
+      
+      assert(head == take);
+      assert(take != NULL);
+      
+      data = take->data;
+
+		QUEUE_DECREMENT_TOTAL();
+		
+      return true;
+   }
+   
+   inline bool pop(T& data)
+   {
+      assert(tail != NULL);
+      assert(head != NULL);
+      
+      if(empty())
+         return false;
+      
+      utils::spinlock::scoped_lock l(mtx);
+      
+      if(empty())
+         return false;
+      
+      assert(head->next != NULL);
+      assert(!empty());
+      
+      node *take((node*)head->next);
+      node *old((node*)head);
+      
+      head = take;
+      
+      delete old;
+      
+      assert(head == take);
+      assert(take != NULL);
+      
+      data = take->data;
+
+		QUEUE_DECREMENT_TOTAL();
+		
+      return true;
+   }
+   
+   inline void push(T data)
+   {
+      node *new_node(new node());
+      
+      new_node->data = data;
+      new_node->next = NULL;
+      
+		utils::spinlock::scoped_lock l(mtx);
+   
+      push_node(new_node);
+   }
+   
+   explicit safe_linear_queue(void):
+      tail(NULL)
+   {
+      head = new node();
+      head->next = NULL;
+      tail = head;
+		QUEUE_ZERO_TOTAL();
+   }
+   
+   ~safe_linear_queue(void)
+   {
+      assert(empty());
+		QUEUE_ASSERT_TOTAL_ZERO();
+      delete head;
    }
 };
 

@@ -13,7 +13,7 @@ class steal_set: public mem::base
 {
 private:
    
-	queue::safe_queue<sched::base*> requests;
+	queue::push_safe_linear_queue<sched::base*> requests;
    
 public:
 

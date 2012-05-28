@@ -282,7 +282,7 @@ sched/local/threads_single.o: sched/base.hpp sched/local/threads_single.hpp \
 								sched/thread/termination_barrier.hpp \
 								utils/atomic.hpp \
 								sched/nodes/thread.hpp \
-								queue/safe_queue_multi.hpp \
+								queue/safe_queue.hpp \
 								sched/thread/threaded.hpp \
 								queue/bounded_pqueue.hpp \
 								sched/thread/assert.hpp
@@ -302,7 +302,7 @@ sched/local/threads_direct.o: sched/base.hpp sched/local/threads_direct.hpp     
 											sched/local/threads_direct.cpp                              \
 											sched/nodes/thread.hpp sched/thread/termination_barrier.hpp \
 											queue/node.hpp sched/thread/steal_set.hpp             \
-											queue/safe_queue_multi.hpp                            \
+											queue/safe_queue.hpp                            \
 											sched/thread/threaded.hpp                                   \
 											conf.hpp utils/atomic.hpp                                   \
 											queue/bounded_pqueue.hpp                              \

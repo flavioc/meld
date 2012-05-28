@@ -21,7 +21,7 @@ protected:
    
    DEFINE_PADDING;
    
-	queue::safe_queue<thread_node*> queue_nodes;
+	queue::push_safe_linear_queue<thread_node*> queue_nodes;
    
    DEFINE_PADDING;
    

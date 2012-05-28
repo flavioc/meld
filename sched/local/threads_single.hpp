@@ -7,7 +7,7 @@
 
 #include "sched/base.hpp"
 #include "sched/nodes/thread.hpp"
-#include "queue/safe_queue_multi.hpp"
+#include "queue/safe_queue.hpp"
 #include "sched/thread/threaded.hpp"
 #include "sched/thread/queue_buffer.hpp"
 
@@ -19,7 +19,7 @@ class threads_single: public sched::base,
 {
 protected:
    
-   static queue::safe_queue_multi<thread_node*> *queue_nodes;
+   static queue::safe_linear_queue<thread_node*> *queue_nodes;
    
    DEFINE_PADDING;
    

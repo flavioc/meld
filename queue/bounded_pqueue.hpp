@@ -259,7 +259,7 @@ public:
 template <typename T>
 struct safe_bounded_pqueue
 {
-   typedef bounded_pqueue<T, safe_queue<T>, utils::atomic<size_t> > type;
+   typedef bounded_pqueue<T, push_safe_linear_queue<T>, utils::atomic<size_t> > type;
 };
 
 template <typename T>
