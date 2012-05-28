@@ -19,6 +19,7 @@ private:
    
    volatile node *head;
    volatile node *tail;
+
 	utils::spinlock mtx;
 	
 #ifdef INSTRUMENTATION

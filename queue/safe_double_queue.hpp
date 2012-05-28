@@ -15,18 +15,16 @@ class intrusive_safe_double_queue
 {
 private:
 
-	DEFINE_INTRUSIVE_DOUBLE_DATA();
+	QUEUE_DEFINE_INTRUSIVE_DOUBLE_DATA();
 
 	utils::spinlock mtx;
-	
-	QUEUE_DEFINE_TOTAL();
 
-	DEFINE_INTRUSIVE_DOUBLE_OPS();
+	QUEUE_DEFINE_INTRUSIVE_DOUBLE_OPS();
    
 public:
    
 	QUEUE_DEFINE_TOTAL_SIZE(); // size()
-	DEFINE_INTRUSIVE_DOUBLE_EMPTY(); // empty()
+	QUEUE_DEFINE_INTRUSIVE_DOUBLE_EMPTY(); // empty()
    
    inline bool pop_if_not_empty(node_type& data)
    {
@@ -35,7 +33,7 @@ public:
       
       utils::spinlock::scoped_lock l(mtx);
       
-		DEFINE_INTRUSIVE_DOUBLE_POP_IF_NOT_EMPTY();
+		QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP_IF_NOT_EMPTY();
    }
    
    inline bool pop(node_type& data)
@@ -45,7 +43,7 @@ public:
       
       utils::spinlock::scoped_lock l(mtx);
       
-		DEFINE_INTRUSIVE_DOUBLE_POP();
+		QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP();
    }
    
    inline void push(node_type data)
@@ -62,20 +60,21 @@ public:
 		push_head_node(data);
 	}
    
-	DEFINE_INTRUSIVE_IN_QUEUE(); // in_queue()
+	QUEUE_DEFINE_INTRUSIVE_IN_QUEUE(); // in_queue()
    
    inline void move_up(node_type node)
    {
       utils::spinlock::scoped_lock l(mtx);
     
-		DEFINE_INTRUSIVE_MOVE_UP();
+		QUEUE_DEFINE_INTRUSIVE_MOVE_UP();
    }
 
-	DEFINE_INTRUSIVE_CONSTRUCTOR(intrusive_safe_double_queue);
+	QUEUE_DEFINE_INTRUSIVE_CONSTRUCTOR(intrusive_safe_double_queue);
    
    ~intrusive_safe_double_queue(void)
    {
       assert(empty());
+		QUEUE_ASSERT_TOTAL_ZERO()
    }
 };
    
