@@ -8,86 +8,88 @@
 #define __INTRUSIVE_PREV(ITEM) ((ITEM)->__intrusive_prev)
 #define __INTRUSIVE_IN_QUEUE(ITEM) ((ITEM)->__intrusive_in_queue)
 
-#define DEFINE_INTRUSIVE_DOUBLE_DATA() \
-	typedef T* node_type; 					\
-   volatile node_type head;				\
-   volatile node_type tail
+#define QUEUE_DEFINE_INTRUSIVE_DOUBLE_DATA() \
+	typedef T* node_type; 							\
+   volatile node_type head;						\
+	volatile node_type tail;						\
+	QUEUE_DEFINE_TOTAL()
 
-#define DEFINE_INTRUSIVE_CONSTRUCTOR(TYPE) 	\
-	explicit TYPE(void): 							\
-		head(NULL), tail(NULL)						\
-	{														\
-		QUEUE_ZERO_TOTAL();							\
-	}
-
-#define DEFINE_INTRUSIVE_IN_QUEUE()						\
-	static inline bool in_queue(node_type node)		\
+#define QUEUE_DEFINE_INTRUSIVE_CONSTRUCTOR(TYPE) 	\
+	explicit TYPE(void): 									\
+		head(NULL), tail(NULL)								\
 	{																\
-   	return __INTRUSIVE_IN_QUEUE(node);								\
+		QUEUE_ZERO_TOTAL();									\
 	}
 
-#define DEFINE_INTRUSIVE_DOUBLE_EMPTY() inline bool empty(void) const { return head == NULL; }
+#define QUEUE_DEFINE_INTRUSIVE_IN_QUEUE()						\
+	static inline bool in_queue(node_type node)				\
+	{																		\
+   	return __INTRUSIVE_IN_QUEUE(node);						\
+	}
 
-#define DEFINE_INTRUSIVE_DOUBLE_POP_IF_NOT_EMPTY() \
-	if(empty())													\
-      return false;											\
-      															\
-   assert(!empty());											\
-   																\
-   if(__INTRUSIVE_NEXT(__INTRUSIVE_NEXT(head)) == NULL)							\
-      return false;											\
-   																\
-   data = head;												\
-   head = __INTRUSIVE_NEXT(head);										\
-   __INTRUSIVE_PREV(head) = NULL;										\
-   																\
-   __INTRUSIVE_PREV(data) = NULL;										\
-   __INTRUSIVE_NEXT(data) = NULL;										\
-   __INTRUSIVE_IN_QUEUE(data) = false;									\
-   																\
-	QUEUE_DECREMENT_TOTAL();								\
-																	\
+#define QUEUE_DEFINE_INTRUSIVE_DOUBLE_EMPTY() 					\
+	inline bool empty(void) const { return head == NULL; }
+
+#define QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP_IF_NOT_EMPTY() 	\
+	if(empty())																\
+      return false;														\
+      																		\
+   assert(!empty());														\
+   																			\
+   if(__INTRUSIVE_NEXT(__INTRUSIVE_NEXT(head)) == NULL)		\
+      return false;														\
+   																			\
+   data = head;															\
+   head = __INTRUSIVE_NEXT(head);									\
+   __INTRUSIVE_PREV(head) = NULL;									\
+   																			\
+   __INTRUSIVE_PREV(data) = NULL;									\
+   __INTRUSIVE_NEXT(data) = NULL;									\
+   __INTRUSIVE_IN_QUEUE(data) = false;								\
+   																			\
+	QUEUE_DECREMENT_TOTAL();											\
+																				\
    return true
 
-#define DEFINE_INTRUSIVE_DOUBLE_POP()					\
-	if(empty())													\
-   	return false;											\
-   																\
-   assert(!empty());											\
-   																\
-   data = head;												\
+#define QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP()							\
+	if(empty())																	\
+   	return false;															\
+   																				\
+   assert(!empty());															\
+   																				\
+   data = head;																\
    head = __INTRUSIVE_NEXT(head);										\
-   if(head)														\
+   if(head)																		\
    	__INTRUSIVE_PREV(head) = NULL;									\
-   else															\
-      tail = NULL;											\
-      															\
+   else																			\
+      tail = NULL;															\
+      																			\
    __INTRUSIVE_IN_QUEUE(data) = false;									\
-      															\
+      																			\
    assert((head && __INTRUSIVE_PREV(head) == NULL) || !head);	\
-   assert((head && tail) || (!head && !tail));		\
-   																\
-	QUEUE_DECREMENT_TOTAL();								\
-																	\
+   assert((head && tail) || (!head && !tail));						\
+   																				\
+	QUEUE_DECREMENT_TOTAL();												\
+																					\
    return true
 
-#define DEFINE_INTRUSIVE_DOUBLE_OPS() 					\
+#define QUEUE_DEFINE_INTRUSIVE_DOUBLE_OPS() 			\
 	inline void push_head_node(node_type new_node)	\
 	{																\
 		QUEUE_INCREMENT_TOTAL();							\
 																	\
-		__INTRUSIVE_IN_QUEUE(new_node) = true;							\
-		__INTRUSIVE_NEXT(new_node) = head;								\
+		__INTRUSIVE_IN_QUEUE(new_node) = true;			\
+		__INTRUSIVE_NEXT(new_node) = head;				\
 																	\
 		if(tail == NULL)										\
 			tail = new_node;									\
 		if(head != NULL)										\
-			__INTRUSIVE_PREV(head) = new_node;							\
+			__INTRUSIVE_PREV(head) = new_node;			\
 																	\
 		head = new_node;										\
 																	\
-		assert(__INTRUSIVE_NEXT(tail) == NULL);						\
-		assert(__INTRUSIVE_PREV(head) == NULL);						\
+		assert(__INTRUSIVE_NEXT(tail) == NULL);		\
+		assert(__INTRUSIVE_PREV(head) == NULL);		\
 		assert(head == new_node);							\
 	}																\
 																	\
@@ -98,73 +100,73 @@
       if(!head)												\
          head = new_node;									\
 																	\
-      __INTRUSIVE_PREV(new_node) = tail;								\
+      __INTRUSIVE_PREV(new_node) = tail;				\
 																	\
       if(tail)													\
-         __INTRUSIVE_NEXT(tail) = new_node;							\
+         __INTRUSIVE_NEXT(tail) = new_node;			\
       else														\
          tail = new_node;									\
 																	\
-      __INTRUSIVE_IN_QUEUE(new_node) = true;							\
-      __INTRUSIVE_NEXT(new_node) = NULL;								\
+      __INTRUSIVE_IN_QUEUE(new_node) = true;			\
+      __INTRUSIVE_NEXT(new_node) = NULL;				\
       tail = new_node;										\
 																	\
       assert(tail == new_node);							\
-      assert(__INTRUSIVE_NEXT(tail) == NULL);						\
+      assert(__INTRUSIVE_NEXT(tail) == NULL);		\
    }
 
-#define DEFINE_INTRUSIVE_MOVE_UP()		{				\
+#define QUEUE_DEFINE_INTRUSIVE_MOVE_UP()		{		\
 	if(!in_queue(node))										\
 		return;													\
 																	\
-   node_type prev(__INTRUSIVE_PREV(node));							\
+   node_type prev(__INTRUSIVE_PREV(node));			\
       															\
    if(prev == NULL) {										\
       assert(node == head);								\
       return;													\
    }																\
    																\
-   node_type next(__INTRUSIVE_NEXT(node));							\
+   node_type next(__INTRUSIVE_NEXT(node));			\
       															\
-   __INTRUSIVE_NEXT(prev) = next;										\
+   __INTRUSIVE_NEXT(prev) = next;						\
    if(next)														\
-    	__INTRUSIVE_PREV(next) = prev;									\
+    	__INTRUSIVE_PREV(next) = prev;					\
          														\
    if(next == NULL)											\
     	tail = prev;											\
       															\
    assert(tail != NULL);									\
    																\
-   __INTRUSIVE_PREV(node) = NULL;										\
-	__INTRUSIVE_NEXT(node) = head;										\
-   __INTRUSIVE_IN_QUEUE(node) = true;									\
-	__INTRUSIVE_PREV(head) = node;										\
+   __INTRUSIVE_PREV(node) = NULL;						\
+	__INTRUSIVE_NEXT(node) = head;						\
+   __INTRUSIVE_IN_QUEUE(node) = true;					\
+	__INTRUSIVE_PREV(head) = node;						\
    head = node;												\
 																	\
    if(tail == NULL)											\
 		tail = node;											\
 }
 
-#define DEFINE_INTRUSIVE_REMOVE()		{				\
-	node_type prev(__INTRUSIVE_PREV(node));							\
-	node_type next(__INTRUSIVE_NEXT(node));							\
+#define QUEUE_DEFINE_INTRUSIVE_REMOVE(ITEM)		{	\
+	node_type prev(__INTRUSIVE_PREV(ITEM));			\
+	node_type next(__INTRUSIVE_NEXT(ITEM));			\
 																	\
-	if(head == node)											\
+	if(head == ITEM)											\
 		head = next;											\
-	if(tail == node)											\
+	if(tail == ITEM)											\
 		tail = prev;											\
 																	\
 	if(prev)														\
-		__INTRUSIVE_NEXT(prev) = next;									\
+		__INTRUSIVE_NEXT(prev) = next;					\
 	if(next)														\
-		__INTRUSIVE_PREV(next) = prev;									\
+		__INTRUSIVE_PREV(next) = prev;					\
 																	\
-	__INTRUSIVE_NEXT(node) = NULL;										\
-	__INTRUSIVE_PREV(node) = NULL;										\
-	__INTRUSIVE_IN_QUEUE(node) = false;									\
+	__INTRUSIVE_NEXT(ITEM) = NULL;						\
+	__INTRUSIVE_PREV(ITEM) = NULL;						\
+	__INTRUSIVE_IN_QUEUE(ITEM) = false;					\
 }
 
-#define DEFINE_INTRUSIVE_CONST_ITERATOR()				\
+#define QUEUE_DEFINE_INTRUSIVE_CONST_ITERATOR()		\
 	class const_iterator										\
 	{																\
 		private:													\
@@ -185,7 +187,7 @@
 			inline void operator++(void)					\
 			{														\
 				assert(cur != NULL);							\
-				cur = __INTRUSIVE_NEXT(cur);								\
+				cur = __INTRUSIVE_NEXT(cur);				\
 			}														\
 																	\
 			inline bool											\
