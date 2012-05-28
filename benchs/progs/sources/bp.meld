@@ -33,4 +33,3 @@ message(A, I + 1, B, damp(Convolved, OldOut, damping)) :-
 	Cavity = normalize(divide(Belief, OldIn)),
 	Convolved = normalize(convolve(GP, Cavity)).
 
-
