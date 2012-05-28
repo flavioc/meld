@@ -273,36 +273,66 @@ function handle_node(msg)
 	var db = info.database;
 	var queue = info.queue;
 	var node = msg.node;
+	var empty_html = '<p class="italic">Empty</p>';
 	
 	var txt = '<h1>Node ' + get_translated_id(node) + '</h1><p>Database:</p>';
 	
+	$('#node-name').text('Node ' + get_translated_id(node));
+	
+	var node_db = $('#node-database');
+	var next_column = 1;
+	var db_empty = true;
+	
+	node_db.empty();
+	
 	$.each(db, function(predicate, tuples) {
 		$.each(tuples, function(i, tpl) {
-			txt = txt + tuple_to_string(tpl) + '<br />';
+			db_empty = false;
+			node_db.append('<div class="node-database-column node-database-column' + next_column + '">' + tuple_to_string(tpl) + '</div>');
+			if(next_column == 4) {
+				node_db.append('<br />');
+				next_column = 1;
+			} else {
+				next_column++;
+			}
 		});
 	});
 	
-	txt = txt + "<br /><p>Queue:</p>";
+	if(db_empty)
+		node_db.html(empty_html);
+	
+	// restore queue
+	var arrow_html = '<p class="arrow">&uarr;</p>';
+	var node_queue = $('#node-queue');
+	node_queue.empty();
+	
+	node_queue.append('<p class="node-queue-item">HEAD</p>');
 	
 	$.each(queue, function(i, tpl) {
-		txt = txt + tuple_to_string(tpl) + '<br />';
+		node_queue.append(arrow_html + '<p class="node-queue-item">' + tuple_to_string(tpl) + '</p>');
 	});
 	
-	// restore events
-	$('#node-log').empty();
-	if(typeof(node_events[node]) !== 'undefined')
-		add_events_to_list('#node-log', node_events[node]);
+	node_queue.append(arrow_html);
+	node_queue.append('<p class="node-queue-item">TAIL</p>');
 	
-	$('#node-info').empty().html(txt);
+	// restore events
+	var node_log = $('#node-log');
+	
+	node_log.empty();
+	if(typeof(node_events[node]) !== 'undefined') {
+		add_events_to_list('#node-log', node_events[node]);
+	} else {
+		$('#node-log').html(empty_html);
+	}
+	
 	$('#node-controls').show();
-	$('#button-set-node').show();
 	$('#node-window').show();
 }
 
 function handle_changed_node(msg)
 {
-	new_ruler();
 	new_global_event('Changed to node ' + msg.node);
+	new_ruler();
 }
 
 function handle_program_termination(msg)
@@ -391,6 +421,16 @@ function node_selection(node)
 	request_node(node.id);
 }
 
+function set_node(id)
+{
+	send_msg({msg: 'change_node', node: selected_node});
+}
+
+function node_dblclick(node)
+{
+	set_node(node.id);
+}
+
 function field_to_string(field_data, type)
 {
 	if(type == 'int')
@@ -399,6 +439,8 @@ function field_to_string(field_data, type)
 		return field_data.toString();
 	else if(type == 'node')
 		return '@' + get_translated_id(field_data);
+	else if(type == 'string')
+		return '"' + field_data + '"';
 	else
 		return 'PROBLEM';
 }
@@ -470,7 +512,7 @@ function request_next()
 $(document).ready(function () {
 
 	setup_message_handlers();
-	$('#graph').springy({ graph: graph }, node_selection);
+	$('#graph').springy({ graph: graph }, node_selection, node_dblclick);
 	
 	new_global_event("Attempting connection with server at " + SERVER_URL);
 	init_connection();
@@ -493,6 +535,7 @@ $(document).ready(function () {
 	
 	$('#button-terminate').click(function () {
 		send_msg({msg: 'terminate'});
+		playing_program = false;
 		return false;
 	});
 	
@@ -508,14 +551,6 @@ $(document).ready(function () {
 		$('#button-next, #button-play').removeAttr('disabled');
 		$('#button-stop').attr('disabled', 'disabled');
 		playing_program = false;
-		return false;
-	});
-	
-	$('#button-set-node').click(function () {
-		if(selected_node !== null) {
-			send_msg({msg: 'change_node', node: selected_node});
-			$('#button-set-node').fadeOut();
-		}
 		return false;
 	});
 });

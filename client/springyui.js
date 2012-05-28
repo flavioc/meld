@@ -32,7 +32,7 @@ jQuery.fn.springyUpdate = function () {
 	canvas.renderer.start();
 };
 
-jQuery.fn.springy = function(params, node_selected) {
+jQuery.fn.springy = function(params, node_selected, node_dblclicked) {
 
 	var stiffness = params.stiffness || 400.0;
 	var repulsion = params.repulsion || 400.0;
@@ -99,6 +99,24 @@ jQuery.fn.springy = function(params, node_selected) {
 		if (sel.node !== null) {
 			if(typeof(node_selected !== 'undefined'))
 				node_selected(sel.node);
+		}
+		
+		return true;
+	});
+	
+	jQuery(canvas).dblclick(function (e) {
+		if(moved == true) {
+			moved = false;
+			return true;
+		}
+		
+		var pos = jQuery(this).offset();
+		var p = fromScreen({x: e.pageX - pos.left, y: e.pageY - pos.top});
+		var sel = layout.nearest(p);
+
+		if (sel.node !== null) {
+			if(typeof(node_dblclicked) !== 'undefined')
+				node_dblclicked(sel.node);
 		}
 		
 		return true;
@@ -288,6 +306,8 @@ jQuery.fn.springy = function(params, node_selected) {
 			var is_selected = selected !== null && nearest.node !== null && selected.node !== null && selected.node.id === node.id;
 			var is_close = nearest !== null && nearest.node !== null && nearest.node.id === node.id;
 			
+			ctx.save();
+			
 			if(is_selected) {
 				ctx.lineWidth = 1.8;
 				ctx.strokeStyle = "#000000";
@@ -296,6 +316,7 @@ jQuery.fn.springy = function(params, node_selected) {
 				ctx.strokeStyle = "#DAA520";
 				ctx.strokeRect(outer_x, outer_y, outer_width, outer_height);
 			}
+			ctx.restore();
 			
 			ctx.save();
 			
