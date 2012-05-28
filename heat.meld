@@ -1,11 +1,15 @@
 
-type route edge(node, node, float).
+include #heat_quadratic_400.meld
+
+type inbound(node, int).
+type linear countinbound(node).
 type linear heat(node, float).
 type linear heatchanged(node, float).
 type linear neighborchanged(node, node, float, float).
 type linear delta(node, float, float).
+type linear acc(node, float).
 type linear count(node, int).
-type inbound(node, int).
+type linear heatwaschanged(node, float).
 
 prio edge < heat.
 prio edge < heatchanged.
@@ -16,40 +20,43 @@ prio heatchanged < heat.
 prio neighborchanged < heat.
 prio neighborchanged < heatchanged.
 prio neighborchanged < delta.
+prio neighborchanged < acc.
+prio edge < neighborchanged.
 
 const startingheat = 1.0.
+const epsilon = 0.001.
+const delta = 1.0.
 
-!edge(@1, @2, 0.6).
-!edge(@3, @4, 0.5).
-!edge(@1, @3, 0.5).
-!edge(@2, @4, 0.5).
-
-!inbound(@1, 2).
-!inbound(@2, 2).
-!inbound(@3, 2).
-!inbound(@4, 2).
-
-!edge(A, B, W) -o !edge(B, A, W).
+fun fabs(float X) : float = if X >= 0.0 then 1 * X else -1.0 * X end.
 
 heat(A, startingheat).
 heatchanged(A, 0.0).
 delta(A, 0.0, 0.0).
+acc(A, 0.0).
 count(A, 0).
+countinbound(A).
+
+countinbound(A) -o
+   [ count => X | B, W | !edge(B, A, W) | !inbound(A, if X = 0 then 1 else X end) ].
+
+neighborchanged(A, B, V, O),
+delta(A, P1, P2),
+acc(A, Diff),
+edge(B, A, W)
+   -o delta(A, P1 + V * W, P2 + O * W), acc(A, Diff + fabs(V * W - O * W)).
 
 heatchanged(A, O),
 $heat(A, V),
-!inbound(A, T),
-$count(A, C)
+!inbound(A, T)
    -o {B, W | !edge(A, B, W) | neighborchanged(B, A, V / float(T), O / float(T))}.
-
-neighborchanged(A, B, V, O),
-!edge(A, B, W),
-delta(A, P1, P2)
-   -o delta(A, P1 + V * W, P2 + O * W).
 
 delta(A, Plus, Minus),
 heat(A, V),
 count(A, C),
-if (Plus - Minus) >= 0.0 then (Plus - Minus) else -1.0 * (Plus - Minus) end > 0.02
-   -o heatchanged(A, V), heat(A, V + Plus - Minus), count(A, C + 1), delta(A, 0.0, 0.0).
+acc(A, Diff),
+Diff > epsilon
+   -o heatwaschanged(A, Plus - Minus), heatchanged(A, V), heat(A, V + Plus - Minus), count(A, C + 1), delta(A, 0.0, 0.0), acc(A, 0.0).
+
+heatwaschanged(A, Diff), fabs(Diff) > delta -o {B, W | !edge(A, B, W) | setprio(B, 2)}.
+heatwaschanged(A, _) -o .
 
