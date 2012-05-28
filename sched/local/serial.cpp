@@ -56,12 +56,14 @@ serial_local::get_work(work& new_work)
          current_node = NULL;
          if(!has_work())
             return false;
-         current_node = queue_nodes.pop();
+			if(!queue_nodes.pop(current_node))
+				return false;
       }
    } else {
       if(!has_work())
          return false;
-      current_node = queue_nodes.pop();
+		if(!queue_nodes.pop(current_node))
+			return false;
       assert(current_node->has_work());
    }
    

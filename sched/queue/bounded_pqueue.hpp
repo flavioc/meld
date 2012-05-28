@@ -269,6 +269,12 @@ struct unsafe_bounded_pqueue
    typedef bounded_pqueue<T, unsafe_queue<T>, size_t> type;
 };
 
+template <typename T>
+struct intrusive_unsafe_double_bounded_pqueue
+{
+	typedef bounded_pqueue<T, intrusive_double_unsafe_queue<T>, size_t> type;
+};
+
 }
 
 #endif

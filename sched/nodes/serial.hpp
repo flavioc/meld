@@ -21,6 +21,8 @@ private:
 
 public:
 	
+	DECLARE_DOUBLE_QUEUE_NODE(serial_node);
+	
 	typedef queue_type::const_iterator queue_iterator;
 	
 	inline queue_iterator begin(void) const { return queue.begin(); }
