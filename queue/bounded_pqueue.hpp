@@ -6,6 +6,7 @@
 
 #include "queue/safe_queue.hpp"
 #include "queue/unsafe_queue.hpp"
+#include "queue/unsafe_double_queue.hpp"
 #include "queue/simple_linear_pqueue.hpp"
 #include "utils/atomic.hpp"
 #include "utils/utils.hpp"
@@ -272,7 +273,7 @@ struct unsafe_bounded_pqueue
 template <typename T>
 struct intrusive_unsafe_double_bounded_pqueue
 {
-	typedef bounded_pqueue<T, intrusive_double_unsafe_queue<T>, size_t> type;
+	typedef bounded_pqueue<T, intrusive_unsafe_double_queue<T>, size_t> type;
 };
 
 }

@@ -4,7 +4,7 @@
 
 #include "mem/base.hpp"
 #include "sched/nodes/thread.hpp"
-#include "queue/double_queue.hpp"
+#include "queue/intrusive.hpp"
 #include "db/tuple.hpp"
 #include "utils/spinlock.hpp"
 #include "sched/base.hpp"

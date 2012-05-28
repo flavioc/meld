@@ -4,7 +4,7 @@
 
 #include "sched/base.hpp"
 #include "sched/nodes/serial.hpp"
-#include "queue/unsafe_queue.hpp"
+#include "queue/unsafe_double_queue.hpp"
 
 namespace sched
 {
@@ -14,7 +14,7 @@ class serial_local: public sched::base
 protected:
 	
 	serial_node *current_node;
-	queue::intrusive_double_unsafe_queue<serial_node> queue_nodes;
+	queue::intrusive_unsafe_double_queue<serial_node> queue_nodes;
 	
 private:
    

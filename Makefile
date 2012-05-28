@@ -276,7 +276,7 @@ sched/local/threads_static_prio.o: sched/base.hpp sched/local/threads_static_pri
 								sched/thread/threaded.hpp \
 								queue/bounded_pqueue.hpp \
 								sched/thread/assert.hpp \
-								queue/double_queue.hpp
+								queue/safe_double_queue.hpp
 
 sched/local/threads_buff.o: sched/base.hpp sched/local/threads_buff.hpp \
 								sched/local/threads_buff.cpp queue/node.hpp \

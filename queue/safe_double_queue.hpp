@@ -1,6 +1,6 @@
 
-#ifndef QUEUE_DOUBLE_QUEUE_HPP
-#define QUEUE_DOUBLE_QUEUE_HPP
+#ifndef QUEUE_SAFE_DOUBLE_QUEUE_HPP
+#define QUEUE_SAFE_DOUBLE_QUEUE_HPP
 
 #include "conf.hpp"
 #include "utils/spinlock.hpp"
@@ -11,7 +11,7 @@ namespace queue
 {
    
 template <class T>
-class double_queue
+class intrusive_safe_double_queue
 {
 private:
 
@@ -71,9 +71,9 @@ public:
 		DEFINE_INTRUSIVE_MOVE_UP();
    }
 
-	DEFINE_INTRUSIVE_CONSTRUCTOR(double_queue);
+	DEFINE_INTRUSIVE_CONSTRUCTOR(intrusive_safe_double_queue);
    
-   ~double_queue(void)
+   ~intrusive_safe_double_queue(void)
    {
       assert(empty());
    }

@@ -7,7 +7,7 @@
 
 #include "sched/base.hpp"
 #include "sched/nodes/thread_intrusive.hpp"
-#include "queue/double_queue.hpp"
+#include "queue/safe_double_queue.hpp"
 #include "sched/thread/threaded.hpp"
 #include "sched/thread/queue_buffer.hpp"
 #include "sched/thread/prio_queue.hpp"
@@ -22,7 +22,7 @@ protected:
    
    DEFINE_PADDING;
    
-   typedef queue::double_queue<thread_intrusive_node> queue;
+   typedef queue::intrusive_safe_double_queue<thread_intrusive_node> queue;
    queue queue_nodes;
    
    DEFINE_PADDING;
