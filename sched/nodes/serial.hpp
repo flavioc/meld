@@ -8,6 +8,7 @@
 #include "db/tuple.hpp"
 #include "utils/spinlock.hpp"
 #include "sched/base.hpp"
+#include "queue/intrusive.hpp"
 
 namespace sched
 { 
