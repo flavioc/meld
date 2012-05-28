@@ -8,6 +8,7 @@
 #include "utils/atomic.hpp"
 #include "queue/node.hpp"
 #include "queue/unsafe_linear_queue.hpp"
+#include "queue/macros.hpp"
 
 namespace queue
 {
@@ -37,15 +38,13 @@ private:
    
    volatile node *head;
    utils::atomic_ref<special_node*> tail;
-#ifdef INSTRUMENTATION
-   utils::atomic<size_t> total;
-#endif
+	
+	QUEUE_DEFINE_TOTAL();
    
    inline void push_node(special_node *new_node)
    {
-#ifdef INSTRUMENTATION
-      total++;
-#endif
+		QUEUE_INCREMENT_TOTAL();
+		
       assert(tail != NULL);
       assert(head != NULL);
       
@@ -87,9 +86,7 @@ private:
    
 public:
    
-#ifdef INSTRUMENTATION
-   inline size_t size(void) const { return total; }
-#endif
+	QUEUE_DEFINE_TOTAL_SIZE(); // size()
    
    inline bool empty(void) const { return head == reinterpret_cast<node*>(tail.get()); }
    
@@ -105,9 +102,8 @@ public:
    
    inline T pop(void)
    {
-#ifdef INSTRUMENTATION
-      total--;
-#endif
+		QUEUE_DECREMENT_TOTAL();
+		
       assert(tail != NULL);
       assert(head != NULL);
       assert(head->next != NULL);
@@ -131,9 +127,7 @@ public:
       assert(q.size() > 0);
       assert(!q.empty());
 
-#ifdef INSTRUMENTATION
-      total += q.size();
-#endif
+		QUEUE_INCREMENT_TOTAL_N(q.size());
       
       assert(tail != NULL);
       assert(head != NULL);
@@ -145,9 +139,7 @@ public:
    {
       assert(!q.empty());
 
-#ifdef INSTRUMENTATION
-      total += q.size();
-#endif
+		QUEUE_INCREMENT_TOTAL_N(q.size());
 
       assert(tail != NULL);
       assert(head != NULL);
@@ -157,20 +149,19 @@ public:
    
    explicit safe_queue(void):
       tail(NULL)
-#ifdef INSTRUMENTATION
-      , total(0)
-#endif
    {
       // sentinel node
       head = new node();
       head->next = NULL;
       tail = (special_node*)head;
+		QUEUE_ZERO_TOTAL();
    }
    
    ~safe_queue(void)
    {
       assert(empty());
       delete head;
+		QUEUE_ASSERT_TOTAL_ZERO();
    }
 };
 

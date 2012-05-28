@@ -6,6 +6,7 @@
 #include "utils/spinlock.hpp"
 #include "utils/atomic.hpp"
 #include "queue/node.hpp"
+#include "queue/macros.hpp"
 
 namespace queue
 {
@@ -22,15 +23,12 @@ private:
 
 	utils::spinlock mtx;
 	
-#ifdef INSTRUMENTATION
-   utils::atomic<size_t> total;
-#endif
+	QUEUE_DEFINE_TOTAL();
 
    inline void push_node(node *new_node)
    {
-#ifdef INSTRUMENTATION
-      total++;
-#endif
+		QUEUE_INCREMENT_TOTAL();
+		
       assert(tail != NULL);
       assert(head != NULL);
 
@@ -41,9 +39,7 @@ private:
    
 public:
    
-#ifdef INSTRUMENTATION
-   inline size_t size(void) const { return total; }
-#endif
+	QUEUE_DEFINE_TOTAL_SIZE(); // size()
    
    inline bool empty(void) const { return head == tail; }
    
@@ -56,7 +52,7 @@ public:
          return false;
          
       utils::spinlock::scoped_lock l(mtx);
-      
+    
       if(empty())
          return false;
          
@@ -78,9 +74,8 @@ public:
       
       data = take->data;
 
-#ifdef INSTRUMENTATION
-      total--;
-#endif
+		QUEUE_DECREMENT_TOTAL();
+		
       return true;
    }
    
@@ -112,9 +107,8 @@ public:
       
       data = take->data;
 
-#ifdef INSTRUMENTATION
-      total--;
-#endif
+		QUEUE_DECREMENT_TOTAL();
+		
       return true;
    }
    
@@ -132,21 +126,17 @@ public:
    
    explicit safe_queue_multi(void):
       tail(NULL)
-#ifdef INSTRUMENTATION
-      , total(0)
-#endif
    {
       head = new node();
       head->next = NULL;
       tail = head;
+		QUEUE_ZERO_TOTAL();
    }
    
    ~safe_queue_multi(void)
    {
       assert(empty());
-#ifdef INSTRUMENTATION
-      assert(total == 0);
-#endif
+		QUEUE_ASSERT_TOTAL_ZERO();
       delete head;
    }
 };

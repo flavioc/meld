@@ -100,9 +100,7 @@ private:
    
 public:
    
-#ifdef INSTRUMENTATION
    inline size_t size(void) const { return total; }
-#endif
    
    inline bool empty(void) const { return total == 0; }
    
