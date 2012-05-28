@@ -3,7 +3,7 @@
 #define SCHED_THREAD_STEAL_SET_HPP
 
 #include "mem/base.hpp"
-#include "queue/safe_queue.hpp"
+#include "queue/safe_linear_queue.hpp"
 #include "sched/base.hpp"
 
 namespace sched
@@ -13,7 +13,7 @@ class steal_set: public mem::base
 {
 private:
    
-	queue::safe_queue<sched::base*> requests;
+	queue::push_safe_linear_queue<sched::base*> requests;
    
 public:
 

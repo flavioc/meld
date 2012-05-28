@@ -5,7 +5,7 @@
 #include <tr1/unordered_set>
 
 #include "conf.hpp"
-#include "queue/safe_queue_multi.hpp"
+#include "queue/safe_linear_queue.hpp"
 #include "utils/spinlock.hpp"
 #include "sched/nodes/thread.hpp"
 #include "sched/thread/threaded.hpp"
@@ -20,7 +20,7 @@ class direct_local: public sched::base,
 private:
    DEFINE_PADDING;
    
-	queue::safe_queue_multi<thread_node*> queue_nodes;
+	queue::safe_linear_queue<thread_node*> queue_nodes;
    
    DEFINE_PADDING;
    

@@ -83,7 +83,6 @@ parse_sched(char *sched)
       match_mpi("mpisingle", sched, SCHED_MPI_AND_THREADS_SINGLE_LOCAL) ||
       match_threads("tlp", sched, SCHED_THREADS_STATIC_LOCAL_PRIO) ||
       match_threads("tl", sched, SCHED_THREADS_STATIC_LOCAL) ||
-      match_threads("tb", sched, SCHED_THREADS_STATIC_BUFF) ||
       match_threads("td", sched, SCHED_THREADS_DYNAMIC_LOCAL) ||
       match_threads("tx", sched, SCHED_THREADS_DIRECT_LOCAL) ||
       match_threads("sin", sched, SCHED_THREADS_SINGLE_LOCAL) ||

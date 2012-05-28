@@ -7,7 +7,7 @@
 
 #include "sched/base.hpp"
 #include "sched/nodes/thread.hpp"
-#include "queue/safe_queue.hpp"
+#include "queue/safe_linear_queue.hpp"
 #include "sched/thread/threaded.hpp"
 #include "sched/thread/queue_buffer.hpp"
 
@@ -21,7 +21,7 @@ protected:
    
    DEFINE_PADDING;
    
-	queue::safe_queue<thread_node*> queue_nodes;
+	queue::push_safe_linear_queue<thread_node*> queue_nodes;
    
    DEFINE_PADDING;
    
