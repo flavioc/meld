@@ -10,7 +10,6 @@
 #include "mem/thread.hpp"
 #include "mem/stat.hpp"
 #include "stat/stat.hpp"
-#include "sched/local/threads_buff.hpp"
 #include "interface.hpp"
 
 using namespace process;
@@ -257,8 +256,6 @@ static inline database::create_node_fn
 get_creation_function(const scheduler_type sched_type)
 {
    switch(sched_type) {
-      case SCHED_THREADS_STATIC_BUFF:
-         return database::create_node_fn(sched::static_buff::create_node);
       case SCHED_THREADS_STATIC_LOCAL:
       case SCHED_THREADS_SINGLE_LOCAL:
          return database::create_node_fn(sched::static_local::create_node);
@@ -310,9 +307,6 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
          break;
       case SCHED_THREADS_STATIC_LOCAL_PRIO:
          schedulers = sched::static_local_prio::start(num_threads);
-         break;
-      case SCHED_THREADS_STATIC_BUFF:
-         schedulers = sched::static_buff::start(num_threads);
          break;
       case SCHED_THREADS_SINGLE_LOCAL:
          schedulers = sched::threads_single::start(num_threads);
