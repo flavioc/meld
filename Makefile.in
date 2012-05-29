@@ -1,0 +1,133 @@
+
+OS = $(shell uname -s)
+
+INCLUDE_DIRS = -I.
+LIBRARY_DIRS =
+
+ifeq (exists, $(shell test -d /usr/lib/openmpi/include && echo exists))
+	INCLUDE_DIRS += -I/usr/lib/openmpi/include
+endif
+ifeq (exists, $(shell test -d /opt/local/include && echo exists))
+	INCLUDE_DIRS += -I/opt/local/include
+endif
+ifeq (exists, $(shell test -d /opt/local/lib  && echo exists))
+	LIBRARY_DIRS += -L/opt/local/lib
+endif
+ifeq (exists, $(shell test -d /usr/include/openmpi-x86_64 && echo exists))
+	INCLUDE_DIRS += -I/usr/include/openmpi-x86_64/
+endif
+ifeq (exists, $(shell test -d /opt/local/include/openmpi && echo exists))
+	INCLUDE_DIRS += -I/opt/local/include/openmpi/
+endif
+ifeq (exists, $(shell test -d /usr/lib64/openmpi/lib && echo exists))
+	LIBRARY_DIRS += -L/usr/lib64/openmpi/lib
+endif
+
+PROFILING = #-pg
+OPTIMIZATIONS = -O0
+ARCH = -march=x86-64
+DEBUG = -g
+WARNINGS = -Wall -Wextra #-Werror
+C0X = -std=c++0x
+
+CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) $(COX)
+LIBRARIES = -lpthread -lm -lboost_thread-mt -lboost_system-mt -lwebsocketpp \
+				-lboost_date_time-mt -lboost_regex-mt -ljson_spirit
+
+#ifneq ($(COMPILE_MPI),)
+	LIBRARIES += -lmpi -lmpi_cxx -lboost_serialization-mt -lboost_mpi-mt
+	CFLAGS += -DCOMPILE_MPI=1
+#endif
+
+CXX = g++
+
+GCC_MINOR    := $(shell $(CXX) -v 2>&1 | \
+													grep " version " | cut -d' ' -f3  | cut -d'.' -f2)
+
+ifeq ($(GCC_MINOR),2)
+	CFLAGS += -DTEMPLATE_OPTIMIZERS=1
+endif
+ifeq ($(GCC_MINOR),4)
+	CFLAGS += $(C0X)
+endif
+
+CXXFLAGS = $(CFLAGS)
+LDFLAGS = $(PROFILING) $(LIBRARY_DIRS) $(LIBRARIES)
+COMPILE = $(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS)
+
+OBJS = utils/utils.o \
+		 	utils/types.o \
+			 vm/program.o \
+			 vm/predicate.o \
+			 vm/types.o \
+			 vm/instr.o \
+			 vm/state.o \
+			 vm/tuple.o \
+			 vm/exec.o \
+			 vm/external.o \
+			 db/node.o \
+			 db/tuple.o \
+			 db/agg_configuration.o \
+			 db/tuple_aggregate.o \
+			 db/neighbor_tuple_aggregate.o \
+			 db/database.o \
+			 db/trie.o \
+			 db/neighbor_agg_configuration.o \
+			 process/process.o \
+			 process/machine.o \
+			 process/remote.o \
+			 process/router.o \
+			 mem/thread.o \
+			 mem/center.o \
+			 mem/stat.o \
+			 sched/common.o \
+			 sched/mpi/message.o \
+			 sched/mpi/message_buffer.o \
+			 sched/mpi/request.o \
+			 sched/local/serial.o \
+			 sched/local/serial_ui.o \
+			 sched/local/threads_static.o \
+			 sched/local/threads_static_prio.o \
+			 sched/local/threads_dynamic.o \
+			 sched/local/threads_direct.o \
+			 sched/local/threads_single.o \
+			 sched/local/mpi_threads_static.o \
+			 sched/local/mpi_threads_dynamic.o \
+			 sched/local/mpi_threads_single.o \
+			 sched/thread/threaded.o \
+			 sched/thread/queue_buffer.o \
+			 sched/thread/assert.o \
+			 sched/thread/prio_queue.o \
+			 sched/mpi/tokenizer.o \
+			 sched/mpi/handler.o \
+			 external/math.o \
+			 external/lists.o \
+			 external/utils.o \
+			 external/strings.o \
+			 stat/stat.o \
+			 stat/slice.o \
+			 stat/slice_set.o \
+			 ui/manager.o \
+			 ui/client.o \
+			 interface.o
+
+all: meld print predicates server
+
+meld: $(OBJS) meld.o
+	$(COMPILE) meld.o -o meld
+
+print: $(OBJS) print.o
+	$(COMPILE) print.o -o print
+
+predicates: $(OBJS) predicates.o
+	$(COMPILE) predicates.o -o predicates
+
+server: $(OBJS) server.o
+	$(COMPILE) server.o -o server -lreadline
+
+depend:
+	makedepend -- $(CXXFLAGS) -- $(shell find . -name '*.cpp')
+	
+clean:
+	find . -name '*.o' | xargs rm -f
+	rm -f meld predicates print server
