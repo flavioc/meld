@@ -15,6 +15,6 @@ extern char *program_running;
 
 void parse_sched(char *);
 void help_schedulers(void);
-void run_program(int, char **, const char *);
+bool run_program(int, char **, const char *);
 
 #endif
