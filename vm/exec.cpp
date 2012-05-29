@@ -155,8 +155,6 @@ move_to_field(pcounter m, state& state, const instr_val& from)
       tuple* tuple(state.get_tuple(val_field_reg(m)));
       const field_num field(val_field_num(m));
       
-cout << field << endl;
-
       if(val_is_host(from))
          tuple->set_node(field, state.node->get_id());
       else if(val_is_reg(from)) {
@@ -1061,7 +1059,7 @@ execute(pcounter pc, state& state)
    {
 eval_loop:
 
-      instr_print_simple(pc, 0, state.PROGRAM, cout);
+      //instr_print_simple(pc, 0, state.PROGRAM, cout);
       
       switch(fetch(pc)) {
          case RETURN_INSTR: return RETURN_OK;

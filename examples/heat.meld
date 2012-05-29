@@ -25,7 +25,7 @@ prio edge < neighborchanged.
 
 const startingheat = 1.0.
 const epsilon = 0.001.
-const delta = 1.0.
+const delta = 0.7.
 
 fun fabs(float X) : float = if X >= 0.0 then 1 * X else -1.0 * X end.
 
@@ -42,7 +42,7 @@ countinbound(A) -o
 neighborchanged(A, B, V, O),
 delta(A, P1, P2),
 acc(A, Diff),
-edge(B, A, W)
+!edge(B, A, W)
    -o delta(A, P1 + V * W, P2 + O * W), acc(A, Diff + fabs(V * W - O * W)).
 
 heatchanged(A, O),
