@@ -46,7 +46,7 @@ protected:
 			queue_nodes.push_head(node);
 			node->unmark_priority();
 		} else
-      	queue_nodes.push(node);
+      	queue_nodes.push_tail(node);
    }
    
    inline bool has_work(void) const { return !queue_nodes.empty(); }

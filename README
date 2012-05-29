@@ -9,7 +9,8 @@ Dependencies:
 		LLVM/Clang also works
 
 Installation:
-	- use make
+	- Run boostrap.sh: sh ./bootstrap.sh
+	- Type make: make
 
 Execution:
 	./meld -f bytecodefile -c scheduler

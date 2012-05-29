@@ -46,7 +46,7 @@ public:
 		QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP();
    }
    
-   inline void push(node_type data)
+   inline void push_tail(node_type data)
    {
       utils::spinlock::scoped_lock l(mtx);
    
