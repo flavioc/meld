@@ -98,7 +98,6 @@ OBJS = utils/utils.o \
 			 sched/thread/threaded.o \
 			 sched/thread/queue_buffer.o \
 			 sched/thread/assert.o \
-			 sched/thread/prio_queue.o \
 			 sched/mpi/tokenizer.o \
 			 sched/mpi/handler.o \
 			 external/math.o \

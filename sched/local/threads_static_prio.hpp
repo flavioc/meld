@@ -10,7 +10,6 @@
 #include "queue/safe_double_queue.hpp"
 #include "sched/thread/threaded.hpp"
 #include "sched/thread/queue_buffer.hpp"
-#include "sched/thread/prio_queue.hpp"
 
 namespace sched
 {
@@ -28,8 +27,6 @@ protected:
    DEFINE_PADDING;
    
    thread_intrusive_node *current_node;
-
-	prio_queue prioqueue;
    
    virtual void assert_end(void) const;
    virtual void assert_end_iteration(void) const;
@@ -51,8 +48,6 @@ protected:
    
    inline bool has_work(void) const { return !queue_nodes.empty(); }
 
-	void check_prioqueue(void);
-   
 public:
    
    virtual void init(const size_t);

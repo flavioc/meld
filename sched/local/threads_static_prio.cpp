@@ -17,6 +17,8 @@ using namespace db;
 using namespace utils;
 
 static atomic<size_t> prio_count(0);
+static atomic<size_t> prio_immediate(0);
+static atomic<size_t> prio_marked(0);
 
 namespace sched
 {
@@ -234,8 +236,6 @@ static_local_prio::set_next_node(void)
 bool
 static_local_prio::get_work(work& new_work)
 {  
-	check_prioqueue();
-	
    if(!set_next_node())
       return false;
       
@@ -258,53 +258,24 @@ static_local_prio::get_work(work& new_work)
 void
 static_local_prio::end(void)
 {
-	cout << prio_count << endl;
-}
-
-void
-static_local_prio::check_prioqueue(void)
-{
-	while(!prioqueue.empty()) {
-		prio_obj p(prioqueue.remove());
-		thread_intrusive_node *n((thread_intrusive_node*)p.get_node());
-		
-		if(n->in_queue())
-			queue_nodes.move_up(n);
-		else
-			prioqueue.save(p);
-	}
-	
-	for(prio_queue::prio_iterator it(prioqueue.begin_saved()), end(prioqueue.end_saved()); it != end;) {
-		prio_obj p(*it);
-		
-		thread_intrusive_node *n((thread_intrusive_node*)p.get_node());
-		
-		if(n->in_queue()) {
-			queue_nodes.move_up(n);
-			it = prioqueue.delete_saved(it);
-		} else
-			it++;
-	}
+	cout << "prio_immediate: " << prio_immediate << endl;
+	cout << "prio_marked: " << prio_marked << endl;
+	cout << "prio_count: " << prio_count << endl;
 }
 
 void
 static_local_prio::set_node_priority(node *n, const int prio)
 {
 	thread_intrusive_node *tn((thread_intrusive_node*)n);
-	if(tn->in_queue())
+	if(tn->in_queue()) {
+		prio_immediate++;
 		queue_nodes.move_up(tn);
-	else {
+	} else {
+		prio_marked++;
 		tn->mark_priority();
-		//prioqueue.add(n, prio);
 	}
-	prio_count++;
 	
-   //thread_intrusive_node *n((thread_intrusive_node*)_n);
-   
-   //assert(n->in_queue());
-   
-   //printf("jumped up\n");
-   //queue_nodes.move_up(n);
+	prio_count++;
 }
 
 void
