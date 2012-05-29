@@ -42,7 +42,7 @@ protected:
    
    inline void add_to_queue(thread_intrusive_node *node)
    {
-      queue_nodes.push(node);
+      queue_nodes.push_tail(node);
    }
    
    inline bool has_work(void) const { return !queue_nodes.empty(); }
