@@ -55,7 +55,7 @@ heat(A, V),
 count(A, C),
 acc(A, Diff),
 Diff > epsilon
-   -o heatwaschanged(A, Plus - Minus), heatchanged(A, V), heat(A, V + Plus - Minus), count(A, C + 1), delta(A, 0.0, 0.0), acc(A, 0.0).
+   -o heatchanged(A, V), heat(A, V + Plus - Minus), heatwaschanged(A, Plus - Minus), count(A, C + 1), delta(A, 0.0, 0.0), acc(A, 0.0).
 
 heatwaschanged(A, Diff), fabs(Diff) > delta -o {B, W | !edge(A, B, W) | setprio(B, 2)}.
 heatwaschanged(A, _) -o .

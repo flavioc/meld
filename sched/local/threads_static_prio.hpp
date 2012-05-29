@@ -23,6 +23,10 @@ protected:
    
    typedef queue::intrusive_safe_double_queue<thread_intrusive_node> queue;
    queue queue_nodes;
+
+	DEFINE_PADDING;
+	
+	queue prio_queue;
    
    DEFINE_PADDING;
    
@@ -40,13 +44,16 @@ protected:
    inline void add_to_queue(thread_intrusive_node *node)
    {
 		if(node->with_priority()) {
-			queue_nodes.push_head(node);
+			prio_queue.push_tail(node);
 			node->unmark_priority();
-		} else
+			node->set_is_in_prioqueue(true);
+		} else {
+			node->set_is_in_prioqueue(false);
       	queue_nodes.push_tail(node);
+		}
    }
    
-   inline bool has_work(void) const { return !queue_nodes.empty(); }
+   inline bool has_work(void) const { return !queue_nodes.empty() || !prio_queue.empty(); }
 
 public:
    

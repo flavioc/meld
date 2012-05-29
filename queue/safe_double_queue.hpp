@@ -69,6 +69,13 @@ public:
 		QUEUE_DEFINE_INTRUSIVE_MOVE_UP();
    }
 
+	inline void remove(node_type node)
+	{
+		utils::spinlock::scoped_lock l(mtx);
+		
+		QUEUE_DEFINE_INTRUSIVE_REMOVE(node);
+	}
+	
 	QUEUE_DEFINE_INTRUSIVE_CONSTRUCTOR(intrusive_safe_double_queue);
    
    ~intrusive_safe_double_queue(void)

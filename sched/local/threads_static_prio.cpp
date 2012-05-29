@@ -73,7 +73,7 @@ static_local_prio::new_work(const node *, work& new_work)
    if(!to->in_queue()) {
       spinlock::scoped_lock l(to->spin);
       if(!to->in_queue()) {
-         add_to_queue(to);
+			add_to_queue(to);
          to->set_in_queue(true);
       }
       // no need to put owner active, since we own this node
@@ -215,10 +215,16 @@ static_local_prio::set_next_node(void)
       }
       
       assert(has_work());
-      
-      const bool suc(queue_nodes.pop(current_node));
-      
-      assert(suc);
+
+		if(!prio_queue.empty()) {
+			const bool suc(prio_queue.pop(current_node));
+			if(!suc)
+				continue;
+		} else if(!queue_nodes.empty()) {
+			const bool suc(queue_nodes.pop(current_node));
+			if(!suc)
+				continue;
+		}
       
       assert(current_node->in_queue());
       assert(current_node != NULL);
@@ -264,12 +270,17 @@ static_local_prio::end(void)
 }
 
 void
-static_local_prio::set_node_priority(node *n, const int prio)
+static_local_prio::set_node_priority(node *n, const int)
 {
 	thread_intrusive_node *tn((thread_intrusive_node*)n);
 	if(tn->in_queue()) {
 		prio_immediate++;
-		queue_nodes.move_up(tn);
+		if(!tn->is_in_prioqueue()) {
+			queue_nodes.remove(tn);
+			prio_queue.push_tail(tn);
+			tn->set_is_in_prioqueue(true);
+		}
+		assert(tn->is_in_prioqueue());
 	} else {
 		prio_marked++;
 		tn->mark_priority();
