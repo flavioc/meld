@@ -28,17 +28,4 @@ random_unsigned(const size_t lim)
    return (size_t)die();
 }
 
-void
-file_print_and_remove(const string& filename)
-{
-   ifstream fp(filename.c_str());
-   char buf[256];
-   while(!fp.eof()) {
-      fp.getline(buf, 256);
-      if(!fp.eof())
-         cout << buf << endl;
-   }
-   remove(filename.c_str());
-}
-
 }

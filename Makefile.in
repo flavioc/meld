@@ -57,6 +57,7 @@ COMPILE = $(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS)
 
 OBJS = utils/utils.o \
 		 	utils/types.o \
+			utils/fs.o \
 			 vm/program.o \
 			 vm/predicate.o \
 			 vm/types.o \
