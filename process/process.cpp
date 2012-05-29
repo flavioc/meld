@@ -121,9 +121,6 @@ process::do_agg_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
    for(simple_tuple_list::iterator it(list.begin()); it != list.end(); ++it) {
       simple_tuple *tpl(*it);
       
-      if(tpl->get_count() <= 0) {
-         cout << *tpl << endl;
-      }
       // cout << node->get_id() << " AUTO GENERATING " << *tpl << endl;
       assert(tpl->get_count() > 0);
       scheduler->new_work_agg(node, tpl);
@@ -138,7 +135,7 @@ process::do_work(work& w)
    ref_count count = stuple->get_count();
    node *node(w.get_node());
    
-   cout << node->get_id() << " " << *tuple << endl;
+   // cout << node->get_id() << " " << *tuple << endl;
    
    if(count == 0)
       return;

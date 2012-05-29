@@ -9,6 +9,7 @@
 #include "process/router.hpp"
 #include "stat/stat.hpp"
 #include "utils/time.hpp"
+#include "utils/fs.hpp"
 #include "process/machine.hpp"
 #include "ui/manager.hpp"
 
@@ -113,9 +114,11 @@ help_schedulers(void)
 	cerr << "\t\t\tmpisingleX no division of work with static processes" << endl;
 }
 
-void
+bool
 run_program(int argc, char **argv, const char *program)
 {
+	assert(utils::file_exists(string(program)));
+
 	try {
       double start_time;
       execution_time tm;
@@ -161,4 +164,6 @@ run_program(int argc, char **argv, const char *program)
 	running = false;
 	program_running = NULL;
 	LOG_PROGRAM_STOPPED();
+
+	return true;
 }

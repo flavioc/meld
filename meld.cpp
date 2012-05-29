@@ -3,6 +3,7 @@
 
 #include "process/machine.hpp"
 #include "utils/utils.hpp"
+#include "utils/fs.hpp"
 #include "process/router.hpp"
 
 #include "interface.hpp"
@@ -106,6 +107,11 @@ main(int argc, char **argv)
       return EXIT_FAILURE;
    }
    
+	if(!file_exists(program)) {
+		cerr << "Error: file " << program << " does not exist or is not readable" << endl;
+		return EXIT_FAILURE;
+	}
+	
 	run_program(argc, argv, program);
 
    return EXIT_SUCCESS;
