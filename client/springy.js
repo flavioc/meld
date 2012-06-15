@@ -27,16 +27,6 @@
 
 var Graph = function() {
 	this.reset();
-	/*
-	this.nodeSet = {};
-	this.nodes = [];
-	this.edges = [];
-	this.adjacency = {};
-
-	this.nextNodeId = 0;
-	this.nextEdgeId = 0;
-	this.eventListeners = [];
-	*/
 };
 
 var Node = function(id, data) {
@@ -109,6 +99,10 @@ Graph.prototype.newNode = function(data) {
 	this.addNode(node);
 	return node;
 };
+
+Graph.prototype.getNode = function(id) {
+	return this.nodeSet[id];
+}
 
 Graph.prototype.newEdge = function(source, target, data) {
 	var edge = new Edge(this.nextEdgeId++, source, target, data);
@@ -248,6 +242,8 @@ Layout.ForceDirected = function(graph, stiffness, repulsion, damping) {
 
 	this.nodePoints = {}; // keep track of points associated with nodes
 	this.edgeSprings = {}; // keep track of springs associated with edges
+	
+	this.animations = []; // keep track of the current animations
 };
 
 Layout.ForceDirected.prototype.point = function(node) {
@@ -415,9 +411,26 @@ Layout.ForceDirected.prototype.start = function(interval, render, done) {
 
 		if (typeof(render) !== 'undefined')
 			render();
-
+			
+		// step through animations and apply each one
+		if(t.animations.length > 0) {
+			var anims = [];
+			
+			$.each(t.animations, function (i, anim) {
+				var donefn = anim['done'];
+				var stepfn = anim['step'];
+			
+				stepfn();
+				
+				if(!donefn())
+					anims.push(anim);
+			});
+			
+			t.animations = anims;
+		}
+		
 		// stop simulation when energy of the system goes below a threshold
-		if (t.totalEnergy() < 0.01) {
+		if (t.totalEnergy() < 0.01 && t.animations == []) {
 			t._started = false;
 			if (typeof(done) !== 'undefined') { done(); }
 		} else {
@@ -431,6 +444,11 @@ Layout.ForceDirected.prototype.stop = function () {
 	if(!this._started) return;
 
 	this._started = false;
+};
+
+Layout.ForceDirected.prototype.addAnimation = function (done, step) {
+	this.animations.push({done: done, step: step});
+	return true;
 };
 
 // Find the nearest point to a particular position
@@ -513,6 +531,10 @@ Vector.prototype.normalise = function() {
 	return this.divide(this.magnitude());
 };
 
+Vector.prototype.angle = function () {
+	return Math.atan2(-this.y, this.x);
+}
+
 // Point
 Layout.ForceDirected.Point = function(position, mass) {
 	this.p = position; // position
@@ -577,5 +599,12 @@ Renderer.prototype.stop = function () {
 	var t = this;
 
 	t.layout.stop();
+};
+
+Renderer.prototype.addAnimation = function (done, step) {
+	var t = this;
+	
+	t.layout.addAnimation(done, step);
+	return true;
 };
 

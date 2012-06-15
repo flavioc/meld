@@ -218,6 +218,8 @@ function handle_tuple_send(msg)
 		var str = '@' + get_translated_id(from) + " &rarr; @" + get_translated_id(to) + " " + tpl_str;
 		new_event(from, str);
 		new_node_event(to, str);
+		$('#graph').message(mapnodes[from], mapnodes[to], tuple_to_string(tpl));
+		update_graph();
 	}
 }
 

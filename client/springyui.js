@@ -1,5 +1,6 @@
 /**
 Copyright (c) 2010 Dennis Hotson
+				  2012 Flavio Cruz
 
  Permission is hereby granted, free of charge, to any person
  obtaining a copy of this software and associated documentation
@@ -32,6 +33,63 @@ jQuery.fn.springyUpdate = function () {
 	canvas.renderer.start();
 };
 
+// animates a message 'content' from node 'from' to 'to'
+jQuery.fn.message = function (from, to, content) {
+	var canvas = this[0];
+	var layout = canvas.layout;
+	var graph = canvas.graph;
+	var ctx = canvas.getContext("2d");
+	var step = 20;
+	var fulldistance = 100;
+	var stepdivide = fulldistance - step;
+	var speed = 0.75;
+	
+	canvas.renderer.addAnimation(
+		function () {
+			return step == stepdivide;
+		},
+		function () {
+			var p1 = toScreen(layout.point(from).p);
+			var p2 = toScreen(layout.point(to).p);
+			var x1 = p1.x;
+			var y1 = p1.y;
+			var x2 = p2.x;
+			var y2 = p2.y;
+			
+			var direction = new Vector(x2-x1, y2-y1);
+			var angle = direction.angle();
+			var diffx = x2 - x1;
+			var diffy = y2 - y1;
+			
+			ctx.save();
+			
+			if(angle <= (Math.PI / 2.0) && angle >= -(Math.PI / 2.0))
+				angle = -angle;
+			else
+				angle = -angle + Math.PI;
+			
+			ctx.translate(x1 + (diffx * step/fulldistance), y1 + (diffy * step / fulldistance));
+			ctx.rotate(angle);
+			
+			// f(y) = 10 - 1/90 * y^2 
+			var ytranslate = 10 - 1/90.0 * Math.pow(step - fulldistance/2.0, 2);
+			
+			ctx.translate(0, 2.5 * ytranslate);
+			ctx.textAlign = "center";
+			ctx.textBaseline = "top";
+			ctx.font = "12px Helvetica, sans-serif";
+			ctx.fillStyle = "black";
+			ctx.fillText(content, 0, 0);
+			
+			ctx.restore();
+			
+			step = step + speed;
+		}
+	);
+		
+	return true;
+};
+
 jQuery.fn.springy = function(params, node_selected, node_dblclicked) {
 
 	var stiffness = params.stiffness || 400.0;
@@ -45,6 +103,8 @@ jQuery.fn.springy = function(params, node_selected, node_dblclicked) {
 	canvas.graph = this.graph = params.graph;
 
 	var layout = this.layout = new Layout.ForceDirected(canvas.graph, stiffness, repulsion, damping);
+	
+	canvas.layout = layout;
 
 	// calculate bounding box of graph layout.. with ease-in
 	var currentBB = layout.getBoundingBox();
