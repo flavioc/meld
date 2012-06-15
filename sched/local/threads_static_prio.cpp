@@ -216,6 +216,7 @@ static_local_prio::set_next_node(void)
       
       assert(has_work());
 
+#ifdef PRIO_OPT
 		if(!prio_queue.empty()) {
 			const bool suc(prio_queue.pop(current_node));
 			if(!suc)
@@ -225,6 +226,21 @@ static_local_prio::set_next_node(void)
 			if(!suc)
 				continue;
 		}
+#elif defined(PRIO_INVERSE)
+		if(!queue_nodes.empty()) {
+			const bool suc(queue_nodes.pop(current_node));
+			if(!suc)
+				continue;
+		} else if(!prio_queue.empty()) {
+			const bool suc(prio_queue.pop(current_node));
+			if(!suc)
+				continue;
+		}
+#else
+		const bool suc(queue_nodes.pop(current_node));
+		
+		assert(suc);
+#endif
       
       assert(current_node->in_queue());
       assert(current_node != NULL);
@@ -264,15 +280,23 @@ static_local_prio::get_work(work& new_work)
 void
 static_local_prio::end(void)
 {
+#ifndef PRIO_NORMAL
 	cout << "prio_immediate: " << prio_immediate << endl;
 	cout << "prio_marked: " << prio_marked << endl;
 	cout << "prio_count: " << prio_count << endl;
+#endif
 }
 
 void
 static_local_prio::set_node_priority(node *n, const int)
 {
+#ifdef PRIO_NORMAL
+	(void)n;
+#elif defined(PRIO_HEAD)
+	(void)n;
+#elif defined(PRIO_OPT) || defined(PRIO_INVERSE)
 	thread_intrusive_node *tn((thread_intrusive_node*)n);
+	
 	if(tn->in_queue()) {
 		prio_immediate++;
 		if(!tn->is_in_prioqueue()) {
@@ -285,6 +309,7 @@ static_local_prio::set_node_priority(node *n, const int)
 		prio_marked++;
 		tn->mark_priority();
 	}
+#endif
 	
 	prio_count++;
 }

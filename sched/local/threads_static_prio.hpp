@@ -11,6 +11,11 @@
 #include "sched/thread/threaded.hpp"
 #include "sched/thread/queue_buffer.hpp"
 
+//#define PRIO_NORMAL
+//#define PRIO_HEAD
+#define PRIO_OPT
+//#define PRIO_INVERSE
+
 namespace sched
 {
 
@@ -43,6 +48,9 @@ protected:
    
    inline void add_to_queue(thread_intrusive_node *node)
    {
+#ifdef PRIO_NORMAL
+		queue_nodes.push_tail(node);
+#elif defined(PRIO_OPT) || defined(PRIO_INVERSE)
 		if(node->with_priority()) {
 			prio_queue.push_tail(node);
 			node->unmark_priority();
@@ -51,6 +59,9 @@ protected:
 			node->set_is_in_prioqueue(false);
       	queue_nodes.push_tail(node);
 		}
+#elif defined(PRIO_HEAD)
+		queue_nodes.push_head(node);
+#endif
    }
    
    inline bool has_work(void) const { return !queue_nodes.empty() || !prio_queue.empty(); }
