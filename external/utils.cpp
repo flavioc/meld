@@ -33,8 +33,20 @@ str2float(EXTERNAL_ARG(x))
 
 	from_string(f, str, std::dec);
 
-
 	RETURN_ARG(f);
+}
+
+argument
+str2int(EXTERNAL_ARG(x))
+{
+	DECLARE_ARG(x, rstring::ptr);
+
+	const string str(x->get_content());
+	int_val i;
+
+	from_string(i, str, std::dec);
+
+	RETURN_ARG(i);
 }
 
 }
