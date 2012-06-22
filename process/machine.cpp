@@ -5,6 +5,7 @@
 #include "process/process.hpp"
 #include "vm/program.hpp"
 #include "vm/state.hpp"
+#include "vm/exec.hpp"
 #include "runtime/list.hpp"
 #include "sched/mpi/message.hpp"
 #include "mem/thread.hpp"
@@ -175,8 +176,22 @@ machine::slice_function(void)
 }
 
 void
+machine::execute_const_code(void)
+{
+	state st;
+	
+	// no node or tuple whatsoever
+	st.setup(NULL, NULL, 0);
+	
+	execute_bytecode(state::PROGRAM->get_const_bytecode(), st);
+}
+
+void
 machine::start(void)
 {
+	// execute constants code
+	execute_const_code();
+	
    deactivate_signals();
    
    if(stat_enabled()) {
@@ -283,7 +298,8 @@ get_creation_function(const scheduler_type sched_type)
    throw machine_error("unknown scheduler type");
 }
 
-machine::machine(const string& file, router& _rout, const size_t th, const scheduler_type _sched_type):
+machine::machine(const string& file, router& _rout, const size_t th,
+		const scheduler_type _sched_type, const machine_arguments& margs):
    filename(file),
    num_threads(th),
    sched_type(_sched_type),
@@ -293,6 +309,7 @@ machine::machine(const string& file, router& _rout, const size_t th, const sched
 {  
    new program(filename);
    
+	state::ARGUMENTS = margs;
    state::DATABASE = new database(filename, get_creation_function(_sched_type));
    state::NUM_THREADS = num_threads;
    state::MACHINE = this;

@@ -25,6 +25,7 @@ const size_t uint_size = sizeof(int_val);
 const size_t float_size = sizeof(float_val);
 const size_t node_size = sizeof(node_val);
 const size_t string_size = sizeof(int_val);
+const size_t argument_size = 1;
 const size_t reg_size = 0;
 const size_t host_size = 0;
 const size_t nil_size = 0;
@@ -137,12 +138,16 @@ inline bool val_is_host(const instr_val x) { return x == 0x03; }
 inline bool val_is_nil(const instr_val x) { return x == 0x04; }
 inline bool val_is_node(const instr_val x) { return x == 0x05; }
 inline bool val_is_string(const instr_val x) { return x == 0x06; }
+inline bool val_is_arg(const instr_val x) { return x == 0x07; }
+inline bool val_is_const(const instr_val x) { return x == 0x08; }
 
-inline int_val pcounter_int(pcounter pc) { return *(int_val *)pc; }
-inline code_size_t pcounter_code_size(pcounter pc) { return *(code_size_t *)pc; }
-inline float_val pcounter_float(pcounter pc) { return *(float_val *)pc; }
-inline node_val pcounter_node(pcounter pc) { return *(node_val *)pc; }
-inline uint_val pcounter_uint(pcounter pc) { return *(uint_val *)pc; }
+inline int_val pcounter_int(const pcounter pc) { return *(int_val *)pc; }
+inline code_size_t pcounter_code_size(const pcounter pc) { return *(code_size_t *)pc; }
+inline float_val pcounter_float(const pcounter pc) { return *(float_val *)pc; }
+inline node_val pcounter_node(const pcounter pc) { return *(node_val *)pc; }
+inline uint_val pcounter_uint(const pcounter pc) { return *(uint_val *)pc; }
+inline argument_id pcounter_argument_id(const pcounter pc) { return (argument_id)*pc; }
+inline const_id pcounter_const_id(const pcounter pc) { return pcounter_uint(pc); }
 
 inline reg_num val_reg(const instr_val x) { return x & 0x1f; }
 inline field_num val_field_num(const pcounter x) { return *x & 0xff; }
@@ -154,6 +159,8 @@ inline void pcounter_move_float(pcounter *pc) { *pc = *pc + float_size; }
 inline void pcounter_move_match(pcounter *pc) { *pc = *pc + iter_match_size; }
 inline void pcounter_move_node(pcounter *pc) { *pc = *pc + node_size; }
 inline void pcounter_move_uint(pcounter *pc) { *pc = *pc + uint_size; }
+inline void pcounter_move_argument_id(pcounter *pc) { *pc = *pc + argument_size; }
+inline void pcounter_move_const_id(pcounter *pc) { pcounter_move_uint(pc); }
 
 /* common instruction functions */
 
@@ -337,7 +344,11 @@ STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING>(const instr_val v)
       return node_size;
 	else if(val_is_string(v))
 		return string_size;
-   else
+	else if(val_is_arg(v))
+		return argument_size;
+   else if(val_is_const(v))
+		return int_size;
+	else
       throw malformed_instr_error("invalid instruction argument value");
 }
 
@@ -360,6 +371,10 @@ STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING_NOT_NIL>(const instr_val v)
       return node_size;
 	else if(val_is_string(v))
 		return string_size;
+	else if(val_is_arg(v))
+		return val_size;
+	else if(val_is_const(v))
+		return int_size;
    else {
       throw malformed_instr_error("invalid instruction argument value");
    }
@@ -375,6 +390,8 @@ size_t arg_size<ARGUMENT_INT>(const instr_val v)
       return reg_size;
    else if(val_is_field(v))
       return field_size;
+	else if(val_is_const(v))
+		return int_size;
    else
       throw malformed_instr_error("invalid instruction int value");
 }
@@ -386,6 +403,8 @@ STATIC_INLINE size_t arg_size<ARGUMENT_WRITABLE>(const instr_val v)
       return reg_size;
    else if(val_is_field(v))
       return field_size;
+	else if(val_is_const(v))
+		return int_size;
    else
       throw malformed_instr_error("invalid instruction writable value");
 }
@@ -420,6 +439,10 @@ STATIC_INLINE size_t arg_size<ARGUMENT_NON_LIST>(const instr_val v)
       return node_size;
 	else if(val_is_string(v))
 		return string_size;
+	else if(val_is_arg(v))
+		return val_size;
+	else if(val_is_const(v))
+		return int_size;
    else
       throw malformed_instr_error("invalid instruction non-list value");
 }
@@ -431,6 +454,8 @@ STATIC_INLINE size_t arg_size<ARGUMENT_BOOL>(const instr_val v)
       return reg_size;
    else if(val_is_field(v))
       return field_size;
+	else if(val_is_const(v))
+		return int_size;
    else
       throw malformed_instr_error("invalid instruction bool value");
 }
@@ -446,6 +471,8 @@ STATIC_INLINE size_t arg_size<ARGUMENT_NODE>(const instr_val v)
       return host_size;
    else if(val_is_node(v))
       return node_size;
+	else if(val_is_const(v))
+		return int_size;
    else
       throw malformed_instr_error("invalid instruction node value");
 }
@@ -604,7 +631,7 @@ advance(pcounter pc)
 
       case END_LINEAR_INSTR:
          return pc + END_LINEAR_BASE;
-         
+				
       case ELSE_INSTR:
       default:
          throw malformed_instr_error("unknown instruction code");

@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <vector>
 
 #include "process/machine.hpp"
 #include "utils/utils.hpp"
@@ -20,6 +21,7 @@ static void
 help(void)
 {
 	cerr << "meld: execute meld program" << endl;
+	cerr << "meld -f <program file> -c <scheduler> -- arg1 arg2 ... argN" << endl;
 	cerr << "\t-f <name>\tmeld program" << endl;
 	help_schedulers();
 	cerr << "\t-t \t\ttime execution" << endl;
@@ -32,9 +34,11 @@ help(void)
    exit(EXIT_SUCCESS);
 }
 
-static void
+static vm::machine_arguments
 read_arguments(int argc, char **argv)
 {
+	vm::machine_arguments program_arguments;
+	
    progname = *argv++;
    --argc;
 
@@ -82,6 +86,11 @@ read_arguments(int argc, char **argv)
          case 'h':
             help();
             break;
+			case '-':
+				
+				for(--argc, ++argv ; argc > 0; --argc, ++argv)
+					program_arguments.push_back(string(*argv));
+			break;
          default:
             help();
       }
@@ -89,12 +98,14 @@ read_arguments(int argc, char **argv)
       /* advance */
       argc--; argv++;
    }
+
+	return program_arguments;
 }
 
 int
 main(int argc, char **argv)
 {
-   read_arguments(argc, argv);
+   vm::machine_arguments margs(read_arguments(argc, argv));
 
    if(program == NULL && sched_type == SCHED_UNKNOWN) {
       cerr << "Error: please provide scheduler type and a program to run" << endl;
@@ -112,7 +123,7 @@ main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 	
-	run_program(argc, argv, program);
+	run_program(argc, argv, program, margs);
 
    return EXIT_SUCCESS;
 }

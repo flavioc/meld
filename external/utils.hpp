@@ -12,6 +12,7 @@ namespace external
 {
 
 argument randint(const argument);
+argument str2float(const argument);
    
 }
 }

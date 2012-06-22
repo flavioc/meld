@@ -84,6 +84,18 @@ val_string(const instr_val v, pcounter *pm, const program *prog)
 		const string ret(string("\"") + prog->get_default_string(pcounter_uint(*pm))->get_content() + "\"");
 		pcounter_move_uint(pm);
 		return ret;
+	} else if(val_is_arg(v)) {
+		const string ret(string("ARG ") + to_string(pcounter_argument_id(*pm)));
+
+		pcounter_move_argument_id(pm);
+
+		return ret;
+	} else if(val_is_const(v)) {
+		const string ret(string("CONST ") + to_string(pcounter_const_id(*pm)));
+		
+		pcounter_move_const_id(pm);
+		
+		return ret;
    } else
 		throw type_error("Unrecognized val type " + to_string(v) + " (val_string)");
    
@@ -354,6 +366,7 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          }
          break;
     	case ELSE_INSTR:
+		default:
          throw malformed_instr_error("unknown instruction code");
 	}
 	

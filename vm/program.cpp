@@ -76,6 +76,26 @@ program::program(const string& filename):
 		str[length] = '\0';
 		default_strings.push_back(runtime::rstring::make_default_string(str));
 	}
+	
+	// read constants code
+	uint_val num_constants;
+	fp.read((char*)&num_constants, sizeof(uint_val));
+	
+	// read constant types
+	const_types.resize(num_constants);
+	
+	for(uint_val i(0); i < num_constants; ++i) {
+		byte b;
+		fp.read((char *)&b, sizeof(byte));
+		const_types[i] = (field_type)b;
+	}
+	
+	// read constants code
+	fp.read((char*)&const_code_size, sizeof(code_size_t));
+	
+	const_code = new byte_code_el[const_code_size];
+	
+	fp.read((char *)const_code, const_code_size);
 
    // read predicate information
    for(size_t i(0); i < num_predicates; ++i) {
@@ -164,11 +184,15 @@ program::print_predicate_code(ostream& out, predicate* p) const
 void
 program::print_bytecode(ostream& out) const
 {
+	out << "CONST CODE" << endl;
+	
+	instrs_print(const_code, const_code_size, 0, this, out);
+	
    for(size_t i = 0; i < num_predicates(); ++i) {
       predicate_id id = (predicate_id)i;
       
       if(i != 0)
-         cout << endl;
+         out << endl;
          
       print_predicate_code(out, get_predicate(id));
    }

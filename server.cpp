@@ -222,7 +222,7 @@ main(int argc, char **argv)
 				case COMMAND_LOAD: {
 					const string filename(command_args[1]);
 				
-					run_program(argc, argv, filename.c_str());
+					run_program(argc, argv, filename.c_str(), vm::machine_arguments());
 				}
 				break;
 				default: break;

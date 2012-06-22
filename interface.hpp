@@ -3,6 +3,7 @@
 #define INTERFACE_HPP
 
 #include "sched/types.hpp"
+#include "vm/state.hpp"
 
 extern sched::scheduler_type sched_type;
 extern size_t num_threads;
@@ -15,6 +16,6 @@ extern char *program_running;
 
 void parse_sched(char *);
 void help_schedulers(void);
-bool run_program(int, char **, const char *);
+bool run_program(int, char **, const char *, const vm::machine_arguments&);
 
 #endif

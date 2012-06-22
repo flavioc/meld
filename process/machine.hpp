@@ -29,6 +29,7 @@
 #include "sched/local/serial_ui.hpp"
 #include "sched/types.hpp"
 #include "stat/slice_set.hpp"
+#include "vm/state.hpp"
 
 namespace process
 {
@@ -51,6 +52,7 @@ private:
    boost::thread *alarm_thread;
    statistics::slice_set slices;
    
+	void execute_const_code(void);
    void deactivate_signals(void);
    void slice_function(void);
    void set_timer(void);
@@ -69,7 +71,7 @@ public:
    
    void start(void);
    
-   explicit machine(const std::string&, router&, const size_t, const sched::scheduler_type);
+   explicit machine(const std::string&, router&, const size_t, const sched::scheduler_type, const vm::machine_arguments&);
                
    ~machine(void);
 };

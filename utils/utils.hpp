@@ -17,6 +17,15 @@ std::string to_string(const T& obj)
 	return ss.str();
 }
 
+template <class T>
+bool from_string(T& t, 
+		const std::string& s, 
+		std::ios_base& (*f)(std::ios_base&))
+{
+	std::istringstream iss(s);
+	return !(iss >> f >> t).fail();
+}
+
 template <typename T>
 T upper_log2(const T n)
 {

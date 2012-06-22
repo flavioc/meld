@@ -115,7 +115,7 @@ help_schedulers(void)
 }
 
 bool
-run_program(int argc, char **argv, const char *program)
+run_program(int argc, char **argv, const char *program, const vm::machine_arguments& margs)
 {
 	assert(utils::file_exists(string(program)));
 
@@ -137,7 +137,7 @@ run_program(int argc, char **argv, const char *program)
 		LOG_PROGRAM_RUNNING();
 		
       router rout(num_threads, argc, argv, is_mpi_sched(sched_type));
-      machine mac(program, rout, num_threads, sched_type);
+      machine mac(program, rout, num_threads, sched_type, margs);
       mac.start();
 
       if(time_execution) {

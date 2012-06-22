@@ -23,6 +23,10 @@ namespace db {
 }
 
 namespace vm {
+	
+#define MAX_CONSTS 32
+
+typedef std::vector<std::string> machine_arguments;
 
 class state
 {
@@ -40,9 +44,30 @@ private:
    
    typedef std::pair<vm::tuple *, vm::ref_count> pair_linear;
    typedef std::list<pair_linear> list_linear;
-   
+
+	static reg consts[MAX_CONSTS];
+
 public:
-   
+	
+#define define_get_const(WHAT, TYPE, CODE) static TYPE get_const_ ## WHAT (const const_id& id) { return CODE; }
+	
+	define_get_const(int, int_val, *(int_val*)(consts + id))
+	define_get_const(float, float_val, *(float_val*)(consts + id))
+	define_get_const(ptr, ptr_val, *(ptr_val*)(consts + id));
+	define_get_const(int_list, runtime::int_list*, (runtime::int_list*)get_const_ptr(id))
+	define_get_const(float_list, runtime::float_list*, (runtime::float_list*)get_const_ptr(id))
+	define_get_const(node_list, runtime::node_list*, (runtime::node_list*)get_const_ptr(id))
+	define_get_const(string, runtime::rstring::ptr, (runtime::rstring::ptr)get_const_ptr(id))
+	
+#undef define_get_const
+	
+#define define_set_const(WHAT, TYPE, CODE) static void set_const_ ## WHAT (const const_id& id, const TYPE val) { CODE;}
+	
+	define_set_const(int, int_val&, *(int_val*)(consts + id) = val)
+	define_set_const(float, float_val&, *(float_val*)(consts + id) = val)
+
+#undef define_set_const
+	
    vm::tuple *tuple;
    db::tuple_trie_leaf *tuple_leaf;
    db::node *node;
@@ -60,6 +85,7 @@ public:
    static size_t NUM_PREDICATES;
    static size_t NUM_NODES;
    static size_t NUM_NODES_PER_PROCESS;
+	static machine_arguments ARGUMENTS;
    
 #define define_get(WHAT, RET, BODY) \
    inline RET get_ ## WHAT (const reg_num& num) const { BODY; }
@@ -102,6 +128,8 @@ public:
    inline void copy_reg(const reg_num& reg_from, const reg_num& reg_to) {
       regs[reg_to] = regs[reg_from];
    }
+
+	void copy_reg2const(const reg_num&, const const_id&);
    
    inline void add_float_list(runtime::float_list *ls) { free_float_list.push_back(ls); }
    inline void add_int_list(runtime::int_list *ls) { free_int_list.push_back(ls); }
@@ -119,6 +147,11 @@ public:
       proc(_proc)
    {
    }
+
+	explicit state(void):
+		proc(NULL)
+	{
+	}
 };
 
 }

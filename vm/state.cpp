@@ -10,6 +10,7 @@ using namespace runtime;
 namespace vm
 {
 
+state::reg state::consts[MAX_CONSTS];
 program *state::PROGRAM = NULL;
 database *state::DATABASE = NULL;
 machine *state::MACHINE = NULL;
@@ -19,6 +20,7 @@ size_t state::NUM_THREADS = 0;
 size_t state::NUM_PREDICATES = 0;
 size_t state::NUM_NODES = 0;
 size_t state::NUM_NODES_PER_PROCESS = 0;
+machine_arguments state::ARGUMENTS;
 
 bool
 state::linear_tuple_can_be_used(vm::tuple *tpl, const vm::ref_count max) const
@@ -107,13 +109,29 @@ state::cleanup(void)
 }
 
 void
+state::copy_reg2const(const reg_num& reg_from, const const_id& cid)
+{
+	consts[cid] = regs[reg_from];
+	switch(PROGRAM->get_const_type(cid)) {
+		case FIELD_LIST_INT: add_int_list(get_const_int_list(cid)); break;
+		case FIELD_LIST_FLOAT: add_float_list(get_const_float_list(cid)); break;
+		case FIELD_LIST_NODE: add_node_list(get_const_node_list(cid)); break;
+		case FIELD_STRING: add_string(get_const_string(cid)); break;
+		default: break;
+	}
+}
+
+void
 state::setup(vm::tuple *tpl, db::node *n, const ref_count count)
 {
    this->tuple = tpl;
    this->tuple_leaf = NULL;
    this->node = n;
    this->count = count;
-   this->is_linear = tpl->is_linear();
+	if(tpl != NULL)
+   	this->is_linear = tpl->is_linear();
+	else
+		this->is_linear = false;
    assert(used_linear_tuples.empty());
    this->used_linear_tuples.clear();
 }

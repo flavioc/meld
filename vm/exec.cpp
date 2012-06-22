@@ -190,6 +190,27 @@ move_to_field(pcounter m, state& state, const instr_val& from)
 }
 
 static inline void
+move_to_const(pcounter m, state& state, const instr_val& from)
+{
+	if(val_is_float(from)) {
+		const float_val flt(pcounter_float(m));
+      
+      pcounter_move_float(&m);
+      
+		const const_id cid(pcounter_const_id(m));
+
+		state.set_const_float(cid, flt);
+
+	} else if(val_is_reg(from)) {
+		const reg_num reg(val_reg(from));
+		const const_id cid(pcounter_const_id(m));
+		
+		state.copy_reg2const(reg, cid);
+	} else
+		throw vm_exec_error("invalid move to const (move_to_const)");
+}
+
+static inline void
 execute_move(const pcounter& pc, state& state)
 {
    const instr_val to(move_to(pc));
@@ -198,6 +219,8 @@ execute_move(const pcounter& pc, state& state)
       move_to_reg(pc + MOVE_BASE, state, val_reg(to), move_from(pc));
    else if(val_is_field(to))
       move_to_field(pc + MOVE_BASE, state, move_from(pc));
+	else if(val_is_const(to))
+		move_to_const(pc + MOVE_BASE, state, move_from(pc));
    else
       throw vm_exec_error("invalid move target");
 }
@@ -246,6 +269,11 @@ float_val get_op_function<float_val>(const instr_val& val, pcounter& m, state& s
       pcounter_move_field(&m);
       
       return tuple->get_float(field);
+	} else if(val_is_const(val)) {
+		const const_id cid(pcounter_const_id(m));
+		pcounter_move_const_id(&m);
+		
+		return state.get_const_float(cid);
    } else
       throw vm_exec_error("invalid float for float op");
 }
@@ -378,6 +406,21 @@ rstring::ptr get_op_function<rstring::ptr>(const instr_val& val, pcounter& m, st
 		pcounter_move_uint(&m);
 		
 		return state::PROGRAM->get_default_string(id);
+	} else if(val_is_arg(val)) {
+		const argument_id id(pcounter_argument_id(m));
+		
+		pcounter_move_argument_id(&m);
+		
+		if(state::ARGUMENTS.size() < id)
+			throw vm_exec_error("not enough arguments");
+			
+		const string& str(state::ARGUMENTS[id-1]);
+		
+		rstring::ptr s(rstring::make_string(str));
+		
+		state.add_string(s);
+		
+		return s;
 	} else
 		throw vm_exec_error("unable to get a string");
 }

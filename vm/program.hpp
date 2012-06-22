@@ -36,6 +36,10 @@ private:
   
    std::vector<byte_code> code;
    std::vector<code_size_t> code_size;
+
+	code_size_t const_code_size;
+	byte_code const_code;
+	std::vector<field_type> const_types;
    
    std::vector<predicate*> route_predicates;
    
@@ -70,6 +74,8 @@ public:
    predicate* get_route_predicate(const size_t&) const;
    
    byte_code get_bytecode(const predicate_id&) const;
+	inline byte_code get_const_bytecode(void) const { return const_code; }
+	inline field_type get_const_type(const const_id& id) const { return const_types[id]; }
    
    size_t num_predicates(void) const { return predicates.size(); }
    size_t num_route_predicates(void) const { return route_predicates.size(); }

@@ -18,11 +18,12 @@
 
 
 A VM program starts with a byte indicating the number of predicates $P$ in the
-program. Next, there are four main components:
+program. Next, there are five main components:
 
 \begin{itemize}
 	\item An unsigned integer indicating the number $N$ of nodes to instantiate, followed by $2N$ unsigned integers corresponding to one pair of unsigned integers one for node. The first value is the node ID to use during execution and the second one the ID given by the user.
 	\item An unsigned integer indicating the number $S$ of constant strings in the program followed by $S$ pairs containing the length of the string and the string itself.
+	\item A byte indicating the number of code constants $C$ and then $C$ bytes for the types of such constants. Finally, there's an unsigned integer describing the code size for computing the constants and the code itself.
 	\item A set of $P$ \emph{predicate descriptors}, with 69 bytes each.
 	\item A set of $P$ byte-code instructions, one for each predicate.
 \end{itemize}
@@ -203,6 +204,12 @@ INSTRUCTION & BYTE FORMAT & ARGS\\
 \end{tabular}
 
 \begin{tabular}{lll}
+INSTRUCTION & BYTE FORMAT & ARGS\\
+\hline
+\\
+\end{tabular}
+
+\begin{tabular}{lll}
 OP & BYTE FORMAT\\
 \hline
 \\
@@ -271,6 +278,13 @@ VALUE & BYTE FORMAT & ARGS\\
 \val{STRING} {0&0&0&1&1&0} {size, content}
 & the next 4 bytes indicate the length of the string\\
 & which are followed by the string itself \\
+\\
+\val{ARG} {0&0&0&1&1&1} {id}
+& the next byte indicates the argument id\\
+\\
+\val{CONST} {0&0&1&0&0&0} {const id}
+& the next 4 bytes indicates the constant id\\
+\\
 \end{tabular}
 \vspace{0.3in}\\
 
