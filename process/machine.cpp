@@ -52,6 +52,14 @@ machine::route_self(process *proc, node *node, simple_tuple *stpl)
 		sched->set_node_priority(node, tpl->get_int(0));
 		delete tpl;
 		delete stpl;
+	} else if(stpl->get_predicate_id() == WRITE_STRING_PREDICATE_ID) {
+		vm::tuple *tpl(stpl->get_tuple());
+		runtime::rstring::ptr s(tpl->get_string(0));
+
+		cout << s->get_content() << endl;
+
+		delete tpl;
+		delete stpl;
 	} else {
 		sched->new_work_self(node, stpl);
 	}

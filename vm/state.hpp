@@ -143,6 +143,12 @@ public:
    void using_new_linear_tuple(vm::tuple *);
    void no_longer_using_linear_tuple(vm::tuple *);
    
+	static inline runtime::rstring::ptr get_argument(const argument_id id)
+	{
+		assert(id <= ARGUMENTS.size());
+		return runtime::rstring::make_string(ARGUMENTS[id-1]);
+	}
+	
    explicit state(process::process *_proc):
       proc(_proc)
    {

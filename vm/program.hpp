@@ -27,6 +27,7 @@ const size_t INIT_PREDICATE_ID(0);
 extern size_t SETPRIO_PREDICATE_ID;
 extern size_t SETCOLOR_PREDICATE_ID;
 extern size_t SETEDGELABEL_PREDICATE_ID;
+extern size_t WRITE_STRING_PREDICATE_ID;
 
 class program
 {

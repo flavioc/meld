@@ -31,6 +31,7 @@ strat_level program::MAX_STRAT_LEVEL(0);
 size_t SETPRIO_PREDICATE_ID(1);
 size_t SETCOLOR_PREDICATE_ID(2);
 size_t SETEDGELABEL_PREDICATE_ID(3);
+size_t WRITE_STRING_PREDICATE_ID(4);
 
 program::program(const string& filename):
    init(NULL)
@@ -115,6 +116,8 @@ program::program(const string& filename):
 			SETCOLOR_PREDICATE_ID = i;
 		else if(name == "setedgelabel")
 			SETEDGELABEL_PREDICATE_ID = i;
+		else if(name == "write_string")
+			WRITE_STRING_PREDICATE_ID = i;
       
       if(predicates[i]->is_route_pred())
          route_predicates.push_back(predicates[i]);

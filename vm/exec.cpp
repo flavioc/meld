@@ -120,6 +120,15 @@ move_to_field(pcounter m, state& state, const instr_val& from)
 		tuple *tuple(state.get_tuple(val_field_reg(m)));
 		
 		tuple->set_string(val_field_num(m), state::PROGRAM->get_default_string(id));
+	} else if(val_is_arg(from)) {
+		const argument_id id(pcounter_argument_id(m));
+		
+		pcounter_move_argument_id(&m);
+		
+		tuple *tuple(state.get_tuple(val_field_reg(m)));
+		
+		tuple->set_string(val_field_num(m), state::get_argument(id));
+		
    } else if(val_is_field(from)) {
       const tuple *from_tuple(state.get_tuple(val_field_reg(m)));
       const field_num from_field(val_field_num(m));
@@ -410,14 +419,8 @@ rstring::ptr get_op_function<rstring::ptr>(const instr_val& val, pcounter& m, st
 		const argument_id id(pcounter_argument_id(m));
 		
 		pcounter_move_argument_id(&m);
-		
-		if(state::ARGUMENTS.size() < id)
-			throw vm_exec_error("not enough arguments");
-			
-		const string& str(state::ARGUMENTS[id-1]);
-		
-		rstring::ptr s(rstring::make_string(str));
-		
+
+		rstring::ptr s(state::get_argument(id));
 		state.add_string(s);
 		
 		return s;
