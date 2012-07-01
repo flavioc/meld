@@ -1,7 +1,6 @@
 
-#include "sched/local/serial.hpp"
+#include "sched/serial.hpp"
 #include "process/remote.hpp"
-#include "sched/local/serial.hpp"
 #include "sched/common.hpp"
 
 using namespace db;
