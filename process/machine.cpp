@@ -13,6 +13,9 @@
 #include "stat/stat.hpp"
 #include "utils/fs.hpp"
 #include "interface.hpp"
+#include "sched/serial.hpp"
+#include "sched/serial_ui.hpp"
+#include "thread/mpi_dynamic.hpp"
 
 using namespace process;
 using namespace db;

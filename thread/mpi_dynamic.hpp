@@ -1,6 +1,6 @@
 
-#ifndef SCHED_LOCAL_MPI_THREADS_DYNAMIC_HPP
-#define SCHED_LOCAL_MPI_THREADS_DYNAMIC_HPP
+#ifndef THREAD_MPI_DYNAMIC_HPP
+#define THREAD_MPI_DYNAMIC_HPP
 
 #include "sched/local/threads_dynamic.hpp"
 #include "sched/mpi/tokenizer.hpp"
