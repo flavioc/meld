@@ -91,7 +91,7 @@ OBJS = utils/utils.o \
 			 thread/static_prio.o \
 			 thread/dynamic.o \
 			 thread/direct.o \
-			 sched/local/threads_single.o \
+			 thread/single.o \
 			 thread/mpi_static.o \
 			 thread/mpi_dynamic.o \
 			 thread/mpi_single.o \
