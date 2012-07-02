@@ -19,6 +19,7 @@
 #include "thread/mpi_single.hpp"
 #include "thread/mpi_static.hpp"
 #include "thread/static_prio.hpp"
+#include "thread/direct.hpp"
 
 using namespace process;
 using namespace db;

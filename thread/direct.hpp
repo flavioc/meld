@@ -1,6 +1,6 @@
 
-#ifndef SCHED_LOCAL_THREADS_DIRECT_HPP
-#define SCHED_LOCAL_THREADS_DIRECT_HPP
+#ifndef THREAD_DIRECT_HPP
+#define THREAD_DIRECT_HPP
 
 #include <tr1/unordered_set>
 

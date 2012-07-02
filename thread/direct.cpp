@@ -1,5 +1,5 @@
 
-#include "sched/local/threads_direct.hpp"
+#include "thread/direct.hpp"
 #include "vm/state.hpp"
 #include "db/database.hpp"
 #include "process/remote.hpp"
