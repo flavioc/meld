@@ -94,7 +94,7 @@ OBJS = utils/utils.o \
 			 sched/local/threads_single.o \
 			 sched/local/mpi_threads_static.o \
 			 thread/mpi_dynamic.o \
-			 sched/local/mpi_threads_single.o \
+			 thread/mpi_single.o \
 			 sched/thread/threaded.o \
 			 sched/thread/queue_buffer.o \
 			 sched/thread/assert.o \

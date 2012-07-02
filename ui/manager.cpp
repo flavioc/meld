@@ -10,7 +10,7 @@
 #include "vm/program.hpp"
 #include "ui/macros.hpp"
 #include "vm/state.hpp"
-#include "sched/local/serial_ui.hpp"
+#include "sched/serial_ui.hpp"
 
 using namespace std;
 using namespace websocketpp;

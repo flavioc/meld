@@ -1,6 +1,6 @@
 
-#ifndef SCHED_LOCAL_MPI_THREADS_SINGLE_HPP
-#define SCHED_LOCAL_MPI_THREADS_SINGLE_HPP
+#ifndef THREAD_MPI_SINGLE_HPP
+#define THREAD_MPI_SINGLE_HPP
 
 #include "sched/local/threads_single.hpp"
 #include "sched/mpi/tokenizer.hpp"

@@ -16,6 +16,7 @@
 #include "sched/serial.hpp"
 #include "sched/serial_ui.hpp"
 #include "thread/mpi_dynamic.hpp"
+#include "thread/mpi_single.hpp"
 
 using namespace process;
 using namespace db;
