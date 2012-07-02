@@ -20,6 +20,7 @@
 #include "thread/mpi_static.hpp"
 #include "thread/static_prio.hpp"
 #include "thread/direct.hpp"
+#include "thread/dynamic.hpp"
 
 using namespace process;
 using namespace db;

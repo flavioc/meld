@@ -19,7 +19,6 @@
 #include "db/node.hpp"
 #include "sched/local/threads_static.hpp"
 #include "sched/local/threads_single.hpp"
-#include "sched/local/threads_dynamic.hpp"
 #include "sched/types.hpp"
 #include "stat/slice_set.hpp"
 #include "vm/state.hpp"

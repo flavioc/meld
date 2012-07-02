@@ -1,5 +1,5 @@
 
-#include "sched/local/threads_dynamic.hpp"
+#include "thread/dynamic.hpp"
 #include "vm/state.hpp"
 #include "db/database.hpp"
 #include "process/remote.hpp"

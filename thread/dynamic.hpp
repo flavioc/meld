@@ -1,6 +1,6 @@
 
-#ifndef SCHED_LOCAL_THREADS_DYNAMIC_HPP
-#define SCHED_LOCAL_THREADS_DYNAMIC_HPP
+#ifndef THREAD_DYNAMIC_HPP
+#define THREAD_DYNAMIC_HPP
 
 #include <tr1/unordered_set>
 
