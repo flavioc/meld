@@ -1,6 +1,6 @@
 
-#ifndef SCHED_LOCAL_MPI_THREADS_STATIC_HPP
-#define SCHED_LOCAL_MPI_THREADS_STATIC_HPP
+#ifndef THREAD_MPI_STATIC_HPP
+#define THREAD_MPI_STATIC_HPP
 
 #include "sched/local/threads_static.hpp"
 #include "sched/mpi/tokenizer.hpp"

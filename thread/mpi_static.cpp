@@ -1,5 +1,5 @@
 
-#include "sched/local/mpi_threads_static.hpp"
+#include "thread/mpi_static.hpp"
 #include "vm/state.hpp"
 #include "process/router.hpp"
 #include "utils/utils.hpp"
