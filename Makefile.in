@@ -88,7 +88,7 @@ OBJS = utils/utils.o \
 			 sched/serial.o \
 			 sched/serial_ui.o \
 			 sched/local/threads_static.o \
-			 sched/local/threads_static_prio.o \
+			 thread/static_prio.o \
 			 sched/local/threads_dynamic.o \
 			 sched/local/threads_direct.o \
 			 sched/local/threads_single.o \
