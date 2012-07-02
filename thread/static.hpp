@@ -1,6 +1,6 @@
 
-#ifndef SCHED_LOCAL_THREADS_STATIC_HPP
-#define SCHED_LOCAL_THREADS_STATIC_HPP
+#ifndef THREAD_STATIC_HPP
+#define THREAD_STATIC_HPP
 
 #include <boost/thread/barrier.hpp>
 #include <vector>

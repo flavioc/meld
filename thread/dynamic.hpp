@@ -5,7 +5,7 @@
 #include <tr1/unordered_set>
 
 #include "conf.hpp"
-#include "sched/local/threads_static.hpp"
+#include "thread/static.hpp"
 #include "sched/thread/steal_set.hpp"
 #include "utils/spinlock.hpp"
 #include "utils/random.hpp"

@@ -2,7 +2,7 @@
 #ifndef THREAD_MPI_STATIC_HPP
 #define THREAD_MPI_STATIC_HPP
 
-#include "sched/local/threads_static.hpp"
+#include "thread/static.hpp"
 #include "sched/mpi/tokenizer.hpp"
 #include "sched/mpi/handler.hpp"
 #include "utils/macros.hpp"

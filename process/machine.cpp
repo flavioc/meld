@@ -21,6 +21,8 @@
 #include "thread/static_prio.hpp"
 #include "thread/direct.hpp"
 #include "thread/dynamic.hpp"
+#include "thread/static.hpp"
+#include "thread/single.hpp"
 
 using namespace process;
 using namespace db;

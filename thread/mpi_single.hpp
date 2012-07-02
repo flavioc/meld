@@ -2,7 +2,7 @@
 #ifndef THREAD_MPI_SINGLE_HPP
 #define THREAD_MPI_SINGLE_HPP
 
-#include "sched/local/threads_single.hpp"
+#include "thread/single.hpp"
 #include "sched/mpi/tokenizer.hpp"
 #include "sched/mpi/handler.hpp"
 #include "utils/macros.hpp"
