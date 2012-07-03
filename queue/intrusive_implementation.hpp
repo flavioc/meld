@@ -3,10 +3,7 @@
 #define QUEUE_INTRUSIVE_IMPLEMENTATION_HPP
 
 #include "queue/macros.hpp"
-
-#define __INTRUSIVE_NEXT(ITEM) ((ITEM)->__intrusive_next)
-#define __INTRUSIVE_PREV(ITEM) ((ITEM)->__intrusive_prev)
-#define __INTRUSIVE_IN_QUEUE(ITEM) ((ITEM)->__intrusive_in_queue)
+#include "queue/intrusive.hpp"
 
 #define QUEUE_DEFINE_INTRUSIVE_DOUBLE_DATA() \
 	typedef T* node_type; 							\

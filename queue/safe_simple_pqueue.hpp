@@ -22,13 +22,13 @@ private:
 	inline int left(const int parent) const
 	{
 		int i = (parent << 1) + 1;
-		return (i < heap.size()) ? i : -1;
+		return (i < (int)heap.size()) ? i : -1;
 	}
 	
 	inline int right(const int parent) const
 	{
 		int i = (parent << 1) + 2;
-		return (i < heap.size()) ? i : -1;
+		return (i < (int)heap.size()) ? i : -1;
 	}
 	
 	inline int parent(const int child) const
@@ -55,8 +55,8 @@ private:
 	{
 		int l = left(index);
 		int r = right(index);
-		const bool hasleft = l >= 0;
-		const bool hasright = r >= 0;
+		const bool hasleft = (l >= 0);
+		const bool hasright = (r >= 0);
 		
 		if(!hasleft && !hasright)
 			return;
