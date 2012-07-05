@@ -141,9 +141,11 @@ program::program(const string& filename):
 		predicate_id pred;
 		
 		fp.read((char*)&pred, sizeof(predicate_id));
-		fp.read((char*)&priority_argument, sizeof(uint_val));
+		fp.read((char*)&priority_argument, sizeof(field_num));
 		
 		priority_pred = predicates[pred];
+		--priority_argument;
+		priority_pred->set_global_priority();
 	}
    
    // read predicate code

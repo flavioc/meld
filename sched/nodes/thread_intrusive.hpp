@@ -25,10 +25,12 @@ private:
 	int current_priority;
 	bool has_prio_fact;
 	
-	queue::heap_queue<process::node_work> prioritized_tuples;
-
 public:
 	
+	queue::heap_queue<process::node_work> prioritized_tuples;
+	
+	virtual bool has_prio_work(void) const { return !prioritized_tuples.empty(); }
+	virtual bool has_normal_work(void) const { return thread_node::has_work(); }
 	virtual bool has_work(void) const { return thread_node::has_work() || !prioritized_tuples.empty(); }
 
 	inline bool has_priority_fact(void) const { return has_prio_fact; }

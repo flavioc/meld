@@ -50,6 +50,7 @@ private:
    bool is_linear;
    bool is_reverse_route;
    bool is_action;
+	bool is_global_prio;
    
    void build_field_info(void);
    void build_aggregate_info(void);
@@ -93,6 +94,9 @@ public:
    inline strat_level get_strat_level(void) const { return level; }
    
    void print(std::ostream&) const;
+
+	void set_global_priority(void) { is_global_prio = true; }
+	bool is_global_priority(void) const { return is_global_prio; }
    
    static predicate* make_predicate_from_buf(utils::byte *buf, code_size_t *code_size, const predicate_id);
 };

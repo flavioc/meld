@@ -38,6 +38,11 @@ public:
    {
       return get_tuple()->get_predicate()->get_strat_level();
    }
+
+	inline const vm::predicate* get_predicate(void) const
+	{
+		return get_tuple()->get_predicate();
+	}
    
    inline vm::predicate_id get_predicate_id(void) const
    {

@@ -67,9 +67,19 @@ static_local_prio::new_work(const node *, work& new_work)
    assert_thread_push_work();
    
    node_work node_new_work(new_work);
-   
-   to->add_work(node_new_work);
-   
+	db::simple_tuple *stpl(node_new_work.get_tuple());
+	const vm::predicate *pred(stpl->get_predicate());
+	
+	if(pred->is_global_priority()) {
+		const field_num field(state::PROGRAM->get_priority_argument());
+		vm::tuple *tpl(stpl->get_tuple());
+		const int_val val(tpl->get_int(field));
+		to->prioritized_tuples.insert(node_new_work, val);
+		cout << "Added tuple " << *stpl << " to " << to->get_id() << endl;
+	} else {
+   	to->add_work(node_new_work);
+   }
+
    if(!to->in_queue()) {
       spinlock::scoped_lock l(to->spin);
       if(!to->in_queue()) {
@@ -266,7 +276,12 @@ static_local_prio::get_work(work& new_work)
    assert(current_node->in_queue());
    assert(current_node->has_work());
    
-   node_work unit(current_node->get_work());
+	node_work unit;
+	
+	if(current_node->has_normal_work())
+		unit = current_node->get_work();
+	else
+		unit = current_node->prioritized_tuples.pop();
    
    new_work.copy_from_node(current_node, unit);
    

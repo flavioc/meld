@@ -53,13 +53,15 @@ private:
 	string_store default_strings;
 	
 	predicate *priority_pred;
-	uint_val priority_argument;
+	field_num priority_argument;
 
    void print_predicate_code(std::ostream&, predicate*) const;
    
 public:
 
    static strat_level MAX_STRAT_LEVEL;
+
+	field_num get_priority_argument(void) const { return priority_argument; }
 
    predicate *get_predicate_by_name(const std::string&) const;
    
