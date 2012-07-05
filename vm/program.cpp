@@ -34,7 +34,7 @@ size_t SETEDGELABEL_PREDICATE_ID(3);
 size_t WRITE_STRING_PREDICATE_ID(4);
 
 program::program(const string& filename):
-   init(NULL)
+   init(NULL), priority_pred(NULL)
 {
    state::PROGRAM = this;
    
@@ -126,9 +126,25 @@ program::program(const string& filename):
    safe = true;
    for(size_t i(0); i < num_predicates; ++i) {
       predicates[i]->cache_info();
-      if(predicates[i]->is_aggregate() && predicates[i]->is_unsafe_agg())
+      if(predicates[i]->is_aggregate() && predicates[i]->is_unsafe_agg()) {
          safe = false;
+			break;
+		}
    }
+
+	// get global priority information
+	byte has_global;
+	
+	fp.read((char*)&has_global, sizeof(byte));
+	
+	if(has_global) {
+		predicate_id pred;
+		
+		fp.read((char*)&pred, sizeof(predicate_id));
+		fp.read((char*)&priority_argument, sizeof(uint_val));
+		
+		priority_pred = predicates[pred];
+	}
    
    // read predicate code
    for(size_t i(0); i < num_predicates; ++i) {

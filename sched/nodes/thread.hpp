@@ -13,38 +13,13 @@
 namespace sched
 {
 
-// forward declarations
-class static_local; 
-class static_local_prio;
-class static_buff;
-class dynamic_local;
-class direct_local;
-class threads_single;
-class programmable_local;
-class mpi_thread_dynamic;
-class mpi_thread_static;
-class mpi_thread_single;
-
 class thread_node: public in_queue_node
 {
-private:
-   
-   friend class static_local;
-   friend class static_local_prio;
-   friend class static_buff;
-   friend class dynamic_local;
-   friend class direct_local;
-   friend class threads_single;
-   friend class programmable_local;
-   friend class mpi_thread_static;
-   friend class mpi_thread_dynamic;
-   friend class mpi_thread_single;
-   
+public:
+	   
    sched::base *owner;
 	utils::spinlock spin;
 	queue::safe_bounded_pqueue<process::node_work>::type queue;
-   
-public:
    
    inline void set_owner(sched::base *_owner) { owner = _owner; }
    
@@ -56,7 +31,7 @@ public:
       queue.push(new_work, new_work.get_strat_level());
    }
    
-   inline bool has_work(void) const { return !queue.empty(); }
+   virtual inline bool has_work(void) const { return !queue.empty(); }
    
    inline process::node_work get_work(void)
    {

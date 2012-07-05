@@ -58,6 +58,7 @@ public:
 	define_get_const(float_list, runtime::float_list*, (runtime::float_list*)get_const_ptr(id))
 	define_get_const(node_list, runtime::node_list*, (runtime::node_list*)get_const_ptr(id))
 	define_get_const(string, runtime::rstring::ptr, (runtime::rstring::ptr)get_const_ptr(id))
+	define_get_const(node, node_val, *(node_val*)(consts + id))
 	
 #undef define_get_const
 	
@@ -65,7 +66,8 @@ public:
 	
 	define_set_const(int, int_val&, *(int_val*)(consts + id) = val)
 	define_set_const(float, float_val&, *(float_val*)(consts + id) = val)
-
+	define_set_const(node, node_val&, *(node_val*)(consts +id) = val)
+	
 #undef define_set_const
 	
    vm::tuple *tuple;

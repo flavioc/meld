@@ -51,6 +51,9 @@ private:
 	typedef std::vector<runtime::rstring::ptr> string_store;
 	
 	string_store default_strings;
+	
+	predicate *priority_pred;
+	uint_val priority_argument;
 
    void print_predicate_code(std::ostream&, predicate*) const;
    

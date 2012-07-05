@@ -9,6 +9,7 @@
 #include "utils/spinlock.hpp"
 #include "sched/base.hpp"
 #include "process/work.hpp"
+#include "queue/safe_simple_pqueue.hpp"
 
 namespace sched
 {
@@ -20,9 +21,19 @@ private:
    DECLARE_DOUBLE_QUEUE_NODE(thread_intrusive_node);
 	bool has_priority;
 	bool added_to_pqueue;
+	
+	int current_priority;
+	bool has_prio_fact;
+	
+	queue::heap_queue<process::node_work> prioritized_tuples;
 
 public:
 	
+	virtual bool has_work(void) const { return thread_node::has_work() || !prioritized_tuples.empty(); }
+
+	inline bool has_priority_fact(void) const { return has_prio_fact; }
+	inline void set_has_priority_fact(const bool val) { has_prio_fact = val; }
+
 	inline bool is_in_prioqueue(void) const { return added_to_pqueue; }
 	inline void set_is_in_prioqueue(const bool val) { added_to_pqueue = val; }
 	
@@ -31,7 +42,8 @@ public:
 	inline void mark_priority(void) { has_priority = true; }
 	
    explicit thread_intrusive_node(const db::node::node_id _id, const db::node::node_id _trans):
-      thread_node(_id, _trans), has_priority(false), added_to_pqueue(false)
+      thread_node(_id, _trans), has_priority(false), added_to_pqueue(false),
+		current_priority(-1), has_prio_fact(false)
    {
 	}
    

@@ -128,7 +128,21 @@ move_to_field(pcounter m, state& state, const instr_val& from)
 		tuple *tuple(state.get_tuple(val_field_reg(m)));
 		
 		tuple->set_string(val_field_num(m), state::get_argument(id));
+	} else if(val_is_const(from)) {
+		const const_id cid(pcounter_const_id(m));
 		
+		pcounter_move_const_id(&m);
+		
+		tuple *tuple(state.get_tuple(val_field_reg(m)));
+		
+		const field_num to_field(val_field_num(m));
+		
+		switch(tuple->get_field_type(to_field)) {
+			case FIELD_INT:	
+				tuple->set_int(to_field, state.get_const_int(cid));
+				break;
+			default: throw vm_exec_error("don't know how to move to field (move_to_field from const)");
+		}
    } else if(val_is_field(from)) {
       const tuple *from_tuple(state.get_tuple(val_field_reg(m)));
       const field_num from_field(val_field_num(m));
@@ -209,12 +223,24 @@ move_to_const(pcounter m, state& state, const instr_val& from)
 		const const_id cid(pcounter_const_id(m));
 
 		state.set_const_float(cid, flt);
-
+	} else if(val_is_int(from)) {
+		const int_val it(pcounter_int(m));
+		
+		pcounter_move_int(&m);
+		
+		const const_id cid(pcounter_int(m));
+		
+		state.set_const_int(cid, it);
 	} else if(val_is_reg(from)) {
 		const reg_num reg(val_reg(from));
 		const const_id cid(pcounter_const_id(m));
 		
 		state.copy_reg2const(reg, cid);
+	} else if(val_is_node(from)) {
+		const node_val node(get_node_val(m));
+		
+		const const_id cid(pcounter_const_id(m));
+		state.set_const_node(cid, node);
 	} else
 		throw vm_exec_error("invalid move to const (move_to_const)");
 }
@@ -303,6 +329,12 @@ int_val get_op_function<int_val>(const instr_val& val, pcounter& m, state& state
       pcounter_move_field(&m);
       
       return tuple->get_int(field);
+	} else if(val_is_const(val)) {
+		const const_id cid(pcounter_const_id(m));
+		
+		pcounter_move_const_id(&m);
+		
+		return state.get_const_int(cid);
    } else
       throw vm_exec_error("invalid int for int op");
 }
@@ -323,8 +355,13 @@ node_val get_op_function<node_val>(const instr_val& val, pcounter& m, state& sta
       pcounter_move_field(&m);
       
       return tuple->get_node(field);
+	} else if(val_is_const(val)) {
+		const const_id cid(pcounter_const_id(m));
+		pcounter_move_const_id(&m);
+		
+		return state.get_const_node(cid);
    } else
-      throw vm_exec_error("invalid node for node op");
+      throw vm_exec_error("invalid node for node op (get_op_function<node_val>)");
 }
 
 template <>
