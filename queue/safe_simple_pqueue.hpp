@@ -19,11 +19,13 @@ private:
 	public:
 		int val;
 		T data;
+		int pos;
 	};
 	
 	HEAP_DEFINE_UTILS;
 	
 #define HEAP_GET_PRIORITY(OBJ) (OBJ).val
+#define HEAP_GET_POS(OBJ) (OBJ).pos
 
 	HEAP_DEFINE_HEAPIFYUP;
 	
@@ -45,6 +47,7 @@ public:
 		obj.val = prio;
 		
 		heap.push_back(obj);
+		HEAP_GET_POS(obj) = heap.size() - 1;
 		heapifyup(heap.size() - 1);
 	}
 	
@@ -55,6 +58,7 @@ public:
 		const heap_object min(heap.front());
 		
 		heap[0] = heap.at(heap.size() - 1);
+		HEAP_GET_POS(heap[0]) = 0;
 		heap.pop_back();
 		heapifydown(0);
 		

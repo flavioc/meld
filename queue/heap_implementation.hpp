@@ -55,8 +55,8 @@
 		{																		\
 			heap_object obj(heap[parent(index)]);					\
 																				\
-			heap[parent(index)] = heap[index];						\
-			heap[index] = obj;											\
+			HEAP_SET_INDEX(parent(index), heap[index]);			\
+			HEAP_SET_INDEX(index, obj);								\
 			index = parent(index);										\
 		}																		\
 	}
@@ -69,6 +69,11 @@
 																				\
 		return heap.at(0).val;											\
 	}
+	
+#define HEAP_SET_INDEX(IDX, OBJ)	do {								\
+	heap[IDX] = OBJ;														\
+	HEAP_GET_POS(OBJ) = IDX;											\
+} while(false)
 	
 #define HEAP_DEFINE_HEAPIFYDOWN										\
 	void heapifydown(const int index)								\
@@ -95,10 +100,10 @@ HEAP_GET_PRIORITY(heap[index]) <= HEAP_GET_PRIORITY(heap[l])\
 		else																	\
 			smaller = l;													\
 																				\
-		const heap_object obj(heap[index]);							\
+		heap_object obj(heap[index]);									\
 																				\
-		heap[index] = heap[smaller];									\
-		heap[smaller] = obj;												\
+		HEAP_SET_INDEX(index, heap[smaller]);						\
+		HEAP_SET_INDEX(smaller, obj);									\
 		heapifydown(smaller);											\
 	}
 
