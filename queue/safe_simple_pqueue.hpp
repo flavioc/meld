@@ -4,6 +4,8 @@
 
 #include <iostream>
 
+#include "queue/heap_implementation.hpp"
+
 namespace queue
 {
 
@@ -19,75 +21,21 @@ private:
 		T data;
 	};
 	
-	inline int left(const int parent) const
-	{
-		int i = (parent << 1) + 1;
-		return (i < (int)heap.size()) ? i : -1;
-	}
+	HEAP_DEFINE_UTILS;
 	
-	inline int right(const int parent) const
-	{
-		int i = (parent << 1) + 2;
-		return (i < (int)heap.size()) ? i : -1;
-	}
+#define HEAP_GET_PRIORITY(OBJ) (OBJ).val
+
+	HEAP_DEFINE_HEAPIFYUP;
 	
-	inline int parent(const int child) const
-	{
-		if(child != 0)
-			return (child - 1) >> 1;
-		return -1;
-	}
+	HEAP_DEFINE_HEAPIFYDOWN;
 	
-	void heapifyup(int index)
-	{
-		while((index > 0) && (parent(index) >= 0) &&
-			(heap[parent(index)].val > heap[index].val))
-		{
-			heap_object obj(heap[parent(index)]);
-			
-			heap[parent(index)] = heap[index];
-			heap[index] = obj;
-			index = parent(index);
-		}
-	}
-	
-	void heapifydown(const int index)
-	{
-		int l = left(index);
-		int r = right(index);
-		const bool hasleft = (l >= 0);
-		const bool hasright = (r >= 0);
-		
-		if(!hasleft && !hasright)
-			return;
-			
-		if(hasleft && heap[index].val <= heap[l].val
-			&& ((hasright && heap[index].val <= heap[r].val)
-					|| !hasright))
-			return;
-		
-		int smaller;
-		if(hasright && heap[r].val <= heap[l].val)
-			smaller = r;
-		else
-			smaller = l;
-		
-		const heap_object obj(heap[index]);
-			
-		heap[index] = heap[smaller];
-		heap[smaller] = obj;
-		heapifydown(smaller);
-	}
-	
-	typedef std::vector<heap_object> heap_vector;
-	heap_vector heap;
+	HEAP_DEFINE_DATA;
 
 public:
 	
-	inline bool empty(void) const
-	{
-		return heap.empty();
-	}
+	HEAP_DEFINE_INVALID_PRIORITY;
+	
+	HEAP_DEFINE_EMPTY;
 	
 	void insert(T el, const int prio)
 	{
@@ -100,6 +48,8 @@ public:
 		heapifyup(heap.size() - 1);
 	}
 	
+	HEAP_DEFINE_MIN_VALUE;
+	
 	T pop(void)
 	{
 		const heap_object min(heap.front());
@@ -111,15 +61,7 @@ public:
 		return min.data;
 	}
 	
-	void print(std::ostream& out)
-	{
-		for(typename heap_vector::iterator it(heap.begin()), end(heap.end());
-			it != end;
-			++it)
-		{
-			out << it->data << " (" << it->val << ") ";
-		}
-	}
+	HEAP_DEFINE_PRINT;
 	
 	explicit heap_queue(void) {}
 	~heap_queue(void) {}
