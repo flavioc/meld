@@ -48,8 +48,9 @@
 	}
 	
 #define HEAP_DEFINE_HEAPIFYUP											\
-	void heapifyup(int index)											\
+	bool heapifyup(int index)											\
 	{																			\
+		bool moved(false);												\
 		while((index > 0) && (parent(index) >= 0) &&				\
 			(HEAP_GET_PRIORITY(heap[parent(index)]) > HEAP_GET_PRIORITY(heap[index])))			\
 		{																		\
@@ -58,7 +59,9 @@
 			HEAP_SET_INDEX(parent(index), heap[index]);			\
 			HEAP_SET_INDEX(index, obj);								\
 			index = parent(index);										\
+			moved = true;													\
 		}																		\
+		return moved;														\
 	}
 	
 #define HEAP_DEFINE_MIN_VALUE											\

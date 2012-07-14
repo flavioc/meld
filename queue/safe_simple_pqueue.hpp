@@ -51,6 +51,20 @@ public:
 		heapifyup(heap.size() - 1);
 	}
 	
+	void remove(const int index)
+	{
+		heap_object obj(heap[index]);
+		heap_object tmp(heap[heap.size() - 1]);
+		
+		heap.pop_back();
+		
+		if(!heap.empty() && index != heap.size()) {
+			HEAP_SET_INDEX(index, tmp);
+			
+			heapifydown(index);
+		}
+	}
+	
 	HEAP_DEFINE_MIN_VALUE;
 	
 	T pop(void)
