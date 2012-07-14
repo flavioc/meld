@@ -19,6 +19,11 @@ using namespace utils;
 static atomic<size_t> prio_count(0);
 static atomic<size_t> prio_immediate(0);
 static atomic<size_t> prio_marked(0);
+static atomic<size_t> prio_moved_pqueue(0);
+static atomic<size_t> prio_add_pqueue(0);
+static atomic<size_t> prio_removed_pqueue(0);
+
+//#define DEBUG_PRIORITIES
 
 namespace sched
 {
@@ -74,26 +79,57 @@ static_local_prio::new_work(const node *, work& new_work)
 		const field_num field(state::PROGRAM->get_priority_argument());
 		vm::tuple *tpl(stpl->get_tuple());
 		const int_val val(tpl->get_int(field));
+		const int_val min_before(to->get_min_value());
+		
 		to->prioritized_tuples.insert(node_new_work, val);
-		cout << "Added tuple " << *stpl << " to " << to->get_id() << endl;
+		
+		if(to != current_node) {
+			if(global_prioqueue::in_queue(to)) {
+				assert(!node_queue::in_queue(to));
+				const int_val min_now(to->get_min_value());
+				assert(min_before != thread_intrusive_node::prio_tuples_queue::INVALID_PRIORITY);
+				
+				if(min_now != min_before) {
+					prio_moved_pqueue++;
+					gprio_queue.move_node(to, min_now);
+				}
+			} else {
+				if(node_queue::in_queue(to)) {
+					prio_removed_pqueue++;
+					queue_nodes.remove(to);
+				}
+				assert(!node_queue::in_queue(to));
+				prio_add_pqueue++;
+				gprio_queue.insert(to, to->get_min_value());
+			}
+			assert(global_prioqueue::in_queue(to));
+			assert(!node_queue::in_queue(to));
+			if(!to->in_queue())
+				to->set_in_queue(true);
+		}
+#ifdef DEBUG_PRIORITIES
+		cout << "Added tuple " << *stpl << " to " << to->get_id() << " prio " << val << endl;
+#endif
 	} else {
+#ifdef DEBUG_PRIORITIES
+		cout << "Added " << *stpl << " to " << to->get_id() << endl;
+#endif
    	to->add_work(node_new_work);
+		if(!to->in_queue()) {
+	      spinlock::scoped_lock l(to->spin);
+	      if(!to->in_queue()) {
+				add_to_queue(to);
+	         to->set_in_queue(true);
+	      }
+	      // no need to put owner active, since we own this node
+	      // new_work was called for init or for self generation of
+	      // tuples (SEND a TO a)
+	      // the lock is needed in order to make sure
+	      // the node is not put multiple times on the queue
+	   }   
    }
 
-   if(!to->in_queue()) {
-      spinlock::scoped_lock l(to->spin);
-      if(!to->in_queue()) {
-			add_to_queue(to);
-         to->set_in_queue(true);
-      }
-      // no need to put owner active, since we own this node
-      // new_work was called for init or for self generation of
-      // tuples (SEND a TO a)
-      // the lock is needed in order to make sure
-      // the node is not put multiple times on the queue
-   }
-   
-   assert(to->in_queue());
+	assert(to->in_queue());
 }
 
 void
@@ -195,15 +231,40 @@ static_local_prio::finish_work(const work& work)
 bool
 static_local_prio::check_if_current_useless(void)
 {
+	if(!gprio_queue.empty() && current_node->has_prio_work() && !current_node->has_normal_work()) {
+		const int current_min(gprio_queue.min_value());
+		const int_val node_min(current_node->get_min_value());
+		
+#ifdef DEBUG_PRIORITIES
+		cout << "Cur min " << current_min << " node min " << node_min << endl;
+#endif
+		if(current_min < node_min) {
+			// put back into priority queue
+			gprio_queue.insert(current_node, node_min);
+			assert(global_prioqueue::in_queue(current_node));
+			current_node = gprio_queue.pop();
+#ifdef DEBUG_PRIORITIES
+			cout << "Picked another " << current_node->get_id() << endl;
+#endif
+		}
+		
+		assert(current_node->in_queue());
+		assert(current_node->has_work());
+		return false;
+	}
+	
    if(!current_node->has_work()) {
       spinlock::scoped_lock lock(current_node->spin);
       
       if(!current_node->has_work()) {
-         if(!queue::in_queue(current_node)) {
+         if(!node_queue::in_queue(current_node)) {
             current_node->set_in_queue(false);
             assert(!current_node->in_queue());
          }
-         current_node = NULL;
+#ifdef DEBUG_PRIORITIES
+			cout << "Done with " << current_node->get_id() << endl;
+#endif
+			current_node = NULL;
          return true;
       }
    }
@@ -226,6 +287,13 @@ static_local_prio::set_next_node(void)
       
       assert(has_work());
 
+		if(!gprio_queue.empty()) {
+			current_node = gprio_queue.pop();
+#ifdef DEBUG_PRIORITIES
+			cout << "Picked node " << current_node->get_id() << " from prio queue" << endl;
+#endif
+			goto loop_check;
+		}
 #ifdef PRIO_OPT
 		if(!prio_queue.empty()) {
 			const bool suc(prio_queue.pop(current_node));
@@ -235,6 +303,9 @@ static_local_prio::set_next_node(void)
 			const bool suc(queue_nodes.pop(current_node));
 			if(!suc)
 				continue;
+#ifdef DEBUG_PRIORITIES
+			cout << "Picked node " << current_node->get_id() << " from normal queue" << endl;
+#endif
 		}
 #elif defined(PRIO_INVERSE)
 		if(!queue_nodes.empty()) {
@@ -252,6 +323,7 @@ static_local_prio::set_next_node(void)
 		assert(suc);
 #endif
       
+loop_check:
       assert(current_node->in_queue());
       assert(current_node != NULL);
       
@@ -296,9 +368,14 @@ void
 static_local_prio::end(void)
 {
 #ifndef PRIO_NORMAL
+#ifdef DEBUG_PRIORITIES
 	cout << "prio_immediate: " << prio_immediate << endl;
 	cout << "prio_marked: " << prio_marked << endl;
 	cout << "prio_count: " << prio_count << endl;
+#endif
+	cout << "Moved nodes in priority queue count: " << prio_moved_pqueue << endl;
+	cout << "Removed from normal queue count: " << prio_removed_pqueue << endl;
+	cout << "Added to priority queue count: " << prio_add_pqueue << endl;
 #endif
 }
 

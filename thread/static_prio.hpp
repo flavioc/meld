@@ -10,6 +10,7 @@
 #include "queue/safe_double_queue.hpp"
 #include "sched/thread/threaded.hpp"
 #include "sched/thread/queue_buffer.hpp"
+#include "queue/safe_complex_pqueue.hpp"
 
 //#define PRIO_NORMAL
 //#define PRIO_HEAD
@@ -26,17 +27,20 @@ protected:
    
    DEFINE_PADDING;
    
-   typedef queue::intrusive_safe_double_queue<thread_intrusive_node> queue;
-   queue queue_nodes;
+   typedef queue::intrusive_safe_double_queue<thread_intrusive_node> node_queue;
+   node_queue queue_nodes;
 
 	DEFINE_PADDING;
 	
-	queue prio_queue;
+	node_queue prio_queue;
    
    DEFINE_PADDING;
    
    thread_intrusive_node *current_node;
-   
+
+	typedef queue::intrusive_safe_complex_pqueue<thread_intrusive_node> global_prioqueue;
+	global_prioqueue gprio_queue;
+	
    virtual void assert_end(void) const;
    virtual void assert_end_iteration(void) const;
    bool set_next_node(void);
@@ -64,7 +68,7 @@ protected:
 #endif
    }
    
-   inline bool has_work(void) const { return !queue_nodes.empty() || !prio_queue.empty(); }
+   inline bool has_work(void) const { return !queue_nodes.empty() || !prio_queue.empty() || !gprio_queue.empty(); }
 
 public:
    

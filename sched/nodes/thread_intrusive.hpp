@@ -16,9 +16,10 @@ namespace sched
 
 class thread_intrusive_node: public thread_node
 {
+	DECLARE_DOUBLE_QUEUE_NODE(thread_intrusive_node);
+	DEFINE_PRIORITY_NODE(thread_intrusive_node);
+	
 private:
-   
-   DECLARE_DOUBLE_QUEUE_NODE(thread_intrusive_node);
 	bool has_priority;
 	bool added_to_pqueue;
 	
@@ -27,7 +28,10 @@ private:
 	
 public:
 	
-	queue::heap_queue<process::node_work> prioritized_tuples;
+	typedef queue::heap_queue<process::node_work> prio_tuples_queue;
+	prio_tuples_queue prioritized_tuples;
+	
+	vm::int_val get_min_value(void) const { return prioritized_tuples.min_value(); }
 	
 	virtual bool has_prio_work(void) const { return !prioritized_tuples.empty(); }
 	virtual bool has_normal_work(void) const { return thread_node::has_work(); }

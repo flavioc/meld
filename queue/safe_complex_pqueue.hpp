@@ -88,9 +88,19 @@ public:
 	
 	QUEUE_DEFINE_INTRUSIVE_CONSTRUCTOR(intrusive_safe_complex_pqueue);
 	
+	static inline bool in_queue(node_type node)
+	{
+   	return __INTRUSIVE_IN_PRIORITY_QUEUE(node);
+	}
+	
 	void insert(node_type node, const int prio)
 	{
 		push_node(node, prio);
+	}
+	
+	int min_value(void) const
+	{
+		return __INTRUSIVE_PRIORITY(head);
 	}
 	
 	node_type pop(void)

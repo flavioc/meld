@@ -144,7 +144,7 @@ program::program(const string& filename):
 		fp.read((char*)&priority_argument, sizeof(field_num));
 		
 		priority_pred = predicates[pred];
-		--priority_argument;
+		priority_argument -= 2;
 		priority_pred->set_global_priority();
 	}
    
