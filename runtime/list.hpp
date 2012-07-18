@@ -6,9 +6,9 @@
 #include <iostream>
 #include <string>
 #include <stack>
-#ifdef COMPILE_MPI
+
 #include <boost/mpi.hpp>
-#endif
+
 #include "utils/types.hpp"
 #include "utils/atomic.hpp"
 #include "mem/base.hpp"
@@ -102,7 +102,6 @@ public:
          ls->inc_refs();
    }
    
-#ifdef COMPILE_MPI
    static inline
 	size_t size_list(const list_ptr ptr, const size_t elem_size)
    {
@@ -160,7 +159,6 @@ public:
       
       return init;
    }
-#endif
 
    static inline
    list_ptr copy(list_ptr ptr)

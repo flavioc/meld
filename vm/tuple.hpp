@@ -6,9 +6,7 @@
 #include <ostream>
 #include <list>
 
-#ifdef COMPILE_MPI
 #include <mpi.h>
-#endif
 
 #ifdef USE_UI
 #include <json_spirit.h>
@@ -73,14 +71,12 @@ public:
 
    inline predicate_id get_predicate_id(void) const { return pred->get_id(); }
    
-#ifdef COMPILE_MPI
    size_t get_storage_size(void) const;
    
    void pack(utils::byte *, const size_t, int *, MPI_Comm) const;
    void load(utils::byte *, const size_t, int *, MPI_Comm);
    
    static tuple* unpack(utils::byte *, const size_t, int *, MPI_Comm);
-#endif
 
    field_type get_field_type(const field_num& field) const { return pred->get_field_type(field); }
 
