@@ -274,7 +274,7 @@ program::dump_json(void) const
 					UI_ADD_ELEM(field_types, "string");
 					break;
 				default:
-					throw type_error("Unrecognized field type " + to_string(pred->get_field_type(j)) + " (program::dump_json)");
+					throw type_error("Unrecognized field type " + field_type_string(pred->get_field_type(j)) + " (program::dump_json)");
 			}
 		}
 		UI_ADD_FIELD(obj, "fields", field_types);
