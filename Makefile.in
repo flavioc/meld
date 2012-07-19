@@ -109,7 +109,8 @@ OBJS = utils/utils.o \
 			 stat/slice_set.o \
 			 ui/manager.o \
 			 ui/client.o \
-			 interface.o
+			 interface.o \
+			 sim/socket.o
 
 all: meld print predicates server
 
