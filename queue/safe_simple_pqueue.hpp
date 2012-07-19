@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "queue/heap_implementation.hpp"
+#include "utils/spinlock.hpp"
 
 namespace queue
 {
@@ -13,6 +14,8 @@ template <class T>
 class heap_queue
 {
 private:
+	
+	utils::spinlock mtx;
 	
 	class heap_object
 	{
@@ -41,6 +44,8 @@ public:
 	
 	void insert(T el, const int prio)
 	{
+		utils::spinlock::scoped_lock l(mtx);
+		
 		heap_object obj;
 		
 		obj.data = el;
@@ -53,6 +58,8 @@ public:
 	
 	void remove(const int index)
 	{
+		utils::spinlock::scoped_lock l(mtx);
+		
 		heap_object obj(heap[index]);
 		heap_object tmp(heap.back());
 		
@@ -69,6 +76,8 @@ public:
 	
 	T pop(void)
 	{
+		utils::spinlock::scoped_lock l(mtx);
+		
 		const heap_object min(heap.front());
 		
 		heap[0] = heap.back();

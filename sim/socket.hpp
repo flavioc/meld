@@ -26,6 +26,8 @@ public:
 	void send(const message_buf, const size_t);
 	message_buf receive(void);
 	
+	void send_start_simulation(void);
+	
 	explicit socket(const std::string&, const std::string&);
 	
 	~socket(void) {

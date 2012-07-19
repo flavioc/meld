@@ -4,13 +4,16 @@
 
 #include <list>
 
+#include "conf.hpp"
 #include "vm/tuple.hpp"
 #include "db/node.hpp"
 #include "vm/program.hpp"
 #include "vm/instr.hpp"
 #include "db/trie.hpp"
 
-#include "conf.hpp"
+#ifdef USE_SIMULATOR
+#include "sim/socket.hpp"
+#endif
 
 // forward declaration
 namespace process {
@@ -94,6 +97,9 @@ public:
    static size_t NUM_NODES;
    static size_t NUM_NODES_PER_PROCESS;
 	static machine_arguments ARGUMENTS;
+#ifdef USE_SIMULATOR
+	static sim::socket *socket;
+#endif
    
 #define define_get(WHAT, RET, BODY) \
    inline RET get_ ## WHAT (const reg_num& num) const { BODY; }

@@ -159,7 +159,10 @@ run_program(int argc, char **argv, const char *program, const vm::machine_argume
    } catch(db::database_error& err) {
       cerr << "Database error: " << err.what() << endl;
       exit(EXIT_FAILURE);
-   }
+   } catch(process::machine_error& err) {
+		cerr << "Virtual machine error: " << err.what() << endl;
+		exit(EXIT_FAILURE);
+	}
 
 	running = false;
 	program_running = NULL;

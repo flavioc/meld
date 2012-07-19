@@ -2,6 +2,7 @@
 #include <vector>
 
 #include "sim/socket.hpp"
+#include "vm/defs.hpp"
 
 using namespace std;
 using boost::asio::ip::udp;
@@ -51,6 +52,17 @@ socket::receive(void)
 	}
 	
 	return msg;
+}
+
+void
+socket::send_start_simulation(void)
+{
+	utils::byte *b(new utils::byte[MESSAGE_SIZE_BYTES]);
+	vm::uint_val *v((vm::uint_val*)b);
+	
+	v[0] = 1;
+	
+	send(b, MESSAGE_SIZE_BYTES);
 }
 
 }

@@ -9,6 +9,11 @@
 
 #include "interface.hpp"
 
+#include "queue/safe_simple_pqueue.hpp"
+#include "queue/safe_complex_pqueue.hpp"
+
+#include "sim/socket.hpp"
+
 using namespace utils;
 using namespace process;
 using namespace std;

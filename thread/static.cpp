@@ -19,6 +19,21 @@ using namespace utils;
 namespace sched
 {
 
+#ifdef USE_SIMULATOR
+void
+static_local::get_pending_facts(const quantum_t quantum)
+{
+	while(!pending_facts.empty()) {
+		const quantum_t min((quantum_t)pending_facts.min_value());
+		
+		if(min <= quantum) {
+			work w(pending_facts.pop());
+			new_agg(w);
+		}
+	}
+}
+#endif
+
 void
 static_local::assert_end(void) const
 {
@@ -92,7 +107,14 @@ static_local::new_work_other(sched::base *, work& new_work)
    assert(tnode->get_owner() != NULL);
    
    assert_thread_push_work();
-   
+ 
+#ifdef USE_SIMULATOR
+	static_local *owner(dynamic_cast<static_local*>(tnode->get_owner()));
+	
+	owner->pending_facts.insert(new_work, (int)current_quantum);
+	return;
+#endif
+  
    node_work node_new_work(new_work);
    tnode->add_work(node_new_work);
    
@@ -293,6 +315,9 @@ static_local::write_slice(statistics::slice& sl) const
 static_local::static_local(const vm::process_id _id):
    base(_id),
    current_node(NULL)
+#ifdef USE_SIMULATOR
+	, current_quantum(0)
+#endif
 {
 }
 

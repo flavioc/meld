@@ -5,11 +5,17 @@
 #include <boost/thread/barrier.hpp>
 #include <vector>
 
+#include "conf.hpp"
+
 #include "sched/base.hpp"
 #include "sched/nodes/thread.hpp"
 #include "queue/safe_linear_queue.hpp"
 #include "sched/thread/threaded.hpp"
 #include "sched/thread/queue_buffer.hpp"
+#ifdef USE_SIMULATOR
+#include "queue/safe_simple_pqueue.hpp"
+#include "process/work.hpp"
+#endif
 
 namespace sched
 {
@@ -26,6 +32,13 @@ protected:
    DEFINE_PADDING;
    
    thread_node *current_node;
+
+#ifdef USE_SIMULATOR
+	queue::heap_queue<process::work> pending_facts;
+	vm::quantum_t current_quantum;
+	
+	void get_pending_facts(const vm::quantum_t);
+#endif
    
    virtual void assert_end(void) const;
    virtual void assert_end_iteration(void) const;

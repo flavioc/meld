@@ -23,6 +23,9 @@
 #include "thread/dynamic.hpp"
 #include "thread/static.hpp"
 #include "thread/single.hpp"
+#ifdef USE_SIMULATOR
+#include "sim/socket.hpp"
+#endif
 
 using namespace process;
 using namespace db;
@@ -331,6 +334,15 @@ machine::machine(const string& file, router& _rout, const size_t th,
    state::DATABASE = new database(filename, get_creation_function(_sched_type));
    state::NUM_THREADS = num_threads;
    state::MACHINE = this;
+#ifdef USE_SIMULATOR
+	try {
+		state::socket = new sim::socket("127.0.0.1", "some");
+	} catch(std::exception&) {
+		throw machine_error("could not connect to simulator");
+	}
+	
+	state::socket->send_start_simulation();
+#endif
    
    mem::init(num_threads);
    process_list.resize(num_threads);

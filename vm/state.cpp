@@ -21,6 +21,9 @@ size_t state::NUM_PREDICATES = 0;
 size_t state::NUM_NODES = 0;
 size_t state::NUM_NODES_PER_PROCESS = 0;
 machine_arguments state::ARGUMENTS;
+#ifdef USE_SIMULATOR
+sim::socket *state::socket(NULL);
+#endif
 
 bool
 state::linear_tuple_can_be_used(vm::tuple *tpl, const vm::ref_count max) const
