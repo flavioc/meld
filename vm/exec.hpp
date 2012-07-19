@@ -8,8 +8,14 @@
 #include "vm/defs.hpp"
 #include "vm/instr.hpp"
 
+#include "conf.hpp"
+
 namespace vm
 {
+	
+#ifdef USE_SIMULATOR
+quantum_t performance_count_block(pcounter);
+#endif
    
 typedef enum {
    EXECUTION_OK,

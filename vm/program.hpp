@@ -17,6 +17,8 @@
 #include <json_spirit.h>
 #endif
 
+#include "conf.hpp"
+
 namespace process {
    class router;
 }
@@ -54,6 +56,10 @@ private:
 	
 	predicate *priority_pred;
 	field_num priority_argument;
+	
+#ifdef USE_SIMULATOR
+	std::vector<quantum_t> pred_quantums;
+#endif
 
    void print_predicate_code(std::ostream&, predicate*) const;
    

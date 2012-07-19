@@ -9,6 +9,7 @@
 #include "db/database.hpp"
 #include "utils/types.hpp"
 #include "vm/state.hpp"
+#include "vm/exec.hpp"
 #ifdef USE_UI
 #include "ui/macros.hpp"
 #endif
@@ -154,6 +155,10 @@ program::program(const string& filename):
       code[i] = new byte_code_el[size];
       
       fp.read((char*)code[i], size);
+
+#ifdef USE_SIMULATOR
+		pred_quantums.push_back(performance_count_block(code[i]));
+#endif
    }
 }
 
@@ -217,6 +222,16 @@ program::print_bytecode(ostream& out) const
          
       print_predicate_code(out, get_predicate(id));
    }
+
+#ifdef USE_SIMULATOR
+	cout << endl << "Performance counters:" << endl;
+	for(size_t i(0); i < num_predicates(); ++i) {
+		predicate_id id((predicate_id)i);
+		const predicate *pred(get_predicate(id));
+		
+		cout << "\t" << pred->get_name() << " " << pred_quantums[id] << endl;
+	}
+#endif
 }
 
 void

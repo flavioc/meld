@@ -1135,6 +1135,81 @@ execute_call(pcounter pc, state& state)
    }
 }
 
+#ifdef USE_SIMULATOR
+static inline quantum_t
+performance_count(const pcounter pc)
+{
+	switch(fetch(pc)) {
+		case RETURN_INSTR:
+		case NEXT_INSTR:
+		case RETURN_LINEAR_INSTR:
+		case RETURN_DERIVED_INSTR:
+		case RETURN_SELECT_INSTR:
+			return 1;
+			
+		case IF_INSTR:
+			return 1;
+		
+		case ELSE_INSTR: throw vm_exec_error("ELSE instruction not supported");
+			
+		case END_LINEAR_INSTR: return 0;
+		
+		case RESET_LINEAR_INSTR: return 1;
+		
+		case ITER_INSTR: return 2;
+		
+		case REMOVE_INSTR: return 1;
+		
+		case MOVE_INSTR: return 1;
+		
+		case ALLOC_INSTR: return 1;
+		
+		case SEND_INSTR: return 1;
+		
+		case OP_INSTR: return 1;
+		
+		case NOT_INSTR: return 1;
+		
+		case MOVE_NIL_INSTR: return 1;
+		
+		case CONS_INSTR: return 1;
+		
+		case TEST_NIL_INSTR: return 1;
+		
+		case TAIL_INSTR: return 0;
+		
+		case HEAD_INSTR: return 1;
+		
+		case FLOAT_INSTR: return 1;
+		
+		case SELECT_INSTR: return 3;
+		
+		case COLOCATED_INSTR: return 1;
+		
+		case DELETE_INSTR: return 1;
+		
+		case CALL_INSTR: return 1;
+		
+		default: throw vm_exec_error("performance_count: instruction not recognized");
+	}
+}
+
+quantum_t
+performance_count_block(pcounter pc)
+{
+	quantum_t ret(0);
+	
+	for(; ; pc = advance(pc)) {
+		ret += performance_count(pc);
+		if(fetch(pc) == RETURN_INSTR)
+			return ret;
+	}
+	
+	assert(false);
+	return 0;
+}
+#endif
+
 static inline return_type
 execute(pcounter pc, state& state)
 {

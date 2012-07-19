@@ -106,6 +106,9 @@ state::cleanup(void)
 {
    purge_runtime_objects();
    assert(used_linear_tuples.empty());
+#ifdef USE_SIMULATOR
+	perf_counter = 0;
+#endif
 }
 
 void

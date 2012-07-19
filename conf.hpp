@@ -39,6 +39,9 @@
 /* use ui interface */
 #define USE_UI
 
+/* use simulator */
+#define USE_SIMULATOR
+
 /* use memory pools for each thread or not */
 const bool USE_ALLOCATOR = true;
 

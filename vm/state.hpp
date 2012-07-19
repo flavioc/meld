@@ -10,6 +10,8 @@
 #include "vm/instr.hpp"
 #include "db/trie.hpp"
 
+#include "conf.hpp"
+
 // forward declaration
 namespace process {
    class process;
@@ -46,6 +48,10 @@ private:
    typedef std::list<pair_linear> list_linear;
 
 	static reg consts[MAX_CONSTS];
+	
+#ifdef USE_SIMULATOR
+	quantum_t perf_counter;
+#endif
 
 public:
 	

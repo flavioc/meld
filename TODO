@@ -3,3 +3,7 @@
 	- safe_linear_queue (intrusive_safe_linear_queue)
 	- unsafe_linear_queue (intrusive_unsafe_linear_queue)
 	- unsafe_linear_queue_count (intrusive_unsafe_linear_queue_count)
+- Performance counters
+- Stop when all node facts are processed and wait for the simulator.
+- Initiate exchange with simulator
+
