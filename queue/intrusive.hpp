@@ -14,6 +14,7 @@ public:  											\
 public:													\
 	bool __intrusive_in_priority_queue;			\
 	int __intrusive_priority;						\
+	int __intrusive_pos;								\
 	inline int get_intrusive_priority(void) const { return __intrusive_priority; }	\
 	inline void set_intrusive_priority(const int n) { __intrusive_priority = n; }
 
@@ -22,5 +23,6 @@ public:													\
 #define __INTRUSIVE_IN_QUEUE(ITEM) ((ITEM)->__intrusive_in_queue)
 #define __INTRUSIVE_IN_PRIORITY_QUEUE(ITEM) ((ITEM->__intrusive_in_priority_queue))
 #define __INTRUSIVE_PRIORITY(ITEM) ((ITEM)->__intrusive_priority)
+#define __INTRUSIVE_POS(ITEM) ((ITEM)->__intrusive_pos)
 
 #endif

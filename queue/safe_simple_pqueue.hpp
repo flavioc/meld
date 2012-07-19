@@ -54,7 +54,7 @@ public:
 	void remove(const int index)
 	{
 		heap_object obj(heap[index]);
-		heap_object tmp(heap[heap.size() - 1]);
+		heap_object tmp(heap.back());
 		
 		heap.pop_back();
 		
@@ -71,7 +71,7 @@ public:
 	{
 		const heap_object min(heap.front());
 		
-		heap[0] = heap.at(heap.size() - 1);
+		heap[0] = heap.back();
 		HEAP_GET_POS(heap[0]) = 0;
 		heap.pop_back();
 		heapifydown(0);
@@ -84,6 +84,9 @@ public:
 	explicit heap_queue(void) {}
 	~heap_queue(void) {}
 };
+
+#undef HEAP_GET_POS
+#undef HEAP_GET_PRIORITY
 
 }
 
