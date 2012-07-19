@@ -28,6 +28,8 @@ public:
 	
 	void send_start_simulation(void);
 	
+	void send_stop_simulation(void);
+	
 	explicit socket(const std::string&, const std::string&);
 	
 	~socket(void) {

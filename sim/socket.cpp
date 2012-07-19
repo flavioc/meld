@@ -7,6 +7,8 @@
 using namespace std;
 using boost::asio::ip::udp;
 
+#define MESSAGE_SIZE (MESSAGE_SIZE_BYTES/sizeof(vm::uint_val))
+
 namespace sim
 {
 	
@@ -63,6 +65,16 @@ socket::send_start_simulation(void)
 	v[0] = 1;
 	
 	send(b, MESSAGE_SIZE_BYTES);
+}
+
+void
+socket::send_stop_simulation(void)
+{
+	vm::uint_val *v(new vm::uint_val[MESSAGE_SIZE]);
+	
+	v[0] = 2;
+	
+	send((message_buf)v, MESSAGE_SIZE_BYTES);
 }
 
 }

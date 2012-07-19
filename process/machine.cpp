@@ -233,6 +233,10 @@ machine::start(void)
    if(state::PROGRAM->is_safe())
       assert(process_list[0]->num_iterations() == 1);
 #endif
+
+#ifdef USE_SIMULATOR
+	state::socket->send_stop_simulation();
+#endif
    
    if(alarm_thread) {
       kill(getpid(), SIGUSR1);
