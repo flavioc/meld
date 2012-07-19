@@ -8,6 +8,7 @@
 #include "sched/thread/assert.hpp"
 #include "vm/state.hpp"
 #include "sched/common.hpp"
+#include "utils/time.hpp"
 
 using namespace boost;
 using namespace std;
@@ -22,8 +23,12 @@ static atomic<size_t> prio_marked(0);
 static atomic<size_t> prio_moved_pqueue(0);
 static atomic<size_t> prio_add_pqueue(0);
 static atomic<size_t> prio_removed_pqueue(0);
+static atomic<size_t> prio_nodes_compared(0);
+static atomic<size_t> prio_nodes_changed(0);
+static execution_time queue_time;
 
 //#define DEBUG_PRIORITIES
+#define PROFILE_QUEUE
 
 namespace sched
 {
@@ -75,6 +80,9 @@ static_local_prio::new_work(const node *, work& new_work)
 	db::simple_tuple *stpl(node_new_work.get_tuple());
 	const vm::predicate *pred(stpl->get_predicate());
 	
+#ifdef PROFILE_QUEUE
+	queue_time.start();
+#endif
 	if(pred->is_global_priority()) {
 		const field_num field(state::PROGRAM->get_priority_argument());
 		vm::tuple *tpl(stpl->get_tuple());
@@ -130,6 +138,9 @@ static_local_prio::new_work(const node *, work& new_work)
    }
 
 	assert(to->in_queue());
+#ifdef PROFILE_QUEUE
+	queue_time.stop();
+#endif
 }
 
 void
@@ -238,6 +249,9 @@ static_local_prio::check_if_current_useless(void)
 #ifdef DEBUG_PRIORITIES
 		cout << "Cur min " << current_min << " node min " << node_min << endl;
 #endif
+
+		prio_nodes_compared++;
+		
 		if(current_min < node_min) {
 			// put back into priority queue
 			gprio_queue.insert(current_node, node_min);
@@ -246,6 +260,7 @@ static_local_prio::check_if_current_useless(void)
 #ifdef DEBUG_PRIORITIES
 			cout << "Picked another " << current_node->get_id() << endl;
 #endif
+			prio_nodes_changed++;
 		}
 		
 		assert(current_node->in_queue());
@@ -376,6 +391,11 @@ static_local_prio::end(void)
 	cout << "Moved nodes in priority queue count: " << prio_moved_pqueue << endl;
 	cout << "Removed from normal queue count: " << prio_removed_pqueue << endl;
 	cout << "Added to priority queue count: " << prio_add_pqueue << endl;
+	cout << "Changed nodes count: " << prio_nodes_changed << endl;
+	cout << "Compared nodes count: " << prio_nodes_compared << endl;
+#endif
+#ifdef PROFILE_QUEUE
+	cout << "Queue time: " << queue_time.milliseconds() << " ms" << endl;
 #endif
 }
 
