@@ -36,6 +36,10 @@ protected:
 #ifdef USE_SIMULATOR
 	queue::heap_queue<process::work> pending_facts;
 	vm::quantum_t current_quantum;
+	bool start_processing;
+	size_t left_processing;
+	size_t total_processing;
+	vm::quantum_t previous_quantum;
 	
 	void get_pending_facts(const vm::quantum_t);
 #endif

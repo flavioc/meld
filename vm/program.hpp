@@ -85,6 +85,10 @@ public:
    predicate* get_predicate(const predicate_id&) const;
    predicate* get_route_predicate(const size_t&) const;
    
+#ifdef USE_SIMULATOR
+	quantum_t get_predicate_quantum(const predicate_id& i) const { return pred_quantums[i]; }
+#endif
+
    byte_code get_bytecode(const predicate_id&) const;
 	inline byte_code get_const_bytecode(void) const { return const_code; }
 	inline field_type get_const_type(const const_id& id) const { return const_types[id]; }

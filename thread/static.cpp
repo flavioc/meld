@@ -16,6 +16,11 @@ using namespace vm;
 using namespace db;
 using namespace utils;
 
+#ifdef USE_SIMULATOR
+typedef boost::barrier* barrier_ptr;
+static barrier_ptr *barriers;
+#endif
+
 namespace sched
 {
 
@@ -27,6 +32,7 @@ static_local::get_pending_facts(const quantum_t quantum)
 		const quantum_t min((quantum_t)pending_facts.min_value());
 		
 		if(min <= quantum) {
+			cout << "New fact with time " << min << endl;
 			work w(pending_facts.pop());
 			new_agg(w);
 		}
@@ -238,9 +244,19 @@ static_local::set_next_node(void)
       assert(current_node != NULL);
       
       check_if_current_useless();
+
    }
    
    ins_active;
+
+#ifdef USE_SIMULATOR
+	if(start_processing) {
+		left_processing = current_node->size_work();
+		previous_quantum = current_quantum;
+		cout << "Thread " << id << " processing " << left_processing << " facts" << endl;
+		start_processing = false;
+	}
+#endif
    
    assert(current_node != NULL);
    
@@ -249,9 +265,39 @@ static_local::set_next_node(void)
 
 bool
 static_local::get_work(work& new_work)
-{  
+{ 
+#ifdef USE_SIMULATOR
+	if(!start_processing && left_processing == 0) {
+		// wait for simulator
+		cout << "Thread " << id << " work lasted for " << current_quantum - previous_quantum << " quanta" << endl;
+		cout << "Thread " << id << " waiting for simulator..." << endl;
+		state::socket->send_computation_lock(id, current_quantum - previous_quantum);
+		if(id == 0) {
+			while(true) {
+				const size_t thread(state::socket->receive_unlock());
+				if(thread == 0)
+					break;
+				barriers[id]->wait();
+			}
+		} else {
+			barriers[id]->wait();
+		}
+		
+		cout << "Thread " << id << " unlocked" << endl;
+		get_pending_facts(current_quantum);
+		// simulator has responded
+		start_processing = true;
+	}
+#endif
+
    if(!set_next_node())
       return false;
+
+#ifdef USE_SIMULATOR
+	if(!start_processing) {
+		left_processing--;
+	}
+#endif
       
    set_active_if_inactive();
    assert(current_node != NULL);
@@ -261,7 +307,11 @@ static_local::get_work(work& new_work)
    node_work unit(current_node->get_work());
    
    new_work.copy_from_node(current_node, unit);
-   
+
+#ifdef USE_SIMULATOR
+	current_quantum += state::PROGRAM->get_predicate_quantum(unit.get_tuple()->get_predicate_id());
+#endif
+
    assert(new_work.get_node() == current_node);
    
    assert_thread_pop_work();
@@ -316,7 +366,9 @@ static_local::static_local(const vm::process_id _id):
    base(_id),
    current_node(NULL)
 #ifdef USE_SIMULATOR
-	, current_quantum(0)
+	, current_quantum(0),
+	start_processing(true),
+	left_processing(0)
 #endif
 {
 }
@@ -332,6 +384,13 @@ static_local::start(const size_t num_threads)
    
    for(process_id i(0); i < num_threads; ++i)
       add_thread(new static_local(i));
+
+#ifdef USE_SIMULATOR
+	barriers = new barrier_ptr[num_threads];
+	for(size_t i(0); i < num_threads; ++i) {
+		barriers[i] = new boost::barrier(2);
+	}
+#endif
       
    return ALL_THREADS;
 }

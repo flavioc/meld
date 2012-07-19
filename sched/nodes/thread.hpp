@@ -37,6 +37,11 @@ public:
    {
       return queue.pop();
    }
+
+	inline size_t size_work(void)
+	{
+		return queue.size();
+	}
    
    virtual void assert_end(void) const
    {

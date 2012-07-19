@@ -340,12 +340,18 @@ machine::machine(const string& file, router& _rout, const size_t th,
    state::MACHINE = this;
 #ifdef USE_SIMULATOR
 	try {
-		state::socket = new sim::socket("127.0.0.1", "some");
+		state::socket = new sim::socket("192.168.100.42", "5000");
 	} catch(std::exception&) {
 		throw machine_error("could not connect to simulator");
 	}
 	
-	state::socket->send_start_simulation();
+	state::socket->send_start_simulation(num_threads);
+	for(size_t i(0); i < num_threads; ++i) {
+		for(size_t j(0); j < num_threads; ++j) {
+			if(i != j)
+				state::socket->send_link(i, j, 1);
+		}
+	}
 #endif
    
    mem::init(num_threads);
