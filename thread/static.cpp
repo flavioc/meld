@@ -19,6 +19,9 @@ using namespace utils;
 #ifdef USE_SIMULATOR
 typedef boost::barrier* barrier_ptr;
 static barrier_ptr *barriers;
+static boost::mutex print_mtx;
+using boost::mutex;
+static volatile bool all_done;
 #endif
 
 namespace sched
@@ -32,10 +35,14 @@ static_local::get_pending_facts(const quantum_t quantum)
 		const quantum_t min((quantum_t)pending_facts.min_value());
 		
 		if(min <= quantum) {
-			cout << "New fact with time " << min << endl;
+			{
+				mutex::scoped_lock l(print_mtx);
+				cout << "New fact with time " << min << endl;
+			}
 			work w(pending_facts.pop());
 			new_agg(w);
-		}
+		} else
+			return;
 	}
 }
 #endif
@@ -48,6 +55,9 @@ static_local::assert_end(void) const
    assert(all_threads_finished());
    assert_thread_end_iteration();
    assert_static_nodes_end(id);
+#ifdef USE_SIMULATOR
+	assert(pending_facts.empty());
+#endif
 }
 
 void
@@ -58,6 +68,9 @@ static_local::assert_end_iteration(void) const
    assert(all_threads_finished());
    assert_thread_end_iteration();
    assert_static_nodes_end_iteration(id);
+#ifdef USE_SIMULATOR
+	assert(pending_facts.empty());
+#endif
 }
 
 void
@@ -117,6 +130,8 @@ static_local::new_work_other(sched::base *, work& new_work)
 #ifdef USE_SIMULATOR
 	static_local *owner(dynamic_cast<static_local*>(tnode->get_owner()));
 	
+	cout << "Thread " << id << " sends message to " << owner->id << " at quantum " << current_quantum << endl;
+	state::socket->send_send_message(id, owner->id, new_work.get_tuple()->get_tuple()->get_storage_size(), current_quantum);
 	owner->pending_facts.insert(new_work, (int)current_quantum);
 	return;
 #endif
@@ -167,11 +182,33 @@ bool
 static_local::busy_wait(void)
 {
    ins_idle;
-   
+
+#ifdef USE_SIMULATOR
+	cout << "Thread " << id << " is now idle" << endl;
+	set_inactive();
+	state::socket->send_idle(id);
+	while(true) {
+		if(id == 0)
+			receive_from_simulator();
+		if(all_done) {
+			printf("DONE\n");
+			return false;
+		}
+		if(please_continue) {
+			please_continue = false;
+			get_pending_facts(current_quantum);
+			assert(start_processing);
+			break;
+		}
+		sleep(1);
+	}
+#else
+
    while(!has_work()) {
       BUSY_LOOP_MAKE_INACTIVE()
       BUSY_LOOP_CHECK_TERMINATION_THREADS()
    }
+#endif
    
    // since queue pushing and state setting are done in
    // different exclusive regions, this may be needed
@@ -253,7 +290,10 @@ static_local::set_next_node(void)
 	if(start_processing) {
 		left_processing = current_node->size_work();
 		previous_quantum = current_quantum;
-		cout << "Thread " << id << " processing " << left_processing << " facts" << endl;
+		{
+			mutex::scoped_lock l(print_mtx);
+			cout << "Thread " << id << " processing " << left_processing << " facts" << endl;
+		}
 		start_processing = false;
 	}
 #endif
@@ -263,27 +303,82 @@ static_local::set_next_node(void)
    return true;
 }
 
+#ifdef USE_SIMULATOR
+void
+static_local::receive_from_simulator(void)
+{
+	while(true) {
+		sim::message_buf buf(state::socket->receive());
+		
+		switch(SIM_ARG(buf, 0)) {
+			case SIM_MESSAGE_UNLOCK:
+				{
+					const size_t thread(SIM_ARG(buf, 1));
+					if(thread == 0) {
+						cout << "Thread 0 stopped" << endl;
+						return;
+					}
+					cout << "Unblocking thread " << thread << endl;
+					barriers[thread]->wait();
+				}
+				break;
+			case SIM_MESSAGE_TERMINATE:
+				{
+					all_done = true;
+					return;
+				}
+				break;
+			case SIM_MESSAGE_RESTART_THREAD:
+				{
+					const size_t thread(SIM_ARG(buf, 1));
+
+					if(thread == id) {
+						cout << "Thread 0 becomes alive" << endl;
+						please_continue = true;
+						return;
+					} else {
+						static_local *other((static_local*)ALL_THREADS[thread]);
+
+						cout << "Thread " << thread << " will now become alive" << endl;
+
+						other->previous_quantum = SIM_ARG(buf, 2);
+						other->current_quantum = other->previous_quantum;
+
+						other->please_continue = true;
+					}
+				}
+				break;
+			default: cout << "Don't know message type!" << endl;
+		}
+	}
+}
+#endif
+
 bool
 static_local::get_work(work& new_work)
 { 
 #ifdef USE_SIMULATOR
 	if(!start_processing && left_processing == 0) {
 		// wait for simulator
-		cout << "Thread " << id << " work lasted for " << current_quantum - previous_quantum << " quanta" << endl;
-		cout << "Thread " << id << " waiting for simulator..." << endl;
-		state::socket->send_computation_lock(id, current_quantum - previous_quantum);
+		{
+			mutex::scoped_lock l(print_mtx);
+			cout << "Thread " << id << " work lasted for " << current_quantum - previous_quantum << " quanta (total: " << current_quantum << ")" << endl;
+			state::socket->send_computation_lock(id, current_quantum - previous_quantum);
+			cout << "Thread " << id << " waiting for simulator..." << endl;
+		}
 		if(id == 0) {
-			while(true) {
-				const size_t thread(state::socket->receive_unlock());
-				if(thread == 0)
-					break;
-				barriers[id]->wait();
-			}
+			receive_from_simulator();
+			if(all_done)
+				return false;
 		} else {
 			barriers[id]->wait();
 		}
 		
-		cout << "Thread " << id << " unlocked" << endl;
+		{
+			mutex::scoped_lock l(print_mtx);
+			cout << "Thread " << id << " unlocked" << endl;
+		}
+		
 		get_pending_facts(current_quantum);
 		// simulator has responded
 		start_processing = true;
@@ -368,7 +463,8 @@ static_local::static_local(const vm::process_id _id):
 #ifdef USE_SIMULATOR
 	, current_quantum(0),
 	start_processing(true),
-	left_processing(0)
+	left_processing(0),
+	please_continue(false)
 #endif
 {
 }
@@ -390,6 +486,7 @@ static_local::start(const size_t num_threads)
 	for(size_t i(0); i < num_threads; ++i) {
 		barriers[i] = new boost::barrier(2);
 	}
+	all_done = false;
 #endif
       
    return ALL_THREADS;

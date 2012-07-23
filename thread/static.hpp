@@ -40,8 +40,10 @@ protected:
 	size_t left_processing;
 	size_t total_processing;
 	vm::quantum_t previous_quantum;
+	volatile bool please_continue;
 	
 	void get_pending_facts(const vm::quantum_t);
+	void receive_from_simulator(void);
 #endif
    
    virtual void assert_end(void) const;

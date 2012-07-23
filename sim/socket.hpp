@@ -14,6 +14,10 @@ namespace sim
 {
 	
 typedef utils::byte* message_buf;
+#define SIM_ARG(MSG, X) (((uint64_t*)MSG)[X])
+#define SIM_MESSAGE_UNLOCK 5
+#define SIM_MESSAGE_TERMINATE 9
+#define SIM_MESSAGE_RESTART_THREAD 10
 
 class socket
 {
@@ -35,7 +39,9 @@ public:
 	
 	void send_computation_lock(const size_t, const vm::quantum_t);
 	
-	void send_send_message(const size_t, const size_t, const size_t);
+	void send_send_message(const size_t, const size_t, const size_t, const vm::quantum_t);
+	
+	void send_idle(const size_t);
 	
 	uint64_t receive_unlock(void);
 	

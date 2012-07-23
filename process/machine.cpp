@@ -340,7 +340,7 @@ machine::machine(const string& file, router& _rout, const size_t th,
    state::MACHINE = this;
 #ifdef USE_SIMULATOR
 	try {
-		state::socket = new sim::socket("192.168.100.42", "5000");
+		state::socket = new sim::socket("127.0.0.1", "5000");
 	} catch(std::exception&) {
 		throw machine_error("could not connect to simulator");
 	}

@@ -99,9 +99,9 @@ socket::send_computation_lock(const size_t tid, const vm::quantum_t q)
 }
 
 void
-socket::send_send_message(const size_t t1, const size_t t2, const size_t sz)
+socket::send_send_message(const size_t t1, const size_t t2, const size_t sz, const vm::quantum_t time)
 {
-	SEND_MSG4(6, t1, t2, sz);
+	SEND_MSG4(6, t2, time, sz);
 }
 
 uint64_t
@@ -111,6 +111,12 @@ socket::receive_unlock(void)
 	uint64_t *v((uint64_t*)buf);
 	
 	return v[1];
+}
+
+void
+socket::send_idle(const size_t id)
+{
+	SEND_MSG2(8, id);
 }
 
 }
