@@ -140,8 +140,10 @@ process::do_work(work& w)
    if(count == 0)
       return;
    
-   if(stuple->must_be_deleted())
+   if(stuple->must_be_deleted()) {
+		delete tuple;
 	   return;
+	}
    
    if(w.locally_generated())
       node->pop_auto(stuple.get());
