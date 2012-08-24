@@ -15,9 +15,12 @@ namespace sched
 
 class serial_node: public in_queue_node
 {
-private:
-
+public:
+	
 	typedef queue::unsafe_bounded_pqueue<process::node_work>::type queue_type;
+	
+private:
+	
    queue_type queue;
 
 public:

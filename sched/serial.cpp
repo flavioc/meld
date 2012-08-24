@@ -108,4 +108,24 @@ serial_local::init(const size_t)
    }
 }
 
+simple_tuple_list
+serial_local::gather_active_tuples(db::node *node, const vm::predicate_id pred)
+{
+	simple_tuple_list ls;
+	serial_node *no((serial_node*)node);
+	typedef serial_node::queue_type fact_queue;
+	
+	for(fact_queue::const_iterator it(no->begin()), end(no->end()); it != end; ++it) {
+		process::node_work w(*it);
+		simple_tuple *stpl(w.get_tuple());
+		
+		if(!stpl->must_be_deleted() && stpl->get_predicate_id() == pred) {
+			ls.push_back(stpl);
+		}
+	}
+	
+	return ls;
+}
+
+
 }

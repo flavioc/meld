@@ -40,6 +40,8 @@ public:
       assert(false);
    }
    
+	virtual db::simple_tuple_list gather_active_tuples(db::node *, const vm::predicate_id);
+   
    virtual bool get_work(process::work&);
    
    virtual void init(const size_t);

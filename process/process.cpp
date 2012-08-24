@@ -135,10 +135,13 @@ process::do_work(work& w)
    ref_count count = stuple->get_count();
    node *node(w.get_node());
    
-   // cout << node->get_id() << " " << *tuple << endl;
+   cout << node->get_id() << " " << *tuple << endl;
    
    if(count == 0)
       return;
+   
+   if(stuple->must_be_deleted())
+	   return;
    
    if(w.locally_generated())
       node->pop_auto(stuple.get());

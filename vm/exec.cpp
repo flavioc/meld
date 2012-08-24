@@ -818,6 +818,44 @@ execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples, co
       }
    }
    
+   if(pred->is_linear_pred()) {
+   	db::simple_tuple_list active_tuples(state.proc->get_scheduler()->gather_active_tuples(state.node, pred->get_id()));
+		
+		for(db::simple_tuple_list::iterator it(active_tuples.begin()), end(active_tuples.end()); it != end; ++it) {
+			simple_tuple *stpl(*it);
+			tuple *tpl(stpl->get_tuple());
+			
+	      if(!do_matches(pc, tpl, state))
+				continue;
+			
+	      tuple *old_tuple = state.tuple;
+	      tuple_trie_leaf *old_tuple_leaf = state.tuple_leaf;
+	      return_type ret;
+			
+			state.tuple_leaf = NULL;
+			state.tuple = tpl;
+			state.is_linear = true;
+			stpl->will_delete(); // this will avoid future gathers of this tuple!
+			
+			// execute...
+			ret = execute(first, state);
+			
+			// restore
+			state.tuple_leaf = old_tuple_leaf;
+			state.tuple = old_tuple;
+			state.is_linear = old_is_linear;
+			
+			if(!(ret == RETURN_LINEAR || ret == RETURN_DERIVED)) // tuple not consumed
+				stpl->will_not_delete(); // oops, revert
+			
+			if(ret == RETURN_LINEAR)
+				return ret;
+			if(state.is_linear && ret == RETURN_DERIVED)
+				return RETURN_NO_RETURN;
+		}
+	}
+   
+   
    return RETURN_NO_RETURN;
 }
 
@@ -1049,7 +1087,10 @@ execute_remove(pcounter pc, state& state)
    const reg_num reg(remove_source(pc));
 
    tuple_trie_leaf *leaf(state.get_leaf(reg));
-   
+ 
+	if(leaf == NULL)
+		return;
+	
    assert(leaf != NULL);
 
 #ifdef USE_UI
