@@ -115,7 +115,11 @@ serial_ui_local::dump_this_node(const db::node::node_id id)
 	// fill queue
 	for(serial_node::queue_iterator it(snode->begin()), end(snode->end()); it != end; ++it) {
 		node_work w(*it);
-		UI_ADD_ELEM(q, w.get_tuple()->get_tuple()->dump_json());
+		Object tpl;
+		simple_tuple *stpl(w.get_tuple());
+		UI_ADD_FIELD(tpl, "tuple", stpl->get_tuple()->dump_json());
+		UI_ADD_FIELD(tpl, "to_delete", stpl->must_be_deleted());
+		UI_ADD_ELEM(q, tpl);
 	}
 	
 	// fill database

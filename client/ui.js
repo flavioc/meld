@@ -261,8 +261,9 @@ function handle_step_done(msg)
 	
 	new_ruler(node);
 	
-	if(node == selected_node && selected_node !== null)
-		request_node(node);
+	//if(node == selected_node && selected_node !== null)
+	if(selected_node !== null)
+		request_node(selected_node);
 	if(playing_program)
 		setTimeout(request_next, PLAY_INTERVAL);
 	else
@@ -310,8 +311,15 @@ function handle_node(msg)
 	
 	node_queue.append('<p class="node-queue-item">HEAD</p>');
 	
-	$.each(queue, function(i, tpl) {
-		node_queue.append(arrow_html + '<p class="node-queue-item">' + tuple_to_string(tpl) + '</p>');
+	$.each(queue, function(i, stpl) {
+		var tpl = stpl.tuple;
+		var html = arrow_html + '<p class="node-queue-item';
+		
+		if(stpl.to_delete) {
+			html = html + ' node-queue-item-delete';
+		}
+		html = html + '">' + tuple_to_string(tpl) + '</p>'
+		node_queue.append(html);
 	});
 	
 	node_queue.append(arrow_html);

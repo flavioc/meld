@@ -154,6 +154,10 @@ p.node-queue-item, p.arrow {
 	margin: 0;
 }
 
+p.node-queue-item-delete {
+	background: red;
+}
+
 .node-queue-item {
 	background: #DE6846;
 	border: 1px solid black;

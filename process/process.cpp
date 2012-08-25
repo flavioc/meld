@@ -141,13 +141,16 @@ process::do_work(work& w)
       return;
    
    if(stuple->must_be_deleted()) {
+#ifdef USE_UI
+		scheduler->new_linear_consumption(node, tuple);
+#endif
 		delete tuple;
 	   return;
 	}
    
    if(w.locally_generated())
       node->pop_auto(stuple.get());
-      
+
    if(count > 0) {
       if(tuple->is_action())
          do_tuple_action(node, tuple, count);
