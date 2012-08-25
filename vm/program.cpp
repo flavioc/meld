@@ -33,10 +33,20 @@ size_t SETCOLOR_PREDICATE_ID(2);
 size_t SETEDGELABEL_PREDICATE_ID(3);
 size_t WRITE_STRING_PREDICATE_ID(4);
 
+#define READ_CODE(TO, SIZE) do { \
+	fp.read((char *)(TO), SIZE);	\
+	position += (SIZE);				\
+} while(false)
+#define SEEK_CODE(SIZE) do { \
+	fp.seekg(SIZE, ios_base::cur);	\
+	position += (SIZE);	\
+} while(false)
+
 program::program(const string& filename):
    init(NULL), priority_pred(NULL)
 {
    state::PROGRAM = this;
+	size_t position(0);
    
    ifstream fp(filename.c_str(), ios::in | ios::binary);
    
@@ -46,7 +56,7 @@ program::program(const string& filename):
    // read number of predicates
    byte buf[PREDICATE_DESCRIPTOR_SIZE];
    
-   fp.read((char*)buf, sizeof(byte));
+	READ_CODE(buf, sizeof(byte));
    
    const size_t num_predicates = (size_t)buf[0];
    
@@ -57,51 +67,52 @@ program::program(const string& filename):
    
    // skip nodes
    int_val num_nodes;
-   fp.read((char*)&num_nodes, sizeof(int_val));
+	READ_CODE(&num_nodes, sizeof(int_val));
    
-   fp.seekg(num_nodes * database::node_size, ios_base::cur);
+	SEEK_CODE(num_nodes * database::node_size);
 
 	// read string constants
 	int_val num_strings;
-	fp.read((char*)&num_strings, sizeof(int_val));
+	READ_CODE(&num_strings, sizeof(int_val));
 	
 	default_strings.reserve(num_strings);
 	
 	for(int i(0); i < num_strings; ++i) {
 		int_val length;
 		
-		fp.read((char*)&length, sizeof(int_val));
+		READ_CODE(&length, sizeof(int_val));
 		
 		char str[length + 1];
-		fp.read(str, sizeof(char) * length);
+		READ_CODE(str, sizeof(char) * length);
 		str[length] = '\0';
 		default_strings.push_back(runtime::rstring::make_default_string(str));
 	}
 	
 	// read constants code
 	uint_val num_constants;
-	fp.read((char*)&num_constants, sizeof(uint_val));
+	READ_CODE(&num_constants, sizeof(uint_val));
 	
 	// read constant types
 	const_types.resize(num_constants);
 	
 	for(uint_val i(0); i < num_constants; ++i) {
 		byte b;
-		fp.read((char *)&b, sizeof(byte));
+		READ_CODE(&b, sizeof(byte));
 		const_types[i] = (field_type)b;
 	}
 	
 	// read constants code
-	fp.read((char*)&const_code_size, sizeof(code_size_t));
+	READ_CODE(&const_code_size, sizeof(code_size_t));
 	
 	const_code = new byte_code_el[const_code_size];
 	
-	fp.read((char *)const_code, const_code_size);
+	READ_CODE(const_code, const_code_size);
 
    // read predicate information
    for(size_t i(0); i < num_predicates; ++i) {
       code_size_t size;
-      fp.read((char*)buf, PREDICATE_DESCRIPTOR_SIZE);
+
+		READ_CODE(buf, PREDICATE_DESCRIPTOR_SIZE);
       
       predicates[i] = predicate::make_predicate_from_buf((unsigned char*)buf, &size, (predicate_id)i);
       code_size[i] = size;
@@ -109,7 +120,7 @@ program::program(const string& filename):
       MAX_STRAT_LEVEL = max(predicates[i]->get_strat_level() + 1, MAX_STRAT_LEVEL);
 		
 		const string name(predicates[i]->get_name());
-		
+
 		if(name == "setprio")
 			SETPRIO_PREDICATE_ID = i;
 		else if(name == "setcolor")
@@ -135,13 +146,13 @@ program::program(const string& filename):
 	// get global priority information
 	byte has_global;
 	
-	fp.read((char*)&has_global, sizeof(byte));
+	READ_CODE(&has_global, sizeof(byte));
 	
 	if(has_global) {
 		predicate_id pred;
 		
-		fp.read((char*)&pred, sizeof(predicate_id));
-		fp.read((char*)&priority_argument, sizeof(field_num));
+		READ_CODE(&pred, sizeof(predicate_id));
+		READ_CODE(&priority_argument, sizeof(field_num));
 		
 		priority_pred = predicates[pred];
 		priority_argument -= 2;
@@ -153,7 +164,7 @@ program::program(const string& filename):
       const size_t size = code_size[i];
       code[i] = new byte_code_el[size];
       
-      fp.read((char*)code[i], size);
+		READ_CODE(code[i], size);
    }
 }
 
