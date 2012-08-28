@@ -394,8 +394,14 @@ int_list* get_op_function<int_list*>(const instr_val& val, pcounter& m, state& s
       return tuple->get_int_list(field);
    } else if(val_is_nil(val))
       return int_list::null_list();
-   else
-      throw vm_exec_error("unable to get an int list");
+	else if(val_is_const(val)) {
+		const const_id cid(pcounter_const_id(m));
+		
+		pcounter_move_const_id(&m);
+		
+		return state.get_const_int_list(cid);
+	} else
+      throw vm_exec_error("unable to get an int list (get_op_function<int_list*>)");
 }
 
 template <>
