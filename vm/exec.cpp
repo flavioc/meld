@@ -1183,7 +1183,7 @@ execute(pcounter pc, state& state)
    {
 eval_loop:
 
-      //instr_print_simple(pc, 0, state.PROGRAM, cout);
+		//instr_print_simple(pc, 0, state.PROGRAM, cout);
       
       switch(fetch(pc)) {
          case RETURN_INSTR: return RETURN_OK;
@@ -1242,12 +1242,10 @@ eval_loop:
                state.node->match_predicate(pred_id, matches);
 #endif
 
-               if(!matches.empty()) {
-                  const return_type ret(execute_iter(pc + ITER_BASE, advance(pc), state, matches, pred));
+               const return_type ret(execute_iter(pc + ITER_BASE, advance(pc), state, matches, pred));
                   
-                  if(ret == RETURN_LINEAR)
-                     return ret;
-               }
+               if(ret == RETURN_LINEAR)
+                 return ret;
                
                pc += iter_jump(pc);
                goto eval_loop;

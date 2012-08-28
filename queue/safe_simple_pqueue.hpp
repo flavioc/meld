@@ -39,6 +39,64 @@ public:
 	
 	HEAP_DEFINE_EMPTY;
 	
+	class const_iterator
+	{
+	private:
+		size_t cur_pos;
+		mutable bool end;
+		const heap_vector *vec;
+		
+	public:
+		
+		inline T operator*(void)
+		{
+			return (*vec)[cur_pos].data;
+		}
+		
+		inline const_iterator&
+		operator=(const const_iterator& it)
+		{
+			end = it.end;
+			cur_pos = it.cur_pos;
+			return *this;
+		}
+		
+		inline void operator++(void)
+		{
+			++cur_pos;
+		}
+		
+		inline bool
+		operator==(const const_iterator& it) const
+		{
+			if(it.end)
+			{
+				if(end)
+					return true;
+				if(vec->size() == cur_pos)
+					end = true;
+				return end;
+			} else
+				return cur_pos == it.cur_pos;
+		}
+		
+		inline bool
+		operator!=(const const_iterator& it) const
+		{
+			return !operator==(it);
+		}
+		
+		explicit const_iterator(const heap_vector* v): cur_pos(0), end(false), vec(v) {}
+		
+		explicit const_iterator(void): end(true), vec(NULL)
+		{}
+	};
+	
+	inline const_iterator begin(void) const
+	{ return const_iterator(&heap); }
+	inline const_iterator end(void) const
+	{ return const_iterator(); }
+	
 	void insert(T el, const int prio)
 	{
 		heap_object obj;

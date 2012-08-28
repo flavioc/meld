@@ -9,6 +9,7 @@
 #include "queue/node.hpp"
 #include "queue/unsafe_linear_queue.hpp"
 #include "queue/macros.hpp"
+#include "queue/iterators.hpp"
 #include "utils/spinlock.hpp"
 
 namespace queue
@@ -93,6 +94,13 @@ public:
 	{
 		return head == reinterpret_cast<node*>(tail.get());
 	}
+	
+	QUEUE_DEFINE_LINEAR_CONST_ITERATOR_CLASS();
+	
+	inline const_iterator begin(void) const
+	{ return const_iterator((node*)head->next); }
+	inline const_iterator end(void) const
+	{ return const_iterator(NULL); }
    
    inline void push(T el)
    {

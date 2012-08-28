@@ -273,6 +273,24 @@ static_local::init(const size_t)
    threads_synchronize();
 }
 
+simple_tuple_list
+static_local::gather_active_tuples(db::node *node, const vm::predicate_id pred)
+{
+	simple_tuple_list ls;
+	thread_node *no((thread_node*)node);
+	typedef thread_node::queue_type fact_queue;
+	
+	for(fact_queue::const_iterator it(no->queue.begin()), end(no->queue.end()); it != end; ++it) {
+		process::node_work w(*it);
+		simple_tuple *stpl(w.get_tuple());
+		
+		if(!stpl->must_be_deleted() && stpl->get_predicate_id() == pred)
+			ls.push_back(stpl);
+	}
+	
+	return ls;
+}
+
 static_local*
 static_local::find_scheduler(const node *n)
 {

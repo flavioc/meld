@@ -3,6 +3,7 @@
 #define QUEUE_UNSAFE_LINEAR_QUEUE_HPP
 
 #include "queue/macros.hpp"
+#include "queue/iterators.hpp"
 #include "queue/node.hpp"
 
 namespace queue
@@ -29,45 +30,6 @@ namespace queue
 	assert(head == NULL);				\
 	assert(tail == NULL);				\
 	assert(empty())
-	
-#define QUEUE_DEFINE_LINEAR_CONST_ITERATOR()				\
-	class const_iterator											\
-	{																	\
-		private:														\
-			node *cur;												\
-		public:														\
-			inline T operator*(void)							\
-			{															\
-				assert(cur != NULL);								\
-				return cur->data;									\
-			}															\
-																		\
-			inline const_iterator&								\
-			operator=(const const_iterator& it)				\
-			{															\
-				cur = it.cur;										\
-				return *this;										\
-			}															\
-																		\
-			inline void operator++(void)						\
-			{															\
-				assert(cur != NULL);								\
-				cur = cur->next;									\
-			}															\
-																		\
-			inline bool												\
-			operator==(const const_iterator& it) const	\
-			{ return it.cur == cur; }							\
-																		\
-			explicit const_iterator(node *n): cur(n) {}	\
-																		\
-			explicit const_iterator(void): cur(NULL) {}	\
-	};																	\
-																		\
-	inline const_iterator begin(void) const				\
-	{ return const_iterator(head); }							\
-	inline const_iterator end(void) const					\
-	{ return const_iterator(NULL); }
 
 #define QUEUE_DEFINE_LINEAR_EMPTY()				\
    inline bool empty(void) const					\

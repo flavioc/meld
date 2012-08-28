@@ -17,6 +17,10 @@ using namespace vm;
 using namespace db;
 using namespace utils;
 
+//#define DEBUG_PRIORITIES
+// #define PROFILE_QUEUE
+
+#ifdef PROFILE_QUEUE
 static atomic<size_t> prio_count(0);
 static atomic<size_t> prio_immediate(0);
 static atomic<size_t> prio_marked(0);
@@ -26,9 +30,7 @@ static atomic<size_t> prio_removed_pqueue(0);
 static atomic<size_t> prio_nodes_compared(0);
 static atomic<size_t> prio_nodes_changed(0);
 static execution_time queue_time;
-
-//#define DEBUG_PRIORITIES
-#define PROFILE_QUEUE
+#endif
 
 namespace sched
 {
@@ -98,16 +100,22 @@ static_local_prio::new_work(const node *, work& new_work)
 				assert(min_before != thread_intrusive_node::prio_tuples_queue::INVALID_PRIORITY);
 				
 				if(min_now != min_before) {
+#ifdef PROFILE_QUEUE
 					prio_moved_pqueue++;
+#endif
 					gprio_queue.move_node(to, min_now);
 				}
 			} else {
 				if(node_queue::in_queue(to)) {
+#ifdef PROFILE_QUEUE
 					prio_removed_pqueue++;
+#endif
 					queue_nodes.remove(to);
 				}
 				assert(!node_queue::in_queue(to));
+#ifdef PROFILE_QUEUE
 				prio_add_pqueue++;
+#endif
 				gprio_queue.insert(to, to->get_min_value());
 			}
 			assert(global_prioqueue::in_queue(to));
@@ -250,7 +258,9 @@ static_local_prio::check_if_current_useless(void)
 		cout << "Cur min " << current_min << " node min " << node_min << endl;
 #endif
 
+#ifdef PROFILE_QUEUE
 		prio_nodes_compared++;
+#endif
 		
 		if(current_min < node_min) {
 			// put back into priority queue
@@ -260,7 +270,9 @@ static_local_prio::check_if_current_useless(void)
 #ifdef DEBUG_PRIORITIES
 			cout << "Picked another " << current_node->get_id() << endl;
 #endif
+#ifdef PROFILE_QUEUE
 			prio_nodes_changed++;
+#endif
 		}
 		
 		assert(current_node->in_queue());
@@ -388,11 +400,13 @@ static_local_prio::end(void)
 	cout << "prio_marked: " << prio_marked << endl;
 	cout << "prio_count: " << prio_count << endl;
 #endif
+#ifdef PROFILE_QUEUE
 	cout << "Moved nodes in priority queue count: " << prio_moved_pqueue << endl;
 	cout << "Removed from normal queue count: " << prio_removed_pqueue << endl;
 	cout << "Added to priority queue count: " << prio_add_pqueue << endl;
 	cout << "Changed nodes count: " << prio_nodes_changed << endl;
 	cout << "Compared nodes count: " << prio_nodes_compared << endl;
+#endif
 #endif
 #ifdef PROFILE_QUEUE
 	cout << "Queue time: " << queue_time.milliseconds() << " ms" << endl;
@@ -410,7 +424,9 @@ static_local_prio::set_node_priority(node *n, const int)
 	thread_intrusive_node *tn((thread_intrusive_node*)n);
 	
 	if(tn->in_queue()) {
+#ifdef PROFILE_QUEUE
 		prio_immediate++;
+#endif
 		if(!tn->is_in_prioqueue()) {
 			queue_nodes.remove(tn);
 			prio_queue.push_tail(tn);
@@ -418,12 +434,16 @@ static_local_prio::set_node_priority(node *n, const int)
 		}
 		assert(tn->is_in_prioqueue());
 	} else {
+#ifdef PROFILE_QUEUE
 		prio_marked++;
+#endif
 		tn->mark_priority();
 	}
 #endif
 	
+#ifdef PROFILE_QUEUE
 	prio_count++;
+#endif
 }
 
 void
@@ -451,6 +471,40 @@ static_local_prio*
 static_local_prio::find_scheduler(const node *n)
 {
    return (static_local_prio*)ALL_THREADS[remote::self->find_proc_owner(n->get_id())];
+}
+
+simple_tuple_list
+static_local_prio::gather_active_tuples(db::node *node, const vm::predicate_id pred)
+{
+	simple_tuple_list ls;
+	thread_intrusive_node *no((thread_intrusive_node*)node);
+	predicate *p(state::PROGRAM->get_predicate(pred));
+	
+	typedef thread_node::queue_type fact_queue;
+	
+	if(p->is_global_priority()) {
+		typedef thread_intrusive_node::prio_tuples_queue prio_queue;
+		for(prio_queue::const_iterator it(no->prioritized_tuples.begin()),
+				end(no->prioritized_tuples.end());
+			it != end; ++it)
+		{
+			process::node_work w(*it);
+			simple_tuple *stpl(w.get_tuple());
+		
+			if(!stpl->must_be_deleted())
+				ls.push_back(stpl);
+		}
+	} else {
+		for(fact_queue::const_iterator it(no->queue.begin()), end(no->queue.end()); it != end; ++it) {
+			process::node_work w(*it);
+			simple_tuple *stpl(w.get_tuple());
+		
+			if(!stpl->must_be_deleted() && stpl->get_predicate_id() == pred)
+				ls.push_back(stpl);
+		}
+	}
+	
+	return ls;
 }
 
 void

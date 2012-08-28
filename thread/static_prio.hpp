@@ -87,6 +87,7 @@ public:
    virtual void set_node_priority(db::node *, const int);
    
    static_local_prio *find_scheduler(const db::node *);
+	virtual db::simple_tuple_list gather_active_tuples(db::node *, const vm::predicate_id);
    
    static db::node *create_node(const db::node::node_id id, const db::node::node_id trans)
    {

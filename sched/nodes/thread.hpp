@@ -19,7 +19,9 @@ public:
 	   
    sched::base *owner;
 	utils::spinlock spin;
-	queue::safe_bounded_pqueue<process::node_work>::type queue;
+	
+	typedef queue::safe_bounded_pqueue<process::node_work>::type queue_type;
+	queue_type queue;
    
    inline void set_owner(sched::base *_owner) { owner = _owner; }
    

@@ -61,6 +61,7 @@ public:
 
    static strat_level MAX_STRAT_LEVEL;
 
+	predicate *get_priority_predicate(void) const { return priority_pred; }
 	field_num get_priority_argument(void) const { return priority_argument; }
 
    predicate *get_predicate_by_name(const std::string&) const;

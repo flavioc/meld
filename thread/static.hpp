@@ -58,7 +58,8 @@ public:
    virtual bool terminate_iteration(void);
    
    static_local *find_scheduler(const db::node *);
-   
+   virtual db::simple_tuple_list gather_active_tuples(db::node *, const vm::predicate_id);
+	
    static db::node *create_node(const db::node::node_id id, const db::node::node_id trans)
    {
       return new thread_node(id, trans);
