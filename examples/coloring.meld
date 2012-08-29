@@ -1,6 +1,9 @@
 
-type route edge(node, node).
+include #coloring/random50.meld
+
 type linear forcecolorchange(node).
+type linear neighbornotice(node, node).
+type linear notcolorable(node).
 type linear set(node, int).
 type linear myset(node, int, int, int).
 type linear changedcolor(node).
@@ -32,11 +35,6 @@ const secondphase = 1.
 const allcolors = [red, blue, green].
 const maxiterations = 1000.
 
-!edge(@1, @2). !edge(@2, @1).
-!edge(@2, @3). !edge(@3, @2).
-!edge(@2, @4). !edge(@4, @2).
-!edge(@4, @5). !edge(@5, @4).
-!edge(@5, @3). !edge(@3, @5).
 color(A, nocolor, 0).
 forcecolorchange(A). /* this kickstarts color selection */
 
@@ -59,9 +57,11 @@ color(A, nocolor, _)
 waitfornew(A, Cur, firstphase), color(A, nocolor, _)
 	-o myset(A, Cur, nocolor, secondphase).
 
-/* looks like we failed, force color change... */
-waitfornew(A, Cur, secondphase)
-	-o forcecolorchange(A).
+/* looks like we failed, notify neighbor... */
+waitfornew(A, Cur, secondphase),
+$edgecolor(A, B, C, EIt),
+!edge(A, B)
+	-o set(B, EIt), neighbornotice(B, A).
 
 neighborchangedcolor(A, B, New, I),
 edgecolor(A, B, Old, _)
@@ -69,6 +69,8 @@ edgecolor(A, B, Old, _)
 
 myset(A, Cur, Mine, Phase), Cur < maxiterations -o
    [collect => X | B, I | !edge(A, B), $edgecolor(A, B, X, I), X <> Mine | usablecolors(A, intlistdiff(intlistdiff(allcolors, X), [Mine]), Cur, Phase)].
+myset(A, Cur, _, _), Cur >= maxiterations -o
+	notcolorable(A).
 
 set(A, Cur), color(A, Mine, Cur) -o
    [collect => X | B, I | !edge(A, B), $edgecolor(A, B, X, I), X <> Mine | usablecolors(A, intlistdiff(intlistdiff(allcolors, X), [Mine]), Cur, firstphase)].
@@ -87,3 +89,7 @@ B > A,
 C <> nocolor
    -o myset(A, MyIt, C, firstphase), set(B, EIt).
 
+!edge(A, B),
+neighbornotice(A, B),
+$edgecolor(A, B, nocolor, EIt)
+	-o set(B, EIt).
