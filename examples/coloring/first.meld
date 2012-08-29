@@ -1,0 +1,7 @@
+type route edge(node, node).
+
+!edge(@1, @2). !edge(@2, @1).
+!edge(@2, @3). !edge(@3, @2).
+!edge(@2, @4). !edge(@4, @2).
+!edge(@4, @5). !edge(@5, @4).
+!edge(@5, @3). !edge(@3, @5).

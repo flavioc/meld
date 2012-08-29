@@ -1,0 +1,5 @@
+
+type route edge(node, node).
+type linear something(node).
+
+something(@1).

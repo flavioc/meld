@@ -1,0 +1,4 @@
+
+type route edge(node, node).
+
+!edge(@1, @2). !edge(@2, @1).
