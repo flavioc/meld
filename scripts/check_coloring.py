@@ -49,6 +49,9 @@ for node, data in db.iteritems():
 			checked = True
 			args = d['args']
 			color = int(args[0])
+			if color == 0:
+				print "Invalid color"
+				sys.exit(1)
 			try:
 				older = colors[node]
 				print "Color already set for node", node
