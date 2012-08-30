@@ -284,6 +284,9 @@ program::dump_json(void) const
 				case FIELD_STRING:
 					UI_ADD_ELEM(field_types, "string");
 					break;
+				case FIELD_LIST_INT:
+					UI_ADD_ELEM(field_types, "list int");
+					break;
 				default:
 					throw type_error("Unrecognized field type " + field_type_string(pred->get_field_type(j)) + " (program::dump_json)");
 			}

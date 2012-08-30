@@ -43,7 +43,6 @@ function do_add_event_to_list(list_name, txt, cls)
 	return $(list_name).prepend(content).children(':first');
 }
 
-
 function add_event_to_list(list_name, txt, cls)
 {
 	return do_add_event_to_list(list_name, txt, cls);
@@ -441,6 +440,20 @@ function node_dblclick(node)
 	set_node(node.id);
 }
 
+function list_to_string(ls)
+{
+	var ret = '[';
+
+	$.each(ls, function (i, x) {
+			if(ret == '[')
+				ret = ret + x;
+			else
+				ret = ret + ', ' + x;
+		});
+
+	return ret + ']';
+}
+
 function field_to_string(field_data, type)
 {
 	if(type == 'int')
@@ -451,6 +464,8 @@ function field_to_string(field_data, type)
 		return '@' + get_translated_id(field_data);
 	else if(type == 'string')
 		return '"' + field_data + '"';
+	else if(type == 'list int')
+		return list_to_string(field_data);
 	else
 		return 'PROBLEM';
 }

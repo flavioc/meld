@@ -198,8 +198,18 @@ tuple::dump_json(void) const
 			case FIELD_STRING:
 				UI_ADD_ELEM(fields, get_string(i));
 				break;
+			case FIELD_LIST_INT: {
+					Array vec;
+					list<int_val> l(int_list::stl_list(get_int_list(i)));
+
+					for(list<int_val>::const_iterator it(l.begin()), end(l.end()); it != end; ++it)
+						UI_ADD_ELEM(vec, *it);
+
+					UI_ADD_ELEM(fields, vec);
+				}
+				break;
 			default:
-				throw type_error("Unrecognized field type " + to_string(i) + " (dump_json)");
+				throw type_error("Unrecognized field type " + to_string(i) + " (tuple::dump_json)");
 		}
 	}
 

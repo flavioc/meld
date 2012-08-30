@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 #include <stack>
+#include <list>
 
 #include <boost/mpi.hpp>
 
@@ -225,7 +226,27 @@ public:
       
       return get(ls->get_tail(), pos - 1, def);
    }
-   
+
+	inline void stl_list(std::list<T>& ls)
+	{
+		ls.push_back(get_head());
+
+		if(!is_null(get_tail()))
+			get_tail()->stl_list(ls);
+	}
+
+	static inline
+	std::list<T> stl_list(const list_ptr ls)
+	{
+		std::list<T> ret;
+
+		if(is_null(ls))
+			return ret;
+
+		ls->stl_list(ret);
+		return ret;
+	}
+
    explicit cons(list_ptr _tail, const T _head):
       head(_head), refs(0)
    {
