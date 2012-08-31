@@ -819,9 +819,8 @@ execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples, co
       
       if(ret == RETURN_LINEAR)
          return ret;
-      if(ret == RETURN_DERIVED && state.is_linear) {
-         return RETURN_NO_RETURN;
-      }
+      if(ret == RETURN_DERIVED && state.is_linear)
+         return RETURN_DERIVED;
    }
    
    if(pred->is_linear_pred()) {
@@ -842,7 +841,7 @@ execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples, co
 			state.tuple = tpl;
 			state.is_linear = true;
 			stpl->will_delete(); // this will avoid future gathers of this tuple!
-			
+
 			// execute...
 			ret = execute(first, state);
 			
@@ -851,13 +850,14 @@ execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples, co
 			state.tuple = old_tuple;
 			state.is_linear = old_is_linear;
 			
-			if(!(ret == RETURN_LINEAR || ret == RETURN_DERIVED)) // tuple not consumed
+			if(!(ret == RETURN_LINEAR || ret == RETURN_DERIVED)) { // tuple not consumed
 				stpl->will_not_delete(); // oops, revert
+			}
 			
 			if(ret == RETURN_LINEAR)
 				return ret;
 			if(state.is_linear && ret == RETURN_DERIVED)
-				return RETURN_NO_RETURN;
+				return RETURN_DERIVED;
 		}
 	}
    
@@ -1252,6 +1252,8 @@ eval_loop:
                   
                if(ret == RETURN_LINEAR)
                  return ret;
+					if(state.is_linear && ret == RETURN_DERIVED)
+						return ret;
                
                pc += iter_jump(pc);
                goto eval_loop;
