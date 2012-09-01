@@ -9,6 +9,7 @@
 #include "vm/program.hpp"
 #include "vm/instr.hpp"
 #include "db/trie.hpp"
+#include "utils/random.hpp"
 
 // forward declaration
 namespace process {
@@ -77,6 +78,7 @@ public:
    process::process *proc;
    bool is_linear;
    list_linear used_linear_tuples;
+	utils::randgen randgen;
    
    static program *PROGRAM;
    static db::database *DATABASE;

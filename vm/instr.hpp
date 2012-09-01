@@ -212,6 +212,8 @@ inline bool iter_match_none(iter_match m) { return (*(m + 1) & 0xc0) == 0xc0; }
 inline instr_val iter_match_val(iter_match m) { return val_get((pcounter)m, 1); }
 inline field_num iter_match_field(iter_match m) { return (field_num)*m; }
 
+inline bool iter_options_random(utils::byte b) { return b & 0x00000001; }
+
 /* ALLOC pred to reg */
 
 inline predicate_id alloc_predicate(pcounter pc) { return predicate_get(pc, 1); }

@@ -3,6 +3,8 @@
 #define UTILS_RANDOM_HPP
 
 #include <boost/random.hpp>
+#include <vector>
+#include <algorithm>
 
 namespace utils
 {
@@ -22,6 +24,13 @@ public:
    
    explicit randgen(void) {}
 };
+
+template <class T>
+void
+shuffle_vector(T& vec, randgen& gen)
+{
+	std::random_shuffle(vec.begin(), vec.end(), gen);
+}
    
 }
 #endif

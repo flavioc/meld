@@ -762,11 +762,16 @@ build_match_object(match& m, pcounter pc, state& state, const predicate *pred)
 }
 
 static inline return_type
-execute_iter(pcounter pc, pcounter first, state& state, tuple_vector& tuples, const predicate *pred)
+execute_iter(pcounter pc, const utils::byte options,
+		pcounter first, state& state, tuple_vector& tuples, const predicate *pred)
 {
 	(void)pred;
 	
    const bool old_is_linear = state.is_linear;
+
+	if(iter_options_random(options)) {
+		utils::shuffle_vector(tuples, state.randgen);
+	}
 
    for(tuple_vector::iterator it(tuples.begin());
       it != tuples.end();
@@ -1248,7 +1253,8 @@ eval_loop:
                state.node->match_predicate(pred_id, matches);
 #endif
 
-               const return_type ret(execute_iter(pc + ITER_BASE, advance(pc), state, matches, pred));
+               const return_type ret(execute_iter(pc + ITER_BASE, iter_options(pc),
+								advance(pc), state, matches, pred));
                   
                if(ret == RETURN_LINEAR)
                  return ret;
