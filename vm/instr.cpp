@@ -231,8 +231,12 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
    	case ITER_INSTR: {
             pcounter m = pc + ITER_BASE;
             
-            cout << "ITERATE OVER " << prog->get_predicate(iter_predicate(pc))->get_name()
-                 << " MATCHING";
+            cout << "ITERATE OVER " << prog->get_predicate(iter_predicate(pc))->get_name();
+
+				if(iter_options_random(iter_options(pc)))
+					cout << " (r)";
+
+				cout << " MATCHING";
             
             if(!iter_match_none(m)) {
                while (true) {
