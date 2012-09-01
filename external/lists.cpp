@@ -90,5 +90,28 @@ intlistnth(EXTERNAL_ARG(ls), EXTERNAL_ARG(v))
    assert(false);
 }
 
+argument
+nodelistremove(EXTERNAL_ARG(ls), EXTERNAL_ARG(n))
+{
+	DECLARE_ARG(ls, node_list*);
+	DECLARE_ARG(n, node_val);
+
+	node_list *p((node_list*)ls);
+
+   stack_node_list s;
+
+   while(!node_list::is_null(p)) {
+
+		if(p->get_head() != n)
+			s.push(p->get_head());
+
+      p = p->get_tail();
+   }
+
+   node_list *ptr(from_stack_to_list<stack_node_list, node_list>(s));
+      
+   RETURN_ARG(ptr);
+}
+
 }
 }
