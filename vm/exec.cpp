@@ -1082,6 +1082,11 @@ read_call_arg(argument& arg, const field_type type, pcounter& m, state& state)
          TO_ARG(val, arg);
       }
       break;
+		case FIELD_LIST_NODE: {
+			const node_list *val(get_op_function<node_list*>(val_type, m, state));
+			TO_ARG(val, arg);
+		}
+		break;
 		case FIELD_STRING: {
 			const rstring::ptr val(get_op_function<rstring::ptr>(val_type, m, state));
 			TO_ARG(val, arg);
@@ -1182,8 +1187,15 @@ execute_call(pcounter pc, state& state)
             state.add_int_list(l);
          break;
       }
+		case FIELD_LIST_NODE: {
+			node_list *l(FROM_ARG(ret, node_list*));
+			state.set_node_list(reg, l);
+			if(!node_list::is_null(l))
+				state.add_node_list(l);
+			break;
+		}
       default:
-         throw vm_exec_error("invalid return type in call");
+         throw vm_exec_error("invalid return type in call (execute_call)");
    }
 }
 
@@ -1194,7 +1206,7 @@ execute(pcounter pc, state& state)
    {
 eval_loop:
 
-		//instr_print_simple(pc, 0, state.PROGRAM, cout);
+		// instr_print_simple(pc, 0, state.PROGRAM, cout);
       
       switch(fetch(pc)) {
          case RETURN_INSTR: return RETURN_OK;
