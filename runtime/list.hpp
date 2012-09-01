@@ -268,6 +268,7 @@ typedef cons<vm::float_val> float_list;
 typedef cons<vm::node_val> node_list;
 typedef std::stack<vm::float_val, std::deque<vm::float_val, mem::allocator<vm::float_val> > > stack_float_list;
 typedef std::stack<vm::int_val, std::deque<vm::int_val, mem::allocator<vm::int_val> > > stack_int_list;
+typedef std::stack<vm::node_val, std::deque<vm::node_val, mem::allocator<vm::node_val> > > stack_node_list;
 
 template <class TStack, class TList>
 static inline TList*
