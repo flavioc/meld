@@ -9,7 +9,6 @@
 #include "sched/nodes/thread.hpp"
 #include "queue/safe_linear_queue.hpp"
 #include "sched/thread/threaded.hpp"
-#include "sched/thread/queue_buffer.hpp"
 
 namespace sched
 {

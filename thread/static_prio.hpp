@@ -9,7 +9,6 @@
 #include "sched/nodes/thread_intrusive.hpp"
 #include "queue/safe_double_queue.hpp"
 #include "sched/thread/threaded.hpp"
-#include "sched/thread/queue_buffer.hpp"
 #include "queue/safe_complex_pqueue.hpp"
 
 //#define PRIO_NORMAL

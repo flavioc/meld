@@ -96,7 +96,6 @@ OBJS = utils/utils.o \
 			 thread/mpi_dynamic.o \
 			 thread/mpi_single.o \
 			 sched/thread/threaded.o \
-			 sched/thread/queue_buffer.o \
 			 sched/thread/assert.o \
 			 sched/mpi/tokenizer.o \
 			 sched/mpi/handler.o \
