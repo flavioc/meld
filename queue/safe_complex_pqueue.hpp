@@ -25,19 +25,8 @@ private:
 	HEAP_DEFINE_HEAPIFYDOWN;
 	
 	HEAP_DEFINE_DATA;
-
-public:
 	
-	HEAP_DEFINE_EMPTY;
-	
-	HEAP_DEFINE_INVALID_PRIORITY;
-	
-	static inline bool in_queue(heap_object node)
-	{
-   	return __INTRUSIVE_IN_PRIORITY_QUEUE(node);
-	}
-	
-	void insert(heap_object node, const int prio)
+	void do_insert(heap_object node, const int prio)
 	{
 		__INTRUSIVE_PRIORITY(node) = prio;
 		__INTRUSIVE_IN_PRIORITY_QUEUE(node) = true;
@@ -47,15 +36,7 @@ public:
 		heapifyup(heap.size() - 1);
 	}
 	
-	int min_value(void) const
-	{
-		if(empty())
-			return INVALID_PRIORITY;
-			
-		return __INTRUSIVE_PRIORITY(heap.front());
-	}
-	
-	heap_object pop(void)
+	heap_object do_pop(void)
 	{
 		if(empty())
 			return NULL;
@@ -72,7 +53,7 @@ public:
 		return min;
 	}
 	
-	void remove(heap_object obj)
+	void do_remove(heap_object obj)
 	{
 		size_t index(__INTRUSIVE_POS(obj));
 		heap_object tmp(heap.back());
@@ -86,6 +67,40 @@ public:
 			
 			heapifydown(index);
 		}
+	}
+
+public:
+	
+	HEAP_DEFINE_EMPTY;
+	
+	HEAP_DEFINE_INVALID_PRIORITY;
+	
+	static inline bool in_queue(heap_object node)
+	{
+   	return __INTRUSIVE_IN_PRIORITY_QUEUE(node);
+	}
+	
+	void insert(heap_object node, const int prio)
+	{
+		do_insert(node, prio);
+	}
+	
+	int min_value(void) const
+	{
+		if(empty())
+			return INVALID_PRIORITY;
+			
+		return __INTRUSIVE_PRIORITY(heap.front());
+	}
+	
+	heap_object pop(void)
+	{
+		return do_pop();
+	}
+	
+	void remove(heap_object obj)
+	{
+		do_remove(obj);
 	}
 	
 	void move_node(heap_object node, const int new_prio)
