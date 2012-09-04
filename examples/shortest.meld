@@ -1,9 +1,8 @@
 
-include #shortest-data.meld
+include #buggy-shortest.meld
 
 type linear path(node, int, int).
 type linear dest(node).
-type linear spreadcount(node, int).
 
 prio type path 2.
 
@@ -16,14 +15,16 @@ const notused = 0.
 /* linear: !edge(@1, @2, 1). !edge(@2, @3, 1). !edge(@3, @4, 1). */
 
 dest(finalnode).
-spreadcount(A, 0).
 
-dest(A), spreadcount(A, 0) -o
-   {B, W | !edge(B, A, W) | path(B, W, notused)}, spreadcount(A, 1).
+dest(A) -o
+   {B, W | !edge(B, A, W) | path(B, W, notused)}.
 
-path(A, B1, X), path(A, B2, Y), B1 < B2
+path(A, B, used), path(A, B, notused)
+	-o path(A, B, used).
+
+path(A, B1, X), path(A, B2, Y), B1 <= B2
    -o path(A, B1, X).
 
-path(A, D, notused), A <> startnode, spreadcount(A, N)
-   -o {B, W | !edge(B, A, W) | path(B, D + W, 0)}, path(A, D, used), spreadcount(A, N + 1).
+path(A, D, notused), A <> startnode
+   -o {B, W | !edge(B, A, W) | path(B, D + W, notused)}, path(A, D, used).
 
