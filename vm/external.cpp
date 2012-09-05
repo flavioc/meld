@@ -1,6 +1,7 @@
 
 #include <tr1/unordered_map>
 #include <assert.h>
+#include <stdlib.h>
 
 #include "vm/external.hpp"
 #include "external/math.hpp"
