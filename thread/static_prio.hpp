@@ -40,6 +40,8 @@ protected:
 	typedef queue::intrusive_safe_complex_pqueue<thread_intrusive_node> global_prioqueue;
 	global_prioqueue gprio_queue;
 	
+	queue::push_safe_linear_queue<process::work> prio_tuples;
+	
    virtual void assert_end(void) const;
    virtual void assert_end_iteration(void) const;
    bool set_next_node(void);
@@ -48,6 +50,8 @@ protected:
    void make_inactive(void);
    virtual void generate_aggs(void);
    virtual bool busy_wait(void);
+	void add_prio_tuple(process::node_work, thread_intrusive_node *, db::simple_tuple *);
+	void retrieve_prio_tuples(void);
    
    inline void add_to_queue(thread_intrusive_node *node)
    {
@@ -67,7 +71,7 @@ protected:
 #endif
    }
    
-   inline bool has_work(void) const { return !queue_nodes.empty() || !prio_queue.empty() || !gprio_queue.empty(); }
+   inline bool has_work(void) const { return !queue_nodes.empty() || !prio_queue.empty() || !gprio_queue.empty() || !prio_tuples.empty(); }
 
 public:
    
