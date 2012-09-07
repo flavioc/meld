@@ -1,5 +1,6 @@
 #!/usr/bin/python
 #
+# Generates a random graph for use with the random shortest path program.
 
 import sys
 import random
