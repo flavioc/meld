@@ -1,5 +1,5 @@
 
-include #heat_linear_500.meld
+include #heat-grid-100-2.meld
 
 type inbound(node, int).
 type linear countinbound(node).
@@ -24,7 +24,7 @@ prio edge < neighborchanged.
 
 const startingheat = 1.0.
 const epsilon = 0.01.
-const delta = 1.0.
+const delta = 0.7.
 
 fun fabs(float X) : float = if X >= 0.0 then 1 * X else -1.0 * X end.
 
@@ -46,14 +46,14 @@ acc(A, Diff),
 
 heatchanged(A, O, X),
 fabs(X) > delta,
-$heat(A, V),
+heat(A, V),
 !inbound(A, T)
-   -o {B, W | !edge(A, B, W) | setprio(B, 2), neighborchanged(B, A, V / float(T), O / float(T))}.
+   -o heat(A, V), {B, W | !edge(A, B, W) | setprio(B, 2), neighborchanged(B, A, V / float(T), O / float(T))}.
 
 heatchanged(A, O, X),
-$heat(A, V),
+heat(A, V),
 !inbound(A, T)
-   -o {B, W | !edge(A, B, W) | neighborchanged(B, A, V / float(T), O / float(T))}.
+   -o heat(A, V), {B, W | !edge(A, B, W) | neighborchanged(B, A, V / float(T), O / float(T))}.
 
 delta(A, Plus, Minus),
 heat(A, V),
