@@ -4,6 +4,7 @@
 #include <vector>
 #include <exception>
 #include <readline/readline.h>
+#include <readline/history.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/thread.hpp>
 
