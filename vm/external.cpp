@@ -135,6 +135,7 @@ init_external_functions(void)
 	register_external_function(EXTERNAL1(str2float, FIELD_FLOAT, FIELD_STRING));
 	register_external_function(EXTERNAL1(str2int, FIELD_INT, FIELD_STRING));
 	register_external_function(EXTERNAL2(nodelistremove, FIELD_LIST_NODE, FIELD_LIST_NODE, FIELD_NODE));
+	register_external_function(EXTERNAL1(wastetime, FIELD_INT, FIELD_INT));
 
    atexit(cleanup_externals);
    

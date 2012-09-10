@@ -14,6 +14,7 @@ namespace external
 argument randint(const argument);
 argument str2float(const argument);
 argument str2int(const argument);
+argument wastetime(const argument);
    
 }
 }

@@ -49,5 +49,15 @@ str2int(EXTERNAL_ARG(x))
 	RETURN_ARG(i);
 }
 
+argument
+wastetime(EXTERNAL_ARG(x))
+{
+	DECLARE_ARG(x, int_val);
+
+	usleep(x * 1000);
+
+	RETURN_ARG(x);
+}
+
 }
 }
