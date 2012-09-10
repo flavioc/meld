@@ -63,7 +63,8 @@ public:
 
 	predicate *get_priority_predicate(void) const { return priority_pred; }
 	field_num get_priority_argument(void) const { return priority_argument; }
-
+	bool has_global_priority(void) const { return priority_pred != NULL; }
+	
    predicate *get_predicate_by_name(const std::string&) const;
    
    predicate *get_init_predicate(void) const;
