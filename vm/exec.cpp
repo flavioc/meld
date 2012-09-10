@@ -80,8 +80,12 @@ move_to_reg(const pcounter& m, state& state,
    else if(val_is_reg(from))
       state.copy_reg(val_reg(from), reg);
    else if(val_is_tuple(from)) {
-      state.set_leaf(reg, state.tuple_leaf);
-      state.set_tuple(reg, state.tuple);
+		if(state.tuple_leaf != NULL)
+      	state.set_leaf(reg, state.tuple_leaf);
+		else if(state.tuple_queue != NULL)
+			state.set_tuple_queue(reg, state.tuple_queue);
+      assert(!(state.tuple_leaf != NULL && state.tuple_queue != NULL));
+		state.set_tuple(reg, state.tuple);
    } else {
       throw vm_exec_error("invalid move to reg");
    }
@@ -800,11 +804,13 @@ execute_iter(pcounter pc, const utils::byte options,
 
       tuple *old_tuple = state.tuple;
       tuple_trie_leaf *old_tuple_leaf = state.tuple_leaf;
+		simple_tuple *old_tuple_queue = state.tuple_queue;
       return_type ret;
 
       // set new tuple
       state.tuple = match_tuple;
       state.tuple_leaf = tuple_leaf;
+		state.tuple_queue = NULL;
       
       state.is_linear = this_is_linear || state.is_linear;
 
@@ -820,6 +826,7 @@ execute_iter(pcounter pc, const utils::byte options,
       // restore old tuple
       state.tuple = old_tuple;
       state.tuple_leaf = old_tuple_leaf;
+		state.tuple_queue = old_tuple_queue;
       state.is_linear = old_is_linear;
       
       if(this_is_linear) {
@@ -844,21 +851,26 @@ execute_iter(pcounter pc, const utils::byte options,
 			
 	      tuple *old_tuple = state.tuple;
 	      tuple_trie_leaf *old_tuple_leaf = state.tuple_leaf;
+			simple_tuple *old_tuple_queue = state.tuple_queue;
 	      return_type ret;
 			
 			state.tuple_leaf = NULL;
+			state.tuple_queue = stpl;
 			state.tuple = tpl;
 			state.is_linear = true;
-			stpl->will_delete(); // this will avoid future gathers of this tuple!
+			
+			if(iter_options_to_delete(options))
+				stpl->will_delete(); // this will avoid future gathers of this tuple!
 
 			// execute...
 			ret = execute(first, state);
 			
 			// restore
 			state.tuple_leaf = old_tuple_leaf;
+			state.tuple_queue = old_tuple_queue;
 			state.tuple = old_tuple;
 			state.is_linear = old_is_linear;
-			
+	
 			if(!(ret == RETURN_LINEAR || ret == RETURN_DERIVED)) { // tuple not consumed
 				stpl->will_not_delete(); // oops, revert
 			}
@@ -1106,19 +1118,17 @@ execute_remove(pcounter pc, state& state)
 {
    const reg_num reg(remove_source(pc));
 
-   tuple_trie_leaf *leaf(state.get_leaf(reg));
- 
-	if(leaf == NULL)
-		return;
-	
-   assert(leaf != NULL);
-
 #ifdef USE_UI
 	sched::base *sched_caller(state.proc->get_scheduler());
 	sched_caller->new_linear_consumption(state.node, state.get_tuple(reg));
 #endif
 
-   state.node->delete_by_leaf(state.get_tuple(reg)->get_predicate(), leaf);
+	if(state.is_it_a_leaf(reg)) {
+   	state.node->delete_by_leaf(state.get_tuple(reg)->get_predicate(), state.get_leaf(reg));
+	} else {
+		//cout << "Remove by queue" << endl;
+		//state.get_tuple_queue(reg)->will_delete();
+	}
 }
 
 static inline void

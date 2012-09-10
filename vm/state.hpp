@@ -37,6 +37,8 @@ private:
    typedef all_val reg;
    reg regs[NUM_REGS];
    db::tuple_trie_leaf *saved_leafs[NUM_REGS];
+	db::simple_tuple *saved_stuples[NUM_REGS];
+	bool is_leaf[NUM_REGS];
    
    std::list<runtime::float_list*, mem::allocator<runtime::float_list*> > free_float_list;
    std::list<runtime::int_list*, mem::allocator<runtime::int_list*> > free_int_list;
@@ -73,6 +75,7 @@ public:
 	
    vm::tuple *tuple;
    db::tuple_trie_leaf *tuple_leaf;
+	db::simple_tuple *tuple_queue;
    db::node *node;
    ref_count count;
    process::process *proc;
@@ -126,8 +129,11 @@ public:
    
    inline void set_nil(const reg_num& num) { set_ptr(num, null_ptr_val); }
    
-   inline void set_leaf(const reg_num& num, db::tuple_trie_leaf* leaf) { saved_leafs[num] = leaf; }
+   inline void set_leaf(const reg_num& num, db::tuple_trie_leaf* leaf) { is_leaf[num] = true; saved_leafs[num] = leaf; }
    inline db::tuple_trie_leaf* get_leaf(const reg_num& num) const { return saved_leafs[num]; }
+	inline void set_tuple_queue(const reg_num& num, db::simple_tuple *stpl) { is_leaf[num] = false; saved_stuples[num] = stpl; }
+	inline db::simple_tuple* get_tuple_queue(const reg_num& num) const { return saved_stuples[num]; }
+	inline bool is_it_a_leaf(const reg_num& num) const { return is_leaf[num]; }
    
    inline void copy_reg(const reg_num& reg_from, const reg_num& reg_to) {
       regs[reg_to] = regs[reg_from];

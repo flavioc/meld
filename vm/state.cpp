@@ -134,6 +134,11 @@ state::setup(vm::tuple *tpl, db::node *n, const ref_count count)
 		this->is_linear = false;
    assert(used_linear_tuples.empty());
    this->used_linear_tuples.clear();
+	for(size_t i(0); i < NUM_REGS; ++i) {
+		this->is_leaf[i] = false;
+		this->saved_leafs[i] = NULL;
+		this->saved_stuples[i] = NULL;
+	}
 }
 
 }

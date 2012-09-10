@@ -230,13 +230,16 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
    		break;
    	case ITER_INSTR: {
             pcounter m = pc + ITER_BASE;
+				const byte opts(iter_options(pc));
             
-            cout << "ITERATE OVER " << prog->get_predicate(iter_predicate(pc))->get_name();
+            cout << "ITERATE OVER " << prog->get_predicate(iter_predicate(pc))->get_name() << " (";
 
-				if(iter_options_random(iter_options(pc)))
-					cout << " (r)";
+				if(iter_options_random(opts))
+					cout << "r";
+				if(iter_options_to_delete(opts))
+					cout << "d";
 
-				cout << " MATCHING";
+				cout << ") MATCHING";
             
             if(!iter_match_none(m)) {
                while (true) {
