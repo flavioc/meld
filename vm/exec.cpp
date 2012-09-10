@@ -136,12 +136,16 @@ move_to_field(pcounter m, state& state, const instr_val& from)
 		tuple *tuple(state.get_tuple(val_field_reg(m)));
 		
 		const field_num to_field(val_field_num(m));
+		const field_type typ(tuple->get_field_type(to_field));
 		
-		switch(tuple->get_field_type(to_field)) {
+		switch(typ) {
 			case FIELD_INT:	
 				tuple->set_int(to_field, state.get_const_int(cid));
 				break;
-			default: throw vm_exec_error("don't know how to move to field (move_to_field from const)");
+			case FIELD_FLOAT:
+				tuple->set_float(to_field, state.get_const_float(cid));
+				break;
+			default: throw vm_exec_error("don't know how to move to " + field_type_string(typ) + " field (move_to_field from const)");
 		}
    } else if(val_is_field(from)) {
       const tuple *from_tuple(state.get_tuple(val_field_reg(m)));
