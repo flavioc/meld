@@ -21,13 +21,14 @@ const maxtotal = 1000.
 !source(A), !capacity(A, Cap) -o load(A, 0), {B | !edge(A, B) | infofree(B, A, Cap)}.
 !sink(A, _) -o total(A, 0), unplugged(A).
 
-unplugged(A),
-!sink(A, Total),
-:random !edge(A, B),
-:random $free(A, B, Free),
-Free >= Total,
-total(A, T),
-T < maxtotal
+[ :random B |
+	unplugged(A),
+	!sink(A, Total),
+	!edge(A, B),
+	$free(A, B, Free),
+	Free >= Total,
+	total(A, T),
+	T < maxtotal ]
 	-o plugged(A, B), connect(B, A, Total), total(A, T + 1).
 
 /* random selection */
@@ -36,19 +37,21 @@ connect(A, B, Total),
 load(A, Old)
 	-o load(A, Old + Total), changedload(A), connected(A, B, Total).
 	
-load(A, Old),
-!capacity(A, Cap),
-Old > Cap,
-!edge(A, B),
-:random connected(A, B, Total)
+[ :random B |
+	load(A, Old),
+	!capacity(A, Cap),
+	Old > Cap,
+	!edge(A, B),
+	connected(A, B, Total) ]
 	-o disconnect(B), load(A, Old - Total), changedload(A).
 	
-changedload(A),
-load(A, Load),
-!capacity(A, Cap),
-randint(20) < 10,
-:random connected(A, B, Total),
-:random !edge(A, B)
+[ :random B |
+	changedload(A),
+	load(A, Load),
+	!capacity(A, Cap),
+	randint(20) < 10,
+	connected(A, B, Total),
+	!edge(A, B) ]
 	-o disconnect(B), load(A, Load - Total), changedload(A).
 	
 changedload(A),
