@@ -23,8 +23,10 @@ using namespace std;
 using namespace sched;
 using namespace boost;
 using namespace utils;
+#ifdef USE_UI
 using namespace websocketpp;
 using namespace ui;
+#endif
 
 static char *progname = NULL;
 static int port = 0;

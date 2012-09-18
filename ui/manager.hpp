@@ -2,12 +2,15 @@
 #ifndef UI_MANAGER_HPP
 #define UI_MANAGER_HPP
 
+#include "conf.hpp"
+
 #include <list>
 #include <cstdlib>
+#ifdef USE_UI
 #include <websocketpp/websocketpp.hpp>
+#endif
 #include <map>
 
-#include "conf.hpp"
 #include "vm/defs.hpp"
 #include "ui/client.hpp"
 #include "utils/atomic.hpp"
@@ -26,7 +29,8 @@ class program;
 
 namespace ui
 {
-	
+
+#ifdef USE_UI	
 typedef enum {
 	EVENT_PROGRAM_START,
 	EVENT_UNKNOWN
@@ -77,6 +81,7 @@ class manager: public websocketpp::server::handler
 };
 
 extern manager *man;
+#endif
 
 #ifdef USE_UI
 #define LOG_RUN(PART)			if (ui::man) { ui::man->PART; }

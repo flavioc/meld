@@ -2,10 +2,16 @@
 #ifndef UI_CLIENT_HPP
 #define UI_CLIENT_HPP
 
+#include "conf.hpp"
+
+#ifdef USE_UI
 #include <websocketpp/websocketpp.hpp>
+#endif
 
 namespace ui
 {
+
+#ifdef USE_UI
 
 class client
 {
@@ -19,6 +25,8 @@ class client
 
       explicit client(connection_ptr);
 };
+
+#endif
 
 }
 
