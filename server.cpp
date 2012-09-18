@@ -150,6 +150,7 @@ parse_command(string cmd)
 	return COMMAND_NONE;
 }
 
+#ifdef USE_UI
 static void
 show_status(void)
 {
@@ -164,24 +165,14 @@ run_server(void)
    server::handler::ptr h(man);
    server endpoint(h);
 
-#if 0
-   printf("Running server...\n");
-   endpoint.alog().unset_level(websocketpp::log::alevel::ALL);
-   endpoint.elog().unset_level(websocketpp::log::elevel::ALL);
-                   
-   endpoint.alog().set_level(websocketpp::log::alevel::CONNECT);
-   endpoint.alog().set_level(websocketpp::log::alevel::DISCONNECT);
-                                   
-   endpoint.elog().set_level(websocketpp::log::elevel::RERROR);
-   endpoint.elog().set_level(websocketpp::log::elevel::FATAL);
-#endif
-
    endpoint.listen(port);
 }
+#endif
 
 int
 main(int argc, char **argv)
 {
+#ifdef USE_UI
    read_arguments(argc, argv);
 
 	if(sched_type == SCHED_UNKNOWN) {
@@ -235,4 +226,8 @@ main(int argc, char **argv)
 	}
 
    return EXIT_SUCCESS;
+#else
+	cerr << "No UI was compiled" << endl;
+	return EXIT_FAILURE;
+#endif
 }

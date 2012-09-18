@@ -13,7 +13,7 @@
 #include "vm/defs.hpp"
 #include "vm/tuple.hpp"
 #include "runtime/string.hpp"
-#ifndef USE_UI
+#ifdef USE_UI
 #include <json_spirit.h>
 #endif
 

@@ -1,4 +1,8 @@
 
+#include "conf.hpp"
+
+#ifdef USE_UI
+
 #include <json_spirit.h>
 
 #include "ui/manager.hpp"
@@ -330,3 +334,5 @@ manager::event_set_edge_label(const vm::node_val from, const vm::node_val to, co
 }
 
 }
+
+#endif /* USE_UI */
