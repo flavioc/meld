@@ -29,19 +29,19 @@ serial_ui_local::new_work(const node *from, work& w)
 }
 
 void
-serial_ui_local::new_persistent_derivation(node *n, tuple *tpl)
+serial_ui_local::new_persistent_derivation(node *n, vm::tuple *tpl)
 {
 	LOG_PERSISTENT_DERIVATION(n, tpl);
 }
 
 void
-serial_ui_local::new_linear_derivation(node *n, tuple *tpl)
+serial_ui_local::new_linear_derivation(node *n, vm::tuple *tpl)
 {
 	LOG_LINEAR_DERIVATION(n, tpl);
 }
 
 void
-serial_ui_local::new_linear_consumption(node *n, tuple *tpl)
+serial_ui_local::new_linear_consumption(node *n, vm::tuple *tpl)
 {
 	LOG_LINEAR_CONSUMPTION(n, tpl);
 }

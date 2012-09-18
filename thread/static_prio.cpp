@@ -521,7 +521,7 @@ static_local_prio::gather_active_tuples(db::node *node, const vm::predicate_id p
 				end(no->prioritized_tuples.end());
 			it != end; ++it)
 		{
-			process::node_work w(*it);
+			node_work w(*it);
 			simple_tuple *stpl(w.get_tuple());
 		
 			if(!stpl->must_be_deleted())
@@ -529,7 +529,7 @@ static_local_prio::gather_active_tuples(db::node *node, const vm::predicate_id p
 		}
 	} else {
 		for(fact_queue::const_iterator it(no->queue.begin()), end(no->queue.end()); it != end; ++it) {
-			process::node_work w(*it);
+			node_work w(*it);
 			simple_tuple *stpl(w.get_tuple());
 		
 			if(!stpl->must_be_deleted() && stpl->get_predicate_id() == pred)
