@@ -281,7 +281,7 @@ static_local::gather_active_tuples(db::node *node, const vm::predicate_id pred)
 	typedef thread_node::queue_type fact_queue;
 	
 	for(fact_queue::const_iterator it(no->queue.begin()), end(no->queue.end()); it != end; ++it) {
-		process::node_work w(*it);
+		node_work w(*it);
 		simple_tuple *stpl(w.get_tuple());
 		
 		if(!stpl->must_be_deleted() && stpl->get_predicate_id() == pred)
