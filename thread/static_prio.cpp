@@ -295,7 +295,7 @@ static_local_prio::finish_work(const work& work)
 bool
 static_local_prio::check_if_current_useless(void)
 {
-	if(!gprio_queue.empty() && current_node->has_prio_work() && !current_node->has_normal_work()) {
+	if(!gprio_queue.empty() && current_node->has_prio_work()) {
 		const int current_min(gprio_queue.min_value());
 		const int_val node_min(current_node->get_min_value());
 		
