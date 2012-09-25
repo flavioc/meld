@@ -41,12 +41,12 @@ public:
 	inline bool with_priority(void) const { return has_priority; }
 	inline void unmark_priority(void) { has_priority = false; }
 	inline void mark_priority(void) { has_priority = true; }
-	
+
    explicit thread_intrusive_node(const db::node::node_id _id, const db::node::node_id _trans):
+		thread_node(_id, _trans),
       INIT_DOUBLE_QUEUE_NODE(), INIT_PRIORITY_NODE(),
-		thread_node(_id, _trans), has_priority(false), added_to_pqueue(false)
+		has_priority(false), added_to_pqueue(false)
    {
-		has_been_prioritized = false;
 	}
    
    virtual ~thread_intrusive_node(void) {}
