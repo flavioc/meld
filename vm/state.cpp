@@ -113,10 +113,14 @@ state::copy_reg2const(const reg_num& reg_from, const const_id& cid)
 {
 	consts[cid] = regs[reg_from];
 	switch(PROGRAM->get_const_type(cid)) {
-		case FIELD_LIST_INT: add_int_list(get_const_int_list(cid)); break;
-		case FIELD_LIST_FLOAT: add_float_list(get_const_float_list(cid)); break;
-		case FIELD_LIST_NODE: add_node_list(get_const_node_list(cid)); break;
-		case FIELD_STRING: add_string(get_const_string(cid)); break;
+		case FIELD_LIST_INT:
+			int_list::inc_refs(get_const_int_list(cid)); break;
+		case FIELD_LIST_FLOAT:
+			float_list::inc_refs(get_const_float_list(cid)); break;
+		case FIELD_LIST_NODE:
+			node_list::inc_refs(get_const_node_list(cid)); break;
+		case FIELD_STRING:
+			get_const_string(cid)->inc_refs(); break;
 		default: break;
 	}
 }

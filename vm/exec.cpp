@@ -914,6 +914,7 @@ execute_cons(pcounter pc, state& state)
    const ELEMENT head_val(get_op_function<ELEMENT>(head, m, state)); \
    LIST *ls(get_op_function<LIST*>(tail, m, state));                 \
    LIST *new_list(new LIST(ls, head_val));                           \
+	state.add_ ## LIST (new_list);												\
    set_op_function(m, dest, new_list, state);                        \
    break;                                                            \
 }
@@ -1190,7 +1191,7 @@ execute_call(pcounter pc, state& state)
 
          state.set_float_list(reg, FROM_ARG(ret, float_list*));
          if(!float_list::is_null(l))
-            state.add_float_list(FROM_ARG(ret, float_list*));
+            state.add_float_list(l);
          break;
       }
       case FIELD_LIST_INT: {
