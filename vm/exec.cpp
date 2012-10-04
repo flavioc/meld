@@ -148,6 +148,7 @@ move_to_field(pcounter m, state& state, const instr_val& from)
 				break;
 			case FIELD_FLOAT:
 				tuple->set_float(to_field, state.get_const_float(cid));
+				break;
 			case FIELD_LIST_FLOAT:
 				tuple->set_float_list(to_field, state.get_const_float_list(cid));
 				break;
