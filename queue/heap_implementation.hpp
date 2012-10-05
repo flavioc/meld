@@ -3,7 +3,7 @@
 #define QUEUE_HEAP_IMPLEMENTATION_HPP
 
 #define HEAP_DEFINE_DATA \
-	typedef std::vector<heap_object> heap_vector;	\
+	typedef std::vector<heap_object, mem::allocator<heap_object> > heap_vector;	\
 	heap_vector heap
 	
 #define HEAP_DEFINE_EMPTY				\
