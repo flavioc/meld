@@ -97,10 +97,12 @@ static_local_prio::add_prio_tuple(node_work node_new_work, thread_intrusive_node
 		min_before = to->get_min_value();
 	
 	switch(priority_type) {
-		case HEAP_INT:
+		case HEAP_INT_ASC:
+		case HEAP_INT_DESC:
 			valp.int_priority = val.int_field;
 			break;
-		case HEAP_FLOAT:
+		case HEAP_FLOAT_ASC:
+		case HEAP_FLOAT_DESC:
 			valp.float_priority = val.float_field;
 			break;
 		default: assert(false);
@@ -121,8 +123,10 @@ static_local_prio::add_prio_tuple(node_work node_new_work, thread_intrusive_node
 			bool different_priority(false);
 
 			switch(priority_type) {
-				case HEAP_INT: different_priority = min_now.int_priority != min_before.int_priority; break;
-				case HEAP_FLOAT: different_priority = min_now.float_priority != min_before.float_priority; break;
+				case HEAP_INT_DESC:
+				case HEAP_INT_ASC: different_priority = min_now.int_priority != min_before.int_priority; break;
+				case HEAP_FLOAT_DESC:
+				case HEAP_FLOAT_ASC: different_priority = min_now.float_priority != min_before.float_priority; break;
 				default: assert(false);
 			}
 				
@@ -329,8 +333,10 @@ static_local_prio::check_if_current_useless(void)
 		bool is_current_best(false);
 
 		switch(priority_type) {
-			case HEAP_INT: is_current_best = (current_min < node_min.int_priority); break;
-			case HEAP_FLOAT: is_current_best = (current_min < node_min.int_priority); break; // XXX
+			case HEAP_INT_ASC: is_current_best = (current_min < node_min.int_priority); break;
+			case HEAP_INT_DESC: is_current_best = (current_min > node_min.int_priority); break;
+			case HEAP_FLOAT_ASC: is_current_best = (current_min < node_min.int_priority); break; // XXX
+			case HEAP_FLOAT_DESC: assert(false); // XXX
 			default: assert(false);
 		}
 		
@@ -519,16 +525,16 @@ static_local_prio::init(const size_t)
 
 		switch(p->get_field_type(field)) {
 			case FIELD_INT:
-				priority_type = HEAP_INT;
+				priority_type = HEAP_INT_ASC;
 				break;
 			case FIELD_FLOAT:
-				priority_type = HEAP_FLOAT;
+				priority_type = HEAP_FLOAT_ASC;
 				break;
 			default:
 				assert(false);
 		}
 	} else {
-		priority_type = HEAP_INT;
+		priority_type = HEAP_INT_ASC;
 	}
 
    database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));

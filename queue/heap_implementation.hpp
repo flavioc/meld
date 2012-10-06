@@ -3,14 +3,16 @@
 #define QUEUE_HEAP_IMPLEMENTATION_HPP
 
 typedef enum {
-	HEAP_INT,
-	HEAP_FLOAT
+	HEAP_INT_ASC,
+	HEAP_INT_DESC,
+	HEAP_FLOAT_ASC,
+	HEAP_FLOAT_DESC
 } heap_type;
 
 typedef union {
-		int int_priority;
-		float float_priority;
-	} heap_priority;
+	int int_priority;
+	float float_priority;
+} heap_priority;
 
 #define HEAP_DEFINE_DATA \
 	typedef std::vector<heap_object, mem::allocator<heap_object> > heap_vector;	\
@@ -62,7 +64,7 @@ typedef union {
 	{																			\
 		bool moved(false);												\
 		while((index > 0) && (parent(index) >= 0) &&				\
-			(HEAP_GET_PRIORITY(heap[parent(index)]) > HEAP_GET_PRIORITY(heap[index])))			\
+			(HEAP_COMPARE(HEAP_GET_PRIORITY(heap[index]), HEAP_GET_PRIORITY(heap[parent(index)]))))	\
 		{																		\
 			heap_object obj(heap[parent(index)]);					\
 																				\
@@ -98,15 +100,15 @@ typedef union {
 			return;															\
 																				\
 		if(hasleft &&														\
-HEAP_GET_PRIORITY(heap[index]) <= HEAP_GET_PRIORITY(heap[l])\
-		&& ((hasright && HEAP_GET_PRIORITY(heap[index]) <=		\
-			HEAP_GET_PRIORITY(heap[r]))								\
+HEAP_COMPARE(HEAP_GET_PRIORITY(heap[index]), HEAP_GET_PRIORITY(heap[l]))	\
+		&& ((hasright && HEAP_COMPARE(HEAP_GET_PRIORITY(heap[index]),			\
+			HEAP_GET_PRIORITY(heap[r])))								\
 					|| !hasright))											\
 			return;															\
 																				\
 		int smaller;														\
-		if(hasright && HEAP_GET_PRIORITY(heap[r]) <= 			\
-					HEAP_GET_PRIORITY(heap[l]))						\
+		if(hasright && HEAP_COMPARE(HEAP_GET_PRIORITY(heap[r]),		\
+					HEAP_GET_PRIORITY(heap[l])))						\
 			smaller = r;													\
 		else																	\
 			smaller = l;													\

@@ -17,6 +17,7 @@ private:
 
 #define HEAP_GET_PRIORITY(OBJ) __INTRUSIVE_PRIORITY(OBJ)
 #define HEAP_GET_POS(OBJ) __INTRUSIVE_POS(OBJ)
+#define HEAP_COMPARE(V1, V2) ((V1) <= (V2))
 
 	HEAP_DEFINE_UTILS;
 	
@@ -119,6 +120,7 @@ public:
 
 #undef HEAP_GET_POS
 #undef HEAP_GET_PRIORITY
+#undef HEAP_COMPARE
 
 }
 

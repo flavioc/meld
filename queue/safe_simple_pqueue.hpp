@@ -26,7 +26,8 @@ private:
 	
 	HEAP_DEFINE_UTILS;
 	
-#define HEAP_GET_PRIORITY(OBJ) (typ == HEAP_INT ? (OBJ).val.int_priority : (OBJ).val.float_priority)
+#define HEAP_GET_PRIORITY(OBJ) ((typ == HEAP_INT_ASC || typ == HEAP_INT_DESC) ? (OBJ).val.int_priority : (OBJ).val.float_priority)
+#define HEAP_COMPARE(V1, V2) ((typ == HEAP_INT_ASC || typ == HEAP_FLOAT_ASC) ? ((V1) <= (V2)) : ((V1) >= (V2)))
 #define HEAP_GET_POS(OBJ) (OBJ).pos
 
 	HEAP_DEFINE_HEAPIFYUP;
@@ -152,6 +153,7 @@ public:
 
 #undef HEAP_GET_POS
 #undef HEAP_GET_PRIORITY
+#undef HEAP_COMPARE
 
 }
 
