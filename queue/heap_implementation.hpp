@@ -2,6 +2,16 @@
 #ifndef QUEUE_HEAP_IMPLEMENTATION_HPP
 #define QUEUE_HEAP_IMPLEMENTATION_HPP
 
+typedef enum {
+	HEAP_INT,
+	HEAP_FLOAT
+} heap_type;
+
+typedef union {
+		int int_priority;
+		float float_priority;
+	} heap_priority;
+
 #define HEAP_DEFINE_DATA \
 	typedef std::vector<heap_object, mem::allocator<heap_object> > heap_vector;	\
 	heap_vector heap
@@ -65,11 +75,9 @@
 	}
 	
 #define HEAP_DEFINE_MIN_VALUE											\
-	int min_value(void) const											\
+	heap_priority min_value(void) const								\
 	{																			\
-		if(empty())															\
-			return INVALID_PRIORITY;									\
-																				\
+		assert(!heap.empty());											\
 		return heap.at(0).val;											\
 	}
 	

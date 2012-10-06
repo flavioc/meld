@@ -37,6 +37,8 @@ protected:
    
    thread_intrusive_node *current_node;
 
+	heap_type priority_type;
+
 	typedef queue::intrusive_safe_complex_pqueue<thread_intrusive_node> global_prioqueue;
 	global_prioqueue gprio_queue;
 	

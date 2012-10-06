@@ -88,10 +88,25 @@ static_local_prio::add_prio_tuple(node_work node_new_work, thread_intrusive_node
 {
 	const field_num field(state::PROGRAM->get_priority_argument());
 	vm::tuple *tpl(stpl->get_tuple());
-	const int_val val(tpl->get_int(field));
-	const int_val min_before(to->get_min_value());
+	heap_priority valp;
+	const bool has_prio_tuples(!to->prioritized_tuples.empty());
+	tuple_field val(tpl->get_field(field));
+	heap_priority min_before;
+
+	if(has_prio_tuples)
+		min_before = to->get_min_value();
 	
-	to->prioritized_tuples.insert(node_new_work, val);
+	switch(priority_type) {
+		case HEAP_INT:
+			valp.int_priority = val.int_field;
+			break;
+		case HEAP_FLOAT:
+			valp.float_priority = val.float_field;
+			break;
+		default: assert(false);
+	}
+
+	to->prioritized_tuples.insert(node_new_work, valp);
 
 	if(to != current_node) {
 		spinlock::scoped_lock l(to->spin);
@@ -99,15 +114,23 @@ static_local_prio::add_prio_tuple(node_work node_new_work, thread_intrusive_node
 		if(global_prioqueue::in_queue(to)) {
 			assert(!node_queue::in_queue(to));
 				
-			const int_val min_now(to->get_min_value());
+			const heap_priority min_now(to->get_min_value());
 				
-			assert(min_before != thread_intrusive_node::prio_tuples_queue::INVALID_PRIORITY);
+			assert(has_prio_tuples);
+
+			bool different_priority(false);
+
+			switch(priority_type) {
+				case HEAP_INT: different_priority = min_now.int_priority != min_before.int_priority; break;
+				case HEAP_FLOAT: different_priority = min_now.float_priority != min_before.float_priority; break;
+				default: assert(false);
+			}
 				
-			if(min_now != min_before) {
+			if(different_priority) {
 #ifdef PROFILE_QUEUE
 				prio_moved_pqueue++;
 #endif
-				gprio_queue.move_node(to, min_now);
+				gprio_queue.move_node(to, min_now.int_priority);
 			}
 		} else {
 			if(node_queue::in_queue(to)) {
@@ -121,7 +144,7 @@ static_local_prio::add_prio_tuple(node_work node_new_work, thread_intrusive_node
 #ifdef PROFILE_QUEUE
 			prio_add_pqueue++;
 #endif
-			gprio_queue.insert(to, to->get_min_value());
+			gprio_queue.insert(to, to->get_min_value().int_priority);
 		}
 			
 		assert(global_prioqueue::in_queue(to));
@@ -297,15 +320,23 @@ static_local_prio::check_if_current_useless(void)
 {
 	if(!gprio_queue.empty() && current_node->has_prio_work()) {
 		const int current_min(gprio_queue.min_value());
-		const int_val node_min(current_node->get_min_value());
+		const heap_priority node_min(current_node->get_min_value());
 		
 #ifdef PROFILE_QUEUE
 		prio_nodes_compared++;
 #endif
+
+		bool is_current_best(false);
+
+		switch(priority_type) {
+			case HEAP_INT: is_current_best = (current_min < node_min.int_priority); break;
+			case HEAP_FLOAT: is_current_best = (current_min < node_min.int_priority); break; // XXX
+			default: assert(false);
+		}
 		
-		if(current_min < node_min) {
+		if(is_current_best) {
 			// put back into priority queue
-			gprio_queue.insert(current_node, node_min);
+			gprio_queue.insert(current_node, node_min.int_priority);
 			assert(global_prioqueue::in_queue(current_node));
 			current_node = gprio_queue.pop();
 #ifdef PROFILE_QUEUE
@@ -482,6 +513,24 @@ static_local_prio::set_node_priority(node *n, const int)
 void
 static_local_prio::init(const size_t)
 {
+	if(state::PROGRAM->has_global_priority()) {
+		predicate *p(state::PROGRAM->get_priority_predicate());
+		const field_num field(state::PROGRAM->get_priority_argument());
+
+		switch(p->get_field_type(field)) {
+			case FIELD_INT:
+				priority_type = HEAP_INT;
+				break;
+			case FIELD_FLOAT:
+				priority_type = HEAP_FLOAT;
+				break;
+			default:
+				assert(false);
+		}
+	} else {
+		priority_type = HEAP_INT;
+	}
+
    database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
    database::map_nodes::iterator end(state::DATABASE->get_node_iterator(remote::self->find_last_node(id)));
    
@@ -491,6 +540,8 @@ static_local_prio::init(const size_t)
       cur_node->set_owner(this);
       
       init_node(cur_node);
+
+		cur_node->prioritized_tuples.set_type(priority_type);
       
       assert(cur_node->get_owner() == this);
       assert(cur_node->in_queue());
