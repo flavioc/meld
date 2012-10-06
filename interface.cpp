@@ -120,7 +120,7 @@ run_program(int argc, char **argv, const char *program, const vm::machine_argume
 	assert(utils::file_exists(string(program)));
 
 	try {
-      double start_time;
+      double start_time(0.0);
       execution_time tm;
       
       if(time_execution) {
