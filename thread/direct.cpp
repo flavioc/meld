@@ -442,6 +442,7 @@ direct_local::write_slice(statistics::slice& sl) const
 direct_local*
 direct_local::find_scheduler(const node *n)
 {
+	(void)n;
    return NULL;
 }
 
