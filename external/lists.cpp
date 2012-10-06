@@ -15,7 +15,7 @@ namespace external
 argument
 intlistlength(EXTERNAL_ARG(ls))
 {
-   DECLARE_ARG(ls, int_list *);
+	DECLARE_INT_LIST(ls);
    int_val total(0);
    int_list *p((int_list *)ls);
 
@@ -24,7 +24,7 @@ intlistlength(EXTERNAL_ARG(ls))
       p = p->get_tail();
    }
 
-   RETURN_ARG(total);
+	RETURN_INT(total);
 }
 
 static bool inline
@@ -46,8 +46,8 @@ has_value(const int_list *_l, int_val v)
 argument
 intlistdiff(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
 {
-   DECLARE_ARG(ls1, int_list *);
-   DECLARE_ARG(ls2, int_list *);
+   DECLARE_INT_LIST(ls1);
+   DECLARE_INT_LIST(ls2);
    
    int_list *p((int_list*)ls1);
 
@@ -63,14 +63,14 @@ intlistdiff(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
 
    int_list *ptr(from_stack_to_list<stack_int_list, int_list>(s));
       
-   RETURN_ARG(ptr);
+   RETURN_INT_LIST(ptr);
 }
 
 argument
 intlistnth(EXTERNAL_ARG(ls), EXTERNAL_ARG(v))
 {
-   DECLARE_ARG(ls, int_list*);
-   DECLARE_ARG(v, int_val);
+   DECLARE_INT_LIST(ls);
+   DECLARE_INT(v);
 
    int_list *p((int_list*)ls);
    int_val count(0);
@@ -80,7 +80,7 @@ intlistnth(EXTERNAL_ARG(ls), EXTERNAL_ARG(v))
       if(count == v) {
          int_val r(p->get_head());
 
-         RETURN_ARG(r);
+         RETURN_INT(r);
       }
 
       count++;
@@ -93,8 +93,8 @@ intlistnth(EXTERNAL_ARG(ls), EXTERNAL_ARG(v))
 argument
 nodelistremove(EXTERNAL_ARG(ls), EXTERNAL_ARG(n))
 {
-	DECLARE_ARG(ls, node_list*);
-	DECLARE_ARG(n, node_val);
+	DECLARE_NODE_LIST(ls);
+	DECLARE_NODE(n);
 
 	node_list *p((node_list*)ls);
 
@@ -110,7 +110,7 @@ nodelistremove(EXTERNAL_ARG(ls), EXTERNAL_ARG(n))
 
    node_list *ptr(from_stack_to_list<stack_node_list, node_list>(s));
       
-   RETURN_ARG(ptr);
+   RETURN_NODE_LIST(ptr);
 }
 
 }

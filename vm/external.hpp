@@ -13,18 +13,28 @@ const size_t EXTERNAL_ARG_LIMIT(100);
 
 typedef size_t external_function_id;
 
-typedef all_val argument;
+typedef tuple_field argument;
 typedef argument (*external_function_ptr0)();
 typedef argument (*external_function_ptr1)(argument);
 typedef argument (*external_function_ptr2)(argument,argument);
 typedef argument (*external_function_ptr3)(argument, argument, argument);
 typedef external_function_ptr0 external_function_ptr;
 
-#define FROM_ARG(X, TYPE) (*(TYPE*)&(X))
-#define TO_ARG(X,ARG) (memcpy(&(ARG), &(X), sizeof(X)))
 #define EXTERNAL_ARG(NAME) const argument __ ## NAME
-#define DECLARE_ARG(NAME,TYPE) const TYPE NAME(FROM_ARG(__ ## NAME, TYPE)) 
-#define RETURN_ARG(X) { argument _ret; TO_ARG(X,_ret); return _ret; }
+#define DECLARE_INT(NAME) const int_val NAME(__ ## NAME.int_field)
+#define DECLARE_NODE(NAME) const node_val NAME(__ ## NAME.node_field)
+#define DECLARE_FLOAT(NAME) const float_val NAME(__ ## NAME.float_field)
+#define DECLARE_INT_LIST(NAME) const int_list *NAME((int_list *)__ ## NAME.ptr_field)
+#define DECLARE_FLOAT_LIST(NAME) const float_list *NAME((float_list *)__ ## NAME.ptr_field)
+#define DECLARE_NODE_LIST(NAME) const node_list *NAME((node_list *)__ ## NAME.ptr_field)
+#define DECLARE_STRING(NAME) const rstring::ptr NAME((rstring::ptr)__ ## NAME.ptr_field)
+#define RETURN_PTR(X) { argument _ret; _ret.ptr_field = (ptr_val)(X); return _ret; }
+#define RETURN_INT(X) { argument _ret; _ret.int_field = X; return _ret; }
+#define RETURN_FLOAT(X) { argument _ret; _ret.float_field = X; return _ret; }
+#define RETURN_INT_LIST(X) RETURN_PTR(X)
+#define RETURN_FLOAT_LIST(X) RETURN_PTR(X)
+#define RETURN_NODE_LIST(X) RETURN_PTR(X)
+#define RETURN_STRING(X) RETURN_PTR(X)
 
 class external_function
 {

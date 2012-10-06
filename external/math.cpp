@@ -15,21 +15,21 @@ namespace external
 argument
 sigmoid(EXTERNAL_ARG(x))
 {
-   DECLARE_ARG(x, float_val);
+   DECLARE_FLOAT(x);
    
    const float_val ret(1.0/(1.0 + exp(-x)));
    
-   RETURN_ARG(ret);
+	RETURN_FLOAT(ret);
 }
 
 argument
 normalize(EXTERNAL_ARG(x))
 {
-   DECLARE_ARG(x, float_list*);
+	DECLARE_FLOAT_LIST(x);
    float_list *ptr((float_list*)x);
    
    if(float_list::is_null(ptr)) {
-      RETURN_ARG(x);
+		RETURN_FLOAT_LIST(x);
    }
    
    /* find max value */
@@ -62,23 +62,22 @@ normalize(EXTERNAL_ARG(x))
    
    float_list *ls(from_stack_to_list<stack_float_list, float_list>(vals));
    
-   RETURN_ARG(ls);
+	RETURN_FLOAT_LIST(ls);
 }
 
 argument
 damp(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2), EXTERNAL_ARG(fact))
 {
-   DECLARE_ARG(ls1, float_list *);
-   DECLARE_ARG(ls2, float_list *);
-   DECLARE_ARG(fact, float_val);
+   DECLARE_FLOAT_LIST(ls1);
+   DECLARE_FLOAT_LIST(ls2);
+   DECLARE_FLOAT(fact);
    float_list *ptr1((float_list*)ls1);
    float_list *ptr2((float_list*)ls2);
    
    float_list *nil(float_list::null_list());
    
    if(float_list::is_null(ptr1) || float_list::is_null(ptr2)) {
-      
-      RETURN_ARG(nil);
+		RETURN_FLOAT_LIST(nil);
    }
    
    stack_float_list vals;
@@ -97,14 +96,14 @@ damp(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2), EXTERNAL_ARG(fact))
    
    float_list *ptr(from_stack_to_list<stack_float_list,float_list>(vals));
    
-   RETURN_ARG(ptr);
+	RETURN_FLOAT_LIST(ptr);
 }
 
 argument
 divide(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
 {
-   DECLARE_ARG(ls1, float_list*);
-   DECLARE_ARG(ls2, float_list*);
+   DECLARE_FLOAT_LIST(ls1);
+   DECLARE_FLOAT_LIST(ls2);
    
    float_list *ptr1((float_list*)ls1);
    float_list *ptr2((float_list*)ls2);
@@ -120,14 +119,14 @@ divide(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
    
    float_list *ptr(from_stack_to_list<stack_float_list, float_list>(vals));
       
-   RETURN_ARG(ptr);
+	RETURN_FLOAT_LIST(ptr);
 }
 
 argument
 convolve(EXTERNAL_ARG(bin_fact), EXTERNAL_ARG(ls))
 {
-   DECLARE_ARG(bin_fact, float_list *);
-   DECLARE_ARG(ls, float_list *);
+   DECLARE_FLOAT_LIST(bin_fact);
+   DECLARE_FLOAT_LIST(ls);
    const size_t length(float_list::length((float_list*)ls));
    
    stack_float_list vals;
@@ -155,14 +154,14 @@ convolve(EXTERNAL_ARG(bin_fact), EXTERNAL_ARG(ls))
    
    float_list *ptr(from_stack_to_list<stack_float_list, float_list>(vals));
       
-   RETURN_ARG(ptr);
+	RETURN_FLOAT_LIST(ptr);
 }
 
 argument
 addfloatlists(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
 {
-   DECLARE_ARG(ls1, float_list*);
-   DECLARE_ARG(ls2, float_list*);
+   DECLARE_FLOAT_LIST(ls1);
+   DECLARE_FLOAT_LIST(ls2);
    
    float_list *ptr1((float_list*)ls1);
    float_list *ptr2((float_list*)ls2);
@@ -178,7 +177,7 @@ addfloatlists(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
    
    float_list *ptr(from_stack_to_list<stack_float_list, float_list>(vals));
       
-   RETURN_ARG(ptr);
+   RETURN_FLOAT_LIST(ptr);
 }
 
 }
