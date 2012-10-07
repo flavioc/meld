@@ -74,6 +74,7 @@ public:
 	
 #undef define_set_const
 	
+	vm::tuple *original_tuple;
    vm::tuple *tuple;
    db::tuple_trie_leaf *tuple_leaf;
 	db::simple_tuple *tuple_queue;

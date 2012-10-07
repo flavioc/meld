@@ -128,6 +128,7 @@ state::copy_reg2const(const reg_num& reg_from, const const_id& cid)
 void
 state::setup(vm::tuple *tpl, db::node *n, const ref_count count)
 {
+	this->original_tuple = tpl;
    this->tuple = tpl;
    this->tuple_leaf = NULL;
    this->node = n;
