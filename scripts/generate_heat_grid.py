@@ -6,8 +6,8 @@ import sys
 
 from lib import write_dedgew, write_edgew
 
-if len(sys.argv) < 6:
-	print "Usage: generate_heat_grid.py <side> <outer side> <outer weight> <inner weight> <transition weight>"
+if len(sys.argv) < 8:
+	print "Usage: generate_heat_grid.py <side> <outer side> <outer weight> <inner weight> <transition weight> <inside heat> <outside heat>"
 	sys.exit(1)
 	
 print 'type route edge(node, node, float).'
@@ -17,6 +17,8 @@ outerside = int(sys.argv[2])
 outerweight = float(sys.argv[3])
 innerweight = float(sys.argv[4])
 transitionweight = float(sys.argv[5])
+insideheat = float(sys.argv[6])
+outsideheat = float(sys.argv[7])
 
 limitrow = limitcol = side-1
 
@@ -42,10 +44,17 @@ def write_weights(id, otherid, isouter, isotherouter):
 	else:
 		print "PROBLEM"
 
+def write_heat(id, heat):
+	print "heat(@" + str(id) + ", " + str(heat) + ")."
+
 for row in range(0, side):
 	for col in range(0, side):
 		isouter = inside_outer(row, col)
 		id = row * side + col
+		if isouter:
+			write_heat(id, outsideheat)
+		else:
+			write_heat(id, insideheat)
 		# south
 		if row < limitrow:
 			rowsouth = row + 1
