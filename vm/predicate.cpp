@@ -151,8 +151,11 @@ predicate::~predicate(void)
 }
 
 void
-predicate::print(ostream& cout) const
+predicate::print_simple(ostream& cout) const
 {
+	if(is_persistent_pred())
+		cout << "!";
+
    cout << name << "(";
    
    for(size_t i = 0; i < num_fields(); ++i) {
@@ -167,7 +170,15 @@ predicate::print(ostream& cout) const
          cout << typ;
    }
    
-   cout << ") [size=" << tuple_size;
+   cout << ")";
+}
+
+void
+predicate::print(ostream& cout) const
+{
+ 	print_simple(cout);
+
+	cout << " [size=" << tuple_size;
    
    if(is_aggregate())
       cout << ",agg";
@@ -182,6 +193,8 @@ predicate::print(ostream& cout) const
       cout << ",linear";
    if(is_action)
       cout << ",action";
+	if(is_global_prio)
+		cout << ",global_prio=" << state::PROGRAM->get_priority_argument();
    
    cout << "]";
    

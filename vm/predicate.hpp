@@ -74,6 +74,7 @@ public:
 	inline bool is_reverse_route_pred(void) const { return is_reverse_route; }
 
    inline bool is_linear_pred(void) const { return is_linear; }
+	inline bool is_persistent_pred(void) const { return !is_linear_pred(); }
 
    inline bool is_action_pred(void) const { return is_action; }
    
@@ -93,6 +94,7 @@ public:
    
    inline strat_level get_strat_level(void) const { return level; }
    
+   void print_simple(std::ostream&) const;
    void print(std::ostream&) const;
 
 	void set_global_priority(void) { is_global_prio = true; }
