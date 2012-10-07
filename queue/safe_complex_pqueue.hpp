@@ -61,15 +61,24 @@ private:
 	{
 		size_t index(__INTRUSIVE_POS(obj));
 		heap_object tmp(heap.back());
-		
+
 		heap.pop_back();
 		
 		__INTRUSIVE_IN_PRIORITY_QUEUE(obj) = false;
 		
 		if(!heap.empty() && index != heap.size()) {
 			HEAP_SET_INDEX(index, tmp);
-			
-			heapifydown(index);
+
+			const int p(parent(index));
+
+			if(p != -1) {
+				if(HEAP_COMPARE(HEAP_GET_PRIORITY(tmp), HEAP_GET_PRIORITY(heap[p])))
+					heapifyup(index);
+				else
+					heapifydown(index);
+			} else {
+				heapifydown(index);
+			}
 		}
 	}
 
