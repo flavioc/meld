@@ -136,6 +136,9 @@ void
 tuple::print(ostream& cout) const
 {
    assert(pred != NULL);
+
+	if(is_persistent())
+		cout << "!";
    
    cout << pred_name() << "(";
    
