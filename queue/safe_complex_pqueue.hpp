@@ -112,7 +112,34 @@ public:
 	{
 		typ = _typ;
 	}
-	
+
+	void assert_heap(void)
+	{
+		for(size_t i(0); i < heap.size(); ++i) {
+			const int l(left(i));
+			const int r(right(i));
+
+			if(l != -1) {
+				assert(HEAP_COMPARE(HEAP_GET_PRIORITY(heap[i]), HEAP_GET_PRIORITY(heap[l])));
+			}
+			if(r != -1) {
+				assert(HEAP_COMPARE(HEAP_GET_PRIORITY(heap[i]), HEAP_GET_PRIORITY(heap[r])));
+			}
+		}
+	}
+
+	void print(std::ostream& out)
+	{
+		for(typename heap_vector::iterator it(heap.begin()),
+											end(heap.end());
+			it != end;
+			++it)
+		{
+			heap_object obj(*it);
+			out << HEAP_GET_PRIORITY(obj) << " ";
+		}
+	}
+
 	intrusive_safe_complex_pqueue(void) {}
 
 	intrusive_safe_complex_pqueue(const heap_type _typ): typ(_typ) {}
