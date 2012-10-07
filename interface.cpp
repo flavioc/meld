@@ -156,6 +156,9 @@ run_program(int argc, char **argv, const char *program, const vm::machine_argume
          }
       }
 
+	} catch(machine_error& err) {
+		cerr << "VM error: " << err.what() << endl;
+		exit(EXIT_FAILURE);
    } catch(db::database_error& err) {
       cerr << "Database error: " << err.what() << endl;
       exit(EXIT_FAILURE);

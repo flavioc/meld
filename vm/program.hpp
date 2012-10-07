@@ -24,14 +24,17 @@ namespace process {
 namespace vm {
 
 const size_t INIT_PREDICATE_ID(0);
-extern size_t SETPRIO_PREDICATE_ID;
+extern size_t SET_PRIORITY_PREDICATE_ID;
 extern size_t SETCOLOR_PREDICATE_ID;
 extern size_t SETEDGELABEL_PREDICATE_ID;
 extern size_t WRITE_STRING_PREDICATE_ID;
+extern size_t ADD_PRIORITY_PREDICATE_ID;
 
 class program
 {
 private:
+
+	size_t num_args;
    
    std::vector<predicate*> predicates;
   
@@ -61,6 +64,8 @@ private:
 public:
 
    static strat_level MAX_STRAT_LEVEL;
+
+	inline size_t num_args_needed(void) const { return num_args; }
 
 	predicate *get_priority_predicate(void) const { return priority_pred; }
 	field_num get_priority_argument(void) const { return priority_argument; }

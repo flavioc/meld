@@ -64,12 +64,18 @@ program::program(const string& filename):
    code_size.resize(num_predicates);
    code.resize(num_predicates);
    state::NUM_PREDICATES = num_predicates;
-   
+
    // skip nodes
    int_val num_nodes;
 	READ_CODE(&num_nodes, sizeof(int_val));
    
 	SEEK_CODE(num_nodes * database::node_size);
+
+	// get number of args needed
+	byte n_args;
+
+	READ_CODE(&n_args, sizeof(byte));
+	num_args = (size_t)n_args;
 
 	// read string constants
 	int_val num_strings;

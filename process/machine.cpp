@@ -326,6 +326,9 @@ machine::machine(const string& file, router& _rout, const size_t th,
    slices(th)
 {  
    new program(filename);
+
+	if(margs.size() < state::PROGRAM->num_args_needed())
+		throw machine_error(string("this program requires ") + to_string(state::PROGRAM->num_args_needed()) + " arguments");
    
 	state::ARGUMENTS = margs;
    state::DATABASE = new database(filename, get_creation_function(_sched_type));
