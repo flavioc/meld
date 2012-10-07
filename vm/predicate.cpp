@@ -194,7 +194,8 @@ predicate::print(ostream& cout) const
    if(is_action)
       cout << ",action";
 	if(is_global_prio)
-		cout << ",global_prio=" << state::PROGRAM->get_priority_argument();
+		cout << ",global_prio/" << state::PROGRAM->get_priority_argument() << "=" <<
+			(state::PROGRAM->is_global_priority_asc() ? "asc" : "desc");
    
    cout << "]";
    
