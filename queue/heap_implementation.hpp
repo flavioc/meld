@@ -24,9 +24,6 @@ typedef union {
 		return heap.empty();				\
 	}
 	
-#define HEAP_DEFINE_INVALID_PRIORITY	\
-	static const int INVALID_PRIORITY = -1
-	
 #define HEAP_DEFINE_UTILS								\
 	inline int left(const int parent) const		\
 	{															\

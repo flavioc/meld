@@ -13,13 +13,13 @@ public:  											\
 #define DEFINE_PRIORITY_NODE(TYPE)				\
 public:													\
 	bool __intrusive_in_priority_queue;			\
-	int __intrusive_priority;						\
+	heap_priority __intrusive_priority;			\
 	int __intrusive_pos;								\
-	inline int get_intrusive_priority(void) const { return __intrusive_priority; }	\
-	inline void set_intrusive_priority(const int n) { __intrusive_priority = n; }
+	inline heap_priority get_intrusive_priority(void) const { return __intrusive_priority; }	\
+	inline void set_intrusive_priority(const heap_priority n) { __intrusive_priority = n; }
 
 #define INIT_PRIORITY_NODE()			\
-	__intrusive_in_priority_queue(false), __intrusive_priority(0), __intrusive_pos(0)
+	__intrusive_in_priority_queue(false), __intrusive_pos(0)
 		
 #define INIT_DOUBLE_QUEUE_NODE()		\
 	__intrusive_next(NULL), __intrusive_prev(NULL), __intrusive_in_queue(false)

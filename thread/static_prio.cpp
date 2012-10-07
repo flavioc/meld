@@ -134,7 +134,7 @@ static_local_prio::add_prio_tuple(node_work node_new_work, thread_intrusive_node
 #ifdef PROFILE_QUEUE
 				prio_moved_pqueue++;
 #endif
-				gprio_queue.move_node(to, min_now.int_priority);
+				gprio_queue.move_node(to, min_now);
 			}
 		} else {
 			if(node_queue::in_queue(to)) {
@@ -148,7 +148,7 @@ static_local_prio::add_prio_tuple(node_work node_new_work, thread_intrusive_node
 #ifdef PROFILE_QUEUE
 			prio_add_pqueue++;
 #endif
-			gprio_queue.insert(to, to->get_min_value().int_priority);
+			gprio_queue.insert(to, to->get_min_value());
 		}
 			
 		assert(global_prioqueue::in_queue(to));
@@ -323,7 +323,7 @@ bool
 static_local_prio::check_if_current_useless(void)
 {
 	if(!gprio_queue.empty() && current_node->has_prio_work()) {
-		const int current_min(gprio_queue.min_value());
+		const heap_priority current_min(gprio_queue.min_value());
 		const heap_priority node_min(current_node->get_min_value());
 		
 #ifdef PROFILE_QUEUE
@@ -333,16 +333,16 @@ static_local_prio::check_if_current_useless(void)
 		bool is_current_best(false);
 
 		switch(priority_type) {
-			case HEAP_INT_ASC: is_current_best = (current_min < node_min.int_priority); break;
-			case HEAP_INT_DESC: is_current_best = (current_min > node_min.int_priority); break;
-			case HEAP_FLOAT_ASC: is_current_best = (current_min < node_min.int_priority); break; // XXX
-			case HEAP_FLOAT_DESC: assert(false); // XXX
+			case HEAP_INT_ASC: is_current_best = (current_min.int_priority < node_min.int_priority); break;
+			case HEAP_INT_DESC: is_current_best = (current_min.int_priority > node_min.int_priority); break;
+			case HEAP_FLOAT_ASC: is_current_best = (current_min.float_priority < node_min.float_priority); break;
+			case HEAP_FLOAT_DESC: is_current_best = (current_min.float_priority > node_min.float_priority); break;
 			default: assert(false);
 		}
 		
 		if(is_current_best) {
 			// put back into priority queue
-			gprio_queue.insert(current_node, node_min.int_priority);
+			gprio_queue.insert(current_node, node_min);
 			assert(global_prioqueue::in_queue(current_node));
 			current_node = gprio_queue.pop();
 #ifdef PROFILE_QUEUE
@@ -536,6 +536,8 @@ static_local_prio::init(const size_t)
 	} else {
 		priority_type = HEAP_INT_ASC;
 	}
+
+	gprio_queue.set_type(priority_type);
 
    database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
    database::map_nodes::iterator end(state::DATABASE->get_node_iterator(remote::self->find_last_node(id)));

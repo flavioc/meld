@@ -15,9 +15,12 @@ private:
 	
 	typedef T* heap_object;
 
-#define HEAP_GET_PRIORITY(OBJ) __INTRUSIVE_PRIORITY(OBJ)
+	heap_type typ;
+
+#define HEAP_GET_PRIORITY(OBJ) ((typ == HEAP_INT_ASC || typ == HEAP_INT_DESC) ? \
+					(__INTRUSIVE_PRIORITY(OBJ).int_priority) : (__INTRUSIVE_PRIORITY(OBJ).float_priority))
 #define HEAP_GET_POS(OBJ) __INTRUSIVE_POS(OBJ)
-#define HEAP_COMPARE(V1, V2) ((V1) <= (V2))
+#define HEAP_COMPARE(V1, V2) ((typ == HEAP_INT_ASC || typ == HEAP_FLOAT_ASC) ? ((V1) <= (V2)) : ((V1) >= (V2)))
 
 	HEAP_DEFINE_UTILS;
 	
@@ -27,7 +30,7 @@ private:
 	
 	HEAP_DEFINE_DATA;
 	
-	void do_insert(heap_object node, const int prio)
+	void do_insert(heap_object node, const heap_priority prio)
 	{
 		__INTRUSIVE_PRIORITY(node) = prio;
 		__INTRUSIVE_IN_PRIORITY_QUEUE(node) = true;
@@ -74,23 +77,18 @@ public:
 	
 	HEAP_DEFINE_EMPTY;
 	
-	HEAP_DEFINE_INVALID_PRIORITY;
-	
 	static inline bool in_queue(heap_object node)
 	{
    	return __INTRUSIVE_IN_PRIORITY_QUEUE(node);
 	}
 	
-	void insert(heap_object node, const int prio)
+	void insert(heap_object node, const heap_priority prio)
 	{
 		do_insert(node, prio);
 	}
 	
-	int min_value(void) const
+	heap_priority min_value(void) const
 	{
-		if(empty())
-			return INVALID_PRIORITY;
-			
 		return __INTRUSIVE_PRIORITY(heap.front());
 	}
 	
@@ -104,13 +102,20 @@ public:
 		do_remove(obj);
 	}
 	
-	void move_node(heap_object node, const int new_prio)
+	void move_node(heap_object node, const heap_priority new_prio)
 	{
 		remove(node);
 		insert(node, new_prio);
 	}
+
+	void set_type(const heap_type _typ)
+	{
+		typ = _typ;
+	}
 	
 	intrusive_safe_complex_pqueue(void) {}
+
+	intrusive_safe_complex_pqueue(const heap_type _typ): typ(_typ) {}
 	
 	~intrusive_safe_complex_pqueue(void)
    {

@@ -38,8 +38,6 @@ private:
 
 public:
 	
-	HEAP_DEFINE_INVALID_PRIORITY;
-	
 	HEAP_DEFINE_EMPTY;
 	
 	class const_iterator
