@@ -23,13 +23,6 @@
 namespace vm
 {
 
-typedef union {
-	int_val int_field;
-	float_val float_field;
-	node_val node_field;
-	ptr_val ptr_field;
-} tuple_field;
-
 class tuple: public mem::base
 {
 private:
