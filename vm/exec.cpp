@@ -1083,37 +1083,37 @@ read_call_arg(argument& arg, const field_type type, pcounter& m, state& state)
    switch(type) {
       case FIELD_INT: {
          const int_val val(get_op_function<int_val>(val_type, m, state));
-         TO_ARG(val, arg);
+			arg.int_field = val;
       }
       break;
       case FIELD_FLOAT: {
          const float_val val(get_op_function<float_val>(val_type, m, state));
-         TO_ARG(val, arg);
+			arg.float_field = val;
       }
       break;
       case FIELD_NODE: {
          const node_val val(get_op_function<node_val>(val_type, m, state));
-         TO_ARG(val, arg);
+			arg.node_field = val;
       }
       break;
       case FIELD_LIST_FLOAT: {
          const float_list *val(get_op_function<float_list*>(val_type, m, state));
-         TO_ARG(val, arg);
+			arg.ptr_field = (ptr_val)val;
       }
       break;
       case FIELD_LIST_INT: {
          const int_list *val(get_op_function<int_list*>(val_type, m, state));
-         TO_ARG(val, arg);
+			arg.ptr_field = (ptr_val)val;
       }
       break;
 		case FIELD_LIST_NODE: {
 			const node_list *val(get_op_function<node_list*>(val_type, m, state));
-			TO_ARG(val, arg);
+			arg.ptr_field = (ptr_val)val;
 		}
 		break;
 		case FIELD_STRING: {
 			const rstring::ptr val(get_op_function<rstring::ptr>(val_type, m, state));
-			TO_ARG(val, arg);
+			arg.ptr_field = (ptr_val)val;
 		}
 		break;
       default:
@@ -1178,16 +1178,16 @@ execute_call(pcounter pc, state& state)
    
    switch(ret_type) {
       case FIELD_INT:
-         state.set_int(reg, FROM_ARG(ret, int_val));
+         state.set_int(reg, ret.int_field);
          break;
       case FIELD_FLOAT:
-         state.set_float(reg, FROM_ARG(ret, float_val));
+         state.set_float(reg, ret.float_field);
          break;
       case FIELD_NODE:
-         state.set_node(reg, FROM_ARG(ret, node_val));
+         state.set_node(reg, ret.node_field);
          break;
 		case FIELD_STRING: {
-			rstring::ptr s(FROM_ARG(ret, rstring::ptr));
+			rstring::ptr s((rstring::ptr)ret.ptr_field);
 			
 			state.set_string(reg, s);
 			state.add_string(s);
@@ -1195,15 +1195,15 @@ execute_call(pcounter pc, state& state)
 			break;
 		}
       case FIELD_LIST_FLOAT: {
-         float_list *l(FROM_ARG(ret, float_list*));
+         float_list *l((float_list *)ret.ptr_field);
 
-         state.set_float_list(reg, FROM_ARG(ret, float_list*));
+         state.set_float_list(reg, l);
          if(!float_list::is_null(l))
             state.add_float_list(l);
          break;
       }
       case FIELD_LIST_INT: {
-         int_list *l(FROM_ARG(ret, int_list*));
+         int_list *l((int_list *)ret.ptr_field);
          state.set_int_list(reg, l);
 
          if(!int_list::is_null(l))
@@ -1211,7 +1211,7 @@ execute_call(pcounter pc, state& state)
          break;
       }
 		case FIELD_LIST_NODE: {
-			node_list *l(FROM_ARG(ret, node_list*));
+			node_list *l((node_list *)ret.ptr_field);
 			state.set_node_list(reg, l);
 			if(!node_list::is_null(l))
 				state.add_node_list(l);
