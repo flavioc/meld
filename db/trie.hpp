@@ -184,6 +184,8 @@ public:
 
    MEM_METHODS(tuple_trie_leaf)
    
+	inline vm::tuple *get_underlying_tuple(void) const { return tpl->get_tuple(); }
+	
    inline simple_tuple *get_tuple(void) const { return tpl; }
    
    virtual inline size_t get_count(void) const { return tpl->get_count(); }
