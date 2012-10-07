@@ -459,7 +459,7 @@ function field_to_string(field_data, type)
 	if(type == 'int')
 		return field_data.toString();
 	else if(type == 'float')
-		return field_data.toString();
+		return field_data.toFixed(2).toString();
 	else if(type == 'node')
 		return '@' + get_translated_id(field_data);
 	else if(type == 'string')
