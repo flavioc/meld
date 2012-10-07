@@ -289,10 +289,14 @@ execute_send(const pcounter& pc, state& state)
    simple_tuple *stuple(new simple_tuple(tuple, state.count));
 
    if(msg == dest) {
-      //cout << "sending " << *stuple << " to self" << endl;
+#ifdef DEBUG_MODE
+      cout << "\t" << *stuple << " -> self" << endl;
+#endif
       state::MACHINE->route_self(state.proc, state.node, stuple);
    } else {
-      //cout << "sending " << *stuple << " to " << dest_val << endl;
+#ifdef DEBUG_MODE
+      cout << "\t" << *stuple << " -> " << dest_val << endl;
+#endif
       state::MACHINE->route(state.node, state.proc, (node::node_id)dest_val, stuple);
    }
 }
@@ -1128,6 +1132,7 @@ execute_remove(pcounter pc, state& state)
 #endif
 
 	if(state.is_it_a_leaf(reg)) {
+		//cout << "Remove " << *state.get_tuple(reg) << endl;
    	state.node->delete_by_leaf(state.get_tuple(reg)->get_predicate(), state.get_leaf(reg));
 	} else {
 		//cout << "Remove by queue" << endl;
@@ -1224,8 +1229,11 @@ execute(pcounter pc, state& state)
    {
 eval_loop:
 
-		// instr_print_simple(pc, 0, state.PROGRAM, cout);
-      
+#ifdef DEBUG_MODE
+		if(state.print_instrs)
+			instr_print_simple(pc, 0, state.PROGRAM, cout);
+#endif      
+
       switch(fetch(pc)) {
          case RETURN_INSTR: return RETURN_OK;
          

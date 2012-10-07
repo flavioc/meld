@@ -19,6 +19,9 @@
 /* activate tuple matching using the trie structure */
 #define TRIE_MATCHING 1
 
+/* activate debug mode */
+// #define DEBUG_MODE 1
+
 /* activate special code for testing trie matching */
 // #define TRIE_MATCHING_ASSERT 1
 

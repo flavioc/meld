@@ -4,6 +4,7 @@
 
 #include <list>
 
+#include "conf.hpp"
 #include "vm/tuple.hpp"
 #include "db/node.hpp"
 #include "vm/program.hpp"
@@ -82,6 +83,9 @@ public:
    bool is_linear;
    list_linear used_linear_tuples;
 	utils::randgen randgen;
+#ifdef DEBUG_MODE
+	bool print_instrs;
+#endif
    
    static program *PROGRAM;
    static db::database *DATABASE;
@@ -161,11 +165,17 @@ public:
 	
    explicit state(process::process *_proc):
       proc(_proc)
+#ifdef DEBUG_MODE
+		, print_instrs(false)
+#endif
    {
    }
 
 	explicit state(void):
 		proc(NULL)
+#ifdef DEBUG_MODE
+		, print_instrs(false)
+#endif
 	{
 	}
 };

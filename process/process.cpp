@@ -147,6 +147,14 @@ process::do_work(work& w)
 		delete tuple;
 	   return;
 	}
+	
+	assert(count != 0);
+
+#ifdef DEBUG_MODE
+   cout << node->get_id() << " " << *tuple << endl;
+   
+	//string name(tuple->get_predicate()->get_name());
+#endif
    
    if(w.locally_generated())
       node->pop_auto(stuple.get());
