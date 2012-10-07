@@ -11,10 +11,9 @@
 #include "sched/thread/threaded.hpp"
 #include "queue/safe_complex_pqueue.hpp"
 
-//#define PRIO_NORMAL
+// #define PRIO_NORMAL
 //#define PRIO_HEAD
 #define PRIO_OPT
-//#define PRIO_INVERSE
 
 namespace sched
 {
@@ -29,9 +28,11 @@ protected:
    typedef queue::intrusive_safe_double_queue<thread_intrusive_node> node_queue;
    node_queue queue_nodes;
 
+	typedef queue::intrusive_safe_complex_pqueue<thread_intrusive_node> global_prioqueue;
+
 	DEFINE_PADDING;
 	
-	node_queue prio_queue;
+	global_prioqueue prio_queue;
    
    DEFINE_PADDING;
    
@@ -39,9 +40,9 @@ protected:
 
 	heap_type priority_type;
 
-	typedef queue::intrusive_safe_complex_pqueue<thread_intrusive_node> global_prioqueue;
 	global_prioqueue gprio_queue;
 	
+	// buffer
 	queue::push_safe_linear_queue<process::work> prio_tuples;
 	
    virtual void assert_end(void) const;
@@ -54,16 +55,23 @@ protected:
    virtual bool busy_wait(void);
 	void add_prio_tuple(process::node_work, thread_intrusive_node *, db::simple_tuple *);
 	void retrieve_prio_tuples(void);
+
+	inline void add_to_priority_queue(thread_intrusive_node *node)
+	{
+		heap_priority pr;
+		pr.int_priority = node->get_priority_level();
+		prio_queue.insert(node, pr);
+		node->unmark_priority();
+		node->set_is_in_prioqueue(true);
+	}
    
    inline void add_to_queue(thread_intrusive_node *node)
    {
 #ifdef PRIO_NORMAL
 		queue_nodes.push_tail(node);
-#elif defined(PRIO_OPT) || defined(PRIO_INVERSE)
+#elif defined(PRIO_OPT)
 		if(node->with_priority()) {
-			prio_queue.push_tail(node);
-			node->unmark_priority();
-			node->set_is_in_prioqueue(true);
+			add_to_priority_queue(node);
 		} else {
 			node->set_is_in_prioqueue(false);
       	queue_nodes.push_tail(node);
@@ -90,6 +98,7 @@ public:
    virtual bool terminate_iteration(void);
    
    virtual void set_node_priority(db::node *, const int);
+	virtual void add_node_priority(db::node *, const int);
    
    static_local_prio *find_scheduler(const db::node *);
 	virtual db::simple_tuple_list gather_active_tuples(db::node *, const vm::predicate_id);

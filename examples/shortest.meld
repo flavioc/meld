@@ -1,23 +1,16 @@
 
-include #buggy-shortest.meld
+include #shortest-data.meld
 
 type linear path(node, int, int).
-type linear dest(node).
 
-prio type path 2.
+prio type path/2 asc.
 
 const finalnode = @4.
 const startnode = @1.
 const used = 1.
 const notused = 0.
 
-/* original: !edge(@1, @3, 4).  !edge(@1, @2, 1).  !edge(@2, @4, 1).  !edge(@3, @4, 1).  */
-/* linear: !edge(@1, @2, 1). !edge(@2, @3, 1). !edge(@3, @4, 1). */
-
-dest(finalnode).
-
-dest(A) -o
-   {B, W | !edge(B, A, W) | path(B, W, notused)}.
+path(finalnode, 0, 0).
 
 path(A, B, used), path(A, B, notused)
 	-o path(A, B, used).

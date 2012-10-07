@@ -29,7 +29,6 @@ static atomic<size_t> prio_add_pqueue(0);
 static atomic<size_t> prio_removed_pqueue(0);
 static atomic<size_t> prio_nodes_compared(0);
 static atomic<size_t> prio_nodes_changed(0);
-static execution_time queue_time;
 #endif
 
 namespace sched
@@ -170,10 +169,6 @@ static_local_prio::new_work(const node *, work& new_work)
 	db::simple_tuple *stpl(node_new_work.get_tuple());
 	const vm::predicate *pred(stpl->get_predicate());
 	
-#ifdef PROFILE_QUEUE
-	queue_time.start();
-#endif
-	
 	if(pred->is_global_priority()) {
 		add_prio_tuple(node_new_work, to, stpl);
 	} else {
@@ -194,9 +189,6 @@ static_local_prio::new_work(const node *, work& new_work)
    }
 
 	assert(to->in_queue());
-#ifdef PROFILE_QUEUE
-	queue_time.stop();
-#endif
 }
 
 void
@@ -322,13 +314,30 @@ static_local_prio::finish_work(const work& work)
 bool
 static_local_prio::check_if_current_useless(void)
 {
-	if(!gprio_queue.empty() && current_node->has_prio_work()) {
+	if(!prio_queue.empty() && current_node->is_in_prioqueue() && current_node->has_work()) {
+		// there could be higher priority nodes around
+		const heap_priority current_min(prio_queue.min_value());
+
+		if(current_min.int_priority < current_node->get_priority_level()) {
+			// put this node back into the priority queue and use the higher priority one
+			heap_priority node_pr;
+			node_pr.int_priority = current_node->get_priority_level();
+			assert(current_node->__intrusive_priority.int_priority == current_node->get_priority_level());
+#ifdef DEBUG_PRIORITIES
+			//cout << "Node in queue has higher priority: " << current_min.int_priority << " vs " << node_pr.int_priority << endl;
+#endif
+			prio_queue.insert(current_node, node_pr);
+			current_node = prio_queue.pop();
+		}
+	} else if(!gprio_queue.empty() && current_node->has_prio_work()) {
 		const heap_priority current_min(gprio_queue.min_value());
 		const heap_priority node_min(current_node->get_min_value());
 		
 #ifdef PROFILE_QUEUE
 		prio_nodes_compared++;
 #endif
+
+		assert(!current_node->is_in_prioqueue());
 
 		bool is_current_best(false);
 
@@ -361,6 +370,8 @@ static_local_prio::check_if_current_useless(void)
       if(!current_node->has_work()) {
          if(!node_queue::in_queue(current_node)) {
             current_node->set_in_queue(false);
+				current_node->set_is_in_prioqueue(false);
+				current_node->set_priority_level(0);
             assert(!current_node->in_queue());
          }
 			current_node = NULL;
@@ -394,28 +405,18 @@ static_local_prio::set_next_node(void)
 		}
 #ifdef PRIO_OPT
 		if(!prio_queue.empty()) {
-			const bool suc(prio_queue.pop(current_node));
-			if(!suc)
-				continue;
+			current_node = prio_queue.pop();
 		} else if(!queue_nodes.empty()) {
 			const bool suc(queue_nodes.pop(current_node));
 			if(!suc)
 				continue;
 		}
-#elif defined(PRIO_INVERSE)
-		if(!queue_nodes.empty()) {
-			const bool suc(queue_nodes.pop(current_node));
-			if(!suc)
-				continue;
-		} else if(!prio_queue.empty()) {
-			const bool suc(prio_queue.pop(current_node));
-			if(!suc)
-				continue;
-		}
 #else
-		const bool suc(queue_nodes.pop(current_node));
+		{
+			const bool suc(queue_nodes.pop(current_node));
 		
-		assert(suc);
+			assert(suc);
+		}
 #endif
 
 loop_check:
@@ -465,48 +466,108 @@ void
 static_local_prio::end(void)
 {
 #ifndef PRIO_NORMAL
-#ifdef DEBUG_PRIORITIES
+#if defined(DEBUG_PRIORITIES) && defined(PROFILE_QUEUE) && defined(PRIO_OPT)
 	cout << "prio_immediate: " << prio_immediate << endl;
 	cout << "prio_marked: " << prio_marked << endl;
 	cout << "prio_count: " << prio_count << endl;
 #endif
 #ifdef PROFILE_QUEUE
-	cout << "Moved nodes in priority queue count: " << prio_moved_pqueue << endl;
-	cout << "Removed from normal queue count: " << prio_removed_pqueue << endl;
-	cout << "Added to priority queue count: " << prio_add_pqueue << endl;
-	cout << "Changed nodes count: " << prio_nodes_changed << endl;
-	cout << "Compared nodes count: " << prio_nodes_compared << endl;
+	if(state::PROGRAM->has_global_priority()) {
+		cout << "Moved nodes in priority queue count: " << prio_moved_pqueue << endl;
+		cout << "Removed from normal queue count: " << prio_removed_pqueue << endl;
+		cout << "Added to priority queue count: " << prio_add_pqueue << endl;
+		cout << "Changed nodes count: " << prio_nodes_changed << endl;
+		cout << "Compared nodes count: " << prio_nodes_compared << endl;
+	}
 #endif
 #endif
-#ifdef PROFILE_QUEUE
-	cout << "Queue time: " << queue_time.milliseconds() << " ms" << endl;
+	
+#if defined(PRIO_OPT) && defined(DEBUG_PRIORITIES)
+	size_t total_prioritized(0);
+	size_t total_nonprioritized(0);
+	
+   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
+   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(remote::self->find_last_node(id)));
+   
+   for(; it != end; ++it)
+   {
+      thread_intrusive_node *cur_node((thread_intrusive_node*)it->second);
+		
+		if(cur_node->has_been_prioritized)
+			++total_prioritized;
+		else
+			++total_nonprioritized;
+	}
+	
+	cout << "Number of prioritized nodes: " << total_prioritized << endl;
+	cout << "Number of non prioritized nodes: " << total_nonprioritized << endl;
 #endif
 }
 
 void
-static_local_prio::set_node_priority(node *n, const int)
+static_local_prio::add_node_priority(node *n, const int priority)
+{
+#ifdef PRIO_OPT
+	thread_intrusive_node *tn((thread_intrusive_node*)n);
+
+	const int old_prio(tn->get_priority_level());
+
+	set_node_priority(n, old_prio + priority);
+#else
+	(void)n;
+	(void)priority;
+#endif
+}
+
+void
+static_local_prio::set_node_priority(node *n, const int priority)
 {
 #ifdef PRIO_NORMAL
 	(void)n;
 #elif defined(PRIO_HEAD)
 	(void)n;
-#elif defined(PRIO_OPT) || defined(PRIO_INVERSE)
+#elif defined(PRIO_OPT)
 	thread_intrusive_node *tn((thread_intrusive_node*)n);
+	
+	tn->has_been_prioritized = true;
 	
 	if(tn->in_queue()) {
 #ifdef PROFILE_QUEUE
 		prio_immediate++;
 #endif
-		if(!tn->is_in_prioqueue()) {
-			queue_nodes.remove(tn);
-			prio_queue.push_tail(tn);
-			tn->set_is_in_prioqueue(true);
+		if(tn->is_in_prioqueue()) {
+			if(tn != current_node) {
+				if(tn->get_priority_level() != priority) {
+					heap_priority pr;
+					pr.int_priority = priority;
+#ifdef DEBUG_PRIORITIES
+					//cout << "Changing node priority " << tn->get_id() << " (" << tn->get_priority_level() << ") to" << priority << endl;
+#endif
+					tn->set_priority_level(priority);
+					prio_queue.move_node(tn, pr);
+				}
+			}
+		} else {
+			tn->set_priority_level(priority);
+#ifdef DEBUG_PRIORITIES
+			//cout << "Add node " << tn->get_id() << " with priority " << priority << endl;
+#endif
+			if(tn != current_node) {
+				queue_nodes.remove(tn);
+				add_to_priority_queue(tn);
+			} else {
+				// add_to_priority_queue already does this...
+				tn->set_is_in_prioqueue(true);
+			}
 		}
 		assert(tn->is_in_prioqueue());
+		assert(tn->get_priority_level() == priority);
 	} else {
 #ifdef PROFILE_QUEUE
 		prio_marked++;
 #endif
+		assert(tn != current_node);
+		tn->set_priority_level(priority);
 		tn->mark_priority();
 	}
 #endif
@@ -525,15 +586,22 @@ static_local_prio::init(const size_t)
 
 		switch(p->get_field_type(field)) {
 			case FIELD_INT:
-				priority_type = HEAP_INT_ASC;
+				if(state::PROGRAM->is_global_priority_asc())
+					priority_type = HEAP_INT_ASC;
+				else
+					priority_type = HEAP_INT_DESC;
 				break;
 			case FIELD_FLOAT:
-				priority_type = HEAP_FLOAT_ASC;
+				if(state::PROGRAM->is_global_priority_asc())
+					priority_type = HEAP_FLOAT_ASC;
+				else
+					priority_type = HEAP_FLOAT_DESC;
 				break;
 			default:
 				assert(false);
 		}
 	} else {
+		// never used
 		priority_type = HEAP_INT_ASC;
 	}
 
@@ -612,6 +680,7 @@ static_local_prio::write_slice(statistics::slice& sl) const
 
 static_local_prio::static_local_prio(const vm::process_id _id):
    base(_id),
+	prio_queue(HEAP_INT_DESC),
    current_node(NULL)
 {
 }
