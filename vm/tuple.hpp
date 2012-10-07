@@ -90,6 +90,7 @@ public:
 
 #undef define_get
 
+	inline bool is_persistent(void) const { return pred->is_persistent_pred(); }
    inline bool is_aggregate(void) const { return pred->is_aggregate(); }
    inline bool is_linear(void) const { return pred->is_linear_pred(); }
    inline bool is_action(void) const { return pred->is_action_pred(); }
