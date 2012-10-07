@@ -28,10 +28,11 @@ static const size_t PREDICATE_DESCRIPTOR_SIZE = sizeof(code_size_t) +
                                                 PRED_NAME_SIZE_MAX +
                                                 PRED_AGG_INFO_MAX;
 strat_level program::MAX_STRAT_LEVEL(0);
-size_t SETPRIO_PREDICATE_ID(1);
+size_t SET_PRIORITY_PREDICATE_ID(1);
 size_t SETCOLOR_PREDICATE_ID(2);
 size_t SETEDGELABEL_PREDICATE_ID(3);
 size_t WRITE_STRING_PREDICATE_ID(4);
+size_t ADD_PRIORITY_PREDICATE_ID(5);
 
 #define READ_CODE(TO, SIZE) do { \
 	fp.read((char *)(TO), SIZE);	\
@@ -127,14 +128,16 @@ program::program(const string& filename):
 		
 		const string name(predicates[i]->get_name());
 
-		if(name == "setprio")
-			SETPRIO_PREDICATE_ID = i;
+		if(name == "set-priority")
+			SET_PRIORITY_PREDICATE_ID = i;
 		else if(name == "setcolor")
 			SETCOLOR_PREDICATE_ID = i;
 		else if(name == "setedgelabel")
 			SETEDGELABEL_PREDICATE_ID = i;
-		else if(name == "write_string")
+		else if(name == "write-string")
 			WRITE_STRING_PREDICATE_ID = i;
+		else if(name == "add-priority")
+			ADD_PRIORITY_PREDICATE_ID = i;
       
       if(predicates[i]->is_route_pred())
          route_predicates.push_back(predicates[i]);

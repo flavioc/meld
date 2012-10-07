@@ -56,13 +56,19 @@ void
 machine::route_self(process *proc, node *node, simple_tuple *stpl)
 {
 	sched::base *sched(proc->get_scheduler());
+	const predicate_id pid(stpl->get_predicate_id());
 
-	if(stpl->get_predicate_id() == SETPRIO_PREDICATE_ID) {
+	if(pid == SET_PRIORITY_PREDICATE_ID) {
 		vm::tuple *tpl(stpl->get_tuple());
 		sched->set_node_priority(node, tpl->get_int(0));
 		delete tpl;
 		delete stpl;
-	} else if(stpl->get_predicate_id() == WRITE_STRING_PREDICATE_ID) {
+	} else if(pid == ADD_PRIORITY_PREDICATE_ID) {
+		vm::tuple *tpl(stpl->get_tuple());
+		sched->add_node_priority(node, tpl->get_int(0));
+		delete tpl;
+		delete stpl;
+	} else if(pid == WRITE_STRING_PREDICATE_ID) {
 		vm::tuple *tpl(stpl->get_tuple());
 		runtime::rstring::ptr s(tpl->get_string(0));
 
@@ -91,9 +97,14 @@ machine::route(const node* from, process *caller, const node::node_id id, simple
       
       sched::base *sched_other(sched_caller->find_scheduler(node));
 
-		if(stpl->get_predicate_id() == SETPRIO_PREDICATE_ID) {
+		if(stpl->get_predicate_id() == SET_PRIORITY_PREDICATE_ID) {
 			vm::tuple *tpl(stpl->get_tuple());
 			sched_other->set_node_priority(node, tpl->get_int(0));
+			delete tpl;
+			delete stpl;
+		} else if(stpl->get_predicate_id() == ADD_PRIORITY_PREDICATE_ID) {
+			vm::tuple *tpl(stpl->get_tuple());
+			sched_other->add_node_priority(node, tpl->get_int(0));
 			delete tpl;
 			delete stpl;
 		} else {
