@@ -50,6 +50,48 @@ str2int(EXTERNAL_ARG(x))
 }
 
 argument
+truncate(EXTERNAL_ARG(x), EXTERNAL_ARG(many))
+{
+	DECLARE_FLOAT(x);
+	DECLARE_INT(many);
+
+	float den(pow(10.0, many));
+	float ret(floor(x*den)/den);
+
+	RETURN_FLOAT(ret);
+}
+
+argument
+float2int(EXTERNAL_ARG(x))
+{
+	DECLARE_FLOAT(x);
+
+	int ret((int)x);
+
+	RETURN_INT(ret);
+}
+
+argument
+int2str(EXTERNAL_ARG(x))
+{
+	DECLARE_INT(x);
+
+	rstring::ptr ptr(rstring::make_string(to_string(x)));
+
+	RETURN_STRING(ptr);
+}
+
+argument
+float2str(EXTERNAL_ARG(x))
+{
+	DECLARE_FLOAT(x);
+
+	rstring::ptr ptr(rstring::make_string(to_string(x)));
+
+	RETURN_STRING(ptr);
+}
+
+argument
 wastetime(EXTERNAL_ARG(x))
 {
 	DECLARE_INT(x);
