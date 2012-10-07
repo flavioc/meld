@@ -54,6 +54,7 @@ private:
 	
 	predicate *priority_pred;
 	field_num priority_argument;
+	bool priority_asc;
 
    void print_predicate_code(std::ostream&, predicate*) const;
    
@@ -63,6 +64,8 @@ public:
 
 	predicate *get_priority_predicate(void) const { return priority_pred; }
 	field_num get_priority_argument(void) const { return priority_argument; }
+	bool is_global_priority_asc(void) const { return priority_asc; }
+	bool is_global_priority_desc(void) const { return !priority_asc; }
 	bool has_global_priority(void) const { return priority_pred != NULL; }
 	
    predicate *get_predicate_by_name(const std::string&) const;

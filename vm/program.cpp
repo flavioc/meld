@@ -150,13 +150,16 @@ program::program(const string& filename):
 	
 	if(has_global) {
 		predicate_id pred;
+		byte asc_desc;
 		
 		READ_CODE(&pred, sizeof(predicate_id));
 		READ_CODE(&priority_argument, sizeof(field_num));
+		READ_CODE(&asc_desc, sizeof(byte));
 		
 		priority_pred = predicates[pred];
 		priority_argument -= 2;
 		priority_pred->set_global_priority();
+		priority_asc = (asc_desc ? true : false);
 	}
    
    // read predicate code
