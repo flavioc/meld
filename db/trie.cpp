@@ -951,18 +951,36 @@ tuple_trie::delete_tuple(vm::tuple *tpl, const ref_count many)
 
 void
 tuple_trie::print(ostream& cout) const
-{
-   //assert(!empty());
+{ 
+	static const size_t FACTS_PER_LINE(3);
+
+   assert(!empty());
    
-   cout << " " << *pred << ":" << endl;
+   cout << " ";
+  
+	pred->print_simple(cout);
+  	cout << endl;
+
+	size_t left_to_write(FACTS_PER_LINE);
    
    for(const_iterator it(begin());
       it != end();
       it++)
    {
       simple_tuple *stuple(*it);
-      cout << "\t" << *stuple << endl;
+		if(left_to_write == FACTS_PER_LINE)
+			cout << "\t";
+      cout << *stuple;
+		--left_to_write;
+		if(left_to_write == 0) {
+			left_to_write = FACTS_PER_LINE;
+			cout << endl;
+		} else
+			cout << " ";
    }
+
+	if(left_to_write > 0 && left_to_write != FACTS_PER_LINE)
+		cout << endl;
 }
 
 void

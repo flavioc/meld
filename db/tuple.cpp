@@ -41,7 +41,10 @@ simple_tuple::~simple_tuple(void)
 void
 simple_tuple::print(ostream& cout) const
 {
-   cout << *data << "@" << count;
+	cout << *data;
+	
+	if(count > 1)
+		cout << "@" << count;
 }
 
 ostream& operator<<(ostream& cout, const simple_tuple& tuple)

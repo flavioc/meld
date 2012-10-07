@@ -221,18 +221,46 @@ node::dump(ostream& cout) const
    }
 }
 
+typedef pair<string, tuple_trie*> str_trie;
+
+static inline bool
+trie_comparer(const str_trie& p1, const str_trie& p2)
+{
+	return p1.first < p2.first;
+}
+
 void
 node::print(ostream& cout) const
 {
-   cout << "--> node " << get_translated_id() << "/" << get_id()
-        << " (" << this << ") <--" << endl;
-   
+	typedef list<str_trie> list_str_trie;
+	list_str_trie ordered_tries;
+
+	// order tries by predicate name
    for(simple_tuple_map::const_iterator it(tuples.begin());
       it != tuples.end();
       ++it)
    {
-      it->second->print(cout);
-   }
+		tuple_trie *tr(it->second);
+		predicate_id id(it->first);
+      const predicate *pred(state::PROGRAM->get_predicate(id));
+
+		ordered_tries.push_back(str_trie(pred->get_name(), tr));
+	}
+
+	ordered_tries.sort(trie_comparer);
+
+   cout << "--> node " << get_translated_id() << "/(id " << get_id()
+        << ") (" << this << ") <--" << endl;
+   
+	for(list_str_trie::const_iterator it(ordered_tries.begin());
+			it != ordered_tries.end();
+			++it)
+	{
+		tuple_trie *tr(it->second);
+		
+		if(!tr->empty())
+			tr->print(cout);
+	}
 }
 
 #ifdef USE_UI
