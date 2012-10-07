@@ -238,6 +238,8 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
 					cout << "r";
 				if(iter_options_to_delete(opts))
 					cout << "d";
+				if(iter_options_min(opts))
+					cout << "m" << iter_options_min_arg(iter_options_argument(pc));
 
 				cout << ") MATCHING";
             

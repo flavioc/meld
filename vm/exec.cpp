@@ -776,16 +776,68 @@ build_match_object(match& m, pcounter pc, state& state, const predicate *pred)
    } while(!iter_match_end(match));
 }
 
+class tuple_sorter
+{
+private:
+	const predicate *pred;
+	const field_num field;
+	
+public:
+	
+	inline bool operator()(tuple_trie_leaf *l1, tuple_trie_leaf *l2)
+	{
+		tuple *t1(l1->get_underlying_tuple());
+		tuple *t2(l2->get_underlying_tuple());
+		
+		switch(pred->get_field_type(field)) {
+			case FIELD_INT:
+				return t1->get_int(field) < t2->get_int(field);
+			case FIELD_FLOAT:
+				return t1->get_float(field) < t2->get_float(field);
+			case FIELD_NODE:
+				return t1->get_node(field) < t2->get_node(field);
+			default:
+				throw vm_exec_error("don't know how to compare this field type (tuple_sorter)");
+		}
+		
+		assert(false);
+		return true;
+	}
+	
+	explicit tuple_sorter(const field_num _field, const predicate *_pred):
+		pred(_pred), field(_field)
+	{}
+};
+
 static inline return_type
-execute_iter(pcounter pc, const utils::byte options,
+execute_iter(pcounter pc, const utils::byte options, const utils::byte options_arguments,
 		pcounter first, state& state, tuple_vector& tuples, const predicate *pred)
 {
 	(void)pred;
 	
    const bool old_is_linear = state.is_linear;
+	db::simple_tuple_list active_tuples;
+
+   if(pred->is_linear_pred())
+   	active_tuples = state.proc->get_scheduler()->gather_active_tuples(state.node, pred->get_id());
 
 	if(iter_options_random(options)) {
 		utils::shuffle_vector(tuples, state.randgen);
+	} else if(iter_options_min(options)) {
+		const field_num field(iter_options_min_arg(options_arguments));
+		
+		//cout << "Sorting " << tuples.size() << endl;
+		
+		sort(tuples.begin(), tuples.end(), tuple_sorter(field, pred));
+	
+#if 0
+		for(tuple_vector::iterator it(tuples.begin()); it != tuples.end(); ++it) {
+			tuple_trie_leaf *tuple_leaf(*it);
+	      tuple *match_tuple(tuple_leaf->get_underlying_tuple());
+
+			cout << *match_tuple << endl;
+		}
+#endif
 	}
 
    for(tuple_vector::iterator it(tuples.begin());
@@ -793,8 +845,8 @@ execute_iter(pcounter pc, const utils::byte options,
       ++it)
    {
       tuple_trie_leaf *tuple_leaf(*it);
-      tuple *match_tuple(tuple_leaf->get_tuple()->get_tuple());
-      
+      tuple *match_tuple(tuple_leaf->get_underlying_tuple());
+
       const bool this_is_linear = match_tuple->is_linear();
       
       if(this_is_linear) {
@@ -847,7 +899,8 @@ execute_iter(pcounter pc, const utils::byte options,
    }
    
    if(pred->is_linear_pred()) {
-   	db::simple_tuple_list active_tuples(state.proc->get_scheduler()->gather_active_tuples(state.node, pred->get_id()));
+		//if(iter_options_random(options))
+		//	utils::shuffle_vector(active_tuples, state.randgen);
 		
 		for(db::simple_tuple_list::iterator it(active_tuples.begin()), end(active_tuples.end()); it != end; ++it) {
 			simple_tuple *stpl(*it);
@@ -1291,7 +1344,8 @@ eval_loop:
                state.node->match_predicate(pred_id, matches);
 #endif
 
-               const return_type ret(execute_iter(pc + ITER_BASE, iter_options(pc),
+               const return_type ret(execute_iter(pc + ITER_BASE,
+								iter_options(pc), iter_options_argument(pc),
 								advance(pc), state, matches, pred));
                   
                if(ret == RETURN_LINEAR)
