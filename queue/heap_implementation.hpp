@@ -88,8 +88,8 @@ typedef union {
 #define HEAP_DEFINE_HEAPIFYDOWN										\
 	void heapifydown(const int index)								\
 	{																			\
-		int l = left(index);												\
-		int r = right(index);											\
+		const int l = left(index);										\
+		const int r = right(index);									\
 		const bool hasleft = (l >= 0);								\
 		const bool hasright = (r >= 0);								\
 																				\
