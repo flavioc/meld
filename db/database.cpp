@@ -7,6 +7,7 @@ using namespace db;
 using namespace std;
 using namespace vm;
 using namespace process;
+using namespace utils;
 
 namespace db
 {
@@ -23,7 +24,7 @@ database::database(const string& filename, create_node_fn create_fn)
    
    ifstream fp(filename.c_str(), ios::in | ios::binary);
    
-   fp.seekg(sizeof(char) * 1, ios_base::cur);
+   fp.seekg(sizeof(byte), ios_base::cur);
    
    fp.read((char*)&num_nodes, sizeof(int_val));
    
