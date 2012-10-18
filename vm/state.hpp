@@ -41,6 +41,7 @@ private:
 	db::simple_tuple *saved_stuples[NUM_REGS];
 	bool is_leaf[NUM_REGS];
    
+   std::list<db::simple_tuple *, mem::allocator<db::simple_tuple *> > generated_tuples;
    std::list<runtime::float_list*, mem::allocator<runtime::float_list*> > free_float_list;
    std::list<runtime::int_list*, mem::allocator<runtime::int_list*> > free_int_list;
    std::list<runtime::node_list*, mem::allocator<runtime::node_list*> > free_node_list;
@@ -50,6 +51,9 @@ private:
    typedef std::list<pair_linear> list_linear;
 
 	static reg consts[MAX_CONSTS];
+
+   void purge_runtime_objects(void);
+   void unmark_generated_tuples(void);
 
 public:
 	
@@ -151,7 +155,7 @@ public:
    inline void add_int_list(runtime::int_list *ls) { free_int_list.push_back(ls); }
    inline void add_node_list(runtime::node_list *ls) { free_node_list.push_back(ls); }
 	inline void add_string(runtime::rstring::ptr str) { free_rstring.push_back(str); }
-   void purge_runtime_objects(void);
+   inline void add_generated_tuple(db::simple_tuple *tpl) { tpl->set_generated_run(true); generated_tuples.push_back(tpl); }
    
    void setup(vm::tuple*, db::node*, const ref_count);
    void cleanup(void);

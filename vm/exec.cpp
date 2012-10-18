@@ -293,6 +293,7 @@ execute_send(const pcounter& pc, state& state)
       cout << "\t" << *stuple << " -> self" << endl;
 #endif
       state::MACHINE->route_self(state.proc, state.node, stuple);
+      state.add_generated_tuple(stuple);
    } else {
 #ifdef DEBUG_MODE
       cout << "\t" << *stuple << " -> " << dest_val << endl;
@@ -816,10 +817,6 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 	(void)pred;
 	
    const bool old_is_linear = state.is_linear;
-	db::simple_tuple_list active_tuples;
-
-   if(pred->is_linear_pred())
-   	active_tuples = state.proc->get_scheduler()->gather_active_tuples(state.node, pred->get_id());
 
 	if(iter_options_random(options)) {
 		utils::shuffle_vector(tuples, state.randgen);
@@ -899,12 +896,16 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
    }
    
    if(pred->is_linear_pred()) {
+      db::simple_tuple_list active_tuples = state.proc->get_scheduler()->gather_active_tuples(state.node, pred->get_id());
+
 		//if(iter_options_random(options))
 		//	utils::shuffle_vector(active_tuples, state.randgen);
 		
 		for(db::simple_tuple_list::iterator it(active_tuples.begin()), end(active_tuples.end()); it != end; ++it) {
 			simple_tuple *stpl(*it);
 			tuple *tpl(stpl->get_tuple());
+
+         assert(stpl->can_be_consumed());
 			
 	      if(!do_matches(pc, tpl, state))
 				continue;

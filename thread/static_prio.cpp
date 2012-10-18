@@ -651,7 +651,7 @@ static_local_prio::gather_active_tuples(db::node *node, const vm::predicate_id p
 			node_work w(*it);
 			simple_tuple *stpl(w.get_tuple());
 		
-			if(!stpl->must_be_deleted())
+			if(stpl->can_be_consumed())
 				ls.push_back(stpl);
 		}
 	} else {
@@ -659,7 +659,7 @@ static_local_prio::gather_active_tuples(db::node *node, const vm::predicate_id p
 			node_work w(*it);
 			simple_tuple *stpl(w.get_tuple());
 		
-			if(!stpl->must_be_deleted() && stpl->get_predicate_id() == pred)
+			if(stpl->can_be_consumed() && stpl->get_predicate_id() == pred)
 				ls.push_back(stpl);
 		}
 	}

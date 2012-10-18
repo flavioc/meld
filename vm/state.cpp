@@ -102,10 +102,26 @@ state::purge_runtime_objects(void)
 }
 
 void
+state::unmark_generated_tuples(void)
+{
+   for(list<db::simple_tuple *>::iterator it(generated_tuples.begin()), end(generated_tuples.end());
+         it != end;
+         ++it)
+   {
+      simple_tuple *stpl(*it);
+      stpl->set_generated_run(false);
+   }
+
+   generated_tuples.clear();
+}
+
+void
 state::cleanup(void)
 {
    purge_runtime_objects();
+   unmark_generated_tuples();
    assert(used_linear_tuples.empty());
+   assert(generated_tuples.empty());
 }
 
 void
