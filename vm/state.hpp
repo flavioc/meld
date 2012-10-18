@@ -84,6 +84,7 @@ public:
    bool is_linear;
    list_linear used_linear_tuples;
 	utils::randgen randgen;
+   size_t current_rule;
 #ifdef DEBUG_MODE
 	bool print_instrs;
 #endif

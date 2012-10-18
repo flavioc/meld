@@ -35,6 +35,9 @@ class program
 private:
 
 	size_t num_args;
+   size_t num_rules;
+
+   std::vector<std::string> rule_strings;
    
    std::vector<predicate*> predicates;
   
@@ -66,6 +69,8 @@ public:
    static strat_level MAX_STRAT_LEVEL;
 
 	inline size_t num_args_needed(void) const { return num_args; }
+
+   inline std::string get_rule_string(const size_t id) const { return rule_strings[id]; }
 
 	predicate *get_priority_predicate(void) const { return priority_pred; }
 	field_num get_priority_argument(void) const { return priority_argument; }

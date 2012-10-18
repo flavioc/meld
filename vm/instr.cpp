@@ -374,6 +374,16 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
             
          }
          break;
+      case RULE_INSTR: {
+            const size_t rule_id(rule_get_id(pc));
+
+            cout << "RULE " << rule_id << endl;
+        }
+        break;
+      case RULE_DONE_INSTR:
+            cout << "RULE DONE" << endl;
+         break;
+
     	case ELSE_INSTR:
 		default:
          throw malformed_instr_error("unknown instruction code");

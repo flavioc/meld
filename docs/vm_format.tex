@@ -18,10 +18,12 @@
 
 
 A VM program starts with a byte indicating the number of predicates $P$ in the
-program. Next, there are five main components:
+program. Next, there are several components:
 
 \begin{itemize}
 	\item An unsigned integer indicating the number $N$ of nodes to instantiate, followed by $2N$ unsigned integers corresponding to one pair of unsigned integers one for node. The first value is the node ID to use during execution and the second one the ID given by the user.
+   \item An unsigned integer indicating the number of arguments needed to run the program.
+   \item An unsigned integer describing the number of rules $R$ in the program. Followed by $R$ byte regions. Each region contains an unsigned integer, $N$, indicating the size of the rule and then $N$ bytes with the string for this rule.
 	\item An unsigned integer indicating the number $S$ of constant strings in the program followed by $S$ pairs containing the length of the string and the string itself.
 	\item A byte indicating the number of code constants $C$ and then $C$ bytes for the types of such constants. Finally, there's an unsigned integer describing the code size for computing the constants and the code itself.
 	\item A set of $P$ \emph{predicate descriptors}, with 69 bytes each.
@@ -208,6 +210,12 @@ INSTRUCTION & BYTE FORMAT & ARGS\\
 \begin{tabular}{lll}
 INSTRUCTION & BYTE FORMAT & ARGS\\
 \hline
+\\
+\inst{RULE} {0&0&0&1&0&0&0&0} {id} \\
+& rule \textit{id} is gonna be executed \\
+\\
+\inst{RULE DONE} {0&0&0&1&0&0&0&0} {} \\
+& rule \textit{id} has been matched \\
 \\
 \end{tabular}
 

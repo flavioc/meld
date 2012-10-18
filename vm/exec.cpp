@@ -1275,6 +1275,28 @@ execute_call(pcounter pc, state& state)
    }
 }
 
+static inline void
+execute_rule(const pcounter& pc, state& state)
+{
+   const size_t rule_id(rule_get_id(pc));
+
+   state.current_rule = rule_id;
+}
+
+static inline void
+execute_rule_done(const pcounter& pc, state& state)
+{
+   (void)pc;
+   (void)state;
+
+#if 0
+
+   const string rule_str(state::PROGRAM->get_rule_string(state.current_rule));
+
+   cout << "Rule applied " << rule_str << endl;
+#endif
+}
+
 static inline return_type
 execute(pcounter pc, state& state)
 {
@@ -1420,6 +1442,14 @@ eval_loop:
          case CALL_INSTR:
             execute_call(pc, state);
             break;
+
+         case RULE_INSTR:
+           execute_rule(pc, state);
+           break;
+
+         case RULE_DONE_INSTR:
+           execute_rule_done(pc, state);
+           break;
             
          default: throw vm_exec_error("unsupported instruction");
       }

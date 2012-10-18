@@ -58,6 +58,8 @@ const size_t RETURN_LINEAR_BASE  = 1;
 const size_t RETURN_DERIVED_BASE = 1;
 const size_t RESET_LINEAR_BASE   = 1 + jump_size;
 const size_t END_LINEAR_BASE     = 1;
+const size_t RULE_BASE           = 1 + uint_size;
+const size_t RULE_DONE_BASE      = 1;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -76,6 +78,8 @@ enum instr_type {
    DELETE_INSTR         =  0x0D,
    RESET_LINEAR_INSTR   =  0x0E,
    END_LINEAR_INSTR     =  0x0F,
+   RULE_INSTR           =  0x10,
+   RULE_DONE_INSTR      =  0x11,
    CALL_INSTR		      =  0x20,
    MOVE_INSTR		      =  0x30,
    ALLOC_INSTR		      =  0x40,
@@ -307,6 +311,9 @@ inline reg_num remove_source(const pcounter pc) { return reg_get(pc, 1); }
 /* RESET LINEAR */
 
 inline code_offset_t reset_linear_jump(const pcounter pc) { return jump_get(pc, 1); }
+
+/* RULE ID */
+inline size_t rule_get_id(const pcounter pc) { return pcounter_uint(pc + 1); }
 
 /* advance function */
 
@@ -638,6 +645,12 @@ advance(pcounter pc)
 
       case END_LINEAR_INSTR:
          return pc + END_LINEAR_BASE;
+
+      case RULE_INSTR:
+         return pc + RULE_BASE;
+
+      case RULE_DONE_INSTR:
+         return pc + RULE_DONE_BASE;
 				
       case ELSE_INSTR:
       default:

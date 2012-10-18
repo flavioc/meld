@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sys/stat.h>
 #include <iostream>
+#include <boost/static_assert.hpp>
 
 #include "vm/program.hpp"
 #include "db/tuple.hpp"
@@ -43,6 +44,9 @@ size_t ADD_PRIORITY_PREDICATE_ID(5);
 	position += (SIZE);	\
 } while(false)
 
+// most integers in the byte-code have 4 bytes
+BOOST_STATIC_ASSERT(sizeof(uint_val) == 4);
+
 program::program(const string& filename):
    init(NULL), priority_pred(NULL)
 {
@@ -67,9 +71,9 @@ program::program(const string& filename):
    state::NUM_PREDICATES = num_predicates;
 
    // skip nodes
-   int_val num_nodes;
-	READ_CODE(&num_nodes, sizeof(int_val));
-   
+   uint_val num_nodes;
+	READ_CODE(&num_nodes, sizeof(uint_val));
+
 	SEEK_CODE(num_nodes * database::node_size);
 
 	// get number of args needed
@@ -77,6 +81,32 @@ program::program(const string& filename):
 
 	READ_CODE(&n_args, sizeof(byte));
 	num_args = (size_t)n_args;
+
+   // get rule information
+   uint_val n_rules;
+
+   READ_CODE(&n_rules, sizeof(uint_val));
+
+   num_rules = n_rules;
+
+   rule_strings.reserve(num_rules);
+
+   for(size_t i(0); i < n_rules; ++i) {
+      // read rule string length
+      uint_val rule_len;
+
+      READ_CODE(&rule_len, sizeof(uint_val));
+
+      assert(rule_len > 0);
+
+      char str[rule_len + 1];
+
+      READ_CODE(str, sizeof(char) * rule_len);
+
+      str[rule_len] = '\0';
+
+      rule_strings.push_back(string(str));
+   }
 
 	// read string constants
 	int_val num_strings;
