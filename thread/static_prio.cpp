@@ -112,7 +112,7 @@ static_local_prio::add_prio_tuple(node_work node_new_work, thread_intrusive_node
 	if(to != current_node) {
 		spinlock::scoped_lock l(to->spin);
 			
-		if(global_prioqueue::in_queue(to)) {
+		if(priority_queue::in_queue(to)) {
 			assert(!node_queue::in_queue(to));
 				
 			const heap_priority min_now(to->get_min_value());
@@ -133,7 +133,7 @@ static_local_prio::add_prio_tuple(node_work node_new_work, thread_intrusive_node
 #ifdef PROFILE_QUEUE
 				prio_moved_pqueue++;
 #endif
-				gprio_queue.move_node(to, min_now);
+				prio_queue.move_node(to, min_now);
 			}
 		} else {
 			if(node_queue::in_queue(to)) {
@@ -147,10 +147,10 @@ static_local_prio::add_prio_tuple(node_work node_new_work, thread_intrusive_node
 #ifdef PROFILE_QUEUE
 			prio_add_pqueue++;
 #endif
-			gprio_queue.insert(to, to->get_min_value());
+			prio_queue.insert(to, to->get_min_value());
 		}
 			
-		assert(global_prioqueue::in_queue(to));
+		assert(priority_queue::in_queue(to));
 		assert(!node_queue::in_queue(to));
 			
 		if(!to->in_queue())
@@ -176,7 +176,7 @@ static_local_prio::new_work(const node *, work& new_work)
 		if(!to->in_queue()) {
 	      spinlock::scoped_lock l(to->spin);
 	      if(!to->in_queue()) {
-				if(!global_prioqueue::in_queue(to))
+				if(!priority_queue::in_queue(to))
 					add_to_queue(to);
 	         to->set_in_queue(true);
 	      }
@@ -231,7 +231,7 @@ static_local_prio::new_work_other(sched::base *, work& new_work)
 			static_local_prio *owner(dynamic_cast<static_local_prio*>(tnode->get_owner()));
 		
 			tnode->set_in_queue(true);
-			if(!global_prioqueue::in_queue(tnode))
+			if(!priority_queue::in_queue(tnode))
 				owner->add_to_queue(tnode);
 
       	if(this != owner) {
@@ -314,7 +314,9 @@ static_local_prio::finish_work(const work& work)
 bool
 static_local_prio::check_if_current_useless(void)
 {
-	if(!prio_queue.empty() && current_node->is_in_prioqueue() && current_node->has_work()) {
+	if(!state::PROGRAM->has_global_priority() &&
+         !prio_queue.empty() && taken_from_priority_queue && current_node->has_work())
+   {
 		// there could be higher priority nodes around
 		const heap_priority current_min(prio_queue.min_value());
 
@@ -328,16 +330,17 @@ static_local_prio::check_if_current_useless(void)
 #endif
 			prio_queue.insert(current_node, node_pr);
 			current_node = prio_queue.pop();
+         taken_from_priority_queue = true;
 		}
-	} else if(!gprio_queue.empty() && current_node->has_prio_work()) {
-		const heap_priority current_min(gprio_queue.min_value());
+	} else if(!prio_queue.empty() && current_node->has_prio_work()) {
+		const heap_priority current_min(prio_queue.min_value());
 		const heap_priority node_min(current_node->get_min_value());
+
+      assert(state::PROGRAM->has_global_priority());
 		
 #ifdef PROFILE_QUEUE
 		prio_nodes_compared++;
 #endif
-
-		assert(!current_node->is_in_prioqueue());
 
 		bool is_current_best(false);
 
@@ -351,9 +354,10 @@ static_local_prio::check_if_current_useless(void)
 		
 		if(is_current_best) {
 			// put back into priority queue
-			gprio_queue.insert(current_node, node_min);
-			assert(global_prioqueue::in_queue(current_node));
-			current_node = gprio_queue.pop();
+			prio_queue.insert(current_node, node_min);
+			assert(priority_queue::in_queue(current_node));
+			current_node = prio_queue.pop();
+         taken_from_priority_queue = true;
 #ifdef PROFILE_QUEUE
 			prio_nodes_changed++;
 #endif
@@ -370,7 +374,6 @@ static_local_prio::check_if_current_useless(void)
       if(!current_node->has_work()) {
          if(!node_queue::in_queue(current_node)) {
             current_node->set_in_queue(false);
-				current_node->set_is_in_prioqueue(false);
 				current_node->set_priority_level(0);
             assert(!current_node->in_queue());
          }
@@ -399,32 +402,24 @@ static_local_prio::set_next_node(void)
 
 		retrieve_prio_tuples();
 		
-		if(!gprio_queue.empty()) {
-			current_node = gprio_queue.pop();
-			goto loop_check;
-		}
-#ifdef PRIO_OPT
 #ifdef DO_ONE_PASS_FIRST
       if(to_takeout > 0) {
          const bool suc(queue_nodes.pop(current_node));
          if(!suc)
             continue;
+         taken_from_priority_queue = false;
       } else
 #endif
-      if(!prio_queue.empty()) {
+		if(!prio_queue.empty()) {
 			current_node = prio_queue.pop();
+         taken_from_priority_queue = true;
+			goto loop_check;
 		} else if(!queue_nodes.empty()) {
 			const bool suc(queue_nodes.pop(current_node));
 			if(!suc)
 				continue;
+         taken_from_priority_queue = false;
 		}
-#else
-		{
-			const bool suc(queue_nodes.pop(current_node));
-		
-			assert(suc);
-		}
-#endif
 
 loop_check:
       assert(current_node != NULL);
@@ -479,8 +474,7 @@ static_local_prio::get_work(work& new_work)
 void
 static_local_prio::end(void)
 {
-#ifndef PRIO_NORMAL
-#if defined(DEBUG_PRIORITIES) && defined(PROFILE_QUEUE) && defined(PRIO_OPT)
+#if defined(DEBUG_PRIORITIES) && defined(PROFILE_QUEUE)
 	cout << "prio_immediate: " << prio_immediate << endl;
 	cout << "prio_marked: " << prio_marked << endl;
 	cout << "prio_count: " << prio_count << endl;
@@ -494,9 +488,8 @@ static_local_prio::end(void)
 		cout << "Compared nodes count: " << prio_nodes_compared << endl;
 	}
 #endif
-#endif
 	
-#if defined(PRIO_OPT) && defined(DEBUG_PRIORITIES)
+#if defined(DEBUG_PRIORITIES)
 	size_t total_prioritized(0);
 	size_t total_nonprioritized(0);
 	
@@ -521,26 +514,16 @@ static_local_prio::end(void)
 void
 static_local_prio::add_node_priority(node *n, const int priority)
 {
-#ifdef PRIO_OPT
 	thread_intrusive_node *tn((thread_intrusive_node*)n);
 
 	const int old_prio(tn->get_priority_level());
 
 	set_node_priority(n, old_prio + priority);
-#else
-	(void)n;
-	(void)priority;
-#endif
 }
 
 void
 static_local_prio::set_node_priority(node *n, const int priority)
 {
-#ifdef PRIO_NORMAL
-	(void)n;
-#elif defined(PRIO_HEAD)
-	(void)n;
-#elif defined(PRIO_OPT)
 	thread_intrusive_node *tn((thread_intrusive_node*)n);
 
 #ifdef DO_ONE_PASS_FIRST
@@ -565,13 +548,12 @@ static_local_prio::set_node_priority(node *n, const int priority)
       if(priority > 0)
          prio_immediate++;
 #endif
-		if(tn->is_in_prioqueue()) {
+		if(priority_queue::in_queue(tn)) {
          // node is in the priority queue
 			if(tn != current_node) {
 				if(tn->get_priority_level() != priority) {
                if(priority == 0) {
                   tn->set_priority_level(0);
-                  tn->set_is_in_prioqueue(false);
                   tn->unmark_priority();
                   prio_queue.remove(tn);
                   queue_nodes.push_tail(tn);
@@ -600,18 +582,14 @@ static_local_prio::set_node_priority(node *n, const int priority)
             if(tn != current_node) {
                queue_nodes.remove(tn);
                add_to_priority_queue(tn);
-            } else {
-               // add_to_priority_queue already does this...
-               tn->set_is_in_prioqueue(true);
             }
          }
 		}
       if(priority > 0) {
-         assert(tn->is_in_prioqueue());
          assert(tn->get_priority_level() == priority);
       }
 	} else {
-      if(priority > 0) {
+      if(priority > 0 && current_node != tn) {
 #ifdef PROFILE_QUEUE
          prio_marked++;
 #endif
@@ -620,7 +598,6 @@ static_local_prio::set_node_priority(node *n, const int priority)
          tn->mark_priority();
       }
 	}
-#endif
 	
 #ifdef PROFILE_QUEUE
 	prio_count++;
@@ -650,12 +627,13 @@ static_local_prio::init(const size_t)
 			default:
 				assert(false);
 		}
+
 	} else {
-		// never used
-		priority_type = HEAP_INT_ASC;
+		// normal priorities
+		priority_type = HEAP_INT_DESC;
 	}
 
-	gprio_queue.set_type(priority_type);
+   prio_queue.set_type(priority_type);
 
    database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
    database::map_nodes::iterator end(state::DATABASE->get_node_iterator(remote::self->find_last_node(id)));
@@ -738,7 +716,6 @@ static_local_prio::write_slice(statistics::slice& sl) const
 
 static_local_prio::static_local_prio(const vm::process_id _id):
    base(_id),
-	prio_queue(HEAP_INT_DESC),
    current_node(NULL)
 {
 }

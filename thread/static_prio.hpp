@@ -11,9 +11,6 @@
 #include "sched/thread/threaded.hpp"
 #include "queue/safe_complex_pqueue.hpp"
 
-// #define PRIO_NORMAL
-//#define PRIO_HEAD
-#define PRIO_OPT
 //#define DO_ONE_PASS_FIRST
 
 namespace sched
@@ -29,19 +26,18 @@ protected:
    typedef queue::intrusive_safe_double_queue<thread_intrusive_node> node_queue;
    node_queue queue_nodes;
 
-	typedef queue::intrusive_safe_complex_pqueue<thread_intrusive_node> global_prioqueue;
+	typedef queue::intrusive_safe_complex_pqueue<thread_intrusive_node> priority_queue;
 
 	DEFINE_PADDING;
 	
-	global_prioqueue prio_queue;
+	priority_queue prio_queue;
    
    DEFINE_PADDING;
    
    thread_intrusive_node *current_node;
+   bool taken_from_priority_queue;
 
 	heap_type priority_type;
-
-	global_prioqueue gprio_queue;
 	
 	// buffer
 	queue::push_safe_linear_queue<process::work> prio_tuples;
@@ -67,26 +63,17 @@ protected:
 		pr.int_priority = node->get_priority_level();
 		prio_queue.insert(node, pr);
 		node->unmark_priority();
-		node->set_is_in_prioqueue(true);
 	}
    
    inline void add_to_queue(thread_intrusive_node *node)
    {
-#ifdef PRIO_NORMAL
-		queue_nodes.push_tail(node);
-#elif defined(PRIO_OPT)
-		if(node->with_priority()) {
+		if(node->with_priority())
 			add_to_priority_queue(node);
-		} else {
-			node->set_is_in_prioqueue(false);
+		else
       	queue_nodes.push_tail(node);
-		}
-#elif defined(PRIO_HEAD)
-		queue_nodes.push_head(node);
-#endif
    }
    
-   inline bool has_work(void) const { return !queue_nodes.empty() || !prio_queue.empty() || !gprio_queue.empty() || !prio_tuples.empty(); }
+   inline bool has_work(void) const { return !queue_nodes.empty() || !prio_queue.empty() || !prio_tuples.empty(); }
 
 public:
    
