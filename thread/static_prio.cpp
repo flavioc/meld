@@ -37,6 +37,7 @@ namespace sched
 void
 static_local_prio::assert_end(void) const
 {
+   assert(priority_buffer.empty());
    assert(!has_work());
    assert(is_inactive());
    assert(all_threads_finished());
@@ -47,11 +48,75 @@ static_local_prio::assert_end(void) const
 void
 static_local_prio::assert_end_iteration(void) const
 {
+   assert(priority_buffer.empty());
    assert(!has_work());
    assert(is_inactive());
    assert(all_threads_finished());
    assert_thread_end_iteration();
    assert_static_nodes_end_iteration(id);
+}
+
+void
+static_local_prio::check_priority_buffer(void)
+{
+#if 0
+   while(!priority_buffer.empty()) {
+      priority_buffer.pop();
+   }
+
+   return;
+#else
+   typedef map<node *, int> node_priorities;
+   node_priorities *node_map(NULL); // XXX: use mem::allocator
+
+   while(!priority_buffer.empty()) {
+      priority_add_item p(priority_buffer.pop());
+      if(node_map == NULL)
+         node_map = new node_priorities();
+      node *target(p.target);
+      thread_intrusive_node *tn((thread_intrusive_node *)target);
+      int howmuch(p.val);
+      priority_add_type typ(p.typ);
+
+      node_priorities::iterator it(node_map->find(target));
+      if (it == node_map->end()) {
+         switch(typ) {
+            case ADD_PRIORITY:
+               (*node_map)[target] = tn->get_priority_level() + howmuch;
+               break;
+            case SET_PRIORITY:
+               (*node_map)[target] = howmuch;
+               break;
+            default:
+               assert(false);
+         }
+      } else {
+         const int oldval(it->second);
+         switch(typ) {
+            case ADD_PRIORITY:
+               (*node_map)[target] = oldval + oldval;
+               break;
+            case SET_PRIORITY:
+               (*node_map)[target] = howmuch;
+               break;
+         }
+      }
+   }
+
+   if(node_map != NULL) {
+      // go through the map and set the priority
+      for(node_priorities::iterator it(node_map->begin()), end(node_map->end());
+            it != end;
+            ++it)
+      {
+         node *target(it->first);
+         const int priority(it->second);
+
+         set_node_priority(target, priority);
+      }
+      delete node_map;
+   }
+#endif
 }
 
 void
@@ -231,8 +296,14 @@ static_local_prio::new_work_other(sched::base *, work& new_work)
 			static_local_prio *owner(dynamic_cast<static_local_prio*>(tnode->get_owner()));
 		
 			tnode->set_in_queue(true);
-			if(!priority_queue::in_queue(tnode))
+         if(tnode->with_priority()) {
+            heap_priority pr;
+            pr.int_priority = tnode->get_priority_level();
+            owner->prio_queue.insert(tnode, pr);
+            tnode->unmark_priority();
+         } else {
 				owner->add_to_queue(tnode);
+         }
 
       	if(this != owner) {
          	spinlock::scoped_lock l2(owner->lock);
@@ -324,7 +395,6 @@ static_local_prio::check_if_current_useless(void)
 			// put this node back into the priority queue and use the higher priority one
 			heap_priority node_pr;
 			node_pr.int_priority = current_node->get_priority_level();
-			assert(current_node->__intrusive_priority.int_priority == current_node->get_priority_level());
 #ifdef DEBUG_PRIORITIES
 			//cout << "Node in queue has higher priority: " << current_min.int_priority << " vs " << node_pr.int_priority << endl;
 #endif
@@ -332,7 +402,7 @@ static_local_prio::check_if_current_useless(void)
 			current_node = prio_queue.pop();
          taken_from_priority_queue = true;
 		}
-	} else if(!prio_queue.empty() && current_node->has_prio_work()) {
+	} else if(state::PROGRAM->has_global_priority() && !prio_queue.empty() && current_node->has_prio_work()) {
 		const heap_priority current_min(prio_queue.min_value());
 		const heap_priority node_min(current_node->get_min_value());
 
@@ -401,6 +471,7 @@ static_local_prio::set_next_node(void)
       assert(has_work());
 
 		retrieve_prio_tuples();
+      check_priority_buffer();
 		
 #ifdef DO_ONE_PASS_FIRST
       if(to_takeout > 0) {
@@ -446,6 +517,7 @@ bool
 static_local_prio::get_work(work& new_work)
 {
 	retrieve_prio_tuples();
+   check_priority_buffer();
 	
    if(!set_next_node())
       return false;
@@ -512,6 +584,28 @@ static_local_prio::end(void)
 }
 
 void
+static_local_prio::add_node_priority_other(node *n, const int priority)
+{
+   // this is called by the other scheduler!
+   priority_add_item item;
+   item.typ = ADD_PRIORITY;
+   item.val = priority;
+   item.target = n;
+   priority_buffer.push(item);
+}
+
+void
+static_local_prio::set_node_priority_other(node *n, const int priority)
+{
+   // this is called by the other scheduler!
+   priority_add_item item;
+   item.typ = SET_PRIORITY;
+   item.val = priority;
+   item.target = n;
+   priority_buffer.push(item);
+}
+
+void
 static_local_prio::add_node_priority(node *n, const int priority)
 {
 	thread_intrusive_node *tn((thread_intrusive_node*)n);
@@ -540,8 +634,21 @@ static_local_prio::set_node_priority(node *n, const int priority)
    }
 #endif
 	
+#ifdef DEBUG_PRIORITIES
    if(priority > 0)
       tn->has_been_prioritized = true;
+#endif
+
+   if(current_node == tn) {
+      if(priority == 0)
+         taken_from_priority_queue = false;
+      else
+         taken_from_priority_queue = true;
+      tn->set_priority_level(priority);
+      return;
+   }
+
+   spinlock::scoped_lock l(tn->spin);
 	
 	if(tn->in_queue()) {
 #ifdef PROFILE_QUEUE
@@ -550,25 +657,23 @@ static_local_prio::set_node_priority(node *n, const int priority)
 #endif
 		if(priority_queue::in_queue(tn)) {
          // node is in the priority queue
-			if(tn != current_node) {
-				if(tn->get_priority_level() != priority) {
-               if(priority == 0) {
-                  tn->set_priority_level(0);
-                  tn->unmark_priority();
-                  prio_queue.remove(tn);
-                  queue_nodes.push_tail(tn);
-               } else {
-                  // priority > 0
-                  assert(priority > 0);
-                  heap_priority pr;
-                  pr.int_priority = priority;
+         if(tn->get_priority_level() != priority) {
+            if(priority == 0) {
+               tn->set_priority_level(0);
+               tn->unmark_priority();
+               prio_queue.remove(tn);
+               queue_nodes.push_tail(tn);
+            } else {
+               // priority > 0
+               assert(priority > 0);
+               heap_priority pr;
+               pr.int_priority = priority;
 #ifdef DEBUG_PRIORITIES
-                  //cout << "Changing node priority " << tn->get_id() << " (" << tn->get_priority_level() << ") to" << priority << endl;
+               //cout << "Changing node priority " << tn->get_id() << " (" << tn->get_priority_level() << ") to" << priority << endl;
 #endif
-                  tn->set_priority_level(priority);
-                  prio_queue.move_node(tn, pr);
-               }
-				}
+               tn->set_priority_level(priority);
+               prio_queue.move_node(tn, pr);
+            }
 			} else {
             tn->set_priority_level(priority);
          }
@@ -579,21 +684,18 @@ static_local_prio::set_node_priority(node *n, const int priority)
 #ifdef DEBUG_PRIORITIES
             //cout << "Add node " << tn->get_id() << " with priority " << priority << endl;
 #endif
-            if(tn != current_node) {
-               queue_nodes.remove(tn);
-               add_to_priority_queue(tn);
-            }
+            queue_nodes.remove(tn);
+            add_to_priority_queue(tn);
          }
 		}
       if(priority > 0) {
          assert(tn->get_priority_level() == priority);
       }
 	} else {
-      if(priority > 0 && current_node != tn) {
+      if(priority > 0) {
 #ifdef PROFILE_QUEUE
          prio_marked++;
 #endif
-         assert(tn != current_node);
          tn->set_priority_level(priority);
          tn->mark_priority();
       }

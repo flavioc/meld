@@ -96,28 +96,43 @@ machine::route(const node* from, process *caller, const node::node_id id, simple
       node *node(state::DATABASE->find_node(id));
       
       sched::base *sched_other(sched_caller->find_scheduler(node));
+      const predicate_id pred_id(stpl->get_predicate_id());
 
-		if(stpl->get_predicate_id() == SET_PRIORITY_PREDICATE_ID) {
-			vm::tuple *tpl(stpl->get_tuple());
-			sched_other->set_node_priority(node, tpl->get_int(0));
-			delete tpl;
-			delete stpl;
-		} else if(stpl->get_predicate_id() == ADD_PRIORITY_PREDICATE_ID) {
-			vm::tuple *tpl(stpl->get_tuple());
-			sched_other->add_node_priority(node, tpl->get_int(0));
-			delete tpl;
-			delete stpl;
-		} else {
-			work new_work(node, stpl);
+      if(sched_other == sched_caller) {
+         if(pred_id == SET_PRIORITY_PREDICATE_ID) {
+            vm::tuple *tpl(stpl->get_tuple());
+            sched_other->set_node_priority(node, tpl->get_int(0));
+            delete tpl;
+            delete stpl;
+         } else if(pred_id == ADD_PRIORITY_PREDICATE_ID) {
+            vm::tuple *tpl(stpl->get_tuple());
+            sched_other->add_node_priority(node, tpl->get_int(0));
+            delete tpl;
+            delete stpl;
+         } else {
+            work new_work(node, stpl);
       
-			if(sched_caller == sched_other)
-				sched_caller->new_work(from, new_work);
-			else {
-				sched_comm(sched_caller);
-				sched_caller->new_work_other(sched_other, new_work);
-				sched_active(sched_caller);
-			}
-		}
+            sched_caller->new_work(from, new_work);
+         }
+      } else {
+         if(pred_id == SET_PRIORITY_PREDICATE_ID) {
+            vm::tuple *tpl(stpl->get_tuple());
+            sched_other->set_node_priority_other(node, tpl->get_int(0));
+            delete tpl;
+            delete stpl;
+         } else if(pred_id == ADD_PRIORITY_PREDICATE_ID) {
+            vm::tuple *tpl(stpl->get_tuple());
+            sched_other->add_node_priority_other(node, tpl->get_int(0));
+            delete tpl;
+            delete stpl;
+         } else {
+            work new_work(node, stpl);
+
+            sched_comm(sched_caller);
+            sched_caller->new_work_other(sched_other, new_work);
+            sched_active(sched_caller);
+         }
+      }
    }
 #ifdef COMPILE_MPI
    else {

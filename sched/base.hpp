@@ -107,6 +107,8 @@ public:
    // ACTIONS
    virtual void set_node_priority(db::node *, const int) { }
 	virtual void add_node_priority(db::node *, const int) { }
+   virtual void add_node_priority_other(db::node *, const int) { }
+   virtual void set_node_priority_other(db::node *, const int) { }
 	virtual void set_node_color(db::node *, const int, const int, const int) { }
 	virtual void set_edge_label(db::node *, const db::node::node_id, const runtime::rstring::ptr) {}
 

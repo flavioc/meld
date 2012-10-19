@@ -11,7 +11,7 @@
 #include "sched/thread/threaded.hpp"
 #include "queue/safe_complex_pqueue.hpp"
 
-//#define DO_ONE_PASS_FIRST
+#define DO_ONE_PASS_FIRST
 
 namespace sched
 {
@@ -42,6 +42,20 @@ protected:
 	// buffer
 	queue::push_safe_linear_queue<process::work> prio_tuples;
 
+   typedef enum {
+      ADD_PRIORITY,
+      SET_PRIORITY
+   } priority_add_type;
+
+   typedef struct {
+      priority_add_type typ;
+      int val;
+      db::node *target;
+   } priority_add_item;
+
+   // priority buffer
+   queue::push_safe_linear_queue<priority_add_item> priority_buffer;
+
 #ifdef DO_ONE_PASS_FIRST
    size_t to_takeout;
 #endif
@@ -56,6 +70,7 @@ protected:
    virtual bool busy_wait(void);
 	void add_prio_tuple(process::node_work, thread_intrusive_node *, db::simple_tuple *);
 	void retrieve_prio_tuples(void);
+   void check_priority_buffer(void);
 
 	inline void add_to_priority_queue(thread_intrusive_node *node)
 	{
@@ -91,6 +106,8 @@ public:
    
    virtual void set_node_priority(db::node *, const int);
 	virtual void add_node_priority(db::node *, const int);
+   virtual void add_node_priority_other(db::node *, const int);
+   virtual void set_node_priority_other(db::node *, const int);
    
    static_local_prio *find_scheduler(const db::node *);
 	virtual db::simple_tuple_list gather_active_tuples(db::node *, const vm::predicate_id);
