@@ -28,6 +28,7 @@ private:
    vm::tuple *data;
    vm::ref_count count;
 	bool to_delete;
+   bool generated_this_run;
 
 public:
 
@@ -49,10 +50,15 @@ public:
    {
       return get_tuple()->get_predicate_id();
    }
-   
+
+   inline void set_generated_run(const bool v)
+   {
+      generated_this_run = v;
+   }
+
    inline bool must_be_deleted(void) const
    {
-	   return to_delete;
+      return to_delete;
    }
    
    inline void will_delete(void)
@@ -63,6 +69,11 @@ public:
    inline void will_not_delete(void)
    {
 	   to_delete = false;
+   }
+
+   inline bool can_be_consumed(void) const
+   {
+      return !to_delete && !generated_this_run;
    }
 
    void print(std::ostream&) const;
@@ -95,7 +106,7 @@ public:
    static void wipeout(simple_tuple *stpl) { delete stpl->get_tuple(); delete stpl; }
 
    explicit simple_tuple(vm::tuple *_tuple, const vm::ref_count _count):
-      data(_tuple), count(_count), to_delete(false)
+      data(_tuple), count(_count), to_delete(false), generated_this_run(false)
    {}
 
    explicit simple_tuple(void) {} // for serialization purposes
