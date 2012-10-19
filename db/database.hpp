@@ -8,6 +8,7 @@
 #include <tr1/unordered_map>
 #include <stdexcept>
 #include <boost/function.hpp>
+#include <boost/static_assert.hpp>
 
 #include "conf.hpp"
 #include "db/node.hpp"
@@ -34,7 +35,9 @@ private:
    map_translate translation;
    
 public:
-   
+
+   BOOST_STATIC_ASSERT(sizeof(node::node_id) == 4);
+
    static const size_t node_size = sizeof(node::node_id) * 2;
    static size_t nodes_total;
    
