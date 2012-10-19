@@ -47,6 +47,7 @@ public:
 
 	// xxx to remove
 	bool has_been_prioritized;
+   bool has_been_touched;
 
    explicit thread_intrusive_node(const db::node::node_id _id, const db::node::node_id _trans):
 		thread_node(_id, _trans),
@@ -54,7 +55,8 @@ public:
 		has_priority(false),
 		priority_level(0),
 		added_to_pqueue(false),
-		has_been_prioritized(false)
+		has_been_prioritized(false),
+      has_been_touched(false)
    {
 	}
    

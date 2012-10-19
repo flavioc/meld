@@ -14,6 +14,7 @@
 // #define PRIO_NORMAL
 //#define PRIO_HEAD
 #define PRIO_OPT
+//#define DO_ONE_PASS_FIRST
 
 namespace sched
 {
@@ -44,6 +45,10 @@ protected:
 	
 	// buffer
 	queue::push_safe_linear_queue<process::work> prio_tuples;
+
+#ifdef DO_ONE_PASS_FIRST
+   size_t to_takeout;
+#endif
 	
    virtual void assert_end(void) const;
    virtual void assert_end_iteration(void) const;

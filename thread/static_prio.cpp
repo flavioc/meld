@@ -18,7 +18,7 @@ using namespace db;
 using namespace utils;
 
 //#define DEBUG_PRIORITIES
-// #define PROFILE_QUEUE
+//#define PROFILE_QUEUE
 
 #ifdef PROFILE_QUEUE
 static atomic<size_t> prio_count(0);
@@ -404,7 +404,14 @@ static_local_prio::set_next_node(void)
 			goto loop_check;
 		}
 #ifdef PRIO_OPT
-		if(!prio_queue.empty()) {
+#ifdef DO_ONE_PASS_FIRST
+      if(to_takeout > 0) {
+         const bool suc(queue_nodes.pop(current_node));
+         if(!suc)
+            continue;
+      } else
+#endif
+      if(!prio_queue.empty()) {
 			current_node = prio_queue.pop();
 		} else if(!queue_nodes.empty()) {
 			const bool suc(queue_nodes.pop(current_node));
@@ -420,8 +427,15 @@ static_local_prio::set_next_node(void)
 #endif
 
 loop_check:
-      assert(current_node->in_queue());
       assert(current_node != NULL);
+      assert(current_node->in_queue());
+
+#ifdef DO_ONE_PASS_FIRST
+      if(!current_node->has_been_touched) {
+         --to_takeout;
+         current_node->has_been_touched = true;
+      }
+#endif
       
       check_if_current_useless();
    }
@@ -528,47 +542,83 @@ static_local_prio::set_node_priority(node *n, const int priority)
 	(void)n;
 #elif defined(PRIO_OPT)
 	thread_intrusive_node *tn((thread_intrusive_node*)n);
-	
-	tn->has_been_prioritized = true;
-	
-	if(tn->in_queue()) {
-#ifdef PROFILE_QUEUE
-		prio_immediate++;
-#endif
-		if(tn->is_in_prioqueue()) {
-			if(tn != current_node) {
-				if(tn->get_priority_level() != priority) {
-					heap_priority pr;
-					pr.int_priority = priority;
-#ifdef DEBUG_PRIORITIES
-					//cout << "Changing node priority " << tn->get_id() << " (" << tn->get_priority_level() << ") to" << priority << endl;
-#endif
-					tn->set_priority_level(priority);
-					prio_queue.move_node(tn, pr);
-				}
-			}
-		} else {
-			tn->set_priority_level(priority);
-#ifdef DEBUG_PRIORITIES
-			//cout << "Add node " << tn->get_id() << " with priority " << priority << endl;
-#endif
-			if(tn != current_node) {
-				queue_nodes.remove(tn);
-				add_to_priority_queue(tn);
-			} else {
-				// add_to_priority_queue already does this...
-				tn->set_is_in_prioqueue(true);
-			}
-		}
-		assert(tn->is_in_prioqueue());
-		assert(tn->get_priority_level() == priority);
-	} else {
+
+#ifdef DO_ONE_PASS_FIRST
+   if(!tn->has_been_touched) {
 #ifdef PROFILE_QUEUE
 		prio_marked++;
 #endif
 		assert(tn != current_node);
-		tn->set_priority_level(priority);
-		tn->mark_priority();
+      if(priority != 0) {
+         tn->set_priority_level(priority);
+         tn->mark_priority();
+      }
+      return;
+   }
+#endif
+	
+   if(priority > 0)
+      tn->has_been_prioritized = true;
+	
+	if(tn->in_queue()) {
+#ifdef PROFILE_QUEUE
+      if(priority > 0)
+         prio_immediate++;
+#endif
+		if(tn->is_in_prioqueue()) {
+         // node is in the priority queue
+			if(tn != current_node) {
+				if(tn->get_priority_level() != priority) {
+               if(priority == 0) {
+                  tn->set_priority_level(0);
+                  tn->set_is_in_prioqueue(false);
+                  tn->unmark_priority();
+                  prio_queue.remove(tn);
+                  queue_nodes.push_tail(tn);
+               } else {
+                  // priority > 0
+                  assert(priority > 0);
+                  heap_priority pr;
+                  pr.int_priority = priority;
+#ifdef DEBUG_PRIORITIES
+                  //cout << "Changing node priority " << tn->get_id() << " (" << tn->get_priority_level() << ") to" << priority << endl;
+#endif
+                  tn->set_priority_level(priority);
+                  prio_queue.move_node(tn, pr);
+               }
+				}
+			} else {
+            tn->set_priority_level(priority);
+         }
+		} else {
+         // node is in the normal queue
+         if(priority > 0) {
+            tn->set_priority_level(priority);
+#ifdef DEBUG_PRIORITIES
+            //cout << "Add node " << tn->get_id() << " with priority " << priority << endl;
+#endif
+            if(tn != current_node) {
+               queue_nodes.remove(tn);
+               add_to_priority_queue(tn);
+            } else {
+               // add_to_priority_queue already does this...
+               tn->set_is_in_prioqueue(true);
+            }
+         }
+		}
+      if(priority > 0) {
+         assert(tn->is_in_prioqueue());
+         assert(tn->get_priority_level() == priority);
+      }
+	} else {
+      if(priority > 0) {
+#ifdef PROFILE_QUEUE
+         prio_marked++;
+#endif
+         assert(tn != current_node);
+         tn->set_priority_level(priority);
+         tn->mark_priority();
+      }
 	}
 #endif
 	
@@ -610,6 +660,10 @@ static_local_prio::init(const size_t)
    database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
    database::map_nodes::iterator end(state::DATABASE->get_node_iterator(remote::self->find_last_node(id)));
    
+#ifdef DO_ONE_PASS_FIRST
+   to_takeout = 0;
+#endif
+
    for(; it != end; ++it)
    {
       thread_intrusive_node *cur_node((thread_intrusive_node*)it->second);
@@ -622,6 +676,10 @@ static_local_prio::init(const size_t)
       assert(cur_node->get_owner() == this);
       assert(cur_node->in_queue());
       assert(cur_node->has_work());
+
+#ifdef DO_ONE_PASS_FIRST
+      ++to_takeout;
+#endif
    }
    
    threads_synchronize();
