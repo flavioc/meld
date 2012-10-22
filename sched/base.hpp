@@ -113,7 +113,7 @@ public:
 	virtual void set_edge_label(db::node *, const db::node::node_id, const runtime::rstring::ptr) {}
 
 	// GATHER QUEUE FACTS FROM NODE
-	virtual db::simple_tuple_list gather_active_tuples(db::node *, const vm::predicate_id) { return db::simple_tuple_list(); }
+	virtual db::simple_tuple_vector gather_active_tuples(db::node *, const vm::predicate_id) { return db::simple_tuple_vector(); }
 
 	// INFORMATION
 	virtual void new_persistent_derivation(db::node *, vm::tuple *) { }

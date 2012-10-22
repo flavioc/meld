@@ -273,10 +273,10 @@ static_local::init(const size_t)
    threads_synchronize();
 }
 
-simple_tuple_list
+simple_tuple_vector
 static_local::gather_active_tuples(db::node *node, const vm::predicate_id pred)
 {
-	simple_tuple_list ls;
+	simple_tuple_vector ls;
 	thread_node *no((thread_node*)node);
 	typedef thread_node::queue_type fact_queue;
 	

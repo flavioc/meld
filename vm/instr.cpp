@@ -134,6 +134,18 @@ instrs_print_until_end_linear(byte_code code, const int tabcount, const program*
    }
 }
 
+static inline pcounter
+instrs_print_until(byte_code code, byte_code until, const int tabcount, const program* prog, ostream& cout)
+{
+   pcounter pc = code;
+   
+	for (; pc < until; ) {
+		pc = instr_print(pc, true, tabcount, prog, cout);
+	}
+	
+   return until;
+}
+
 static inline void
 print_tab(const int tabcount)
 {
@@ -250,7 +262,7 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
                   m += iter_match_size;
                   
                   cout << endl;
-                  print_tab(tabcount);
+                  print_tab(tabcount+1);
                   cout << "  (match)." << iter_match_field(match)
                        << "=" << val_string(iter_match_val(match), &m, prog);
                   if(iter_match_end(match))
@@ -259,6 +271,11 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
             }
             
             cout << endl;
+
+            if(recurse) {
+               instrs_print_until(advance(pc), pc + iter_jump(pc), tabcount + 1, prog, cout);
+               return pc + iter_jump(pc);
+            }
    		}
    		break;
    	case NEXT_INSTR:
@@ -381,7 +398,14 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
         }
         break;
       case RULE_DONE_INSTR:
-            cout << "RULE DONE" << endl;
+         cout << "RULE DONE" << endl;
+         break;
+      case SAVE_ORIGINAL_INSTR:
+         cout << "SAVE ORIGINAL" << endl;
+         if(recurse) {
+            instrs_print_until(advance(pc), pc + save_original_jump(pc), tabcount + 1, prog, cout);
+            return pc + save_original_jump(pc);
+         }
          break;
 
     	case ELSE_INSTR:

@@ -182,6 +182,9 @@ move_to_field(pcounter m, state& state, const instr_val& from)
          case FIELD_NODE:
             to_tuple->set_node(to_field, from_tuple->get_node(from_field));
             break;
+         case FIELD_STRING:
+            to_tuple->set_string(to_field, from_tuple->get_string(from_field));
+            break;
          default:
             throw vm_exec_error("don't know how to move to field (move_to_field)");
       }
@@ -777,6 +780,14 @@ build_match_object(match& m, pcounter pc, state& state, const predicate *pred)
    } while(!iter_match_end(match));
 }
 
+typedef enum {
+	ITER_DB,
+	ITER_QUEUE,
+	ITER_ORIGINAL
+} iter_type_t;
+
+typedef pair<iter_type_t, void*> iter_object;
+
 class tuple_sorter
 {
 private:
@@ -785,10 +796,38 @@ private:
 	
 public:
 	
-	inline bool operator()(tuple_trie_leaf *l1, tuple_trie_leaf *l2)
+	inline bool operator()(const iter_object& l1, const iter_object& l2)
 	{
-		tuple *t1(l1->get_underlying_tuple());
-		tuple *t2(l2->get_underlying_tuple());
+		tuple *t1;
+		tuple *t2;
+		
+		switch(l1.first) {
+			case ITER_QUEUE:
+				t1 = ((simple_tuple*)l1.second)->get_tuple();
+				break;
+			case ITER_DB:
+				t1 = ((tuple_trie_leaf*)l1.second)->get_underlying_tuple();
+				break;
+			case ITER_ORIGINAL:
+				t1 = (tuple*)l1.second;
+				break;
+			default: assert(false);
+		}
+		
+		switch(l2.first) {
+			case ITER_QUEUE:
+				t2 = ((simple_tuple*)l2.second)->get_tuple();
+				break;
+			case ITER_DB:
+				t2 = ((tuple_trie_leaf*)l2.second)->get_underlying_tuple();
+				break;
+			case ITER_ORIGINAL:
+				t2 = (tuple *)l2.second;
+				break;
+			default: assert(false);
+		}
+			
+		assert(t1 != NULL && t2 != NULL);
 		
 		switch(pred->get_field_type(field)) {
 			case FIELD_INT:
@@ -814,27 +853,145 @@ static inline return_type
 execute_iter(pcounter pc, const utils::byte options, const utils::byte options_arguments,
 		pcounter first, state& state, tuple_vector& tuples, const predicate *pred)
 {
-	(void)pred;
-	
    const bool old_is_linear = state.is_linear;
+	const bool this_is_linear = pred->is_linear_pred();
+	
+#define PUSH_CURRENT_STATE(TUPLE, TUPLE_LEAF, TUPLE_QUEUE)		\
+	tuple *old_tuple = state.tuple;										\
+   tuple_trie_leaf *old_tuple_leaf = state.tuple_leaf;			\
+	simple_tuple *old_tuple_queue = state.tuple_queue;				\
+																					\
+   state.tuple = TUPLE;														\
+   state.tuple_leaf = TUPLE_LEAF;										\
+	state.tuple_queue = TUPLE_QUEUE;										\
+	state.is_linear = this_is_linear || state.is_linear
+	
+#define POP_STATE()								\
+	state.tuple = old_tuple;					\
+   state.tuple_leaf = old_tuple_leaf;		\
+	state.tuple_queue = old_tuple_queue;	\
+   state.is_linear = old_is_linear
 
 	if(iter_options_random(options)) {
 		utils::shuffle_vector(tuples, state.randgen);
 	} else if(iter_options_min(options)) {
 		const field_num field(iter_options_min_arg(options_arguments));
+		typedef vector<iter_object> vector_of_everything;
+		simple_tuple_vector queue_tuples(state.proc->get_scheduler()->gather_active_tuples(state.node, pred->get_id()));
+		vector_of_everything everything;
 		
-		//cout << "Sorting " << tuples.size() << endl;
-		
-		sort(tuples.begin(), tuples.end(), tuple_sorter(field, pred));
-	
-#if 0
-		for(tuple_vector::iterator it(tuples.begin()); it != tuples.end(); ++it) {
-			tuple_trie_leaf *tuple_leaf(*it);
-	      tuple *match_tuple(tuple_leaf->get_underlying_tuple());
+		for(simple_tuple_vector::iterator it(queue_tuples.begin()), end(queue_tuples.end());
+			it != end; ++it)
+		{
+			if(do_matches(pc, (*it)->get_tuple(), state))
+				everything.push_back(iter_object(ITER_QUEUE, (void*)*it));
 
-			cout << *match_tuple << endl;
 		}
+		
+		for(tuple_vector::iterator it(tuples.begin()), end(tuples.end());
+			it != end; ++it)
+		{
+			everything.push_back(iter_object(ITER_DB, (void*)*it));
+		}
+		
+		if(state.original_status == state::ORIGINAL_CAN_BE_USED)
+			everything.push_back(iter_object(ITER_ORIGINAL, (void*)state.original_tuple));
+		
+		//cout << "Sorting " << everything.size() << endl;
+		
+		sort(everything.begin(), everything.end(), tuple_sorter(field, pred));
+		
+		for(vector_of_everything::iterator it(everything.begin()), end(everything.end());
+			it != end; ++it)
+		{
+			iter_object p(*it);
+			return_type ret;
+			
+			switch(p.first) {
+				case ITER_DB: {
+					tuple_trie_leaf *tuple_leaf((tuple_trie_leaf*)p.second);
+			      tuple *match_tuple(tuple_leaf->get_underlying_tuple());
+
+			      if(this_is_linear) {
+			         if(!state.linear_tuple_can_be_used(match_tuple, tuple_leaf->get_count()))
+			            continue;
+			         state.using_new_linear_tuple(match_tuple);
+			      }
+
+#if defined(TRIE_MATCHING_ASSERT) && defined(TRIE_MATCHING)
+			      assert(do_matches(pc, match_tuple, state));
+#else
+			      (void)pc;
 #endif
+
+					PUSH_CURRENT_STATE(match_tuple, tuple_leaf, NULL);
+#ifdef TRIE_MATCHING
+			      ret = execute(first, state);
+#else
+			      if(do_matches(pc, match_tuple, state))
+			         ret = execute(first, state);
+			      else
+			         ret = RETURN_OK;
+#endif
+
+					POP_STATE();
+
+			      if(this_is_linear)
+			         state.no_longer_using_linear_tuple(match_tuple);
+				}
+				break;
+				case ITER_QUEUE: {
+					simple_tuple *stpl((simple_tuple*)p.second);
+					tuple *match_tuple(stpl->get_tuple());
+
+		         assert(stpl->can_be_consumed());
+
+			      if(!do_matches(pc, match_tuple, state))
+						continue;
+
+					PUSH_CURRENT_STATE(match_tuple, NULL, stpl);
+
+					if(iter_options_to_delete(options))
+						stpl->will_delete(); // this will avoid future gathers of this tuple!
+
+					ret = execute(first, state);
+
+					POP_STATE();
+
+					if(!(ret == RETURN_LINEAR || ret == RETURN_DERIVED)) { // tuple not consumed
+						stpl->will_not_delete(); // oops, revert
+					}
+				}
+				break;
+				case ITER_ORIGINAL: {
+					tuple *match_tuple((tuple*)p.second);
+			
+					if(state.original_status == state::ORIGINAL_WAS_CONSUMED)
+						continue;
+				
+					if(!do_matches(pc, match_tuple, state))
+						continue;
+				
+					PUSH_CURRENT_STATE(match_tuple, NULL, NULL);
+			
+					ret = execute(first, state);
+			
+					POP_STATE();
+			
+					if(ret == RETURN_LINEAR || ret == RETURN_DERIVED)
+						state.original_status = state::ORIGINAL_WAS_CONSUMED;
+				}
+				break;
+				default: assert(false);
+			}
+		
+			if(ret == RETURN_LINEAR)
+	         return ret;
+	      if(ret == RETURN_DERIVED && state.is_linear)
+	         return RETURN_DERIVED;
+		}
+		
+		return RETURN_NO_RETURN;
 	}
 
    for(tuple_vector::iterator it(tuples.begin());
@@ -843,8 +1000,6 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
    {
       tuple_trie_leaf *tuple_leaf(*it);
       tuple *match_tuple(tuple_leaf->get_underlying_tuple());
-
-      const bool this_is_linear = match_tuple->is_linear();
       
       if(this_is_linear) {
          if(!state.linear_tuple_can_be_used(match_tuple, tuple_leaf->get_count()))
@@ -858,18 +1013,10 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
       (void)pc;
 #endif
 
-      tuple *old_tuple = state.tuple;
-      tuple_trie_leaf *old_tuple_leaf = state.tuple_leaf;
-		simple_tuple *old_tuple_queue = state.tuple_queue;
+		PUSH_CURRENT_STATE(match_tuple, tuple_leaf, NULL);
+		
       return_type ret;
-
-      // set new tuple
-      state.tuple = match_tuple;
-      state.tuple_leaf = tuple_leaf;
-		state.tuple_queue = NULL;
       
-      state.is_linear = this_is_linear || state.is_linear;
-
 #ifdef TRIE_MATCHING
       ret = execute(first, state);
 #else
@@ -879,70 +1026,74 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
          ret = RETURN_OK;
 #endif
 
-      // restore old tuple
-      state.tuple = old_tuple;
-      state.tuple_leaf = old_tuple_leaf;
-		state.tuple_queue = old_tuple_queue;
-      state.is_linear = old_is_linear;
+		POP_STATE();
       
-      if(this_is_linear) {
+      if(this_is_linear)
          state.no_longer_using_linear_tuple(match_tuple);
-      }
       
       if(ret == RETURN_LINEAR)
          return ret;
       if(ret == RETURN_DERIVED && state.is_linear)
          return RETURN_DERIVED;
    }
-   
-   if(pred->is_linear_pred()) {
-      db::simple_tuple_list active_tuples = state.proc->get_scheduler()->gather_active_tuples(state.node, pred->get_id());
 
-		//if(iter_options_random(options))
-		//	utils::shuffle_vector(active_tuples, state.randgen);
-		
-		for(db::simple_tuple_list::iterator it(active_tuples.begin()), end(active_tuples.end()); it != end; ++it) {
+	if(this_is_linear) {
+   	db::simple_tuple_vector active_tuples = state.proc->get_scheduler()->gather_active_tuples(state.node, pred->get_id());
+
+		if(iter_options_random(options))
+			utils::shuffle_vector(active_tuples, state.randgen);
+
+		for(db::simple_tuple_vector::iterator it(active_tuples.begin()), end(active_tuples.end()); it != end; ++it) {
 			simple_tuple *stpl(*it);
-			tuple *tpl(stpl->get_tuple());
+			tuple *match_tuple(stpl->get_tuple());
 
-         assert(stpl->can_be_consumed());
-			
-	      if(!do_matches(pc, tpl, state))
+      	assert(stpl->can_be_consumed());
+		
+      	if(!do_matches(pc, match_tuple, state))
 				continue;
-			
-	      tuple *old_tuple = state.tuple;
-	      tuple_trie_leaf *old_tuple_leaf = state.tuple_leaf;
-			simple_tuple *old_tuple_queue = state.tuple_queue;
-	      return_type ret;
-			
-			state.tuple_leaf = NULL;
-			state.tuple_queue = stpl;
-			state.tuple = tpl;
-			state.is_linear = true;
-			
-			if(iter_options_to_delete(options))
+		
+			PUSH_CURRENT_STATE(match_tuple, NULL, stpl);
+		
+			if(iter_options_to_delete(options)) {
+				assert(this_is_linear);
 				stpl->will_delete(); // this will avoid future gathers of this tuple!
-
-			// execute...
-			ret = execute(first, state);
-			
-			// restore
-			state.tuple_leaf = old_tuple_leaf;
-			state.tuple_queue = old_tuple_queue;
-			state.tuple = old_tuple;
-			state.is_linear = old_is_linear;
-	
-			if(!(ret == RETURN_LINEAR || ret == RETURN_DERIVED)) { // tuple not consumed
-				stpl->will_not_delete(); // oops, revert
 			}
-			
+		
+			// execute...
+			return_type ret = execute(first, state);
+		
+			POP_STATE();
+
+			if(!(ret == RETURN_LINEAR || ret == RETURN_DERIVED)) { // tuple not consumed
+				if(this_is_linear)
+					stpl->will_not_delete(); // oops, revert
+			}
+		
 			if(ret == RETURN_LINEAR)
 				return ret;
 			if(state.is_linear && ret == RETURN_DERIVED)
-				return RETURN_DERIVED;
+				return ret;
 		}
 	}
    
+	// must attempt to use original tuple, if possible
+	if(state.original_status == state::ORIGINAL_CAN_BE_USED) {
+		if(state.original_tuple->get_predicate() == pred && do_matches(pc, state.original_tuple, state)) {
+			PUSH_CURRENT_STATE(state.original_tuple, NULL, NULL);
+			
+			return_type ret = execute(first, state);
+			
+			POP_STATE();
+			
+			if((ret == RETURN_LINEAR || ret == RETURN_DERIVED) && this_is_linear)
+				state.original_status = state::ORIGINAL_WAS_CONSUMED;
+			
+			if(ret == RETURN_LINEAR)
+				return ret;
+			if(ret == RETURN_DERIVED && state.is_linear)
+				return ret;
+		}
+	}
    
    return RETURN_NO_RETURN;
 }
@@ -1307,7 +1458,7 @@ eval_loop:
 
 #ifdef DEBUG_MODE
 		if(state.print_instrs)
-			instr_print_simple(pc, 0, state.PROGRAM, cout);
+         instr_print_simple(pc, 0, state.PROGRAM, cout);
 #endif      
 
       switch(fetch(pc)) {
@@ -1451,6 +1602,34 @@ eval_loop:
          case RULE_DONE_INSTR:
            execute_rule_done(pc, state);
            break;
+
+			case SAVE_ORIGINAL_INSTR:
+			{
+				state.original_status = state::ORIGINAL_CAN_BE_USED;
+				
+            const bool old_is_linear(state.is_linear);
+            
+            state.is_linear = false;
+            
+            return_type ret(execute(pc + SAVE_ORIGINAL_BASE, state));
+
+				assert(ret != RETURN_LINEAR);
+				assert(ret != RETURN_NO_RETURN);
+				assert(ret != RETURN_DERIVED);
+
+            state.is_linear = old_is_linear;
+
+				assert(ret == RETURN_OK);
+				
+				if(state.original_status == state::ORIGINAL_WAS_CONSUMED)
+					return RETURN_LINEAR; // consumed!
+				else
+					state.original_status = state::ORIGINAL_CANNOT_BE_USED;
+            
+            pc += save_original_jump(pc);
+
+            goto eval_loop;
+         }
             
          default: throw vm_exec_error("unsupported instruction");
       }

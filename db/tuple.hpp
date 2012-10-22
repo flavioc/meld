@@ -117,6 +117,7 @@ public:
 std::ostream& operator<<(std::ostream&, const simple_tuple&);
 
 typedef std::list<simple_tuple*, mem::allocator<simple_tuple*> > simple_tuple_list;
+typedef std::vector<simple_tuple*, mem::allocator<simple_tuple*> > simple_tuple_vector;
 
 }
 

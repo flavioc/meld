@@ -108,10 +108,10 @@ serial_local::init(const size_t)
    }
 }
 
-simple_tuple_list
+simple_tuple_vector
 serial_local::gather_active_tuples(db::node *node, const vm::predicate_id pred)
 {
-	simple_tuple_list ls;
+	simple_tuple_vector ls;
 	serial_node *no((serial_node*)node);
 	typedef serial_node::queue_type fact_queue;
 	
