@@ -56,6 +56,10 @@ protected:
    // priority buffer
    queue::push_safe_linear_queue<priority_add_item> priority_buffer;
 
+   typedef std::map<db::node *, int, std::less<db::node *>,
+           mem::allocator< std::pair<const db::node *, int> > > node_priorities;
+   node_priorities node_map;
+
 #ifdef DO_ONE_PASS_FIRST
    size_t to_takeout;
 #endif

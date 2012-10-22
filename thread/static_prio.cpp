@@ -66,26 +66,22 @@ static_local_prio::check_priority_buffer(void)
 
    return;
 #else
-   typedef map<node *, int> node_priorities;
-   node_priorities *node_map(NULL); // XXX: use mem::allocator
 
    while(!priority_buffer.empty()) {
       priority_add_item p(priority_buffer.pop());
-      if(node_map == NULL)
-         node_map = new node_priorities();
       node *target(p.target);
       thread_intrusive_node *tn((thread_intrusive_node *)target);
       int howmuch(p.val);
       priority_add_type typ(p.typ);
 
-      node_priorities::iterator it(node_map->find(target));
-      if (it == node_map->end()) {
+      node_priorities::iterator it(node_map.find(target));
+      if (it == node_map.end()) {
          switch(typ) {
             case ADD_PRIORITY:
-               (*node_map)[target] = tn->get_priority_level() + howmuch;
+               node_map[target] = tn->get_priority_level() + howmuch;
                break;
             case SET_PRIORITY:
-               (*node_map)[target] = howmuch;
+               node_map[target] = howmuch;
                break;
             default:
                assert(false);
@@ -94,28 +90,27 @@ static_local_prio::check_priority_buffer(void)
          const int oldval(it->second);
          switch(typ) {
             case ADD_PRIORITY:
-               (*node_map)[target] = oldval + oldval;
+               node_map[target] = oldval + oldval;
                break;
             case SET_PRIORITY:
-               (*node_map)[target] = howmuch;
+               node_map[target] = howmuch;
                break;
          }
       }
    }
 
-   if(node_map != NULL) {
-      // go through the map and set the priority
-      for(node_priorities::iterator it(node_map->begin()), end(node_map->end());
-            it != end;
-            ++it)
-      {
-         node *target(it->first);
-         const int priority(it->second);
+   // go through the map and set the priority
+   for(node_priorities::iterator it(node_map.begin()), end(node_map.end());
+         it != end;
+         ++it)
+   {
+      node *target(it->first);
+      const int priority(it->second);
 
-         set_node_priority(target, priority);
-      }
-      delete node_map;
+      set_node_priority(target, priority);
    }
+
+   node_map.clear();
 #endif
 }
 
