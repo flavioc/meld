@@ -39,8 +39,9 @@ protected:
 
 	heap_type priority_type;
 	
-	// buffer
+	// work buffers
 	queue::push_safe_linear_queue<process::work> prio_tuples;
+   queue::push_safe_linear_queue<process::work> buffer;
 
    typedef enum {
       ADD_PRIORITY,
