@@ -89,11 +89,6 @@ private:
       strats.pop_queue(stpl->get_strat_level());
    }
    
-   inline vm::strat_level get_local_strat_level(void)
-   {
-      return strats.get_current_level();
-   }
-	
 public:
    
    inline node_id get_id(void) const { return id; }
@@ -109,6 +104,11 @@ public:
    const edge_set& get_edge_set(const vm::predicate_id id) const {
       assert(edge_info.find(id) != edge_info.end());
       return edge_info.find(id)->second;
+   }
+
+   inline vm::strat_level get_local_strat_level(void)
+   {
+      return strats.get_current_level();
    }
    
    void delete_by_index(const vm::predicate*, const vm::match&);
