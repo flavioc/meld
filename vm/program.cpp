@@ -199,6 +199,7 @@ program::program(const string& filename):
 		priority_argument -= 2;
 		priority_pred->set_global_priority();
 		priority_asc = (asc_desc ? true : false);
+      priority_strat_level = priority_pred->get_strat_level();
 	}
    
    // read predicate code
