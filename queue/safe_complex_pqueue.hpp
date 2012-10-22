@@ -18,8 +18,6 @@ private:
 
 	heap_type typ;
 
-	utils::spinlock mtx;
-
 #define HEAP_GET_PRIORITY(OBJ) ((typ == HEAP_INT_ASC || typ == HEAP_INT_DESC) ? \
 					(__INTRUSIVE_PRIORITY(OBJ).int_priority) : (__INTRUSIVE_PRIORITY(OBJ).float_priority))
 #define HEAP_GET_POS(OBJ) __INTRUSIVE_POS(OBJ)
@@ -96,7 +94,6 @@ public:
 	
 	void insert(heap_object node, const heap_priority prio)
 	{
-      utils::spinlock::scoped_lock l(mtx);
 		do_insert(node, prio);
 	}
 	
@@ -107,19 +104,16 @@ public:
 	
 	heap_object pop(void)
 	{
-      utils::spinlock::scoped_lock l(mtx);
 		return do_pop();
 	}
 	
 	void remove(heap_object obj)
 	{
-      utils::spinlock::scoped_lock l(mtx);
 		do_remove(obj);
 	}
 	
 	void move_node(heap_object node, const heap_priority new_prio)
 	{
-      utils::spinlock::scoped_lock l(mtx);
 		do_remove(node);
 		do_insert(node, new_prio);
 	}
