@@ -22,4 +22,5 @@ def read_db(lines):
 				args = []
 			data = {'name': name, 'args': args}
 			node_db.append(data)
+	nodes[current_node] = node_db
 	return nodes
