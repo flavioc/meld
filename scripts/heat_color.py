@@ -41,6 +41,7 @@ coords = {}
 inners = {}
 
 maxcount = 0
+totalcount = 0
 maxx = 0
 maxy = 0
 lowestxinner = None
@@ -51,6 +52,7 @@ for node, data in db.iteritems():
 	total = read_count_node(data)
 	if total > maxcount:
 		maxcount = total
+	totalcount = totalcount + total
 	coord = read_coord(data)
 	(x, y) = coord
 	if x > maxx:
@@ -96,5 +98,10 @@ ctx.move_to(int(0.8 * WIDTH), HEIGHT - 20)
 ctx.set_source_rgb(1.00, 0.83, 0.00) # yellow
 ctx.show_text(str(maxcount))
 
+ctx.select_font_face('Sans')
+ctx.set_font_size(maxx / 2) # em-square height is 90 pixels
+ctx.move_to(int(0.2 * WIDTH), HEIGHT - 20)
+ctx.set_source_rgb(1.00, 0.00, 0.00) # red
+ctx.show_text(str(totalcount))
 
 surface.write_to_png(sys.argv[1])
