@@ -90,4 +90,11 @@ ctx.rectangle(lowestxinner * SCALE, lowestyinner * SCALE, (highestxinner - lowes
 ctx.set_source_rgb(1, 1, 1)
 ctx.stroke()
 
+ctx.select_font_face('Sans')
+ctx.set_font_size(maxx / 2) # em-square height is 90 pixels
+ctx.move_to(int(0.8 * WIDTH), HEIGHT - 20)
+ctx.set_source_rgb(1.00, 0.83, 0.00) # yellow
+ctx.show_text(str(maxcount))
+
+
 surface.write_to_png(sys.argv[1])
