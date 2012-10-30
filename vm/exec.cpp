@@ -64,7 +64,7 @@ move_to_reg(const pcounter& m, state& state,
       
       switch(tuple->get_field_type(field)) {
          case FIELD_INT: state.set_int(reg, tuple->get_int(field)); break;
-         case FIELD_FLOAT: state.set_int(reg, tuple->get_float(field)); break;
+         case FIELD_FLOAT: state.set_float(reg, tuple->get_float(field)); break;
          case FIELD_LIST_INT: state.set_int_list(reg, tuple->get_int_list(field)); break;
          case FIELD_LIST_FLOAT: state.set_float_list(reg, tuple->get_float_list(field)); break;
          case FIELD_LIST_NODE: state.set_node_list(reg, tuple->get_node_list(field)); break;
