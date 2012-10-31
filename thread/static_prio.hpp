@@ -21,18 +21,12 @@ class static_local_prio: public sched::base,
 {
 protected:
    
-   DEFINE_PADDING;
-   
    typedef queue::intrusive_safe_double_queue<thread_intrusive_node> node_queue;
    node_queue queue_nodes;
 
 	typedef queue::intrusive_safe_complex_pqueue<thread_intrusive_node> priority_queue;
 
-	DEFINE_PADDING;
-	
 	priority_queue prio_queue;
-   
-   DEFINE_PADDING;
    
    thread_intrusive_node *current_node;
    bool taken_from_priority_queue;

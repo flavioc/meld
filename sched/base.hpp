@@ -29,8 +29,6 @@ protected:
    
    const vm::process_id id;
    
-   DEFINE_PADDING;
-   
    size_t iteration;
    
 #ifdef INSTRUMENTATION

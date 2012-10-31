@@ -18,11 +18,7 @@ class static_local: public sched::base,
 {
 protected:
    
-   DEFINE_PADDING;
-   
 	queue::push_safe_linear_queue<thread_node*> queue_nodes;
-   
-   DEFINE_PADDING;
    
    thread_node *current_node;
    

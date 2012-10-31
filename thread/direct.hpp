@@ -18,17 +18,11 @@ class direct_local: public sched::base,
                     public sched::threaded
 {
 private:
-   DEFINE_PADDING;
-   
 	queue::safe_linear_queue<thread_node*> queue_nodes;
-   
-   DEFINE_PADDING;
    
    thread_node *current_node;
    mutable utils::randgen random;
    bool added_any;
-   
-   DEFINE_PADDING;
    
 #ifdef MARK_OWNED_NODES
    typedef std::tr1::unordered_set<db::node*, std::tr1::hash<db::node*>,
@@ -39,8 +33,6 @@ private:
    utils::spinlock *nodes_mutex;
 #endif
 
-   DEFINE_PADDING;
-   
 #ifdef INSTRUMENTATION
    mutable utils::atomic<size_t> stealed_nodes;
 #endif

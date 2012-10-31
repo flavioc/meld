@@ -16,8 +16,6 @@ namespace sched
 class dynamic_local: public static_local
 {
 private:
-   DEFINE_PADDING;
-   
 #ifdef MARK_OWNED_NODES
    typedef std::tr1::unordered_set<db::node*, std::tr1::hash<db::node*>,
                      std::equal_to<db::node*>, mem::allocator<db::node*> > node_set;
@@ -27,12 +25,8 @@ private:
    utils::spinlock *nodes_mutex;
 #endif
 
-   DEFINE_PADDING;
-   
    steal_set steal;
 	
-   DEFINE_PADDING;
-   
    size_t next_steal_cycle;
    size_t num_nodes_to_send;
    mutable utils::randgen random;

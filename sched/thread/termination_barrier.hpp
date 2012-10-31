@@ -15,8 +15,6 @@ private:
    
    utils::atomic<size_t> active_threads;
    
-   DEFINE_PADDING;
-   
    volatile bool done;
    
 public:

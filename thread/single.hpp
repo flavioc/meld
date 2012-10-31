@@ -20,8 +20,6 @@ protected:
    
    static queue::safe_linear_queue<thread_node*> *queue_nodes;
    
-   DEFINE_PADDING;
-   
    thread_node *current_node;
    
    virtual void assert_end(void) const;

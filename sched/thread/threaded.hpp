@@ -25,14 +25,10 @@ private:
      
    volatile thread_state state;
    
-   DEFINE_PADDING;
-   
 protected:
    
    static termination_barrier *term_barrier;
    static utils::tree_barrier *thread_barrier;
-   
-   DEFINE_PADDING;
    
 	utils::spinlock lock;
 	
