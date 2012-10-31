@@ -309,6 +309,21 @@ template <typename T>
 static inline T get_op_function(const instr_val& val, pcounter& m, state& state);
 
 template <>
+bool_val get_op_function<bool_val>(const instr_val& val, pcounter& m, state& state)
+{
+   if(val_is_reg(val)) {
+      return state.get_bool(val_reg(val));
+   } else if(val_is_field(val)) {
+      const tuple *tuple(state.get_tuple(val_field_reg(m)));
+      const field_num field(val_field_num(m));
+
+      pcounter_move_field(&m);
+      return tuple->get_bool(field);
+   } else
+      throw vm_exec_error("invalid bool for bool op");
+}
+
+template <>
 float_val get_op_function<float_val>(const instr_val& val, pcounter& m, state& state)
 {
    if(val_is_float(val)) {
@@ -640,6 +655,7 @@ execute_op(const pcounter& pc, state& state)
       case OP_NEQA: implement_operation(node_val, bool_val, v1 != v2);
       case OP_EQA: implement_operation(node_val, bool_val, v1 == v2);
       case OP_GREATERA: implement_operation(node_val, bool_val, v1 > v2);
+      case OP_ORB: implement_operation(bool_val, bool_val, v1 || v2);
       default: throw vm_exec_error("unknown operation (execute_op)");
    }
 #undef implement_operation

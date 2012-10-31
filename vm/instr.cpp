@@ -41,6 +41,7 @@ op_string(const instr_op op)
 		case OP_NEQA: return string("ADDR NOT EQUAL"); 
 		case OP_EQA: return string("ADDR EQUAL"); 
       case OP_GREATERA: return string("ADDR GREATER");
+      case OP_ORB: return string("BOOL OR");
 	}
 	
    return string("");

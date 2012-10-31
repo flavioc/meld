@@ -119,7 +119,8 @@ enum instr_op {
    OP_DIVI       = 0x15,
    OP_NEQA       = 0x16,
    OP_EQA        = 0x17,
-   OP_GREATERA   = 0x18
+   OP_GREATERA   = 0x18,
+   OP_ORB        = 0x19
 };
 
 std::string op_string(const instr_op op);

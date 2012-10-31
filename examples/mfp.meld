@@ -1,4 +1,7 @@
 
+/* A Distributed Algorithm for the Maximum Flow Problem */
+/* presentation: http://www2.lifl.fr/ispdc2005/presentations/ispdc-maxflow-PHAM.pdf */
+
 type typ(node, int).
 type linear state(node, int).
 type linear height(node, int).
@@ -137,16 +140,11 @@ NotSource <> source
 
 init-height-check(A, H),
 height(A, Height),
-Height = 0
+Height = 0 || Height > H + 1
    -o height(A, H + 1), do-init-height(A, return-init-height).
 
 proc-return(A, return-init-height)
    -o token(A).
-
-init-height-check(A, H),
-height(A, Height),
-Height > H + 1
-   -o height(A, H + 1), do-init-height(A, return-init-height).
 
 init-height-check(A, H) -o token(A).
 
