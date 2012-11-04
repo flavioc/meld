@@ -26,7 +26,7 @@ namespace ui
 manager *man;
 
 manager::manager(void):
-	next_set(1),
+	next_set(0),
 	done(false)
 {
 }
@@ -127,8 +127,15 @@ manager::on_message(connection_ptr conn, message_ptr msg)
 			const string& str(type.get_str());
 			
 			if(str == "next")
-				next_set--;
-			else if(str == "get_node") {
+				next_set++;
+         else if(str == "jump") {
+            Value node(get_field_from_obj(obj, "steps"));
+
+            if(is_int(node)) {
+               const int steps(node.get_int());
+               next_set += steps;
+            }
+         } else if(str == "get_node") {
 				if(!running)
 					return;
 					
@@ -173,12 +180,12 @@ void
 manager::wait_for_next(void)
 {
 	if(!no_clients()) {
-		while(next_set > 0) {
+		while(next_set <= 0) {
 			if(no_clients())
 				return;
 			usleep(100);
 		}
-		next_set++;
+		next_set--;
 	}
 }
 
@@ -331,6 +338,17 @@ manager::event_set_edge_label(const vm::node_val from, const vm::node_val to, co
 	ADD_FIELD("label", label);
 	
 	SEND_ALL_CLIENTS();
+}
+
+void
+manager::event_rule_applied(const db::node *who, const string& rule)
+{
+   DECLARE_JSON("rule_applied");
+
+   ADD_NODE_FIELD(who);
+   ADD_FIELD("rule", rule);
+
+   SEND_ALL_CLIENTS();
 }
 
 }

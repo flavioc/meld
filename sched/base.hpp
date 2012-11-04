@@ -117,6 +117,7 @@ public:
 	virtual void new_persistent_derivation(db::node *, vm::tuple *) { }
 	virtual void new_linear_derivation(db::node *, vm::tuple *) { }
 	virtual void new_linear_consumption(db::node *, vm::tuple *) { }
+   virtual void rule_applied(db::node *, const std::string&) { }
    
    virtual void init(const size_t) = 0;
    virtual void end(void) = 0;

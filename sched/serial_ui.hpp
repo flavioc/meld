@@ -20,12 +20,14 @@ class serial_ui_local: public serial_local
 private:
    
 	bool first_done;
+   bool stop;
 	
 public:
 
 	virtual void new_persistent_derivation(db::node *, vm::tuple *);
 	virtual void new_linear_derivation(db::node *, vm::tuple *);
 	virtual void new_linear_consumption(db::node *, vm::tuple *);
+   virtual void rule_applied(db::node *, const std::string&);
 	
 	virtual void new_work(const db::node *, process::work&);
 	virtual bool get_work(process::work&);

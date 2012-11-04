@@ -347,7 +347,7 @@ function handle_changed_node(msg)
 function handle_program_termination(msg)
 {
 	$('#button-terminate').removeAttr('disabled');
-	$('#button-next, #button-play, #button-stop').attr('disabled', 'disabled');
+	$('#button-next, #button-play, #button-stop, #button-jump').attr('disabled', 'disabled');
 }
 
 function handle_set_color(msg)
@@ -381,6 +381,14 @@ function handle_set_edge_label(msg)
 	update_graph();
 }
 
+function handle_rule_applied(msg)
+{
+   var who = msg.who;
+   var rule = msg.rule;
+
+	new_global_event('<span class="rule" title="' + rule + '">rule applied</span>');
+}
+
 function setup_message_handlers()
 {
 	message_handlers['init'] = handle_init;
@@ -399,16 +407,17 @@ function setup_message_handlers()
 	message_handlers['program_termination'] = handle_program_termination;
 	message_handlers['set_color'] = handle_set_color;
 	message_handlers['set_edge_label'] = handle_set_edge_label;
+   message_handlers['rule_applied'] = handle_rule_applied;
 }
 
 function disable_controls()
 {
-	$('#button-next, #button-play, #button-stop, #button-terminate').attr('disabled', 'disabled');
+	$('#button-next, #button-play, #button-stop, #button-terminate, #button-jump').attr('disabled', 'disabled');
 }
 
 function activate_controls()
 {
-	$('#button-next, #button-play, #button-stop').removeAttr('disabled');
+	$('#button-next, #button-play, #button-stop, #button-jump').removeAttr('disabled');
 }
 
 function clear_everything()
@@ -534,6 +543,13 @@ function request_next()
 	$('#log-message-parent').hide();
 }
 
+function request_jump()
+{
+   var many = $('#input-jump').val();
+   send_msg({msg: 'jump', steps: parseInt(many)});
+	$('#log-message-parent').hide();
+}
+
 $(document).ready(function () {
 
 	setup_message_handlers();
@@ -557,6 +573,11 @@ $(document).ready(function () {
 		request_next();
 		return false;
 	});
+
+   $('#button-jump').click(function () {
+      request_jump();
+      return false;
+   });
 	
 	$('#button-terminate').click(function () {
 		send_msg({msg: 'terminate'});
@@ -565,7 +586,7 @@ $(document).ready(function () {
 	});
 	
 	$('#button-play').click(function () {
-		$('#button-next, #button-play').attr('disabled', 'disabled');
+		$('#button-next, #button-play, #button-jump').attr('disabled', 'disabled');
 		$('#button-stop').removeAttr('disabled');
 		request_next();
 		playing_program = true;
@@ -573,7 +594,7 @@ $(document).ready(function () {
 	});
 	
 	$('#button-stop').click(function () {
-		$('#button-next, #button-play').removeAttr('disabled');
+		$('#button-next, #button-play, #button-jump').removeAttr('disabled');
 		$('#button-stop').attr('disabled', 'disabled');
 		playing_program = false;
 		return false;

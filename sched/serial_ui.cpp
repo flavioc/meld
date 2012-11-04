@@ -46,20 +46,39 @@ serial_ui_local::new_linear_consumption(node *n, vm::tuple *tpl)
 	LOG_LINEAR_CONSUMPTION(n, tpl);
 }
 
+void
+serial_ui_local::rule_applied(node *n, const string& str)
+{
+   LOG_RULE_APPLIED(n, str);
+}
+
 bool
 serial_ui_local::get_work(work& new_work)
 {
+	const bool ret(serial_local::get_work(new_work));
+
 	if(first_done) {
-		LOG_STEP_DONE(current_node);
-		WAIT_FOR_NEXT();
+      if(stop)
+         LOG_STEP_DONE(current_node);
+      if(ret) {
+         db::simple_tuple *stpl(new_work.get_tuple());
+         if(!stpl->must_be_deleted()) {
+            stop = true;
+         } else
+            stop = false;
+      } else {
+         stop = true;
+      }
 	} else
 		first_done = true;
 		
-	const bool ret(serial_local::get_work(new_work));
-	
-	if(ret) {
-		LOG_STEP_START(new_work.get_node(), new_work.get_tuple()->get_tuple());
+	if(stop) {
+      LOG_STEP_START(new_work.get_node(), new_work.get_tuple()->get_tuple());
 	}
+
+   if(stop) {
+      WAIT_FOR_NEXT();
+   }
 	
 	return ret;
 }

@@ -1457,6 +1457,11 @@ execute_rule_done(const pcounter& pc, state& state)
    (void)pc;
    (void)state;
 
+#ifdef USE_UI
+	sched::base *sched_caller(state.proc->get_scheduler());
+	sched_caller->rule_applied(state.node, state::PROGRAM->get_rule_string(state.current_rule));
+#endif
+
 #if 0
 
    const string rule_str(state::PROGRAM->get_rule_string(state.current_rule));
