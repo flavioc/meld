@@ -24,9 +24,10 @@ type outbound(node, int).
 type linear do-push(node, int).
 type linear accumulate-excess(node).
 type linear push-request(node, node, float).
-type linear push-request2(node, node, float).
-type linear push-request3(node, node, float).
-type linear push-request4(node, node, float).
+type linear find-all-push-requests(node, float).
+type linear push-request2(node, float).
+type linear push-request3(node, float).
+type linear push-request4(node, float).
 type linear push-request-ans(node, node, float).
 type linear push-check-excesses(node, int).
 type linear may-do-lift(node, float).
@@ -240,7 +241,23 @@ rv(A, W, RV)
    -o edge-height(A, W, EH),
       height(A, H),
       rv(A, W, RV + Delta),
-      push-request2(A, W, Delta).
+      find-all-push-requests(A, Delta).
+
+/* this is different from the paper... we collect all the requests to push them all at once */
+find-all-push-requests(A, Acc),
+push-request(A, W, Delta),
+edge-height(A, W, EH),
+height(A, H),
+EH > H,
+rv(A, W, RV)
+   -o edge-height(A, W, EH),
+      height(A, H),
+      rv(A, W, RV + Delta),
+      find-all-push-requests(A, Acc + Delta).
+ 
+/* no more push-requests */
+find-all-push-requests(A, Acc)
+   -o push-request2(A, Acc).
 
 push-request(A, W, Delta),
 edge-height(A, W, EH),
@@ -252,26 +269,26 @@ EH <= H,
       push-request-ans(W, A, Delta),
       token(A).
 
-push-request2(A, W, Delta),
+push-request2(A, Delta),
 state(A, inactive),
 !typ(A, NotSink),
 NotSink <> sink
    -o state(A, active),
-      push-request3(A, W, Delta).
+      push-request3(A, Delta).
 
 /* state not inactive or type not sink */
-push-request2(A, W, Delta) -o push-request3(A, W, Delta).
+push-request2(A, Delta) -o push-request3(A, Delta).
 
-push-request3(A, W, Delta),
+push-request3(A, Delta),
 excess(A, Excess)
    -o excess(A, Excess + Delta),
-      push-request4(A, W, Delta).
+      push-request4(A, Delta).
 
-push-request4(A, W, Delta),
+push-request4(A, Delta),
 !typ(A, sink)
    -o token(A).
 
-push-request4(A, W, Delta),
+push-request4(A, Delta),
 !typ(A, NotSink),
 NotSink <> sink
    -o do-push(A, dolift).
