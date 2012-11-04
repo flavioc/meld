@@ -1,0 +1,73 @@
+
+===============================
+     VM instructions
+===============================
+
+;; To compile the virtual machine we first need to install a few packages, namely:
+
+- MPI (with MPICXX)
+- Boost (must include boost-thread, boost-system-mt, boost-date-time-mt, boost-regex-mt, boost-serialization-mt and boost-mpi-mt)
+
+;; Use your operating system facilities to install such packages.
+;; Now, we'll download the virtual machine source code:
+$ git clone https://github.com/flavioc/meld.git
+
+;; Let's compile the virtual machine:
+$ cd meld
+$ ./bootstrap.sh
+$ make
+
+;; To run a program
+$ ./meld -f <byte code file> -c sched
+
+;; Where sched is either sl, tl or tlp
+;; Both tl and tlp need the number of threads, thus to use 4 threads with tl you do:
+$ ./meld -f file.m -c tl4
+
+;; To measure execution time, add -t to the command line.
+;; To see the final contents of the database, add -d or -s
+
+===============================
+     Compiler instructions
+===============================
+
+;; First and foremost, install sbcl using the operating systems facilities
+;; On my mac, I use brew install sbcl.
+
+;; Now let's install all the required sbcl packages, load sbcl by typing:
+$ sbcl
+
+;; Type the following instructions into SBCL, one by one:
+
+(require 'asdf)
+(require 'asdf-install)
+(asdf-install:install :cl-ppcre)
+(asdf-install:install :cl-yacc)
+(asdf-install:install :cl-lex)
+(asdf-install:install :arnesi)
+(asdf-install:install :alexandria)
+(asdf-install:install :flexi-streams)
+
+;; For every asdf-install:install you may choose to install system-wide or just for the current user
+;; I recommend selecting user installation
+
+;; If gpg authentication is required then press 0 to skip
+;; If "Component xxx not found" just select 0: reinitialize source registry and retry
+
+;; We also need to install ieee-floats, but asdf-install fails to do this...
+;; We need to do this by hand:
+$ cd ~/.sbcl/site
+$ git clone https://github.com/marijnh/ieee-floats.git
+$ ln -sf $HOME/.sbcl/site/ieee-floats/ieee-floats.asd ~/.sbcl/systems/
+
+;; Now it's time to download cl-meld:
+$ cd ~
+$ git clone https://github.com/flavioc/cl-meld.git
+$ cd cl-meld
+$ sbcl
+
+;; Type in: (load "load") and you'll see several messages (it's just sbcl compiling and loading everything)
+;; To compile a file, just do this:
+(cl-meld:meld-compile "path-to-file.meld" "path-to-output-file")
+
+;; If everything went ok you should see "All done. T"
