@@ -23,6 +23,12 @@ typedef union {
 	{											\
 		return heap.empty();				\
 	}
+
+#define HEAP_DEFINE_SIZE            \
+   inline size_t size(void) const   \
+   {                                \
+      return heap.size();           \
+   }
 	
 #define HEAP_DEFINE_UTILS								\
 	inline int left(const int parent) const		\

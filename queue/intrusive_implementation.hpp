@@ -2,6 +2,7 @@
 #ifndef QUEUE_INTRUSIVE_IMPLEMENTATION_HPP
 #define QUEUE_INTRUSIVE_IMPLEMENTATION_HPP
 
+#include "conf.hpp"
 #include "queue/macros.hpp"
 #include "queue/intrusive.hpp"
 
@@ -11,12 +12,19 @@
 	volatile node_type tail;						\
 	QUEUE_DEFINE_TOTAL()
 
+#ifdef INSTRUMENTATION
+#define QUEUE_DEFINE_INTRUSIVE_CONSTRUCTOR(TYPE) 	\
+	explicit TYPE(void): 									\
+		head(NULL), tail(NULL), total(0)             \
+	{																\
+	}
+#else
 #define QUEUE_DEFINE_INTRUSIVE_CONSTRUCTOR(TYPE) 	\
 	explicit TYPE(void): 									\
 		head(NULL), tail(NULL)								\
 	{																\
-		QUEUE_ZERO_TOTAL();									\
 	}
+#endif /* INSTRUMENTATION */
 
 #define QUEUE_DEFINE_INTRUSIVE_IN_QUEUE()						\
 	static inline bool in_queue(node_type node)				\
@@ -161,6 +169,7 @@
 	__INTRUSIVE_NEXT(ITEM) = NULL;						\
 	__INTRUSIVE_PREV(ITEM) = NULL;						\
 	__INTRUSIVE_IN_QUEUE(ITEM) = false;					\
+	QUEUE_DECREMENT_TOTAL();								\
 }
 
 #define QUEUE_DEFINE_INTRUSIVE_CONST_ITERATOR()		\

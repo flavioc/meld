@@ -161,12 +161,14 @@ public:
    
    explicit push_safe_linear_queue(void):
       tail(NULL)
+#ifdef INSTRUMENTATION
+      , total(0)
+#endif
    {
       // sentinel node
       head = new node();
       head->next = NULL;
       tail = (special_node*)head;
-		QUEUE_ZERO_TOTAL();
    }
    
    virtual ~push_safe_linear_queue(void)
@@ -293,11 +295,13 @@ public:
    
    explicit safe_linear_queue(void):
       tail(NULL)
+#ifdef INSTRUMENTATION
+      , total(0)
+#endif
    {
       head = new node();
       head->next = NULL;
       tail = head;
-		QUEUE_ZERO_TOTAL();
    }
    
    ~safe_linear_queue(void)

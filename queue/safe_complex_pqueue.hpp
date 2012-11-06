@@ -86,6 +86,7 @@ private:
 public:
 	
 	HEAP_DEFINE_EMPTY;
+   HEAP_DEFINE_SIZE;
 	
 	static inline bool in_queue(heap_object node)
 	{
