@@ -36,6 +36,7 @@ private:
    void write_sent_facts(const std::string&) const;
    void write_stealed_nodes(const std::string&) const;
    void write_steal_requests(const std::string&) const;
+   void write_priority_queue(const std::string&) const;
    
    typedef  void (slice::*print_fn)(utils::csv_line&) const;
    

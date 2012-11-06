@@ -99,6 +99,12 @@ slice_set::write_steal_requests(const string& file) const
 }
 
 void
+slice_set::write_priority_queue(const string& file) const
+{
+   write_general(file + ".priority_queue", "priorityqueue", &slice::print_priority_queue);
+}
+
+void
 slice_set::write(const string& file, const scheduler_type type) const
 {
    write_state(file);
@@ -109,6 +115,8 @@ slice_set::write(const string& file, const scheduler_type type) const
       write_stealed_nodes(file);
    if(is_indirect_work_stealing_sched(type))
       write_steal_requests(file);
+   if(is_priority_sched(type))
+      write_priority_queue(file);
 }
    
 void

@@ -63,4 +63,10 @@ slice::print_steal_requests(csv_line& csv) const
    csv << to_string<size_t>(steal_requests);
 }
 
+void
+slice::print_priority_queue(csv_line& csv) const
+{
+   csv << to_string<size_t>(priority_queue);
+}
+
 }

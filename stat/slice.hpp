@@ -20,6 +20,7 @@ public:
    size_t sent_facts;
    size_t stealed_nodes;
    size_t steal_requests;
+   size_t priority_queue;
    
    void print_state(utils::csv_line&) const;
    void print_work_queue(utils::csv_line&) const;
@@ -27,6 +28,7 @@ public:
    void print_sent_facts(utils::csv_line&) const;
    void print_stealed_nodes(utils::csv_line&) const;
    void print_steal_requests(utils::csv_line&) const;
+   void print_priority_queue(utils::csv_line&) const;
    
    explicit slice(void):
       state(NOW_IDLE),
@@ -34,7 +36,8 @@ public:
       processed_facts(0),
       sent_facts(0),
       stealed_nodes(0),
-      steal_requests(0)
+      steal_requests(0),
+      priority_queue(0)
    {
    }
    

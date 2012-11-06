@@ -854,6 +854,7 @@ static_local_prio::write_slice(statistics::slice& sl) const
 #ifdef INSTRUMENTATION
    base::write_slice(sl);
    sl.work_queue = queue_nodes.size();
+   sl.priority_queue = prio_queue.size();
 #else
    (void)sl;
 #endif

@@ -44,6 +44,11 @@ inline bool is_indirect_work_stealing_sched(const scheduler_type type)
       type == SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL;
 }
 
+inline bool is_priority_sched(const scheduler_type type)
+{
+   return type == SCHED_THREADS_STATIC_LOCAL_PRIO;
+}
+
 }
 
 #endif
