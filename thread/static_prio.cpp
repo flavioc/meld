@@ -408,7 +408,7 @@ bool
 static_local_prio::check_if_current_useless(void)
 {
 	if(!state::PROGRAM->has_global_priority() &&
-         !prio_queue.empty() && taken_from_priority_queue && current_node->has_work())
+         !prio_queue.empty() && taken_from_priority_queue && !current_node->has_work())
    {
 		// there could be higher priority nodes around
 		const heap_priority current_min(prio_queue.min_value());
