@@ -1,11 +1,11 @@
 
 type start(node).
-type end(node).
+type final(node).
 type path(node, min int, list node).
 
 path(A, W, [A]) :-
 	edge(A, B, W),
-	end(B).
+	final(B).
 
 path(A, D + W, [A | P]) :-
 	edge(A, B, W),
