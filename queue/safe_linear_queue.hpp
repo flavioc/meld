@@ -111,6 +111,15 @@ public:
       
       push_node((special_node*)new_node);
    }
+
+	inline T top(void)
+	{
+		assert(tail != NULL);
+		assert(head != NULL);
+		assert(head->next != NULL);
+		
+		return head->data;
+	}
    
    inline T pop(void)
    {

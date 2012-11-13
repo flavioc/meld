@@ -55,7 +55,7 @@ namespace queue
 	assert(head != NULL);								\
    assert(tail == new_node)
 
-#define QUEUE_DEFINE_LINEAR_POP_NODE(ELEM)		\
+#define QUEUE_DEFINE_LINEAR_POP_NODE()				\
    node *take(head);										\
    															\
    assert(head != NULL);								\
@@ -73,6 +73,10 @@ namespace queue
    delete take;											\
 																\
    return el
+
+#define QUEUE_DEFINE_LINEAR_TOP_NODE()				\
+	assert(head != NULL);								\
+	return head->data
 	
 // no safety of operations for this queue
 template <class T>
@@ -105,6 +109,11 @@ public:
 		QUEUE_DECREMENT_TOTAL();
 		QUEUE_DEFINE_LINEAR_POP_NODE();
    }
+
+	inline T top(void)
+	{
+		QUEUE_DEFINE_LINEAR_TOP_NODE();
+	}
    
    explicit unsafe_linear_queue(void):
       QUEUE_DEFINE_LINEAR_CONSTRUCTOR()
@@ -143,6 +152,11 @@ public:
 		QUEUE_DEFINE_LINEAR_PUSH_NODE(el);
       ++total;
    }
+
+	inline T top(void)
+	{
+		QUEUE_DEFINE_LINEAR_TOP_NODE();
+	}
    
    inline T pop(void)
    {

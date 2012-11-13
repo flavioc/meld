@@ -120,6 +120,22 @@ public:
       
       total++; // has more tasks
    }
+
+	T top(void)
+	{
+		tree_node *node = root;
+		
+		while(!node->is_leaf()) {
+			if(node->counter > 0)
+				node = node->left;
+			else
+				node = node->right;
+		}
+		
+		assert(!node->bin.empty());
+		
+		return node->bin.top();
+	}
    
    T pop(void)
    {
@@ -179,7 +195,7 @@ public:
 				sub = (*leaves)[cur_pos]->bin.begin();
 				started_cur = true;
 			}
-				
+
 			if(sub == (*leaves)[cur_pos]->bin.end()) {
 				cur_pos++;
 				started_cur = false;
@@ -228,7 +244,7 @@ public:
 	
 	inline const_iterator begin(void) const { return const_iterator(leaves); }
 	inline const_iterator end(void) const { return const_iterator(); }
-   
+
    explicit bounded_pqueue(const size_t _range):
       total(0),
       range(_range)
