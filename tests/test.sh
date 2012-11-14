@@ -53,17 +53,6 @@ do_test ()
 	run_diff "${TO_RUN}"
 }
 
-do_test_mix ()
-{
-	NPROCS=${1}
-	NTHREADS=${2}
-	MIX_TYPE=${3}
-
-	TO_RUN="mpirun -n ${NPROCS} ${EXEC} -f ${TEST} -c ${MIX_TYPE}${NTHREADS}"
-
-	run_diff "${TO_RUN}"
-}
-
 run_serial_n ()
 {
 	SCHED=${1}
@@ -83,18 +72,6 @@ run_test_n ()
 	echo "Running ${TEST} ${TIMES} times with ${NTHREADS} threads (SCHED: ${SCHED})..."
 	for((I=1; I <= ${TIMES}; I++)); do
 		do_test ${NTHREADS} ${SCHED}
-	done
-}
-
-run_test_mix_n ()
-{
-	NPROCS=${1}
-	NTHREADS=${2}
-	TIMES=${3}
-	MIX_TYPE=${4}
-	echo "Running ${TEST} ${TIMES} times with ${NPROCS} processes and ${NTHREADS} threads (SCHED: ${MIX_TYPE})..."
-	for((I=1; I <= ${TIMES}; I++)); do
-		do_test_mix ${NPROCS} ${NTHREADS} ${MIX_TYPE}
 	done
 }
 
@@ -126,106 +103,17 @@ loop_sched ()
 	fi
 }
 
-loop_sched_mix ()
-{
-	MIX_TYPE=${1}
-	run_test_mix_n 1 1 1 ${MIX_TYPE}
-	run_test_mix_n 2 1 1 ${MIX_TYPE}
-	run_test_mix_n 1 2 1 ${MIX_TYPE}
-	
-	if [ $NODES -gt 2 ]; then
-		run_test_mix_n 3 1 1 ${MIX_TYPE}
-		run_test_mix_n 1 3 1 ${MIX_TYPE}
-	fi
-	if [ $NODES -gt 3 ]; then
-		run_test_mix_n 4 1 1 ${MIX_TYPE}
-		run_test_mix_n 1 4 1 ${MIX_TYPE}
-		run_test_mix_n 2 2 1 ${MIX_TYPE}
-	fi
-	if [ $NODES -gt 4 ]; then
-		run_test_mix_n 5 1 1 ${MIX_TYPE}
-		run_test_mix_n 1 5 1 ${MIX_TYPE}
-	fi
-	if [ $NODES -gt 5 ]; then
-		run_test_mix_n 6 1 1 ${MIX_TYPE}
-		run_test_mix_n 1 6 1 ${MIX_TYPE}
-		run_test_mix_n 2 3 1 ${MIX_TYPE}
-		run_test_mix_n 3 2 1 ${MIX_TYPE}
-	fi
-	if [ $NODES -gt 6 ]; then
-		run_test_mix_n 7 1 1 ${MIX_TYPE}
-		run_test_mix_n 1 7 1 ${MIX_TYPE}
-	fi
-	if [ $NODES -gt 7 ]; then
-		run_test_mix_n 8 1 1 ${MIX_TYPE}
-		run_test_mix_n 1 8 1 ${MIX_TYPE}
-		run_test_mix_n 2 4 1 ${MIX_TYPE}
-		run_test_mix_n 4 2 1 ${MIX_TYPE}
-	fi
-}
-
 if [ "${TYPE}" = "all" ]; then
-	loop_sched ts
 	loop_sched tl
-	loop_sched td
-	loop_sched_mix mpiglobal
-	loop_sched_mix mpistatic
-	loop_sched_mix mpidynamic
-	loop_sched_mix mpisingle
 	exit 0
 fi
 
-if [ "${TYPE}" = "serial" ]; then
+if [ "${TYPE}" = "sl" ]; then
 	run_serial_n sl 1
-	exit 0
-fi
-
-if [ "${TYPE}" = "ts" ]; then
-	loop_sched ts
 	exit 0
 fi
 
 if [ "${TYPE}" = "tl" ]; then
 	loop_sched tl
-	exit 0
-fi
-
-if [ "${TYPE}" = "tb" ]; then
-   loop_sched tb
-   exit 0
-fi
-
-if [ "${TYPE}" = "td" ]; then
-	loop_sched td
-	exit 0
-fi
-
-if [ "${TYPE}" = "tx" ]; then
-   loop_sched tx
-   exit 0
-fi
-
-if [ "${TYPE}" = "sin" ]; then
-	loop_sched sin
-	exit 0
-fi
-
-if [ "${TYPE}" = "mpiglobal" ]; then
-	loop_sched_mix mpiglobal
-	exit 0
-fi
-
-if [ "${TYPE}" = "mpistatic" ]; then
-	loop_sched_mix mpistatic
-	exit 0
-fi
-
-if [ "${TYPE}" = "mpidynamic" ]; then
-	loop_sched_mix mpidynamic
-	exit 0
-fi
-
-if [ "${TYPE}" = "mpisingle" ]; then
-	loop_sched_mix mpisingle
 	exit 0
 fi
