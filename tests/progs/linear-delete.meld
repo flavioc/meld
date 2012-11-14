@@ -3,4 +3,4 @@ type linear f(node).
 
 f(@1).
 
-:- f(A).
+f(A) -o 1.
