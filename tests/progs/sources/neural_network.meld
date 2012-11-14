@@ -11,41 +11,41 @@ extern float sigmoid(float).
 
 const lrate = 0.01.
 
-receive(A, I, W * V) :-
-	link(B, A),
-	weight(B, I, A, W),
-	activated(B, I, V).
+!receive(A, I, W * V) :-
+	!link(B, A),
+	!weight(B, I, A, W),
+	!activated(B, I, V).
 
-activated(A, I, sigmoid(V)) :-
-	receive(A, I, V).
+!activated(A, I, sigmoid(V)) :-
+	!receive(A, I, V).
 
-delta(A, I, B, lrate * V * G) :-
-	hidden(A),
-	activated(A, I, V),
-	link(A, B),
-	outgrad(B, I, G).
+!delta(A, I, B, lrate * V * G) :-
+	!hidden(A),
+	!activated(A, I, V),
+	!link(A, B),
+	!outgrad(B, I, G).
 
-outgrad(A, I, G * (1.0 - G) * (E - G)) :-
-	expected(A, I, E),
-	activated(A, I, G).
+!outgrad(A, I, G * (1.0 - G) * (E - G)) :-
+	!expected(A, I, E),
+	!activated(A, I, G).
 
-allhiddengrad(A, I, V * W) :-
-	hidden(A),
-	link(A, B),
-	weight(A, I, B, W),
-	outgrad(B, I, V).
+!allhiddengrad(A, I, V * W) :-
+	!hidden(A),
+	!link(A, B),
+	!weight(A, I, B, W),
+	!outgrad(B, I, V).
 
-hiddengrad(A, I, V * (1.0 - V) * T) :-
-	activated(A, I, V),
-	allhiddengrad(A, I, T).
+!hiddengrad(A, I, V * (1.0 - V) * T) :-
+	!activated(A, I, V),
+	!allhiddengrad(A, I, T).
 
-delta(A, I, B, lrate * V * G) :-
-	input(A),
-	activated(A, I, V),
-	link(A, B),
-	hiddengrad(B, I, G).
+!delta(A, I, B, lrate * V * G) :-
+	!input(A),
+	!activated(A, I, V),
+	!link(A, B),
+	!hiddengrad(B, I, G).
 
-weight(A, I + 1, B, O + D) :-
-	weight(A, I, B, O),
-	delta(A, I, B, D).
+!weight(A, I + 1, B, O + D) :-
+	!weight(A, I, B, O),
+	!delta(A, I, B, D).
 

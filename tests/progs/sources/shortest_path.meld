@@ -3,11 +3,11 @@ type start(node).
 type final(node).
 type path(node, min int, list node).
 
-path(A, W, [A]) :-
-	edge(A, B, W),
-	final(B).
+!path(A, W, [A]) :-
+	!edge(A, B, W),
+	!final(B).
 
-path(A, D + W, [A | P]) :-
-	edge(A, B, W),
-	path(B, D, P).
+!path(A, D + W, [A | P]) :-
+	!edge(A, B, W),
+	!path(B, D, P).
 

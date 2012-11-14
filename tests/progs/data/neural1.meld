@@ -5,80 +5,80 @@ type output(node).
 type bias(node).
 type weight(node, int, node, float).
 
-input(@0). input(@1). input(@2). input(@3). input(@4). input(@5). input(@6). input(@7). input(@8). input(@9). input(@10). input(@11). input(@12). input(@13). input(@14). input(@15).
-hidden(@100). hidden(@101). hidden(@102). hidden(@103). hidden(@104). hidden(@105). hidden(@106). hidden(@107).
-output(@200).
+!input(@0). !input(@1). !input(@2). !input(@3). !input(@4). !input(@5). !input(@6). !input(@7). !input(@8). !input(@9). !input(@10). !input(@11). !input(@12). !input(@13). !input(@14). !input(@15).
+!hidden(@100). !hidden(@101). !hidden(@102). !hidden(@103). !hidden(@104). !hidden(@105). !hidden(@106). !hidden(@107).
+!output(@200).
 
-input(@16).
-bias(@16).
-hidden(@108).
-bias(@108).
+!input(@16).
+!bias(@16).
+!hidden(@108).
+!bias(@108).
 
-link(@0, @100). link(@0, @101). link(@0, @102). link(@0, @103). link(@0, @104). link(@0, @105). link(@0, @106). link(@0, @107).
-link(@1, @100). link(@1, @101). link(@1, @102). link(@1, @103). link(@1, @104). link(@1, @105). link(@1, @106). link(@1, @107).
-link(@2, @100). link(@2, @101). link(@2, @102). link(@2, @103). link(@2, @104). link(@2, @105). link(@2, @106). link(@2, @107).
-link(@3, @100). link(@3, @101). link(@3, @102). link(@3, @103). link(@3, @104). link(@3, @105). link(@3, @106). link(@3, @107).
-link(@4, @100). link(@4, @101). link(@4, @102). link(@4, @103). link(@4, @104). link(@4, @105). link(@4, @106). link(@4, @107).
-link(@5, @100). link(@5, @101). link(@5, @102). link(@5, @103). link(@5, @104). link(@5, @105). link(@5, @106). link(@5, @107).
-link(@6, @100). link(@6, @101). link(@6, @102). link(@6, @103). link(@6, @104). link(@6, @105). link(@6, @106). link(@6, @107).
-link(@7, @100). link(@7, @101). link(@7, @102). link(@7, @103). link(@7, @104). link(@7, @105). link(@7, @106). link(@7, @107).
-link(@8, @100). link(@8, @101). link(@8, @102). link(@8, @103). link(@8, @104). link(@8, @105). link(@8, @106). link(@8, @107).
-link(@9, @100). link(@9, @101). link(@9, @102). link(@9, @103). link(@9, @104). link(@9, @105). link(@9, @106). link(@9, @107).
-link(@10, @100). link(@10, @101). link(@10, @102). link(@10, @103). link(@10, @104). link(@10, @105). link(@10, @106). link(@10, @107).
-link(@11, @100). link(@11, @101). link(@11, @102). link(@11, @103). link(@11, @104). link(@11, @105). link(@11, @106). link(@11, @107).
-link(@12, @100). link(@12, @101). link(@12, @102). link(@12, @103). link(@12, @104). link(@12, @105). link(@12, @106). link(@12, @107).
-link(@13, @100). link(@13, @101). link(@13, @102). link(@13, @103). link(@13, @104). link(@13, @105). link(@13, @106). link(@13, @107).
-link(@14, @100). link(@14, @101). link(@14, @102). link(@14, @103). link(@14, @104). link(@14, @105). link(@14, @106). link(@14, @107).
-link(@15, @100). link(@15, @101). link(@15, @102). link(@15, @103). link(@15, @104). link(@15, @105). link(@15, @106). link(@15, @107).
-link(@16, @100). link(@16, @101). link(@16, @102). link(@16, @103). link(@16, @104). link(@16, @105). link(@16, @106). link(@16, @107).
+!link(@0, @100). !link(@0, @101). !link(@0, @102). !link(@0, @103). !link(@0, @104). !link(@0, @105). !link(@0, @106). !link(@0, @107).
+!link(@1, @100). !link(@1, @101). !link(@1, @102). !link(@1, @103). !link(@1, @104). !link(@1, @105). !link(@1, @106). !link(@1, @107).
+!link(@2, @100). !link(@2, @101). !link(@2, @102). !link(@2, @103). !link(@2, @104). !link(@2, @105). !link(@2, @106). !link(@2, @107).
+!link(@3, @100). !link(@3, @101). !link(@3, @102). !link(@3, @103). !link(@3, @104). !link(@3, @105). !link(@3, @106). !link(@3, @107).
+!link(@4, @100). !link(@4, @101). !link(@4, @102). !link(@4, @103). !link(@4, @104). !link(@4, @105). !link(@4, @106). !link(@4, @107).
+!link(@5, @100). !link(@5, @101). !link(@5, @102). !link(@5, @103). !link(@5, @104). !link(@5, @105). !link(@5, @106). !link(@5, @107).
+!link(@6, @100). !link(@6, @101). !link(@6, @102). !link(@6, @103). !link(@6, @104). !link(@6, @105). !link(@6, @106). !link(@6, @107).
+!link(@7, @100). !link(@7, @101). !link(@7, @102). !link(@7, @103). !link(@7, @104). !link(@7, @105). !link(@7, @106). !link(@7, @107).
+!link(@8, @100). !link(@8, @101). !link(@8, @102). !link(@8, @103). !link(@8, @104). !link(@8, @105). !link(@8, @106). !link(@8, @107).
+!link(@9, @100). !link(@9, @101). !link(@9, @102). !link(@9, @103). !link(@9, @104). !link(@9, @105). !link(@9, @106). !link(@9, @107).
+!link(@10, @100). !link(@10, @101). !link(@10, @102). !link(@10, @103). !link(@10, @104). !link(@10, @105). !link(@10, @106). !link(@10, @107).
+!link(@11, @100). !link(@11, @101). !link(@11, @102). !link(@11, @103). !link(@11, @104). !link(@11, @105). !link(@11, @106). !link(@11, @107).
+!link(@12, @100). !link(@12, @101). !link(@12, @102). !link(@12, @103). !link(@12, @104). !link(@12, @105). !link(@12, @106). !link(@12, @107).
+!link(@13, @100). !link(@13, @101). !link(@13, @102). !link(@13, @103). !link(@13, @104). !link(@13, @105). !link(@13, @106). !link(@13, @107).
+!link(@14, @100). !link(@14, @101). !link(@14, @102). !link(@14, @103). !link(@14, @104). !link(@14, @105). !link(@14, @106). !link(@14, @107).
+!link(@15, @100). !link(@15, @101). !link(@15, @102). !link(@15, @103). !link(@15, @104). !link(@15, @105). !link(@15, @106). !link(@15, @107).
+!link(@16, @100). !link(@16, @101). !link(@16, @102). !link(@16, @103). !link(@16, @104). !link(@16, @105). !link(@16, @106). !link(@16, @107).
 
-link(@100, @200).
-link(@101, @200).
-link(@102, @200).
-link(@103, @200).
-link(@104, @200).
-link(@105, @200).
-link(@106, @200).
-link(@107, @200).
-link(@108, @200).
+!link(@100, @200).
+!link(@101, @200).
+!link(@102, @200).
+!link(@103, @200).
+!link(@104, @200).
+!link(@105, @200).
+!link(@106, @200).
+!link(@107, @200).
+!link(@108, @200).
 
-weight(@0, 0, @100, 0.5). weight(@0, 0, @101, 0.5). weight(@0, 0, @102, 0.5). weight(@0, 0, @103, 0.5). weight(@0, 0, @104, 0.5). weight(@0, 0, @105, 0.5). weight(@0, 0, @106, 0.5). weight(@0, 0, @107, 0.5).
-weight(@1, 0, @100, 0.5). weight(@1, 0, @101, 0.5). weight(@1, 0, @102, 0.5). weight(@1, 0, @103, 0.5). weight(@1, 0, @104, 0.5). weight(@1, 0, @105, 0.5). weight(@1, 0, @106, 0.5). weight(@1, 0, @107, 0.5).
-weight(@2, 0, @100, 0.5). weight(@2, 0, @101, 0.5). weight(@2, 0, @102, 0.5). weight(@2, 0, @103, 0.5). weight(@2, 0, @104, 0.5). weight(@2, 0, @105, 0.5). weight(@2, 0, @106, 0.5). weight(@2, 0, @107, 0.5).
-weight(@3, 0, @100, 0.5). weight(@3, 0, @101, 0.5). weight(@3, 0, @102, 0.5). weight(@3, 0, @103, 0.5). weight(@3, 0, @104, 0.5). weight(@3, 0, @105, 0.5). weight(@3, 0, @106, 0.5). weight(@3, 0, @107, 0.5).
-weight(@4, 0, @100, 0.5). weight(@4, 0, @101, 0.5). weight(@4, 0, @102, 0.5). weight(@4, 0, @103, 0.5). weight(@4, 0, @104, 0.5). weight(@4, 0, @105, 0.5). weight(@4, 0, @106, 0.5). weight(@4, 0, @107, 0.5).
-weight(@5, 0, @100, 0.5). weight(@5, 0, @101, 0.5). weight(@5, 0, @102, 0.5). weight(@5, 0, @103, 0.5). weight(@5, 0, @104, 0.5). weight(@5, 0, @105, 0.5). weight(@5, 0, @106, 0.5). weight(@5, 0, @107, 0.5).
-weight(@6, 0, @100, 0.5). weight(@6, 0, @101, 0.5). weight(@6, 0, @102, 0.5). weight(@6, 0, @103, 0.5). weight(@6, 0, @104, 0.5). weight(@6, 0, @105, 0.5). weight(@6, 0, @106, 0.5). weight(@6, 0, @107, 0.5).
-weight(@7, 0, @100, 0.5). weight(@7, 0, @101, 0.5). weight(@7, 0, @102, 0.5). weight(@7, 0, @103, 0.5). weight(@7, 0, @104, 0.5). weight(@7, 0, @105, 0.5). weight(@7, 0, @106, 0.5). weight(@7, 0, @107, 0.5).
-weight(@8, 0, @100, 0.5). weight(@8, 0, @101, 0.5). weight(@8, 0, @102, 0.5). weight(@8, 0, @103, 0.5). weight(@8, 0, @104, 0.5). weight(@8, 0, @105, 0.5). weight(@8, 0, @106, 0.5). weight(@8, 0, @107, 0.5).
-weight(@9, 0, @100, 0.5). weight(@9, 0, @101, 0.5). weight(@9, 0, @102, 0.5). weight(@9, 0, @103, 0.5). weight(@9, 0, @104, 0.5). weight(@9, 0, @105, 0.5). weight(@9, 0, @106, 0.5). weight(@9, 0, @107, 0.5).
-weight(@10, 0, @100, 0.5). weight(@10, 0, @101, 0.5). weight(@10, 0, @102, 0.5). weight(@10, 0, @103, 0.5). weight(@10, 0, @104, 0.5). weight(@10, 0, @105, 0.5). weight(@10, 0, @106, 0.5). weight(@10, 0, @107, 0.5).
-weight(@11, 0, @100, 0.5). weight(@11, 0, @101, 0.5). weight(@11, 0, @102, 0.5). weight(@11, 0, @103, 0.5). weight(@11, 0, @104, 0.5). weight(@11, 0, @105, 0.5). weight(@11, 0, @106, 0.5). weight(@11, 0, @107, 0.5).
-weight(@12, 0, @100, 0.5). weight(@12, 0, @101, 0.5). weight(@12, 0, @102, 0.5). weight(@12, 0, @103, 0.5). weight(@12, 0, @104, 0.5). weight(@12, 0, @105, 0.5). weight(@12, 0, @106, 0.5). weight(@12, 0, @107, 0.5).
-weight(@13, 0, @100, 0.5). weight(@13, 0, @101, 0.5). weight(@13, 0, @102, 0.5). weight(@13, 0, @103, 0.5). weight(@13, 0, @104, 0.5). weight(@13, 0, @105, 0.5). weight(@13, 0, @106, 0.5). weight(@13, 0, @107, 0.5).
-weight(@14, 0, @100, 0.5). weight(@14, 0, @101, 0.5). weight(@14, 0, @102, 0.5). weight(@14, 0, @103, 0.5). weight(@14, 0, @104, 0.5). weight(@14, 0, @105, 0.5). weight(@14, 0, @106, 0.5). weight(@14, 0, @107, 0.5).
-weight(@15, 0, @100, 0.5). weight(@15, 0, @101, 0.5). weight(@15, 0, @102, 0.5). weight(@15, 0, @103, 0.5). weight(@15, 0, @104, 0.5). weight(@15, 0, @105, 0.5). weight(@15, 0, @106, 0.5). weight(@15, 0, @107, 0.5).
-weight(@16, 0, @100, 0.5). weight(@16, 0, @101, 0.5). weight(@16, 0, @102, 0.5). weight(@16, 0, @103, 0.5). weight(@16, 0, @104, 0.5). weight(@16, 0, @105, 0.5). weight(@16, 0, @106, 0.5). weight(@16, 0, @107, 0.5).
+!weight(@0, 0, @100, 0.5). !weight(@0, 0, @101, 0.5). !weight(@0, 0, @102, 0.5). !weight(@0, 0, @103, 0.5). !weight(@0, 0, @104, 0.5). !weight(@0, 0, @105, 0.5). !weight(@0, 0, @106, 0.5). !weight(@0, 0, @107, 0.5).
+!weight(@1, 0, @100, 0.5). !weight(@1, 0, @101, 0.5). !weight(@1, 0, @102, 0.5). !weight(@1, 0, @103, 0.5). !weight(@1, 0, @104, 0.5). !weight(@1, 0, @105, 0.5). !weight(@1, 0, @106, 0.5). !weight(@1, 0, @107, 0.5).
+!weight(@2, 0, @100, 0.5). !weight(@2, 0, @101, 0.5). !weight(@2, 0, @102, 0.5). !weight(@2, 0, @103, 0.5). !weight(@2, 0, @104, 0.5). !weight(@2, 0, @105, 0.5). !weight(@2, 0, @106, 0.5). !weight(@2, 0, @107, 0.5).
+!weight(@3, 0, @100, 0.5). !weight(@3, 0, @101, 0.5). !weight(@3, 0, @102, 0.5). !weight(@3, 0, @103, 0.5). !weight(@3, 0, @104, 0.5). !weight(@3, 0, @105, 0.5). !weight(@3, 0, @106, 0.5). !weight(@3, 0, @107, 0.5).
+!weight(@4, 0, @100, 0.5). !weight(@4, 0, @101, 0.5). !weight(@4, 0, @102, 0.5). !weight(@4, 0, @103, 0.5). !weight(@4, 0, @104, 0.5). !weight(@4, 0, @105, 0.5). !weight(@4, 0, @106, 0.5). !weight(@4, 0, @107, 0.5).
+!weight(@5, 0, @100, 0.5). !weight(@5, 0, @101, 0.5). !weight(@5, 0, @102, 0.5). !weight(@5, 0, @103, 0.5). !weight(@5, 0, @104, 0.5). !weight(@5, 0, @105, 0.5). !weight(@5, 0, @106, 0.5). !weight(@5, 0, @107, 0.5).
+!weight(@6, 0, @100, 0.5). !weight(@6, 0, @101, 0.5). !weight(@6, 0, @102, 0.5). !weight(@6, 0, @103, 0.5). !weight(@6, 0, @104, 0.5). !weight(@6, 0, @105, 0.5). !weight(@6, 0, @106, 0.5). !weight(@6, 0, @107, 0.5).
+!weight(@7, 0, @100, 0.5). !weight(@7, 0, @101, 0.5). !weight(@7, 0, @102, 0.5). !weight(@7, 0, @103, 0.5). !weight(@7, 0, @104, 0.5). !weight(@7, 0, @105, 0.5). !weight(@7, 0, @106, 0.5). !weight(@7, 0, @107, 0.5).
+!weight(@8, 0, @100, 0.5). !weight(@8, 0, @101, 0.5). !weight(@8, 0, @102, 0.5). !weight(@8, 0, @103, 0.5). !weight(@8, 0, @104, 0.5). !weight(@8, 0, @105, 0.5). !weight(@8, 0, @106, 0.5). !weight(@8, 0, @107, 0.5).
+!weight(@9, 0, @100, 0.5). !weight(@9, 0, @101, 0.5). !weight(@9, 0, @102, 0.5). !weight(@9, 0, @103, 0.5). !weight(@9, 0, @104, 0.5). !weight(@9, 0, @105, 0.5). !weight(@9, 0, @106, 0.5). !weight(@9, 0, @107, 0.5).
+!weight(@10, 0, @100, 0.5). !weight(@10, 0, @101, 0.5). !weight(@10, 0, @102, 0.5). !weight(@10, 0, @103, 0.5). !weight(@10, 0, @104, 0.5). !weight(@10, 0, @105, 0.5). !weight(@10, 0, @106, 0.5). !weight(@10, 0, @107, 0.5).
+!weight(@11, 0, @100, 0.5). !weight(@11, 0, @101, 0.5). !weight(@11, 0, @102, 0.5). !weight(@11, 0, @103, 0.5). !weight(@11, 0, @104, 0.5). !weight(@11, 0, @105, 0.5). !weight(@11, 0, @106, 0.5). !weight(@11, 0, @107, 0.5).
+!weight(@12, 0, @100, 0.5). !weight(@12, 0, @101, 0.5). !weight(@12, 0, @102, 0.5). !weight(@12, 0, @103, 0.5). !weight(@12, 0, @104, 0.5). !weight(@12, 0, @105, 0.5). !weight(@12, 0, @106, 0.5). !weight(@12, 0, @107, 0.5).
+!weight(@13, 0, @100, 0.5). !weight(@13, 0, @101, 0.5). !weight(@13, 0, @102, 0.5). !weight(@13, 0, @103, 0.5). !weight(@13, 0, @104, 0.5). !weight(@13, 0, @105, 0.5). !weight(@13, 0, @106, 0.5). !weight(@13, 0, @107, 0.5).
+!weight(@14, 0, @100, 0.5). !weight(@14, 0, @101, 0.5). !weight(@14, 0, @102, 0.5). !weight(@14, 0, @103, 0.5). !weight(@14, 0, @104, 0.5). !weight(@14, 0, @105, 0.5). !weight(@14, 0, @106, 0.5). !weight(@14, 0, @107, 0.5).
+!weight(@15, 0, @100, 0.5). !weight(@15, 0, @101, 0.5). !weight(@15, 0, @102, 0.5). !weight(@15, 0, @103, 0.5). !weight(@15, 0, @104, 0.5). !weight(@15, 0, @105, 0.5). !weight(@15, 0, @106, 0.5). !weight(@15, 0, @107, 0.5).
+!weight(@16, 0, @100, 0.5). !weight(@16, 0, @101, 0.5). !weight(@16, 0, @102, 0.5). !weight(@16, 0, @103, 0.5). !weight(@16, 0, @104, 0.5). !weight(@16, 0, @105, 0.5). !weight(@16, 0, @106, 0.5). !weight(@16, 0, @107, 0.5).
 
-weight(@100, 0, @200, 0.5).
-weight(@101, 0, @200, 0.5).
-weight(@102, 0, @200, 0.5).
-weight(@103, 0, @200, 0.5).
-weight(@104, 0, @200, 0.5).
-weight(@105, 0, @200, 0.5).
-weight(@106, 0, @200, 0.5).
-weight(@107, 0, @200, 0.5).
-weight(@108, 0, @200, 0.5).
+!weight(@100, 0, @200, 0.5).
+!weight(@101, 0, @200, 0.5).
+!weight(@102, 0, @200, 0.5).
+!weight(@103, 0, @200, 0.5).
+!weight(@104, 0, @200, 0.5).
+!weight(@105, 0, @200, 0.5).
+!weight(@106, 0, @200, 0.5).
+!weight(@107, 0, @200, 0.5).
+!weight(@108, 0, @200, 0.5).
 
-activated(@0, 0, 2). activated(@1, 0, 8). activated(@2, 0, 3). activated(@3, 0, 5). activated(@4, 0, 1). activated(@5, 0, 8). activated(@6, 0, 13). activated(@7, 0, 0). activated(@8, 0, 6). activated(@9, 0, 6). activated(@10, 0, 10). activated(@11, 0, 8). activated(@12, 0, 0). activated(@13, 0, 8). activated(@14, 0, 0). activated(@15, 0, 8).
-expected(@200, 0, 0).
-activated(@16, 0, 0.0 - 1.0).
-activated(@108, 0, 0.0 - 1.0).
-activated(@0, 1, 5). activated(@1, 1, 12). activated(@2, 1, 3). activated(@3, 1, 7). activated(@4, 1, 2). activated(@5, 1, 10). activated(@6, 1, 5). activated(@7, 1, 5). activated(@8, 1, 4). activated(@9, 1, 13). activated(@10, 1, 3). activated(@11, 1, 9). activated(@12, 1, 2). activated(@13, 1, 8). activated(@14, 1, 4). activated(@15, 1, 10).
-expected(@200, 1, 1).
-activated(@16, 1, 0.0 - 1.0).
-activated(@108, 1, 0.0 - 1.0).
-activated(@0, 2, 4). activated(@1, 2, 11). activated(@2, 2, 6). activated(@3, 2, 8). activated(@4, 2, 6). activated(@5, 2, 10). activated(@6, 2, 6). activated(@7, 2, 2). activated(@8, 2, 6). activated(@9, 2, 10). activated(@10, 2, 3). activated(@11, 2, 7). activated(@12, 2, 3). activated(@13, 2, 7). activated(@14, 2, 3). activated(@15, 2, 9).
-expected(@200, 2, 0).
-activated(@16, 2, 0.0 - 1.0).
-activated(@108, 2, 0.0 - 1.0).
+!activated(@0, 0, 2). !activated(@1, 0, 8). !activated(@2, 0, 3). !activated(@3, 0, 5). !activated(@4, 0, 1). !activated(@5, 0, 8). !activated(@6, 0, 13). !activated(@7, 0, 0). !activated(@8, 0, 6). !activated(@9, 0, 6). !activated(@10, 0, 10). !activated(@11, 0, 8). !activated(@12, 0, 0). !activated(@13, 0, 8). !activated(@14, 0, 0). !activated(@15, 0, 8).
+!expected(@200, 0, 0).
+!activated(@16, 0, 0.0 - 1.0).
+!activated(@108, 0, 0.0 - 1.0).
+!activated(@0, 1, 5). !activated(@1, 1, 12). !activated(@2, 1, 3). !activated(@3, 1, 7). !activated(@4, 1, 2). !activated(@5, 1, 10). !activated(@6, 1, 5). !activated(@7, 1, 5). !activated(@8, 1, 4). !activated(@9, 1, 13). !activated(@10, 1, 3). !activated(@11, 1, 9). !activated(@12, 1, 2). !activated(@13, 1, 8). !activated(@14, 1, 4). !activated(@15, 1, 10).
+!expected(@200, 1, 1).
+!activated(@16, 1, 0.0 - 1.0).
+!activated(@108, 1, 0.0 - 1.0).
+!activated(@0, 2, 4). !activated(@1, 2, 11). !activated(@2, 2, 6). !activated(@3, 2, 8). !activated(@4, 2, 6). !activated(@5, 2, 10). !activated(@6, 2, 6). !activated(@7, 2, 2). !activated(@8, 2, 6). !activated(@9, 2, 10). !activated(@10, 2, 3). !activated(@11, 2, 7). !activated(@12, 2, 3). !activated(@13, 2, 7). !activated(@14, 2, 3). !activated(@15, 2, 9).
+!expected(@200, 2, 0).
+!activated(@16, 2, 0.0 - 1.0).
+!activated(@108, 2, 0.0 - 1.0).

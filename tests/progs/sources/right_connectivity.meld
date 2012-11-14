@@ -1,6 +1,6 @@
 
 type path(node, node).
     
-path(A, B) :- edge(A, B).
-path(A, B) :- edge(A, C), path(C, B).
+!path(A, B) :- !edge(A, B).
+!path(A, B) :- !edge(A, C), !path(C, B).
 
