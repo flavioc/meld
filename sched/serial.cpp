@@ -25,7 +25,6 @@ serial_local::new_work(const node *, work& new_work)
    node_work n_work(new_work);
    
    to->add_work(n_work);
-   to->register_tuple(new_work.get_underlying_tuple());
    
    if(!to->in_queue()) {
       to->set_in_queue(true);
