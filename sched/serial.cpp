@@ -6,6 +6,7 @@
 using namespace db;
 using namespace vm;
 using namespace process;
+using namespace std;
 
 namespace sched
 {
@@ -24,6 +25,7 @@ serial_local::new_work(const node *, work& new_work)
    node_work n_work(new_work);
    
    to->add_work(n_work);
+   to->register_tuple(new_work.get_underlying_tuple());
    
    if(!to->in_queue()) {
       to->set_in_queue(true);
@@ -49,7 +51,6 @@ bool
 serial_local::get_work(work& new_work)
 {  
    if(current_node != NULL) {
-      // holding a node
       if(!current_node->has_work()) {
          current_node->set_in_queue(false);
          current_node = NULL;
@@ -70,9 +71,7 @@ serial_local::get_work(work& new_work)
    assert(current_node->has_work());
    assert(current_node->in_queue());
    
-   node_work unit(current_node->get_work());
-   
-   new_work.copy_from_node(current_node, unit);
+   new_work.set_work_with_rules(current_node);
    
    return true;
 }
@@ -127,5 +126,30 @@ serial_local::gather_active_tuples(db::node *node, const vm::predicate_id pred)
 	return ls;
 }
 
+void
+serial_local::gather_next_tuples(db::node *node, simple_tuple_vector& ls, strat_level& level)
+{
+	serial_node *no((serial_node*)node);
+
+	vector<node_work> vec;
+	
+	while(ls.empty() && no->has_work()) {
+		no->queue.top_vector(vec);
+		for(vector<node_work>::iterator it(vec.begin()), end(vec.end()); it != end; it++) {
+			node_work &w(*it);
+			vm::tuple *tpl(w.get_underlying_tuple());
+	      db::simple_tuple *stpl(w.get_tuple());
+
+	      if(!stpl->can_be_consumed()) {
+				delete tpl;
+				delete stpl;
+			} else {
+				ls.push_back(stpl);
+				level = tpl->get_predicate()->get_strat_level();
+			}
+		}
+		vec.clear();
+	}
+}
 
 }

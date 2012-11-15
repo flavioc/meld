@@ -74,6 +74,15 @@ namespace queue
 																\
    return el
 
+#define QUEUE_DEFINE_LINEAR_POP_VECTOR(VEC)		\
+	while(head != NULL)	{								\
+		node *next(head->next);							\
+		(VEC).push_back(head->data);					\
+		delete head;										\
+		head = next;										\
+	}															\
+	tail = NULL
+
 #define QUEUE_DEFINE_LINEAR_TOP_NODE()				\
 	assert(head != NULL);								\
 	return head->data
@@ -109,6 +118,12 @@ public:
 		QUEUE_DECREMENT_TOTAL();
 		QUEUE_DEFINE_LINEAR_POP_NODE();
    }
+
+	inline void pop_vector(std::vector<T>& vec)
+	{
+		QUEUE_DEFINE_LINEAR_POP_VECTOR(vec);
+		QUEUE_ZERO_TOTAL();
+	}
 
 	inline T top(void)
 	{
@@ -163,6 +178,12 @@ public:
 		--total;
 		QUEUE_DEFINE_LINEAR_POP_NODE();
    }
+
+	inline void pop_vector(std::vector<T>& vec)
+	{
+		QUEUE_DEFINE_LINEAR_POP_VECTOR(vec);
+		total = 0;
+	}
    
    inline void clear(void)
    {

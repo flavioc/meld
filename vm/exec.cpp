@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <algorithm>
 #include <functional>
@@ -289,18 +290,31 @@ execute_send(const pcounter& pc, state& state)
    const reg_num dest(send_dest(pc));
    const node_val dest_val(state.get_node(dest));
    tuple *tuple(state.get_tuple(msg));
-   simple_tuple *stuple(new simple_tuple(tuple, state.count));
 
    if(msg == dest) {
 #ifdef DEBUG_MODE
       cout << "\t" << *stuple << " -> self" << endl;
 #endif
-      state::MACHINE->route_self(state.proc, state.node, stuple);
-      state.add_generated_tuple(stuple);
+      if(tuple->is_action()) {
+         state::MACHINE->run_action(state.proc->get_scheduler(),
+               state.node, tuple);
+         return;
+      }
+
+      simple_tuple *stuple(new simple_tuple(tuple, state.count));
+
+      if(state.use_local_tuples) {
+         assert(stuple->can_be_consumed());
+         state.generated_tuples.push_back(stuple);
+      } else {
+         state::MACHINE->route_self(state.proc, state.node, stuple);
+         state.add_generated_tuple(stuple);
+		}
    } else {
 #ifdef DEBUG_MODE
       cout << "\t" << *stuple << " -> " << dest_val << endl;
 #endif
+      simple_tuple *stuple(new simple_tuple(tuple, state.count));
       state::MACHINE->route(state.node, state.proc, (node::node_id)dest_val, stuple);
    }
 }
@@ -341,8 +355,9 @@ float_val get_op_function<float_val>(const instr_val& val, pcounter& m, state& s
 	} else if(val_is_const(val)) {
 		const const_id cid(pcounter_const_id(m));
 		pcounter_move_const_id(&m);
+		float_val val(state.get_const_float(cid));
 		
-		return state.get_const_float(cid);
+		return val;
    } else
       throw vm_exec_error("invalid float for float op");
 }
@@ -799,7 +814,8 @@ build_match_object(match& m, pcounter pc, state& state, const predicate *pred)
 typedef enum {
 	ITER_DB,
 	ITER_QUEUE,
-	ITER_ORIGINAL
+	ITER_ORIGINAL,
+	ITER_LOCAL
 } iter_type_t;
 
 typedef pair<iter_type_t, void*> iter_object;
@@ -810,38 +826,26 @@ private:
 	const predicate *pred;
 	const field_num field;
 	
+	static inline tuple *get_tuple(const iter_object& l)
+	{
+		switch(l.first) {
+			case ITER_LOCAL:
+			case ITER_QUEUE:
+				return ((simple_tuple*)l.second)->get_tuple();
+			case ITER_DB:
+				return ((tuple_trie_leaf*)l.second)->get_underlying_tuple();
+			case ITER_ORIGINAL:
+				return (tuple*)l.second;
+			default: assert(false); return NULL;
+		}
+	}
+	
 public:
 	
 	inline bool operator()(const iter_object& l1, const iter_object& l2)
 	{
-		tuple *t1;
-		tuple *t2;
-		
-		switch(l1.first) {
-			case ITER_QUEUE:
-				t1 = ((simple_tuple*)l1.second)->get_tuple();
-				break;
-			case ITER_DB:
-				t1 = ((tuple_trie_leaf*)l1.second)->get_underlying_tuple();
-				break;
-			case ITER_ORIGINAL:
-				t1 = (tuple*)l1.second;
-				break;
-			default: assert(false);
-		}
-		
-		switch(l2.first) {
-			case ITER_QUEUE:
-				t2 = ((simple_tuple*)l2.second)->get_tuple();
-				break;
-			case ITER_DB:
-				t2 = ((tuple_trie_leaf*)l2.second)->get_underlying_tuple();
-				break;
-			case ITER_ORIGINAL:
-				t2 = (tuple *)l2.second;
-				break;
-			default: assert(false);
-		}
+		tuple *t1(get_tuple(l1));
+		tuple *t2(get_tuple(l2));
 			
 		assert(t1 != NULL && t2 != NULL);
 		
@@ -892,22 +896,45 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 		utils::shuffle_vector(tuples, state.randgen);
 	} else if(iter_options_min(options)) {
 		const field_num field(iter_options_min_arg(options_arguments));
-		typedef vector<iter_object> vector_of_everything;
-		simple_tuple_vector queue_tuples(state.proc->get_scheduler()->gather_active_tuples(state.node, pred->get_id()));
-		vector_of_everything everything;
-		
-		for(simple_tuple_vector::iterator it(queue_tuples.begin()), end(queue_tuples.end());
-			it != end; ++it)
-		{
-			if(do_matches(pc, (*it)->get_tuple(), state))
-				everything.push_back(iter_object(ITER_QUEUE, (void*)*it));
+		typedef vector<iter_object, mem::allocator<iter_object> > vector_of_everything;
+      vector_of_everything everything;
 
+      if(true) {
+         simple_tuple_vector queue_tuples(state.proc->get_scheduler()->gather_active_tuples(state.node, pred->get_id()));
+		
+         for(simple_tuple_vector::iterator it(queue_tuples.begin()), end(queue_tuples.end());
+            it != end; ++it)
+         {
+            if(do_matches(pc, (*it)->get_tuple(), state))
+               everything.push_back(iter_object(ITER_QUEUE, (void*)*it));
+         }
+      }
+
+		if(state.use_local_tuples) {
+			for(db::simple_tuple_vector::iterator it(state.local_tuples.begin()), end(state.local_tuples.end());
+				it != end;
+				++it)
+			{
+				simple_tuple *stpl(*it);
+				if(stpl->get_predicate() == pred && stpl->can_be_consumed()) {
+					if(do_matches(pc, stpl->get_tuple(), state))
+						everything.push_back(iter_object(ITER_LOCAL, (void*)stpl));
+				}
+			}
 		}
 		
 		for(tuple_vector::iterator it(tuples.begin()), end(tuples.end());
 			it != end; ++it)
 		{
-			everything.push_back(iter_object(ITER_DB, (void*)*it));
+			tuple_trie_leaf *tuple_leaf(*it);
+#ifndef TRIE_MATCHING
+			if(!do_matches(pc, tuple_leaf->get_underlying_tuple(), state))
+				continue;
+#endif
+#if defined(TRIE_MATCHING_ASSERT) && defined(TRIE_MATCHING)
+	      assert(do_matches(pc, tuple_leaf->get_underlying_tuple(), state));
+#endif
+			everything.push_back(iter_object(ITER_DB, (void*)tuple_leaf));
 		}
 		
 		if(state.original_status == state::ORIGINAL_CAN_BE_USED)
@@ -934,21 +961,9 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 			         state.using_new_linear_tuple(match_tuple);
 			      }
 
-#if defined(TRIE_MATCHING_ASSERT) && defined(TRIE_MATCHING)
-			      assert(do_matches(pc, match_tuple, state));
-#else
-			      (void)pc;
-#endif
-
 					PUSH_CURRENT_STATE(match_tuple, tuple_leaf, NULL);
-#ifdef TRIE_MATCHING
+
 			      ret = execute(first, state);
-#else
-			      if(do_matches(pc, match_tuple, state))
-			         ret = execute(first, state);
-			      else
-			         ret = RETURN_OK;
-#endif
 
 					POP_STATE();
 
@@ -960,11 +975,9 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 					simple_tuple *stpl((simple_tuple*)p.second);
 					tuple *match_tuple(stpl->get_tuple());
 
-		         assert(stpl->can_be_consumed());
-
-			      if(!do_matches(pc, match_tuple, state))
+					if(!stpl->can_be_consumed())
 						continue;
-
+						
 					PUSH_CURRENT_STATE(match_tuple, NULL, stpl);
 
 					if(iter_options_to_delete(options))
@@ -979,13 +992,32 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 					}
 				}
 				break;
+				case ITER_LOCAL: {
+					simple_tuple *stpl((simple_tuple*)p.second);
+					tuple *match_tuple(stpl->get_tuple());
+					
+					if(!stpl->can_be_consumed())
+						continue;
+					
+					PUSH_CURRENT_STATE(match_tuple, NULL, stpl);
+					
+					if(iter_options_to_delete(options)) {
+						stpl->will_delete();
+					}
+					
+					ret = execute(first, state);
+					
+					POP_STATE();
+					
+					if(!(ret == RETURN_LINEAR || ret == RETURN_DERIVED)) {
+						stpl->will_not_delete();
+					}
+				}
+				break;
 				case ITER_ORIGINAL: {
 					tuple *match_tuple((tuple*)p.second);
 			
 					if(state.original_status == state::ORIGINAL_WAS_CONSUMED)
-						continue;
-				
-					if(!do_matches(pc, match_tuple, state))
 						continue;
 				
 					PUSH_CURRENT_STATE(match_tuple, NULL, NULL);
@@ -1053,6 +1085,7 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
          return RETURN_DERIVED;
    }
 
+	// tuples from current queue
 	if(this_is_linear) {
    	db::simple_tuple_vector active_tuples = state.proc->get_scheduler()->gather_active_tuples(state.node, pred->get_id());
 
@@ -1062,8 +1095,9 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 		for(db::simple_tuple_vector::iterator it(active_tuples.begin()), end(active_tuples.end()); it != end; ++it) {
 			simple_tuple *stpl(*it);
 			tuple *match_tuple(stpl->get_tuple());
-
-      	assert(stpl->can_be_consumed());
+			
+			if(!stpl->can_be_consumed())
+				continue;
 		
       	if(!do_matches(pc, match_tuple, state))
 				continue;
@@ -1081,8 +1115,56 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 			POP_STATE();
 
 			if(!(ret == RETURN_LINEAR || ret == RETURN_DERIVED)) { // tuple not consumed
-				if(this_is_linear)
+				if(this_is_linear) {
 					stpl->will_not_delete(); // oops, revert
+            } else {
+               cout << "\tConsumed " << match_tuple << endl;
+            }
+			}
+		
+			if(ret == RETURN_LINEAR)
+				return ret;
+			if(state.is_linear && ret == RETURN_DERIVED)
+				return ret;
+		}
+	}
+	
+	// current set of tuples
+	{
+		if(iter_options_random(options))
+			utils::shuffle_vector(state.local_tuples, state.randgen);
+		
+		for(db::simple_tuple_vector::iterator it(state.local_tuples.begin()), end(state.local_tuples.end()); it != end; ++it) {
+			simple_tuple *stpl(*it);
+			tuple *match_tuple(stpl->get_tuple());
+
+			if(!stpl->can_be_consumed())
+				continue;
+				
+			if(match_tuple->get_predicate() != pred)
+				continue;
+				
+      	if(!do_matches(pc, match_tuple, state))
+				continue;
+		
+			PUSH_CURRENT_STATE(match_tuple, NULL, stpl);
+		
+			if(iter_options_to_delete(options)) {
+				assert(this_is_linear);
+				stpl->will_delete(); // this will avoid future gathers of this tuple!
+			}
+		
+			// execute...
+			return_type ret = execute(first, state);
+		
+			POP_STATE();
+
+			if(!(ret == RETURN_LINEAR || ret == RETURN_DERIVED)) { // tuple not consumed
+				if(this_is_linear) {
+					stpl->will_not_delete(); // oops, revert
+            } else {
+               cout << "\tConsumed " << match_tuple << endl;
+            }
 			}
 		
 			if(ret == RETURN_LINEAR)
@@ -1449,6 +1531,14 @@ execute_rule(const pcounter& pc, state& state)
    const size_t rule_id(rule_get_id(pc));
 
    state.current_rule = rule_id;
+
+#ifdef CORE_STATISTICS
+	if(state.stat_rules_activated == 0 && state.stat_inside_rule) {
+		state.stat_rules_failed++;
+	}
+	state.stat_inside_rule = true;
+	state.stat_rules_activated = 0;
+#endif
 }
 
 static inline void
@@ -1459,11 +1549,16 @@ execute_rule_done(const pcounter& pc, state& state)
 
 #ifdef USE_UI
 	sched::base *sched_caller(state.proc->get_scheduler());
-	sched_caller->rule_applied(state.node, state::PROGRAM->get_rule_string(state.current_rule));
+	vm::rule *rule(state::PROGRAM->get_rule(state.current_rule));
+	sched_caller->rule_applied(state.node, rule->get_string());
+#endif
+
+#ifdef CORE_STATISTICS
+	state.stat_rules_ok++;
+	state.stat_rules_activated++;
 #endif
 
 #if 0
-
    const string rule_str(state::PROGRAM->get_rule_string(state.current_rule));
 
    cout << "Rule applied " << rule_str << endl;
@@ -1473,6 +1568,11 @@ execute_rule_done(const pcounter& pc, state& state)
 static inline return_type
 execute(pcounter pc, state& state)
 {
+#ifdef CORE_STATISTICS
+	if(state.tuple != NULL)
+		state.stat_tuples_used++;
+#endif
+
    for(; ; pc = advance(pc))
    {
 eval_loop:
@@ -1482,6 +1582,10 @@ eval_loop:
          instr_print_simple(pc, 0, state.PROGRAM, cout);
 #endif      
 
+#ifdef CORE_STATISTICS
+		state.stat_instructions_executed++;
+#endif
+		
       switch(fetch(pc)) {
          case RETURN_INSTR: return RETURN_OK;
          
@@ -1496,7 +1600,13 @@ eval_loop:
             goto eval_loop;
          
          case IF_INSTR:
+#ifdef CORE_STATISTICS
+				state.stat_if_tests++;
+#endif
             if(!state.get_bool(if_reg(pc))) {
+#ifdef CORE_STATISTICS
+					state.stat_if_failed++;
+#endif
                pc += if_jump(pc);
                goto eval_loop;
             }
@@ -1532,6 +1642,9 @@ eval_loop:
                const predicate *pred(state::PROGRAM->get_predicate(pred_id));
                match mobj(pred);
                
+#ifdef CORE_STATISTICS
+					state.stat_db_hits++;
+#endif
 #ifdef TRIE_MATCHING
                build_match_object(mobj, pc + ITER_BASE, state, pred);
                state.node->match_predicate(pred_id, mobj, matches);
@@ -1557,6 +1670,9 @@ eval_loop:
             break;
             
          case MOVE_INSTR:
+#ifdef CORE_STATISTICS
+				state.stat_moves_executed++;
+#endif
             execute_move(pc, state);
             break;
             
@@ -1569,6 +1685,9 @@ eval_loop:
             break;
             
          case OP_INSTR:
+#ifdef CORE_STATISTICS
+				state.stat_ops_executed++;
+#endif
             execute_op(pc, state);
             break;
             
@@ -1663,12 +1782,37 @@ execute_bytecode(byte_code code, state& state)
    const return_type ret(execute((pcounter)code, state));
    
    state.cleanup();
+	state.unmark_generated_tuples();
+	
+#ifdef CORE_STATISTICS
+#endif
    
    if(ret == RETURN_LINEAR) {
       return EXECUTION_CONSUMED;
 	} else {
       return EXECUTION_OK;
 	}
+}
+
+void
+execute_rule(const rule_id rule_id, state& state)
+{
+#if 0
+	cout << "Running rule " << rule << endl;
+   
+	cout << state::PROGRAM->get_rule_string(rule) << endl;
+#endif
+	
+	vm::rule *rule(state::PROGRAM->get_rule(rule_id));
+
+   execute(rule->get_bytecode(), state);
+
+#ifdef CORE_STATISTICS
+   if(state.stat_rules_activated == 0)
+      state.stat_rules_failed++;
+#endif
+
+   state.cleanup();
 }
 
 }

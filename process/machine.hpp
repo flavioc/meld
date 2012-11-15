@@ -55,6 +55,7 @@ public:
    
    bool same_place(const db::node::node_id, const db::node::node_id) const;
    
+   void run_action(sched::base *, db::node *, vm::tuple *);
    void route_self(process *, db::node *, db::simple_tuple *);
    
    void route(const db::node *, process *, const db::node::node_id, db::simple_tuple*);

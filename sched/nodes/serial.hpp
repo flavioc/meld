@@ -17,14 +17,9 @@ class serial_node: public in_queue_node
 {
 public:
 	
-	typedef queue::unsafe_bounded_pqueue<process::node_work>::type queue_type;
-	
-private:
-	
+	typedef queue::unsafe_bounded_pqueue<process::node_work>::type queue_type;	
    queue_type queue;
 
-public:
-	
 	DECLARE_DOUBLE_QUEUE_NODE(serial_node);
 	
 	typedef queue_type::const_iterator queue_iterator;

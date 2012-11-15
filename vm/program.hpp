@@ -12,6 +12,7 @@
 #include "vm/predicate.hpp"
 #include "vm/defs.hpp"
 #include "vm/tuple.hpp"
+#include "vm/rule.hpp"
 #include "runtime/string.hpp"
 #ifdef USE_UI
 #include <json_spirit.h>
@@ -35,9 +36,9 @@ class program
 private:
 
 	size_t num_args;
-   size_t num_rules;
+   size_t number_rules;
 
-   std::vector<std::string> rule_strings;
+   std::vector<rule *> rules;
    
    std::vector<predicate*> predicates;
   
@@ -69,9 +70,13 @@ public:
 
    static strat_level MAX_STRAT_LEVEL;
 
+   inline size_t num_rules(void) const { return number_rules; }
 	inline size_t num_args_needed(void) const { return num_args; }
 
-   inline std::string get_rule_string(const size_t id) const { return rule_strings[id]; }
+   inline rule *get_rule(const rule_id id) const {
+      assert(id < number_rules);
+      return rules[id];
+   }
 
 	predicate *get_priority_predicate(void) const { return priority_pred; }
 	field_num get_priority_argument(void) const { return priority_argument; }
@@ -96,7 +101,10 @@ public:
    predicate* get_predicate(const predicate_id&) const;
    predicate* get_route_predicate(const size_t&) const;
    
-   byte_code get_bytecode(const predicate_id&) const;
+   byte_code get_predicate_bytecode(const predicate_id id) const {
+      assert(id < num_predicates());
+      return code[id];
+   }
 	inline byte_code get_const_bytecode(void) const { return const_code; }
 	inline field_type get_const_type(const const_id& id) const { return const_types[id]; }
    

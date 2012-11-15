@@ -104,7 +104,7 @@ state::purge_runtime_objects(void)
 void
 state::unmark_generated_tuples(void)
 {
-   for(list<db::simple_tuple *>::iterator it(generated_tuples.begin()), end(generated_tuples.end());
+   for(simple_tuple_vector::iterator it(generated_tuples.begin()), end(generated_tuples.end());
          it != end;
          ++it)
    {
@@ -119,9 +119,7 @@ void
 state::cleanup(void)
 {
    purge_runtime_objects();
-   unmark_generated_tuples();
    assert(used_linear_tuples.empty());
-   assert(generated_tuples.empty());
 }
 
 void
@@ -144,6 +142,7 @@ state::copy_reg2const(const reg_num& reg_from, const const_id& cid)
 void
 state::setup(vm::tuple *tpl, db::node *n, const ref_count count)
 {
+   this->use_local_tuples = false;
 	this->original_tuple = tpl;
    this->original_status = ORIGINAL_CANNOT_BE_USED;
    this->tuple = tpl;
@@ -161,6 +160,66 @@ state::setup(vm::tuple *tpl, db::node *n, const ref_count count)
 		this->saved_leafs[i] = NULL;
 		this->saved_stuples[i] = NULL;
 	}
+#ifdef CORE_STATISTICS
+   this->stat_rules_activated = 0;
+	this->stat_inside_rule = false;
+#endif
+}
+
+#ifdef CORE_STATISTICS
+void
+state::init_core_statistics(void)
+{
+   stat_rules_ok = 0;
+   stat_rules_failed = 0;
+   stat_db_hits = 0;
+   stat_tuples_used = 0;
+   stat_if_tests = 0;
+	stat_if_failed = 0;
+	stat_instructions_executed = 0;
+	stat_moves_executed = 0;
+	stat_ops_executed = 0;
+}
+#endif
+
+state::state(process::process *_proc):
+   proc(_proc)
+#ifdef DEBUG_MODE
+   , print_instrs(false)
+#endif
+{
+#ifdef CORE_STATISTICS
+   init_core_statistics();
+#endif
+}
+
+state::state(void):
+   proc(NULL)
+#ifdef DEBUG_MODE
+   , print_instrs(false)
+#endif
+{
+#ifdef CORE_STATISTICS
+   init_core_statistics();
+#endif
+}
+
+state::~state(void)
+{
+#ifdef CORE_STATISTICS
+	if(proc != NULL) {
+		cout << "Rules:" << endl;
+   	cout << "\tapplied: " << stat_rules_ok << endl;
+   	cout << "\tfailed: " << stat_rules_failed << endl;
+		cout << "DB hits: " << stat_db_hits << endl;
+		cout << "Tuples used: " << stat_tuples_used << endl;
+		cout << "If tests: " << stat_if_tests << endl;
+		cout << "\tfailed: " << stat_if_failed << endl;
+		cout << "Instructions executed: " << stat_instructions_executed << endl;
+		cout << "\tmoves: " << stat_moves_executed << endl;
+		cout << "\tops: " << stat_ops_executed << endl;
+	}
+#endif
 }
 
 }

@@ -112,6 +112,7 @@ public:
 
 	// GATHER QUEUE FACTS FROM NODE
 	virtual db::simple_tuple_vector gather_active_tuples(db::node *, const vm::predicate_id) { return db::simple_tuple_vector(); }
+   virtual void gather_next_tuples(db::node *, db::simple_tuple_vector&, vm::strat_level&) { }
 
 	// INFORMATION
 	virtual void new_persistent_derivation(db::node *, vm::tuple *) { }

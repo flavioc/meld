@@ -51,6 +51,8 @@ private:
    bool is_reverse_route;
    bool is_action;
 	bool is_global_prio;
+
+   std::vector<rule_id> affected_rules;
    
    void build_field_info(void);
    void build_aggregate_info(void);
@@ -61,6 +63,18 @@ private:
    virtual ~predicate(void);
    
 public:
+
+   typedef std::vector<rule_id>::const_iterator rule_iterator;
+
+   inline rule_iterator begin_rules(void) const
+   {
+      return affected_rules.begin();
+   }
+
+   inline rule_iterator end_rules(void) const
+   {
+      return affected_rules.end();
+   }
    
    inline bool is_aggregate(void) const { return agg_info != NULL; }
    

@@ -1,0 +1,32 @@
+
+#include "vm/rule.hpp"
+#include "vm/state.hpp"
+#include "vm/instr.hpp"
+
+using namespace std;
+
+namespace vm
+{
+	
+void
+rule::print(ostream& out) const
+{
+	out << str << endl;
+	
+	for(vector<predicate*>::const_iterator it(predicates.begin()),
+		end(predicates.end());
+		it != end;
+		it++)
+	{
+		const predicate *pred(*it);
+
+      assert(pred != NULL);
+
+      out << pred->get_name() << endl;
+		
+	}
+
+   instrs_print(code, code_size, 0, state::PROGRAM, out);
+}
+
+}

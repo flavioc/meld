@@ -87,9 +87,7 @@ program::program(const string& filename):
 
    READ_CODE(&n_rules, sizeof(uint_val));
 
-   num_rules = n_rules;
-
-   rule_strings.reserve(num_rules);
+   number_rules = n_rules;
 
    for(size_t i(0); i < n_rules; ++i) {
       // read rule string length
@@ -105,7 +103,7 @@ program::program(const string& filename):
 
       str[rule_len] = '\0';
 
-      rule_strings.push_back(string(str));
+      rules.push_back(new rule(string(str)));
    }
 
 	// read string constants
@@ -209,14 +207,52 @@ program::program(const string& filename):
       
 		READ_CODE(code[i], size);
    }
+
+   // read rules code
+	uint_val num_rules_code;
+	READ_CODE(&num_rules_code, sizeof(uint_val));
+
+   assert(num_rules_code == number_rules);
+
+   for(size_t i(0); i < num_rules_code; ++i) {
+      code_size_t code_size;
+      byte_code code;
+
+      READ_CODE(&code_size, sizeof(code_size_t));
+
+      code = new byte_code_el[code_size];
+
+      READ_CODE(code, code_size);
+
+      rules[i]->set_bytecode(code_size, code);
+
+      uint_val num_preds;
+
+      READ_CODE(&num_preds, sizeof(uint_val));
+
+      assert(num_preds < 10);
+
+      for(size_t j(0); j < num_preds; ++j) {
+         predicate_id id;
+         READ_CODE(&id, sizeof(predicate_id));
+         predicate *pred(predicates[id]);
+
+         pred->affected_rules.push_back(i);
+         rules[i]->add_predicate(pred);
+      }
+   }
 }
 
 program::~program(void)
 {
    for(size_t i(0); i < num_predicates(); ++i) {
       delete predicates[i];
-      delete [] code[i];
+      delete []code[i];
    }
+	for(size_t i(0); i < num_rules(); ++i) {
+		delete rules[i];
+	}
+	delete []const_code;
    MAX_STRAT_LEVEL = 0;
 }
 
@@ -236,15 +272,6 @@ program::get_route_predicate(const size_t& i) const
    assert(i < num_route_predicates());
    
    return route_predicates[i];
-}
-
-byte_code
-program::get_bytecode(const predicate_id& id) const
-{
-   if((size_t)id >= num_predicates())
-      return NULL;
-      
-   return code[id];
 }
 
 void
@@ -270,6 +297,14 @@ program::print_bytecode(ostream& out) const
          out << endl;
          
       print_predicate_code(out, get_predicate(id));
+   }
+
+   out << "RULES CODE" << endl;
+
+   for(size_t i(0); i < number_rules; ++i) {
+      out << endl;
+      out << "RULE " << i << endl;
+		rules[i]->print(out);
    }
 }
 

@@ -121,6 +121,38 @@ public:
       total++; // has more tasks
    }
 
+	void top_vector(std::vector<T>& vec)
+	{
+		if(empty())
+			return;
+	
+		tree_node *node = root;
+		
+		while(!node->is_leaf()) {
+			if(node->counter > 0)
+				node = node->left;
+			else
+				node = node->right;
+		}
+		
+		assert(!node->bin.empty());
+		
+		node->bin.pop_vector(vec);
+		
+		assert(!vec.empty());
+		
+		const size_t size(vec.size());
+		
+		while(node != root) {
+         tree_node *parent = node->parent;
+         if(node == parent->left)
+            parent->counter -= size;
+         node = parent;
+      }
+
+		total -= size;
+	}
+
 	T top(void)
 	{
 		tree_node *node = root;

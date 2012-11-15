@@ -26,7 +26,13 @@ private:
    sched::base *scheduler;
    
    vm::state state;
+	std::vector<bool> rules;
    
+	void process_consumed_local_tuples(void);
+	void process_generated_tuples(vm::rule_id &, const vm::strat_level, db::node *);
+	void mark_predicate_rules(const vm::predicate *);
+	void mark_rules_using_local_tuples(db::node *);
+   void do_work_rules(work&);
    void do_work(work&);
    void do_tuple_action(db::node *, vm::tuple *, const vm::ref_count);
    void do_tuple_add(db::node *, vm::tuple *, const vm::ref_count);

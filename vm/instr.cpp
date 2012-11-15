@@ -371,6 +371,7 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
             const pcounter hash_start(select_hash_start(pc));
             
             for(size_t i(0); i < elems; ++i) {
+               print_tab(tabcount);
                cout << i << endl;
                
                const code_size_t hashed(select_hash(hash_start, i));

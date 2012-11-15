@@ -3,6 +3,7 @@
 #define VM_EXEC_HPP
 
 #include <stdexcept>
+#include <vector>
 
 #include "vm/state.hpp"
 #include "vm/defs.hpp"
@@ -17,6 +18,7 @@ typedef enum {
 } execution_return;
 
 execution_return execute_bytecode(byte_code, state&);
+void execute_rule(const rule_id, state&);
 
 class vm_exec_error : public std::runtime_error {
  public:

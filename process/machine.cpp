@@ -53,32 +53,37 @@ machine::same_place(const node::node_id id1, const node::node_id id2) const
 }
 
 void
-machine::route_self(process *proc, node *node, simple_tuple *stpl)
+machine::run_action(sched::base *sched, node*node, vm::tuple *tpl)
 {
-	sched::base *sched(proc->get_scheduler());
-	const predicate_id pid(stpl->get_predicate_id());
-
-	if(pid == SET_PRIORITY_PREDICATE_ID) {
-		vm::tuple *tpl(stpl->get_tuple());
+	const predicate_id pid(tpl->get_predicate_id());
+	
+	assert(tpl->is_action());
+	
+	if(pid == SETCOLOR_PREDICATE_ID)
+		sched->set_node_color(node, tpl->get_int(0), tpl->get_int(1), tpl->get_int(2));
+	else if(pid == SETEDGELABEL_PREDICATE_ID)
+		sched->set_edge_label(node, tpl->get_node(0), tpl->get_string(1));
+   else if(pid == SET_PRIORITY_PREDICATE_ID)
 		sched->set_node_priority(node, tpl->get_int(0));
-		delete tpl;
-		delete stpl;
-	} else if(pid == ADD_PRIORITY_PREDICATE_ID) {
-		vm::tuple *tpl(stpl->get_tuple());
+	else if(pid == ADD_PRIORITY_PREDICATE_ID)
 		sched->add_node_priority(node, tpl->get_int(0));
-		delete tpl;
-		delete stpl;
-	} else if(pid == WRITE_STRING_PREDICATE_ID) {
-		vm::tuple *tpl(stpl->get_tuple());
+	else if(pid == WRITE_STRING_PREDICATE_ID) {
 		runtime::rstring::ptr s(tpl->get_string(0));
 
 		cout << s->get_content() << endl;
+	} else
+		assert(false);
 
-		delete tpl;
-		delete stpl;
-	} else {
-		sched->new_work_self(node, stpl);
-	}
+	delete tpl;
+}
+
+void
+machine::route_self(process *proc, node *node, simple_tuple *stpl)
+{
+	sched::base *sched(proc->get_scheduler());
+
+   assert(!stpl->get_tuple()->is_action());
+   sched->new_work_self(node, stpl);
 }
 
 void
@@ -96,42 +101,21 @@ machine::route(const node* from, process *caller, const node::node_id id, simple
       node *node(state::DATABASE->find_node(id));
       
       sched::base *sched_other(sched_caller->find_scheduler(node));
-      const predicate_id pred_id(stpl->get_predicate_id());
+		const predicate *pred(stpl->get_predicate());
 
-      if(sched_other == sched_caller) {
-         if(pred_id == SET_PRIORITY_PREDICATE_ID) {
-            vm::tuple *tpl(stpl->get_tuple());
-            sched_other->set_node_priority(node, tpl->get_int(0));
-            delete tpl;
-            delete stpl;
-         } else if(pred_id == ADD_PRIORITY_PREDICATE_ID) {
-            vm::tuple *tpl(stpl->get_tuple());
-            sched_other->add_node_priority(node, tpl->get_int(0));
-            delete tpl;
-            delete stpl;
-         } else {
-            work new_work(node, stpl);
+		if(pred->is_action_pred()) {
+			run_action(sched_other, node, stpl->get_tuple());
+			delete stpl;
+		} else if(sched_other == sched_caller) {
+			work new_work(node, stpl);
       
-            sched_caller->new_work(from, new_work);
-         }
+         sched_caller->new_work(from, new_work);
       } else {
-         if(pred_id == SET_PRIORITY_PREDICATE_ID) {
-            vm::tuple *tpl(stpl->get_tuple());
-            sched_other->set_node_priority_other(node, tpl->get_int(0));
-            delete tpl;
-            delete stpl;
-         } else if(pred_id == ADD_PRIORITY_PREDICATE_ID) {
-            vm::tuple *tpl(stpl->get_tuple());
-            sched_other->add_node_priority_other(node, tpl->get_int(0));
-            delete tpl;
-            delete stpl;
-         } else {
-            work new_work(node, stpl);
+         work new_work(node, stpl);
 
-            sched_comm(sched_caller);
-            sched_caller->new_work_other(sched_other, new_work);
-            sched_active(sched_caller);
-         }
+         sched_comm(sched_caller);
+         sched_caller->new_work_other(sched_other, new_work);
+         sched_active(sched_caller);
       }
    }
 #ifdef COMPILE_MPI
@@ -262,6 +246,7 @@ machine::start(void)
       alarm_thread->join();
       delete alarm_thread;
       alarm_thread = NULL;
+      cout << "Writing stat" << endl;
       slices.write(get_stat_file(), sched_type);
    }
 

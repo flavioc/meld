@@ -31,6 +31,7 @@ protected:
    
 public:
    
+   inline vm::tuple* get_underlying_tuple(void) const { return get_tuple()->get_tuple(); }
    inline db::simple_tuple* get_tuple(void) const { return tuple; }
    inline vm::strat_level get_strat_level(void) const { return tuple->get_strat_level(); }
    inline bool force_aggregate(void) const { return mod & mods::FORCE_AGGREGATE; }
@@ -60,8 +61,11 @@ class work: public node_work
 private:
    
    db::node *node;
+   bool use_rules;
    
 public:
+   
+   inline bool using_rules(void) const { return use_rules; }
 
    inline db::node* get_node(void) const { return node; }
    
@@ -70,6 +74,12 @@ public:
       node = _node;
       tuple = w.tuple;
       mod = w.mod;
+   }
+
+   void set_work_with_rules(db::node *_node)
+   {
+      node = _node;
+      use_rules = true;
    }
    
    explicit work(db::node *_node, db::simple_tuple *_tuple,
@@ -80,15 +90,15 @@ public:
    }
    
    explicit work(db::node *_node, db::simple_tuple *_tuple):
-      node_work(_tuple), node(_node)
+      node_work(_tuple), node(_node), use_rules(false)
    {
    }
    
    explicit work(void):
-      node_work(), node(NULL)
+      node_work(), node(NULL), use_rules(false)
    {
    }
-   
+
    ~work(void) {}
 };
 

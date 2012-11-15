@@ -40,9 +40,8 @@ private:
    db::tuple_trie_leaf *saved_leafs[NUM_REGS];
 	db::simple_tuple *saved_stuples[NUM_REGS];
 	bool is_leaf[NUM_REGS];
-   
-   std::list<db::simple_tuple *, mem::allocator<db::simple_tuple *> > generated_tuples;
-   std::list<runtime::float_list*, mem::allocator<runtime::float_list*> > free_float_list;
+	
+	std::list<runtime::float_list*, mem::allocator<runtime::float_list*> > free_float_list;
    std::list<runtime::int_list*, mem::allocator<runtime::int_list*> > free_int_list;
    std::list<runtime::node_list*, mem::allocator<runtime::node_list*> > free_node_list;
 	std::list<runtime::rstring::ptr, mem::allocator<runtime::rstring::ptr> > free_rstring;
@@ -53,7 +52,9 @@ private:
 	static reg consts[MAX_CONSTS];
 
    void purge_runtime_objects(void);
-   void unmark_generated_tuples(void);
+#ifdef CORE_STATISTICS
+   void init_core_statistics(void);
+#endif
 
 public:
 	
@@ -97,6 +98,9 @@ public:
 #ifdef DEBUG_MODE
 	bool print_instrs;
 #endif
+   bool use_local_tuples;
+   db::simple_tuple_vector local_tuples;
+	db::simple_tuple_vector generated_tuples;
    
    static program *PROGRAM;
    static db::database *DATABASE;
@@ -108,6 +112,21 @@ public:
    static size_t NUM_NODES;
    static size_t NUM_NODES_PER_PROCESS;
 	static machine_arguments ARGUMENTS;
+
+#ifdef CORE_STATISTICS
+   size_t stat_rules_ok;
+   size_t stat_rules_failed;
+   size_t stat_db_hits;
+   size_t stat_tuples_used;
+   size_t stat_if_tests;
+	size_t stat_if_failed;
+	size_t stat_instructions_executed;
+	size_t stat_moves_executed;
+	size_t stat_ops_executed;
+
+	bool stat_inside_rule;
+	size_t stat_rules_activated;
+#endif
    
 #define define_get(WHAT, RET, BODY) \
    inline RET get_ ## WHAT (const reg_num& num) const { BODY; }
@@ -126,7 +145,7 @@ public:
    
 #undef define_get
 
-#define define_set(WHAT, ARG, BODY) \
+#define define_set(WHAT, ARG, BODY) 												\
    inline void set_ ## WHAT (const reg_num& num, ARG val) { BODY; };
    
    define_set(float, const float_val&, *(float_val*)(regs + num) = val);
@@ -167,28 +186,17 @@ public:
    bool linear_tuple_can_be_used(vm::tuple *, const vm::ref_count) const;
    void using_new_linear_tuple(vm::tuple *);
    void no_longer_using_linear_tuple(vm::tuple *);
-   
+   void unmark_generated_tuples(void);
+
 	static inline runtime::rstring::ptr get_argument(const argument_id id)
 	{
 		assert(id <= ARGUMENTS.size());
 		return runtime::rstring::make_string(ARGUMENTS[id-1]);
 	}
 	
-   explicit state(process::process *_proc):
-      proc(_proc)
-#ifdef DEBUG_MODE
-		, print_instrs(false)
-#endif
-   {
-   }
-
-	explicit state(void):
-		proc(NULL)
-#ifdef DEBUG_MODE
-		, print_instrs(false)
-#endif
-	{
-	}
+   explicit state(process::process *);
+	explicit state(void);
+   ~state(void);
 };
 
 }
