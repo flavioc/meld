@@ -15,3 +15,4 @@ run_test linear-ref-use
 run_test linear-repeat
 run_test mfp
 run_test mwst
+run_test dfs

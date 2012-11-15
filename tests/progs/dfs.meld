@@ -1,0 +1,114 @@
+
+/* http://www710.univ-lyon1.fr/~beffanti/cours/master/A%20new%20distributed%20Depth-First-Search%20algorithm.pdf */
+
+type route edge(node, node).
+type linear flag(node, node, int).
+type linear unvisited(node, node).
+type linear father(node, node).
+type linear discover(node, node).
+type linear visited(node, node).
+type linear return(node, node).
+type linear check-if-only-neighbor(node, node).
+type linear stop(node).
+type linear ack(node, node).
+type linear first-time(node).
+
+!edge(@1, @2). unvisited(@1, @2). flag(@1, @2, 0).
+!edge(@1, @6). unvisited(@1, @6). flag(@1, @6, 0).
+
+!edge(@2, @3). unvisited(@2, @3). flag(@2, @3, 0).
+!edge(@2, @5). unvisited(@2, @5). flag(@2, @5, 0).
+!edge(@2, @1). unvisited(@2, @1). flag(@2, @1, 0).
+
+!edge(@5, @4). unvisited(@5, @4). flag(@5, @4, 0).
+!edge(@5, @2). unvisited(@5, @2). flag(@5, @2, 0).
+
+!edge(@3, @4). unvisited(@3, @4). flag(@3, @4, 0).
+!edge(@3, @2). unvisited(@3, @2). flag(@3, @2, 0).
+
+!edge(@4, @10). unvisited(@4, @10). flag(@4, @10, 0).
+!edge(@4, @5). unvisited(@4, @5). flag(@4, @5, 0).
+!edge(@4, @3). unvisited(@4, @3). flag(@4, @3, 0).
+
+!edge(@6, @7). unvisited(@6, @7). flag(@6, @7, 0).
+!edge(@6, @8). unvisited(@6, @8). flag(@6, @8, 0).
+!edge(@6, @1). unvisited(@6, @1). flag(@6, @1, 0).
+
+!edge(@8, @9). unvisited(@8, @9). flag(@8, @9, 0).
+!edge(@8, @6). unvisited(@8, @6). flag(@8, @6, 0).
+
+!edge(@7, @9). unvisited(@7, @9). flag(@7, @9, 0).
+!edge(@7, @6). unvisited(@7, @6). flag(@7, @6, 0).
+
+!edge(@9, @10). unvisited(@9, @10). flag(@9, @10, 0).
+!edge(@9, @8). unvisited(@9, @8). flag(@9, @8, 0).
+!edge(@9, @7). unvisited(@9, @7). flag(@9, @7, 0).
+
+!edge(@10, @4). unvisited(@10, @4). flag(@10, @4, 0).
+!edge(@10, @9). unvisited(@10, @9). flag(@10, @9, 0).
+
+discover(@1, @1).
+first-time(A).
+
+/* DISCOVER message from j */
+discover(A, J),
+first-time(A)
+   -o father(A, J),
+      {Q, Flag | !edge(A, Q), Q <> J, flag(A, Q, Flag),
+               unvisited(A, Q) | unvisited(A, Q), visited(Q, A), flag(A, Q, 1)},
+      check-if-only-neighbor(A, J),
+      setcolor(A, 255, 255, 0).
+
+discover(A, J),
+!edge(A, J)
+   -o return(J, A).
+
+/* new: just check if some unvisited node exists */
+check-if-only-neighbor(A, J),
+unvisited(A, X)
+   -o unvisited(A, X).
+
+/* no unvisited nodes */
+check-if-only-neighbor(A, Node),
+!edge(A, Node)
+   -o return(Node, A),
+      setcolor(A, 0, 255, 255).
+
+/* RETURN message from q */
+return(A, Q),
+unvisited(A, K),
+!edge(A, K)
+   -o discover(K, A).
+
+return(A, Q),
+father(A, Father),
+Father <> A,
+!edge(A, Father)
+   -o father(A, Father),
+      return(Father, A),
+      setcolor(A, 0, 255, 255).
+
+return(A, Q),
+father(A, A)
+   -o stop(A), father(A, A).
+
+/* VISITED message from k */
+visited(A, K),
+unvisited(A, K),
+!edge(A, K)
+   -o ack(K, A).
+
+/* ACK message from j */
+ack(A, J),
+flag(A, J, _),
+flag(A, J2, 1),
+J <> J2
+   -o flag(A, J, 0),
+      flag(A, J2, 1).
+
+ack(A, J),
+flag(A, J, _)
+   -o flag(A, J, 0),
+      return(A, A).
+
+
