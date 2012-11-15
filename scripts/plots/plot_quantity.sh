@@ -19,9 +19,10 @@ for i in `seq 2 $NUMCOLS`; do
 done
 
 gnuplot <<EOF
-set output "$FILE.pdf"
+set output "$FILE.png"
 load 'base.plt'
 set xrange [0:$MAXX]
+set ylabel "Max: $BIGGER"
 
 set style line 1 lt 1 lc rgb "black" lw 2
 set style line 3 lt 1 lw 1
