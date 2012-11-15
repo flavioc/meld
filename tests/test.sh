@@ -3,6 +3,7 @@
 EXEC="../meld -d"
 TEST=${1}
 TYPE="${2}"
+FORCE_THREADS="${3}"
 
 if test -z "${TEST}" -o -z "${TYPE}"; then
 	echo "Usage: test.sh <code file> <test type: serial, ts, tl, ...>"
@@ -81,8 +82,14 @@ run_test_n ()
 loop_sched ()
 {
 	SCHED=${1}
+   if [ ! -z "$FORCE_THREADS" ]; then
+      run_test_n $FORCE_THREADS 1 ${SCHED}
+      return
+   fi
 	run_test_n 1 1 ${SCHED}
-	run_test_n 2 1 ${SCHED}
+   if [ $NODES -gt 1 ]; then
+      run_test_n 2 1 ${SCHED}
+   fi
 	if [ $NODES -gt 2 ]; then
 		run_test_n 3 1 ${SCHED}
 	fi
