@@ -57,13 +57,6 @@ private:
 	bool *predicates;
 	std::vector<vm::predicate*> predicates_to_check;
 	queue::heap_queue<vm::rule_id> rule_queue;
-	
-	void mark_rules_using_active_predicates(void);
-	void mark_predicate_to_run(const vm::predicate *);
-	void process_consumed_local_tuples(void);
-	void process_generated_tuples(const vm::strat_level, db::node *);
-	void mark_predicate_rules(const vm::predicate *);
-	void mark_rules_using_local_tuples(db::node *);
 
    void purge_runtime_objects(void);
 #ifdef CORE_STATISTICS
@@ -113,8 +106,11 @@ public:
 	bool print_instrs;
 #endif
    bool use_local_tuples;
-   db::simple_tuple_vector local_tuples;
-	db::simple_tuple_vector generated_tuples;
+   db::simple_tuple_list local_tuples;
+	db::simple_tuple_list generated_tuples;
+	db::simple_tuple_vector generated_persistent_tuples;
+	db::simple_tuple_vector generated_other_level;
+	vm::strat_level current_level;
    
    static program *PROGRAM;
    static db::database *DATABASE;
@@ -195,6 +191,12 @@ public:
 	inline void add_string(runtime::rstring::ptr str) { free_rstring.push_back(str); }
    inline void add_generated_tuple(db::simple_tuple *tpl) { tpl->set_generated_run(true); generated_tuples.push_back(tpl); }
    
+	void mark_rules_using_active_predicates(void);
+	void mark_predicate_to_run(const vm::predicate *);
+	void process_consumed_local_tuples(void);
+	void process_generated_tuples(void);
+	void mark_predicate_rules(const vm::predicate *);
+	void mark_rules_using_local_tuples(db::node *);
 	void run_node(db::node *);
    void setup(vm::tuple*, db::node*, const ref_count);
    void cleanup(void);

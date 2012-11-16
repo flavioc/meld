@@ -2,6 +2,8 @@
 #ifndef QUEUE_UNSAFE_LINEAR_QUEUE_HPP
 #define QUEUE_UNSAFE_LINEAR_QUEUE_HPP
 
+#include <list>
+
 #include "queue/macros.hpp"
 #include "queue/iterators.hpp"
 #include "queue/node.hpp"
@@ -74,7 +76,7 @@ namespace queue
 																\
    return el
 
-#define QUEUE_DEFINE_LINEAR_POP_VECTOR(VEC)		\
+#define QUEUE_DEFINE_LINEAR_POP_LIST(VEC)			\
 	while(head != NULL)	{								\
 		node *next(head->next);							\
 		(VEC).push_back(head->data);					\
@@ -119,9 +121,10 @@ public:
 		QUEUE_DEFINE_LINEAR_POP_NODE();
    }
 
-	inline void pop_vector(std::vector<T>& vec)
+	template <class Alloc>
+	inline void pop_list(std::list<T, Alloc>& vec)
 	{
-		QUEUE_DEFINE_LINEAR_POP_VECTOR(vec);
+		QUEUE_DEFINE_LINEAR_POP_LIST(vec);
 		QUEUE_ZERO_TOTAL();
 	}
 
@@ -179,9 +182,10 @@ public:
 		QUEUE_DEFINE_LINEAR_POP_NODE();
    }
 
-	inline void pop_vector(std::vector<T>& vec)
+	template <class Alloc>
+	inline void pop_list(std::list<T, Alloc>& vec)
 	{
-		QUEUE_DEFINE_LINEAR_POP_VECTOR(vec);
+		QUEUE_DEFINE_LINEAR_POP_LIST(vec);
 		total = 0;
 	}
    

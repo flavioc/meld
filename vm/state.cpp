@@ -107,7 +107,7 @@ state::purge_runtime_objects(void)
 void
 state::unmark_generated_tuples(void)
 {
-   for(simple_tuple_vector::iterator it(generated_tuples.begin()), end(generated_tuples.end());
+   for(simple_tuple_list::iterator it(generated_tuples.begin()), end(generated_tuples.end());
          it != end;
          ++it)
    {
@@ -209,7 +209,7 @@ state::mark_rules_using_local_tuples(db::node *node)
 	predicates_to_check.clear();
 	fill_n(predicates, PROGRAM->num_predicates(), false);
 	
-	for(db::simple_tuple_vector::iterator it(local_tuples.begin());
+	for(db::simple_tuple_list::iterator it(local_tuples.begin());
 		it != local_tuples.end(); )
 	{
 		db::simple_tuple *stpl(*it);
@@ -236,7 +236,7 @@ void
 state::process_consumed_local_tuples(void)
 {
 	// process current set of tuples
-	for(db::simple_tuple_vector::iterator it(local_tuples.begin());
+	for(db::simple_tuple_list::iterator it(local_tuples.begin());
 		it != local_tuples.end();
 		)
 	{
@@ -254,88 +254,82 @@ state::process_consumed_local_tuples(void)
 }
 
 void
-state::process_generated_tuples(const strat_level current_level, db::node *node)
+state::process_generated_tuples(void)
 {
-	predicates_to_check.clear();
-	fill_n(predicates, PROGRAM->num_predicates(), false);
+	/* move from generated tuples to local_tuples */
+	local_tuples.splice(local_tuples.end(), generated_tuples);
 	
-	// get tuples generated with the previous rule
-	for(simple_tuple_vector::iterator it(generated_tuples.begin()), end(generated_tuples.end());
+	for(simple_tuple_vector::iterator it(generated_other_level.begin()), end(generated_other_level.end());
+		it != end;
+		it++)
+	{
+		MACHINE->route_self(proc, node, *it);
+	}
+	
+	for(simple_tuple_vector::iterator it(generated_persistent_tuples.begin()), end(generated_persistent_tuples.end());
 		it != end;
 		it++)
 	{
 		simple_tuple *stpl(*it);
 		vm::tuple *tpl(stpl->get_tuple());
-		const predicate *pred(tpl->get_predicate());
 		
-		if(pred->get_strat_level() != current_level) {
-			assert(stpl->can_be_consumed());
-			MACHINE->route_self(proc, node, stpl);
-		} else if(pred->is_action_pred()) {
-			MACHINE->run_action(proc->get_scheduler(), node, tpl);
+		const bool is_new(node->add_tuple(tpl, stpl->get_count()));
+		if(is_new)
+			mark_predicate_to_run(tpl->get_predicate());
+		else
 			delete tpl;
-			delete stpl;
-		} else {
-			if(tpl->is_persistent()) {
-				const bool is_new(node->add_tuple(tpl, 1));
-				if(is_new)
-					mark_predicate_to_run(pred);
-				else
-					delete tpl;
-				delete stpl;
-			} else {
-				local_tuples.push_back(stpl);
-				mark_predicate_to_run(pred);
-			}
-		}
+		delete stpl;
 	}
 	
-	mark_rules_using_active_predicates();
+	assert(generated_tuples.empty());
+	generated_persistent_tuples.clear();
+	generated_other_level.clear();
 }
 
 void
-state::run_node(db::node *node)
+state::run_node(db::node *no)
 {
 #ifdef DEBUG_RULES
    cout << "Node " << node->get_id() << endl;
 #endif
 
-	strat_level level;
-	proc->get_scheduler()->gather_next_tuples(node, local_tuples, level);
+	this->node = no;
+
+	proc->get_scheduler()->gather_next_tuples(node, local_tuples, current_level);
 	mark_rules_using_local_tuples(node);
 
 #ifdef DEBUG_RULES
-	cout << "Strat level: " << level << " got " << local_tuples.size() << " tuples " << endl;
+	cout << "Strat level: " << current_level << " got " << local_tuples.size() << " tuples " << endl;
 #endif
 
 	while(!rule_queue.empty()) {
 		rule_id rule(rule_queue.pop());
 
-		setup(NULL, node, 0);
+		/* delete rule and every check */
+		rules[rule] = false;
+		predicates_to_check.clear();
+		fill_n(predicates, PROGRAM->num_predicates(), false);
+		
+		setup(NULL, node, 1);
 		use_local_tuples = true;
 		execute_rule(rule, *this);
 
 		process_consumed_local_tuples();
-
-#ifdef DEBUG_RULES
-		cout << "Generated " << generated_tuples.size() << " tuples" << endl;
-#endif
-
-		rules[rule] = false;
-		process_generated_tuples(level, node);
-
-		generated_tuples.clear();
+		process_generated_tuples();
+		mark_rules_using_active_predicates();
 	}
 
-	for(db::simple_tuple_vector::iterator it(local_tuples.begin()), end(local_tuples.end());
+	for(db::simple_tuple_list::iterator it(local_tuples.begin()), end(local_tuples.end());
 		it != end;
 		++it)
 	{
 		simple_tuple *stpl(*it);
+		vm::tuple *tpl(stpl->get_tuple());
+		
 		if(stpl->can_be_consumed()) {
-			node->add_tuple(stpl->get_tuple(), 1);
+			node->add_tuple(tpl, 1);
 		} else
-			delete stpl->get_tuple();
+			delete tpl;
 		delete stpl;
 	}
 

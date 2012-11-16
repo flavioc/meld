@@ -41,7 +41,7 @@ public:
    }
    
 	virtual db::simple_tuple_vector gather_active_tuples(db::node *, const vm::predicate_id);
-   virtual void gather_next_tuples(db::node *, db::simple_tuple_vector&, vm::strat_level&);
+   virtual void gather_next_tuples(db::node *, db::simple_tuple_list&, vm::strat_level&);
    
    virtual bool get_work(process::work&);
    

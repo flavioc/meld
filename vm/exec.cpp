@@ -301,12 +301,25 @@ execute_send(const pcounter& pc, state& state)
          return;
       }
 
-      simple_tuple *stuple(new simple_tuple(tuple, state.count));
-
       if(state.use_local_tuples) {
-         assert(stuple->can_be_consumed());
-         state.generated_tuples.push_back(stuple);
+			const predicate *pred(tuple->get_predicate());
+			
+			if(pred->get_strat_level() != state.current_level) {
+				simple_tuple *stuple(new simple_tuple(tuple, state.count));
+				assert(stuple->can_be_consumed());
+				state.generated_other_level.push_back(stuple);
+			} else {
+				if(tuple->is_persistent()) {
+					simple_tuple *stuple(new simple_tuple(tuple, state.count));
+					state.generated_persistent_tuples.push_back(stuple);
+				} else {
+					simple_tuple *stuple(new simple_tuple(tuple, state.count));
+					state.generated_tuples.push_back(stuple);
+					state.mark_predicate_to_run(pred);
+				}
+			}
       } else {
+			simple_tuple *stuple(new simple_tuple(tuple, state.count));
          state::MACHINE->route_self(state.proc, state.node, stuple);
          state.add_generated_tuple(stuple);
 		}
@@ -911,7 +924,7 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
       }
 
 		if(state.use_local_tuples) {
-			for(db::simple_tuple_vector::iterator it(state.local_tuples.begin()), end(state.local_tuples.end());
+			for(db::simple_tuple_list::iterator it(state.local_tuples.begin()), end(state.local_tuples.end());
 				it != end;
 				++it)
 			{
@@ -1131,10 +1144,12 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 	
 	// current set of tuples
 	{
+		/* XXXX
 		if(iter_options_random(options))
 			utils::shuffle_vector(state.local_tuples, state.randgen);
+		*/
 		
-		for(db::simple_tuple_vector::iterator it(state.local_tuples.begin()), end(state.local_tuples.end()); it != end; ++it) {
+		for(db::simple_tuple_list::iterator it(state.local_tuples.begin()), end(state.local_tuples.end()); it != end; ++it) {
 			simple_tuple *stpl(*it);
 			tuple *match_tuple(stpl->get_tuple());
 

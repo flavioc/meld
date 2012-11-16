@@ -10,6 +10,7 @@
 #include "queue/simple_linear_pqueue.hpp"
 #include "utils/atomic.hpp"
 #include "utils/utils.hpp"
+#include "mem/allocator.hpp"
 
 namespace queue
 {
@@ -121,7 +122,8 @@ public:
       total++; // has more tasks
    }
 
-	void top_vector(std::vector<T>& vec)
+	template <class Alloc>
+	void top_list(std::list<T, Alloc>& vec)
 	{
 		if(empty())
 			return;
@@ -137,7 +139,7 @@ public:
 		
 		assert(!node->bin.empty());
 		
-		node->bin.pop_vector(vec);
+		node->bin.pop_list(vec);
 		
 		assert(!vec.empty());
 		
