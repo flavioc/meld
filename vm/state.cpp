@@ -1,5 +1,8 @@
 
 #include "vm/state.hpp"
+#include "process/process.hpp"
+#include "process/machine.hpp"
+#include "vm/exec.hpp"
 
 using namespace vm;
 using namespace db;
@@ -166,6 +169,179 @@ state::setup(vm::tuple *tpl, db::node *n, const ref_count count)
 #endif
 }
 
+void
+state::mark_predicate_rules(const predicate *pred)
+{
+	for(predicate::rule_iterator it(pred->begin_rules()), end(pred->end_rules()); it != end; it++) {
+		rule_id rule(*it);
+		if(!rules[rule]) {
+			rules[rule] = true;
+			heap_priority pr;
+			pr.int_priority = (int)rule;
+			rule_queue.insert(rule, pr);
+		}
+	}
+}
+
+void
+state::mark_predicate_to_run(const predicate *pred)
+{
+	if(!predicates[pred->get_id()]) {
+		predicates[pred->get_id()] = true;
+		predicates_to_check.push_back((predicate*)pred);
+	}
+}
+
+void
+state::mark_rules_using_active_predicates(void)
+{
+	for(vector<predicate*>::iterator it(predicates_to_check.begin()), end(predicates_to_check.end());
+		it != end;
+		it++)
+	{
+		mark_predicate_rules(*it);
+	}
+}
+
+void
+state::mark_rules_using_local_tuples(db::node *node)
+{
+	predicates_to_check.clear();
+	fill_n(predicates, PROGRAM->num_predicates(), false);
+	
+	for(db::simple_tuple_vector::iterator it(local_tuples.begin());
+		it != local_tuples.end(); )
+	{
+		db::simple_tuple *stpl(*it);
+		vm::tuple *tpl(stpl->get_tuple());
+		
+		if(tpl->is_persistent()) {
+			const bool is_new(node->add_tuple(tpl, 1));
+			if(is_new)
+				mark_predicate_to_run(tpl->get_predicate());
+			else
+				delete tpl;
+			delete stpl;
+			it = local_tuples.erase(it);
+		} else {
+			mark_predicate_to_run(tpl->get_predicate());
+			it++;
+		}
+	}
+	
+	mark_rules_using_active_predicates();
+}
+
+void
+state::process_consumed_local_tuples(void)
+{
+	// process current set of tuples
+	for(db::simple_tuple_vector::iterator it(local_tuples.begin());
+		it != local_tuples.end();
+		)
+	{
+		simple_tuple *stpl(*it);
+		if(!stpl->can_be_consumed()) {
+#ifdef DEBUG_RULES
+			cout << "Delete " << *stpl << endl;
+#endif
+			delete stpl->get_tuple();
+			delete stpl;
+			it = local_tuples.erase(it);
+		} else
+			it++;
+	}
+}
+
+void
+state::process_generated_tuples(const strat_level current_level, db::node *node)
+{
+	predicates_to_check.clear();
+	fill_n(predicates, PROGRAM->num_predicates(), false);
+	
+	// get tuples generated with the previous rule
+	for(simple_tuple_vector::iterator it(generated_tuples.begin()), end(generated_tuples.end());
+		it != end;
+		it++)
+	{
+		simple_tuple *stpl(*it);
+		vm::tuple *tpl(stpl->get_tuple());
+		const predicate *pred(tpl->get_predicate());
+		
+		if(pred->get_strat_level() != current_level) {
+			assert(stpl->can_be_consumed());
+			MACHINE->route_self(proc, node, stpl);
+		} else if(pred->is_action_pred()) {
+			MACHINE->run_action(proc->get_scheduler(), node, tpl);
+			delete tpl;
+			delete stpl;
+		} else {
+			if(tpl->is_persistent()) {
+				const bool is_new(node->add_tuple(tpl, 1));
+				if(is_new)
+					mark_predicate_to_run(pred);
+				else
+					delete tpl;
+				delete stpl;
+			} else {
+				local_tuples.push_back(stpl);
+				mark_predicate_to_run(pred);
+			}
+		}
+	}
+	
+	mark_rules_using_active_predicates();
+}
+
+void
+state::run_node(db::node *node)
+{
+#ifdef DEBUG_RULES
+   cout << "Node " << node->get_id() << endl;
+#endif
+
+	strat_level level;
+	proc->get_scheduler()->gather_next_tuples(node, local_tuples, level);
+	mark_rules_using_local_tuples(node);
+
+#ifdef DEBUG_RULES
+	cout << "Strat level: " << level << " got " << local_tuples.size() << " tuples " << endl;
+#endif
+
+	while(!rule_queue.empty()) {
+		rule_id rule(rule_queue.pop());
+
+		setup(NULL, node, 0);
+		use_local_tuples = true;
+		execute_rule(rule, *this);
+
+		process_consumed_local_tuples();
+
+#ifdef DEBUG_RULES
+		cout << "Generated " << generated_tuples.size() << " tuples" << endl;
+#endif
+
+		rules[rule] = false;
+		process_generated_tuples(level, node);
+
+		generated_tuples.clear();
+	}
+
+	for(db::simple_tuple_vector::iterator it(local_tuples.begin()), end(local_tuples.end());
+		it != end;
+		++it)
+	{
+		simple_tuple *stpl(*it);
+		if(stpl->can_be_consumed()) {
+			node->add_tuple(stpl->get_tuple(), 1);
+		} else
+			delete stpl->get_tuple();
+		delete stpl;
+	}
+
+	local_tuples.clear();
+}
+
 #ifdef CORE_STATISTICS
 void
 state::init_core_statistics(void)
@@ -191,10 +367,15 @@ state::state(process::process *_proc):
 #ifdef CORE_STATISTICS
    init_core_statistics();
 #endif
+	rules = new bool[state::PROGRAM->num_rules()];
+	fill_n(rules, state::PROGRAM->num_rules(), false);
+	predicates = new bool[state::PROGRAM->num_predicates()];
+	fill_n(predicates, state::PROGRAM->num_predicates(), false);
+	rule_queue.set_type(HEAP_INT_ASC);
 }
 
 state::state(void):
-   proc(NULL)
+   rules(NULL), predicates(NULL), proc(NULL)
 #ifdef DEBUG_MODE
    , print_instrs(false)
 #endif
@@ -208,6 +389,7 @@ state::~state(void)
 {
 #ifdef CORE_STATISTICS
 	if(proc != NULL) {
+      return;
 		cout << "Rules:" << endl;
    	cout << "\tapplied: " << stat_rules_ok << endl;
    	cout << "\tfailed: " << stat_rules_failed << endl;
@@ -220,6 +402,9 @@ state::~state(void)
 		cout << "\tops: " << stat_ops_executed << endl;
 	}
 #endif
+	delete []rules;
+	delete []predicates;
+	assert(rule_queue.empty());
 }
 
 }

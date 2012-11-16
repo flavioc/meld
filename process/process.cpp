@@ -115,178 +115,11 @@ process::do_agg_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
 }
 
 void
-process::mark_predicate_rules(const predicate *pred)
-{
-	for(predicate::rule_iterator it(pred->begin_rules()), end(pred->end_rules()); it != end; it++) {
-		rule_id rule(*it);
-		if(!rules[rule]) {
-			rules[rule] = true;
-			heap_priority pr;
-			pr.int_priority = (int)rule;
-			rule_queue.insert(rule, pr);
-		}
-	}
-}
-
-void
-process::mark_predicate_to_run(const predicate *pred)
-{
-	if(!predicates[pred->get_id()]) {
-		predicates[pred->get_id()] = true;
-		predicates_to_check.push_back((predicate*)pred);
-	}
-}
-
-void
-process::mark_rules_using_active_predicates(void)
-{
-	for(vector<predicate*>::iterator it(predicates_to_check.begin()), end(predicates_to_check.end());
-		it != end;
-		it++)
-	{
-		mark_predicate_rules(*it);
-	}
-}
-
-void
-process::mark_rules_using_local_tuples(db::node *node)
-{
-	predicates_to_check.clear();
-	fill_n(predicates, state::PROGRAM->num_predicates(), false);
-	
-	for(db::simple_tuple_vector::iterator it(state.local_tuples.begin());
-		it != state.local_tuples.end(); )
-	{
-		db::simple_tuple *stpl(*it);
-		vm::tuple *tpl(stpl->get_tuple());
-		
-		if(tpl->is_persistent()) {
-			const bool is_new(node->add_tuple(tpl, 1));
-			if(is_new)
-				mark_predicate_to_run(tpl->get_predicate());
-			else
-				delete tpl;
-			delete stpl;
-			it = state.local_tuples.erase(it);
-		} else {
-			mark_predicate_to_run(tpl->get_predicate());
-			it++;
-		}
-	}
-	
-	mark_rules_using_active_predicates();
-}
-
-void
-process::process_consumed_local_tuples(void)
-{
-	// process current set of tuples
-	for(db::simple_tuple_vector::iterator it(state.local_tuples.begin());
-		it != state.local_tuples.end();
-		)
-	{
-		simple_tuple *stpl(*it);
-		if(!stpl->can_be_consumed()) {
-#ifdef DEBUG_RULES
-			cout << "Delete " << *stpl << endl;
-#endif
-			delete stpl->get_tuple();
-			delete stpl;
-			it = state.local_tuples.erase(it);
-		} else
-			it++;
-	}
-}
-
-void
-process::process_generated_tuples(const strat_level current_level, db::node *node)
-{
-	predicates_to_check.clear();
-	fill_n(predicates, state::PROGRAM->num_predicates(), false);
-	
-	// get tuples generated with the previous rule
-	for(simple_tuple_vector::iterator it(state.generated_tuples.begin()), end(state.generated_tuples.end());
-		it != end;
-		it++)
-	{
-		simple_tuple *stpl(*it);
-		vm::tuple *tpl(stpl->get_tuple());
-		const predicate *pred(tpl->get_predicate());
-		
-		if(pred->get_strat_level() != current_level) {
-			assert(stpl->can_be_consumed());
-			state::MACHINE->route_self(this, node, stpl);
-		} else if(pred->is_action_pred()) {
-			state::MACHINE->run_action(scheduler, node, tpl);
-			delete tpl;
-			delete stpl;
-		} else {
-			if(tpl->is_persistent()) {
-				const bool is_new(node->add_tuple(tpl, 1));
-				if(is_new)
-					mark_predicate_to_run(pred);
-				else
-					delete tpl;
-				delete stpl;
-			} else {
-				state.local_tuples.push_back(stpl);
-				mark_predicate_to_run(pred);
-			}
-		}
-	}
-	
-	mark_rules_using_active_predicates();
-}
-
-void
 process::do_work_rules(work& w)
 {
    node *node(w.get_node());
 
-#ifdef DEBUG_RULES
-   cout << "Node " << node->get_id() << endl;
-#endif
-	
-	strat_level level;
-	scheduler->gather_next_tuples(node, state.local_tuples, level);
-	mark_rules_using_local_tuples(node);
-
-#ifdef DEBUG_RULES
-	cout << "Strat level: " << level << " got " << state.local_tuples.size() << " tuples " << endl;
-#endif
-
-	while(!rule_queue.empty()) {
-		rule_id rule(rule_queue.pop());
-		
-		state.setup(NULL, node, 0);
-		state.use_local_tuples = true;
-		execute_rule(rule, state);
-	
-		process_consumed_local_tuples();
-		
-#ifdef DEBUG_RULES
-		cout << "Generated " << state.generated_tuples.size() << " tuples" << endl;
-#endif
-
-		rules[rule] = false;
-		process_generated_tuples(level, node);
-
-		state.generated_tuples.clear();
-	}
-	
-	for(db::simple_tuple_vector::iterator it(state.local_tuples.begin()), end(state.local_tuples.end());
-		it != end;
-		++it)
-	{
-		simple_tuple *stpl(*it);
-		if(stpl->can_be_consumed()) {
-			node->add_tuple(stpl->get_tuple(), 1);
-		} else
-			delete stpl->get_tuple();
-		delete stpl;
-	}
-	
-	state.local_tuples.clear();
+	state.run_node(node);
 }
 
 void
@@ -399,20 +232,12 @@ process::process(const process_id _id, sched::base *_sched):
    scheduler(_sched),
    state(this)
 {
-	rules = new bool[state::PROGRAM->num_rules()];
-	fill_n(rules, state::PROGRAM->num_rules(), false);
-	predicates = new bool[state::PROGRAM->num_predicates()];
-	fill_n(predicates, state::PROGRAM->num_predicates(), false);
-	rule_queue.set_type(HEAP_INT_ASC);
 }
 
 process::~process(void)
 {
    delete thread;
    delete scheduler;
-	delete []rules;
-	delete []predicates;
-	assert(rule_queue.empty());
 }
 
 }
