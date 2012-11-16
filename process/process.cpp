@@ -2,6 +2,7 @@
 #include <iostream>
 #include <boost/function.hpp>
 #include <boost/thread/tss.hpp>
+#include <algorithm>
 
 #include "process/process.hpp"
 #include "vm/exec.hpp"
@@ -104,7 +105,7 @@ process::do_agg_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
 
    simple_tuple_list list;
    conf->generate(pred->get_aggregate_type(), pred->get_aggregate_field(), list);
-      
+
    for(simple_tuple_list::iterator it(list.begin()); it != list.end(); ++it) {
       simple_tuple *tpl(*it);
       
@@ -128,8 +129,31 @@ process::mark_predicate_rules(const predicate *pred)
 }
 
 void
+process::mark_predicate_to_run(const predicate *pred)
+{
+	if(!predicates[pred->get_id()]) {
+		predicates[pred->get_id()] = true;
+		predicates_to_check.push_back((predicate*)pred);
+	}
+}
+
+void
+process::mark_rules_using_active_predicates(void)
+{
+	for(vector<predicate*>::iterator it(predicates_to_check.begin()), end(predicates_to_check.end());
+		it != end;
+		it++)
+	{
+		mark_predicate_rules(*it);
+	}
+}
+
+void
 process::mark_rules_using_local_tuples(db::node *node)
 {
+	predicates_to_check.clear();
+	fill_n(predicates, state::PROGRAM->num_predicates(), false);
+	
 	for(db::simple_tuple_vector::iterator it(state.local_tuples.begin());
 		it != state.local_tuples.end(); )
 	{
@@ -139,22 +163,23 @@ process::mark_rules_using_local_tuples(db::node *node)
 		if(tpl->is_persistent()) {
 			const bool is_new(node->add_tuple(tpl, 1));
 			if(is_new)
-				mark_predicate_rules(tpl->get_predicate());
+				mark_predicate_to_run(tpl->get_predicate());
 			else
 				delete tpl;
 			delete stpl;
 			it = state.local_tuples.erase(it);
 		} else {
-			mark_predicate_rules(tpl->get_predicate());
+			mark_predicate_to_run(tpl->get_predicate());
 			it++;
 		}
 	}
+	
+	mark_rules_using_active_predicates();
 }
 
 void
 process::process_consumed_local_tuples(void)
 {
-	
 	// process current set of tuples
 	for(db::simple_tuple_vector::iterator it(state.local_tuples.begin());
 		it != state.local_tuples.end();
@@ -176,6 +201,9 @@ process::process_consumed_local_tuples(void)
 void
 process::process_generated_tuples(const strat_level current_level, db::node *node)
 {
+	predicates_to_check.clear();
+	fill_n(predicates, state::PROGRAM->num_predicates(), false);
+	
 	// get tuples generated with the previous rule
 	for(simple_tuple_vector::iterator it(state.generated_tuples.begin()), end(state.generated_tuples.end());
 		it != end;
@@ -195,17 +223,19 @@ process::process_generated_tuples(const strat_level current_level, db::node *nod
 		} else {
 			if(tpl->is_persistent()) {
 				const bool is_new(node->add_tuple(tpl, 1));
-				if(is_new) {
-					mark_predicate_rules(pred);
-				} else
+				if(is_new)
+					mark_predicate_to_run(pred);
+				else
 					delete tpl;
 				delete stpl;
 			} else {
 				state.local_tuples.push_back(stpl);
-				mark_predicate_rules(pred);
+				mark_predicate_to_run(pred);
 			}
 		}
 	}
+	
+	mark_rules_using_active_predicates();
 }
 
 void
@@ -370,8 +400,9 @@ process::process(const process_id _id, sched::base *_sched):
    state(this)
 {
 	rules = new bool[state::PROGRAM->num_rules()];
-	for(size_t i(0); i < state::PROGRAM->num_rules(); i++)
-		rules[i] = false;
+	fill_n(rules, state::PROGRAM->num_rules(), false);
+	predicates = new bool[state::PROGRAM->num_predicates()];
+	fill_n(predicates, state::PROGRAM->num_predicates(), false);
 	rule_queue.set_type(HEAP_INT_ASC);
 }
 
@@ -380,6 +411,7 @@ process::~process(void)
    delete thread;
    delete scheduler;
 	delete []rules;
+	delete []predicates;
 	assert(rule_queue.empty());
 }
 

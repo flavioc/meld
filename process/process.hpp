@@ -29,8 +29,12 @@ private:
    
    vm::state state;
 	bool *rules;
+	bool *predicates;
+	std::vector<vm::predicate*> predicates_to_check;
 	queue::heap_queue<vm::rule_id> rule_queue;
 
+	void mark_rules_using_active_predicates(void);
+	void mark_predicate_to_run(const vm::predicate *);
 	void process_consumed_local_tuples(void);
 	void process_generated_tuples(const vm::strat_level, db::node *);
 	void mark_predicate_rules(const vm::predicate *);
