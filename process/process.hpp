@@ -10,9 +10,11 @@
 #include "conf.hpp"
 #include "vm/program.hpp"
 #include "vm/state.hpp"
+#include "vm/rule.hpp"
 #include "db/node.hpp"
 #include "db/database.hpp"
 #include "sched/base.hpp"
+#include "queue/safe_simple_pqueue.hpp"
 
 namespace process
 {
@@ -26,10 +28,11 @@ private:
    sched::base *scheduler;
    
    vm::state state;
-	std::vector<bool> rules;
-   
+	bool *rules;
+	queue::heap_queue<vm::rule_id> rule_queue;
+
 	void process_consumed_local_tuples(void);
-	void process_generated_tuples(vm::rule_id &, const vm::strat_level, db::node *);
+	void process_generated_tuples(const vm::strat_level, db::node *);
 	void mark_predicate_rules(const vm::predicate *);
 	void mark_rules_using_local_tuples(db::node *);
    void do_work_rules(work&);

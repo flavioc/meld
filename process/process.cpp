@@ -116,8 +116,15 @@ process::do_agg_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
 void
 process::mark_predicate_rules(const predicate *pred)
 {
-	for(predicate::rule_iterator it(pred->begin_rules()), end(pred->end_rules()); it != end; it++)
-      rules[*it] = true;
+	for(predicate::rule_iterator it(pred->begin_rules()), end(pred->end_rules()); it != end; it++) {
+		rule_id rule(*it);
+		if(!rules[rule]) {
+			rules[rule] = true;
+			heap_priority pr;
+			pr.int_priority = (int)rule;
+			rule_queue.insert(rule, pr);
+		}
+	}
 }
 
 void
@@ -167,7 +174,7 @@ process::process_consumed_local_tuples(void)
 }
 
 void
-process::process_generated_tuples(rule_id &r, const strat_level current_level, db::node *node)
+process::process_generated_tuples(const strat_level current_level, db::node *node)
 {
 	// get tuples generated with the previous rule
 	for(simple_tuple_vector::iterator it(state.generated_tuples.begin()), end(state.generated_tuples.end());
@@ -189,29 +196,13 @@ process::process_generated_tuples(rule_id &r, const strat_level current_level, d
 			if(tpl->is_persistent()) {
 				const bool is_new(node->add_tuple(tpl, 1));
 				if(is_new) {
-					const predicate *pred(tpl->get_predicate());
-
-		         for(predicate::rule_iterator it(pred->begin_rules()), end(pred->end_rules()); it != end; it++) {
-						rule_id rule(*it);
-						if(!rules[rule]) {
-							rules[rule] = true;
-							if(rule < r)
-								r = rule;
-						}
-					}
+					mark_predicate_rules(pred);
 				} else
 					delete tpl;
 				delete stpl;
 			} else {
 				state.local_tuples.push_back(stpl);
-      		for(predicate::rule_iterator it(pred->begin_rules()), end(pred->end_rules()); it != end; it++) {
-					rule_id rule(*it);
-					if(!rules[rule]) {
-						rules[rule] = true;
-						if(rule < r)
-							r = rule;
-					}
-				}
+				mark_predicate_rules(pred);
 			}
 		}
 	}
@@ -234,27 +225,22 @@ process::do_work_rules(work& w)
 	cout << "Strat level: " << level << " got " << state.local_tuples.size() << " tuples " << endl;
 #endif
 
-	for(rule_id i(0), end_rule((rule_id)rules.size()); i < end_rule; ) {
-		if(!rules[i]) {
-			i++;
-			continue;
-		}
+	while(!rule_queue.empty()) {
+		rule_id rule(rule_queue.pop());
 		
 		state.setup(NULL, node, 0);
 		state.use_local_tuples = true;
-		execute_rule(i, state);
+		execute_rule(rule, state);
 	
 		process_consumed_local_tuples();
-		
-		// deactivate rule
-		rules[i] = false;
 		
 #ifdef DEBUG_RULES
 		cout << "Generated " << state.generated_tuples.size() << " tuples" << endl;
 #endif
-		i++;
-		process_generated_tuples(i, level, node);
-		
+
+		rules[rule] = false;
+		process_generated_tuples(level, node);
+
 		state.generated_tuples.clear();
 	}
 	
@@ -383,15 +369,18 @@ process::process(const process_id _id, sched::base *_sched):
    scheduler(_sched),
    state(this)
 {
-	rules.resize(state::PROGRAM->num_rules());
-	for(size_t i(0); i < rules.size(); i++)
+	rules = new bool[state::PROGRAM->num_rules()];
+	for(size_t i(0); i < state::PROGRAM->num_rules(); i++)
 		rules[i] = false;
+	rule_queue.set_type(HEAP_INT_ASC);
 }
 
 process::~process(void)
 {
    delete thread;
    delete scheduler;
+	delete []rules;
+	assert(rule_queue.empty());
 }
 
 }
