@@ -20,7 +20,8 @@ class rule
       const std::string str;
       byte_code code;
 		code_size_t code_size;
-      std::vector<predicate*> predicates;
+		typedef std::vector<predicate*> predicate_vector;
+      predicate_vector predicates;
 
    public:
 	
@@ -34,7 +35,12 @@ class rule
 			code = _code;
 		}
 		
-		byte_code get_bytecode(void) const { return code; }
+		inline byte_code get_bytecode(void) const { return code; }
+		inline size_t num_predicates(void) const { return predicates.size(); }
+
+		typedef predicate_vector::const_iterator predicate_iterator;
+		inline predicate_iterator begin_predicates(void) const { return predicates.begin(); }
+		inline predicate_iterator end_predicates(void) const { return predicates.end(); }
 
       explicit rule(const std::string& _str): str(_str) { }
 

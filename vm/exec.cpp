@@ -315,6 +315,9 @@ execute_send(const pcounter& pc, state& state)
 				} else {
 					simple_tuple *stuple(new simple_tuple(tuple, state.count));
 					state.generated_tuples.push_back(stuple);
+#ifdef USE_RULE_COUNTING
+					state.node->matcher.register_tuple(tuple, 1);
+#endif
 					state.mark_predicate_to_run(pred);
 				}
 			}
@@ -1449,7 +1452,21 @@ execute_remove(pcounter pc, state& state)
 	sched_caller->new_linear_consumption(state.node, state.get_tuple(reg));
 #endif
 
-	if(state.is_it_a_leaf(reg)) {
+	const bool is_a_leaf(state.is_it_a_leaf(reg));
+
+#ifdef USE_RULE_COUNTING
+	if(state.use_local_tuples) {
+		
+		vm::tuple *tpl(state.get_tuple(reg));
+		assert(tpl != NULL);
+		
+		if(is_a_leaf) {
+			state.node->matcher.deregister_tuple(tpl, 1);
+		}
+	}
+#endif
+
+	if(is_a_leaf) {
 		//cout << "Remove " << *state.get_tuple(reg) << endl;
    	state.node->delete_by_leaf(state.get_tuple(reg)->get_predicate(), state.get_leaf(reg));
 	} else {

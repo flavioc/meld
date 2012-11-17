@@ -28,6 +28,12 @@
 /* use old method of counting neighborhood aggregates */
 // #define USE_OLD_NEIGHBOR_CHECK 1
 
+/* gather statistics about the core VM execution */
+#define CORE_STATISTICS 1
+
+/* use fact counting for rule engine */
+#define USE_RULE_COUNTING 1
+
 /* activate instrumentation code */
 // #define INSTRUMENTATION 1
 

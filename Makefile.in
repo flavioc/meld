@@ -68,6 +68,7 @@ OBJS = utils/utils.o \
 			 vm/exec.o \
 			 vm/external.o \
 			 vm/rule.o \
+			 vm/rule_matcher.o \
 			 db/node.o \
 			 db/tuple.o \
 			 db/agg_configuration.o \

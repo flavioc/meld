@@ -55,9 +55,11 @@ private:
 	/* execution data for when using rules */
 	bool *rules;
 	bool *predicates;
-	std::vector<vm::predicate*> predicates_to_check;
 	queue::heap_queue<vm::rule_id> rule_queue;
-
+#ifndef USE_RULE_COUNTING
+	std::vector<vm::predicate*> predicates_to_check;
+#endif
+	
    void purge_runtime_objects(void);
 #ifdef CORE_STATISTICS
    void init_core_statistics(void);
@@ -191,12 +193,19 @@ public:
 	inline void add_string(runtime::rstring::ptr str) { free_rstring.push_back(str); }
    inline void add_generated_tuple(db::simple_tuple *tpl) { tpl->set_generated_run(true); generated_tuples.push_back(tpl); }
    
-	void mark_rules_using_active_predicates(void);
+	bool add_fact_to_node(vm::tuple *);
+	
+#ifndef USE_RULE_COUNTING
+	void mark_predicate_rules(const vm::predicate *);
+#else
+	bool check_if_rule_predicate_activated(vm::rule *);
+#endif
+	
 	void mark_predicate_to_run(const vm::predicate *);
+	void mark_active_rules(void);
 	void process_consumed_local_tuples(void);
 	void process_generated_tuples(void);
-	void mark_predicate_rules(const vm::predicate *);
-	void mark_rules_using_local_tuples(db::node *);
+	void mark_rules_using_local_tuples(void);
 	void run_node(db::node *);
    void setup(vm::tuple*, db::node*, const ref_count);
    void cleanup(void);

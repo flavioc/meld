@@ -16,8 +16,6 @@ using namespace std;
 using namespace utils;
 using namespace boost;
 
-//#define DEBUG_RULES
-
 namespace process {
 
 static inline byte_code

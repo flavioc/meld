@@ -22,6 +22,7 @@
 #include "vm/match.hpp"
 #include "utils/atomic.hpp"
 #include "db/edge_set.hpp"
+#include "vm/rule_matcher.hpp"
 
 #ifdef USE_UI
 #include <json_spirit.h>
@@ -129,6 +130,8 @@ public:
 #ifdef USE_UI
 	json_spirit::Value dump_json(void) const;
 #endif
+
+	vm::rule_matcher matcher;
    
    explicit node(const node_id, const node_id);
    

@@ -10,6 +10,8 @@ using namespace process;
 using namespace std;
 using namespace runtime;
 
+//#define DEBUG_RULES
+
 namespace vm
 {
 
@@ -169,6 +171,16 @@ state::setup(vm::tuple *tpl, db::node *n, const ref_count count)
 #endif
 }
 
+#ifndef USE_RULE_COUNTING
+void
+state::mark_predicate_to_run(const predicate *pred)
+{
+	if(!predicates[pred->get_id()]) {
+		predicates[pred->get_id()] = true;
+		predicates_to_check.push_back((predicate*)pred);
+	}
+}
+
 void
 state::mark_predicate_rules(const predicate *pred)
 {
@@ -182,31 +194,85 @@ state::mark_predicate_rules(const predicate *pred)
 		}
 	}
 }
-
+#else
 void
 state::mark_predicate_to_run(const predicate *pred)
 {
-	if(!predicates[pred->get_id()]) {
+	if(!predicates[pred->get_id()])
 		predicates[pred->get_id()] = true;
-		predicates_to_check.push_back((predicate*)pred);
-	}
 }
 
-void
-state::mark_rules_using_active_predicates(void)
+bool
+state::check_if_rule_predicate_activated(vm::rule *rule)
 {
+	for(rule::predicate_iterator jt(rule->begin_predicates()), endj(rule->end_predicates());
+		jt != endj;
+		jt++)
+	{
+		const predicate *pred(*jt);
+		if(predicates[pred->get_id()])
+			return true;
+	}
+	
+	return false;
+}
+#endif
+
+void
+state::mark_active_rules(void)
+{
+#ifdef USE_RULE_COUNTING
+	for(rule_matcher::rule_iterator it(node->matcher.begin_active_rules()),
+		end(node->matcher.end_active_rules());
+		it != end;
+		it++)
+	{
+		rule_id rid(*it);
+		if(!rules[rid]) {
+			// we need check if at least one predicate was activated in this loop
+			vm::rule *rule(PROGRAM->get_rule(rid));
+			if(check_if_rule_predicate_activated(rule)) {
+				rules[rid] = true;
+				heap_priority pr;
+				pr.int_priority = (int)rid;
+				rule_queue.insert(rid, pr);
+			}
+		}
+	}
+	
+	for(rule_matcher::rule_iterator it(node->matcher.begin_dropped_rules()),
+		end(node->matcher.end_dropped_rules());
+		it != end;
+		it++)
+	{
+		rule_id rid(*it);
+		if(rules[rid]) {
+			rules[rid] = false;
+			rule_queue.remove(rid);
+		}
+	}
+#else
 	for(vector<predicate*>::iterator it(predicates_to_check.begin()), end(predicates_to_check.end());
 		it != end;
 		it++)
 	{
 		mark_predicate_rules(*it);
 	}
+#endif
+}
+
+bool
+state::add_fact_to_node(vm::tuple *tpl)
+{
+	return node->add_tuple(tpl, 1);
 }
 
 void
-state::mark_rules_using_local_tuples(db::node *node)
+state::mark_rules_using_local_tuples(void)
 {
+#ifndef USE_RULE_COUNTING
 	predicates_to_check.clear();
+#endif
 	fill_n(predicates, PROGRAM->num_predicates(), false);
 	
 	for(db::simple_tuple_list::iterator it(local_tuples.begin());
@@ -216,7 +282,10 @@ state::mark_rules_using_local_tuples(db::node *node)
 		vm::tuple *tpl(stpl->get_tuple());
 		
 		if(tpl->is_persistent()) {
-			const bool is_new(node->add_tuple(tpl, 1));
+			const bool is_new(add_fact_to_node(tpl));
+#ifdef USE_RULE_COUNTING
+			node->matcher.register_tuple(tpl, 1, is_new);
+#endif
 			if(is_new)
 				mark_predicate_to_run(tpl->get_predicate());
 			else
@@ -224,12 +293,15 @@ state::mark_rules_using_local_tuples(db::node *node)
 			delete stpl;
 			it = local_tuples.erase(it);
 		} else {
+#ifdef USE_RULE_COUNTING
+			node->matcher.register_tuple(tpl, stpl->get_count());
+#endif
 			mark_predicate_to_run(tpl->get_predicate());
 			it++;
 		}
 	}
 	
-	mark_rules_using_active_predicates();
+	mark_active_rules();
 }
 
 void
@@ -242,10 +314,11 @@ state::process_consumed_local_tuples(void)
 	{
 		simple_tuple *stpl(*it);
 		if(!stpl->can_be_consumed()) {
-#ifdef DEBUG_RULES
-			cout << "Delete " << *stpl << endl;
+			vm::tuple *tpl(stpl->get_tuple());
+#ifdef USE_RULE_COUNTING
+			node->matcher.deregister_tuple(tpl, stpl->get_count());
 #endif
-			delete stpl->get_tuple();
+			delete tpl;
 			delete stpl;
 			it = local_tuples.erase(it);
 		} else
@@ -258,11 +331,13 @@ state::process_generated_tuples(void)
 {
 	/* move from generated tuples to local_tuples */
 	local_tuples.splice(local_tuples.end(), generated_tuples);
+	/* tuples were already marked in vm/exec.cpp (execute_send) */
 	
 	for(simple_tuple_vector::iterator it(generated_other_level.begin()), end(generated_other_level.end());
 		it != end;
 		it++)
 	{
+		/* no need to mark tuples */
 		MACHINE->route_self(proc, node, *it);
 	}
 	
@@ -273,7 +348,12 @@ state::process_generated_tuples(void)
 		simple_tuple *stpl(*it);
 		vm::tuple *tpl(stpl->get_tuple());
 		
-		const bool is_new(node->add_tuple(tpl, stpl->get_count()));
+		const bool is_new(add_fact_to_node(tpl));
+		
+#ifdef USE_RULE_COUNTING
+		node->matcher.register_tuple(tpl, stpl->get_count(), is_new);
+#endif
+
 		if(is_new)
 			mark_predicate_to_run(tpl->get_predicate());
 		else
@@ -289,14 +369,14 @@ state::process_generated_tuples(void)
 void
 state::run_node(db::node *no)
 {
+	this->node = no;
+	
 #ifdef DEBUG_RULES
    cout << "Node " << node->get_id() << endl;
 #endif
 
-	this->node = no;
-
 	proc->get_scheduler()->gather_next_tuples(node, local_tuples, current_level);
-	mark_rules_using_local_tuples(node);
+	mark_rules_using_local_tuples();
 
 #ifdef DEBUG_RULES
 	cout << "Strat level: " << current_level << " got " << local_tuples.size() << " tuples " << endl;
@@ -304,10 +384,18 @@ state::run_node(db::node *no)
 
 	while(!rule_queue.empty()) {
 		rule_id rule(rule_queue.pop());
+		
+#ifdef DEBUG_RULES
+		cout << "Run rule " << state::PROGRAM->get_rule(rule)->get_string() << endl;
+#endif
 
 		/* delete rule and every check */
 		rules[rule] = false;
+#ifdef USE_RULE_COUNTING
+		node->matcher.clear_dropped_rules();
+#else
 		predicates_to_check.clear();
+#endif
 		fill_n(predicates, PROGRAM->num_predicates(), false);
 		
 		setup(NULL, node, 1);
@@ -316,7 +404,7 @@ state::run_node(db::node *no)
 
 		process_consumed_local_tuples();
 		process_generated_tuples();
-		mark_rules_using_active_predicates();
+		mark_active_rules();
 	}
 
 	for(db::simple_tuple_list::iterator it(local_tuples.begin()), end(local_tuples.end());
@@ -327,7 +415,7 @@ state::run_node(db::node *no)
 		vm::tuple *tpl(stpl->get_tuple());
 		
 		if(stpl->can_be_consumed()) {
-			node->add_tuple(tpl, 1);
+			add_fact_to_node(tpl);
 		} else
 			delete tpl;
 		delete stpl;
@@ -382,11 +470,12 @@ state::state(void):
 state::~state(void)
 {
 #ifdef CORE_STATISTICS
+   return;
 	if(proc != NULL) {
-      return;
 		cout << "Rules:" << endl;
    	cout << "\tapplied: " << stat_rules_ok << endl;
    	cout << "\tfailed: " << stat_rules_failed << endl;
+      cout << "\tfailure rate: " << setprecision (2) << 100 * (float)stat_rules_failed / ((float)(stat_rules_ok + stat_rules_failed)) << "%" << endl;
 		cout << "DB hits: " << stat_db_hits << endl;
 		cout << "Tuples used: " << stat_tuples_used << endl;
 		cout << "If tests: " << stat_if_tests << endl;

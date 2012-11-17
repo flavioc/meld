@@ -110,7 +110,19 @@ public:
 		heapifyup(heap.size() - 1);
 	}
 	
-	void remove(const int index)
+	void remove(T val)
+	{
+		/* XXX: must use heap structure to improve this */
+		for(size_t i(0); i < heap.size(); i++) {
+			if(val == heap[i].data) {
+				remove_by_index(i);
+				return;
+			}
+		}
+		assert(false);
+	}
+	
+	void remove_by_index(const size_t index)
 	{
 		heap_object obj(heap[index]);
 		heap_object tmp(heap.back());
