@@ -3,6 +3,10 @@
 #define SCHED_BASE_HPP
 
 #include <iostream>
+#include <list>
+#include <stdexcept>
+#include <boost/thread/thread.hpp>
+#include <boost/thread/mutex.hpp>
 
 #include "conf.hpp"
 
@@ -15,6 +19,7 @@
 #include "process/work.hpp"
 #include "stat/stat.hpp"
 #include "runtime/string.hpp"
+#include "vm/state.hpp"
 
 namespace process {
    class remote;
@@ -28,6 +33,8 @@ class base
 protected:
    
    const vm::process_id id;
+	boost::thread *thread;
+   vm::state state;
    
    size_t iteration;
    
@@ -51,6 +58,12 @@ protected:
 #define ins_comm
 
 #endif
+
+	void do_loop(void);
+   void loop(void);
+	void do_work(process::work&);
+	void do_agg_tuple_add(db::node *, vm::tuple *, const vm::ref_count);
+	void do_tuple_add(db::node *, vm::tuple *, const vm::ref_count);
    
    virtual bool terminate_iteration(void) = 0;
    
@@ -156,6 +169,10 @@ public:
    inline vm::process_id get_id(void) const { return id; }
    
    inline size_t num_iterations(void) const { return iteration; }
+
+	inline void join(void) { thread->join(); }
+	
+	void start(void);
    
    virtual void write_slice(statistics::slice& sl) const
    {
@@ -172,18 +189,9 @@ public:
 #endif
    }
    
-   explicit base(const vm::process_id _id):
-      id(_id), iteration(0)
-#ifdef INSTRUMENTATION
-      , processed_facts(0), sent_facts(0), ins_state(statistics::NOW_ACTIVE)
-#endif
-   {
-   }
+	explicit base(const vm::process_id);
    
-   virtual ~base(void)
-   {
-      //std::cout << iteration << std::endl;
-   }
+	virtual ~base(void);
 };
 
 }

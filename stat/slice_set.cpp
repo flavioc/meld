@@ -4,7 +4,6 @@
 
 #include "stat/slice_set.hpp"
 #include "vm/state.hpp"
-#include "process/process.hpp"
 #include "process/machine.hpp"
 #include "stat/stat.hpp"
 #include "utils/macros.hpp"
@@ -122,7 +121,7 @@ slice_set::write(const string& file, const scheduler_type type) const
 void
 slice_set::beat_thread(const process_id id, slice& sl)
 {
-   state::MACHINE->get_process(id)->get_scheduler()->write_slice(sl);
+   state::MACHINE->get_scheduler(id)->write_slice(sl);
 }
 
 void

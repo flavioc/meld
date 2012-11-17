@@ -77,13 +77,13 @@ OBJS = utils/utils.o \
 			 db/database.o \
 			 db/trie.o \
 			 db/neighbor_agg_configuration.o \
-			 process/process.o \
 			 process/machine.o \
 			 process/remote.o \
 			 process/router.o \
 			 mem/thread.o \
 			 mem/center.o \
 			 mem/stat.o \
+			 sched/base.o \
 			 sched/common.o \
 			 sched/mpi/message.o \
 			 sched/mpi/message_buffer.o \

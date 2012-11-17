@@ -20,12 +20,10 @@
 #include "sched/types.hpp"
 #include "stat/slice_set.hpp"
 #include "vm/state.hpp"
+#include "sched/base.hpp"
 
 namespace process
 {
-
-// forward declaration   
-class process;
 
 class machine
 {
@@ -35,7 +33,7 @@ private:
    const size_t num_threads;
    const sched::scheduler_type sched_type;
    
-   std::vector<process*> process_list;
+   std::vector<sched::base*> process_list;
    
    router& rout;
    
@@ -51,14 +49,14 @@ public:
    
    sched::scheduler_type get_sched_type(void) const { return sched_type; }
    
-   process *get_process(const vm::process_id id) { return process_list[id]; }
+   sched::base *get_scheduler(const vm::process_id id) { return process_list[id]; }
    
    bool same_place(const db::node::node_id, const db::node::node_id) const;
    
    void run_action(sched::base *, db::node *, vm::tuple *);
-   void route_self(process *, db::node *, db::simple_tuple *);
+   void route_self(sched::base *, db::node *, db::simple_tuple *);
    
-   void route(const db::node *, process *, const db::node::node_id, db::simple_tuple*);
+   void route(const db::node *, sched::base *, const db::node::node_id, db::simple_tuple*);
    
    void start(void);
    

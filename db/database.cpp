@@ -2,6 +2,7 @@
 #include "vm/defs.hpp"
 #include "db/database.hpp"
 #include "process/router.hpp"
+#include "vm/state.hpp"
 
 using namespace db;
 using namespace std;

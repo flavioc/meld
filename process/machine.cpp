@@ -2,7 +2,6 @@
 #include <signal.h>
 
 #include "process/machine.hpp"
-#include "process/process.hpp"
 #include "vm/program.hpp"
 #include "vm/state.hpp"
 #include "vm/exec.hpp"
@@ -78,19 +77,16 @@ machine::run_action(sched::base *sched, node*node, vm::tuple *tpl)
 }
 
 void
-machine::route_self(process *proc, node *node, simple_tuple *stpl)
+machine::route_self(sched::base *sched, node *node, simple_tuple *stpl)
 {
-	sched::base *sched(proc->get_scheduler());
-
    assert(!stpl->get_tuple()->is_action());
    sched->new_work_self(node, stpl);
 }
 
 void
-machine::route(const node* from, process *caller, const node::node_id id, simple_tuple* stpl)
+machine::route(const node* from, sched::base *sched_caller, const node::node_id id, simple_tuple* stpl)
 {  
    remote* rem(rout.find_remote(id));
-   sched::base *sched_caller(caller->get_scheduler());
    
    assert(sched_caller != NULL);
    assert(id <= state::DATABASE->max_id());
@@ -347,48 +343,42 @@ machine::machine(const string& file, router& _rout, const size_t th,
    state::MACHINE = this;
    
    mem::init(num_threads);
-   process_list.resize(num_threads);
-   
-   vector<sched::base*> schedulers;
    
    switch(sched_type) {
       case SCHED_THREADS_STATIC_LOCAL:
-         schedulers = sched::static_local::start(num_threads);
+         process_list = sched::static_local::start(num_threads);
          break;
       case SCHED_THREADS_STATIC_LOCAL_PRIO:
-         schedulers = sched::static_local_prio::start(num_threads);
+         process_list = sched::static_local_prio::start(num_threads);
          break;
       case SCHED_THREADS_SINGLE_LOCAL:
-         schedulers = sched::threads_single::start(num_threads);
+         process_list = sched::threads_single::start(num_threads);
          break;
       case SCHED_THREADS_DYNAMIC_LOCAL:
-         schedulers = sched::dynamic_local::start(num_threads);
+         process_list = sched::dynamic_local::start(num_threads);
          break;
       case SCHED_THREADS_DIRECT_LOCAL:
-         schedulers = sched::direct_local::start(num_threads);
+         process_list = sched::direct_local::start(num_threads);
          break;
       case SCHED_MPI_AND_THREADS_STATIC_LOCAL:
-         schedulers = sched::mpi_thread_static::start(num_threads);
+         process_list = sched::mpi_thread_static::start(num_threads);
          break;
       case SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL:
-         schedulers = sched::mpi_thread_dynamic::start(num_threads);
+         process_list = sched::mpi_thread_dynamic::start(num_threads);
          break;
       case SCHED_MPI_AND_THREADS_SINGLE_LOCAL:
-         schedulers = sched::mpi_thread_single::start(num_threads);
+         process_list = sched::mpi_thread_single::start(num_threads);
          break;
       case SCHED_SERIAL_LOCAL:
-         schedulers.push_back(dynamic_cast<sched::base*>(new sched::serial_local()));
+         process_list.push_back(dynamic_cast<sched::base*>(new sched::serial_local()));
          break;
 		case SCHED_SERIAL_UI_LOCAL:
-			schedulers.push_back(dynamic_cast<sched::base*>(new sched::serial_ui_local()));
+			process_list.push_back(dynamic_cast<sched::base*>(new sched::serial_ui_local()));
 			break;
       case SCHED_UNKNOWN: assert(false); break;
    }
    
-   assert(schedulers.size() == num_threads);
-   
-   for(process_id i(0); i < num_threads; ++i)
-      process_list[i] = new process(i, schedulers[i]);
+   assert(process_list.size() == num_threads);
 }
 
 machine::~machine(void)

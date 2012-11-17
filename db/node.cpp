@@ -178,7 +178,7 @@ node::count_total(const predicate_id id) const
    
    if(it == tuples.end())
       return 0;
-      
+
    const tuple_trie *tr(it->second);
    
    return tr->size();

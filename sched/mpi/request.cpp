@@ -2,6 +2,7 @@
 #include "sched/mpi/request.hpp"
 #include "process/remote.hpp"
 #include "process/router.hpp"
+#include "vm/state.hpp"
 
 using namespace process;
 using namespace vm;

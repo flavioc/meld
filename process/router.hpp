@@ -12,7 +12,6 @@
 #endif
 
 #include "process/remote.hpp"
-#include "process/process.hpp"
 #include "db/tuple.hpp"
 #include "db/node.hpp"
 #include "vm/defs.hpp"

@@ -1,6 +1,5 @@
 
 #include "vm/state.hpp"
-#include "process/process.hpp"
 #include "process/machine.hpp"
 #include "vm/exec.hpp"
 
@@ -248,7 +247,9 @@ state::mark_active_rules(void)
 		rule_id rid(*it);
 		if(rules[rid]) {
 			rules[rid] = false;
-			rule_queue.remove(rid);
+         heap_priority pr;
+         pr.int_priority = (int)rid;
+			rule_queue.remove(rid, pr);
 		}
 	}
 #else
@@ -292,6 +293,8 @@ state::mark_rules_using_local_tuples(void)
 				delete tpl;
 			delete stpl;
 			it = local_tuples.erase(it);
+		} else if(tpl->is_action()) {
+			assert(false);
 		} else {
 #ifdef USE_RULE_COUNTING
 			node->matcher.register_tuple(tpl, stpl->get_count());
@@ -338,7 +341,7 @@ state::process_generated_tuples(void)
 		it++)
 	{
 		/* no need to mark tuples */
-		MACHINE->route_self(proc, node, *it);
+		MACHINE->route_self(sched, node, *it);
 	}
 	
 	for(simple_tuple_vector::iterator it(generated_persistent_tuples.begin()), end(generated_persistent_tuples.end());
@@ -375,7 +378,7 @@ state::run_node(db::node *no)
    cout << "Node " << node->get_id() << endl;
 #endif
 
-	proc->get_scheduler()->gather_next_tuples(node, local_tuples, current_level);
+	sched->gather_next_tuples(node, local_tuples, current_level);
 	mark_rules_using_local_tuples();
 
 #ifdef DEBUG_RULES
@@ -440,8 +443,8 @@ state::init_core_statistics(void)
 }
 #endif
 
-state::state(process::process *_proc):
-   proc(_proc)
+state::state(sched::base *_sched):
+   sched(_sched)
 #ifdef DEBUG_MODE
    , print_instrs(false)
 #endif
@@ -457,7 +460,7 @@ state::state(process::process *_proc):
 }
 
 state::state(void):
-   rules(NULL), predicates(NULL), proc(NULL)
+   rules(NULL), predicates(NULL), sched(NULL)
 #ifdef DEBUG_MODE
    , print_instrs(false)
 #endif
@@ -470,8 +473,7 @@ state::state(void):
 state::~state(void)
 {
 #ifdef CORE_STATISTICS
-   return;
-	if(proc != NULL) {
+	if(sched != NULL) {
 		cout << "Rules:" << endl;
    	cout << "\tapplied: " << stat_rules_ok << endl;
    	cout << "\tfailed: " << stat_rules_failed << endl;

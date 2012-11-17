@@ -15,10 +15,13 @@
 
 // forward declaration
 namespace process {
-   class process;
    class remote;
    class machine;
    class router;
+}
+
+namespace sched {
+	class base;
 }
 
 namespace db {
@@ -99,7 +102,7 @@ public:
 	db::simple_tuple *tuple_queue;
    db::node *node;
    ref_count count;
-   process::process *proc;
+   sched::base *sched;
    bool is_linear;
    list_linear used_linear_tuples;
 	utils::randgen randgen;
@@ -220,7 +223,7 @@ public:
 		return runtime::rstring::make_string(ARGUMENTS[id-1]);
 	}
 	
-   explicit state(process::process *);
+   explicit state(sched::base *);
 	explicit state(void);
    ~state(void);
 };

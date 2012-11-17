@@ -8,7 +8,6 @@
 #include "vm/tuple.hpp"
 #include "vm/match.hpp"
 #include "db/tuple.hpp"
-#include "process/process.hpp"
 #include "process/machine.hpp"
 
 using namespace vm;
@@ -296,7 +295,7 @@ execute_send(const pcounter& pc, state& state)
       cout << "\t" << *stuple << " -> self" << endl;
 #endif
       if(tuple->is_action()) {
-         state::MACHINE->run_action(state.proc->get_scheduler(),
+         state::MACHINE->run_action(state.sched,
                state.node, tuple);
          return;
       }
@@ -323,7 +322,7 @@ execute_send(const pcounter& pc, state& state)
 			}
       } else {
 			simple_tuple *stuple(new simple_tuple(tuple, state.count));
-         state::MACHINE->route_self(state.proc, state.node, stuple);
+         state::MACHINE->route_self(state.sched, state.node, stuple);
          state.add_generated_tuple(stuple);
 		}
    } else {
@@ -331,7 +330,7 @@ execute_send(const pcounter& pc, state& state)
       cout << "\t" << *stuple << " -> " << dest_val << endl;
 #endif
       simple_tuple *stuple(new simple_tuple(tuple, state.count));
-      state::MACHINE->route(state.node, state.proc, (node::node_id)dest_val, stuple);
+      state::MACHINE->route(state.node, state.sched, (node::node_id)dest_val, stuple);
    }
 }
 
@@ -916,7 +915,7 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
       vector_of_everything everything;
 
       if(true) {
-         simple_tuple_vector queue_tuples(state.proc->get_scheduler()->gather_active_tuples(state.node, pred->get_id()));
+         simple_tuple_vector queue_tuples(state.sched->gather_active_tuples(state.node, pred->get_id()));
 		
          for(simple_tuple_vector::iterator it(queue_tuples.begin()), end(queue_tuples.end());
             it != end; ++it)
@@ -1103,7 +1102,7 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 
 	// tuples from current queue
 	if(this_is_linear) {
-   	db::simple_tuple_vector active_tuples = state.proc->get_scheduler()->gather_active_tuples(state.node, pred->get_id());
+   	db::simple_tuple_vector active_tuples = state.sched->gather_active_tuples(state.node, pred->get_id());
 
 		if(iter_options_random(options))
 			utils::shuffle_vector(active_tuples, state.randgen);
@@ -1448,8 +1447,7 @@ execute_remove(pcounter pc, state& state)
    const reg_num reg(remove_source(pc));
 
 #ifdef USE_UI
-	sched::base *sched_caller(state.proc->get_scheduler());
-	sched_caller->new_linear_consumption(state.node, state.get_tuple(reg));
+	state.sched->new_linear_consumption(state.node, state.get_tuple(reg));
 #endif
 
 	const bool is_a_leaf(state.is_it_a_leaf(reg));
@@ -1580,9 +1578,8 @@ execute_rule_done(const pcounter& pc, state& state)
    (void)state;
 
 #ifdef USE_UI
-	sched::base *sched_caller(state.proc->get_scheduler());
 	vm::rule *rule(state::PROGRAM->get_rule(state.current_rule));
-	sched_caller->rule_applied(state.node, rule->get_string());
+	state.sched->rule_applied(state.node, rule->get_string());
 #endif
 
 #ifdef CORE_STATISTICS
