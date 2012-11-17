@@ -67,7 +67,7 @@ private:
       }
    }
    
-   inline void snap_headtail(special_node* qhead, special_node* qtail)
+   inline void splice_headtail(special_node* qhead, special_node* qtail)
    {
       while (true) {
          special_node *last(tail.get());
@@ -143,7 +143,7 @@ public:
    }
    
    // append an unsafe queue on this queue
-   inline void snap(unsafe_linear_queue_count<T>& q)
+   inline void splice(unsafe_linear_queue_count<T>& q)
    {
       assert(q.size() > 0);
       assert(!q.empty());
@@ -153,10 +153,10 @@ public:
       assert(tail != NULL);
       assert(head != NULL);
       
-      snap_headtail((special_node*)q.head, (special_node*)q.tail);
+      splice_headtail((special_node*)q.head, (special_node*)q.tail);
    }
    
-   inline void snap(unsafe_linear_queue<T>& q)
+   inline void splice(unsafe_linear_queue<T>& q)
    {
       assert(!q.empty());
 
@@ -165,7 +165,7 @@ public:
       assert(tail != NULL);
       assert(head != NULL);
       
-      snap_headtail((special_node*)q.head, (special_node*)q.tail);
+      splice_headtail((special_node*)q.head, (special_node*)q.tail);
    }
    
    explicit push_safe_linear_queue(void):

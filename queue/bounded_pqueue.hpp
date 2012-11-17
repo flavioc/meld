@@ -87,7 +87,7 @@ private:
       assert(prio < leaves.size());
       
       tree_node *node(leaves[prio]);
-      node->bin.snap(q);
+      node->bin.splice(q);
       
       while(node != root) {
          tree_node *parent = node->parent;
@@ -196,7 +196,7 @@ public:
       return ret;
    }
    
-   void snap(simple_linear_pqueue<T>& other)
+   void splice(simple_linear_pqueue<T>& other)
    {
       assert(!other.empty());
       assert(other.size() > 0);
