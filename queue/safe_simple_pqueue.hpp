@@ -110,13 +110,45 @@ public:
 		heapifyup(heap.size() - 1);
 	}
 	
-	void remove(T val)
+	void remove(T val, const heap_priority prio)
 	{
-		/* XXX: must use heap structure to improve this */
-		for(size_t i(0); i < heap.size(); i++) {
-			if(val == heap[i].data) {
-				remove_by_index(i);
+		int shift = 1;
+		int remain = 1;
+		size_t index = 0;
+		heap_object obj;
+		bool forall = true;
+		
+		obj.data = val;
+		obj.val = prio;
+		
+		/* look at each tree level and find val
+		   to prune search find if in all the nodes y in the level follow the condition prio(x) <= prio(y) holds
+		*/ 
+		
+		while (index < heap.size()) {			
+			if(heap[index].data == val) {
+				remove_by_index(index);
 				return;
+			}
+			
+			if(forall && !HEAP_COMPARE(HEAP_GET_PRIORITY(obj), HEAP_GET_PRIORITY(heap[index]))) {
+				forall = false;
+			}
+			
+			remain--;
+			
+			index = index + 1;
+			
+			if(remain == 0) {
+				if(forall) {
+					// not found
+					assert(false);
+					return;
+				}
+				
+				forall = true;
+				shift = shift << 1;
+				remain = shift;
 			}
 		}
 		assert(false);
