@@ -1,6 +1,7 @@
 #include <iostream>
 #include <signal.h>
 
+#include "ui/manager.hpp"
 #include "process/machine.hpp"
 #include "vm/program.hpp"
 #include "vm/state.hpp"
@@ -58,11 +59,19 @@ machine::run_action(sched::base *sched, node*node, vm::tuple *tpl)
 	
 	assert(tpl->is_action());
 	
-	if(pid == SETCOLOR_PREDICATE_ID)
-		sched->set_node_color(node, tpl->get_int(0), tpl->get_int(1), tpl->get_int(2));
-	else if(pid == SETEDGELABEL_PREDICATE_ID)
-		sched->set_edge_label(node, tpl->get_node(0), tpl->get_string(1));
-   else if(pid == SET_PRIORITY_PREDICATE_ID)
+	if(pid == SETCOLOR_PREDICATE_ID) {
+#ifdef USE_UI
+      if(state::UI) {
+         LOG_SET_COLOR(node, tpl->get_int(0), tpl->get_int(1), tpl->get_int(2));
+      }
+#endif
+   } else if(pid == SETEDGELABEL_PREDICATE_ID) {
+#ifdef USE_UI
+      if(state::UI) {
+         LOG_SET_EDGE_LABEL(node->get_id(), tpl->get_node(0), tpl->get_string(1)->get_content());
+      }
+#endif
+   } else if(pid == SET_PRIORITY_PREDICATE_ID)
 		sched->set_node_priority(node, tpl->get_int(0));
 	else if(pid == ADD_PRIORITY_PREDICATE_ID)
 		sched->add_node_priority(node, tpl->get_int(0));
@@ -132,7 +141,7 @@ machine::route(const node* from, sched::base *sched_caller, const node::node_id 
 static inline string
 get_output_filename(const string other, const remote::remote_id id)
 {
-   return string("meld_output." + other + "." + to_string(id));
+   return string("meld_output." + other + "." + utils::to_string(id));
 }
 
 void
@@ -335,7 +344,7 @@ machine::machine(const string& file, router& _rout, const size_t th,
    new program(filename);
 
 	if(margs.size() < state::PROGRAM->num_args_needed())
-		throw machine_error(string("this program requires ") + to_string(state::PROGRAM->num_args_needed()) + " arguments");
+		throw machine_error(string("this program requires ") + utils::to_string(state::PROGRAM->num_args_needed()) + " arguments");
    
 	state::ARGUMENTS = margs;
    state::DATABASE = new database(filename, get_creation_function(_sched_type));

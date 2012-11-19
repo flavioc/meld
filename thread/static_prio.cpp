@@ -487,9 +487,31 @@ static_local_prio::check_if_current_useless(void)
    return false;
 }
 
+//#define USE_DELTA_ADJUST
+#define ROUND 1000
+
+static size_t next_round(ROUND);
+
 bool
 static_local_prio::set_next_node(void)
 {
+#ifdef USE_DELTA_ADJUST
+   if(id == 0) {
+      next_round--;
+      if(next_round == 0) {
+         next_round = ROUND;
+         if(prio_queue.empty()) {
+            const float_val cur(state::get_const_float(1));
+            if(cur > 0.5) {
+               const float_val up(cur / 2.0);
+               cout << "Current " << cur << " new " << up << endl;
+               state::set_const_float(1, up);
+            }
+         }
+      }
+   }
+#endif
+
    if(current_node != NULL)
       check_if_current_useless();
    

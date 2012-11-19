@@ -103,7 +103,7 @@ program::program(const string& filename):
 
       str[rule_len] = '\0';
 
-      rules.push_back(new rule(string(str)));
+      rules.push_back(new rule((rule_id)i, string(str)));
    }
 
 	// read string constants

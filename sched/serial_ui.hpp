@@ -24,20 +24,11 @@ private:
 	
 public:
 
-	virtual void new_persistent_derivation(db::node *, vm::tuple *);
-	virtual void new_linear_derivation(db::node *, vm::tuple *);
-	virtual void new_linear_consumption(db::node *, vm::tuple *);
-   virtual void rule_applied(db::node *, const std::string&);
-	
-	virtual void new_work(const db::node *, process::work&);
 	virtual bool get_work(process::work&);
 	
 	virtual void init(const size_t);
 	virtual void end(void);
 	
-	virtual void set_node_color(db::node *, const int, const int, const int);
-	virtual void set_edge_label(db::node *, const db::node::node_id, const runtime::rstring::ptr);
-   
    static db::node* create_node(const db::node::node_id id, const db::node::node_id trans)
    {
       return dynamic_cast<db::node*>(new sched::serial_node(id, trans));

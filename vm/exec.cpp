@@ -9,6 +9,9 @@
 #include "vm/match.hpp"
 #include "db/tuple.hpp"
 #include "process/machine.hpp"
+#ifdef USE_UI
+#include "ui/manager.hpp"
+#endif
 
 using namespace vm;
 using namespace vm::instr;
@@ -303,6 +306,16 @@ execute_send(const pcounter& pc, state& state)
       if(state.use_local_tuples) {
 			const predicate *pred(tuple->get_predicate());
 			
+#ifdef USE_UI
+         if(state::UI) {
+            if(tuple->is_persistent()) {
+               LOG_PERSISTENT_DERIVATION(state.node, tuple);
+            } else if(tuple->is_linear() && !tuple->is_action()) {
+               LOG_LINEAR_DERIVATION(state.node, tuple);
+            }
+			}
+#endif
+			
 			if(pred->get_strat_level() != state.current_level) {
 				simple_tuple *stuple(new simple_tuple(tuple, state.count));
 				assert(stuple->can_be_consumed());
@@ -328,6 +341,11 @@ execute_send(const pcounter& pc, state& state)
    } else {
 #ifdef DEBUG_MODE
       cout << "\t" << *stuple << " -> " << dest_val << endl;
+#endif
+#ifdef USE_UI
+      if(state::UI) {
+         LOG_TUPLE_SEND(state.node, state::DATABASE->find_node((node::node_id)dest_val), tuple);
+      }
 #endif
       simple_tuple *stuple(new simple_tuple(tuple, state.count));
       state::MACHINE->route(state.node, state.sched, (node::node_id)dest_val, stuple);
@@ -1447,7 +1465,9 @@ execute_remove(pcounter pc, state& state)
    const reg_num reg(remove_source(pc));
 
 #ifdef USE_UI
-	state.sched->new_linear_consumption(state.node, state.get_tuple(reg));
+   if(state::UI) {
+      LOG_LINEAR_CONSUMPTION(state.node, state.get_tuple(reg));
+   }
 #endif
 
 	const bool is_a_leaf(state.is_it_a_leaf(reg));
@@ -1562,6 +1582,13 @@ execute_rule(const pcounter& pc, state& state)
 
    state.current_rule = rule_id;
 
+#ifdef USE_UI
+   if(state::UI) {
+      vm::rule *rule(state::PROGRAM->get_rule(state.current_rule));
+      LOG_RULE_START(state.node, rule);
+   }
+#endif
+
 #ifdef CORE_STATISTICS
 	if(state.stat_rules_activated == 0 && state.stat_inside_rule) {
 		state.stat_rules_failed++;
@@ -1578,8 +1605,10 @@ execute_rule_done(const pcounter& pc, state& state)
    (void)state;
 
 #ifdef USE_UI
-	vm::rule *rule(state::PROGRAM->get_rule(state.current_rule));
-	state.sched->rule_applied(state.node, rule->get_string());
+   if(state::UI) {
+      vm::rule *rule(state::PROGRAM->get_rule(state.current_rule));
+      LOG_RULE_APPLIED(state.node, rule);
+   }
 #endif
 
 #ifdef CORE_STATISTICS

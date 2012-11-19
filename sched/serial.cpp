@@ -22,9 +22,7 @@ serial_local::new_work(const node *, work& new_work)
 {
    serial_node *to(dynamic_cast<serial_node*>(new_work.get_node()));
    
-   node_work n_work(new_work);
-   
-   to->add_work(n_work);
+   to->add_work(new_work.get_tuple());
    
    if(!to->in_queue()) {
       to->set_in_queue(true);
@@ -126,31 +124,11 @@ serial_local::gather_active_tuples(db::node *node, const vm::predicate_id pred)
 }
 
 void
-serial_local::gather_next_tuples(db::node *node, simple_tuple_list& ls, strat_level& level)
+serial_local::gather_next_tuples(db::node *node, simple_tuple_list& ls)
 {
 	serial_node *no((serial_node*)node);
 
-	typedef list<node_work, mem::allocator<node_work> > work_list;
-	
-	work_list all_work;
-	
-	while(ls.empty() && no->has_work()) {
-		no->queue.top_list(all_work);
-		for(work_list::iterator it(all_work.begin()), end(all_work.end()); it != end; it++) {
-			node_work &w(*it);
-			vm::tuple *tpl(w.get_underlying_tuple());
-	      db::simple_tuple *stpl(w.get_tuple());
-
-	      if(!stpl->can_be_consumed()) {
-				delete tpl;
-				delete stpl;
-			} else {
-				ls.push_back(stpl);
-				level = tpl->get_predicate()->get_strat_level();
-			}
-		}
-		all_work.clear();
-	}
+   no->queue.top_list(ls);
 }
 
 }

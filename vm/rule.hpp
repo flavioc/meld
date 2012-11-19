@@ -17,6 +17,7 @@ class rule
 {
    private:
 
+      rule_id id;
       const std::string str;
       byte_code code;
 		code_size_t code_size;
@@ -27,6 +28,7 @@ class rule
 	
 		void print(std::ostream&) const;
 		
+      inline rule_id get_id(void) const { return id; }
 		inline const std::string get_string(void) const { return str; }
 
       inline void add_predicate(predicate *p) { predicates.push_back(p); }
@@ -42,7 +44,7 @@ class rule
 		inline predicate_iterator begin_predicates(void) const { return predicates.begin(); }
 		inline predicate_iterator end_predicates(void) const { return predicates.end(); }
 
-      explicit rule(const std::string& _str): str(_str) { }
+      explicit rule(const rule_id _id, const std::string& _str): id(_id), str(_str) { }
 
 		~rule(void) { delete []code; }
 };

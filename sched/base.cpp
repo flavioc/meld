@@ -32,16 +32,12 @@ base::do_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
       const execution_return ret(execute_bytecode(get_bytecode(tuple), state));
       
       if(ret == EXECUTION_CONSUMED) {
-			new_linear_consumption(node, tuple);
          delete tuple;
       } else {
-			new_linear_derivation(node, tuple);
          node->add_tuple(tuple, count);
 		}
    } else {
       const bool is_new(node->add_tuple(tuple, count));
-
-		new_persistent_derivation(node, tuple);
 
       if(is_new) {
          // set vm state

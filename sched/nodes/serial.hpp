@@ -17,7 +17,7 @@ class serial_node: public in_queue_node
 {
 public:
 	
-	typedef queue::unsafe_bounded_pqueue<process::node_work>::type queue_type;	
+	typedef queue::unsafe_bounded_pqueue<db::simple_tuple*>::type queue_type;	
    queue_type queue;
 
 	DECLARE_DOUBLE_QUEUE_NODE(serial_node);
@@ -27,18 +27,12 @@ public:
 	inline queue_iterator begin(void) const { return queue.begin(); }
 	inline queue_iterator end(void) const { return queue.end(); }
    
-   inline void add_work(process::node_work& new_work)
+   inline void add_work(db::simple_tuple *stpl)
    {
-      queue.push(new_work, new_work.get_strat_level());
+      queue.push(stpl, stpl->get_strat_level());
    }
    
    inline bool has_work(void) const { return !queue.empty(); }
-
-   inline process::node_work get_work(void)
-   {
-      assert(in_queue());
-      return queue.pop();
-   }
 
    virtual void assert_end(void) const
    {

@@ -127,6 +127,9 @@ public:
    static size_t NUM_NODES;
    static size_t NUM_NODES_PER_PROCESS;
 	static machine_arguments ARGUMENTS;
+#ifdef USE_UI
+   static bool UI;
+#endif
 
 #ifdef CORE_STATISTICS
    size_t stat_rules_ok;

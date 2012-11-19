@@ -25,6 +25,9 @@ size_t state::NUM_PREDICATES = 0;
 size_t state::NUM_NODES = 0;
 size_t state::NUM_NODES_PER_PROCESS = 0;
 machine_arguments state::ARGUMENTS;
+#ifdef USE_UI
+bool state::UI = false;
+#endif
 
 bool
 state::linear_tuple_can_be_used(vm::tuple *tpl, const vm::ref_count max) const
@@ -275,14 +278,24 @@ state::mark_rules_using_local_tuples(void)
 	predicates_to_check.clear();
 #endif
 	fill_n(predicates, PROGRAM->num_predicates(), false);
+   bool has_level(false);
 	
 	for(db::simple_tuple_list::iterator it(local_tuples.begin());
 		it != local_tuples.end(); )
 	{
 		db::simple_tuple *stpl(*it);
 		vm::tuple *tpl(stpl->get_tuple());
+
+      if(!has_level) {
+         current_level = stpl->get_strat_level();
+         has_level = true;
+      }
 		
-		if(tpl->is_persistent()) {
+      if(!stpl->can_be_consumed()) {
+         delete tpl;
+         delete stpl;
+         it = local_tuples.erase(it);
+      } else if(tpl->is_persistent()) {
 			const bool is_new(add_fact_to_node(tpl));
 #ifdef USE_RULE_COUNTING
 			node->matcher.register_tuple(tpl, 1, is_new);
@@ -378,7 +391,7 @@ state::run_node(db::node *no)
    cout << "Node " << node->get_id() << endl;
 #endif
 
-	sched->gather_next_tuples(node, local_tuples, current_level);
+	sched->gather_next_tuples(node, local_tuples);
 	mark_rules_using_local_tuples();
 
 #ifdef DEBUG_RULES

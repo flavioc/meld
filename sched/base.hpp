@@ -120,19 +120,11 @@ public:
 	virtual void add_node_priority(db::node *, const int) { }
    virtual void add_node_priority_other(db::node *, const int) { }
    virtual void set_node_priority_other(db::node *, const int) { }
-	virtual void set_node_color(db::node *, const int, const int, const int) { }
-	virtual void set_edge_label(db::node *, const db::node::node_id, const runtime::rstring::ptr) {}
 
 	// GATHER QUEUE FACTS FROM NODE
 	virtual db::simple_tuple_vector gather_active_tuples(db::node *, const vm::predicate_id) { return db::simple_tuple_vector(); }
-   virtual void gather_next_tuples(db::node *, db::simple_tuple_list&, vm::strat_level&) { }
+   virtual void gather_next_tuples(db::node *, db::simple_tuple_list&) { }
 
-	// INFORMATION
-	virtual void new_persistent_derivation(db::node *, vm::tuple *) { }
-	virtual void new_linear_derivation(db::node *, vm::tuple *) { }
-	virtual void new_linear_consumption(db::node *, vm::tuple *) { }
-   virtual void rule_applied(db::node *, const std::string&) { }
-   
    virtual void init(const size_t) = 0;
    virtual void end(void) = 0;
    

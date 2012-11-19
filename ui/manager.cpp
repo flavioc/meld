@@ -237,6 +237,13 @@ manager::event_program(vm::program *pgrm)
 
 	ADD_FIELD("program", pgrm->dump_json());
 
+	Array rules;
+
+   for(size_t i(0); i < pgrm->num_rules(); i++)
+      UI_ADD_ELEM(rules, pgrm->get_rule(i)->get_string());
+
+   ADD_FIELD("rules", rules);
+
 	SEND_ALL_CLIENTS();
 }
 
@@ -297,12 +304,11 @@ manager::event_step_done(const db::node *n)
 }
 
 void
-manager::event_step_start(const db::node *n, const vm::tuple *tpl)
+manager::event_step_start(const db::node *n)
 {
 	DECLARE_JSON("step_start");
 	
 	ADD_NODE_FIELD(n);
-	ADD_TUPLE_FIELD(tpl);
 	
 	SEND_ALL_CLIENTS();
 }
@@ -341,12 +347,23 @@ manager::event_set_edge_label(const vm::node_val from, const vm::node_val to, co
 }
 
 void
-manager::event_rule_applied(const db::node *who, const string& rule)
+manager::event_rule_start(const db::node *who, const vm::rule *rule)
+{
+   DECLARE_JSON("rule_start");
+
+   ADD_NODE_FIELD(who);
+   ADD_FIELD("rule", (int)rule->get_id());
+
+   SEND_ALL_CLIENTS();
+}
+
+void
+manager::event_rule_applied(const db::node *who, const vm::rule *rule)
 {
    DECLARE_JSON("rule_applied");
 
    ADD_NODE_FIELD(who);
-   ADD_FIELD("rule", rule);
+   ADD_FIELD("rule", (int)rule->get_id());
 
    SEND_ALL_CLIENTS();
 }

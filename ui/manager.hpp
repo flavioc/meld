@@ -12,6 +12,7 @@
 #include <map>
 
 #include "vm/defs.hpp"
+#include "vm/rule.hpp"
 #include "ui/client.hpp"
 #include "utils/atomic.hpp"
 
@@ -68,11 +69,12 @@ class manager: public websocketpp::server::handler
 		void event_tuple_send(const db::node *, const db::node *, const vm::tuple *);
 		void event_linear_consumption(const db::node *, const vm::tuple *);
 		void event_step_done(const db::node *);
-		void event_step_start(const db::node *, const vm::tuple *);
+		void event_step_start(const db::node *);
 		void event_program_termination(void);
 		void event_set_color(const db::node *, const int, const int, const int);
 		void event_set_edge_label(const vm::node_val, const vm::node_val, const std::string&);
-      void event_rule_applied(const db::node *, const std::string&);
+      void event_rule_applied(const db::node *, const vm::rule *);
+      void event_rule_start(const db::node *, const vm::rule *);
 		
 		bool no_clients(void) const { return num_clients() == 0; }
       size_t num_clients(void) const { return clients.size(); }
@@ -95,11 +97,12 @@ extern manager *man;
 #define LOG_TUPLE_SEND(FROM, TO, TPL) LOG_RUN(event_tuple_send(FROM, TO, TPL))
 #define LOG_LINEAR_CONSUMPTION(NODE, TPL) LOG_RUN(event_linear_consumption(NODE, TPL))
 #define LOG_STEP_DONE(NODE) LOG_RUN(event_step_done(NODE))
-#define LOG_STEP_START(NODE, TPL) LOG_RUN(event_step_start(NODE, TPL))
+#define LOG_STEP_START(NODE) LOG_RUN(event_step_start(NODE))
 #define LOG_PROGRAM_TERMINATION()	LOG_RUN(event_program_termination())
 #define LOG_SET_COLOR(NODE, R, G, B)	LOG_RUN(event_set_color(NODE, R, G, B))
 #define LOG_SET_EDGE_LABEL(FROM, TO, LABEL) LOG_RUN(event_set_edge_label(FROM, TO, LABEL))
 #define LOG_RULE_APPLIED(NODE, RULE) LOG_RUN(event_rule_applied(NODE, RULE))
+#define LOG_RULE_START(NODE, RULE) LOG_RUN(event_rule_start(NODE, RULE))
 #define WAIT_FOR_NEXT()	LOG_RUN(wait_for_next())
 #define WAIT_FOR_DONE() LOG_RUN(wait_for_done())
 #else
@@ -113,11 +116,12 @@ extern manager *man;
 #define LOG_TUPLE_SEND(FROM, TO, TPL)
 #define LOG_LINEAR_DERIVATION(NODE, TPL)
 #define LOG_STEP_DONE(NODE)
-#define LOG_STEP_START(NODE, TPL)
+#define LOG_STEP_START(NODE)
 #define LOG_PROGRAM_TERMINATION()
 #define LOG_SET_COLOR(NODE, R, G, B)
 #define LOG_SET_EDGE_LABEL(FROM, TO, LABEL)
 #define LOG_RULE_APPLIED(NODE, RULE)
+#define LOG_RULE_START(NODE, RULE)
 #define WAIT_FOR_NEXT()
 #define WAIT_FOR_DONE()
 #endif

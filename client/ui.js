@@ -6,6 +6,7 @@ var PLAY_INTERVAL = 200;
 
 var message_handlers = {};
 var predicates = null;
+var rules = null;
 var mapnodes = {};
 var graph = new Graph();
 var sock = null; // connection socket to server
@@ -134,8 +135,8 @@ function handle_program_running(msg)
 
 function handle_program_stopped(msg)
 {
-	new_global_event("Program has terminated");
 	new_ruler();
+	new_global_event("Program has terminated");
 	clear_everything();
 }
 
@@ -157,7 +158,6 @@ function handle_database(msg)
 	}
 
 	new_global_event("Database initialized: " + msg.database.num_nodes + " nodes");
-	new_ruler();
 	update_graph();
 }
 
@@ -166,6 +166,7 @@ function handle_program(msg)
 	var program = msg.program;
 
 	predicates = msg.program;
+   rules = msg.rules;
 }
 
 function handle_persistent_derivation(msg)
@@ -233,9 +234,8 @@ function handle_linear_consumption(msg)
 function handle_step_start(msg)
 {
 	var node = msg.node;
-	var tpl = msg.tuple;
 	
-	new_event(node, "&crarr; " + tuple_to_string(tpl), true);
+	new_event(node, "&crarr; node " + get_translated_id(node) + " ready to execute", true);
 }
 
 function new_ruler(node)
@@ -346,6 +346,8 @@ function handle_changed_node(msg)
 
 function handle_program_termination(msg)
 {
+	$('#log-message').text('Click Terminate to Finish');
+	$('#log-message-parent').show();
 	$('#button-terminate').removeAttr('disabled');
 	$('#button-next, #button-play, #button-stop, #button-jump').attr('disabled', 'disabled');
 }
@@ -386,7 +388,15 @@ function handle_rule_applied(msg)
    var who = msg.who;
    var rule = msg.rule;
 
-	new_global_event('<span class="rule" title="' + rule + '">rule applied</span>');
+	//new_global_event('<span class="rule" title="' + rules[rule] + '">rule applied</span>');
+}
+
+function handle_rule_start(msg)
+{
+   var who = msg.who;
+   var rule = msg.rule;
+
+	new_event(who, '&gt;&gt; trying rule <span class="rule" title="' + rules[rule] + '">' + rule + '</span>');
 }
 
 function setup_message_handlers()
@@ -408,6 +418,7 @@ function setup_message_handlers()
 	message_handlers['set_color'] = handle_set_color;
 	message_handlers['set_edge_label'] = handle_set_edge_label;
    message_handlers['rule_applied'] = handle_rule_applied;
+   message_handlers['rule_start'] = handle_rule_start;
 }
 
 function disable_controls()
@@ -581,6 +592,7 @@ $(document).ready(function () {
 	
 	$('#button-terminate').click(function () {
 		send_msg({msg: 'terminate'});
+      $('#log-message-parent').hide();
 		playing_program = false;
 		return false;
 	});

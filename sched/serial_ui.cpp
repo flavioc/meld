@@ -18,65 +18,38 @@ namespace sched
 	
 static serial_ui_local *scheduler(NULL);
 	
-void
-serial_ui_local::new_work(const node *from, work& w)
-{
-	const node *to(w.get_node());
-	
-	LOG_TUPLE_SEND(from, to, w.get_tuple()->get_tuple());
-	
-	return serial_local::new_work(from, w);
-}
-
-void
-serial_ui_local::new_persistent_derivation(node *n, vm::tuple *tpl)
-{
-	LOG_PERSISTENT_DERIVATION(n, tpl);
-}
-
-void
-serial_ui_local::new_linear_derivation(node *n, vm::tuple *tpl)
-{
-	LOG_LINEAR_DERIVATION(n, tpl);
-}
-
-void
-serial_ui_local::new_linear_consumption(node *n, vm::tuple *tpl)
-{
-	LOG_LINEAR_CONSUMPTION(n, tpl);
-}
-
-void
-serial_ui_local::rule_applied(node *n, const string& str)
-{
-   LOG_RULE_APPLIED(n, str);
-}
-
 bool
 serial_ui_local::get_work(work& new_work)
 {
-	const bool ret(serial_local::get_work(new_work));
+   bool ret = serial_local::get_work(new_work);
+   serial_node *n((serial_node*)new_work.get_node());
 
-	if(first_done) {
-      if(stop)
-         LOG_STEP_DONE(current_node);
-      if(ret) {
-         db::simple_tuple *stpl(new_work.get_tuple());
-         if(!stpl->must_be_deleted()) {
-            stop = true;
-         } else
-            stop = false;
-      } else {
-         stop = true;
+   while(ret) {
+      if(!n->has_work()) {
+         ret = serial_local::get_work(new_work);
+         n = (serial_node*)new_work.get_node();
+         if(!ret)
+            continue;
       }
-	} else
-		first_done = true;
-		
-	if(stop) {
-      LOG_STEP_START(new_work.get_node(), new_work.get_tuple()->get_tuple());
-	}
 
-   if(stop) {
+      simple_tuple *stpl(n->queue.top());
+
+      if(!stpl->can_be_consumed()) {
+         delete stpl->get_tuple();
+         delete stpl;
+         n->queue.pop();
+      } else {
+         break;
+      }
+   }
+
+   if(ret) {
+      if(first_done) {
+         LOG_STEP_DONE(current_node);
+      } else
+         first_done = true;
+		
+      LOG_STEP_START(new_work.get_node());
       WAIT_FOR_NEXT();
    }
 	
@@ -88,7 +61,6 @@ serial_ui_local::init(const size_t x)
 {
 	serial_local::init(x);
 	LOG_STEP_DONE(NULL);
-	WAIT_FOR_NEXT();
 }
 
 void
@@ -98,18 +70,6 @@ serial_ui_local::end(void)
 	WAIT_FOR_DONE();
 }
 
-void
-serial_ui_local::set_node_color(node *n, const int r, const int g, const int b)
-{
-	LOG_SET_COLOR(n, r, g, b);
-}
-
-void
-serial_ui_local::set_edge_label(node *from, const node::node_id to, const runtime::rstring::ptr str)
-{
-	LOG_SET_EDGE_LABEL(from->get_id(), to, str->get_content());
-}
-
 serial_ui_local::serial_ui_local(void):
 	serial_local(),
 	first_done(false)
@@ -117,6 +77,9 @@ serial_ui_local::serial_ui_local(void):
 	LOG_DATABASE(state::DATABASE);
 	LOG_PROGRAM(state::PROGRAM);
 	scheduler = this;
+#ifdef USE_UI
+   state::UI = true;
+#endif
 }
 
 #ifdef USE_UI
