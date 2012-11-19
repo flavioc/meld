@@ -1,4 +1,4 @@
-set terminal pdf
+set terminal png
 #set terminal postscript
 #set output "| ps2pdf - $FILE.pdf"
 
