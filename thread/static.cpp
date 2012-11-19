@@ -42,7 +42,7 @@ static_local::assert_end_iteration(void) const
 void
 static_local::new_agg(work& new_work)
 {
-   thread_node *to(dynamic_cast<thread_node*>(new_work.get_node()));
+   thread_intrusive_node *to(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
    
    assert_thread_push_work();
    
@@ -58,27 +58,20 @@ static_local::new_agg(work& new_work)
 void
 static_local::new_work(const node *, work& new_work)
 {
-   thread_node *to(dynamic_cast<thread_node*>(new_work.get_node()));
+   thread_intrusive_node *to(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
    
    assert_thread_push_work();
    
    node_work node_new_work(new_work);
    
    to->add_work(node_new_work);
+   //cout << id << " Add to queue node " << to->get_id() << endl;
    
    if(!to->in_queue()) {
-      spinlock::scoped_lock l(to->spin);
-      if(!to->in_queue()) {
-         add_to_queue(to);
-         to->set_in_queue(true);
-      }
-      // no need to put owner active, since we own this node
-      // new_work was called for init or for self generation of
-      // tuples (SEND a TO a)
-      // the lock is needed in order to make sure
-      // the node is not put multiple times on the queue
+      add_to_queue(to);
+      to->set_in_queue(true);
    }
-   
+
    assert(to->in_queue());
 }
 
@@ -91,11 +84,26 @@ static_local::new_work_other(sched::base *, work& new_work)
    
    assert(tnode->get_owner() != NULL);
    
-   assert_thread_push_work();
-   
-   node_work node_new_work(new_work);
-   tnode->add_work(node_new_work);
-   
+   static_local *owner(dynamic_cast<static_local*>(tnode->get_owner()));
+
+   assert(owner != this);
+
+   owner->buffer.push(new_work);
+
+   //cout << id << " Add to buffer node " << tnode->get_id() << endl;
+
+   if(this != owner) {
+      spinlock::scoped_lock l2(owner->lock);
+      
+      if(owner->is_inactive() && owner->has_work())
+      {
+         owner->set_active();
+         assert(owner->is_active());
+      }
+   } else {
+      assert(is_active());
+   }
+#if 0
 	spinlock::scoped_lock l(tnode->spin);
    if(!tnode->in_queue() && tnode->has_work()) {
 		static_local *owner(dynamic_cast<static_local*>(tnode->get_owner()));
@@ -117,10 +125,40 @@ static_local::new_work_other(sched::base *, work& new_work)
          
       assert(tnode->in_queue());
    }
-   
+#endif
 #ifdef INSTRUMENTATION
    sent_facts++;
 #endif
+}
+
+void
+static_local::retrieve_tuples(void)
+{
+   while(!buffer.empty()) {
+      work new_work(buffer.pop());
+      node_work node_new_work(new_work);
+		thread_intrusive_node *to(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
+      static_local *owner(dynamic_cast<static_local*>(to->get_owner()));
+
+      //cout << id << " Got for node " << new_work.get_node()->get_id() << endl;
+
+      if(owner == this) {
+         to->add_work(node_new_work);
+         if(!to->in_queue()) {
+            add_to_queue(to);
+            to->set_in_queue(true);
+         }
+      } else {
+         owner->buffer.push(new_work);
+         spinlock::scoped_lock l(owner->lock);
+      
+         if(owner->is_inactive() && owner->has_work())
+         {
+            owner->set_active();
+            assert(owner->is_active());
+         }
+      }
+   }
 }
 
 void
@@ -128,6 +166,77 @@ static_local::new_work_remote(remote *, const node::node_id, message *)
 {
    assert(false);
 }
+
+#ifdef TASK_STEALING
+void
+static_local::make_steal_request(void)
+{
+   if(state::NUM_THREADS == 1)
+      return;
+
+   const size_t num_requests(max((size_t)1, (size_t)(state::NUM_THREADS * 0.25)));
+
+//   cout << "Making " << num_requests << " requests" << endl;
+
+   for(size_t i(0); i < num_requests; ++i) {
+      const size_t _target(random_unsigned(state::NUM_THREADS));
+      static_local *target((static_local*)ALL_THREADS[_target]);
+
+      if(target == this)
+         continue;
+
+      target->steal_request_buffer.push(this);
+   }
+}
+
+void
+static_local::check_stolen_nodes(void)
+{
+   while(!stolen_nodes_buffer.empty()) {
+      thread_intrusive_node *n(stolen_nodes_buffer.pop());
+
+      n->set_owner(this);
+      assert(n->in_queue());
+
+      queue_nodes.push_tail(n);
+   }
+}
+
+void
+static_local::clear_steal_requests(void)
+{
+   while(!steal_request_buffer.empty()) {
+      steal_request_buffer.pop();
+   }
+}
+
+void
+static_local::answer_steal_requests(void)
+{
+   while(!steal_request_buffer.empty() && !queue_nodes.empty()) {
+      static_local *target((static_local*)steal_request_buffer.pop());
+      thread_intrusive_node *node(NULL);
+      queue_nodes.pop(node);
+      assert(node != NULL);
+      assert(node != current_node);
+      assert(node->get_owner() == this);
+      assert(node->in_queue());
+
+      node->set_owner(target);
+      target->stolen_nodes_buffer.push(node);
+
+      //cout << "Sending node " << node->get_id() << " to " << target->get_id() << endl;
+
+      spinlock::scoped_lock l(target->lock);
+   
+      if(target->is_inactive() && target->has_work())
+      {
+         target->set_active();
+         assert(target->is_active());
+      }
+   }
+}
+#endif
 
 void
 static_local::generate_aggs(void)
@@ -139,8 +248,16 @@ bool
 static_local::busy_wait(void)
 {
    ins_idle;
+
+#ifdef TASK_STEALING
+   make_steal_request();
+#endif
    
    while(!has_work()) {
+#ifdef TASK_STEALING
+      check_stolen_nodes();
+#endif
+      retrieve_tuples();
       BUSY_LOOP_MAKE_INACTIVE()
       BUSY_LOOP_CHECK_TERMINATION_THREADS()
    }
@@ -175,6 +292,9 @@ static_local::finish_work(const work& work)
    
    assert(current_node != NULL);
    assert(current_node->in_queue());
+   if(current_node->get_owner() != this) {
+      cout << id << " node " << current_node->get_id() << endl;
+   }
    assert(current_node->get_owner() == this);
 }
 
@@ -203,14 +323,25 @@ static_local::set_next_node(void)
       check_if_current_useless();
    
    while (current_node == NULL) {   
+#ifdef TASK_STEALING
+      check_stolen_nodes();
+      answer_steal_requests();
+#endif
+      retrieve_tuples();
+
       if(!has_work()) {
          if(!busy_wait())
             return false;
       }
+
+#ifdef TASK_STEALING
+      check_stolen_nodes();
+      answer_steal_requests();
+#endif
+      retrieve_tuples();
       
-      assert(has_work());
-      
-      current_node = queue_nodes.pop();
+      if(!queue_nodes.pop(current_node))
+         continue;
       
       assert(current_node->in_queue());
       assert(current_node != NULL);
@@ -294,7 +425,7 @@ static_local::gather_active_tuples(db::node *node, const vm::predicate_id pred)
 static_local*
 static_local::find_scheduler(const node *n)
 {
-   return (static_local*)ALL_THREADS[remote::self->find_proc_owner(n->get_id())];
+   return (static_local*)((thread_intrusive_node*)n)->get_owner();
 }
 
 void
@@ -316,6 +447,9 @@ static_local::static_local(const vm::process_id _id):
 
 static_local::~static_local(void)
 {
+#ifdef TASK_STEALING
+   clear_steal_requests();
+#endif
 }
    
 vector<sched::base*>&

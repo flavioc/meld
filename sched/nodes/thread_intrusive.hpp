@@ -28,18 +28,19 @@ public:
 	
 	typedef queue::heap_queue<process::node_work> prio_tuples_queue;
 	prio_tuples_queue prioritized_tuples;
-	
+
 	heap_priority get_min_value(void) const { return prioritized_tuples.min_value(); }
 	
 	virtual bool has_prio_work(void) const { return !prioritized_tuples.empty(); }
 	virtual bool has_normal_work(void) const { return thread_node::has_work(); }
 	virtual bool has_work(void) const { return thread_node::has_work() || !prioritized_tuples.empty(); }
 
-	inline bool with_priority(void) const { return has_priority; }
+	inline bool with_marked_priority(void) const { return has_priority; }
 	inline void unmark_priority(void) { has_priority = false; }
 	inline void mark_priority(void) { has_priority = true; }
 	inline int get_priority_level(void) { return priority_level; }
 	inline void set_priority_level(const int level) { priority_level = level; }
+	inline bool has_priority_level(void) const { return priority_level > 0; }
 
 	// xxx to remove
 	bool has_been_prioritized;

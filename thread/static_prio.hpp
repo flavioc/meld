@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "sched/base.hpp"
+#include "thread/static.hpp"
 #include "sched/nodes/thread_intrusive.hpp"
 #include "queue/safe_double_queue.hpp"
 #include "sched/thread/threaded.hpp"
@@ -16,26 +17,18 @@
 namespace sched
 {
 
-class static_local_prio: public sched::base,
-                    public sched::threaded
+class static_local_prio: public static_local
 {
 protected:
    
-   typedef queue::intrusive_safe_double_queue<thread_intrusive_node> node_queue;
-   node_queue queue_nodes;
-
 	typedef queue::intrusive_safe_complex_pqueue<thread_intrusive_node> priority_queue;
 
 	priority_queue prio_queue;
-   
-   thread_intrusive_node *current_node;
    bool taken_from_priority_queue;
 
 	heap_type priority_type;
 	
-	// work buffers
 	queue::push_safe_linear_queue<process::work> prio_tuples;
-   queue::push_safe_linear_queue<process::work> buffer;
 
    typedef enum {
       ADD_PRIORITY,
@@ -58,6 +51,11 @@ protected:
 #ifdef DO_ONE_PASS_FIRST
    size_t to_takeout;
 #endif
+
+#ifdef TASK_STEALING
+   virtual void check_stolen_nodes(void);
+   virtual void answer_steal_requests(void);
+#endif
 	
    virtual void assert_end(void) const;
    virtual void assert_end_iteration(void) const;
@@ -79,15 +77,15 @@ protected:
 		node->unmark_priority();
 	}
    
-   inline void add_to_queue(thread_intrusive_node *node)
+   virtual void add_to_queue(thread_intrusive_node *node)
    {
-		if(node->with_priority())
+		if(node->with_marked_priority())
 			add_to_priority_queue(node);
 		else
       	queue_nodes.push_tail(node);
    }
    
-   inline bool has_work(void) const { return !queue_nodes.empty() || !prio_queue.empty() || !prio_tuples.empty(); }
+   virtual bool has_work(void) const { return static_local::has_work() || !prio_queue.empty() || !prio_tuples.empty(); }
 
 public:
    

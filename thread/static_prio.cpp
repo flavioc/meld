@@ -38,23 +38,94 @@ void
 static_local_prio::assert_end(void) const
 {
    assert(priority_buffer.empty());
-   assert(!has_work());
-   assert(is_inactive());
-   assert(all_threads_finished());
-   assert_thread_end_iteration();
-   assert_static_nodes_end(id);
+	static_local::assert_end();
 }
 
 void
 static_local_prio::assert_end_iteration(void) const
 {
+	static_local::assert_end_iteration();
    assert(priority_buffer.empty());
-   assert(!has_work());
-   assert(is_inactive());
-   assert(all_threads_finished());
-   assert_thread_end_iteration();
-   assert_static_nodes_end_iteration(id);
 }
+
+#ifdef TASK_STEALING
+void
+static_local_prio::check_stolen_nodes(void)
+{
+   while(!stolen_nodes_buffer.empty()) {
+      thread_intrusive_node *n(stolen_nodes_buffer.pop());
+
+      n->set_owner(this);
+      assert(n->in_queue());
+
+		// nodes may have been added
+		if(priority_queue::in_queue(n))
+			continue;
+		if(node_queue::in_queue(n))
+			continue;
+			
+		if(n->has_priority_level()) {
+			heap_priority pr;
+			pr.int_priority = n->get_priority_level();
+			prio_queue.insert(n, pr);
+		} else {
+      	queue_nodes.push_tail(n);
+		}
+		assert(n->in_queue());
+   }
+}
+
+void
+static_local_prio::answer_steal_requests(void)
+{
+	enum {
+		FROM_REGULAR_QUEUE,
+		FROM_PRIO_QUEUE
+	} flag;
+	
+	flag = FROM_REGULAR_QUEUE;
+	
+   while(!steal_request_buffer.empty() && (!queue_nodes.empty() || !prio_queue.empty())) {
+      static_local_prio *target((static_local_prio*)steal_request_buffer.pop());
+      thread_intrusive_node *node(NULL);
+
+		if(flag == FROM_REGULAR_QUEUE) {
+			if(!queue_nodes.empty())
+      		queue_nodes.pop(node);
+			else if(!prio_queue.empty())
+				node = prio_queue.pop();
+			flag = FROM_PRIO_QUEUE;
+		} else {
+			if(!prio_queue.empty())
+				node = prio_queue.pop();
+			else if(!queue_nodes.empty())
+				queue_nodes.pop(node);
+			flag = FROM_REGULAR_QUEUE;
+		}
+		
+		if(node == NULL)
+			continue;
+			
+      assert(node != NULL);
+      assert(node != current_node);
+      assert(node->get_owner() == this);
+      assert(node->in_queue());
+
+      node->set_owner(target);
+      target->stolen_nodes_buffer.push(node);
+
+      cout << "Sending node " << node->get_id() << " to " << target->get_id() << endl;
+
+      spinlock::scoped_lock l(target->lock);
+   
+      if(target->is_inactive() && target->has_work())
+      {
+         target->set_active();
+         assert(target->is_active());
+      }
+   }
+}
+#endif
 
 void
 static_local_prio::check_priority_buffer(void)
@@ -73,6 +144,9 @@ static_local_prio::check_priority_buffer(void)
       thread_intrusive_node *tn((thread_intrusive_node *)target);
       int howmuch(p.val);
       priority_add_type typ(p.typ);
+
+		if(tn->get_owner() != this)
+			continue; // skip nodes we do not own
 
       node_priorities::iterator it(node_map.find(target));
       if (it == node_map.end()) {
@@ -121,21 +195,22 @@ static_local_prio::retrieve_prio_tuples(void)
 		work new_work(prio_tuples.pop());
 		node_work node_new_work(new_work);
 		thread_intrusive_node *to(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
+		static_local_prio *owner((static_local_prio *)to->get_owner());
 		
-		add_prio_tuple(node_new_work, to, node_new_work.get_tuple());
+		if(owner == this) {
+			add_prio_tuple(node_new_work, to, node_new_work.get_tuple());
+		} else {
+			owner->prio_tuples.push(new_work);
+			
+			spinlock::scoped_lock l(owner->lock);
+      
+         if(owner->is_inactive() && owner->has_work())
+         {
+            owner->set_active();
+            assert(owner->is_active());
+         }
+		}
 	}
-
-   while(!buffer.empty()) {
-      work new_work(buffer.pop());
-      node_work node_new_work(new_work);
-		thread_intrusive_node *to(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
-
-   	to->add_work(node_new_work);
-		if(!to->in_queue()) {
-         add_to_queue(to);
-         to->set_in_queue(true);
-      }
-   }
 }
 
 void
@@ -149,8 +224,8 @@ static_local_prio::new_agg(work& new_work)
    to->add_work(node_new_work);
    
    if(!to->in_queue()) {
-      add_to_queue(to);
       to->set_in_queue(true);
+		add_to_queue(to);
    }
 }
 
@@ -227,6 +302,8 @@ static_local_prio::add_prio_tuple(node_work node_new_work, thread_intrusive_node
 			
 		if(!to->in_queue())
 			to->set_in_queue(true);
+			
+		assert(to->in_queue());
 	}
 }
 
@@ -245,18 +322,10 @@ static_local_prio::new_work(const node *, work& new_work)
 		add_prio_tuple(node_new_work, to, stpl);
 	} else {
    	to->add_work(node_new_work);
-		//if(!to->in_queue()) {
-	     // spinlock::scoped_lock l(to->spin);
-	      if(!to->in_queue()) {
-            add_to_queue(to);
-	         to->set_in_queue(true);
-	      }
-	      // no need to put owner active, since we own this node
-	      // new_work was called for init or for self generation of
-	      // tuples (SEND a TO a)
-	      // the lock is needed in order to make sure
-	      // the node is not put multiple times on the queue
-	   //}   
+		if(!to->in_queue()) {
+  			to->set_in_queue(true);
+			add_to_queue(to);
+	   }   
    }
 
 	assert(to->in_queue());
@@ -309,38 +378,6 @@ static_local_prio::new_work_other(sched::base *, work& new_work)
    	} else {
       	assert(is_active());
    	}
-#if 0
-   	tnode->add_work(node_new_work);
-   
-		spinlock::scoped_lock l(tnode->spin);
-	
-   	if(!tnode->in_queue() && tnode->has_work()) {
-			static_local_prio *owner(dynamic_cast<static_local_prio*>(tnode->get_owner()));
-		
-			tnode->set_in_queue(true);
-         if(tnode->with_priority()) {
-            heap_priority pr;
-            pr.int_priority = tnode->get_priority_level();
-            owner->prio_queue.insert(tnode, pr);
-            tnode->unmark_priority();
-         } else {
-				owner->add_to_queue(tnode);
-         }
-      	if(this != owner) {
-         	spinlock::scoped_lock l2(owner->lock);
-         
-         	if(owner->is_inactive() && owner->has_work())
-         	{
-            	owner->set_active();
-            	assert(owner->is_active());
-         	}
-      	} else {
-         	assert(is_active());
-      	}
-         
-      	assert(tnode->in_queue());
-   	}
-#endif
 	}
    
 #ifdef INSTRUMENTATION
@@ -364,11 +401,19 @@ bool
 static_local_prio::busy_wait(void)
 {
    ins_idle;
+
+#ifdef TASK_STEALING
+   make_steal_request();
+#endif
    
    while(!has_work()) {
+#ifdef TASK_STEALING
+      check_stolen_nodes();
+#endif
+      retrieve_tuples();
+   	retrieve_prio_tuples();
       BUSY_LOOP_MAKE_INACTIVE()
       BUSY_LOOP_CHECK_TERMINATION_THREADS()
-   	retrieve_prio_tuples();
 	}
 	
    // since queue pushing and state setting are done in
@@ -407,6 +452,8 @@ static_local_prio::finish_work(const work& work)
 bool
 static_local_prio::check_if_current_useless(void)
 {
+	assert(current_node->in_queue());
+	
 	if(!state::PROGRAM->has_global_priority() &&
          !prio_queue.empty() && taken_from_priority_queue && !current_node->has_work())
    {
@@ -516,16 +563,21 @@ static_local_prio::set_next_node(void)
       check_if_current_useless();
    
    while (current_node == NULL) {   
+      retrieve_tuples();
+		retrieve_prio_tuples();
+      check_priority_buffer();
+		
       if(!has_work()) {
          if(!busy_wait())
             return false;
       }
+
+      retrieve_tuples();
+		retrieve_prio_tuples();
+      check_priority_buffer();
       
       assert(has_work());
 
-		retrieve_prio_tuples();
-      check_priority_buffer();
-		
 #ifdef DO_ONE_PASS_FIRST
       if(to_takeout > 0) {
          const bool suc(queue_nodes.pop(current_node));
@@ -713,7 +765,7 @@ static_local_prio::set_node_priority(node *n, const int priority)
       return;
    }
 
-   //spinlock::scoped_lock l(tn->spin);
+	assert(tn->get_owner() == this);
 	
 	if(tn->in_queue()) {
 #ifdef PROFILE_QUEUE
@@ -737,11 +789,10 @@ static_local_prio::set_node_priority(node *n, const int priority)
                //cout << "Changing node priority " << tn->get_id() << " (" << tn->get_priority_level() << ") to" << priority << endl;
 #endif
                tn->set_priority_level(priority);
+					assert(tn->in_queue());
                prio_queue.move_node(tn, pr);
             }
-			} else {
-            tn->set_priority_level(priority);
-         }
+			}
 		} else {
          // node is in the normal queue
          if(priority > 0) {
@@ -749,13 +800,16 @@ static_local_prio::set_node_priority(node *n, const int priority)
 #ifdef DEBUG_PRIORITIES
             //cout << "Add node " << tn->get_id() << " with priority " << priority << endl;
 #endif
-            queue_nodes.remove(tn);
+				if(node_queue::in_queue(tn)) {
+            	queue_nodes.remove(tn);
+				}
             add_to_priority_queue(tn);
          }
 		}
       if(priority > 0) {
          assert(tn->get_priority_level() == priority);
       }
+		assert(tn->in_queue());
 	} else {
       if(priority > 0) {
 #ifdef PROFILE_QUEUE
@@ -833,7 +887,9 @@ static_local_prio::init(const size_t)
 static_local_prio*
 static_local_prio::find_scheduler(const node *n)
 {
-   return (static_local_prio*)ALL_THREADS[remote::self->find_proc_owner(n->get_id())];
+	thread_intrusive_node *tn((thread_intrusive_node*)n);
+	
+	return (static_local_prio*)tn->get_owner();
 }
 
 simple_tuple_vector
@@ -874,8 +930,7 @@ void
 static_local_prio::write_slice(statistics::slice& sl) const
 {
 #ifdef INSTRUMENTATION
-   base::write_slice(sl);
-   sl.work_queue = queue_nodes.size();
+   static_local::write_slice(sl);
    sl.priority_queue = prio_queue.size();
 #else
    (void)sl;
@@ -883,8 +938,7 @@ static_local_prio::write_slice(statistics::slice& sl) const
 }
 
 static_local_prio::static_local_prio(const vm::process_id _id):
-   base(_id),
-   current_node(NULL)
+   static_local(_id)
 {
 }
 

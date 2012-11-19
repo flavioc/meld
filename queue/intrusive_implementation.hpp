@@ -83,6 +83,7 @@
 	{																\
 		QUEUE_INCREMENT_TOTAL();							\
 																	\
+      assert(__INTRUSIVE_IN_QUEUE(new_node) == false);   \
 		__INTRUSIVE_IN_QUEUE(new_node) = true;			\
 		__INTRUSIVE_NEXT(new_node) = head;				\
 																	\
@@ -112,6 +113,7 @@
       else														\
          tail = new_node;									\
 																	\
+      assert(__INTRUSIVE_IN_QUEUE(new_node) == false);   \
       __INTRUSIVE_IN_QUEUE(new_node) = true;			\
       __INTRUSIVE_NEXT(new_node) = NULL;				\
       tail = new_node;										\

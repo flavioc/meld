@@ -92,12 +92,6 @@ OBJS = utils/utils.o \
 			 sched/serial_ui.o \
 			 thread/static.o \
 			 thread/static_prio.o \
-			 thread/dynamic.o \
-			 thread/direct.o \
-			 thread/single.o \
-			 thread/mpi_static.o \
-			 thread/mpi_dynamic.o \
-			 thread/mpi_single.o \
 			 sched/thread/threaded.o \
 			 sched/thread/assert.o \
 			 sched/mpi/tokenizer.o \

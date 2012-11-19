@@ -9,6 +9,11 @@
 #include "sched/nodes/thread.hpp"
 #include "queue/safe_linear_queue.hpp"
 #include "sched/thread/threaded.hpp"
+#include "sched/nodes/thread_intrusive.hpp"
+#include "queue/safe_complex_pqueue.hpp"
+#include "queue/safe_double_queue.hpp"
+
+#define TASK_STEALING 1
 
 namespace sched
 {
@@ -18,25 +23,38 @@ class static_local: public sched::base,
 {
 protected:
    
-	queue::push_safe_linear_queue<thread_node*> queue_nodes;
+   typedef queue::intrusive_safe_double_queue<thread_intrusive_node> node_queue;
+   node_queue queue_nodes;
+   queue::push_safe_linear_queue<process::work> buffer;
    
-   thread_node *current_node;
+   thread_intrusive_node *current_node;
+
+   queue::push_safe_linear_queue<sched::base*> steal_request_buffer;
+   queue::push_safe_linear_queue<thread_intrusive_node*> stolen_nodes_buffer;
+
+#ifdef TASK_STEALING
+   void clear_steal_requests(void);
+   virtual void make_steal_request(void);
+   virtual void check_stolen_nodes(void);
+   virtual void answer_steal_requests(void);
+#endif
    
    virtual void assert_end(void) const;
    virtual void assert_end_iteration(void) const;
    bool set_next_node(void);
-   bool check_if_current_useless();
+   virtual bool check_if_current_useless();
    void make_active(void);
    void make_inactive(void);
    virtual void generate_aggs(void);
    virtual bool busy_wait(void);
+   virtual void retrieve_tuples(void);
    
-   inline void add_to_queue(thread_node *node)
+   virtual void add_to_queue(thread_intrusive_node *node)
    {
-      queue_nodes.push(node);
+      queue_nodes.push_tail(node);
    }
    
-   inline bool has_work(void) const { return !queue_nodes.empty(); }
+   virtual bool has_work(void) const { return !queue_nodes.empty() || !buffer.empty() || !stolen_nodes_buffer.empty(); }
    
 public:
    
@@ -57,7 +75,7 @@ public:
 	
    static db::node *create_node(const db::node::node_id id, const db::node::node_id trans)
    {
-      return new thread_node(id, trans);
+      return new thread_intrusive_node(id, trans);
    }
    
    static std::vector<sched::base*>& start(const size_t);

@@ -53,7 +53,7 @@ machine::same_place(const node::node_id id1, const node::node_id id2) const
 }
 
 void
-machine::run_action(sched::base *sched, node*node, vm::tuple *tpl)
+machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, const bool from_other)
 {
 	const predicate_id pid(tpl->get_predicate_id());
 	
@@ -71,11 +71,17 @@ machine::run_action(sched::base *sched, node*node, vm::tuple *tpl)
          LOG_SET_EDGE_LABEL(node->get_id(), tpl->get_node(0), tpl->get_string(1)->get_content());
       }
 #endif
-   } else if(pid == SET_PRIORITY_PREDICATE_ID)
-		sched->set_node_priority(node, tpl->get_int(0));
-	else if(pid == ADD_PRIORITY_PREDICATE_ID)
-		sched->add_node_priority(node, tpl->get_int(0));
-	else if(pid == WRITE_STRING_PREDICATE_ID) {
+   } else if(pid == SET_PRIORITY_PREDICATE_ID) {
+      if(from_other)
+         sched->set_node_priority_other(node, tpl->get_int(0));
+      else
+         sched->set_node_priority(node, tpl->get_int(0));
+   } else if(pid == ADD_PRIORITY_PREDICATE_ID) {
+      if(from_other)
+         sched->add_node_priority_other(node, tpl->get_int(0));
+      else
+         sched->add_node_priority(node, tpl->get_int(0));
+   } else if(pid == WRITE_STRING_PREDICATE_ID) {
 		runtime::rstring::ptr s(tpl->get_string(0));
 
 		cout << s->get_content() << endl;
@@ -109,7 +115,7 @@ machine::route(const node* from, sched::base *sched_caller, const node::node_id 
 		const predicate *pred(stpl->get_predicate());
 
 		if(pred->is_action_pred()) {
-			run_action(sched_other, node, stpl->get_tuple());
+			run_action(sched_other, node, stpl->get_tuple(), sched_caller != sched_other);
 			delete stpl;
 		} else if(sched_other == sched_caller) {
 			work new_work(node, stpl);
@@ -311,6 +317,7 @@ get_creation_function(const scheduler_type sched_type)
          return database::create_node_fn(sched::static_local::create_node);
       case SCHED_THREADS_STATIC_LOCAL_PRIO:
          return database::create_node_fn(sched::static_local_prio::create_node);
+#if 0
       case SCHED_THREADS_DYNAMIC_LOCAL:
          return database::create_node_fn(sched::dynamic_local::create_node);
       case SCHED_THREADS_DIRECT_LOCAL:
@@ -321,6 +328,7 @@ get_creation_function(const scheduler_type sched_type)
          return database::create_node_fn(sched::mpi_thread_dynamic::create_node);
       case SCHED_MPI_AND_THREADS_SINGLE_LOCAL:
          return database::create_node_fn(sched::mpi_thread_single::create_node);
+#endif
       case SCHED_SERIAL_LOCAL:
          return database::create_node_fn(sched::serial_local::create_node);
 		case SCHED_SERIAL_UI_LOCAL:
@@ -360,6 +368,7 @@ machine::machine(const string& file, router& _rout, const size_t th,
       case SCHED_THREADS_STATIC_LOCAL_PRIO:
          process_list = sched::static_local_prio::start(num_threads);
          break;
+#if 0
       case SCHED_THREADS_SINGLE_LOCAL:
          process_list = sched::threads_single::start(num_threads);
          break;
@@ -378,6 +387,7 @@ machine::machine(const string& file, router& _rout, const size_t th,
       case SCHED_MPI_AND_THREADS_SINGLE_LOCAL:
          process_list = sched::mpi_thread_single::start(num_threads);
          break;
+#endif
       case SCHED_SERIAL_LOCAL:
          process_list.push_back(dynamic_cast<sched::base*>(new sched::serial_local()));
          break;
