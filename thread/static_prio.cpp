@@ -118,7 +118,7 @@ static_local_prio::answer_steal_requests(void)
       node->set_owner(target);
       target->stolen_nodes_buffer.push(node);
 
-      cout << "Sending node " << node->get_id() << " to " << target->get_id() << endl;
+//      cout << "Sending node " << node->get_id() << " to " << target->get_id() << endl;
 
       spinlock::scoped_lock l(target->lock);
    
@@ -572,17 +572,12 @@ static_local_prio::set_next_node(void)
       check_priority_buffer();
 #ifdef TASK_STEALING
       check_stolen_nodes();
-      answer_steal_requests();
 #endif
 		
       if(!has_work()) {
          if(!busy_wait())
             return false;
       }
-
-      retrieve_tuples();
-		retrieve_prio_tuples();
-      check_priority_buffer();
       
       assert(has_work());
 
@@ -635,6 +630,10 @@ static_local_prio::get_work(work& new_work)
 	
    if(!set_next_node())
       return false;
+
+#ifdef TASK_STEALING
+   answer_steal_requests();
+#endif
       
    set_active_if_inactive();
    assert(current_node != NULL);

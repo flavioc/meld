@@ -86,8 +86,6 @@ static_local::new_work_other(sched::base *, work& new_work)
    
    static_local *owner(dynamic_cast<static_local*>(tnode->get_owner()));
 
-   assert(owner != this);
-
    owner->buffer.push(new_work);
 
    //cout << id << " Add to buffer node " << tnode->get_id() << endl;
@@ -140,8 +138,6 @@ static_local::retrieve_tuples(void)
 		thread_intrusive_node *to(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
       static_local *owner(dynamic_cast<static_local*>(to->get_owner()));
 
-      //cout << id << " Got for node " << new_work.get_node()->get_id() << endl;
-
       if(owner == this) {
          to->add_work(node_new_work);
          if(!to->in_queue()) {
@@ -180,7 +176,10 @@ static_local::make_steal_request(void)
 
    for(size_t i(0); i < num_requests; ++i) {
       const size_t _target(random_unsigned(state::NUM_THREADS));
+
+      assert(_target < state::NUM_THREADS);
       static_local *target((static_local*)ALL_THREADS[_target]);
+      assert(target->get_id() == _target && target->get_id() < state::NUM_THREADS);
 
       if(target == this)
          continue;
@@ -220,8 +219,10 @@ void
 static_local::answer_steal_requests(void)
 {
    while(!steal_request_buffer.empty() && !queue_nodes.empty()) {
+      assert(!steal_request_buffer.empty());
       static_local *target((static_local*)steal_request_buffer.pop());
       thread_intrusive_node *node(NULL);
+assert(target != NULL);
       queue_nodes.pop(node);
       assert(node != NULL);
       assert(node != current_node);
@@ -229,6 +230,7 @@ static_local::answer_steal_requests(void)
       assert(node->in_queue());
 
       node->set_owner(target);
+	assert(target->get_id() < state::NUM_THREADS);
       target->stolen_nodes_buffer.push(node);
 
       //cout << "Sending node " << node->get_id() << " to " << target->get_id() << endl;
@@ -331,7 +333,6 @@ static_local::set_next_node(void)
    while (current_node == NULL) {   
 #ifdef TASK_STEALING
       check_stolen_nodes();
-      answer_steal_requests();
 #endif
       retrieve_tuples();
 
@@ -340,12 +341,6 @@ static_local::set_next_node(void)
             return false;
       }
 
-#ifdef TASK_STEALING
-      check_stolen_nodes();
-      answer_steal_requests();
-#endif
-      retrieve_tuples();
-      
       if(!queue_nodes.pop(current_node))
          continue;
       
@@ -367,7 +362,16 @@ static_local::get_work(work& new_work)
 {  
    if(!set_next_node())
       return false;
-      
+
+#ifdef TASK_STEALING
+   if(answer_requests) {
+      answer_steal_requests();
+      answer_requests = false;
+   } else {
+      answer_requests = true;
+   }
+#endif
+
    set_active_if_inactive();
    assert(current_node != NULL);
    assert(current_node->in_queue());
@@ -454,6 +458,9 @@ static_local::write_slice(statistics::slice& sl) const
 static_local::static_local(const vm::process_id _id):
    base(_id),
    current_node(NULL)
+#ifdef TASK_STEALING
+   , answer_requests(true)
+#endif
 #if defined(TASK_STEALING) && defined(INSTRUMENTATION)
    , stolen_total(0), steal_requests(0)
 #endif

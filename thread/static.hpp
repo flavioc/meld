@@ -33,6 +33,7 @@ protected:
    queue::push_safe_linear_queue<thread_intrusive_node*> stolen_nodes_buffer;
 
 #ifdef TASK_STEALING
+   bool answer_requests;
 #ifdef INSTRUMENTATION
    mutable size_t stolen_total;
    mutable size_t steal_requests;
