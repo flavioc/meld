@@ -63,6 +63,10 @@ static_local_prio::check_stolen_nodes(void)
 			continue;
 		if(node_queue::in_queue(n))
 			continue;
+
+#ifdef INSTRUMENTATION
+      stolen_total++;
+#endif
 			
 		if(n->has_priority_level()) {
 			heap_priority pr;

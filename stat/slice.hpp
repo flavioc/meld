@@ -18,7 +18,7 @@ public:
    size_t work_queue;
    size_t processed_facts;
    size_t sent_facts;
-   size_t stealed_nodes;
+   size_t stolen_nodes;
    size_t steal_requests;
    size_t priority_queue;
    
@@ -26,7 +26,7 @@ public:
    void print_work_queue(utils::csv_line&) const;
    void print_processed_facts(utils::csv_line&) const;
    void print_sent_facts(utils::csv_line&) const;
-   void print_stealed_nodes(utils::csv_line&) const;
+   void print_stolen_nodes(utils::csv_line&) const;
    void print_steal_requests(utils::csv_line&) const;
    void print_priority_queue(utils::csv_line&) const;
    
@@ -35,7 +35,7 @@ public:
       work_queue(0),
       processed_facts(0),
       sent_facts(0),
-      stealed_nodes(0),
+      stolen_nodes(0),
       steal_requests(0),
       priority_queue(0)
    {

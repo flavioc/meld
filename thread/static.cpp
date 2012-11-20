@@ -186,6 +186,9 @@ static_local::make_steal_request(void)
          continue;
 
       target->steal_request_buffer.push(this);
+#ifdef INSTRUMENTATION
+      steal_requests++;
+#endif
    }
 }
 
@@ -199,6 +202,9 @@ static_local::check_stolen_nodes(void)
       assert(n->in_queue());
 
       queue_nodes.push_tail(n);
+#ifdef INSTRUMENTATION
+      stolen_total++;
+#endif
    }
 }
 
@@ -434,6 +440,12 @@ static_local::write_slice(statistics::slice& sl) const
 #ifdef INSTRUMENTATION
    base::write_slice(sl);
    sl.work_queue = queue_nodes.size();
+#ifdef TASK_STEALING
+   sl.stolen_nodes = stolen_total;
+   sl.steal_requests = steal_requests;
+   stolen_total = 0;
+   steal_requests = 0;
+#endif
 #else
    (void)sl;
 #endif
@@ -442,6 +454,9 @@ static_local::write_slice(statistics::slice& sl) const
 static_local::static_local(const vm::process_id _id):
    base(_id),
    current_node(NULL)
+#if defined(TASK_STEALING) && defined(INSTRUMENTATION)
+   , stolen_total(0), steal_requests(0)
+#endif
 {
 }
 

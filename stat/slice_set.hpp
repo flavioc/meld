@@ -34,7 +34,7 @@ private:
    void write_work_queue(const std::string&) const;
    void write_processed_facts(const std::string&) const;
    void write_sent_facts(const std::string&) const;
-   void write_stealed_nodes(const std::string&) const;
+   void write_stolen_nodes(const std::string&) const;
    void write_steal_requests(const std::string&) const;
    void write_priority_queue(const std::string&) const;
    

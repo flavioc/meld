@@ -86,9 +86,9 @@ slice_set::write_sent_facts(const string& file) const
 }
 
 void
-slice_set::write_stealed_nodes(const string& file) const
+slice_set::write_stolen_nodes(const string& file) const
 {
-   write_general(file + ".stealed_nodes", "stealednodes", &slice::print_stealed_nodes);
+   write_general(file + ".stolen_nodes", "stolennodes", &slice::print_stolen_nodes);
 }
 
 void
@@ -110,10 +110,8 @@ slice_set::write(const string& file, const scheduler_type type) const
    write_work_queue(file);
    write_processed_facts(file);
    write_sent_facts(file);
-   if(is_work_stealing_sched(type))
-      write_stealed_nodes(file);
-   if(is_indirect_work_stealing_sched(type))
-      write_steal_requests(file);
+   write_stolen_nodes(file);
+   write_steal_requests(file);
    if(is_priority_sched(type))
       write_priority_queue(file);
 }
