@@ -566,6 +566,10 @@ static_local_prio::set_next_node(void)
       retrieve_tuples();
 		retrieve_prio_tuples();
       check_priority_buffer();
+#ifdef TASK_STEALING
+      check_stolen_nodes();
+      answer_steal_requests();
+#endif
 		
       if(!has_work()) {
          if(!busy_wait())
@@ -595,7 +599,8 @@ static_local_prio::set_next_node(void)
 			if(!suc)
 				continue;
          taken_from_priority_queue = false;
-		}
+		} else
+         continue;
 
 loop_check:
       assert(current_node != NULL);
