@@ -7,7 +7,7 @@ BIGGER=`bash ./find_bigger_value.sh ${FILE}`
 
 if [ $BIGGER -eq 0 ]; then
    echo "No quantities for ${FILE}"
-   exit 1
+#exit 1
 fi
 
 for i in `seq 2 $NUMCOLS`; do
