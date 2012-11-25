@@ -21,7 +21,6 @@ class thread_intrusive_node: public thread_node
 	
 private:
 	
-	bool has_priority;
 	int priority_level;
 	
 public:
@@ -35,9 +34,6 @@ public:
 	virtual bool has_normal_work(void) const { return thread_node::has_work(); }
 	virtual bool has_work(void) const { return thread_node::has_work() || !prioritized_tuples.empty(); }
 
-	inline bool with_marked_priority(void) const { return has_priority; }
-	inline void unmark_priority(void) { has_priority = false; }
-	inline void mark_priority(void) { has_priority = true; }
 	inline int get_priority_level(void) { return priority_level; }
 	inline void set_priority_level(const int level) { priority_level = level; }
 	inline bool has_priority_level(void) const { return priority_level > 0; }
@@ -49,7 +45,6 @@ public:
    explicit thread_intrusive_node(const db::node::node_id _id, const db::node::node_id _trans):
 		thread_node(_id, _trans),
       INIT_DOUBLE_QUEUE_NODE(), INIT_PRIORITY_NODE(),
-		has_priority(false),
 		priority_level(0),
 		has_been_prioritized(false),
       has_been_touched(false)

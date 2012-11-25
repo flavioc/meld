@@ -74,12 +74,11 @@ protected:
 		heap_priority pr;
 		pr.int_priority = node->get_priority_level();
 		prio_queue.insert(node, pr);
-		node->unmark_priority();
 	}
    
    virtual void add_to_queue(thread_intrusive_node *node)
    {
-		if(node->with_marked_priority())
+		if(node->has_priority_level())
 			add_to_priority_queue(node);
 		else
       	queue_nodes.push_tail(node);

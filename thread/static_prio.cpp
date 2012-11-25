@@ -542,7 +542,9 @@ static_local_prio::check_if_current_useless(void)
 //#define USE_DELTA_ADJUST
 #define ROUND 1000
 
+#ifdef ROUND
 static size_t next_round(ROUND);
+#endif
 
 bool
 static_local_prio::set_next_node(void)
@@ -786,7 +788,6 @@ static_local_prio::set_node_priority(node *n, const int priority)
          if(tn->get_priority_level() != priority) {
             if(priority == 0) {
                tn->set_priority_level(0);
-               tn->unmark_priority();
                prio_queue.remove(tn);
                queue_nodes.push_tail(tn);
             } else {
@@ -825,7 +826,6 @@ static_local_prio::set_node_priority(node *n, const int priority)
          prio_marked++;
 #endif
          tn->set_priority_level(priority);
-         tn->mark_priority();
       }
 	}
 	
