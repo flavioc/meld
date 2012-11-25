@@ -14,6 +14,11 @@ plot_part ()
 {
 	FILE="${1}"
 	SCRIPT="${2}"
+   INTER="${3}"
+
+   if [ -z "${INTER}" ]; then
+      INTER="bash"
+   fi
 
 	if [ -z "${SCRIPT}" ]; then
 		echo "Missing script."
@@ -25,7 +30,7 @@ plot_part ()
 		exit 1
 	fi
 
-	CMD="bash ${SCRIPT} ${FILE}"
+	CMD="${INTER} ${SCRIPT} ${FILE}"
 	echo -n "${SCRIPT} ${FILE}..."
 	$CMD
 	echo "done."
@@ -43,7 +48,7 @@ try_plot_part ()
 	fi
 }
 
-plot_part "${DIR}/data.state" "active_inactive.sh"
+plot_part "${DIR}/data.state" "active_inactive.py" "python"
 plot_part "${DIR}/data.work_queue" "plot_quantity.sh"
 plot_part "${DIR}/data.processed_facts" "plot_quantity.sh"
 plot_part "${DIR}/data.sent_facts" "plot_quantity.sh"

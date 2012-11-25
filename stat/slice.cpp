@@ -26,9 +26,6 @@ slice::print_state(csv_line& csv) const
       case NOW_ROUND:
          csv << "3";
          break;
-      case NOW_COMM:
-         csv << "4";
-         break;
       default: assert(false);
    }
 }

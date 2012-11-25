@@ -255,11 +255,12 @@ static_local::generate_aggs(void)
 bool
 static_local::busy_wait(void)
 {
-   ins_idle;
-
 #ifdef TASK_STEALING
+   ins_sched;
    make_steal_request();
 #endif
+
+   ins_idle;
    
    while(!has_work()) {
 #ifdef TASK_STEALING
