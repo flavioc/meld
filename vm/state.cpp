@@ -25,6 +25,7 @@ size_t state::NUM_PREDICATES = 0;
 size_t state::NUM_NODES = 0;
 size_t state::NUM_NODES_PER_PROCESS = 0;
 machine_arguments state::ARGUMENTS;
+double state::TASK_STEALING_FACTOR = 0.2;
 #ifdef USE_UI
 bool state::UI = false;
 #endif

@@ -253,7 +253,6 @@ machine::start(void)
       alarm_thread->join();
       delete alarm_thread;
       alarm_thread = NULL;
-      cout << "Writing stat" << endl;
       slices.write(get_stat_file(), sched_type);
    }
 

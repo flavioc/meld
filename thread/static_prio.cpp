@@ -82,43 +82,34 @@ static_local_prio::check_stolen_nodes(void)
 void
 static_local_prio::answer_steal_requests(void)
 {
-	enum {
-		FROM_REGULAR_QUEUE,
-		FROM_PRIO_QUEUE
-	} flag;
-	
-	flag = FROM_REGULAR_QUEUE;
-	
    while(!steal_request_buffer.empty() && (!queue_nodes.empty() || !prio_queue.empty())) {
       static_local_prio *target((static_local_prio*)steal_request_buffer.pop());
       thread_intrusive_node *node(NULL);
 
-		if(flag == FROM_REGULAR_QUEUE) {
-			if(!queue_nodes.empty())
-      		queue_nodes.pop(node);
-			else if(!prio_queue.empty())
-				node = prio_queue.pop();
-			flag = FROM_PRIO_QUEUE;
-		} else {
-			if(!prio_queue.empty())
-				node = prio_queue.pop();
-			else if(!queue_nodes.empty())
-				queue_nodes.pop(node);
-			flag = FROM_REGULAR_QUEUE;
-		}
+      size_t size(queue_nodes.size());
+      const size_t frac((int)((double)size * (double)state::TASK_STEALING_FACTOR));
+      size = max(min(size, (size_t)4), frac);
+      cout << "Size " << size << endl;
+
+      while(size > 0 && (!queue_nodes.empty() || !prio_queue.empty())) {
+         node = NULL;
+
+         if(!prio_queue.empty())
+            node = prio_queue.pop();
+         else if(!queue_nodes.empty())
+            queue_nodes.pop(node);
 		
-		if(node == NULL)
-			continue;
+         if(node == NULL)
+            continue;
 			
-      assert(node != NULL);
-      assert(node != current_node);
-      assert(node->get_owner() == this);
-      assert(node->in_queue());
+         assert(node != NULL);
+         assert(node != current_node);
+         assert(node->get_owner() == this);
+         assert(node->in_queue());
 
-      node->set_owner(target);
-      target->stolen_nodes_buffer.push(node);
-
-//      cout << "Sending node " << node->get_id() << " to " << target->get_id() << endl;
+         node->set_owner(target);
+         target->stolen_nodes_buffer.push(node);
+      }
 
       spinlock::scoped_lock l(target->lock);
    

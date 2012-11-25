@@ -170,11 +170,9 @@ static_local::make_steal_request(void)
    if(state::NUM_THREADS == 1)
       return;
 
-   const size_t num_requests(max((size_t)1, (size_t)(state::NUM_THREADS * 0.25)));
+   size_t num_requests(1);
 
-//   cout << "Making " << num_requests << " requests" << endl;
-
-   for(size_t i(0); i < num_requests; ++i) {
+   while(num_requests > 0) {
       const size_t _target(random_unsigned(state::NUM_THREADS));
 
       assert(_target < state::NUM_THREADS);
@@ -188,12 +186,16 @@ static_local::make_steal_request(void)
 #ifdef INSTRUMENTATION
       steal_requests++;
 #endif
+      --num_requests;
    }
 }
 
 void
 static_local::check_stolen_nodes(void)
 {
+   if(state::NUM_THREADS == 1)
+      return;
+
    while(!stolen_nodes_buffer.empty()) {
       thread_intrusive_node *n(stolen_nodes_buffer.pop());
 
@@ -220,20 +222,28 @@ static_local::answer_steal_requests(void)
 {
    while(!steal_request_buffer.empty() && !queue_nodes.empty()) {
       assert(!steal_request_buffer.empty());
+
       static_local *target((static_local*)steal_request_buffer.pop());
+      assert(target != NULL && target != this);
+      assert(target->get_id() < state::NUM_THREADS);
+
       thread_intrusive_node *node(NULL);
-assert(target != NULL);
-      queue_nodes.pop(node);
-      assert(node != NULL);
-      assert(node != current_node);
-      assert(node->get_owner() == this);
-      assert(node->in_queue());
 
-      node->set_owner(target);
-	assert(target->get_id() < state::NUM_THREADS);
-      target->stolen_nodes_buffer.push(node);
+      size_t size(queue_nodes.size());
+      const size_t frac((int)((double)size * (double)state::TASK_STEALING_FACTOR));
+      size = max(min(size, (size_t)4), frac);
 
-      //cout << "Sending node " << node->get_id() << " to " << target->get_id() << endl;
+      while(size > 0 && !queue_nodes.empty()) {
+         node = NULL;
+         queue_nodes.pop(node);
+         assert(node != NULL);
+         assert(node != current_node);
+         assert(node->get_owner() == this);
+         assert(node->in_queue());
+         node->set_owner(target);
+         target->stolen_nodes_buffer.push(node);
+         --size;
+      }
 
       spinlock::scoped_lock l(target->lock);
    

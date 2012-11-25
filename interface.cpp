@@ -103,15 +103,8 @@ help_schedulers(void)
 	cerr << "\t-c <scheduler>\tselect scheduling type" << endl;
 	cerr << "\t\t\tsl simple serial scheduler" << endl;
 	cerr << "\t\t\tui serial scheduler + ui" << endl;
-   cerr << "\t\t\ttlX static division with threads" << endl;
-   cerr << "\t\t\ttlpX static division with threads" << endl;
-	cerr << "\t\t\ttbX static division with threads and buffering" << endl;
-	cerr << "\t\t\ttdX initial static division but allow work stealing" << endl;
-	cerr << "\t\t\ttxX initial static division but allow direct work stealing" << endl;
-	cerr << "\t\t\tsinX no division of work using local queues" << endl;
-	cerr << "\t\t\tmpistaticX static division of work using mpi plus threads" << endl;
-	cerr << "\t\t\tmpidynamicX static division of work using mpi plus threads and work stealing" << endl;
-	cerr << "\t\t\tmpisingleX no division of work with static processes" << endl;
+   cerr << "\t\t\ttlX multithreaded scheduler with task stealing" << endl;
+   cerr << "\t\t\ttlpX multithreaded scheduler with priorities and task stealing" << endl;
 }
 
 bool

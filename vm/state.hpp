@@ -127,6 +127,7 @@ public:
    static size_t NUM_NODES;
    static size_t NUM_NODES_PER_PROCESS;
 	static machine_arguments ARGUMENTS;
+   static double TASK_STEALING_FACTOR;
 #ifdef USE_UI
    static bool UI;
 #endif
