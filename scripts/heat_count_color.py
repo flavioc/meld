@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Gets heat predicate and builds a colored grid based on that heat.
+# Gets count predicate and builds a colored grid based on that count.
 
 import sys
 import math
@@ -8,16 +8,16 @@ import cairo
 from lib_db import read_db
 
 if len(sys.argv) < 2:
-	print "usage: python real_heat_color.py <output image>"
+	print "usage: python heat_color.py <file name>"
 	sys.exit(1)
 
 db = read_db(sys.stdin.readlines())
 
-def read_heat_node(data):
+def read_count_node(data):
 	for d in data:
 		name = d['name']
-		if name == 'heat':
-			return float(d['args'][0])
+		if name == 'count':
+			return int(d['args'][0])
 	return 0
 
 def read_coord(data):
@@ -36,11 +36,12 @@ def read_inner(data):
 			return True
 	return False
 
-heats = {}
+counts = {}
 coords = {}
 inners = {}
 
-maxheat = 0
+maxcount = 0
+totalcount = 0
 maxx = 0
 maxy = 0
 lowestxinner = None
@@ -48,9 +49,10 @@ lowestyinner = None
 highestxinner = None
 highestyinner = None
 for node, data in db.iteritems():
-	heat = read_heat_node(data)
-	if heat > maxheat:
-		maxheat = heat
+	total = read_count_node(data)
+	if total > maxcount:
+		maxcount = total
+	totalcount = totalcount + total
 	coord = read_coord(data)
 	(x, y) = coord
 	if x > maxx:
@@ -68,7 +70,7 @@ for node, data in db.iteritems():
 			highestxinner = x
 		if highestyinner is None or highestyinner < y:
 			highestyinner = y
-	heats[node] = heat
+	counts[node] = total
 	coords[node] = coord
 
 SCALE = 20
@@ -78,10 +80,10 @@ surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, WIDTH, HEIGHT)
 ctx = cairo.Context(surface)
 
 for node, coord in coords.iteritems():
-	heat = heats[node]
+	count = counts[node]
 	(x, y) = coord
 	inner = inners[node]
-	ratio = heat / maxheat
+	ratio = float(count) / float(maxcount)
 	ctx.set_source_rgb(ratio, ratio, ratio)
 	ctx.rectangle(x * SCALE, y * SCALE, SCALE, SCALE)
 	ctx.fill()
@@ -93,7 +95,14 @@ ctx.stroke()
 ctx.select_font_face('Sans')
 ctx.set_font_size(maxx / 2)
 ctx.move_to(int(0.8 * WIDTH), HEIGHT - 20)
-ctx.set_source_rgb(1.00, 0.83, 0.00)
-ctx.show_text(str(maxheat))
+ctx.set_source_rgb(1.00, 0.83, 0.00) # yellow
+ctx.show_text(str(maxcount))
+
+ctx.select_font_face('Sans')
+ctx.set_font_size(maxx / 2)
+ctx.move_to(int(0.2 * WIDTH), HEIGHT - 20)
+ctx.set_source_rgb(1.00, 0.00, 0.00) # red
+ctx.show_text(str(totalcount))
 
 surface.write_to_png(sys.argv[1])
+
