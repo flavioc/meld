@@ -15,16 +15,16 @@ slice::print_state(csv_line& csv) const
 {
    switch(state) {
       case NOW_ACTIVE:
-         csv << "1";
+         csv << to_string<size_t>(work_queue + priority_queue);
          break;
       case NOW_IDLE:
-         csv << "0";
+         csv << "i";
          break;
       case NOW_SCHED:
-         csv << "2";
+         csv << "s";
          break;
       case NOW_ROUND:
-         csv << "3";
+         csv << "r";
          break;
       default: assert(false);
    }
