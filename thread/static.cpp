@@ -268,6 +268,7 @@ static_local::busy_wait(void)
 #ifdef TASK_STEALING
    ins_sched;
    make_steal_request();
+   size_t count(0);
 #endif
 
    ins_idle;
@@ -275,6 +276,13 @@ static_local::busy_wait(void)
    while(!has_work()) {
 #ifdef TASK_STEALING
       check_stolen_nodes();
+      ++count;
+      if(count == STEALING_ROUND_MAX) {
+         ins_sched;
+         make_steal_request();
+         ins_idle;
+         count = 0;
+      }
 #endif
       retrieve_tuples();
       BUSY_LOOP_MAKE_INACTIVE()
