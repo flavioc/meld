@@ -14,7 +14,7 @@
 #include "queue/safe_double_queue.hpp"
 
 #define TASK_STEALING 1
-#define STEALING_ROUND_MAX 1000
+#define STEALING_ROUND_MAX 5000
 
 namespace sched
 {

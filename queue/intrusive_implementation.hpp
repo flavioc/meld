@@ -42,6 +42,7 @@
    																			\
    __INTRUSIVE_PREV(data) = NULL;									\
    __INTRUSIVE_NEXT(data) = NULL;									\
+   assert(__INTRUSIVE_IN_QUEUE(data) == true);              \
    __INTRUSIVE_IN_QUEUE(data) = false;								\
    																			\
 	QUEUE_DECREMENT_TOTAL();											\
@@ -61,6 +62,7 @@
    else																			\
       tail = NULL;															\
       																			\
+   assert(__INTRUSIVE_IN_QUEUE(data) == true);                 \
    __INTRUSIVE_IN_QUEUE(data) = false;									\
       																			\
    assert((head && __INTRUSIVE_PREV(head) == NULL) || !head);	\
@@ -162,6 +164,7 @@
 																	\
 	__INTRUSIVE_NEXT(ITEM) = NULL;						\
 	__INTRUSIVE_PREV(ITEM) = NULL;						\
+   assert(__INTRUSIVE_IN_QUEUE(ITEM) == true);     \
 	__INTRUSIVE_IN_QUEUE(ITEM) = false;					\
 	QUEUE_DECREMENT_TOTAL();								\
 }

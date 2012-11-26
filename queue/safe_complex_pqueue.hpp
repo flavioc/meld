@@ -33,6 +33,7 @@ private:
 	
 	void do_insert(heap_object node, const heap_priority prio)
 	{
+      assert(__INTRUSIVE_IN_PRIORITY_QUEUE(node) == false);
 		__INTRUSIVE_PRIORITY(node) = prio;
 		__INTRUSIVE_IN_PRIORITY_QUEUE(node) = true;
 		
@@ -45,7 +46,7 @@ private:
 	{
 		if(empty())
 			return NULL;
-		
+
 		const heap_object min(heap.front());
 		
 		heap[0] = heap.back();
@@ -53,11 +54,12 @@ private:
 		heap.pop_back();
 		heapifydown(0);
 		
+      assert(__INTRUSIVE_IN_PRIORITY_QUEUE(min) == true);
 		__INTRUSIVE_IN_PRIORITY_QUEUE(min) = false;
 		
 		return min;
 	}
-	
+
 	void do_remove(heap_object obj)
 	{
 		size_t index(__INTRUSIVE_POS(obj));

@@ -24,6 +24,8 @@ private:
 	int priority_level;
 	
 public:
+
+   bool moving_around;
 	
 	typedef queue::heap_queue<process::node_work> prio_tuples_queue;
 	prio_tuples_queue prioritized_tuples;
@@ -46,6 +48,7 @@ public:
 		thread_node(_id, _trans),
       INIT_DOUBLE_QUEUE_NODE(), INIT_PRIORITY_NODE(),
 		priority_level(0),
+      moving_around(false),
 		has_been_prioritized(false),
       has_been_touched(false)
    {

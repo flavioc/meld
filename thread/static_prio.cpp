@@ -55,26 +55,29 @@ static_local_prio::check_stolen_nodes(void)
    while(!stolen_nodes_buffer.empty()) {
       thread_intrusive_node *n(stolen_nodes_buffer.pop());
 
-      n->set_owner(this);
       assert(n->in_queue());
 
+#ifdef INSTRUMENTATION
+      stolen_total++;
+#endif
+			
 		// nodes may have been added
 		if(priority_queue::in_queue(n))
 			continue;
 		if(node_queue::in_queue(n))
 			continue;
 
-#ifdef INSTRUMENTATION
-      stolen_total++;
-#endif
-			
+      assert(n->moving_around);
+
 		if(n->has_priority_level()) {
 			heap_priority pr;
 			pr.int_priority = n->get_priority_level();
+         assert(!priority_queue::in_queue(n));
 			prio_queue.insert(n, pr);
 		} else {
       	queue_nodes.push_tail(n);
 		}
+      n->moving_around = false;
 		assert(n->in_queue());
    }
 }
@@ -82,31 +85,41 @@ static_local_prio::check_stolen_nodes(void)
 void
 static_local_prio::answer_steal_requests(void)
 {
+   bool flag(true);
    while(!steal_request_buffer.empty() && (!queue_nodes.empty() || !prio_queue.empty())) {
       static_local_prio *target((static_local_prio*)steal_request_buffer.pop());
       thread_intrusive_node *node(NULL);
 
-      size_t size(queue_nodes.size());
+      size_t size(queue_nodes.size() + prio_queue.size());
       const size_t frac((int)((double)size * (double)state::TASK_STEALING_FACTOR));
       size = max(min(size, (size_t)4), frac);
-      cout << "Size " << size << endl;
 
       while(size > 0 && (!queue_nodes.empty() || !prio_queue.empty())) {
          node = NULL;
 
-         if(!prio_queue.empty())
-            node = prio_queue.pop();
-         else if(!queue_nodes.empty())
-            queue_nodes.pop(node);
+         if(flag) {
+            if(!queue_nodes.empty())
+               queue_nodes.pop(node);
+            else if(!prio_queue.empty())
+               node = prio_queue.pop();
+            flag = false;
+         } else {
+            if(!prio_queue.empty())
+               node = prio_queue.pop();
+            else if(!queue_nodes.empty())
+               queue_nodes.pop(node);
+            flag = true;
+         }
 		
          if(node == NULL)
             continue;
-			
+
          assert(node != NULL);
          assert(node != current_node);
          assert(node->get_owner() == this);
          assert(node->in_queue());
 
+         node->moving_around = true;
          node->set_owner(target);
          target->stolen_nodes_buffer.push(node);
       }
@@ -140,8 +153,11 @@ static_local_prio::check_priority_buffer(void)
       int howmuch(p.val);
       priority_add_type typ(p.typ);
 
-		if(tn->get_owner() != this)
+		if(tn->get_owner() != this) {
+         static_local_prio *other((static_local_prio*)tn->get_owner());
+         other->priority_buffer.push(p);
 			continue; // skip nodes we do not own
+      }
 
       node_priorities::iterator it(node_map.find(target));
       if (it == node_map.end()) {
@@ -233,6 +249,8 @@ static_local_prio::add_prio_tuple(node_work node_new_work, thread_intrusive_node
 	const bool has_prio_tuples(!to->prioritized_tuples.empty());
 	tuple_field val(tpl->get_field(field));
 	heap_priority min_before;
+
+   assert(false);
 
 	if(has_prio_tuples)
 		min_before = to->get_min_value();
@@ -332,8 +350,6 @@ static_local_prio::new_work_other(sched::base *, work& new_work)
    assert(is_active());
    
    thread_intrusive_node *tnode(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
-   
-   assert(tnode->get_owner() != NULL);
    
    assert_thread_push_work();
    
@@ -471,6 +487,7 @@ static_local_prio::check_if_current_useless(void)
 #ifdef DEBUG_PRIORITIES
 			//cout << "Node in queue has higher priority: " << current_min.int_priority << " vs " << node_pr.int_priority << endl;
 #endif
+         assert(!priority_queue::in_queue(current_node));
 			prio_queue.insert(current_node, node_pr);
 			current_node = prio_queue.pop();
          taken_from_priority_queue = true;
@@ -569,12 +586,12 @@ static_local_prio::set_next_node(void)
       check_if_current_useless();
    
    while (current_node == NULL) {   
-      retrieve_tuples();
-		retrieve_prio_tuples();
-      check_priority_buffer();
 #ifdef TASK_STEALING
       check_stolen_nodes();
 #endif
+      retrieve_tuples();
+		retrieve_prio_tuples();
+      check_priority_buffer();
 		
       if(!has_work()) {
          if(!busy_wait())
@@ -777,7 +794,7 @@ static_local_prio::set_node_priority(node *n, const int priority)
 
 	assert(tn->get_owner() == this);
 	
-	if(tn->in_queue()) {
+	if(tn->in_queue() && !tn->moving_around) {
 #ifdef PROFILE_QUEUE
       if(priority > 0)
          prio_immediate++;
@@ -809,23 +826,17 @@ static_local_prio::set_node_priority(node *n, const int priority)
 #ifdef DEBUG_PRIORITIES
             //cout << "Add node " << tn->get_id() << " with priority " << priority << endl;
 #endif
-				if(node_queue::in_queue(tn)) {
-            	queue_nodes.remove(tn);
-				}
+            queue_nodes.remove(tn);
+            assert(!priority_queue::in_queue(tn));
             add_to_priority_queue(tn);
          }
 		}
-      if(priority > 0) {
-         assert(tn->get_priority_level() == priority);
-      }
 		assert(tn->in_queue());
 	} else {
-      if(priority > 0) {
 #ifdef PROFILE_QUEUE
          prio_marked++;
 #endif
-         tn->set_priority_level(priority);
-      }
+      tn->set_priority_level(priority);
 	}
 	
 #ifdef PROFILE_QUEUE

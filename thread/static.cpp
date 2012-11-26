@@ -140,7 +140,7 @@ static_local::retrieve_tuples(void)
 
       if(owner == this) {
          to->add_work(node_new_work);
-         if(!to->in_queue()) {
+         if(!to->moving_around && !to->in_queue()) {
             add_to_queue(to);
             to->set_in_queue(true);
          }
@@ -199,9 +199,9 @@ static_local::check_stolen_nodes(void)
    while(!stolen_nodes_buffer.empty()) {
       thread_intrusive_node *n(stolen_nodes_buffer.pop());
 
-      n->set_owner(this);
       assert(n->in_queue());
 
+      n->moving_around = false;
       queue_nodes.push_tail(n);
 #ifdef INSTRUMENTATION
       stolen_total++;
@@ -240,6 +240,7 @@ static_local::answer_steal_requests(void)
          assert(node != current_node);
          assert(node->get_owner() == this);
          assert(node->in_queue());
+         node->moving_around = true;
          node->set_owner(target);
          target->stolen_nodes_buffer.push(node);
          --size;
