@@ -12,19 +12,11 @@
 	volatile node_type tail;						\
 	QUEUE_DEFINE_TOTAL()
 
-#ifdef INSTRUMENTATION
 #define QUEUE_DEFINE_INTRUSIVE_CONSTRUCTOR(TYPE) 	\
 	explicit TYPE(void): 									\
 		head(NULL), tail(NULL), total(0)             \
 	{																\
 	}
-#else
-#define QUEUE_DEFINE_INTRUSIVE_CONSTRUCTOR(TYPE) 	\
-	explicit TYPE(void): 									\
-		head(NULL), tail(NULL)								\
-	{																\
-	}
-#endif /* INSTRUMENTATION */
 
 #define QUEUE_DEFINE_INTRUSIVE_IN_QUEUE()						\
 	static inline bool in_queue(node_type node)				\

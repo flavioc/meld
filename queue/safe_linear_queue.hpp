@@ -169,10 +169,7 @@ public:
    }
    
    explicit push_safe_linear_queue(void):
-      tail(NULL)
-#ifdef INSTRUMENTATION
-      , total(0)
-#endif
+      tail(NULL), total(0)
    {
       // sentinel node
       head = new node();
