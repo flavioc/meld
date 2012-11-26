@@ -142,6 +142,9 @@ public:
 	size_t stat_instructions_executed;
 	size_t stat_moves_executed;
 	size_t stat_ops_executed;
+   size_t *stat_predicate_proven;
+   size_t *stat_predicate_applications;
+   size_t *stat_predicate_success;
 
 	bool stat_inside_rule;
 	size_t stat_rules_activated;

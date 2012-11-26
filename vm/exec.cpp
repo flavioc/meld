@@ -293,6 +293,10 @@ execute_send(const pcounter& pc, state& state)
    const node_val dest_val(state.get_node(dest));
    tuple *tuple(state.get_tuple(msg));
 
+#ifdef CORE_STATISTICS
+   state.stat_predicate_proven[tuple->get_predicate_id()]++;
+#endif
+
    if(msg == dest) {
 #ifdef DEBUG_MODE
       cout << "\t" << *stuple << " -> self" << endl;
@@ -1469,6 +1473,9 @@ execute_remove(pcounter pc, state& state)
       LOG_LINEAR_CONSUMPTION(state.node, state.get_tuple(reg));
    }
 #endif
+#ifdef CORE_STATISTICS
+   state.stat_predicate_success[state.get_tuple(reg)->get_predicate_id()]++;
+#endif
 
 	const bool is_a_leaf(state.is_it_a_leaf(reg));
 
@@ -1627,8 +1634,12 @@ static inline return_type
 execute(pcounter pc, state& state)
 {
 #ifdef CORE_STATISTICS
-	if(state.tuple != NULL)
+	if(state.tuple != NULL) {
 		state.stat_tuples_used++;
+      if(state.tuple->is_linear()) {
+         state.stat_predicate_applications[state.tuple->get_predicate_id()]++;
+      }
+   }
 #endif
 
    for(; ; pc = advance(pc))
