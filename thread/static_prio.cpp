@@ -86,6 +86,7 @@ void
 static_local_prio::answer_steal_requests(void)
 {
    bool flag(true);
+
    while(!steal_request_buffer.empty() && (!queue_nodes.empty() || !prio_queue.empty())) {
       static_local_prio *target((static_local_prio*)steal_request_buffer.pop());
       thread_intrusive_node *node(NULL);
@@ -122,6 +123,7 @@ static_local_prio::answer_steal_requests(void)
          node->moving_around = true;
          node->set_owner(target);
          target->stolen_nodes_buffer.push(node);
+         size--;
       }
 
       spinlock::scoped_lock l(target->lock);
@@ -129,7 +131,6 @@ static_local_prio::answer_steal_requests(void)
       if(target->is_inactive() && target->has_work())
       {
          target->set_active();
-         assert(target->is_active());
       }
    }
 }
@@ -432,6 +433,7 @@ static_local_prio::busy_wait(void)
 #endif
       retrieve_tuples();
    	retrieve_prio_tuples();
+      check_priority_buffer();
       BUSY_LOOP_MAKE_INACTIVE()
       BUSY_LOOP_CHECK_TERMINATION_THREADS()
 	}
