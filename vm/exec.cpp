@@ -64,7 +64,7 @@ move_to_reg(const pcounter& m, state& state,
       const field_num field(val_field_num(m));
       const reg_num from_reg(val_field_reg(m));
       const tuple *tuple(state.get_tuple(from_reg));
-      
+
       switch(tuple->get_field_type(field)) {
          case FIELD_INT: state.set_int(reg, tuple->get_int(field)); break;
          case FIELD_FLOAT: state.set_float(reg, tuple->get_float(field)); break;
@@ -152,9 +152,15 @@ move_to_field(pcounter m, state& state, const instr_val& from)
 			case FIELD_FLOAT:
 				tuple->set_float(to_field, state.get_const_float(cid));
 				break;
+         case FIELD_LIST_INT:
+            tuple->set_int_list(to_field, state.get_const_int_list(cid));
+            break;
 			case FIELD_LIST_FLOAT:
 				tuple->set_float_list(to_field, state.get_const_float_list(cid));
 				break;
+         case FIELD_NODE:
+            tuple->set_node(to_field, state.get_const_node(cid));
+            break;
 			default: throw vm_exec_error("don't know how to move to " + field_type_string(typ) + " field (move_to_field from const)");
 		}
    } else if(val_is_field(from)) {
