@@ -140,6 +140,8 @@ init_external_functions(void)
 	register_external_function(EXTERNAL1(float2int, FIELD_INT, FIELD_FLOAT));
 	register_external_function(EXTERNAL1(int2str, FIELD_STRING, FIELD_INT));
 	register_external_function(EXTERNAL1(float2str, FIELD_STRING, FIELD_FLOAT));
+   register_external_function(EXTERNAL3(intlistsub, FIELD_LIST_INT, FIELD_LIST_INT, FIELD_INT, FIELD_INT));
+   register_external_function(EXTERNAL2(intlistappend, FIELD_LIST_INT, FIELD_LIST_INT, FIELD_LIST_INT));
 
    atexit(cleanup_externals);
    

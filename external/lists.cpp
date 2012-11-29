@@ -113,5 +113,60 @@ nodelistremove(EXTERNAL_ARG(ls), EXTERNAL_ARG(n))
    RETURN_NODE_LIST(ptr);
 }
 
+argument
+intlistsub(EXTERNAL_ARG(p), EXTERNAL_ARG(a), EXTERNAL_ARG(b))
+{
+   DECLARE_INT_LIST(p);
+   DECLARE_INT(a);
+   DECLARE_INT(b);
+   int_list *ls((int_list *)p);
+
+   int_val ctn(0);
+
+   while(!int_list::is_null(ls) && ctn < a) {
+      ls = ls->get_tail();
+      ++ctn;
+   }
+
+   stack_int_list s;
+
+   while(!int_list::is_null(ls) && ctn < b) {
+      s.push(ls->get_head());
+
+      ls = ls->get_tail();
+      ++ctn;
+   }
+
+   int_list *ptr(from_stack_to_list<stack_int_list, int_list>(s));
+
+   RETURN_INT_LIST(ptr);
+}
+
+argument
+intlistappend(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
+{
+   DECLARE_INT_LIST(ls1);
+   DECLARE_INT_LIST(ls2);
+
+   int_list *p1((int_list*)ls1);
+   int_list *p2((int_list*)ls2);
+
+   stack_int_list s;
+
+   while(!int_list::is_null(p1)) {
+      s.push(p1->get_head());
+      p1 = p1->get_tail();
+   }
+
+   while(!int_list::is_null(p2)) {
+      s.push(p2->get_head());
+      p2 = p2->get_tail();
+   }
+
+   int_list *ptr(from_stack_to_list<stack_int_list, int_list>(s));
+
+   RETURN_INT_LIST(ptr);
+}
+
 }
 }
