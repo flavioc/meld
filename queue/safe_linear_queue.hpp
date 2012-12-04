@@ -141,6 +141,23 @@ public:
       
       return take->data;
    }
+
+	template <class Alloc>
+	inline void pop_list(std::list<T, Alloc>& vec)
+	{
+      while(!empty()) {
+         node *take((node*)head->next);
+         node *old((node *)head);
+
+         head = take;
+
+         vec.push_back(take->data);
+
+         delete old;
+      }
+
+		QUEUE_ZERO_TOTAL();
+	}
    
    // append an unsafe queue on this queue
    inline void splice(unsafe_linear_queue_count<T>& q)
