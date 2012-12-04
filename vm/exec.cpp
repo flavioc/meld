@@ -1356,6 +1356,9 @@ execute_float(pcounter& pc, state& state)
 static inline pcounter
 execute_select(pcounter pc, state& state)
 {
+   if(state.node->get_id() > state::DATABASE->static_max_id())
+      return pc + select_size(pc);
+
    const pcounter hash_start(select_hash_start(pc));
    const code_size_t hashed(select_hash(hash_start, state.node->get_id()));
    
@@ -1636,6 +1639,17 @@ execute_rule_done(const pcounter& pc, state& state)
 #endif
 }
 
+static inline void
+execute_new_node(const pcounter& pc, state& state)
+{
+   const reg_num reg(new_node_reg(pc));
+   node *new_node(state::DATABASE->create_node());
+
+   state.sched->init_node(new_node);
+
+   state.set_node(reg, new_node->get_id());
+}
+
 static inline return_type
 execute(pcounter pc, state& state)
 {
@@ -1816,6 +1830,10 @@ eval_loop:
 
          case RULE_DONE_INSTR:
            execute_rule_done(pc, state);
+           break;
+
+         case NEW_NODE_INSTR:
+           execute_new_node(pc, state);
            break;
 
 			case SAVE_ORIGINAL_INSTR:

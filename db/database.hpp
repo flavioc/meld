@@ -12,6 +12,7 @@
 
 #include "conf.hpp"
 #include "db/node.hpp"
+#include "utils/spinlock.hpp"
 
 #ifdef USE_UI
 #include <json_spirit.h>
@@ -25,14 +26,26 @@ class database
 {
 public:
    
-   typedef std::tr1::unordered_map<node::node_id, node::node_id> map_translate;
-   typedef std::map<node::node_id, node*> map_nodes;
+   typedef std::tr1::unordered_map<node::node_id, node::node_id,
+           std::tr1::hash<node::node_id>,
+           std::equal_to<node::node_id>,
+           mem::allocator< std::pair<const node::node_id, node::node_id> > > map_translate;
+   typedef std::map<node::node_id, node*,
+           std::less<node::node_id>,
+           mem::allocator< std::pair<const node::node_id, node*> > > map_nodes;
    typedef boost::function2<node*, node::node_id, node::node_id> create_node_fn;
-   
+
 private:
+
+   create_node_fn create_fn;
    
    map_nodes nodes;
    map_translate translation;
+   node::node_id original_max_node_id;
+   node::node_id max_node_id;
+   node::node_id max_translated_id;
+
+	utils::spinlock mtx;
    
 public:
 
@@ -46,9 +59,11 @@ public:
    map_nodes::iterator get_node_iterator(const node::node_id id) { return nodes.find(id); }
    
    size_t num_nodes(void) const { return nodes.size(); }
-   node::node_id max_id(void) const { return nodes_total - 1; }
+   node::node_id max_id(void) const { return max_node_id; }
+   node::node_id static_max_id(void) const { return original_max_node_id; }
    
    node* find_node(const node::node_id) const;
+   node* create_node(void);
    
    void print_db(std::ostream&) const;
    void dump_db(std::ostream&) const;

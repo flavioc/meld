@@ -33,7 +33,7 @@ namespace process { class process; class machine; }
 
 namespace db {
 
-class node
+class node: public mem::base
 {
 public:
    
@@ -89,11 +89,16 @@ private:
    {
       strats.pop_queue(stpl->get_strat_level());
    }
+
+   sched::base *owner;
    
 public:
    
    inline node_id get_id(void) const { return id; }
    inline node_id get_translated_id(void) const { return translation; }
+
+   inline void set_owner(sched::base *_owner) { owner = _owner; }
+   inline sched::base *get_owner(void) const { return owner; }
    
    bool add_tuple(vm::tuple*, vm::ref_count);
    delete_info delete_tuple(vm::tuple *, vm::ref_count);

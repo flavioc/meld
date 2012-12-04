@@ -15,7 +15,8 @@ namespace db
    
 size_t database::nodes_total = 0;
 
-database::database(const string& filename, create_node_fn create_fn)
+database::database(const string& filename, create_node_fn _create_fn):
+   create_fn(_create_fn)
 {
    assert(state::ROUTER != NULL);
    
@@ -39,6 +40,9 @@ database::database(const string& filename, create_node_fn create_fn)
       fp.seekg(node_size * nodes_to_skip, ios_base::cur);
    
    size_t nodes_to_read = remote::self->get_total_nodes();
+
+   max_node_id = 0;
+   max_translated_id = 0;
       
    for(size_t i(0); i < nodes_to_read; ++i) {
       fp.read((char*)&fake_id, sizeof(node::node_id));
@@ -48,7 +52,14 @@ database::database(const string& filename, create_node_fn create_fn)
       
       translation[fake_id] = real_id;
       nodes[fake_id] = node;
+
+      if(fake_id > max_node_id)
+         max_node_id = fake_id;
+      if(real_id > max_translated_id)
+         max_translated_id = real_id;
    }
+   
+   original_max_node_id = max_node_id;
    
    if(!remote::i_am_last_one()) {
       const size_t nodes_left(nodes_total - (nodes_to_skip + nodes_to_read));
@@ -74,6 +85,22 @@ database::find_node(const node::node_id id) const
    assert(it != nodes.end());
    
    return it->second;
+}
+
+node*
+database::create_node(void)
+{
+   utils::spinlock::scoped_lock l(mtx);
+
+   ++max_node_id;
+   ++max_translated_id;
+
+   node *ret(create_fn(max_node_id, max_translated_id));
+   
+   translation[max_node_id] = max_translated_id;
+   nodes[max_node_id] = ret;
+
+   return ret;
 }
 
 void

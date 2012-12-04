@@ -39,7 +39,7 @@ node::add_tuple(vm::tuple *tpl, ref_count many)
    const predicate* pred(tpl->get_predicate());
    tuple_trie *tr(get_storage(pred));
    
-   if(pred->is_route_pred()) {
+   if(pred->is_route_pred() && pred->is_persistent_pred()) {
       const predicate_id pred_id(pred->get_id());
       edge_map::iterator it(edge_info.find(pred_id));
       
@@ -196,7 +196,7 @@ node::assert_end(void) const
 }
 
 node::node(const node_id _id, const node_id _trans):
-   id(_id), translation(_trans)
+   id(_id), translation(_trans), owner(NULL)
 {
 }
 

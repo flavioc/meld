@@ -61,6 +61,7 @@ const size_t END_LINEAR_BASE     = 1;
 const size_t RULE_BASE           = 1 + uint_size;
 const size_t RULE_DONE_BASE      = 1;
 const size_t SAVE_ORIGINAL_BASE  = 1 + jump_size;
+const size_t NEW_NODE_BASE       = 2;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -82,6 +83,7 @@ enum instr_type {
    RULE_INSTR           =  0x10,
    RULE_DONE_INSTR      =  0x11,
    SAVE_ORIGINAL_INSTR  =  0x12,
+   NEW_NODE_INSTR       =  0x13,
    CALL_INSTR		      =  0x20,
    MOVE_INSTR		      =  0x30,
    ALLOC_INSTR		      =  0x40,
@@ -320,6 +322,9 @@ inline size_t rule_get_id(const pcounter pc) { return pcounter_uint(pc + 1); }
 
 /* SAVE ORIGINAL */
 inline code_offset_t save_original_jump(const pcounter pc) { return jump_get(pc, 1); }
+
+/* NEW NODE */
+inline reg_num new_node_reg(const pcounter pc) { return reg_get(pc, 1); }
 
 /* advance function */
 
@@ -660,6 +665,9 @@ advance(pcounter pc)
 
       case SAVE_ORIGINAL_INSTR:
          return pc + SAVE_ORIGINAL_BASE;
+
+      case NEW_NODE_INSTR:
+         return pc + NEW_NODE_BASE;
 				
       case ELSE_INSTR:
       default:

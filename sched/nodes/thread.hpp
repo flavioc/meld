@@ -17,16 +17,10 @@ class thread_node: public in_queue_node
 {
 public:
 	   
-   sched::base *owner;
 	utils::spinlock spin;
 	
 	typedef queue::safe_bounded_pqueue<process::node_work>::type queue_type;
 	queue_type queue;
-   
-   inline void set_owner(sched::base *_owner) { owner = _owner; }
-   
-   inline sched::base* get_owner(void) { return owner; }
-   inline const sched::base* get_owner(void) const { return owner; }
    
    inline void add_work(process::node_work& new_work)
    {
@@ -54,7 +48,6 @@ public:
    
    explicit thread_node(const db::node::node_id _id, const db::node::node_id _trans):
       in_queue_node(_id, _trans),
-      owner(NULL),
       queue(vm::program::MAX_STRAT_LEVEL)
    {}
    
