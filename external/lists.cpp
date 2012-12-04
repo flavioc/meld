@@ -1,11 +1,16 @@
 
 #include <cmath>
+#include <boost/algorithm/string.hpp>
 
 #include "runtime/list.hpp"
 #include "external/lists.hpp"
+#include "runtime/string.hpp"
+#include "utils/utils.hpp"
 
 using namespace std;
 using namespace runtime;
+using namespace boost::algorithm;
+using namespace utils;
 
 namespace vm
 {
@@ -164,6 +169,31 @@ intlistappend(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
    }
 
    int_list *ptr(from_stack_to_list<stack_int_list, int_list>(s));
+
+   RETURN_INT_LIST(ptr);
+}
+
+argument
+str2intlist(EXTERNAL_ARG(str))
+{
+   DECLARE_STRING(str);
+
+   stack_int_list st;
+   const string s(str->get_content());
+
+   vector<string> vec;
+   split(vec, s, is_any_of(", "), token_compress_on);
+
+   for(vector<string>::const_iterator it(vec.begin()), end(vec.end());
+      it != end;
+      ++it)
+   {
+      int_val i;
+      from_string(i, *it, std::dec);
+      st.push(i);
+   }
+
+   int_list *ptr(from_stack_to_list<stack_int_list, int_list>(st));
 
    RETURN_INT_LIST(ptr);
 }
