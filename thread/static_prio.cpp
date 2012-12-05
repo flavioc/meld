@@ -661,30 +661,33 @@ static_local_prio::get_work(work& new_work)
    assert(current_node->in_queue());
    assert(current_node->has_work());
    
-	node_work unit;
-	
-#if 1
    if(state::PROGRAM->has_global_priority()) {
+      node_work unit;
+
       if(current_node->get_local_strat_level() < state::PROGRAM->get_priority_strat_level())
          unit = current_node->get_work();
       else if(current_node->has_prio_work())
          unit = current_node->prioritized_tuples.pop();
       else
          unit = current_node->get_work();
-   } else
-      unit = current_node->get_work();
+      new_work.copy_from_node(current_node, unit);
+   
+      assert(new_work.get_node() == current_node);
+   
+      assert_thread_pop_work();
+   
+   } else {
+#if 1
+      new_work.set_work_with_rules(current_node);
 #else
-	if(current_node->has_normal_work())
-		unit = current_node->get_work();
-	else
-		unit = current_node->prioritized_tuples.pop();
+      node_work unit = current_node->get_work();
+      new_work.copy_from_node(current_node, unit);
+   
+      assert(new_work.get_node() == current_node);
+   
+      assert_thread_pop_work();
 #endif
-   
-   new_work.copy_from_node(current_node, unit);
-   
-   assert(new_work.get_node() == current_node);
-   
-   assert_thread_pop_work();
+   }
    
    return true;
 }
@@ -887,7 +890,6 @@ static_local_prio::init(const size_t)
    for(; it != end; ++it)
    {
       thread_intrusive_node *cur_node((thread_intrusive_node*)it->second);
-      cur_node->set_owner(this);
       
       init_node(cur_node);
 

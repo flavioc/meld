@@ -79,6 +79,7 @@ public:
    
    static_local *find_scheduler(const db::node *);
    virtual db::simple_tuple_vector gather_active_tuples(db::node *, const vm::predicate_id);
+   virtual void gather_next_tuples(db::node *, db::simple_tuple_list&);
 	
    static db::node *create_node(const db::node::node_id id, const db::node::node_id trans)
    {

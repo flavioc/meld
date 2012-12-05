@@ -397,6 +397,7 @@ static_local::get_work(work& new_work)
    assert(current_node->in_queue());
    assert(current_node->has_work());
    
+#if 0
    node_work unit(current_node->get_work());
    
    new_work.copy_from_node(current_node, unit);
@@ -404,6 +405,9 @@ static_local::get_work(work& new_work)
    assert(new_work.get_node() == current_node);
    
    assert_thread_pop_work();
+#else
+   new_work.set_work_with_rules(current_node);
+#endif
    
    return true;
 }
@@ -416,17 +420,18 @@ static_local::end(void)
 void
 static_local::init(const size_t)
 {
-   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
-   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(remote::self->find_last_node(id)));
+   const node::node_id first_node(remote::self->find_first_node(id));
+   const node::node_id last_node(remote::self->find_last_node(id));
+
+   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(first_node));
+   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(last_node));
    
    for(; it != end; ++it)
    {
       thread_node *cur_node((thread_node*)it->second);
-      cur_node->set_owner(this);
       
       init_node(cur_node);
       
-      assert(cur_node->get_owner() == this);
       assert(cur_node->in_queue());
       assert(cur_node->has_work());
    }
@@ -450,6 +455,21 @@ static_local::gather_active_tuples(db::node *node, const vm::predicate_id pred)
 	}
 	
 	return ls;
+}
+
+void
+static_local::gather_next_tuples(db::node *node, simple_tuple_list& ls)
+{
+	thread_intrusive_node *no((thread_intrusive_node*)node);
+   list<process::node_work> work_ls;
+
+   no->queue.top_list(work_ls);
+
+   for(list<process::node_work>::iterator it(work_ls.begin()), end(work_ls.end()); it != end; ++it) {
+      node_work unit(*it);
+
+      ls.push_back(unit.get_tuple());
+   }
 }
 
 static_local*
