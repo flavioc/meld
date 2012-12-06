@@ -71,9 +71,7 @@ protected:
 
 	inline void add_to_priority_queue(thread_intrusive_node *node)
 	{
-		heap_priority pr;
-		pr.int_priority = node->get_priority_level();
-		prio_queue.insert(node, pr);
+		prio_queue.insert(node, node->get_priority_level());
 	}
    
    virtual void add_to_queue(thread_intrusive_node *node)
@@ -107,6 +105,7 @@ public:
    
    static_local_prio *find_scheduler(const db::node *);
 	virtual db::simple_tuple_vector gather_active_tuples(db::node *, const vm::predicate_id);
+   virtual void gather_next_tuples(db::node *, db::simple_tuple_list&);
    
    static db::node *create_node(const db::node::node_id id, const db::node::node_id trans)
    {

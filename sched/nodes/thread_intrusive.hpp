@@ -10,6 +10,7 @@
 #include "sched/base.hpp"
 #include "process/work.hpp"
 #include "queue/safe_simple_pqueue.hpp"
+#include "vm/state.hpp"
 
 namespace sched
 {
@@ -21,7 +22,7 @@ class thread_intrusive_node: public thread_node
 	
 private:
 	
-	int priority_level;
+   heap_priority priority_level;
 	
 public:
 
@@ -36,9 +37,23 @@ public:
 	virtual bool has_normal_work(void) const { return thread_node::has_work(); }
 	virtual bool has_work(void) const { return thread_node::has_work() || !prioritized_tuples.empty(); }
 
-	inline int get_priority_level(void) { return priority_level; }
-	inline void set_priority_level(const int level) { priority_level = level; }
-	inline bool has_priority_level(void) const { return priority_level > 0; }
+	inline heap_priority get_priority_level(void) { return priority_level; }
+	inline vm::int_val get_int_priority_level(void) { return priority_level.int_priority; }
+	inline vm::float_val get_float_priority_level(void) { return priority_level.float_priority; }
+	inline void set_priority_level(const heap_priority level) { priority_level = level; }
+   inline void set_int_priority_level(const vm::int_val level) { priority_level.int_priority = level; }
+   inline void set_float_priority_level(const vm::float_val level) { priority_level.float_priority = level; }
+	inline bool has_priority_level(void) const {
+      switch(vm::state::PROGRAM->get_priority_type()) {
+         case vm::FIELD_INT:
+            return priority_level.int_priority > 0;
+         case vm::FIELD_FLOAT:
+            return priority_level.float_priority > 0.0;
+         default:
+            assert(false);
+            return false;
+      }
+   }
 
 	// xxx to remove
 	bool has_been_prioritized;
@@ -47,11 +62,12 @@ public:
    explicit thread_intrusive_node(const db::node::node_id _id, const db::node::node_id _trans):
 		thread_node(_id, _trans),
       INIT_DOUBLE_QUEUE_NODE(), INIT_PRIORITY_NODE(),
-		priority_level(0),
       moving_around(false),
 		has_been_prioritized(false),
       has_been_touched(false)
    {
+      priority_level.float_priority = 0;
+      priority_level.int_priority = 0;
 	}
    
    virtual ~thread_intrusive_node(void) {}

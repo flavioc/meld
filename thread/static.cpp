@@ -101,29 +101,6 @@ static_local::new_work_other(sched::base *, work& new_work)
    } else {
       assert(is_active());
    }
-#if 0
-	spinlock::scoped_lock l(tnode->spin);
-   if(!tnode->in_queue() && tnode->has_work()) {
-		static_local *owner(dynamic_cast<static_local*>(tnode->get_owner()));
-		
-		tnode->set_in_queue(true);
-		owner->add_to_queue(tnode);
-
-      if(this != owner) {
-         spinlock::scoped_lock l2(owner->lock);
-         
-         if(owner->is_inactive() && owner->has_work())
-         {
-            owner->set_active();
-            assert(owner->is_active());
-         }
-      } else {
-         assert(is_active());
-      }
-         
-      assert(tnode->in_queue());
-   }
-#endif
 #ifdef INSTRUMENTATION
    sent_facts++;
 #endif
@@ -461,11 +438,11 @@ void
 static_local::gather_next_tuples(db::node *node, simple_tuple_list& ls)
 {
 	thread_intrusive_node *no((thread_intrusive_node*)node);
-   list<process::node_work> work_ls;
+   list<node_work> work_ls;
 
    no->queue.top_list(work_ls);
 
-   for(list<process::node_work>::iterator it(work_ls.begin()), end(work_ls.end()); it != end; ++it) {
+   for(list<node_work>::iterator it(work_ls.begin()), end(work_ls.end()); it != end; ++it) {
       node_work unit(*it);
 
       ls.push_back(unit.get_tuple());

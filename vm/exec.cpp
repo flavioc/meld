@@ -264,6 +264,16 @@ move_to_const(pcounter m, state& state, const instr_val& from)
 		
 		const const_id cid(pcounter_const_id(m));
 		state.set_const_node(cid, node);
+   } else if(val_is_string(from)) {
+		const uint_val id(pcounter_uint(m));
+		
+		pcounter_move_uint(&m);
+
+      rstring::ptr str(state::PROGRAM->get_default_string(id));
+
+		const const_id cid(pcounter_const_id(m));
+
+      state.set_const_string(cid, str);
 	} else
 		throw vm_exec_error("invalid move to const (move_to_const)");
 }
@@ -559,6 +569,12 @@ rstring::ptr get_op_function<rstring::ptr>(const instr_val& val, pcounter& m, st
 		state.add_string(s);
 		
 		return s;
+   } else if(val_is_const(val)) {
+		const const_id cid(pcounter_const_id(m));
+		
+		pcounter_move_const_id(&m);
+		
+		return state.get_const_string(cid);
 	} else
 		throw vm_exec_error("unable to get a string");
 }

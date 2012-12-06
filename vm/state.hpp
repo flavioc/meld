@@ -88,6 +88,8 @@ public:
 	define_set_const(int, int_val&, *(int_val*)(consts + id) = val)
 	define_set_const(float, float_val&, *(float_val*)(consts + id) = val)
 	define_set_const(node, node_val&, *(node_val*)(consts +id) = val)
+	define_set_const(ptr, ptr_val&, *(ptr_val*)(consts + id) = val);
+	define_set_const(string, runtime::rstring::ptr, set_const_ptr(id, (ptr_val)val));
 	
 #undef define_set_const
 	

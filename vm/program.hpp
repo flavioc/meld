@@ -78,12 +78,18 @@ public:
       return rules[id];
    }
 
-	predicate *get_priority_predicate(void) const { return priority_pred; }
-	field_num get_priority_argument(void) const { return priority_argument; }
-   strat_level get_priority_strat_level(void) const { return priority_strat_level; }
-	bool is_global_priority_asc(void) const { return priority_asc; }
-	bool is_global_priority_desc(void) const { return !priority_asc; }
-	bool has_global_priority(void) const { return priority_pred != NULL; }
+	inline predicate *get_priority_predicate(void) const { return priority_pred; }
+	inline field_num get_priority_argument(void) const { return priority_argument; }
+   inline field_type get_priority_type(void) const {
+      if(has_global_priority())
+         return priority_pred->get_field_type(priority_argument);
+      else
+         return FIELD_INT;
+   }
+   inline strat_level get_priority_strat_level(void) const { return priority_strat_level; }
+	inline bool is_global_priority_asc(void) const { return priority_asc; }
+	inline bool is_global_priority_desc(void) const { return !priority_asc; }
+	inline bool has_global_priority(void) const { return priority_pred != NULL; }
 	
    predicate *get_predicate_by_name(const std::string&) const;
    
