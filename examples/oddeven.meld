@@ -1,0 +1,99 @@
+
+type route linear elem(node, node, node, int, int).
+type route linear hd(node, node, int).
+type route linear tl(node, node, int).
+type linear switch(node).
+type linear test-and-send(node, int).
+type linear change(node, int).
+type linear iterations(node, int).
+type linear force-switch(node).
+type linear reduce(node, list int).
+
+const left = 0.
+const right = 1.
+const waiting = 2.
+const max = 36.
+
+hd(@0, @1, right).
+elem(@1, @0, @2, left, 3).
+elem(@2, @1, @3, right, 5).
+elem(@3, @2, @4, left, 1).
+elem(@4, @3, @5, right, 2).
+elem(@5, @4, @6, left, 4).
+elem(@6, @5, @7, right, 0).
+tl(@7, @6, left).
+
+iterations(A, 0).
+
+/* hd with right can change immediately */
+hd(A, B, right),
+iterations(A, N),
+N < max
+   -o hd(A, B, left), iterations(A, N + 1).
+/* ... same thing for tl, but on the left */
+tl(A, B, left),
+iterations(A, N),
+N < max
+   -o tl(A, B, right), iterations(A, N + 1).
+
+/* for tl on the right, we force the elem on the left to change to right */
+tl(A, B, right),
+iterations(A, N),
+N < max
+   -o force-switch(B), tl(A, B, left), iterations(A, N + 1).
+
+/* elem on the right, sends message to elem on the left to decide */
+elem(A, L, R, right, N),
+iterations(A, I),
+I < max
+   -o test-and-send(L, N),
+      elem(A, L, R, waiting, N),
+      iterations(A, I + 1).
+
+/* elem on the left, is smaller, so everything is right */
+elem(A, L, R, left, M),
+test-and-send(A, N),
+iterations(A, I),
+M <= N
+   -o elem(A, L, R, right, M), switch(R), iterations(A, I + 1).
+/* ... in this case, we must switch */
+elem(A, L, R, left, M),
+test-and-send(A, N),
+iterations(A, I),
+M > N
+   -o elem(A, L, R, right, N), change(R, M), iterations(A, I + 1).
+
+/* elem on the right must switch to left, no number change */
+elem(A, L, R, waiting, N),
+switch(A)
+   -o elem(A, L, R, left, N).
+/* force-switch is sent from tl */
+elem(A, L, R, left, N),
+force-switch(A),
+iterations(A, I)
+   -o elem(A, L, R, right, N), iterations(A, I + 1).
+/* elem on the right must switch to left and also change its number */
+elem(A, L, R, waiting, N),
+change(A, M)
+   -o elem(A, L, R, left, M).
+
+/* in the case hd receives test-and-send, we just send a switch back */
+hd(A, R, left),
+test-and-send(A, _),
+iterations(A, I)
+   -o hd(A, R, right),
+      switch(R),
+      iterations(A, I + 1).
+
+/* when everything's sorted, we just collect the numbers as a list */
+tl(A, L, _),
+iterations(A, max)
+   -o reduce(L, []).
+elem(A, L, R, _, N),
+iterations(A, max),
+reduce(A, Ls)
+   -o reduce(L, [N | Ls]).
+hd(A, R, _),
+iterations(A, max),
+reduce(A, Ls)
+   -o reduce(A, Ls).

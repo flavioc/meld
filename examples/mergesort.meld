@@ -1,0 +1,142 @@
+
+type route linear cons(node, int, node, node).
+type route linear xnil(node, node).
+type route linear merge(node, node, node, node).
+type linear childnil(node, node).
+type route linear childcons(node, node, int, node).
+type route linear childmerge(node, node, node, node).
+type linear token(node).
+type linear deletenil(node).
+type linear deletecons(node).
+type linear deletemerge(node).
+type linear result(node, list int).
+type linear change-parent(node, node).
+
+/*xnil(@0, @1).  cons(@1, 9, @0, @2).  cons(@2, 8, @1, @5).  xnil(@3, @4).  cons(@4, 7, @3, @5).  merge(@5, @2, @4, @8).  cons(@6, 6, @7, @8).  xnil(@7, @6).  merge(@8, @6, @5, @8).*/
+/*xnil(@0, @1).  xnil(@2, @1).  merge(@1, @0, @2, @1).*/
+/*merge(@0, @1, @2, @0). cons(@1, 1, @3, @0). xnil(@2, @0). xnil(@3, @1).*/
+/*merge(@0, @1, @2, @0). cons(@1, 1, @3, @0). cons(@2, 2, @4, @0). xnil(@3, @1). xnil(@4, @2).*/
+xnil(@0, @1). cons(@1, 3, @0, @4).
+xnil(@2, @3). cons(@3, 8, @2, @4).
+merge(@4, @3, @1, @10).
+
+xnil(@5, @6). cons(@6, 1, @5, @9).
+xnil(@7, @8). cons(@8, 10, @7, @9).
+merge(@9, @6, @8, @10).
+
+merge(@10, @9, @4, @16).
+
+xnil(@11, @12). cons(@12, 15, @11, @15).
+xnil(@13, @14). cons(@14, 11, @13, @15).
+merge(@15, @12, @14, @16).
+
+merge(@16, @15, @10, @16).
+
+token(A).
+
+cons(A, Child, N, Parent),
+change-parent(A, NewParent)
+   -o token(A),
+      cons(A, Child, N, NewParent).
+
+xnil(A, Parent),
+change-parent(A, NewParent)
+   -o token(A),
+      xnil(A, NewParent).
+
+xnil(A, Parent),
+token(A),
+Parent <> A
+   -o childnil(Parent, A),
+      xnil(A, Parent).
+
+/* merge tells parent it is a merge */
+merge(A, Child1, Child2, Parent),
+Parent <> A,
+token(A)
+   -o childmerge(Parent, A, Child1, Child2),
+      merge(A, Child1, Child2, Parent).
+merge(A, Child1, Child2, Parent),
+Parent = A,
+token(A)
+   -o merge(A, Child1, Child2, Parent).
+
+/* cons tells parent it is a cons */
+cons(A, N, Child, Parent),
+token(A),
+Parent <> A
+   -o childcons(Parent, A, N, Child),
+      cons(A, N, Child, Parent).
+cons(A, N, Child, Parent),
+token(A),
+Parent = A
+   -o cons(A, N, Child, Parent).
+
+/* we don't care if child is a nil */
+cons(A, N, Child, Parent), childnil(A, Child) -o cons(A, N, Child, Parent).
+
+/* we don't care if child is a cons */
+cons(A, N, Child, Parent), childcons(A, _, _, _) -o cons(A, N, Child, Parent).
+
+/* we don't care if child is merge */
+cons(A, N, Child, Parent), childmerge(A, _, _, _) -o cons(A, N, Child, Parent).
+
+/* merge D Dl Dr, nil Dl, nil Dr -o nil D */
+merge(A, Child1, Child2, Parent),
+childnil(A, Child1),
+childnil(A, Child2)
+   -o xnil(A, Parent),
+      deletenil(Child1),
+      deletenil(Child2).
+
+/* merge D Dl Dr, nil Dl, cons Dr N Dr' -o cons D N Dr' */
+merge(A, Child1, Child2, Parent),
+childnil(A, Child1),
+childcons(A, Child2, N, Child22)
+   -o cons(A, N, Child22, Parent),
+      token(A),
+      deletecons(Child2),
+      deletenil(Child1).
+merge(A, Child1, Child2, Parent),
+childcons(A, Child1, N, Child12),
+childnil(A, Child2)
+   -o cons(A, N, Child12, Parent),
+      token(A),
+      deletecons(Child1),
+      deletenil(Child2).
+
+/* merge D Dl Dr, nil Dl, merge Dr Drl Drr -o merge D Drl Drr */
+merge(A, Child1, Child2, Parent),
+childmerge(A, Child1, Child11, Child12),
+childnil(A, Child2)
+   -o merge(A, Child11, Child12, Parent),
+      deletenil(Child2),
+      deletemerge(Child1),
+      change-parent(Child11, A),
+      change-parent(Child12, A).
+merge(A, Child1, Child2, Parent),
+childnil(A, Child1),
+childmerge(A, Child2, Child21, Child22)
+   -o merge(A, Child21, Child22, Parent),
+      change-parent(Child21, A),
+      change-parent(Child21, A),
+      deletemerge(Child2),
+      deletenil(Child1).
+
+/* merge/cc/leq: merge D Dl, Dr, cons Dl M Dl', cons Dr N Dr', M <= N */
+merge(A, Child1, Child2, Parent),
+childcons(A, Child1, M, Child11),
+childcons(A, Child2, N, Child21),
+M <= N
+   -o exists D. (cons(A, M, D, Parent), token(A), merge(D, Child11, Child2, A), change-parent(Child2, D), change-parent(Child11, D), deletecons(Child1)).
+/* merge/cc/gtr: merge D Dl Dr, cons Dl M Dl', cons Dr N Dr', M > N */
+merge(A, Child1, Child2, Parent),
+childcons(A, Child1, M, Child11),
+childcons(A, Child2, N, Child21),
+M > N
+   -o exists D. (cons(A, N, D, Parent), token(A), merge(D, Child1, Child21, A), change-parent(Child1, D), change-parent(Child21, D), deletecons(Child2)).
+
+/* this deletes all stuff */
+xnil(A, _), deletenil(A) -o 1.
+cons(A, _, _, _), deletecons(A) -o 1.
+merge(A, _, _, _), deletemerge(A) -o 1.
