@@ -102,7 +102,7 @@ show_version(void)
 	cout << "Meld Parallel Environment " << VERSION << endl;
 	cout << "using ";
 	switch(sched_type) {
-		case SCHED_SERIAL_LOCAL:
+		case SCHED_SERIAL:
 			cout << "sequential scheduler";
 			break;
 		default:

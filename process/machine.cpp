@@ -304,10 +304,9 @@ static inline database::create_node_fn
 get_creation_function(const scheduler_type sched_type)
 {
    switch(sched_type) {
-      case SCHED_THREADS_STATIC_LOCAL:
-      case SCHED_THREADS_SINGLE_LOCAL:
+      case SCHED_THREADS:
          return database::create_node_fn(sched::static_local::create_node);
-      case SCHED_THREADS_STATIC_LOCAL_PRIO:
+      case SCHED_THREADS_PRIO:
          return database::create_node_fn(sched::static_local_prio::create_node);
 #if 0
       case SCHED_THREADS_DYNAMIC_LOCAL:
@@ -321,9 +320,9 @@ get_creation_function(const scheduler_type sched_type)
       case SCHED_MPI_AND_THREADS_SINGLE_LOCAL:
          return database::create_node_fn(sched::mpi_thread_single::create_node);
 #endif
-      case SCHED_SERIAL_LOCAL:
+      case SCHED_SERIAL:
          return database::create_node_fn(sched::serial_local::create_node);
-		case SCHED_SERIAL_UI_LOCAL:
+		case SCHED_SERIAL_UI:
 			return database::create_node_fn(sched::serial_ui_local::create_node);
       case SCHED_UNKNOWN:
          return NULL;
@@ -354,10 +353,10 @@ machine::machine(const string& file, router& _rout, const size_t th,
    mem::init(num_threads);
    
    switch(sched_type) {
-      case SCHED_THREADS_STATIC_LOCAL:
+      case SCHED_THREADS:
          process_list = sched::static_local::start(num_threads);
          break;
-      case SCHED_THREADS_STATIC_LOCAL_PRIO:
+      case SCHED_THREADS_PRIO:
          process_list = sched::static_local_prio::start(num_threads);
          break;
 #if 0
@@ -380,10 +379,10 @@ machine::machine(const string& file, router& _rout, const size_t th,
          process_list = sched::mpi_thread_single::start(num_threads);
          break;
 #endif
-      case SCHED_SERIAL_LOCAL:
+      case SCHED_SERIAL:
          process_list.push_back(dynamic_cast<sched::base*>(new sched::serial_local()));
          break;
-		case SCHED_SERIAL_UI_LOCAL:
+		case SCHED_SERIAL_UI:
 			process_list.push_back(dynamic_cast<sched::base*>(new sched::serial_ui_local()));
 			break;
       case SCHED_UNKNOWN: assert(false); break;

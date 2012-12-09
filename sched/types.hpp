@@ -7,46 +7,30 @@ namespace sched
    
 enum scheduler_type {
    SCHED_UNKNOWN,
-   SCHED_THREADS_STATIC_LOCAL,
-   SCHED_THREADS_SINGLE_LOCAL,
-   SCHED_THREADS_DYNAMIC_LOCAL,
-   SCHED_THREADS_DIRECT_LOCAL,
-   SCHED_THREADS_STATIC_LOCAL_PRIO,
-   SCHED_MPI_AND_THREADS_STATIC_LOCAL,
-   SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL,
-   SCHED_MPI_AND_THREADS_SINGLE_LOCAL,
-   SCHED_SERIAL_LOCAL,
-	SCHED_SERIAL_UI_LOCAL
+   SCHED_THREADS,
+   SCHED_THREADS_PRIO,
+   SCHED_SERIAL,
+	SCHED_SERIAL_UI
 };
 
 inline bool is_serial_sched(const scheduler_type type)
 {
-   return type == SCHED_SERIAL_LOCAL;
+   return type == SCHED_SERIAL || type == SCHED_SERIAL_UI;
 }
 
-inline bool is_mpi_sched(const scheduler_type type)
+inline bool is_mpi_sched(const scheduler_type)
 {
-   return type == SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL ||
-      type == SCHED_MPI_AND_THREADS_STATIC_LOCAL ||
-      type == SCHED_MPI_AND_THREADS_SINGLE_LOCAL;
+   return false;
 }
 
 inline bool is_work_stealing_sched(const scheduler_type type)
 {
-   return type == SCHED_THREADS_DYNAMIC_LOCAL ||
-      type == SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL ||
-      type == SCHED_THREADS_DIRECT_LOCAL;
-}
-
-inline bool is_indirect_work_stealing_sched(const scheduler_type type)
-{
-   return type == SCHED_THREADS_DYNAMIC_LOCAL ||
-      type == SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL;
+   return type == SCHED_THREADS || type == SCHED_THREADS_PRIO;
 }
 
 inline bool is_priority_sched(const scheduler_type type)
 {
-   return type == SCHED_THREADS_STATIC_LOCAL_PRIO;
+   return type == SCHED_THREADS_PRIO;
 }
 
 }

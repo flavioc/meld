@@ -27,12 +27,23 @@ bool memory_statistics = false;
 bool running = false;
 char *program_running = NULL;
 
+static inline size_t
+num_cpus_available(void)
+{
+    return (size_t)sysconf(_SC_NPROCESSORS_ONLN );
+}
+
 static inline bool
 match_mpi(const char *name, char *arg, const scheduler_type type)
 {
    const size_t len(strlen(name));
-   
-   if(strlen(arg) > len && strncmp(name, arg, len) == 0) {
+
+   if(strlen(arg) == len && strncmp(name, arg, len) == 0) {
+      sched_type = type;
+      arg += len;
+      num_threads = num_cpus_available();
+      return true;
+   } else if(strlen(arg) > len && strncmp(name, arg, len) == 0) {
       sched_type = type;
       arg += len;
       num_threads = (size_t)atoi(arg);
@@ -79,16 +90,10 @@ parse_sched(char *sched)
       fail_sched(sched);
    
    // attempt to parse the scheduler string
-   match_mpi("mpistatic", sched, SCHED_MPI_AND_THREADS_STATIC_LOCAL) ||
-      match_mpi("mpidynamic", sched, SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL) ||
-      match_mpi("mpisingle", sched, SCHED_MPI_AND_THREADS_SINGLE_LOCAL) ||
-      match_threads("tlp", sched, SCHED_THREADS_STATIC_LOCAL_PRIO) ||
-      match_threads("tl", sched, SCHED_THREADS_STATIC_LOCAL) ||
-      match_threads("td", sched, SCHED_THREADS_DYNAMIC_LOCAL) ||
-      match_threads("tx", sched, SCHED_THREADS_DIRECT_LOCAL) ||
-      match_threads("sin", sched, SCHED_THREADS_SINGLE_LOCAL) ||
-      match_serial("sl", sched, SCHED_SERIAL_LOCAL) ||
-		match_serial("ui", sched, SCHED_SERIAL_UI_LOCAL) ||
+   match_threads("thp", sched, SCHED_THREADS_PRIO) ||
+      match_threads("th", sched, SCHED_THREADS) ||
+      match_serial("sl", sched, SCHED_SERIAL) ||
+		match_serial("ui", sched, SCHED_SERIAL_UI) ||
       fail_sched(sched);
 
 	if (num_threads == 0) {
@@ -103,8 +108,8 @@ help_schedulers(void)
 	cerr << "\t-c <scheduler>\tselect scheduling type" << endl;
 	cerr << "\t\t\tsl simple serial scheduler" << endl;
 	cerr << "\t\t\tui serial scheduler + ui" << endl;
-   cerr << "\t\t\ttlX multithreaded scheduler with task stealing" << endl;
-   cerr << "\t\t\ttlpX multithreaded scheduler with priorities and task stealing" << endl;
+   cerr << "\t\t\tthX multithreaded scheduler with task stealing" << endl;
+   cerr << "\t\t\tthpX multithreaded scheduler with priorities and task stealing" << endl;
 }
 
 bool

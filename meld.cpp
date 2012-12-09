@@ -118,7 +118,7 @@ main(int argc, char **argv)
    vm::machine_arguments margs(read_arguments(argc, argv));
 
    if(sched_type == SCHED_UNKNOWN) {
-      sched_type = SCHED_SERIAL_LOCAL;
+      sched_type = SCHED_SERIAL;
       num_threads = 1;
    }
 
