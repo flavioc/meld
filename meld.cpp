@@ -117,6 +117,11 @@ main(int argc, char **argv)
 {
    vm::machine_arguments margs(read_arguments(argc, argv));
 
+   if(sched_type == SCHED_UNKNOWN) {
+      sched_type = SCHED_SERIAL_LOCAL;
+      num_threads = 1;
+   }
+
    if(program == NULL && sched_type == SCHED_UNKNOWN) {
       cerr << "Error: please provide scheduler type and a program to run" << endl;
       return EXIT_FAILURE;
