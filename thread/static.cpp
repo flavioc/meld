@@ -46,8 +46,7 @@ static_local::new_agg(work& new_work)
    
    assert_thread_push_work();
    
-   node_work node_new_work(new_work);
-   to->add_work(node_new_work);
+   to->add_work(new_work.get_tuple());
    
    if(!to->in_queue()) {
       add_to_queue(to);
@@ -62,9 +61,7 @@ static_local::new_work(const node *, work& new_work)
    
    assert_thread_push_work();
    
-   node_work node_new_work(new_work);
-   
-   to->add_work(node_new_work);
+   to->add_work(new_work.get_tuple());
    //cout << id << " Add to queue node " << to->get_id() << endl;
    
    if(!to->in_queue()) {
@@ -111,12 +108,11 @@ static_local::retrieve_tuples(void)
 {
    while(!buffer.empty()) {
       work new_work(buffer.pop());
-      node_work node_new_work(new_work);
 		thread_intrusive_node *to(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
       static_local *owner(dynamic_cast<static_local*>(to->get_owner()));
 
       if(owner == this) {
-         to->add_work(node_new_work);
+         to->add_work(new_work.get_tuple());
          if(!to->moving_around && !to->in_queue()) {
             add_to_queue(to);
             to->set_in_queue(true);
@@ -291,15 +287,12 @@ static_local::terminate_iteration(void)
 }
 
 void
-static_local::finish_work(const work& work)
+static_local::finish_work(db::node *no)
 {
-   base::finish_work(work);
+   base::finish_work(no);
    
    assert(current_node != NULL);
    assert(current_node->in_queue());
-   if(current_node->get_owner() != this) {
-      cout << id << " node " << current_node->get_id() << endl;
-   }
    assert(current_node->get_owner() == this);
 }
 
@@ -354,11 +347,11 @@ static_local::set_next_node(void)
    return true;
 }
 
-bool
-static_local::get_work(work& new_work)
+node*
+static_local::get_work(void)
 {  
    if(!set_next_node())
-      return false;
+      return NULL;
 
 #ifdef TASK_STEALING
    if(answer_requests) {
@@ -374,19 +367,7 @@ static_local::get_work(work& new_work)
    assert(current_node->in_queue());
    assert(current_node->has_work());
    
-#if 0
-   node_work unit(current_node->get_work());
-   
-   new_work.copy_from_node(current_node, unit);
-   
-   assert(new_work.get_node() == current_node);
-   
-   assert_thread_pop_work();
-#else
-   new_work.set_work_with_rules(current_node);
-#endif
-   
-   return true;
+   return current_node;
 }
 
 void
@@ -438,15 +419,7 @@ void
 static_local::gather_next_tuples(db::node *node, simple_tuple_list& ls)
 {
 	thread_intrusive_node *no((thread_intrusive_node*)node);
-   list<node_work> work_ls;
-
-   no->queue.top_list(work_ls);
-
-   for(list<node_work>::iterator it(work_ls.begin()), end(work_ls.end()); it != end; ++it) {
-      node_work unit(*it);
-
-      ls.push_back(unit.get_tuple());
-   }
+   no->queue.top_list(ls);
 }
 
 static_local*

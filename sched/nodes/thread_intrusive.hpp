@@ -28,7 +28,7 @@ public:
 
    bool moving_around;
 	
-	typedef queue::heap_queue<process::node_work> prio_tuples_queue;
+	typedef queue::heap_queue<db::simple_tuple*> prio_tuples_queue;
 	prio_tuples_queue prioritized_tuples;
 
 	heap_priority get_min_value(void) const { return prioritized_tuples.min_value(); }

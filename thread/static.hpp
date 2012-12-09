@@ -72,8 +72,8 @@ public:
    virtual void new_work_other(sched::base *, process::work&);
    virtual void new_work_remote(process::remote *, const db::node::node_id, message *);
    
-   virtual bool get_work(process::work&);
-   virtual void finish_work(const process::work&);
+   virtual db::node* get_work(void);
+   virtual void finish_work(db::node *);
    virtual void end(void);
    virtual bool terminate_iteration(void);
    

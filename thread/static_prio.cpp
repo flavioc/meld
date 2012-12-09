@@ -203,12 +203,11 @@ static_local_prio::retrieve_prio_tuples(void)
 {
 	while(!prio_tuples.empty()) {
 		work new_work(prio_tuples.pop());
-		node_work node_new_work(new_work);
 		thread_intrusive_node *to(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
 		static_local_prio *owner((static_local_prio *)to->get_owner());
 		
 		if(owner == this) {
-			add_prio_tuple(node_new_work, to, node_new_work.get_tuple());
+			add_prio_tuple(new_work, to, new_work.get_tuple());
 		} else {
 			owner->prio_tuples.push(new_work);
 			
@@ -230,8 +229,7 @@ static_local_prio::new_agg(work& new_work)
    
    assert_thread_push_work();
    
-   node_work node_new_work(new_work);
-   to->add_work(node_new_work);
+   to->add_work(new_work.get_tuple());
    
    if(!to->in_queue()) {
       to->set_in_queue(true);
@@ -240,7 +238,7 @@ static_local_prio::new_agg(work& new_work)
 }
 
 void
-static_local_prio::add_prio_tuple(node_work node_new_work, thread_intrusive_node *to, db::simple_tuple *stpl)
+static_local_prio::add_prio_tuple(work new_work, thread_intrusive_node *to, db::simple_tuple *stpl)
 {
 	const field_num field(state::PROGRAM->get_priority_argument());
 	vm::tuple *tpl(stpl->get_tuple());
@@ -264,7 +262,7 @@ static_local_prio::add_prio_tuple(node_work node_new_work, thread_intrusive_node
 		default: assert(false);
 	}
 
-	to->prioritized_tuples.insert(node_new_work, valp);
+	to->prioritized_tuples.insert(new_work.get_tuple(), valp);
 
 	if(to != current_node) {
 		spinlock::scoped_lock l(to->spin);
@@ -327,14 +325,13 @@ static_local_prio::new_work(const node *, work& new_work)
    
    assert_thread_push_work();
    
-   node_work node_new_work(new_work);
-	db::simple_tuple *stpl(node_new_work.get_tuple());
+	db::simple_tuple *stpl(new_work.get_tuple());
 	const vm::predicate *pred(stpl->get_predicate());
 	
 	if(pred->is_global_priority()) {
-		add_prio_tuple(node_new_work, to, stpl);
+		add_prio_tuple(new_work, to, stpl);
 	} else {
-   	to->add_work(node_new_work);
+   	to->add_work(new_work.get_tuple());
 		if(!to->in_queue()) {
   			to->set_in_queue(true);
 			add_to_queue(to);
@@ -461,9 +458,9 @@ static_local_prio::terminate_iteration(void)
 }
 
 void
-static_local_prio::finish_work(const work& work)
+static_local_prio::finish_work(db::node *no)
 {
-   base::finish_work(work);
+   base::finish_work(no);
    
    assert(current_node != NULL);
    assert(current_node->in_queue());
@@ -650,14 +647,14 @@ loop_check:
    return true;
 }
 
-bool
-static_local_prio::get_work(work& new_work)
+node*
+static_local_prio::get_work(void)
 {
 	retrieve_prio_tuples();
    check_priority_buffer();
 	
    if(!set_next_node())
-      return false;
+      return NULL;
 
 #ifdef TASK_STEALING
    answer_steal_requests();
@@ -668,35 +665,7 @@ static_local_prio::get_work(work& new_work)
    assert(current_node->in_queue());
    assert(current_node->has_work());
    
-   if(state::PROGRAM->has_global_priority()) {
-      node_work unit;
-
-      if(current_node->get_local_strat_level() < state::PROGRAM->get_priority_strat_level())
-         unit = current_node->get_work();
-      else if(current_node->has_prio_work())
-         unit = current_node->prioritized_tuples.pop();
-      else
-         unit = current_node->get_work();
-      new_work.copy_from_node(current_node, unit);
-   
-      assert(new_work.get_node() == current_node);
-   
-      assert_thread_pop_work();
-   
-   } else {
-#if 1
-      new_work.set_work_with_rules(current_node);
-#else
-      node_work unit = current_node->get_work();
-      new_work.copy_from_node(current_node, unit);
-   
-      assert(new_work.get_node() == current_node);
-   
-      assert_thread_pop_work();
-#endif
-   }
-   
-   return true;
+   return current_node;
 }
 
 void
@@ -963,9 +932,10 @@ static_local_prio::gather_next_tuples(db::node *node, simple_tuple_list& ls)
 
 	thread_intrusive_node *no((thread_intrusive_node*)node);
 
-   while(!no->prioritized_tuples.empty()) {
-      node_work unit = no->prioritized_tuples.pop();
-      ls.push_back(unit.get_tuple());
+   if(no->get_local_strat_level() >= state::PROGRAM->get_priority_strat_level()) {
+      while(!no->prioritized_tuples.empty()) {
+         ls.push_back(no->prioritized_tuples.pop());
+      }
    }
 }
 

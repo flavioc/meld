@@ -15,14 +15,11 @@
 #include "interface.hpp"
 #include "sched/serial.hpp"
 #include "sched/serial_ui.hpp"
-#include "thread/mpi_dynamic.hpp"
-#include "thread/mpi_single.hpp"
-#include "thread/mpi_static.hpp"
+//#include "thread/mpi_dynamic.hpp"
+//#include "thread/mpi_single.hpp"
+//#include "thread/mpi_static.hpp"
 #include "thread/static_prio.hpp"
-#include "thread/direct.hpp"
-#include "thread/dynamic.hpp"
 #include "thread/static.hpp"
-#include "thread/single.hpp"
 
 using namespace process;
 using namespace db;

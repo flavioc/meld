@@ -24,7 +24,7 @@ private:
 	
 public:
 
-	virtual bool get_work(process::work&);
+	virtual db::node* get_work(void);
 	
 	virtual void init(const size_t);
 	virtual void end(void);

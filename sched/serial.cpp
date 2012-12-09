@@ -44,23 +44,23 @@ serial_local::assert_end_iteration(void) const
    assert_static_nodes_end_iteration(id);
 }
 
-bool
-serial_local::get_work(work& new_work)
+node*
+serial_local::get_work(void)
 {  
    if(current_node != NULL) {
       if(!current_node->has_work()) {
          current_node->set_in_queue(false);
          current_node = NULL;
          if(!has_work())
-            return false;
+            return NULL;
 			if(!queue_nodes.pop(current_node))
-				return false;
+				return NULL;
       }
    } else {
       if(!has_work())
-         return false;
+         return NULL;
 		if(!queue_nodes.pop(current_node))
-			return false;
+			return NULL;
       assert(current_node->has_work());
    }
    
@@ -68,9 +68,7 @@ serial_local::get_work(work& new_work)
    assert(current_node->has_work());
    assert(current_node->in_queue());
    
-   new_work.set_work_with_rules(current_node);
-   
-   return true;
+   return current_node;
 }
 
 bool

@@ -101,14 +101,11 @@ base::do_agg_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
 }
 
 void
-base::do_work(work& w)
+base::do_work(db::node *node)
 {
-   if(w.using_rules()) {
-		node *node(w.get_node());
-		state.run_node(node);
-      return;
-   }
+   state.run_node(node);
 
+#if 0
    auto_ptr<const simple_tuple> stuple(w.get_tuple()); // this will delete tuple automatically
    vm::tuple *tuple = stuple->get_tuple();
    ref_count count = stuple->get_count();
@@ -158,18 +155,19 @@ base::do_work(work& w)
             delete tuple; // as in the positive case, nothing to do
       }
    }
+#endif
 }
 
 
 void
 base::do_loop(void)
 {
-   work w;
+   db::node *node(NULL);
 
    while(true) {
-      while(get_work(w)) {
-         do_work(w);
-         finish_work(w);
+      while((node = get_work())) {
+         do_work(node);
+         finish_work(node);
       }
 
       assert_end_iteration();

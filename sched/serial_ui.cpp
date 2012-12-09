@@ -18,42 +18,30 @@ namespace sched
 	
 static serial_ui_local *scheduler(NULL);
 	
-bool
-serial_ui_local::get_work(work& new_work)
+node*
+serial_ui_local::get_work(void)
 {
-   bool ret = serial_local::get_work(new_work);
-   serial_node *n((serial_node*)new_work.get_node());
+   serial_node* n = (serial_node*)serial_local::get_work();
 
-   while(ret) {
+   while(n != NULL) {
       if(!n->has_work()) {
-         ret = serial_local::get_work(new_work);
-         n = (serial_node*)new_work.get_node();
-         if(!ret)
+         n = (serial_node*)serial_local::get_work();
+         if(n == NULL)
             continue;
-      }
-
-      simple_tuple *stpl(n->queue.top());
-
-      if(!stpl->can_be_consumed()) {
-         delete stpl->get_tuple();
-         delete stpl;
-         n->queue.pop();
-      } else {
-         break;
       }
    }
 
-   if(ret) {
+   if(n != NULL) {
       if(first_done) {
-         LOG_STEP_DONE(current_node);
+         LOG_STEP_DONE(n);
       } else
          first_done = true;
 		
-      LOG_STEP_START(new_work.get_node());
+      LOG_STEP_START(n);
       WAIT_FOR_NEXT();
    }
 	
-	return ret;
+	return n;
 }
 
 void

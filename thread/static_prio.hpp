@@ -65,7 +65,7 @@ protected:
    void make_inactive(void);
    virtual void generate_aggs(void);
    virtual bool busy_wait(void);
-	void add_prio_tuple(process::node_work, thread_intrusive_node *, db::simple_tuple *);
+	void add_prio_tuple(process::work, thread_intrusive_node *, db::simple_tuple *);
 	void retrieve_prio_tuples(void);
    void check_priority_buffer(void);
 
@@ -93,8 +93,8 @@ public:
    virtual void new_work_other(sched::base *, process::work&);
    virtual void new_work_remote(process::remote *, const db::node::node_id, message *);
    
-   virtual bool get_work(process::work&);
-   virtual void finish_work(const process::work&);
+   virtual db::node* get_work(void);
+   virtual void finish_work(db::node *);
    virtual void end(void);
    virtual bool terminate_iteration(void);
    

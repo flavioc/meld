@@ -59,7 +59,7 @@ protected:
 
 	void do_loop(void);
    void loop(void);
-	void do_work(process::work&);
+	void do_work(db::node *);
 	void do_agg_tuple_add(db::node *, vm::tuple *, const vm::ref_count);
 	void do_tuple_add(db::node *, vm::tuple *, const vm::ref_count);
    
@@ -127,9 +127,9 @@ public:
    virtual void init(const size_t) = 0;
    virtual void end(void) = 0;
    
-   virtual bool get_work(process::work&) = 0;
+   virtual db::node *get_work(void) = 0;
    
-   virtual void finish_work(const process::work&)
+   virtual void finish_work(db::node *)
    {
 #ifdef INSTRUMENTATION
       processed_facts++;

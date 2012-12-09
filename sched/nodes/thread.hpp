@@ -19,20 +19,15 @@ public:
 	   
 	utils::spinlock spin;
 	
-	typedef queue::safe_bounded_pqueue<process::node_work>::type queue_type;
+	typedef queue::safe_bounded_pqueue<db::simple_tuple*>::type queue_type;
 	queue_type queue;
    
-   inline void add_work(process::node_work& new_work)
+   inline void add_work(db::simple_tuple *stpl)
    {
-      queue.push(new_work, new_work.get_strat_level());
+      queue.push(stpl, stpl->get_strat_level());
    }
    
    virtual inline bool has_work(void) const { return !queue.empty(); }
-   
-   inline process::node_work get_work(void)
-   {
-      return queue.pop();
-   }
    
    virtual void assert_end(void) const
    {
