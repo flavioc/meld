@@ -1,7 +1,7 @@
 #include <iostream>
 #include <boost/thread/barrier.hpp>
 
-#include "thread/static_prio.hpp"
+#include "thread/prio.hpp"
 #include "db/database.hpp"
 #include "db/tuple.hpp"
 #include "process/remote.hpp"
@@ -35,14 +35,14 @@ namespace sched
 {
 
 void
-static_local_prio::assert_end(void) const
+threads_prio::assert_end(void) const
 {
    assert(priority_buffer.empty());
 	static_local::assert_end();
 }
 
 void
-static_local_prio::assert_end_iteration(void) const
+threads_prio::assert_end_iteration(void) const
 {
 	static_local::assert_end_iteration();
    assert(priority_buffer.empty());
@@ -50,7 +50,7 @@ static_local_prio::assert_end_iteration(void) const
 
 #ifdef TASK_STEALING
 void
-static_local_prio::check_stolen_nodes(void)
+threads_prio::check_stolen_nodes(void)
 {
    while(!stolen_nodes_buffer.empty()) {
       thread_intrusive_node *n(stolen_nodes_buffer.pop());
@@ -81,12 +81,12 @@ static_local_prio::check_stolen_nodes(void)
 }
 
 void
-static_local_prio::answer_steal_requests(void)
+threads_prio::answer_steal_requests(void)
 {
    bool flag(true);
 
    while(!steal_request_buffer.empty() && (!queue_nodes.empty() || !prio_queue.empty())) {
-      static_local_prio *target((static_local_prio*)steal_request_buffer.pop());
+      threads_prio *target((threads_prio*)steal_request_buffer.pop());
       thread_intrusive_node *node(NULL);
 
       size_t size(queue_nodes.size() + prio_queue.size());
@@ -135,7 +135,7 @@ static_local_prio::answer_steal_requests(void)
 #endif
 
 void
-static_local_prio::check_priority_buffer(void)
+threads_prio::check_priority_buffer(void)
 {
 #if 0
    while(!priority_buffer.empty()) {
@@ -153,7 +153,7 @@ static_local_prio::check_priority_buffer(void)
       priority_add_type typ(p.typ);
 
 		if(tn->get_owner() != this) {
-         static_local_prio *other((static_local_prio*)tn->get_owner());
+         threads_prio *other((threads_prio*)tn->get_owner());
          other->priority_buffer.push(p);
 			continue; // skip nodes we do not own
       }
@@ -199,12 +199,12 @@ static_local_prio::check_priority_buffer(void)
 }
 
 void
-static_local_prio::retrieve_prio_tuples(void)
+threads_prio::retrieve_prio_tuples(void)
 {
 	while(!prio_tuples.empty()) {
 		work new_work(prio_tuples.pop());
 		thread_intrusive_node *to(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
-		static_local_prio *owner((static_local_prio *)to->get_owner());
+		threads_prio *owner((threads_prio *)to->get_owner());
 		
 		if(owner == this) {
 			add_prio_tuple(new_work, to, new_work.get_tuple());
@@ -223,7 +223,7 @@ static_local_prio::retrieve_prio_tuples(void)
 }
 
 void
-static_local_prio::new_agg(work& new_work)
+threads_prio::new_agg(work& new_work)
 {
    thread_intrusive_node *to(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
    
@@ -238,7 +238,7 @@ static_local_prio::new_agg(work& new_work)
 }
 
 void
-static_local_prio::add_prio_tuple(work new_work, thread_intrusive_node *to, db::simple_tuple *stpl)
+threads_prio::add_prio_tuple(work new_work, thread_intrusive_node *to, db::simple_tuple *stpl)
 {
 	const field_num field(state::PROGRAM->get_priority_argument());
 	vm::tuple *tpl(stpl->get_tuple());
@@ -319,7 +319,7 @@ static_local_prio::add_prio_tuple(work new_work, thread_intrusive_node *to, db::
 }
 
 void
-static_local_prio::new_work(const node *, work& new_work)
+threads_prio::new_work(const node *, work& new_work)
 {
    thread_intrusive_node *to(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
    
@@ -342,7 +342,7 @@ static_local_prio::new_work(const node *, work& new_work)
 }
 
 void
-static_local_prio::new_work_other(sched::base *, work& new_work)
+threads_prio::new_work_other(sched::base *, work& new_work)
 {
    assert(is_active());
    
@@ -355,7 +355,7 @@ static_local_prio::new_work_other(sched::base *, work& new_work)
 	const vm::predicate *pred(stpl->get_predicate());
 	
 	if(pred->is_global_priority()) {
-		static_local_prio *owner(dynamic_cast<static_local_prio*>(tnode->get_owner()));
+		threads_prio *owner(dynamic_cast<threads_prio*>(tnode->get_owner()));
 		
 		owner->prio_tuples.push(new_work);
 		
@@ -371,7 +371,7 @@ static_local_prio::new_work_other(sched::base *, work& new_work)
       	assert(is_active());
    	}
 	} else {
-      static_local_prio *owner(dynamic_cast<static_local_prio*>(tnode->get_owner()));
+      threads_prio *owner(dynamic_cast<threads_prio*>(tnode->get_owner()));
 
       owner->buffer.push(new_work);
 
@@ -394,19 +394,19 @@ static_local_prio::new_work_other(sched::base *, work& new_work)
 }
 
 void
-static_local_prio::new_work_remote(remote *, const node::node_id, message *)
+threads_prio::new_work_remote(remote *, const node::node_id, message *)
 {
    assert(false);
 }
 
 void
-static_local_prio::generate_aggs(void)
+threads_prio::generate_aggs(void)
 {
    iterate_static_nodes(id);
 }
 
 bool
-static_local_prio::busy_wait(void)
+threads_prio::busy_wait(void)
 {
 #ifdef TASK_STEALING
    ins_sched;
@@ -445,7 +445,7 @@ static_local_prio::busy_wait(void)
 }
 
 bool
-static_local_prio::terminate_iteration(void)
+threads_prio::terminate_iteration(void)
 {
    START_ROUND();
    
@@ -458,7 +458,7 @@ static_local_prio::terminate_iteration(void)
 }
 
 void
-static_local_prio::finish_work(db::node *no)
+threads_prio::finish_work(db::node *no)
 {
    base::finish_work(no);
    
@@ -468,7 +468,7 @@ static_local_prio::finish_work(db::node *no)
 }
 
 bool
-static_local_prio::check_if_current_useless(void)
+threads_prio::check_if_current_useless(void)
 {
 	assert(current_node->in_queue());
 	
@@ -568,7 +568,7 @@ static size_t next_round(ROUND);
 #endif
 
 bool
-static_local_prio::set_next_node(void)
+threads_prio::set_next_node(void)
 {
 #ifdef USE_DELTA_ADJUST
    if(id == 0) {
@@ -648,7 +648,7 @@ loop_check:
 }
 
 node*
-static_local_prio::get_work(void)
+threads_prio::get_work(void)
 {
 	retrieve_prio_tuples();
    check_priority_buffer();
@@ -669,7 +669,7 @@ static_local_prio::get_work(void)
 }
 
 void
-static_local_prio::end(void)
+threads_prio::end(void)
 {
 #if defined(DEBUG_PRIORITIES) && defined(PROFILE_QUEUE)
 	cout << "prio_immediate: " << prio_immediate << endl;
@@ -709,7 +709,7 @@ static_local_prio::end(void)
 }
 
 void
-static_local_prio::add_node_priority_other(node *n, const int priority)
+threads_prio::add_node_priority_other(node *n, const int priority)
 {
    // this is called by the other scheduler!
    priority_add_item item;
@@ -720,7 +720,7 @@ static_local_prio::add_node_priority_other(node *n, const int priority)
 }
 
 void
-static_local_prio::set_node_priority_other(node *n, const int priority)
+threads_prio::set_node_priority_other(node *n, const int priority)
 {
    // this is called by the other scheduler!
    priority_add_item item;
@@ -731,7 +731,7 @@ static_local_prio::set_node_priority_other(node *n, const int priority)
 }
 
 void
-static_local_prio::add_node_priority(node *n, const int priority)
+threads_prio::add_node_priority(node *n, const int priority)
 {
 	thread_intrusive_node *tn((thread_intrusive_node*)n);
 
@@ -741,7 +741,7 @@ static_local_prio::add_node_priority(node *n, const int priority)
 }
 
 void
-static_local_prio::set_node_priority(node *n, const int priority)
+threads_prio::set_node_priority(node *n, const int priority)
 {
 	thread_intrusive_node *tn((thread_intrusive_node*)n);
 
@@ -826,7 +826,7 @@ static_local_prio::set_node_priority(node *n, const int priority)
 }
 
 void
-static_local_prio::init(const size_t)
+threads_prio::init(const size_t)
 {
 	if(state::PROGRAM->has_global_priority()) {
 		predicate *p(state::PROGRAM->get_priority_predicate());
@@ -883,16 +883,16 @@ static_local_prio::init(const size_t)
    threads_synchronize();
 }
 
-static_local_prio*
-static_local_prio::find_scheduler(const node *n)
+threads_prio*
+threads_prio::find_scheduler(const node *n)
 {
 	thread_intrusive_node *tn((thread_intrusive_node*)n);
 	
-	return (static_local_prio*)tn->get_owner();
+	return (threads_prio*)tn->get_owner();
 }
 
 simple_tuple_vector
-static_local_prio::gather_active_tuples(db::node *node, const vm::predicate_id pred)
+threads_prio::gather_active_tuples(db::node *node, const vm::predicate_id pred)
 {
 	simple_tuple_vector ls;
 	thread_intrusive_node *no((thread_intrusive_node*)node);
@@ -926,7 +926,7 @@ static_local_prio::gather_active_tuples(db::node *node, const vm::predicate_id p
 }
 
 void
-static_local_prio::gather_next_tuples(db::node *node, simple_tuple_list& ls)
+threads_prio::gather_next_tuples(db::node *node, simple_tuple_list& ls)
 {
    static_local::gather_next_tuples(node, ls);
 
@@ -940,7 +940,7 @@ static_local_prio::gather_next_tuples(db::node *node, simple_tuple_list& ls)
 }
 
 void
-static_local_prio::write_slice(statistics::slice& sl) const
+threads_prio::write_slice(statistics::slice& sl) const
 {
 #ifdef INSTRUMENTATION
    static_local::write_slice(sl);
@@ -950,22 +950,22 @@ static_local_prio::write_slice(statistics::slice& sl) const
 #endif
 }
 
-static_local_prio::static_local_prio(const vm::process_id _id):
+threads_prio::threads_prio(const vm::process_id _id):
    static_local(_id)
 {
 }
 
-static_local_prio::~static_local_prio(void)
+threads_prio::~threads_prio(void)
 {
 }
    
 vector<sched::base*>&
-static_local_prio::start(const size_t num_threads)
+threads_prio::start(const size_t num_threads)
 {
    init_barriers(num_threads);
    
    for(process_id i(0); i < num_threads; ++i)
-      add_thread(new static_local_prio(i));
+      add_thread(new threads_prio(i));
       
    return ALL_THREADS;
 }

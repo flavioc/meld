@@ -307,7 +307,7 @@ get_creation_function(const scheduler_type sched_type)
       case SCHED_THREADS:
          return database::create_node_fn(sched::static_local::create_node);
       case SCHED_THREADS_PRIO:
-         return database::create_node_fn(sched::static_local_prio::create_node);
+         return database::create_node_fn(sched::threads_prio::create_node);
 #if 0
       case SCHED_THREADS_DYNAMIC_LOCAL:
          return database::create_node_fn(sched::dynamic_local::create_node);
@@ -357,7 +357,7 @@ machine::machine(const string& file, router& _rout, const size_t th,
          process_list = sched::static_local::start(num_threads);
          break;
       case SCHED_THREADS_PRIO:
-         process_list = sched::static_local_prio::start(num_threads);
+         process_list = sched::threads_prio::start(num_threads);
          break;
 #if 0
       case SCHED_THREADS_SINGLE_LOCAL:

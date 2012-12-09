@@ -91,7 +91,7 @@ OBJS = utils/utils.o \
 			 sched/serial.o \
 			 sched/serial_ui.o \
 			 thread/static.o \
-			 thread/static_prio.o \
+			 thread/prio.o \
 			 sched/thread/threaded.o \
 			 sched/thread/assert.o \
 			 sched/mpi/tokenizer.o \

@@ -17,7 +17,7 @@
 namespace sched
 {
 
-class static_local_prio: public static_local
+class threads_prio: public static_local
 {
 protected:
    
@@ -103,7 +103,7 @@ public:
    virtual void add_node_priority_other(db::node *, const int);
    virtual void set_node_priority_other(db::node *, const int);
    
-   static_local_prio *find_scheduler(const db::node *);
+   threads_prio *find_scheduler(const db::node *);
 	virtual db::simple_tuple_vector gather_active_tuples(db::node *, const vm::predicate_id);
    virtual void gather_next_tuples(db::node *, db::simple_tuple_list&);
    
@@ -116,9 +116,9 @@ public:
    
    virtual void write_slice(statistics::slice&) const;
    
-   explicit static_local_prio(const vm::process_id);
+   explicit threads_prio(const vm::process_id);
    
-   virtual ~static_local_prio(void);
+   virtual ~threads_prio(void);
 };
 
 }
