@@ -20,7 +20,7 @@ $ make
 ;; To run a program
 $ ./meld -f <byte code file> -c sched
 
-;; Where sched is either sl, tl or tlp
+;; Where sched is either sl, th or thp
 ;; Both tl and tlp need the number of threads, thus to use 4 threads with tl you do:
 $ ./meld -f file.m -c tl4
 
