@@ -112,6 +112,14 @@ help_schedulers(void)
    cerr << "\t\t\tthpX multithreaded scheduler with priorities and task stealing" << endl;
 }
 
+static inline void
+finish(void)
+{
+	running = false;
+	program_running = NULL;
+	LOG_PROGRAM_STOPPED();
+}
+
 bool
 run_program(int argc, char **argv, const char *program, const vm::machine_arguments& margs)
 {
@@ -155,16 +163,14 @@ run_program(int argc, char **argv, const char *program, const vm::machine_argume
       }
 
 	} catch(machine_error& err) {
-		cerr << "VM error: " << err.what() << endl;
-		exit(EXIT_FAILURE);
+      finish();
+      throw err;
    } catch(db::database_error& err) {
-      cerr << "Database error: " << err.what() << endl;
-      exit(EXIT_FAILURE);
+      finish();
+      throw err;
    }
 
-	running = false;
-	program_running = NULL;
-	LOG_PROGRAM_STOPPED();
+   finish();
 
 	return true;
 }

@@ -18,7 +18,7 @@
 //#include "thread/mpi_dynamic.hpp"
 //#include "thread/mpi_single.hpp"
 //#include "thread/mpi_static.hpp"
-#include "thread/static_prio.hpp"
+#include "thread/prio.hpp"
 #include "thread/static.hpp"
 
 using namespace process;

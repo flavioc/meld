@@ -138,7 +138,15 @@ main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 	
-	run_program(argc, argv, program, margs);
+   try {
+      run_program(argc, argv, program, margs);
+   } catch(machine_error& err) {
+      cerr << "VM error: " << err.what() << endl;
+      exit(EXIT_FAILURE);
+   } catch(db::database_error& err) {
+      cerr << "Database error: " << err.what() << endl;
+      exit(EXIT_FAILURE);
+   }
 
    return EXIT_SUCCESS;
 }

@@ -368,6 +368,17 @@ manager::event_rule_applied(const db::node *who, const vm::rule *rule)
    SEND_ALL_CLIENTS();
 }
 
+void
+manager::event_new_node(const db::node *node)
+{
+   DECLARE_JSON("new_node");
+   
+   ADD_NODE_FIELD(node);
+   ADD_FIELD("translated", (int)node->get_translated_id());
+
+   SEND_ALL_CLIENTS();
+}
+
 }
 
 #endif /* USE_UI */

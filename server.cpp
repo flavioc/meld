@@ -89,7 +89,7 @@ show_inter_help(void)
 	cout << "Meld server command line" << endl;
 	
 	cout << "Commands:" << endl;
-	cout << "\tload <file>\t loads file and runs it" << endl;
+	cout << "\tload <file> [args]\t loads file and runs it" << endl;
 	cout << "\tstatus\t\t show server status" << endl;
 	cout << "\tversion\t\t show version" << endl;
 	cout << "\thelp\t\t show this text" << endl;
@@ -139,12 +139,14 @@ parse_command(string cmd)
 		return COMMAND_HELP;
 	if(cmd == "status")
 		return COMMAND_STATUS;
+   if(cmd == "quit")
+      return COMMAND_EXIT;
 		
 	split(command_args, cmd, is_any_of(" \t\n"), token_compress_on);
 	
 	if(!command_args.empty()) {
 		if(command_args[0] == "load") {
-			if(command_args.size() == 2) {
+			if(command_args.size() >= 2) {
 				return COMMAND_LOAD;
 			}
 		}
@@ -215,8 +217,15 @@ main(int argc, char **argv)
 				case COMMAND_NONE: cout << "Command not recognized" << endl; break;
 				case COMMAND_LOAD: {
 					const string filename(command_args[1]);
+
+               // remove first two args
+               command_args.erase(command_args.erase(command_args.begin()));
 				
-					run_program(argc, argv, filename.c_str(), vm::machine_arguments());
+               try {
+                  run_program(argc, argv, filename.c_str(), command_args);
+               } catch(std::exception& e) {
+                  cerr << e.what() << endl;
+               }
 				}
 				break;
 				default: break;

@@ -1664,6 +1664,12 @@ execute_new_node(const pcounter& pc, state& state)
    state.sched->init_node(new_node);
 
    state.set_node(reg, new_node->get_id());
+
+#ifdef USE_UI
+   if(state::UI) {
+      LOG_NEW_NODE(new_node);
+   }
+#endif
 }
 
 static inline return_type
@@ -1908,8 +1914,9 @@ execute_rule(const rule_id rule_id, state& state)
 {
 #if 0
 	cout << "Running rule " << rule << endl;
+   cout << state::PROGRAM->get_rule(rule_id)->get_string() << endl;
    
-	cout << state::PROGRAM->get_rule_string(rule) << endl;
+   state::DATABASE->print_db(cout);
 #endif
 	
 	vm::rule *rule(state::PROGRAM->get_rule(rule_id));

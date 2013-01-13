@@ -33,7 +33,7 @@ class base
 protected:
    
    const vm::process_id id;
-	boost::thread *thread;
+   boost::thread *thread;
    vm::state state;
    
    size_t iteration;
@@ -57,11 +57,11 @@ protected:
 
 #endif
 
-	void do_loop(void);
+   void do_loop(void);
    void loop(void);
-	void do_work(db::node *);
-	void do_agg_tuple_add(db::node *, vm::tuple *, const vm::ref_count);
-	void do_tuple_add(db::node *, vm::tuple *, const vm::ref_count);
+   void do_work(db::node *);
+   void do_agg_tuple_add(db::node *, vm::tuple *, const vm::ref_count);
+   void do_tuple_add(db::node *, vm::tuple *, const vm::ref_count);
    
    virtual bool terminate_iteration(void) = 0;
    

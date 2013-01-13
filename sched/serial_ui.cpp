@@ -28,6 +28,8 @@ serial_ui_local::get_work(void)
          n = (serial_node*)serial_local::get_work();
          if(n == NULL)
             continue;
+      } else {
+         break;
       }
    }
 

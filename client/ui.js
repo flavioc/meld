@@ -8,6 +8,9 @@ var message_handlers = {};
 var predicates = null;
 var rules = null;
 var mapnodes = {};
+var mapedges = {}; // maps strings of tuples to edges
+// we need this in order to avoid doing an animation with many facts
+var last_sent = {}; // timestamps of source -> destination of sent tuples
 var graph = new Graph();
 var sock = null; // connection socket to server
 var node_events = {}; // all events in a per node basis
@@ -140,6 +143,11 @@ function handle_program_stopped(msg)
 	clear_everything();
 }
 
+function add_node_to_screen(id, translated_id)
+{
+   mapnodes[id] = graph.newNode({label: translated_id, color: 'red', id: id, translated_id: translated_id});
+}
+
 function handle_database(msg)
 {
 	var db = msg.database;
@@ -153,8 +161,7 @@ function handle_database(msg)
 		var node = nodes[i];
 		var id = node.id;
 		var translated_id = node.translated_id;
-		// XXX use translated_id in the future
-		mapnodes[id] = graph.newNode({label: translated_id, color: 'red', id: id, translated_id: translated_id});
+      add_node_to_screen(id, translated_id);
 	}
 
 	new_global_event("Database initialized: " + msg.database.num_nodes + " nodes");
@@ -169,6 +176,36 @@ function handle_program(msg)
    rules = msg.rules;
 }
 
+function is_routing_pred(pred)
+{
+   return pred.route && !pred.reverse_route;
+}
+
+function hash_route_fact(node, tpl)
+{
+   return node + ' ' + tuple_to_string(tpl);
+}
+
+function check_for_routing(from, pred, tpl)
+{
+   if(is_routing_pred(pred)) {
+      var dest = tpl.fields[0];
+      var node_orig = mapnodes[from];
+      var node_dest = mapnodes[dest];
+
+      var label_str;
+
+      if(tpl.fields.length > 1)
+         label_str = field_to_string(tpl.fields[1], pred.fields[1]);
+      else
+         label_str = '';
+
+		var edge = graph.newEdge(node_orig, node_dest, {color: '#00A0B0', label: label_str});
+      mapedges[hash_route_fact(from, tpl)] = edge;
+		update_graph();
+   }
+}
+
 function handle_persistent_derivation(msg)
 {
 	var node = msg.node;
@@ -176,21 +213,7 @@ function handle_persistent_derivation(msg)
 	var predid = tpl.predicate;
 	var pred = predicates[predid];
 
-	if(pred.route && !pred.reverse_route) {
-		var dest = tpl.fields[0];
-		var node_orig = mapnodes[node];
-		var node_dest = mapnodes[dest];
-		
-		var label_str;
-		
-		if(tpl.fields.length > 1)
-			label_str = field_to_string(tpl.fields[1], pred.fields[1]);
-		else
-			label_str = '';
-
-		graph.newEdge(node_orig, node_dest, {color: '#00A0B0', label: label_str});
-		update_graph();
-	}
+   check_for_routing(node, pred, tpl);
 
 	var tuple_str = tuple_to_string(tpl);
 
@@ -201,8 +224,24 @@ function handle_linear_derivation(msg)
 {
 	var node = msg.node;
 	var tpl = msg.tuple;
+	var predid = tpl.predicate;
+	var pred = predicates[predid];
+
+   check_for_routing(node, pred, tpl);
 	
 	new_event(node, "&darr; " + tuple_to_string(tpl));
+}
+
+function do_tuple_send_animation(hash, from, to, pred, tpl)
+{
+   last_sent[hash] = Math.round((new Date()).getTime());
+
+   var str = '@' + get_translated_id(from) + " &rarr; @" + get_translated_id(to) + " " + tuple_to_string(tpl);
+   check_for_routing(to, pred, tpl);
+   new_event(from, str);
+   new_node_event(to, str);
+   $('#graph').message(mapnodes[from], mapnodes[to], tuple_to_string(tpl));
+   update_graph();
 }
 
 function handle_tuple_send(msg)
@@ -211,15 +250,23 @@ function handle_tuple_send(msg)
 	var to = msg.to;
 	var tpl = msg.tuple;
 	var tpl_str = tuple_to_string(tpl);
+   var predid = tpl.predicate;
+   var pred = predicates[predid];
 	
 	if(from == to)
-		new_event(from, "&harr; " + tpl_str);
+		new_event(from, "&harr; " + tuple_to_string(tpl));
 	else {
-		var str = '@' + get_translated_id(from) + " &rarr; @" + get_translated_id(to) + " " + tpl_str;
-		new_event(from, str);
-		new_node_event(to, str);
-		$('#graph').message(mapnodes[from], mapnodes[to], tuple_to_string(tpl));
-		update_graph();
+      var hash_last_sent = from + ' ' + to;
+      var now = Math.round((new Date()).getTime());
+      var last = last_sent[hash_last_sent];
+      if(typeof(last) == 'undefined') {
+         do_tuple_send_animation(hash_last_sent, from, to, pred, tpl);
+      } else if(now > last + PLAY_INTERVAL) {
+         do_tuple_send_animation(hash_last_sent, from, to, pred, tpl);
+      } else {
+         setTimeout(function () { do_tuple_send_animation(hash_last_sent, from, to, pred, tpl); },
+               PLAY_INTERVAL);
+      }
 	}
 }
 
@@ -227,6 +274,17 @@ function handle_linear_consumption(msg)
 {
 	var node = msg.node;
 	var tpl = msg.tuple;
+	var predid = tpl.predicate;
+	var pred = predicates[predid];
+
+   if(is_routing_pred(pred)) {
+      var hash = hash_route_fact(node, tpl);
+      var edge = mapedges[hash];
+      delete mapedges[hash];
+      
+      graph.removeEdge(edge);
+		update_graph();
+   }
 	
 	new_event(node, "&uarr; " + tuple_to_string(tpl));
 }
@@ -385,7 +443,7 @@ function handle_set_edge_label(msg)
 
 function handle_rule_applied(msg)
 {
-   var who = msg.who;
+   var who = msg.node;
    var rule = msg.rule;
 
 	//new_global_event('<span class="rule" title="' + rules[rule] + '">rule applied</span>');
@@ -393,10 +451,20 @@ function handle_rule_applied(msg)
 
 function handle_rule_start(msg)
 {
-   var who = msg.who;
+   var who = msg.node;
    var rule = msg.rule;
 
 	new_event(who, '&gt;&gt; trying rule <span class="rule" title="' + rules[rule] + '">' + rule + '</span>');
+}
+
+function handle_new_node(msg)
+{
+   var who = msg.node;
+   var translated = msg.translated;
+
+   add_node_to_screen(who, translated);
+
+   new_event(who, 'Node ' + translated + ' created');
 }
 
 function setup_message_handlers()
@@ -419,6 +487,7 @@ function setup_message_handlers()
 	message_handlers['set_edge_label'] = handle_set_edge_label;
    message_handlers['rule_applied'] = handle_rule_applied;
    message_handlers['rule_start'] = handle_rule_start;
+   message_handlers['new_node'] = handle_new_node;
 }
 
 function disable_controls()
