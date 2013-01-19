@@ -23,6 +23,7 @@
 #include "utils/atomic.hpp"
 #include "db/edge_set.hpp"
 #include "vm/rule_matcher.hpp"
+#include "vm/all.hpp"
 
 #ifdef USE_UI
 #include <json_spirit.h>
@@ -41,6 +42,10 @@ public:
    
    typedef trie::delete_info delete_info;
    
+protected:
+
+   vm::all *all;
+
 private:
    
 	node_id id;
@@ -138,7 +143,7 @@ public:
 
 	vm::rule_matcher matcher;
    
-   explicit node(const node_id, const node_id);
+   explicit node(const node_id, const node_id, vm::all *);
    
    virtual ~node(void);
 };

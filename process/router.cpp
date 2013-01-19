@@ -21,20 +21,19 @@ namespace process
 static mutex mpi_mutex;
    
 void
-router::set_nodes_total(const size_t total)
+router::set_nodes_total(const size_t total, vm::all *all)
 {
    nodes_per_remote = total / world_size;
    
    if(nodes_per_remote == 0)
       throw database_error("Number of nodes is less than the number of remote machines");
 
-   state::NUM_NODES = total;
-   state::NUM_NODES_PER_PROCESS = nodes_per_remote;
+   all->NUM_NODES_PER_PROCESS = nodes_per_remote;
    
    // cache values for each remote
    
    for(remote::remote_id i(0); i != (remote::remote_id)world_size; ++i)
-      remote_list[i]->cache_values(world_size, nodes_per_remote);
+      remote_list[i]->cache_values(world_size, nodes_per_remote, total);
       
 #ifdef COMPILE_MPI
 #if 0
@@ -84,7 +83,7 @@ router::send(remote *rem, const process_id& proc, const message_set& ms)
 }
 
 message_set*
-router::recv_attempt(const process_id proc, byte *recv_buf)
+router::recv_attempt(const process_id proc, byte *recv_buf, vm::program *prog)
 {
 #ifdef DEBUG_SERIALIZATION_TIME
    utils::execution_time::scope s(serial_time);
@@ -110,7 +109,7 @@ router::recv_attempt(const process_id proc, byte *recv_buf)
       
       //cout << "Received with tag " << stat.m_status.MPI_TAG << " " << (int)proc << endl;
       assert(stat.m_status.MPI_TAG == tag);
-      message_set *ms(message_set::unpack(recv_buf, MPI_BUF_SIZE, *world));
+      message_set *ms(message_set::unpack(recv_buf, MPI_BUF_SIZE, *world, prog));
       return ms;
    } else
       return NULL;
@@ -198,8 +197,6 @@ router::find_remote(const node::node_id id) const
    if(!use_mpi())
       return remote::self;
       
-   assert(id <= state::DATABASE->max_id());
-   
    assert(nodes_per_remote > 0);
    assert(world_size > 1);
    
@@ -240,7 +237,7 @@ router::base_constructor(const size_t num_threads, int argc, char **argv, const 
          remote_list[i] = new remote(i, nthreads_other);
       }
    
-      state::REMOTE = remote::self = remote_list[world->rank()];
+      remote::self = remote_list[world->rank()];
    } else
 #endif
    {
@@ -251,12 +248,10 @@ router::base_constructor(const size_t num_threads, int argc, char **argv, const 
       env = NULL;
       world = NULL;
 #endif
-      state::REMOTE = remote::self = remote_list[0];
+      remote::self = remote_list[0];
    }
    
    remote::world_size = world_size;
-   
-   state::ROUTER = this;
    
    // other initializations
    sched::mpi_handler::init(num_threads);

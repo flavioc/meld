@@ -27,7 +27,8 @@ manager *man;
 
 manager::manager(void):
 	next_set(0),
-	done(false)
+	done(false),
+   all(NULL)
 {
 }
 
@@ -69,8 +70,8 @@ manager::on_open(connection_ptr conn)
 	SEND_JSON(conn);
 	
 	if(running) {
-		event_program(vm::state::PROGRAM);
-		event_database(vm::state::DATABASE);
+		event_program(all->PROGRAM);
+		event_database(all->DATABASE);
 		// XXX: send all route facts
 	}
 }

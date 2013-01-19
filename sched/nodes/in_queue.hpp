@@ -40,8 +40,8 @@ public:
       assert(!in_queue());
    }
 
-   explicit in_queue_node(const db::node::node_id _id, const db::node::node_id _trans):
-      db::node(_id, _trans),
+   explicit in_queue_node(const db::node::node_id _id, const db::node::node_id _trans, vm::all *all):
+      db::node(_id, _trans, all),
       i_am_on_queue(false)
    {}
 

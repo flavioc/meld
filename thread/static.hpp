@@ -81,16 +81,16 @@ public:
    virtual db::simple_tuple_vector gather_active_tuples(db::node *, const vm::predicate_id);
    virtual void gather_next_tuples(db::node *, db::simple_tuple_list&);
 	
-   static db::node *create_node(const db::node::node_id id, const db::node::node_id trans)
+   static db::node *create_node(const db::node::node_id id, const db::node::node_id trans, vm::all *all)
    {
-      return new thread_intrusive_node(id, trans);
+      return new thread_intrusive_node(id, trans, all);
    }
    
-   static std::vector<sched::base*>& start(const size_t);
+   DEFINE_START_FUNCTION(static_local);
    
    virtual void write_slice(statistics::slice&) const;
    
-   explicit static_local(const vm::process_id);
+   explicit static_local(const vm::process_id, vm::all *);
    
    virtual ~static_local(void);
 };

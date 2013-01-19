@@ -21,17 +21,17 @@ tokenizer::messages_received(const size_t total)
 }
 
 void
-tokenizer::try_fetch_token_as_worker(void)
+tokenizer::try_fetch_token_as_worker(vm::all *all)
 {
    assert(has_global_tok == false);
 
-   if(state::ROUTER->receive_token(global_tok)) {
+   if(all->ROUTER->receive_token(global_tok)) {
       has_global_tok = true;
    }
 }
 
 void
-tokenizer::send_token_as_leader(void)
+tokenizer::send_token_as_leader(vm::all *all)
 {
    assert(remote::self->is_leader());
    assert(has_global_tok == true);
@@ -47,18 +47,18 @@ tokenizer::send_token_as_leader(void)
    
    assert(global_tok.is_white());
    assert(global_tok.is_zero());
-   state::ROUTER->send_token(global_tok);
+   all->ROUTER->send_token(global_tok);
    
    assert(tok.is_white());
 }
 
 bool
-tokenizer::try_fetch_token_as_leader(void)
+tokenizer::try_fetch_token_as_leader(vm::all *all)
 {
    assert(remote::self->is_leader());
    assert(has_global_tok == false);
    
-   if(state::ROUTER->receive_token(global_tok)) {
+   if(all->ROUTER->receive_token(global_tok)) {
       has_global_tok = true;
       global_tok.add_count(tok.get_count());
 #ifdef DEBUG_SAFRAS
@@ -72,18 +72,18 @@ tokenizer::try_fetch_token_as_leader(void)
          assert(global_tok.is_zero());
          assert(tok.is_white());
          
-         do_collective_end_iteration(1);
+         do_collective_end_iteration(1, all);
          
          return true;
       } else
-         send_token_as_leader();
+         send_token_as_leader(all);
    }
    
    return false;
 }
 
 void
-tokenizer::send_token_as_idler(void)
+tokenizer::send_token_as_idler(vm::all *all)
 {
    assert(!remote::self->is_leader());
    assert(has_global_tok == true);
@@ -97,17 +97,17 @@ tokenizer::send_token_as_idler(void)
    
    assert(global_tok.is_black());
    
-   state::ROUTER->send_token(global_tok);
+   all->ROUTER->send_token(global_tok);
    has_global_tok = false;
 }
 
 bool
-tokenizer::try_fetch_token_as_idler(void)
+tokenizer::try_fetch_token_as_idler(vm::all *all)
 {
    assert(!remote::self->is_leader());
    assert(has_global_tok == false);
    
-   if(state::ROUTER->receive_token(global_tok)) {
+   if(all->ROUTER->receive_token(global_tok)) {
       has_global_tok = true;
       global_tok.add_count(tok.get_count());
 #ifdef DEBUG_SAFRAS
@@ -126,7 +126,7 @@ tokenizer::try_fetch_token_as_idler(void)
 #endif
 
       assert(has_global_tok == true);
-      state::ROUTER->send_token(global_tok);
+      all->ROUTER->send_token(global_tok);
       has_global_tok = false;
       
       assert(tok.is_white());
@@ -140,7 +140,7 @@ tokenizer::try_fetch_token_as_idler(void)
 }
 
 void
-tokenizer::do_collective_end_iteration(size_t stage)
+tokenizer::do_collective_end_iteration(size_t stage, vm::all *all)
 {
    for( ; stage <= upper_log2(remote::world_size); ++stage) {
       if(remote::self->get_rank() < power<remote::remote_id>(2, stage - 1)) {
@@ -149,12 +149,12 @@ tokenizer::do_collective_end_iteration(size_t stage)
          assert(dest >= 0);
          
          if((size_t)dest < remote::world_size)
-            state::ROUTER->send_end_iteration(stage, dest);
+            all->ROUTER->send_end_iteration(stage, dest);
       } else if(remote::self->get_rank() >= power<remote::remote_id>(2, stage - 1)
                   && remote::self->get_rank() < power<remote::remote_id>(2, stage))
       {
          const remote::remote_id source(remote::self->get_rank() - power<remote::remote_id>(2, stage - 1));
-         state::ROUTER->receive_end_iteration(source);
+         all->ROUTER->receive_end_iteration(source);
       }
    }
 }
@@ -176,43 +176,43 @@ find_source_collective(void)
 }
 
 bool
-tokenizer::try_fetch_end_iteration(void)
+tokenizer::try_fetch_end_iteration(vm::all *all)
 {
    size_t stage;
    
-   if(state::ROUTER->received_end_iteration(stage, find_source_collective())) {
-      do_collective_end_iteration(stage + 1);
+   if(all->ROUTER->received_end_iteration(stage, find_source_collective())) {
+      do_collective_end_iteration(stage + 1, all);
       return true;
    }
    return false;
 }
 
 bool
-tokenizer::busy_loop_token(const bool turned_inactive)
+tokenizer::busy_loop_token(const bool turned_inactive, vm::all *all)
 {
    if(turned_inactive) {
       if(remote::self->is_leader()) {
-         if(has_global_tok && !state::ROUTER->use_mpi())
+         if(has_global_tok && !all->ROUTER->use_mpi())
             return false;
          if(has_global_tok)
-            send_token_as_leader();
+            send_token_as_leader(all);
          else {
-            if(try_fetch_token_as_leader())
+            if(try_fetch_token_as_leader(all))
                return false;
          }
       } else {
          if(has_global_tok)
-            send_token_as_idler();
+            send_token_as_idler(all);
          else {
-            if(!try_fetch_token_as_idler()) {
-               if(try_fetch_end_iteration())
+            if(!try_fetch_token_as_idler(all)) {
+               if(try_fetch_end_iteration(all))
                   return false;
             }
          }
       }
    } else {
       if(!has_global_tok)
-         try_fetch_token_as_worker();
+         try_fetch_token_as_worker(all);
    }
    
    return true;

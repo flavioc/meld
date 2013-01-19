@@ -35,7 +35,7 @@ public:
    
    void pack(utils::byte *, const size_t, int *, MPI_Comm) const;
    
-   static message *unpack(utils::byte *, const size_t, int *, MPI_Comm);
+   static message *unpack(utils::byte *, const size_t, int *, MPI_Comm, vm::program *);
    static void wipeout(message *msg) { db::simple_tuple::wipeout(msg->data); delete msg; }
    
    explicit message(const db::node::node_id _id,
@@ -91,7 +91,7 @@ public:
    inline list_messages::const_iterator begin(void) const { return lst.begin(); }
    inline list_messages::const_iterator end(void) const { return lst.end(); }
    
-   static message_set* unpack(utils::byte *, const size_t, MPI_Comm);
+   static message_set* unpack(utils::byte *, const size_t, MPI_Comm, vm::program *);
    
    void wipeout(void)
    {

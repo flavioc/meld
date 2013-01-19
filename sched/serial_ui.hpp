@@ -29,9 +29,9 @@ public:
 	virtual void init(const size_t);
 	virtual void end(void);
 	
-   static db::node* create_node(const db::node::node_id id, const db::node::node_id trans)
+   static db::node* create_node(const db::node::node_id id, const db::node::node_id trans, vm::all *all)
    {
-      return dynamic_cast<db::node*>(new sched::serial_node(id, trans));
+      return dynamic_cast<db::node*>(new sched::serial_node(id, trans, all));
    }
 
 #ifdef USE_UI
@@ -44,7 +44,7 @@ public:
 
    serial_ui_local *find_scheduler(const db::node *) { return this; }
    
-	explicit serial_ui_local(void);
+	explicit serial_ui_local(vm::all *);
    
    virtual ~serial_ui_local(void) {}
 };

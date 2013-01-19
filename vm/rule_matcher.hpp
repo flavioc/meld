@@ -58,7 +58,7 @@ public:
 	rule_iterator end_dropped_rules(void) const { return dropped_rules.end(); }
 #endif
 
-   rule_matcher(void);
+   rule_matcher(vm::program *);
 };
 
 }

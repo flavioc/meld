@@ -39,7 +39,7 @@ private:
    
 public:
    
-   void cache_values(const size_t, const size_t);
+   void cache_values(const size_t, const size_t, const size_t);
    
    inline bool am_last_one(void) const
    {

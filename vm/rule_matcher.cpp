@@ -92,11 +92,11 @@ rule_matcher::deregister_tuple(tuple *tpl, const ref_count count)
 }
 #endif
 
-rule_matcher::rule_matcher(void)
+rule_matcher::rule_matcher(vm::program *prog)
 {
 #ifdef USE_RULE_COUNTING
-	predicate_count.resize(state::PROGRAM->num_predicates());
-	rules.resize(state::PROGRAM->num_rules());
+	predicate_count.resize(prog->num_predicates());
+	rules.resize(prog->num_rules());
 
 	fill(predicate_count.begin(), predicate_count.end(), 0);
 	
@@ -108,7 +108,7 @@ rule_matcher::rule_matcher(void)
 		rule_matcher_obj& obj(*it);
 		
 		obj.total_have = 0;
-		obj.total_needed = state::PROGRAM->get_rule(rid)->num_predicates();
+		obj.total_needed = prog->get_rule(rid)->num_predicates();
 	}
 #endif
 }

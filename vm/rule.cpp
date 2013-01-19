@@ -9,7 +9,7 @@ namespace vm
 {
 	
 void
-rule::print(ostream& out) const
+rule::print(ostream& out, const vm::program *const prog) const
 {
 	out << str << endl;
 	
@@ -26,7 +26,7 @@ rule::print(ostream& out) const
 		
 	}
 
-   instrs_print(code, code_size, 0, state::PROGRAM, out);
+   instrs_print(code, code_size, 0, prog, out);
 }
 
 }

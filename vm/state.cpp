@@ -14,18 +14,6 @@ using namespace runtime;
 namespace vm
 {
 
-state::reg state::consts[MAX_CONSTS];
-program *state::PROGRAM = NULL;
-database *state::DATABASE = NULL;
-machine *state::MACHINE = NULL;
-remote *state::REMOTE = NULL;
-router *state::ROUTER = NULL;
-size_t state::NUM_THREADS = 0;
-size_t state::NUM_PREDICATES = 0;
-size_t state::NUM_NODES = 0;
-size_t state::NUM_NODES_PER_PROCESS = 0;
-machine_arguments state::ARGUMENTS;
-double state::TASK_STEALING_FACTOR = 0.2;
 #ifdef USE_UI
 bool state::UI = false;
 #endif
@@ -133,16 +121,16 @@ state::cleanup(void)
 void
 state::copy_reg2const(const reg_num& reg_from, const const_id& cid)
 {
-	consts[cid] = regs[reg_from];
-	switch(PROGRAM->get_const_type(cid)) {
+   all->set_const(cid, regs[reg_from]);
+	switch(all->PROGRAM->get_const_type(cid)) {
 		case FIELD_LIST_INT:
-			int_list::inc_refs(get_const_int_list(cid)); break;
+			int_list::inc_refs(all->get_const_int_list(cid)); break;
 		case FIELD_LIST_FLOAT:
-			float_list::inc_refs(get_const_float_list(cid)); break;
+			float_list::inc_refs(all->get_const_float_list(cid)); break;
 		case FIELD_LIST_NODE:
-			node_list::inc_refs(get_const_node_list(cid)); break;
+			node_list::inc_refs(all->get_const_node_list(cid)); break;
 		case FIELD_STRING:
-			get_const_string(cid)->inc_refs(); break;
+			all->get_const_string(cid)->inc_refs(); break;
 		default: break;
 	}
 }
@@ -233,7 +221,7 @@ state::mark_active_rules(void)
 		rule_id rid(*it);
 		if(!rules[rid]) {
 			// we need check if at least one predicate was activated in this loop
-			vm::rule *rule(PROGRAM->get_rule(rid));
+			vm::rule *rule(all->PROGRAM->get_rule(rid));
 			if(check_if_rule_predicate_activated(rule)) {
 				rules[rid] = true;
 				heap_priority pr;
@@ -278,7 +266,7 @@ state::mark_rules_using_local_tuples(void)
 #ifndef USE_RULE_COUNTING
 	predicates_to_check.clear();
 #endif
-	fill_n(predicates, PROGRAM->num_predicates(), false);
+	fill_n(predicates, all->PROGRAM->num_predicates(), false);
    bool has_level(false);
 	
 	for(db::simple_tuple_list::iterator it(local_tuples.begin());
@@ -355,7 +343,7 @@ state::process_generated_tuples(void)
 		it++)
 	{
 		/* no need to mark tuples */
-		MACHINE->route_self(sched, node, *it);
+		all->MACHINE->route_self(sched, node, *it);
 	}
 	
 	for(simple_tuple_vector::iterator it(generated_persistent_tuples.begin()), end(generated_persistent_tuples.end());
@@ -413,7 +401,7 @@ state::run_node(db::node *no)
 #else
 		predicates_to_check.clear();
 #endif
-		fill_n(predicates, PROGRAM->num_predicates(), false);
+		fill_n(predicates, all->PROGRAM->num_predicates(), false);
 		
 		setup(NULL, node, 1);
 		use_local_tuples = true;
@@ -467,27 +455,29 @@ state::init_core_statistics(void)
 }
 #endif
 
-state::state(sched::base *_sched):
+state::state(sched::base *_sched, vm::all *_all):
    sched(_sched)
 #ifdef DEBUG_MODE
    , print_instrs(false)
 #endif
+   , all(_all)
 {
 #ifdef CORE_STATISTICS
    init_core_statistics();
 #endif
-	rules = new bool[state::PROGRAM->num_rules()];
-	fill_n(rules, state::PROGRAM->num_rules(), false);
-	predicates = new bool[state::PROGRAM->num_predicates()];
-	fill_n(predicates, state::PROGRAM->num_predicates(), false);
+	rules = new bool[all->PROGRAM->num_rules()];
+	fill_n(rules, all->PROGRAM->num_rules(), false);
+	predicates = new bool[all->PROGRAM->num_predicates()];
+	fill_n(predicates, all->PROGRAM->num_predicates(), false);
 	rule_queue.set_type(HEAP_INT_ASC);
 }
 
-state::state(void):
+state::state(vm::all *_all):
    rules(NULL), predicates(NULL), sched(NULL)
 #ifdef DEBUG_MODE
    , print_instrs(false)
 #endif
+   , all(_all)
 {
 #ifdef CORE_STATISTICS
    init_core_statistics();

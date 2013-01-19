@@ -15,7 +15,7 @@ namespace sched
    
 #ifdef COMPILE_MPI
 void
-message_buffer::transmit_list(remote *rem, const process_id proc, message_set& ms)
+message_buffer::transmit_list(remote *rem, const process_id proc, message_set& ms, vm::all *all)
 {
    assert(rem != NULL);
    assert(!ms.empty());
@@ -26,7 +26,7 @@ message_buffer::transmit_list(remote *rem, const process_id proc, message_set& m
    --total;
    
    assert(ms.get_storage_size() < MPI_BUFFER_THRESHOLD);
-   req_obj obj(state::ROUTER->send(rem, proc, ms));
+   req_obj obj(all->ROUTER->send(rem, proc, ms));
    
    req_handler.add_request(rem, obj);
    
@@ -40,7 +40,7 @@ message_buffer::transmit_list(remote *rem, const process_id proc, message_set& m
 }
 
 bool
-message_buffer::insert(remote *rem, const process_id proc, message* msg)
+message_buffer::insert(remote *rem, const process_id proc, message* msg, vm::all *all)
 {
    map_messages::iterator it(map_rem.find(rem));
    
@@ -66,7 +66,7 @@ message_buffer::insert(remote *rem, const process_id proc, message* msg)
    bool transmitted(false);
    
    if(ms.get_storage_size() + msg->get_storage_size() >= MPI_BUFFER_THRESHOLD) {
-      transmit_list(rem, proc, ms);
+      transmit_list(rem, proc, ms, all);
       transmitted = true;
    }
    
@@ -78,7 +78,7 @@ message_buffer::insert(remote *rem, const process_id proc, message* msg)
 }
 
 size_t
-message_buffer::transmit(void)
+message_buffer::transmit(vm::all *all)
 {
    if(total > 0) {
       const size_t ret(total);
@@ -92,7 +92,7 @@ message_buffer::transmit(void)
             message_set& ms(it2->second);
          
             if(!ms.empty())
-               transmit_list(rem, proc, ms);
+               transmit_list(rem, proc, ms, all);
          }
       }
       

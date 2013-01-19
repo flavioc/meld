@@ -26,7 +26,7 @@ static_local::assert_end(void) const
    assert(is_inactive());
    assert(all_threads_finished());
    assert_thread_end_iteration();
-   assert_static_nodes_end(id);
+   assert_static_nodes_end(id, state.all);
 }
 
 void
@@ -36,7 +36,7 @@ static_local::assert_end_iteration(void) const
    assert(is_inactive());
    assert(all_threads_finished());
    assert_thread_end_iteration();
-   assert_static_nodes_end_iteration(id);
+   assert_static_nodes_end_iteration(id, state.all);
 }
 
 void
@@ -140,17 +140,17 @@ static_local::new_work_remote(remote *, const node::node_id, message *)
 void
 static_local::make_steal_request(void)
 {
-   if(state::NUM_THREADS == 1)
+   if(state.all->NUM_THREADS == 1)
       return;
 
    size_t num_requests(1);
 
    while(num_requests > 0) {
-      const size_t _target(random_unsigned(state::NUM_THREADS));
+      const size_t _target(random_unsigned(state.all->NUM_THREADS));
 
-      assert(_target < state::NUM_THREADS);
-      static_local *target((static_local*)ALL_THREADS[_target]);
-      assert(target->get_id() == _target && target->get_id() < state::NUM_THREADS);
+      assert(_target < state.all->NUM_THREADS);
+      static_local *target((static_local*)state.all->ALL_THREADS[_target]);
+      assert(target->get_id() == _target && target->get_id() < state.all->NUM_THREADS);
 
       if(target == this)
          continue;
@@ -166,7 +166,7 @@ static_local::make_steal_request(void)
 void
 static_local::check_stolen_nodes(void)
 {
-   if(state::NUM_THREADS == 1)
+   if(state.all->NUM_THREADS == 1)
       return;
 
    while(!stolen_nodes_buffer.empty()) {
@@ -198,12 +198,12 @@ static_local::answer_steal_requests(void)
 
       static_local *target((static_local*)steal_request_buffer.pop());
       assert(target != NULL && target != this);
-      assert(target->get_id() < state::NUM_THREADS);
+      assert(target->get_id() < state.all->NUM_THREADS);
 
       thread_intrusive_node *node(NULL);
 
       size_t size(queue_nodes.size());
-      const size_t frac((int)((double)size * (double)state::TASK_STEALING_FACTOR));
+      const size_t frac((int)((double)size * (double)state.all->TASK_STEALING_FACTOR));
       size = max(min(size, (size_t)4), frac);
 
       while(size > 0 && !queue_nodes.empty()) {
@@ -381,8 +381,8 @@ static_local::init(const size_t)
    const node::node_id first_node(remote::self->find_first_node(id));
    const node::node_id last_node(remote::self->find_last_node(id));
 
-   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(first_node));
-   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(last_node));
+   database::map_nodes::iterator it(state.all->DATABASE->get_node_iterator(first_node));
+   database::map_nodes::iterator end(state.all->DATABASE->get_node_iterator(last_node));
    
    for(; it != end; ++it)
    {
@@ -445,8 +445,8 @@ static_local::write_slice(statistics::slice& sl) const
 #endif
 }
 
-static_local::static_local(const vm::process_id _id):
-   base(_id),
+static_local::static_local(const vm::process_id _id, vm::all *all):
+   base(_id, all),
    current_node(NULL)
 #ifdef TASK_STEALING
    , answer_requests(true)
@@ -462,17 +462,6 @@ static_local::~static_local(void)
 #ifdef TASK_STEALING
    clear_steal_requests();
 #endif
-}
-   
-vector<sched::base*>&
-static_local::start(const size_t num_threads)
-{
-   init_barriers(num_threads);
-   
-   for(process_id i(0); i < num_threads; ++i)
-      add_thread(new static_local(i));
-      
-   return ALL_THREADS;
 }
    
 }

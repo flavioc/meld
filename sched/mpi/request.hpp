@@ -10,8 +10,9 @@
 #include <list>
 #include <boost/mpi/request.hpp>
 
-#include "process/remote.hpp"
+#include "vm/all.hpp"
 #include "mem/allocator.hpp"
+#include "process/remote.hpp"
 
 namespace sched
 {
@@ -38,7 +39,7 @@ public:
    
    inline bool empty(void) const { return total == 0; }
    
-   void flush(const bool);
+   void flush(const bool, vm::all *);
    
    inline void add_request(const process::remote* rem, req_obj& req) {
       assert(rem->get_rank() < (int)all_reqs.size());

@@ -13,6 +13,7 @@
 #include "conf.hpp"
 #include "db/node.hpp"
 #include "utils/spinlock.hpp"
+#include "vm/program.hpp"
 
 #ifdef USE_UI
 #include <json_spirit.h>
@@ -33,10 +34,11 @@ public:
    typedef std::map<node::node_id, node*,
            std::less<node::node_id>,
            mem::allocator< std::pair<const node::node_id, node*> > > map_nodes;
-   typedef boost::function2<node*, node::node_id, node::node_id> create_node_fn;
+   typedef boost::function3<node*, node::node_id, node::node_id, vm::all *> create_node_fn;
 
 private:
 
+   vm::all *all;
    create_node_fn create_fn;
    
    map_nodes nodes;
@@ -52,7 +54,7 @@ public:
    BOOST_STATIC_ASSERT(sizeof(node::node_id) == 4);
 
    static const size_t node_size = sizeof(node::node_id) * 2;
-   static size_t nodes_total;
+   size_t nodes_total;
    
    map_nodes::const_iterator nodes_begin(void) const { return nodes.begin(); }
    map_nodes::const_iterator nodes_end(void) const { return nodes.end(); }
@@ -73,7 +75,7 @@ public:
    
    void print(std::ostream&) const;
    
-   explicit database(const std::string&, create_node_fn);
+   explicit database(const std::string&, create_node_fn, vm::all *);
    
    ~database(void);
 };

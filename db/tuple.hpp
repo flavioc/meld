@@ -96,7 +96,7 @@ public:
    
    void pack(utils::byte *, const size_t, int *, MPI_Comm) const;
    
-   static simple_tuple* unpack(utils::byte *, const size_t, int *, MPI_Comm);
+   static simple_tuple* unpack(utils::byte *, const size_t, int *, MPI_Comm, vm::program *);
 #endif
 
    static simple_tuple* create_new(vm::tuple *tuple) { return new simple_tuple(tuple, 1); }

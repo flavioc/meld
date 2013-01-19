@@ -26,13 +26,13 @@ message::pack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm) const
 }
 
 message*
-message::unpack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm)
+message::unpack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm, vm::program *prog)
 {
    node::node_id id;
    
    MPI_Unpack(buf, buf_size, pos, &id, 1, MPI_UNSIGNED, comm);
    
-   simple_tuple *stpl(simple_tuple::unpack(buf, buf_size, pos, comm));
+   simple_tuple *stpl(simple_tuple::unpack(buf, buf_size, pos, comm, prog));
    
    return new message(id, stpl);
 }
@@ -50,7 +50,7 @@ message_set::pack(byte *buf, const size_t buf_size, MPI_Comm comm) const
 }
 
 message_set*
-message_set::unpack(byte *buf, const size_t buf_size, MPI_Comm comm)
+message_set::unpack(byte *buf, const size_t buf_size, MPI_Comm comm, vm::program *prog)
 {
    message_set *ms(new message_set());
    unsigned short int size_msg;
@@ -59,7 +59,7 @@ message_set::unpack(byte *buf, const size_t buf_size, MPI_Comm comm)
    MPI_Unpack(buf, buf_size, &pos, &size_msg, 1, MPI_UNSIGNED_SHORT, comm);
    
    for(size_t i(0); i < size_msg; ++i) {
-      message *msg(message::unpack(buf, buf_size, &pos, comm));
+      message *msg(message::unpack(buf, buf_size, &pos, comm, prog));
       ms->add(msg);
    }
    

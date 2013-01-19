@@ -83,7 +83,7 @@ public:
 
    virtual void init_node(db::node *node)
    {
-      db::simple_tuple *stpl(db::simple_tuple::create_new(new vm::tuple(vm::state::PROGRAM->get_init_predicate())));
+      db::simple_tuple *stpl(db::simple_tuple::create_new(new vm::tuple(state.all->PROGRAM->get_init_predicate())));
       new_work_self(node, stpl);
       node->init();
       node->set_owner(this);
@@ -170,7 +170,7 @@ public:
 #endif
    }
    
-	explicit base(const vm::process_id);
+	explicit base(const vm::process_id, vm::all *);
    
 	virtual ~base(void);
 };

@@ -114,8 +114,6 @@ def do_blocks(thread):
 			if current == numthreads:
 				current = 0
 
-assert(divisible_by(side * side, numthreads))
-
 if ONE_PER_THREAD:
 	if numthreads == 1:
 		do_range(0, side, 0, side)

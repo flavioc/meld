@@ -10,29 +10,17 @@
 #include "vm/program.hpp"
 #include "vm/instr.hpp"
 #include "db/trie.hpp"
+#include "vm/all.hpp"
 #include "utils/random.hpp"
 #include "queue/safe_simple_pqueue.hpp"
 
 // forward declaration
-namespace process {
-   class remote;
-   class machine;
-   class router;
-}
-
 namespace sched {
 	class base;
 }
 
-namespace db {
-   class database;
-}
-
 namespace vm {
 	
-#define MAX_CONSTS 32
-
-typedef std::vector<std::string> machine_arguments;
 
 class state
 {
@@ -53,8 +41,6 @@ private:
    typedef std::pair<vm::tuple *, vm::ref_count> pair_linear;
    typedef std::list<pair_linear> list_linear;
 
-	static reg consts[MAX_CONSTS];
-	
 	/* execution data for when using rules */
 	bool *rules;
 	bool *predicates;
@@ -69,29 +55,6 @@ private:
 #endif
 
 public:
-	
-#define define_get_const(WHAT, TYPE, CODE) static TYPE get_const_ ## WHAT (const const_id& id) { return CODE; }
-	
-	define_get_const(int, int_val, *(int_val*)(consts + id))
-	define_get_const(float, float_val, *(float_val*)(consts + id))
-	define_get_const(ptr, ptr_val, *(ptr_val*)(consts + id));
-	define_get_const(int_list, runtime::int_list*, (runtime::int_list*)get_const_ptr(id))
-	define_get_const(float_list, runtime::float_list*, (runtime::float_list*)get_const_ptr(id))
-	define_get_const(node_list, runtime::node_list*, (runtime::node_list*)get_const_ptr(id))
-	define_get_const(string, runtime::rstring::ptr, (runtime::rstring::ptr)get_const_ptr(id))
-	define_get_const(node, node_val, *(node_val*)(consts + id))
-	
-#undef define_get_const
-	
-#define define_set_const(WHAT, TYPE, CODE) static void set_const_ ## WHAT (const const_id& id, const TYPE val) { CODE;}
-	
-	define_set_const(int, int_val&, *(int_val*)(consts + id) = val)
-	define_set_const(float, float_val&, *(float_val*)(consts + id) = val)
-	define_set_const(node, node_val&, *(node_val*)(consts +id) = val)
-	define_set_const(ptr, ptr_val&, *(ptr_val*)(consts + id) = val);
-	define_set_const(string, runtime::rstring::ptr, set_const_ptr(id, (ptr_val)val));
-	
-#undef define_set_const
 	
 	vm::tuple *original_tuple;
 	enum {
@@ -118,18 +81,7 @@ public:
 	db::simple_tuple_vector generated_persistent_tuples;
 	db::simple_tuple_vector generated_other_level;
 	vm::strat_level current_level;
-   
-   static program *PROGRAM;
-   static db::database *DATABASE;
-   static process::machine *MACHINE;
-   static process::remote *REMOTE;
-   static process::router *ROUTER;
-   static size_t NUM_THREADS;
-   static size_t NUM_PREDICATES;
-   static size_t NUM_NODES;
-   static size_t NUM_NODES_PER_PROCESS;
-	static machine_arguments ARGUMENTS;
-   static double TASK_STEALING_FACTOR;
+   vm::all *all;
 #ifdef USE_UI
    static bool UI;
 #endif
@@ -226,14 +178,8 @@ public:
    void no_longer_using_linear_tuple(vm::tuple *);
    void unmark_generated_tuples(void);
 
-	static inline runtime::rstring::ptr get_argument(const argument_id id)
-	{
-		assert(id <= ARGUMENTS.size());
-		return runtime::rstring::make_string(ARGUMENTS[id-1]);
-	}
-	
-   explicit state(sched::base *);
-	explicit state(void);
+   explicit state(sched::base *, vm::all *);
+	explicit state(vm::all *);
    ~state(void);
 };
 

@@ -101,12 +101,12 @@ machine::route(const node* from, sched::base *sched_caller, const node::node_id 
    remote* rem(rout.find_remote(id));
    
    assert(sched_caller != NULL);
-   assert(id <= state::DATABASE->max_id());
+   assert(id <= this->all->DATABASE->max_id());
    
    if(rem == remote::self) {
       // on this machine
       
-      node *node(state::DATABASE->find_node(id));
+      node *node(this->all->DATABASE->find_node(id));
       
       sched::base *sched_other(sched_caller->find_scheduler(node));
 		const predicate *pred(stpl->get_predicate());
@@ -196,7 +196,7 @@ machine::slice_function(void)
          case SIGALRM:
          if(tofinish)
             return;
-         slices.beat();
+         slices.beat(all);
          set_timer();
          break;
          case SIGUSR1:
@@ -210,12 +210,12 @@ machine::slice_function(void)
 void
 machine::execute_const_code(void)
 {
-	state st;
+	state st(all);
 	
 	// no node or tuple whatsoever
 	st.setup(NULL, NULL, 0);
 	
-	execute_bytecode(state::PROGRAM->get_const_bytecode(), st);
+	execute_bytecode(all->PROGRAM->get_const_bytecode(), st);
 }
 
 void
@@ -232,17 +232,17 @@ machine::start(void)
    }
    
    for(size_t i(1); i < num_threads; ++i)
-      process_list[i]->start();
-   process_list[0]->start();
+      this->all->ALL_THREADS[i]->start();
+   this->all->ALL_THREADS[0]->start();
    
    for(size_t i(1); i < num_threads; ++i)
-      process_list[i]->join();
+      this->all->ALL_THREADS[i]->join();
       
 #ifndef NDEBUG
    for(size_t i(1); i < num_threads; ++i)
-      assert(process_list[i-1]->num_iterations() == process_list[i]->num_iterations());
-   if(state::PROGRAM->is_safe())
-      assert(process_list[0]->num_iterations() == 1);
+      assert(this->all->ALL_THREADS[i-1]->num_iterations() == this->all->ALL_THREADS[i]->num_iterations());
+   if(this->all->PROGRAM->is_safe())
+      assert(this->all->ALL_THREADS[0]->num_iterations() == 1);
 #endif
    
    if(alarm_thread) {
@@ -250,7 +250,7 @@ machine::start(void)
       alarm_thread->join();
       delete alarm_thread;
       alarm_thread = NULL;
-      slices.write(get_stat_file(), sched_type);
+      slices.write(get_stat_file(), sched_type, all);
    }
 
    const bool will_print(show_database || dump_database);
@@ -261,12 +261,12 @@ machine::start(void)
             const string filename(get_output_filename("db", remote::self->get_rank()));
             ofstream fp(filename.c_str());
             
-            state::DATABASE->print_db(fp);
+            all->DATABASE->print_db(fp);
          }
          if(dump_database) {
             const string filename(get_output_filename("dump", remote::self->get_rank()));
             ofstream fp(filename.c_str());
-            state::DATABASE->dump_db(fp);
+            all->DATABASE->dump_db(fp);
          }
          
          rout.barrier();
@@ -284,9 +284,9 @@ machine::start(void)
          }
       } else {
          if(show_database)
-            state::DATABASE->print_db(cout);
+            all->DATABASE->print_db(cout);
          if(dump_database)
-            state::DATABASE->dump_db(cout);
+            all->DATABASE->dump_db(cout);
       }
    }
 
@@ -333,31 +333,33 @@ get_creation_function(const scheduler_type sched_type)
 
 machine::machine(const string& file, router& _rout, const size_t th,
 		const scheduler_type _sched_type, const machine_arguments& margs):
+   all(new vm::all()),
    filename(file),
    num_threads(th),
    sched_type(_sched_type),
    rout(_rout),
    alarm_thread(NULL),
    slices(th)
-{  
-   new program(filename);
-
-	if(margs.size() < state::PROGRAM->num_args_needed())
-		throw machine_error(string("this program requires ") + utils::to_string(state::PROGRAM->num_args_needed()) + " arguments");
+{
+    this->all->PROGRAM = new vm::program(file);
+    this->all->ROUTER = &_rout;
+    
+    if(margs.size() < this->all->PROGRAM->num_args_needed())
+        throw machine_error(string("this program requires ") + utils::to_string(all->PROGRAM->num_args_needed()) + " arguments");
    
-	state::ARGUMENTS = margs;
-   state::DATABASE = new database(filename, get_creation_function(_sched_type));
-   state::NUM_THREADS = num_threads;
-   state::MACHINE = this;
+   this->all->ARGUMENTS = margs;
+   this->all->DATABASE =  new database(filename, get_creation_function(_sched_type), this->all);
+   this->all->NUM_THREADS = num_threads;
+   this->all->MACHINE = this;
    
    mem::init(num_threads);
    
    switch(sched_type) {
       case SCHED_THREADS:
-         process_list = sched::static_local::start(num_threads);
+         sched::static_local::start(num_threads, this->all);
          break;
       case SCHED_THREADS_PRIO:
-         process_list = sched::threads_prio::start(num_threads);
+         sched::threads_prio::start(num_threads, this->all);
          break;
 #if 0
       case SCHED_THREADS_SINGLE_LOCAL:
@@ -380,42 +382,32 @@ machine::machine(const string& file, router& _rout, const size_t th,
          break;
 #endif
       case SCHED_SERIAL:
-         process_list.push_back(dynamic_cast<sched::base*>(new sched::serial_local()));
+         this->all->ALL_THREADS.push_back(dynamic_cast<sched::base*>(new sched::serial_local(this->all)));
          break;
 		case SCHED_SERIAL_UI:
-			process_list.push_back(dynamic_cast<sched::base*>(new sched::serial_ui_local()));
+			this->all->ALL_THREADS.push_back(dynamic_cast<sched::base*>(new sched::serial_ui_local(this->all)));
 			break;
       case SCHED_UNKNOWN: assert(false); break;
    }
    
-   assert(process_list.size() == num_threads);
+   assert(this->all->ALL_THREADS.size() == num_threads);
 }
 
 machine::~machine(void)
 {
    // when deleting database, we need to access the program,
    // so we must delete this in correct order
-   delete state::DATABASE;
+   delete this->all->DATABASE;
    
    for(process_id i(0); i != num_threads; ++i)
-      delete process_list[i];
+      delete all->ALL_THREADS[i];
 
-   delete state::PROGRAM;
+   delete this->all->PROGRAM;
       
    if(alarm_thread)
       delete alarm_thread;
       
    mem::cleanup(num_threads);
-
-   state::PROGRAM = NULL;
-   state::DATABASE = NULL;
-   state::MACHINE = NULL;
-   state::REMOTE = NULL;
-   state::ROUTER = NULL;
-   state::NUM_THREADS = 0;
-   state::NUM_PREDICATES = 0;
-   state::NUM_NODES = 0;
-   state::NUM_NODES_PER_PROCESS = 0;
 }
 
 }

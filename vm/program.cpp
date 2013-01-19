@@ -50,7 +50,6 @@ BOOST_STATIC_ASSERT(sizeof(uint_val) == 4);
 program::program(const string& filename):
    init(NULL), priority_pred(NULL)
 {
-   state::PROGRAM = this;
 	size_t position(0);
    
    ifstream fp(filename.c_str(), ios::in | ios::binary);
@@ -68,7 +67,6 @@ program::program(const string& filename):
    predicates.resize(num_predicates);
    code_size.resize(num_predicates);
    code.resize(num_predicates);
-   state::NUM_PREDICATES = num_predicates;
 
    // skip nodes
    uint_val num_nodes;
@@ -173,7 +171,7 @@ program::program(const string& filename):
    
    safe = true;
    for(size_t i(0); i < num_predicates; ++i) {
-      predicates[i]->cache_info();
+      predicates[i]->cache_info(this);
       if(predicates[i]->is_aggregate() && predicates[i]->is_unsafe_agg()) {
          safe = false;
 			break;
@@ -188,17 +186,19 @@ program::program(const string& filename):
 	if(has_global) {
 		predicate_id pred;
 		byte asc_desc;
+      field_num priority_argument;
+      priority_type global_prio;
 		
 		READ_CODE(&pred, sizeof(predicate_id));
 		READ_CODE(&priority_argument, sizeof(field_num));
 		READ_CODE(&asc_desc, sizeof(byte));
 		
+		global_prio = (asc_desc ? PRIORITY_ASC : PRIORITY_DESC);
 		priority_pred = predicates[pred];
 		priority_argument -= 2;
-		priority_pred->set_global_priority();
-		priority_asc = (asc_desc ? true : false);
+		priority_pred->set_global_priority(global_prio, priority_argument);
       priority_strat_level = priority_pred->get_strat_level();
-	}
+   }
    
    // read predicate code
    for(size_t i(0); i < num_predicates; ++i) {
@@ -304,7 +304,7 @@ program::print_bytecode(ostream& out) const
    for(size_t i(0); i < number_rules; ++i) {
       out << endl;
       out << "RULE " << i << endl;
-		rules[i]->print(out);
+		rules[i]->print(out, this);
    }
 }
 

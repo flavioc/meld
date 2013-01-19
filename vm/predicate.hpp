@@ -19,6 +19,12 @@ const size_t PRED_AGG_INFO_MAX = 32;
 
 class program;
 
+typedef enum {
+   NO_GLOBAL_PRIORITY,
+   PRIORITY_ASC,
+   PRIORITY_DESC
+} priority_type;
+
 class predicate {
 private:
    friend class program;
@@ -50,13 +56,14 @@ private:
    bool is_linear;
    bool is_reverse_route;
    bool is_action;
-	bool is_global_prio;
+   priority_type global_prio;
+   field_num priority_argument;
 
    std::vector<rule_id> affected_rules;
    
    void build_field_info(void);
-   void build_aggregate_info(void);
-   void cache_info(void);
+   void build_aggregate_info(vm::program *);
+   void cache_info(vm::program *);
    
    explicit predicate(void);
 
@@ -111,8 +118,11 @@ public:
    void print_simple(std::ostream&) const;
    void print(std::ostream&) const;
 
-	void set_global_priority(void) { is_global_prio = true; }
-	bool is_global_priority(void) const { return is_global_prio; }
+	void set_global_priority(priority_type _type, const field_num field) { global_prio = _type; priority_argument = field;}
+	bool is_global_priority(void) const { return global_prio != NO_GLOBAL_PRIORITY; }
+   field_num get_priority_argument(void) const { return priority_argument; }
+	inline bool is_global_priority_asc(void) const { return global_prio == PRIORITY_ASC; }
+	inline bool is_global_priority_desc(void) const { return global_prio == PRIORITY_DESC; }
    
    static predicate* make_predicate_from_buf(utils::byte *buf, code_size_t *code_size, const predicate_id);
 };

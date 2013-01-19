@@ -21,20 +21,20 @@ atomic<size_t> mpi_handler::inside_counter(0);
 static boost::barrier *inside_barrier(NULL);
    
 void
-mpi_handler::fetch_work(const process_id id)
+mpi_handler::fetch_work(const process_id id, vm::all *all)
 {
-   if(!state::ROUTER->use_mpi())
+   if(!all->ROUTER->use_mpi())
       return;
    
    size_t total_received(0);
    message_set *ms;
       
-   while((ms = state::ROUTER->recv_attempt(id, recv_buf)) != NULL) {
+   while((ms = all->ROUTER->recv_attempt(id, recv_buf, all->PROGRAM)) != NULL) {
       assert(!ms->empty());
       
       for(list_messages::const_iterator it(ms->begin()); it != ms->end(); ++it) {
          message *msg(*it);
-         node *node(state::DATABASE->find_node(msg->id));
+         node *node(all->DATABASE->find_node(msg->id));
          simple_tuple *tpl(msg->data);
          
          assert(msg->id == node->get_id());
@@ -67,63 +67,63 @@ mpi_handler::fetch_work(const process_id id)
 }
 
 void
-mpi_handler::transmit_messages(void)
+mpi_handler::transmit_messages(vm::all *all)
 {
-   const size_t transmitted(msg_buf.transmit());
+   const size_t transmitted(msg_buf.transmit(all));
    
    if(transmitted > 0)
       messages_were_transmitted(transmitted);
 }
 
 void
-mpi_handler::do_mpi_worker_cycle(void)
+mpi_handler::do_mpi_worker_cycle(vm::all *all)
 {
    ++round_trip_update;
    ++round_trip_send;
 
    if(round_trip_update == MPI_ROUND_TRIP_UPDATE) {
-      update_pending_messages(true);
+      update_pending_messages(true, all);
       round_trip_update = 0;
    }
 
    if(round_trip_send == step_send) {
-      transmit_messages();
+      transmit_messages(all);
       round_trip_send = 0;
    }
 }
 
 void
-mpi_handler::do_mpi_leader_cycle(void)
+mpi_handler::do_mpi_leader_cycle(vm::all *all)
 {
    ++round_trip_fetch;
    
    if(round_trip_fetch == step_fetch) {
-      fetch_work(0);
+      fetch_work(0, all);
       round_trip_fetch = 0;
    }
 }
 
 void
-mpi_handler::do_mpi_cycle(const process_id id)
+mpi_handler::do_mpi_cycle(const process_id id, vm::all *all)
 {
-   do_mpi_worker_cycle();
+   do_mpi_worker_cycle(all);
    
    ++round_trip_fetch;
    
    if(round_trip_fetch == step_fetch) {
-      fetch_work(id);
+      fetch_work(id, all);
       round_trip_fetch = 0;
    }
 }
 
 void
-mpi_handler::update_pending_messages(const bool test)
+mpi_handler::update_pending_messages(const bool test, vm::all *all)
 {
-   msg_buf.update_received(test);
+   msg_buf.update_received(test, all);
 }
 
 bool
-mpi_handler::attempt_token(termination_barrier *barrier, const bool main)
+mpi_handler::attempt_token(termination_barrier *barrier, const bool main, vm::all *all)
 {
    if(!barrier->zero_active_threads())
       return false;
@@ -147,14 +147,14 @@ mpi_handler::attempt_token(termination_barrier *barrier, const bool main)
    if(main) {
       boost::mutex::scoped_lock lock(tok_mutex);
       
-      if(!token.busy_loop_token(true)) {
+      if(!token.busy_loop_token(true, all)) {
          assert(barrier->zero_active_threads());
          barrier->set_done();
          iteration_finished = true;
       }
       
       assert(inside_counter == 0);
-      inside_counter = state::NUM_THREADS;
+      inside_counter = all->NUM_THREADS;
    }
    
    inside_barrier->wait();

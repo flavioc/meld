@@ -44,7 +44,7 @@ public:
    inline void set_int_priority_level(const vm::int_val level) { priority_level.int_priority = level; }
    inline void set_float_priority_level(const vm::float_val level) { priority_level.float_priority = level; }
 	inline bool has_priority_level(void) const {
-      switch(vm::state::PROGRAM->get_priority_type()) {
+      switch(all->PROGRAM->get_priority_type()) {
          case vm::FIELD_INT:
             return priority_level.int_priority > 0;
          case vm::FIELD_FLOAT:
@@ -59,8 +59,8 @@ public:
 	bool has_been_prioritized;
    bool has_been_touched;
 
-   explicit thread_intrusive_node(const db::node::node_id _id, const db::node::node_id _trans):
-		thread_node(_id, _trans),
+   explicit thread_intrusive_node(const db::node::node_id _id, const db::node::node_id _trans, vm::all *all):
+		thread_node(_id, _trans, all),
       INIT_DOUBLE_QUEUE_NODE(), INIT_PRIORITY_NODE(),
       moving_around(false),
 		has_been_prioritized(false),

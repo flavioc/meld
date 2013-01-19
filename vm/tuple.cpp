@@ -348,13 +348,13 @@ tuple::load(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm)
 }
 
 tuple*
-tuple::unpack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm)
+tuple::unpack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm, vm::program *prog)
 {
    predicate_id pred_id;
    
    MPI_Unpack(buf, buf_size, pos, &pred_id, 1, MPI_UNSIGNED_CHAR, comm);
    
-   tuple *ret(new tuple(state::PROGRAM->get_predicate(pred_id)));
+   tuple *ret(new tuple(prog->get_predicate(pred_id)));
    
    ret->load(buf, buf_size, pos, comm);
    

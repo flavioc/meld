@@ -20,6 +20,8 @@
 #include "sched/mpi/message.hpp"
 #include "sched/mpi/request.hpp"
 #include "sched/mpi/token.hpp"
+#include "vm/all.hpp"
+#include "process/remote.hpp"
 
 namespace process
 {
@@ -75,7 +77,7 @@ public:
    
    inline bool use_mpi(void) const { return world_size > 1; }
    
-   void set_nodes_total(const size_t);
+   void set_nodes_total(const size_t, vm::all *);
    
 #ifdef COMPILE_MPI
 
@@ -85,7 +87,7 @@ public:
    
    bool was_received(const size_t, MPI_Request *) const;
    
-   sched::message_set* recv_attempt(const vm::process_id, utils::byte *);
+   sched::message_set* recv_attempt(const vm::process_id, utils::byte *, vm::program *);
 
    void send_token(const sched::token&);
    

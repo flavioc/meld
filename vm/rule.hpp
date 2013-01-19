@@ -26,7 +26,7 @@ class rule
 
    public:
 	
-		void print(std::ostream&) const;
+		void print(std::ostream&, const vm::program * const) const;
 		
       inline rule_id get_id(void) const { return id; }
 		inline const std::string get_string(void) const { return str; }

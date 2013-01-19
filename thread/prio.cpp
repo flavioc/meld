@@ -6,7 +6,6 @@
 #include "db/tuple.hpp"
 #include "process/remote.hpp"
 #include "sched/thread/assert.hpp"
-#include "vm/state.hpp"
 #include "sched/common.hpp"
 #include "utils/time.hpp"
 
@@ -90,7 +89,7 @@ threads_prio::answer_steal_requests(void)
       thread_intrusive_node *node(NULL);
 
       size_t size(queue_nodes.size() + prio_queue.size());
-      const size_t frac((int)((double)size * (double)state::TASK_STEALING_FACTOR));
+      const size_t frac((int)((double)size * (double)state.all->TASK_STEALING_FACTOR));
       size = max(min(size, (size_t)4), frac);
 
       while(size > 0 && (!queue_nodes.empty() || !prio_queue.empty())) {
@@ -240,7 +239,7 @@ threads_prio::new_agg(work& new_work)
 void
 threads_prio::add_prio_tuple(work new_work, thread_intrusive_node *to, db::simple_tuple *stpl)
 {
-	const field_num field(state::PROGRAM->get_priority_argument());
+	const field_num field(state.all->PROGRAM->get_priority_argument());
 	vm::tuple *tpl(stpl->get_tuple());
 	heap_priority valp;
 	const bool has_prio_tuples(!to->prioritized_tuples.empty());
@@ -472,7 +471,7 @@ threads_prio::check_if_current_useless(void)
 {
 	assert(current_node->in_queue());
 	
-	if(!state::PROGRAM->has_global_priority() &&
+	if(!state.all->PROGRAM->has_global_priority() &&
          !prio_queue.empty() && taken_from_priority_queue && !current_node->has_work())
    {
 		// there could be higher priority nodes around
@@ -497,11 +496,11 @@ threads_prio::check_if_current_useless(void)
 		assert(current_node->has_work());
       return false;
 #endif
-	} else if(state::PROGRAM->has_global_priority() && !prio_queue.empty() && current_node->has_prio_work()) {
+	} else if(state.all->PROGRAM->has_global_priority() && !prio_queue.empty() && current_node->has_prio_work()) {
 		const heap_priority current_min(prio_queue.min_value());
 		const heap_priority node_min(current_node->get_min_value());
 
-      assert(state::PROGRAM->has_global_priority());
+      assert(state.all->PROGRAM->has_global_priority());
 		
 #ifdef PROFILE_QUEUE
 		prio_nodes_compared++;
@@ -539,7 +538,7 @@ threads_prio::check_if_current_useless(void)
       
       if(!node_queue::in_queue(current_node)) {
          current_node->set_in_queue(false);
-         switch(state::PROGRAM->get_priority_type()) {
+         switch(state.all->PROGRAM->get_priority_type()) {
             case FIELD_INT:
                current_node->set_int_priority_level(0);
                break;
@@ -677,7 +676,7 @@ threads_prio::end(void)
 	cout << "prio_count: " << prio_count << endl;
 #endif
 #ifdef PROFILE_QUEUE
-	if(state::PROGRAM->has_global_priority()) {
+	if(state::all->PROGRAM->has_global_priority()) {
 		cout << "Moved nodes in priority queue count: " << prio_moved_pqueue << endl;
 		cout << "Removed from normal queue count: " << prio_removed_pqueue << endl;
 		cout << "Added to priority queue count: " << prio_add_pqueue << endl;
@@ -828,19 +827,19 @@ threads_prio::set_node_priority(node *n, const int priority)
 void
 threads_prio::init(const size_t)
 {
-	if(state::PROGRAM->has_global_priority()) {
-		predicate *p(state::PROGRAM->get_priority_predicate());
-		const field_num field(state::PROGRAM->get_priority_argument());
+	if(state.all->PROGRAM->has_global_priority()) {
+		predicate *p(state.all->PROGRAM->get_priority_predicate());
+		const field_num field(state.all->PROGRAM->get_priority_argument());
 
 		switch(p->get_field_type(field)) {
 			case FIELD_INT:
-				if(state::PROGRAM->is_global_priority_asc())
+				if(state.all->PROGRAM->is_global_priority_asc())
 					priority_type = HEAP_INT_ASC;
 				else
 					priority_type = HEAP_INT_DESC;
 				break;
 			case FIELD_FLOAT:
-				if(state::PROGRAM->is_global_priority_asc())
+				if(state.all->PROGRAM->is_global_priority_asc())
 					priority_type = HEAP_FLOAT_ASC;
 				else
 					priority_type = HEAP_FLOAT_DESC;
@@ -856,8 +855,8 @@ threads_prio::init(const size_t)
 
    prio_queue.set_type(priority_type);
 
-   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
-   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(remote::self->find_last_node(id)));
+   database::map_nodes::iterator it(state.all->DATABASE->get_node_iterator(remote::self->find_first_node(id)));
+   database::map_nodes::iterator end(state.all->DATABASE->get_node_iterator(remote::self->find_last_node(id)));
    
 #ifdef DO_ONE_PASS_FIRST
    to_takeout = 0;
@@ -896,7 +895,7 @@ threads_prio::gather_active_tuples(db::node *node, const vm::predicate_id pred)
 {
 	simple_tuple_vector ls;
 	thread_intrusive_node *no((thread_intrusive_node*)node);
-	predicate *p(state::PROGRAM->get_predicate(pred));
+	predicate *p(state.all->PROGRAM->get_predicate(pred));
 	
 	typedef thread_node::queue_type fact_queue;
 	
@@ -932,7 +931,7 @@ threads_prio::gather_next_tuples(db::node *node, simple_tuple_list& ls)
 
 	thread_intrusive_node *no((thread_intrusive_node*)node);
 
-   if(no->get_local_strat_level() >= state::PROGRAM->get_priority_strat_level()) {
+   if(no->get_local_strat_level() >= state.all->PROGRAM->get_priority_strat_level()) {
       while(!no->prioritized_tuples.empty()) {
          ls.push_back(no->prioritized_tuples.pop());
       }
@@ -950,24 +949,13 @@ threads_prio::write_slice(statistics::slice& sl) const
 #endif
 }
 
-threads_prio::threads_prio(const vm::process_id _id):
-   static_local(_id)
+threads_prio::threads_prio(const vm::process_id _id, vm::all *all):
+   static_local(_id, all)
 {
 }
 
 threads_prio::~threads_prio(void)
 {
-}
-   
-vector<sched::base*>&
-threads_prio::start(const size_t num_threads)
-{
-   init_barriers(num_threads);
-   
-   for(process_id i(0); i < num_threads; ++i)
-      add_thread(new threads_prio(i));
-      
-   return ALL_THREADS;
 }
    
 }

@@ -25,7 +25,6 @@ help(void)
 	cerr << "meld -f <program file> -c <scheduler> -- arg1 arg2 ... argN" << endl;
 	cerr << "\t-f <name>\tmeld program" << endl;
 	help_schedulers();
-   cerr << "\t-b \t\ttask stealing factor" << endl;
 	cerr << "\t-t \t\ttime execution" << endl;
 	cerr << "\t-m \t\tmemory statistics" << endl;
 	cerr << "\t-i <file>\tdump time statistics" << endl;
@@ -82,14 +81,6 @@ read_arguments(int argc, char **argv)
                help();
                
             statistics::set_stat_file(string(argv[1]));
-            argc--;
-            argv++;
-            break;
-         case 'b':
-            if(argc < 2)
-               help();
-            if(!from_string<double>(vm::state::TASK_STEALING_FACTOR, string(argv[1]), std::dec))
-               help();
             argc--;
             argv++;
             break;

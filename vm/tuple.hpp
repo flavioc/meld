@@ -69,7 +69,7 @@ public:
    void pack(utils::byte *, const size_t, int *, MPI_Comm) const;
    void load(utils::byte *, const size_t, int *, MPI_Comm);
    
-   static tuple* unpack(utils::byte *, const size_t, int *, MPI_Comm);
+   static tuple* unpack(utils::byte *, const size_t, int *, MPI_Comm, vm::program *);
 
    field_type get_field_type(const field_num& field) const { return pred->get_field_type(field); }
 

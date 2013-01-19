@@ -50,20 +50,20 @@ protected:
       token.messages_received(total);
    }
    
-   inline void buffer_message(process::remote *rem, const db::node::node_id id, message *msg)
+   inline void buffer_message(process::remote *rem, const db::node::node_id id, message *msg, vm::all *all)
    {
-      if(msg_buf.insert(rem, id, msg))
+      if(msg_buf.insert(rem, id, msg, all))
          messages_were_transmitted(1);
    }
    
-   bool attempt_token(termination_barrier *, const bool);
+   bool attempt_token(termination_barrier *, const bool, vm::all *);
    
 public:
    
    static void init(const size_t);
    static void end(void);
    
-   void fetch_work(const vm::process_id);
+   void fetch_work(const vm::process_id, vm::all *);
    
    void assert_mpi(void) const
    {
@@ -71,13 +71,13 @@ public:
       assert(iteration_finished);
    }
    
-   void transmit_messages(void);
+   void transmit_messages(vm::all *);
    
-   void update_pending_messages(const bool);
+   void update_pending_messages(const bool, vm::all *);
    
-   void do_mpi_worker_cycle(void);
-   void do_mpi_leader_cycle(void);
-   void do_mpi_cycle(const vm::process_id);
+   void do_mpi_worker_cycle(vm::all *);
+   void do_mpi_leader_cycle(vm::all *);
+   void do_mpi_cycle(const vm::process_id, vm::all *);
    
    explicit mpi_handler(void);
    
@@ -108,23 +108,23 @@ public:
    
 #define BUSY_LOOP_FETCH_WORK()   \
    if(leader_thread())           \
-      fetch_work(0);
+      fetch_work(0, all);
       
 #define MPI_WORK_CYCLE()         \
    do_mpi_worker_cycle();        \
    if(leader_thread())           \
-      do_mpi_leader_cycle();
+      do_mpi_leader_cycle(all);
 
-#define IDLE_MPI()                  \
-   transmit_messages();             \
-   if(leader_thread())              \
-      fetch_work(0);                \
-   update_pending_messages(true);
+#define IDLE_MPI()                     \
+   transmit_messages();                \
+   if(leader_thread())                 \
+      fetch_work(0);                   \
+   update_pending_messages(true, all);
 
-#define IDLE_MPI_ALL(ID)            \
-   transmit_messages();             \
-   fetch_work(ID);                  \
-   update_pending_messages(true);   \
+#define IDLE_MPI_ALL(ID)                  \
+   transmit_messages();                   \
+   fetch_work(ID);                        \
+   update_pending_messages(true, all);    \
 
 }
 

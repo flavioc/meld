@@ -23,7 +23,7 @@ class threaded
 {
 private:
      
-   volatile thread_state state;
+   volatile thread_state tstate;
    
 protected:
    
@@ -36,11 +36,10 @@ protected:
    size_t thread_round_state;
    static utils::atomic<size_t> total_in_agg;
    
-   static std::vector<sched::base*> ALL_THREADS;
-   
-   static inline void add_thread(sched::base *add)
+   static inline void add_thread(sched::base *add, vm::all *all)
    {
-      ALL_THREADS[add->get_id()] = add;
+      all->ALL_THREADS.push_back(add);
+      assert((size_t)all->ALL_THREADS.size() == (size_t)(add->get_id() + 1));
    }
    
 #define threads_synchronize() thread_barrier->wait(get_id())
@@ -49,15 +48,15 @@ protected:
    
    inline void set_active(void)
    {
-      assert(state == THREAD_INACTIVE);
-      state = THREAD_ACTIVE;
+      assert(tstate == THREAD_INACTIVE);
+      tstate = THREAD_ACTIVE;
       term_barrier->is_active();
    }
    
    inline void set_inactive(void)
    {
-      assert(state == THREAD_ACTIVE);
-      state = THREAD_INACTIVE;
+      assert(tstate == THREAD_ACTIVE);
+      tstate = THREAD_INACTIVE;
       term_barrier->is_inactive();
    }
    
@@ -72,8 +71,8 @@ protected:
    
    static inline size_t num_active(void) { return term_barrier->num_active(); }
    
-   inline bool is_inactive(void) const { return state == THREAD_INACTIVE; }
-   inline bool is_active(void) const { return state == THREAD_ACTIVE; }
+   inline bool is_inactive(void) const { return tstate == THREAD_INACTIVE; }
+   inline bool is_active(void) const { return tstate == THREAD_ACTIVE; }
    
    static inline void reset_barrier(void) { term_barrier->reset(); }
    
@@ -84,26 +83,24 @@ protected:
    
 public:
    
-   explicit threaded(void): state(THREAD_ACTIVE),
+   explicit threaded(void): tstate(THREAD_ACTIVE),
       thread_round_state(1)
    {
    }
    
    virtual ~threaded(void)
    {
-      assert(state == THREAD_INACTIVE);
+      assert(tstate == THREAD_INACTIVE);
    }
 };
 
 #define DEFINE_START_FUNCTION(CLASS)                  \
-   static std::vector<sched::base*>&                  \
-   start(const size_t num_threads)                    \
+   static inline void                                 \
+   start(const size_t num_threads, vm::all *all)      \
    {                                                  \
       init_barriers(num_threads);                     \
       for(vm::process_id i(0); i < num_threads; ++i)  \
-         add_thread(new CLASS(i));                    \
-      assert_thread_disable_work_count();             \
-      return ALL_THREADS;                             \
+         add_thread(new CLASS(i, all), all);          \
    }
 
 #define BUSY_LOOP_MAKE_INACTIVE()         \
@@ -149,7 +146,7 @@ public:
       COMPUTE_MORE_WORK                                  \
       if(more_work) {                                    \
          reset_barrier();                                \
-         total_in_agg = state::NUM_THREADS;              \
+         total_in_agg = state.all->NUM_THREADS;          \
          round_state = GET_NEXT(round_state);            \
          IF_TRUE                                         \
          return true;                                    \

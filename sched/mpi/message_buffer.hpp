@@ -8,6 +8,7 @@
 #endif
 
 #include "vm/defs.hpp"
+#include "vm/all.hpp"
 #include "mem/base.hpp"
 #include "utils/types.hpp"
 #include "sched/mpi/message.hpp"
@@ -36,7 +37,7 @@ private:
    request_handler req_handler;
    size_t total;
    
-   void transmit_list(process::remote *, const vm::process_id, message_set&);
+   void transmit_list(process::remote *, const vm::process_id, message_set&, vm::all *);
    
 public:
 
@@ -46,15 +47,15 @@ public:
    
    inline bool all_received(void) const { return req_handler.empty(); }
    
-   inline void update_received(const bool test)
+   inline void update_received(const bool test, vm::all *all)
    {
       if(!req_handler.empty())
-         req_handler.flush(test);
+         req_handler.flush(test, all);
    }
    
-   bool insert(process::remote *, const vm::process_id, message *);
+   bool insert(process::remote *, const vm::process_id, message *, vm::all *);
    
-   size_t transmit(void);
+   size_t transmit(vm::all *);
    
    explicit message_buffer(void): total(0) {}
    

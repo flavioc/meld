@@ -30,7 +30,7 @@ request_handler::clear(void)
 }
 
 void
-request_handler::flush(const bool test)
+request_handler::flush(const bool test, vm::all *all)
 {
    if(!test) {
       clear();
@@ -67,7 +67,7 @@ request_handler::flush(const bool test)
                mem_sizes[k] = obj.mem_size;
             }
             
-            if(k > 0 && state::ROUTER->was_received(k, reqs)) {
+            if(k > 0 && all->ROUTER->was_received(k, reqs)) {
                for(size_t x(0); x < k; ++x)
                   allocator<byte>().deallocate(mems[x], mem_sizes[x]);
                assert(k <= requests_per_round && k > 0);

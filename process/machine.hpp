@@ -29,11 +29,10 @@ class machine
 {
 private:
    
+   vm::all *all;
    const std::string filename;
    const size_t num_threads;
    const sched::scheduler_type sched_type;
-   
-   std::vector<sched::base*> process_list;
    
    router& rout;
    
@@ -49,7 +48,9 @@ public:
    
    sched::scheduler_type get_sched_type(void) const { return sched_type; }
    
-   sched::base *get_scheduler(const vm::process_id id) { return process_list[id]; }
+   sched::base *get_scheduler(const vm::process_id id) { return this->all->ALL_THREADS[id]; }
+
+   vm::all *get_all(void) const { return this->all; }
    
    bool same_place(const db::node::node_id, const db::node::node_id) const;
    

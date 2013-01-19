@@ -18,18 +18,13 @@ namespace sched
 {
 	
 	
-static inline byte_code
-get_bytecode(vm::tuple *tuple)
-{
-   return state::PROGRAM->get_predicate_bytecode(tuple->get_predicate_id());
-}
-
 void
 base::do_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
 {
    if(tuple->is_linear()) {
       state.setup(tuple, node, count);
-      const execution_return ret(execute_bytecode(get_bytecode(tuple), state));
+      const byte_code code(state.all->PROGRAM->get_predicate_bytecode(tuple->get_predicate_id()));
+      const execution_return ret(execute_bytecode(code, state));
       
       if(ret == EXECUTION_CONSUMED) {
          delete tuple;
@@ -42,7 +37,8 @@ base::do_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
       if(is_new) {
          // set vm state
          state.setup(tuple, node, count);
-         execute_bytecode(get_bytecode(tuple), state);
+         byte_code code(state.all->PROGRAM->get_predicate_bytecode(tuple->get_predicate_id()));
+         execute_bytecode(code, state);
       } else
          delete tuple;
    }
@@ -186,7 +182,7 @@ base::loop(void)
    // start process pool
    mem::create_pool(id);
 
-   init(state::NUM_THREADS);
+   init(state.all->NUM_THREADS);
 
    do_loop();
 
@@ -211,10 +207,10 @@ base::~base(void)
 	delete thread;
 }
 
-base::base(const vm::process_id _id):
+base::base(const vm::process_id _id, vm::all *_all):
    id(_id),
 	thread(NULL),
-	state(this),
+	state(this, _all),
 	iteration(0)
 #ifdef INSTRUMENTATION
    , processed_facts(0), sent_facts(0), ins_state(statistics::NOW_ACTIVE)

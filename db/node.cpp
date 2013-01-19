@@ -195,8 +195,8 @@ node::assert_end(void) const
    }
 }
 
-node::node(const node_id _id, const node_id _trans):
-   id(_id), translation(_trans), owner(NULL)
+node::node(const node_id _id, const node_id _trans, vm::all *_all):
+   all(_all), id(_id), translation(_trans), owner(NULL), matcher(_all->PROGRAM)
 {
 }
 
@@ -242,7 +242,7 @@ node::print(ostream& cout) const
    {
 		tuple_trie *tr(it->second);
 		predicate_id id(it->first);
-      const predicate *pred(state::PROGRAM->get_predicate(id));
+      const predicate *pred(all->PROGRAM->get_predicate(id));
 
 		ordered_tries.push_back(str_trie(pred->get_name(), tr));
 	}
@@ -296,8 +296,8 @@ node::dump_json(void) const
 void
 node::init(void)
 {
-   for(size_t i(0); i < state::PROGRAM->num_route_predicates(); ++i) {
-      const predicate *pred(state::PROGRAM->get_route_predicate(i));
+   for(size_t i(0); i < all->PROGRAM->num_route_predicates(); ++i) {
+      const predicate *pred(all->PROGRAM->get_route_predicate(i));
       
       edge_info[pred->get_id()] = edge_set();
    }

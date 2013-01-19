@@ -72,6 +72,7 @@ predicate::make_predicate_from_buf(byte *buf, code_size_t *code_size, const pred
    
    // read predicate name
    pred->name = string((const char*)buf);
+   pred->global_prio = NO_GLOBAL_PRIORITY;
    
    buf += PRED_NAME_SIZE_MAX;
    
@@ -120,23 +121,23 @@ predicate::build_field_info(void)
 }
 
 void
-predicate::build_aggregate_info(void)
+predicate::build_aggregate_info(vm::program *prog)
 {
    switch(agg_info->safeness) {
       case AGG_NEIGHBORHOOD:
       case AGG_NEIGHBORHOOD_AND_SELF:
-         agg_info->remote_pred = state::PROGRAM->get_predicate(agg_info->remote_pred_id);
+         agg_info->remote_pred = prog->get_predicate(agg_info->remote_pred_id);
          break;
       default: break;
    }
 }
 
 void
-predicate::cache_info(void)
+predicate::cache_info(vm::program *prog)
 {
    build_field_info();
    if(is_aggregate())
-      build_aggregate_info();
+      build_aggregate_info(prog);
 }
 
 predicate::predicate(void)
@@ -193,9 +194,9 @@ predicate::print(ostream& cout) const
       cout << ",linear";
    if(is_action)
       cout << ",action";
-	if(is_global_prio)
-		cout << ",global_prio/" << state::PROGRAM->get_priority_argument() << "=" <<
-			(state::PROGRAM->is_global_priority_asc() ? "asc" : "desc");
+	if(is_global_priority())
+		cout << ",global_prio/" << priority_argument << "=" <<
+			(global_prio == PRIORITY_ASC ? "asc" : "desc");
    
    cout << "]";
    

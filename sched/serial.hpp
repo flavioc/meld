@@ -49,15 +49,15 @@ public:
    virtual void end(void) {}
    virtual bool terminate_iteration(void);
    
-   static db::node* create_node(const db::node::node_id id, const db::node::node_id trans)
+   static db::node* create_node(const db::node::node_id id, const db::node::node_id trans, vm::all *all)
    {
-      return dynamic_cast<db::node*>(new sched::serial_node(id, trans));
+      return dynamic_cast<db::node*>(new sched::serial_node(id, trans, all));
    }
    
    serial_local *find_scheduler(const db::node *) { return this; }
    
-   explicit serial_local(void):
-      sched::base(0),
+   explicit serial_local(vm::all *all):
+      sched::base(0, all),
       current_node(NULL)
    {
    }

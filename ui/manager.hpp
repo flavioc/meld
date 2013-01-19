@@ -11,6 +11,7 @@
 #endif
 #include <map>
 
+#include "vm/all.hpp"
 #include "vm/defs.hpp"
 #include "vm/rule.hpp"
 #include "ui/client.hpp"
@@ -51,7 +52,11 @@ class manager: public websocketpp::server::handler
 		utils::atomic<int> next_set;
 		volatile bool done;
 
+      vm::all *all;
+
    public:
+
+      void set_all(vm::all *_all) { all = _all; }
 
       void on_open(connection_ptr);
       void on_close(connection_ptr);

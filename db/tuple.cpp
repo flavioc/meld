@@ -21,13 +21,13 @@ simple_tuple::pack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm) co
 }
 
 simple_tuple*
-simple_tuple::unpack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm)
+simple_tuple::unpack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm, vm::program *prog)
 {
    ref_count count;
    
    MPI_Unpack(buf, buf_size, pos, &count, 1, MPI_SHORT, comm);
    
-   vm::tuple *tpl(vm::tuple::unpack(buf, buf_size, pos, comm));
+   vm::tuple *tpl(vm::tuple::unpack(buf, buf_size, pos, comm, prog));
    
    return new simple_tuple(tpl, count);
 }

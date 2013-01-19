@@ -20,6 +20,8 @@ class client
       typedef websocketpp::server::connection_ptr connection_ptr;
 
       connection_ptr conn;
+
+      vm::all *all;
 	
 		bool is_alive(void) const;
 
