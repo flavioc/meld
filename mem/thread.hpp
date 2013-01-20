@@ -11,11 +11,11 @@
 namespace mem
 {
    
-void init(const size_t);
-
 pool *get_pool(void);
    
-void create_pool(const size_t); // XXX: must be process_id
+void create_pool(void);
+void ensure_pool(void);
+void delete_pool(void);
 
 void cleanup(const size_t);
   

@@ -4,6 +4,7 @@
 
 #include "conf.hpp"
 
+#include "vm/all.hpp"
 #ifdef USE_UI
 #include <websocketpp/websocketpp.hpp>
 #endif

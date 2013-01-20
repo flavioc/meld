@@ -180,7 +180,7 @@ void
 base::loop(void)
 {
    // start process pool
-   mem::create_pool(id);
+   mem::ensure_pool();
 
    init(state.all->NUM_THREADS);
 

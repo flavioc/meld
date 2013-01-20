@@ -352,8 +352,6 @@ machine::machine(const string& file, router& _rout, const size_t th,
    this->all->NUM_THREADS = num_threads;
    this->all->MACHINE = this;
    
-   mem::init(num_threads);
-   
    switch(sched_type) {
       case SCHED_THREADS:
          sched::static_local::start(num_threads, this->all);
