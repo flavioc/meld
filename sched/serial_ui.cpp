@@ -40,7 +40,8 @@ serial_ui_local::get_work(void)
          first_done = true;
 		
       LOG_STEP_START(n);
-      WAIT_FOR_NEXT();
+      if(!WAIT_FOR_NEXT())
+         return NULL;
    }
 	
 	return n;

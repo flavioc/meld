@@ -391,7 +391,7 @@ state::run_node(db::node *no)
 		rule_id rule(rule_queue.pop());
 		
 #ifdef DEBUG_RULES
-		cout << "Run rule " << state::PROGRAM->get_rule(rule)->get_string() << endl;
+		cout << "Run rule " << all->PROGRAM->get_rule(rule)->get_string() << endl;
 #endif
 
 		/* delete rule and every check */

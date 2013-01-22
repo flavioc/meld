@@ -35,6 +35,7 @@ class program
 {
 private:
 
+   const std::string filename;
 	size_t num_args;
    size_t number_rules;
 
@@ -70,6 +71,8 @@ public:
 
    inline size_t num_rules(void) const { return number_rules; }
 	inline size_t num_args_needed(void) const { return num_args; }
+
+   inline std::string get_name(void) const { return filename; }
 
    inline rule *get_rule(const rule_id id) const {
       assert(id < number_rules);

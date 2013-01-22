@@ -47,8 +47,8 @@ size_t ADD_PRIORITY_PREDICATE_ID(5);
 // most integers in the byte-code have 4 bytes
 BOOST_STATIC_ASSERT(sizeof(uint_val) == 4);
 
-program::program(const string& filename):
-   init(NULL), priority_pred(NULL)
+program::program(const string& _filename):
+   filename(_filename), init(NULL), priority_pred(NULL)
 {
 	size_t position(0);
    

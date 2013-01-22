@@ -47,7 +47,7 @@ get_node_val(pcounter& m, state& state)
 }
 
 static inline node_val
-get_node_val(const pcounter& m)
+get_node_val(const pcounter& m, state& state)
 {
    return pcounter_node(m);
 }
@@ -79,7 +79,7 @@ move_to_reg(const pcounter& m, state& state,
    } else if(val_is_host(from))
       state.set_node(reg, state.node->get_id());
    else if(val_is_node(from))
-      state.set_node(reg, get_node_val(m));
+      state.set_node(reg, get_node_val(m, state));
    else if(val_is_reg(from))
       state.copy_reg(val_reg(from), reg);
    else if(val_is_tuple(from)) {
@@ -114,7 +114,7 @@ move_to_field(pcounter m, state& state, const instr_val& from)
       
       tuple->set_int(val_field_num(m), i);
    } else if(val_is_node(from)) {
-      const node_val val(get_node_val(m));
+      const node_val val(get_node_val(m, state));
       
       tuple *tuple(state.get_tuple(val_field_reg(m)));
       
@@ -260,7 +260,7 @@ move_to_const(pcounter m, state& state, const instr_val& from)
 		
 		state.copy_reg2const(reg, cid);
 	} else if(val_is_node(from)) {
-		const node_val node(get_node_val(m));
+		const node_val node(get_node_val(m, state));
 		
 		const const_id cid(pcounter_const_id(m));
 		state.all->set_const_node(cid, node);
@@ -315,7 +315,7 @@ execute_send(const pcounter& pc, state& state)
 
    if(msg == dest) {
 #ifdef DEBUG_MODE
-      cout << "\t" << *stuple << " -> self" << endl;
+      cout << "\t" << *tuple << " -> self" << endl;
 #endif
       if(tuple->is_action()) {
          state.all->MACHINE->run_action(state.sched,
@@ -360,7 +360,7 @@ execute_send(const pcounter& pc, state& state)
 		}
    } else {
 #ifdef DEBUG_MODE
-      cout << "\t" << *stuple << " -> " << dest_val << endl;
+      cout << "\t" << *tuple << " -> " << dest_val << endl;
 #endif
 #ifdef USE_UI
       if(state::UI) {
@@ -447,7 +447,7 @@ node_val get_op_function<node_val>(const instr_val& val, pcounter& m, state& sta
    if(val_is_host(val))
       return state.node->get_id();
    else if(val_is_node(val))
-      return get_node_val(m);
+      return get_node_val(m, state);
    else if(val_is_reg(val))
       return state.get_node(val_reg(val));
    else if(val_is_field(val)) {
@@ -1690,7 +1690,7 @@ eval_loop:
 
 #ifdef DEBUG_MODE
 		if(state.print_instrs)
-         instr_print_simple(pc, 0, state.PROGRAM, cout);
+         instr_print_simple(pc, 0, state.all->PROGRAM, cout);
 #endif      
 
 #ifdef CORE_STATISTICS
@@ -1913,8 +1913,7 @@ void
 execute_rule(const rule_id rule_id, state& state)
 {
 #if 0
-	cout << "Running rule " << rule << endl;
-   cout << state.PROGRAM->get_rule(rule_id)->get_string() << endl;
+	cout << "Running rule " << state.all->PROGRAM->get_rule(rule_id)->get_string() << endl;
    
    state::DATABASE->print_db(cout);
 #endif

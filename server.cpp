@@ -89,7 +89,6 @@ show_inter_help(void)
 	cout << "Meld server command line" << endl;
 	
 	cout << "Commands:" << endl;
-	cout << "\tload <file> [args]\t loads file and runs it" << endl;
 	cout << "\tstatus\t\t show server status" << endl;
 	cout << "\tversion\t\t show version" << endl;
 	cout << "\thelp\t\t show this text" << endl;
@@ -102,8 +101,8 @@ show_version(void)
 	cout << "Meld Parallel Environment " << VERSION << endl;
 	cout << "using ";
 	switch(sched_type) {
-		case SCHED_SERIAL:
-			cout << "sequential scheduler";
+		case SCHED_SERIAL_UI:
+			cout << "ui sequential scheduler";
 			break;
 		default:
 			cout << "other scheduler";
@@ -114,7 +113,6 @@ show_version(void)
 
 typedef enum {
 	COMMAND_EXIT,
-	COMMAND_LOAD,
 	COMMAND_VERSION,
 	COMMAND_HELP,
 	COMMAND_STATUS,
@@ -142,6 +140,7 @@ parse_command(string cmd)
    if(cmd == "quit")
       return COMMAND_EXIT;
 		
+#if 0
 	split(command_args, cmd, is_any_of(" \t\n"), token_compress_on);
 	
 	if(!command_args.empty()) {
@@ -151,6 +150,7 @@ parse_command(string cmd)
 			}
 		}
 	}
+#endif
 	return COMMAND_NONE;
 }
 
@@ -161,6 +161,7 @@ show_status(void)
 	show_version();
 	cout << "Port: " << port << endl;
 	cout << "# Users: " << man->num_clients() << endl;
+   man->print_clients();
 }
 
 static void
@@ -215,19 +216,6 @@ main(int argc, char **argv)
 				case COMMAND_HELP: show_inter_help(); break;
 				case COMMAND_STATUS: show_status(); break;
 				case COMMAND_NONE: cout << "Command not recognized" << endl; break;
-				case COMMAND_LOAD: {
-					const string filename(command_args[1]);
-
-               // remove first two args
-               command_args.erase(command_args.erase(command_args.begin()));
-				
-               try {
-                  run_program(argc, argv, filename.c_str(), command_args);
-               } catch(std::exception& e) {
-                  cerr << e.what() << endl;
-               }
-				}
-				break;
 				default: break;
 			}
 		}

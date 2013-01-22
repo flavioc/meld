@@ -24,8 +24,6 @@ bool show_database = false;
 bool dump_database = false;
 bool time_execution = false;
 bool memory_statistics = false;
-bool running = false;
-char *program_running = NULL;
 
 static inline size_t
 num_cpus_available(void)
@@ -115,9 +113,6 @@ help_schedulers(void)
 static inline void
 finish(void)
 {
-	running = false;
-	program_running = NULL;
-	LOG_PROGRAM_STOPPED();
 }
 
 bool
@@ -138,10 +133,6 @@ run_program(int argc, char **argv, const char *program, const vm::machine_argume
          }
       }
 
-		running = true;
-		program_running = (char*)program;
-		LOG_PROGRAM_RUNNING();
-		
       router rout(num_threads, argc, argv, is_mpi_sched(sched_type));
       machine mac(program, rout, num_threads, sched_type, margs);
 

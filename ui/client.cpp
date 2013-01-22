@@ -13,7 +13,8 @@ namespace ui
 
 #ifdef USE_UI
 client::client(connection_ptr _conn):
-   conn(_conn), all(NULL)
+   conn(_conn), all(NULL), counter(0),
+   done(false), th(NULL), cunits(0)
 {
 }
 

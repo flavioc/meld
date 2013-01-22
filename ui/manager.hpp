@@ -17,6 +17,8 @@
 #include "ui/client.hpp"
 #include "utils/atomic.hpp"
 
+#define TEMPORARY_CODE_DIRECTORY "/var/tmp"
+
 namespace db
 {
 class database;
@@ -47,14 +49,20 @@ class manager: public websocketpp::server::handler
 
       typedef std::map<connection_ptr, client *> client_list;
 
+      std::vector<client*> cleanup_list;
       client_list clients;
-
-		utils::atomic<int> next_set;
-		volatile bool done;
+      mutable boost::mutex client_mtx;
+      utils::atomic<size_t> clients_served;
 
       vm::all *all;
 
+      client *get_client(connection_ptr);
+      void cleanup(void);
+      void start_file(const std::string&, client*, bool);
+
    public:
+
+      void print_clients(void) const;
 
       void set_all(vm::all *_all) { all = _all; }
 
@@ -62,7 +70,7 @@ class manager: public websocketpp::server::handler
       void on_close(connection_ptr);
       void on_message(connection_ptr, message_ptr);
 
-		void wait_for_next(void);
+		bool wait_for_next(void);
 		void wait_for_done(void);
 
 		void event_program_running(void);
@@ -81,7 +89,7 @@ class manager: public websocketpp::server::handler
       void event_rule_applied(const db::node *, const vm::rule *);
       void event_rule_start(const db::node *, const vm::rule *);
       void event_new_node(const db::node *);
-		
+
 		bool no_clients(void) const { return num_clients() == 0; }
       size_t num_clients(void) const { return clients.size(); }
 
@@ -93,7 +101,7 @@ extern manager *man;
 #endif
 
 #ifdef USE_UI
-#define LOG_RUN(PART)			if (ui::man) { ui::man->PART; }
+#define LOG_RUN(PART)			if (ui::man != NULL) { ui::man->PART; }
 #define LOG_PROGRAM_RUNNING() LOG_RUN(event_program_running())
 #define LOG_PROGRAM_STOPPED() LOG_RUN(event_program_stopped())
 #define LOG_DATABASE(DB)		LOG_RUN(event_database(DB))
@@ -110,7 +118,7 @@ extern manager *man;
 #define LOG_RULE_APPLIED(NODE, RULE) LOG_RUN(event_rule_applied(NODE, RULE))
 #define LOG_RULE_START(NODE, RULE) LOG_RUN(event_rule_start(NODE, RULE))
 #define LOG_NEW_NODE(NODE) LOG_RUN(event_new_node(NODE))
-#define WAIT_FOR_NEXT()	LOG_RUN(wait_for_next())
+#define WAIT_FOR_NEXT()	(ui::man != NULL ? ui::man->wait_for_next() : false)
 #define WAIT_FOR_DONE() LOG_RUN(wait_for_done())
 #else
 #define LOG_PROGRAM_RUNNING()
@@ -130,7 +138,7 @@ extern manager *man;
 #define LOG_RULE_APPLIED(NODE, RULE)
 #define LOG_RULE_START(NODE, RULE)
 #define LOG_NEW_NODE(NODE)
-#define WAIT_FOR_NEXT()
+#define WAIT_FOR_NEXT() false
 #define WAIT_FOR_DONE()
 #endif
 

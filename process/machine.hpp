@@ -61,7 +61,7 @@ public:
    
    void start(void);
    
-   explicit machine(const std::string&, router&, const size_t, const sched::scheduler_type, const vm::machine_arguments&);
+   explicit machine(const std::string&, router&, const size_t, const sched::scheduler_type, const vm::machine_arguments& args = vm::machine_arguments());
                
    ~machine(void);
 };
