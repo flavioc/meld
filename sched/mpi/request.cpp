@@ -9,6 +9,8 @@ using namespace vm;
 using namespace utils;
 using namespace mem;
 
+#ifdef COMPILE_MPI
+
 namespace sched
 {
    
@@ -110,3 +112,4 @@ request_handler::~request_handler(void)
 }
    
 }
+#endif

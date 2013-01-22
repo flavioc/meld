@@ -78,10 +78,16 @@ public:
    inline bool use_mpi(void) const { return world_size > 1; }
    
    void set_nodes_total(const size_t, vm::all *);
+
+   inline void barrier(void)
+   {
+#ifdef COMPILE_MPI
+      world->barrier();
+#endif
+   }
    
 #ifdef COMPILE_MPI
 
-   inline void barrier(void) { world->barrier(); }
    
    sched::req_obj send(remote *, const vm::process_id&, const sched::message_set&);
    

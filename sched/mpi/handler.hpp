@@ -11,6 +11,8 @@
 #include "utils/atomic.hpp"
 #include "sched/thread/termination_barrier.hpp"
 
+#ifdef COMPILE_MPI
+
 namespace sched
 {
    
@@ -127,5 +129,6 @@ public:
    update_pending_messages(true, all);    \
 
 }
+#endif
 
 #endif

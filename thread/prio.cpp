@@ -392,11 +392,13 @@ threads_prio::new_work_other(sched::base *, work& new_work)
 #endif
 }
 
+#ifdef COMPILE_MPI
 void
 threads_prio::new_work_remote(remote *, const node::node_id, message *)
 {
    assert(false);
 }
+#endif
 
 void
 threads_prio::generate_aggs(void)

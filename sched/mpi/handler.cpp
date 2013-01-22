@@ -11,6 +11,8 @@ using namespace db;
 using namespace process;
 using namespace utils;
 
+#ifdef COMPILE_MPI
+
 namespace sched
 {
 
@@ -186,3 +188,4 @@ mpi_handler::end(void)
 }
 
 }
+#endif

@@ -13,11 +13,10 @@
 #include "mem/base.hpp"
 #include "utils/types.hpp"
 
+#ifdef COMPILE_MPI
 namespace sched
 {
    
-#ifdef COMPILE_MPI
-
 class message: public mem::base
 {
 private:
@@ -109,10 +108,9 @@ public:
    ~message_set(void) {}
 };
 
-#endif
-
 }
 
 BOOST_CLASS_TRACKING(sched::message, boost::serialization::track_never)
+#endif
 
 #endif

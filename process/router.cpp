@@ -205,6 +205,7 @@ router::find_remote(const node::node_id id) const
    //printf("Returning remote %d from id %d\n", rem, id);
    return remote_list[rem];
 #else
+   (void)id;
    return remote::self;
 #endif
 }
@@ -254,7 +255,9 @@ router::base_constructor(const size_t num_threads, int argc, char **argv, const 
    remote::world_size = world_size;
    
    // other initializations
+#ifdef COMPILE_MPI
    sched::mpi_handler::init(num_threads);
+#endif
 }
 
 router::router(void)

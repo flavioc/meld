@@ -91,7 +91,9 @@ public:
    virtual void new_agg(process::work&);
    virtual void new_work(const db::node *, process::work&);
    virtual void new_work_other(sched::base *, process::work&);
+#ifdef COMPILE_MPI
    virtual void new_work_remote(process::remote *, const db::node::node_id, message *);
+#endif
    
    virtual db::node* get_work(void);
    virtual void finish_work(db::node *);

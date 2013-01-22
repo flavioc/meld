@@ -111,8 +111,10 @@ public:
    virtual void new_agg(process::work&) = 0;
    // work to be sent to a different thread
    virtual void new_work_other(sched::base *, process::work&) = 0;
+#ifdef COMPILE_MPI
    // work to be sent to a MPI process
    virtual void new_work_remote(process::remote *, const db::node::node_id, sched::message *) = 0;
+#endif
    
    // ACTIONS
    virtual void set_node_priority(db::node *, const int) { }

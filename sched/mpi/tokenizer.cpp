@@ -10,6 +10,8 @@ using namespace process;
 using namespace utils;
 using namespace std;
 
+#ifdef COMPILE_MPI
+
 namespace sched
 {
    
@@ -259,3 +261,4 @@ tokenizer::end(void)
 }
 
 }
+#endif

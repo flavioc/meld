@@ -2,6 +2,8 @@
 #ifndef SCHED_MPI_MESSAGE_BUFFER_HPP
 #define SCHED_MPI_MESSAGE_BUFFER_HPP
 
+#include "conf.hpp"
+
 #include <list>
 #ifdef COMPILE_MPI
 #include <boost/mpi.hpp>

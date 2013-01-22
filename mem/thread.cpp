@@ -77,6 +77,8 @@ get_pool(void)
 void
 cleanup(const size_t num_threads)
 {
+   (void)num_threads;
+
    pthread_setspecific(pool_key, NULL);
 
 #ifdef ALLOCATOR_ASSERT

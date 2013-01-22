@@ -4,6 +4,8 @@
 
 #include "sched/mpi/token.hpp"
 
+#ifdef COMPILE_MPI
+
 namespace sched
 {
 
@@ -43,5 +45,6 @@ public:
 };
 
 }
+#endif
 
 #endif
