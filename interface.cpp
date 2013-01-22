@@ -125,9 +125,11 @@ run_program(int argc, char **argv, const char *program, const vm::machine_argume
       execution_time tm;
       
       if(time_execution) {
+#ifdef COMPILE_MPI
          if(is_mpi_sched(sched_type))
             start_time = MPI_Wtime();
          else
+#endif
          {
             tm.start();
          }
@@ -145,6 +147,7 @@ run_program(int argc, char **argv, const char *program, const vm::machine_argume
       mac.start();
 
       if(time_execution) {
+#ifdef COMPILE_MPI
          if(is_mpi_sched(sched_type)) {
             double total_time(MPI_Wtime() - start_time);
             size_t ms = static_cast<size_t>(total_time * 1000);
@@ -152,7 +155,9 @@ run_program(int argc, char **argv, const char *program, const vm::machine_argume
             if(remote::self->get_rank() == 0)
                cout << "Time: " << ms << " ms" << endl;
          }
-         else {
+         else
+#endif
+         {
             tm.stop();
             size_t ms = tm.milliseconds();
             

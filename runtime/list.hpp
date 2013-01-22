@@ -8,7 +8,9 @@
 #include <stack>
 #include <list>
 
+#ifdef COMPILE_MPI
 #include <boost/mpi.hpp>
+#endif
 
 #include "utils/types.hpp"
 #include "utils/atomic.hpp"
@@ -109,6 +111,7 @@ public:
       return sizeof(unsigned int) + elem_size * length(ptr);
    }
    
+#ifdef COMPILE_MPI
    static inline
 	void pack(const list_ptr ptr, MPI_Datatype typ,
           utils::byte *buf, const size_t buf_size, int *pos, MPI_Comm comm)
@@ -160,6 +163,7 @@ public:
       
       return init;
    }
+#endif
 
    static inline
    list_ptr copy(list_ptr ptr)
