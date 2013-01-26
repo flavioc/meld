@@ -29,10 +29,10 @@ ARCH = -march=x86-64
 DEBUG = -g
 WARNINGS = -Wall -Wextra #-Werror
 C0X = -std=c++0x
-UILIBRARIES = -lwebsocketpp -ljson_spirit
+UILIBRARIES = #-lwebsocketpp -ljson_spirit
 
 CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) $(COX)
-LIBRARIES = -lpthread -lm -lboost_thread-mt -lboost_system-mt \
+LIBRARIES = -pthread -lm -lboost_thread-mt -lboost_system-mt \
 				-lboost_date_time-mt -lboost_regex-mt $(UILIBRARIES)
 
 ifneq ($(COMPILE_MPI),)
@@ -54,7 +54,7 @@ endif
 
 CXXFLAGS = $(CFLAGS)
 LDFLAGS = $(PROFILING) $(LIBRARY_DIRS) $(LIBRARIES)
-COMPILE = $(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS)
+COMPILE = $(CXX) $(CXXFLAGS) $(OBJS)
 
 OBJS = utils/utils.o \
 		 	utils/types.o \
@@ -111,16 +111,16 @@ OBJS = utils/utils.o \
 all: meld print predicates server
 
 meld: $(OBJS) meld.o
-	$(COMPILE) meld.o -o meld
+	$(COMPILE) meld.o -o meld $(LDFLAGS)
 
 print: $(OBJS) print.o
-	$(COMPILE) print.o -o print
+	$(COMPILE) print.o -o print $(LDFLAGS)
 
 predicates: $(OBJS) predicates.o
-	$(COMPILE) predicates.o -o predicates
+	$(COMPILE) predicates.o -o predicates $(LDFLAGS)
 
 server: $(OBJS) server.o
-	$(COMPILE) server.o -o server -lreadline
+	$(COMPILE) server.o -o server -lreadline $(LDFLAGS)
 
 depend:
 	makedepend -- $(CXXFLAGS) -- $(shell find . -name '*.cpp')
