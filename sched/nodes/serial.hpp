@@ -17,11 +17,11 @@ class serial_node: public in_queue_node
 {
 public:
 	
+	DECLARE_DOUBLE_QUEUE_NODE(serial_node);
+	
 	typedef queue::unsafe_bounded_pqueue<db::simple_tuple*>::type queue_type;	
    queue_type queue;
 
-	DECLARE_DOUBLE_QUEUE_NODE(serial_node);
-	
 	typedef queue_type::const_iterator queue_iterator;
 	
 	inline queue_iterator begin(void) const { return queue.begin(); }
@@ -48,6 +48,7 @@ public:
 
    explicit serial_node(const db::node::node_id _id, const db::node::node_id _trans, vm::all *all):
       in_queue_node(_id, _trans, all),
+      INIT_DOUBLE_QUEUE_NODE(),
       queue(vm::program::MAX_STRAT_LEVEL)
    {}
 
