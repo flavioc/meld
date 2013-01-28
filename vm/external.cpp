@@ -145,6 +145,7 @@ init_external_functions(void)
    register_external_function(EXTERNAL2(intlistappend, FIELD_LIST_INT, FIELD_LIST_INT, FIELD_LIST_INT));
    register_external_function(EXTERNAL1(str2intlist, FIELD_LIST_INT, FIELD_STRING));
    register_external_function(EXTERNAL2(filecountwords, FIELD_INT, FIELD_STRING, FIELD_INT));
+   register_external_function(EXTERNAL2(residual, FIELD_FLOAT, FIELD_LIST_FLOAT, FIELD_LIST_FLOAT));
 
    atexit(cleanup_externals);
    

@@ -180,5 +180,28 @@ addfloatlists(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
    RETURN_FLOAT_LIST(ptr);
 }
 
+argument
+residual(EXTERNAL_ARG(l1), EXTERNAL_ARG(l2))
+{
+   DECLARE_FLOAT_LIST(l1);
+   DECLARE_FLOAT_LIST(l2);
+   float_list *ls1((float_list*)l1);
+   float_list *ls2((float_list*)l2);
+
+   double residual(0.0);
+   size_t size(0);
+
+   while(!float_list::is_null(ls1) && !float_list::is_null(ls2)) {
+      residual += std::abs(std::exp(ls1->get_head()) - std::exp(ls2->get_head()));
+      ls1 = ls1->get_tail();
+      ls2 = ls2->get_tail();
+      ++size;
+   }
+
+   residual /= (double)size;
+
+   RETURN_FLOAT(residual);
+}
+
 }
 }
