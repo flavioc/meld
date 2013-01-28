@@ -7,10 +7,10 @@
 
 #include "sched/base.hpp"
 #include "thread/static.hpp"
+#include "queue/safe_complex_pqueue.hpp"
 #include "sched/nodes/thread_intrusive.hpp"
 #include "queue/safe_double_queue.hpp"
 #include "sched/thread/threaded.hpp"
-#include "queue/safe_complex_pqueue.hpp"
 
 //#define DO_ONE_PASS_FIRST
 

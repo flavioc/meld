@@ -474,30 +474,25 @@ threads_prio::check_if_current_useless(void)
 	assert(current_node->in_queue());
 	
 	if(!state.all->PROGRAM->has_global_priority() &&
-         !prio_queue.empty() && taken_from_priority_queue && !current_node->has_work())
+         !prio_queue.empty() && !current_node->has_work())
    {
-		// there could be higher priority nodes around
-		const heap_priority current_min(prio_queue.min_value());
-
-		if(current_min.int_priority < current_node->get_int_priority_level()) {
-			// put this node back into the priority queue and use the higher priority one
-#ifdef DEBUG_PRIORITIES
-			//cout << "Node in queue has higher priority: " << current_min.int_priority << " vs " << node_pr.int_priority << endl;
-#endif
-         assert(!priority_queue::in_queue(current_node));
-			prio_queue.insert(current_node, current_node->get_priority_level());
-			current_node = prio_queue.pop();
-         taken_from_priority_queue = true;
-		}
-#if 0
-   } else if(state::PROGRAM->has_global_priority() && !prio_queue.empty() && !current_node->has_prio_work() && current_node->has_work()) {
-      queue_nodes.push_tail(current_node);
+      current_node->set_in_queue(false);
+      switch(state.all->PROGRAM->get_priority_type()) {
+         case FIELD_INT:
+            current_node->set_int_priority_level(0);
+            break;
+         case FIELD_FLOAT:
+            current_node->set_float_priority_level(0.0);
+            break;
+         default:
+            assert(false);
+            break;
+      }
+      assert(!current_node->in_queue());
+      assert(!priority_queue::in_queue(current_node));
       current_node = prio_queue.pop();
       taken_from_priority_queue = true;
-		assert(current_node->in_queue());
-		assert(current_node->has_work());
       return false;
-#endif
 	} else if(state.all->PROGRAM->has_global_priority() && !prio_queue.empty() && current_node->has_prio_work()) {
 		const heap_priority current_min(prio_queue.min_value());
 		const heap_priority node_min(current_node->get_min_value());
