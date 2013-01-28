@@ -520,7 +520,13 @@ float_list* get_op_function<float_list*>(const instr_val& val, pcounter& m, stat
       return tuple->get_float_list(field);
    } else if(val_is_nil(val))
       return float_list::null_list();
-   else
+   else if(val_is_const(val)) {
+		const const_id cid(pcounter_const_id(m));
+		
+		pcounter_move_const_id(&m);
+		
+		return state.all->get_const_float_list(cid);
+   } else
       throw vm_exec_error("unable to get a float list");
 }
 
