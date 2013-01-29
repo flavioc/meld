@@ -76,10 +76,13 @@ protected:
    
    virtual void add_to_queue(thread_intrusive_node *node)
    {
-		if(node->has_priority_level())
+		if(node->has_priority_level()) {
+         //cout << "Adding to prio\n";
 			add_to_priority_queue(node);
-		else
+      } else {
+         //cout << "Adding to normal\n";
       	queue_nodes.push_tail(node);
+      }
    }
    
    virtual bool has_work(void) const { return static_local::has_work() || !prio_queue.empty() || !prio_tuples.empty(); }
@@ -100,10 +103,10 @@ public:
    virtual void end(void);
    virtual bool terminate_iteration(void);
    
-   virtual void set_node_priority(db::node *, const int);
-	virtual void add_node_priority(db::node *, const int);
-   virtual void add_node_priority_other(db::node *, const int);
-   virtual void set_node_priority_other(db::node *, const int);
+   virtual void set_node_priority(db::node *, const double);
+	virtual void add_node_priority(db::node *, const double);
+   virtual void add_node_priority_other(db::node *, const double);
+   virtual void set_node_priority_other(db::node *, const double);
    
    threads_prio *find_scheduler(const db::node *);
 	virtual db::simple_tuple_vector gather_active_tuples(db::node *, const vm::predicate_id);

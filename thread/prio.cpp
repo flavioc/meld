@@ -148,7 +148,7 @@ threads_prio::check_priority_buffer(void)
       priority_add_item p(priority_buffer.pop());
       node *target(p.target);
       thread_intrusive_node *tn((thread_intrusive_node *)target);
-      int howmuch(p.val);
+      double howmuch(p.val);
       priority_add_type typ(p.typ);
 
 		if(tn->get_owner() != this) {
@@ -161,7 +161,7 @@ threads_prio::check_priority_buffer(void)
       if (it == node_map.end()) {
          switch(typ) {
             case ADD_PRIORITY:
-               node_map[target] = tn->get_int_priority_level() + howmuch;
+               node_map[target] = tn->get_float_priority_level() + howmuch;
                break;
             case SET_PRIORITY:
                node_map[target] = howmuch;
@@ -170,7 +170,7 @@ threads_prio::check_priority_buffer(void)
                assert(false);
          }
       } else {
-         const int oldval(it->second);
+         const double oldval(it->second);
          switch(typ) {
             case ADD_PRIORITY:
                node_map[target] = oldval + oldval;
@@ -188,7 +188,7 @@ threads_prio::check_priority_buffer(void)
          ++it)
    {
       node *target(it->first);
-      const int priority(it->second);
+      const double priority(it->second);
 
       set_node_priority(target, priority);
    }
@@ -705,7 +705,7 @@ threads_prio::end(void)
 }
 
 void
-threads_prio::add_node_priority_other(node *n, const int priority)
+threads_prio::add_node_priority_other(node *n, const double priority)
 {
    // this is called by the other scheduler!
    priority_add_item item;
@@ -716,7 +716,7 @@ threads_prio::add_node_priority_other(node *n, const int priority)
 }
 
 void
-threads_prio::set_node_priority_other(node *n, const int priority)
+threads_prio::set_node_priority_other(node *n, const double priority)
 {
    // this is called by the other scheduler!
    priority_add_item item;
@@ -727,17 +727,17 @@ threads_prio::set_node_priority_other(node *n, const int priority)
 }
 
 void
-threads_prio::add_node_priority(node *n, const int priority)
+threads_prio::add_node_priority(node *n, const double priority)
 {
 	thread_intrusive_node *tn((thread_intrusive_node*)n);
 
-	const int old_prio(tn->get_int_priority_level());
+	const double old_prio(tn->get_float_priority_level());
 
 	set_node_priority(n, old_prio + priority);
 }
 
 void
-threads_prio::set_node_priority(node *n, const int priority)
+threads_prio::set_node_priority(node *n, const double priority)
 {
 	thread_intrusive_node *tn((thread_intrusive_node*)n);
 
@@ -761,13 +761,16 @@ threads_prio::set_node_priority(node *n, const int priority)
 #endif
 
    if(current_node == tn) {
+      //cout << "Was current node\n";
       if(priority == 0)
          taken_from_priority_queue = false;
       else
          taken_from_priority_queue = true;
-      tn->set_int_priority_level(priority);
+      tn->set_float_priority_level(priority);
       return;
    }
+
+   //cout << "================ Set one\n";
 
 	assert(tn->get_owner() == this);
 	
@@ -778,32 +781,37 @@ threads_prio::set_node_priority(node *n, const int priority)
 #endif
 		if(priority_queue::in_queue(tn)) {
          // node is in the priority queue
-         if(tn->get_int_priority_level() != priority) {
-            if(priority == 0) {
-               tn->set_int_priority_level(0);
+         if(tn->get_float_priority_level() != priority) {
+            if(priority == 0.0) {
+               tn->set_float_priority_level(0.0);
+               //cout << "Remove from frio put into main\n";
                prio_queue.remove(tn);
                queue_nodes.push_tail(tn);
             } else {
                // priority > 0
-               assert(priority > 0);
+               assert(priority > 0.0);
                heap_priority pr;
-               pr.int_priority = priority;
+               pr.float_priority = priority;
 #ifdef DEBUG_PRIORITIES
                //cout << "Changing node priority " << tn->get_id() << " (" << tn->get_priority_level() << ") to" << priority << endl;
 #endif
-               tn->set_int_priority_level(priority);
+               tn->set_float_priority_level(priority);
 					assert(tn->in_queue());
+               //cout << "Moving priority\n";
                prio_queue.move_node(tn, pr);
             }
-			}
+			} else {
+            //cout << "Priority was the same 1 = 1\n";
+         }
 		} else {
          // node is in the normal queue
          if(priority > 0) {
-            tn->set_int_priority_level(priority);
+            tn->set_float_priority_level(priority);
 #ifdef DEBUG_PRIORITIES
             //cout << "Add node " << tn->get_id() << " with priority " << priority << endl;
 #endif
             queue_nodes.remove(tn);
+            //cout << "Remove from main put into prio\n";
             assert(!priority_queue::in_queue(tn));
             add_to_priority_queue(tn);
          }
@@ -813,12 +821,14 @@ threads_prio::set_node_priority(node *n, const int priority)
 #ifdef PROFILE_QUEUE
          prio_marked++;
 #endif
-      tn->set_int_priority_level(priority);
+      //cout << "Just define priority\n";
+      tn->set_float_priority_level(priority);
 	}
 	
 #ifdef PROFILE_QUEUE
 	prio_count++;
 #endif
+   //cout << "============\n";
 }
 
 void
@@ -847,7 +857,7 @@ threads_prio::init(const size_t)
 
 	} else {
 		// normal priorities
-		priority_type = HEAP_INT_DESC;
+		priority_type = HEAP_FLOAT_DESC;
 	}
 
    prio_queue.set_type(priority_type);

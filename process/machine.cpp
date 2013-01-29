@@ -70,14 +70,14 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, const bool f
 #endif
    } else if(pid == SET_PRIORITY_PREDICATE_ID) {
       if(from_other)
-         sched->set_node_priority_other(node, tpl->get_int(0));
+         sched->set_node_priority_other(node, tpl->get_float(0));
       else
-         sched->set_node_priority(node, tpl->get_int(0));
+         sched->set_node_priority(node, tpl->get_float(0));
    } else if(pid == ADD_PRIORITY_PREDICATE_ID) {
       if(from_other)
-         sched->add_node_priority_other(node, tpl->get_int(0));
+         sched->add_node_priority_other(node, tpl->get_float(0));
       else
-         sched->add_node_priority(node, tpl->get_int(0));
+         sched->add_node_priority(node, tpl->get_float(0));
    } else if(pid == WRITE_STRING_PREDICATE_ID) {
 		runtime::rstring::ptr s(tpl->get_string(0));
 

@@ -117,10 +117,10 @@ public:
 #endif
    
    // ACTIONS
-   virtual void set_node_priority(db::node *, const int) { }
-	virtual void add_node_priority(db::node *, const int) { }
-   virtual void add_node_priority_other(db::node *, const int) { }
-   virtual void set_node_priority_other(db::node *, const int) { }
+   virtual void set_node_priority(db::node *, const double) { }
+	virtual void add_node_priority(db::node *, const double) { }
+   virtual void add_node_priority_other(db::node *, const double) { }
+   virtual void set_node_priority_other(db::node *, const double) { }
 
 	// GATHER QUEUE FACTS FROM NODE
 	virtual db::simple_tuple_vector gather_active_tuples(db::node *, const vm::predicate_id) { return db::simple_tuple_vector(); }
