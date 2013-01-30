@@ -790,15 +790,15 @@ threads_prio::set_node_priority(node *n, const double priority)
             } else {
                // priority > 0
                assert(priority > 0.0);
-               heap_priority pr;
-               pr.float_priority = priority;
-#ifdef DEBUG_PRIORITIES
-               //cout << "Changing node priority " << tn->get_id() << " (" << tn->get_priority_level() << ") to" << priority << endl;
-#endif
-               tn->set_float_priority_level(priority);
-					assert(tn->in_queue());
-               //cout << "Moving priority\n";
-               prio_queue.move_node(tn, pr);
+               // we check if new priority is bigger than the current priority
+               if(tn->get_float_priority_level() < priority) {
+                  heap_priority pr;
+                  pr.float_priority = priority;
+                  tn->set_float_priority_level(priority);
+                  assert(tn->in_queue());
+                  //cout << "Moving priority\n";
+                  prio_queue.move_node(tn, pr);
+               }
             }
 			} else {
             //cout << "Priority was the same 1 = 1\n";
