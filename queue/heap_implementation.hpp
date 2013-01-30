@@ -67,7 +67,7 @@ typedef union {
 	{																			\
 		bool moved(false);												\
 		while((index > 0) && (parent(index) >= 0) &&				\
-			(HEAP_COMPARE(HEAP_GET_PRIORITY(heap[index]), HEAP_GET_PRIORITY(heap[parent(index)]))))	\
+			(!HEAP_COMPARE(HEAP_GET_PRIORITY(heap[parent(index)]), HEAP_GET_PRIORITY(heap[index]))))	\
 		{																		\
 			heap_object obj(heap[parent(index)]);					\
 																				\
@@ -119,7 +119,7 @@ HEAP_COMPARE(HEAP_GET_PRIORITY(heap[index]), HEAP_GET_PRIORITY(heap[l]))	\
 		heap_object obj(heap[index]);									\
 																				\
 		HEAP_SET_INDEX(index, heap[smaller]);						\
-		HEAP_SET_INDEX(smaller, obj);									\
+		HEAP_SET_INDEX(smaller, obj);								   \
 		heapifydown(smaller);											\
 	}
 

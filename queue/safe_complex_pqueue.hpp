@@ -6,6 +6,7 @@
 #include "queue/heap_implementation.hpp"
 #include "utils/spinlock.hpp"
 
+
 namespace queue
 {
 	
@@ -17,11 +18,12 @@ private:
 	typedef T* heap_object;
 
 	heap_type typ;
+   static const bool debug = false;
 
 #define HEAP_GET_PRIORITY(OBJ) ((typ == HEAP_INT_ASC || typ == HEAP_INT_DESC) ? \
 					(__INTRUSIVE_PRIORITY(OBJ).int_priority) : (__INTRUSIVE_PRIORITY(OBJ).float_priority))
 #define HEAP_GET_POS(OBJ) __INTRUSIVE_POS(OBJ)
-#define HEAP_COMPARE(V1, V2) ((typ == HEAP_INT_ASC || typ == HEAP_FLOAT_ASC) ? ((V1) <= (V2)) : ((V1) > (V2)))
+#define HEAP_COMPARE(V1, V2) ((typ == HEAP_INT_ASC || typ == HEAP_FLOAT_ASC) ? ((V1) <= (V2)) : ((V1) >= (V2)))
 
 	HEAP_DEFINE_UTILS;
 	
