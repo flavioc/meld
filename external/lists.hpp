@@ -20,6 +20,9 @@ argument intlistappend(const argument, const argument);
 argument str2intlist(const argument);
 
 argument nodelistremove(const argument, const argument);
+argument nodelistlength(const argument);
+argument nodelistcount(const argument, const argument);
+argument nodelistappend(const argument, const argument);
 
 }
 

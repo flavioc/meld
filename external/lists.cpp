@@ -198,5 +198,65 @@ str2intlist(EXTERNAL_ARG(str))
    RETURN_INT_LIST(ptr);
 }
 
+argument
+nodelistlength(EXTERNAL_ARG(ls))
+{
+   DECLARE_NODE_LIST(ls);
+
+   int_val total(0);
+   node_list *p((node_list *)ls);
+
+   while(!node_list::is_null(p)) {
+      total++;
+      p = p->get_tail();
+   }
+
+	RETURN_INT(total);
+}
+
+argument
+nodelistcount(EXTERNAL_ARG(ls), EXTERNAL_ARG(el))
+{
+   DECLARE_NODE_LIST(ls);
+   DECLARE_NODE(el);
+   node_list *p((node_list *)ls);
+   int_val total(0);
+
+   while(!node_list::is_null(p)){
+      if(p->get_head() == el) {
+         ++total;
+      }
+      p = p->get_tail();
+   }
+
+   RETURN_INT(total);
+}
+
+argument
+nodelistappend(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
+{
+   DECLARE_NODE_LIST(ls1);
+   DECLARE_NODE_LIST(ls2);
+
+   node_list *p1((node_list*)ls1);
+   node_list *p2((node_list*)ls2);
+
+   stack_node_list s;
+
+   while(!node_list::is_null(p1)) {
+      s.push(p1->get_head());
+      p1 = p1->get_tail();
+   }
+
+   while(!node_list::is_null(p2)) {
+      s.push(p2->get_head());
+      p2 = p2->get_tail();
+   }
+
+   node_list *ptr(from_stack_to_list<stack_node_list, node_list>(s));
+
+   RETURN_NODE_LIST(ptr);
+}
+
 }
 }
