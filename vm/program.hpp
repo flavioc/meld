@@ -85,7 +85,7 @@ public:
       if(has_global_priority())
          return priority_pred->get_field_type(get_priority_argument());
       else
-         return FIELD_INT;
+         return FIELD_FLOAT;
    }
    inline strat_level get_priority_strat_level(void) const { return priority_strat_level; }
 	inline bool is_global_priority_asc(void) const { return priority_pred->is_global_priority_asc(); }
