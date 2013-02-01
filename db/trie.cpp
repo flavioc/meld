@@ -492,7 +492,10 @@ trie::delete_path(trie_node *node)
    trie_node *parent(node->get_parent());
    
    if(node == root) // reached root
+   {
+      node->hashed = false;
       return;
+   }
    
    assert(node->child == NULL);
    
