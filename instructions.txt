@@ -63,7 +63,12 @@ $ ln -sf $HOME/.sbcl/site/ieee-floats/ieee-floats.asd ~/.sbcl/systems/
 ;; Now it's time to download cl-meld:
 $ cd ~
 $ git clone https://github.com/flavioc/cl-meld.git
-$ cd cl-meld
+
+;; Before you can load up the compiler, you need to patch CL-Yacc so that it supports comments in the source code:
+
+$ cd ~/.site/cl-yacc
+$ patch -p1 < ~/cl-meld/yacc-comments.patch
+$ cd ~/cl-meld
 $ sbcl
 
 ;; Type in: (load "load") and you'll see several messages (it's just sbcl compiling and loading everything)
