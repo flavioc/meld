@@ -12,13 +12,6 @@ type linear count(node, int).
 type coord(node, int, int).
 type inner(node).
 
-prio edge < heat.
-prio edge < heatchanged.
-prio edge < delta.
-prio edge < count.
-prio edge < inbound.
-prio edge < neighborchanged.
-
 const epsilon = str2float(@arg1).
 const delta = str2float(@arg2).
 
