@@ -23,6 +23,8 @@ argument nodelistremove(const argument, const argument);
 argument nodelistlength(const argument);
 argument nodelistcount(const argument, const argument);
 argument nodelistappend(const argument, const argument);
+argument nodelistreverse(const argument);
+argument nodelistlast(const argument);
 
 }
 

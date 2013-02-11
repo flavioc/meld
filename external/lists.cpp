@@ -258,5 +258,37 @@ nodelistappend(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
    RETURN_NODE_LIST(ptr);
 }
 
+argument
+nodelistreverse(EXTERNAL_ARG(ls))
+{
+   DECLARE_NODE_LIST(ls);
+   node_list *p((node_list *)ls);
+   stack_node_list s;
+
+   while(!node_list::is_null(p)) {
+      s.push(p->get_head());
+      p = p->get_tail();
+   }
+
+   node_list *ptr(from_stack_to_reverse_list<stack_node_list, node_list>(s));
+
+   RETURN_NODE_LIST(ptr);
+}
+
+argument
+nodelistlast(EXTERNAL_ARG(ls))
+{
+   DECLARE_NODE_LIST(ls);
+   node_list *p((node_list *)ls);
+   node_val last = 0;
+
+   while(!node_list::is_null(p)) {
+      last = p->get_head();
+      p = p->get_tail();
+   }
+
+   RETURN_NODE(last);
+}
+
 }
 }

@@ -879,7 +879,7 @@ trie::~trie(void)
 trie_node*
 tuple_trie::check_insert(vm::tuple *tpl, const ref_count many, bool& found)
 {
-   // cout << "Starting insertion of " << *tpl << endl;
+   //cout << "Starting insertion of " << *tpl << endl;
  
    val_stack vals(tpl->num_fields() + STACK_EXTRA_SIZE);
    type_stack typs(tpl->num_fields() + STACK_EXTRA_SIZE);

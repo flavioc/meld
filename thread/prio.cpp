@@ -33,6 +33,8 @@ static atomic<size_t> prio_nodes_changed(0);
 namespace sched
 {
 
+db::database *prio_db(NULL);
+
 void
 threads_prio::assert_end(void) const
 {
@@ -491,6 +493,7 @@ threads_prio::check_if_current_useless(void)
       assert(!current_node->in_queue());
       assert(!priority_queue::in_queue(current_node));
       current_node = prio_queue.pop();
+      //cout << "Prio: " << current_node->get_float_priority_level() << endl;
       taken_from_priority_queue = true;
       return false;
 	} else if(state.all->PROGRAM->has_global_priority() && !prio_queue.empty() && current_node->has_prio_work()) {
@@ -528,26 +531,21 @@ threads_prio::check_if_current_useless(void)
 		assert(current_node->in_queue());
 		assert(current_node->has_work());
 		return false;
-	}
-	
-   if(!current_node->has_work()) {
-      //spinlock::scoped_lock lock(current_node->spin);
+	} else if(!current_node->has_work()) {
       
-      if(!node_queue::in_queue(current_node)) {
-         current_node->set_in_queue(false);
-         switch(state.all->PROGRAM->get_priority_type()) {
-            case FIELD_INT:
-               current_node->set_int_priority_level(0);
-               break;
-            case FIELD_FLOAT:
-               current_node->set_float_priority_level(0.0);
-               break;
-            default:
-               assert(false);
-               break;
-         }
-         assert(!current_node->in_queue());
+      current_node->set_in_queue(false);
+      switch(state.all->PROGRAM->get_priority_type()) {
+         case FIELD_INT:
+            current_node->set_int_priority_level(0);
+            break;
+         case FIELD_FLOAT:
+            current_node->set_float_priority_level(0.0);
+            break;
+         default:
+            assert(false);
+            break;
       }
+      assert(!current_node->in_queue());
       current_node = NULL;
       return true;
    }
@@ -705,6 +703,22 @@ threads_prio::end(void)
 }
 
 void
+threads_prio::schedule_next(node *n)
+{
+   thread_intrusive_node *tn((thread_intrusive_node*)n);
+   double prio(0.0);
+   if(prio_queue.empty()) {
+      prio = 1.0;
+   } else {
+      heap_priority pr(prio_queue.min_value());
+
+      prio = pr.float_priority + 1.0;
+   }
+
+   set_node_priority(n, prio);
+}
+
+void
 threads_prio::add_node_priority_other(node *n, const double priority)
 {
    // this is called by the other scheduler!
@@ -834,6 +848,8 @@ threads_prio::set_node_priority(node *n, const double priority)
 void
 threads_prio::init(const size_t)
 {
+   prio_db = state.all->DATABASE;
+
 	if(state.all->PROGRAM->has_global_priority()) {
 		predicate *p(state.all->PROGRAM->get_priority_predicate());
 		const field_num field(state.all->PROGRAM->get_priority_argument());

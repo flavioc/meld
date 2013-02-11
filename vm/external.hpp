@@ -31,6 +31,7 @@ typedef external_function_ptr0 external_function_ptr;
 #define RETURN_PTR(X) { argument _ret; _ret.ptr_field = (ptr_val)(X); return _ret; }
 #define RETURN_INT(X) { argument _ret; _ret.int_field = X; return _ret; }
 #define RETURN_FLOAT(X) { argument _ret; _ret.float_field = X; return _ret; }
+#define RETURN_NODE(X) { argument _ret; _ret.node_field = X; return _ret; }
 #define RETURN_INT_LIST(X) RETURN_PTR(X)
 #define RETURN_FLOAT_LIST(X) RETURN_PTR(X)
 #define RETURN_NODE_LIST(X) RETURN_PTR(X)

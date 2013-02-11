@@ -9,6 +9,7 @@
 #include "external/lists.hpp"
 #include "external/strings.hpp"
 #include "external/others.hpp"
+#include "external/core.hpp"
 
 using namespace std;
 using namespace std::tr1;
@@ -149,6 +150,9 @@ init_external_functions(void)
    register_external_function(EXTERNAL1(nodelistlength, FIELD_INT, FIELD_LIST_NODE));
    register_external_function(EXTERNAL2(nodelistcount, FIELD_INT, FIELD_LIST_NODE, FIELD_NODE));
    register_external_function(EXTERNAL2(nodelistappend, FIELD_LIST_NODE, FIELD_LIST_NODE, FIELD_LIST_NODE));
+   register_external_function(EXTERNAL1(node_priority, FIELD_FLOAT, FIELD_NODE));
+   register_external_function(EXTERNAL1(nodelistreverse, FIELD_LIST_NODE, FIELD_LIST_NODE));
+   register_external_function(EXTERNAL1(nodelistlast, FIELD_NODE, FIELD_LIST_NODE));
 
    atexit(cleanup_externals);
    

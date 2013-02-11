@@ -71,8 +71,9 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, const bool f
    } else if(pid == SET_PRIORITY_PREDICATE_ID) {
       if(from_other)
          sched->set_node_priority_other(node, tpl->get_float(0));
-      else
+      else {
          sched->set_node_priority(node, tpl->get_float(0));
+      }
    } else if(pid == ADD_PRIORITY_PREDICATE_ID) {
       if(from_other)
          sched->add_node_priority_other(node, tpl->get_float(0));
@@ -82,6 +83,12 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, const bool f
 		runtime::rstring::ptr s(tpl->get_string(0));
 
 		cout << s->get_content() << endl;
+   } else if(pid == SCHEDULE_NEXT_PREDICATE_ID) {
+      if(!from_other) {
+         sched->schedule_next(node);
+      } else {
+         assert(false);
+      }
 	} else
 		assert(false);
 

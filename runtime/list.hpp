@@ -288,6 +288,20 @@ from_stack_to_list(TStack& stk)
    return ptr;
 }
 
+template <class TStack, class TList>
+static inline TList *
+from_stack_to_reverse_list(TStack& stk)
+{
+   TStack stk2;
+
+   while(!stk.empty()) {
+      stk2.push(stk.top());
+      stk.pop();
+   }
+
+   return from_stack_to_list<TStack, TList>(stk2);
+}
+
 }
 
 #endif

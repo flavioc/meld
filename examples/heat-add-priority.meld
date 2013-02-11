@@ -46,7 +46,7 @@ heat(A, V),
 fabs(X) > delta, 
 !inbound(A, T)
    -o heat(A, V),
-      {B, W | !edge(A, B, W) | add-priority(B, float2int(fabs(X) / delta)),
+      {B, W | !edge(A, B, W) | add-priority(B, fabs(X) / delta),
       neighborchanged(B, A, V / float(T), O / float(T), fabs(((V * W) / float(T)) - ((O * W) / float(T))))}.
 
 /* ... same thing, except delta was not big enough to change priority */

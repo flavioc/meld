@@ -34,6 +34,7 @@ size_t SETCOLOR_PREDICATE_ID(2);
 size_t SETEDGELABEL_PREDICATE_ID(3);
 size_t WRITE_STRING_PREDICATE_ID(4);
 size_t ADD_PRIORITY_PREDICATE_ID(5);
+size_t SCHEDULE_NEXT_PREDICATE_ID(6);
 
 #define READ_CODE(TO, SIZE) do { \
 	fp.read((char *)(TO), SIZE);	\
@@ -165,6 +166,8 @@ program::program(const string& _filename):
 			WRITE_STRING_PREDICATE_ID = i;
 		else if(name == "add-priority")
 			ADD_PRIORITY_PREDICATE_ID = i;
+      else if(name == "schedule-next")
+         SCHEDULE_NEXT_PREDICATE_ID = i;
       
       if(predicates[i]->is_route_pred())
          route_predicates.push_back(predicates[i]);

@@ -101,6 +101,7 @@ OBJS = utils/utils.o \
 			 external/utils.o \
 			 external/strings.o \
 			 external/others.o \
+			 external/core.o \
 			 stat/stat.o \
 			 stat/slice.o \
 			 stat/slice_set.o \

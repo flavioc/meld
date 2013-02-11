@@ -30,6 +30,7 @@ extern size_t SETCOLOR_PREDICATE_ID;
 extern size_t SETEDGELABEL_PREDICATE_ID;
 extern size_t WRITE_STRING_PREDICATE_ID;
 extern size_t ADD_PRIORITY_PREDICATE_ID;
+extern size_t SCHEDULE_NEXT_PREDICATE_ID;
 
 class program
 {

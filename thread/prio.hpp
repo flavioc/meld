@@ -17,6 +17,8 @@
 namespace sched
 {
 
+extern db::database *prio_db;
+
 class threads_prio: public static_local
 {
 protected:
@@ -107,6 +109,7 @@ public:
 	virtual void add_node_priority(db::node *, const double);
    virtual void add_node_priority_other(db::node *, const double);
    virtual void set_node_priority_other(db::node *, const double);
+   virtual void schedule_next(db::node *);
    
    threads_prio *find_scheduler(const db::node *);
 	virtual db::simple_tuple_vector gather_active_tuples(db::node *, const vm::predicate_id);

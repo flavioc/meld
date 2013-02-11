@@ -315,7 +315,7 @@ execute_send(const pcounter& pc, state& state)
 
    if(msg == dest) {
 #ifdef DEBUG_MODE
-      cout << "\t" << *tuple << " -> self" << endl;
+      cout << "\t" << *tuple << " -> self " << state.node->get_id() << endl;
 #endif
       if(tuple->is_action()) {
          state.all->MACHINE->run_action(state.sched,
@@ -1918,11 +1918,10 @@ execute_bytecode(byte_code code, state& state)
 void
 execute_rule(const rule_id rule_id, state& state)
 {
-#if 0
-	cout << "Running rule " << state.all->PROGRAM->get_rule(rule_id)->get_string() << endl;
+	//cout << "Running rule " << state.all->PROGRAM->get_rule(rule_id)->get_string() << endl;
    
-   state::DATABASE->print_db(cout);
-#endif
+   //state.node->print(cout);
+   //state.all->DATABASE->print_db(cout);
 	
 	vm::rule *rule(state.all->PROGRAM->get_rule(rule_id));
 
