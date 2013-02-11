@@ -19,7 +19,17 @@ for test in ${DIR}/*; do
       for sched in ${test}/*; do
          if [ -d "${sched}" ]; then
             for cpu in ${sched}/*; do
-               bash plot_dir.sh ${cpu}
+               echo "$cpu/data.state"
+               if [ -f "$cpu/data.state" ]; then
+                  bash plot_dir.sh ${cpu}
+               fi
+               for stealing in ${cpu}/*; do
+                  if [ -d "$stealing" ]; then
+                     if [ -f "$stealing/data.state" ]; then
+                        bash plot_dir.sh ${stealing}
+                     fi
+                  fi
+               done
             done
          fi
       done

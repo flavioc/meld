@@ -45,11 +45,11 @@ ctx.fill()
 heightdivision = HEIGHT/numcolumns
 for i in range(numcolumns-1):
 	height = (i + 1) * heightdivision
-	ctx.set_source_rgb(0, 0, 0)
-	ctx.rectangle(0, height, WIDTH, 3)
-	ctx.fill()
+#ctx.set_source_rgb(0, 0, 0)
+#ctx.rectangle(0, height, WIDTH, 1)
+#ctx.fill()
 
-widthgap = int(WIDTH/25.0)
+widthgap = 10
 widthavailable = WIDTH - widthgap
 widthdivision = widthavailable/float(timetotal)
 currentwidth = widthgap / 2.0
@@ -70,19 +70,23 @@ for line in lines:
 		elif thr == 's':
 			ctx.set_source_rgb(0, 0, 1)
 		elif thr == 'r':
-			assert(false)
+			ctx.set_source_rgb(1, 1, 0)
 		elif is_number(thr):
 			v = int(thr)
 			if v == 0:
 				ctx.set_source_rgb(1, 1, 0)
 			else:
-				ratio = float(thr) / float(maxqueue)
+				ratio = float(thr) /float(maxqueue)
 				ctx.set_source_rgb(ratio, 0, 0)
 		else:
+			print thr
 			assert(false)
 		ctx.rectangle(startwidth, thrnum * heightdivision + gap/2.0, widthlength, heightdivision - gap)
 		ctx.fill()
 		thrnum = thrnum + 1
 	time = time + 1
 		
+ctx.set_source_rgb(0, 0, 0)
+ctx.rectangle(0, HEIGHT - 5, WIDTH, 5)
+ctx.fill()
 surface.write_to_png(sys.argv[1] + '.png')
