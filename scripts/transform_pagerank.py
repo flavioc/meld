@@ -15,11 +15,13 @@ if len(sys.argv) != 2:
 file = sys.argv[1]
 f = open(file, 'rb')
 
-print "type route edge(node, node)."
+def write_inout(i, o):
+	print "!output(@" + str(i) + ", @" + str(o) + ")."
+	print "!input(@" + str(o) + ", @" + str(i) + ")."
 
 for line in f:
 	line = line.rstrip('\n')
 	vec = line.split(' ')
 	id = vec[0].rstrip(':')
 	for dest in vec[1:len(vec)-1]:
-		simple_write_edge(id, dest)
+		write_inout(id, dest)
