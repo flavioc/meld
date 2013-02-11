@@ -48,7 +48,8 @@ size_t ADD_PRIORITY_PREDICATE_ID(5);
 BOOST_STATIC_ASSERT(sizeof(uint_val) == 4);
 
 program::program(const string& _filename):
-   filename(_filename), init(NULL), priority_pred(NULL)
+   filename(_filename), initial_priority(0.0),
+   init(NULL), priority_pred(NULL)
 {
 	size_t position(0);
    
@@ -179,25 +180,33 @@ program::program(const string& _filename):
    }
 
 	// get global priority information
-	byte has_global;
+	byte global_info;
 	
-	READ_CODE(&has_global, sizeof(byte));
+	READ_CODE(&global_info, sizeof(byte));
 	
-	if(has_global) {
-		predicate_id pred;
-		byte asc_desc;
-      field_num priority_argument;
-      priority_type global_prio;
-		
-		READ_CODE(&pred, sizeof(predicate_id));
-		READ_CODE(&priority_argument, sizeof(field_num));
-		READ_CODE(&asc_desc, sizeof(byte));
-		
-		global_prio = (asc_desc ? PRIORITY_ASC : PRIORITY_DESC);
-		priority_pred = predicates[pred];
-		priority_argument -= 2;
-		priority_pred->set_global_priority(global_prio, priority_argument);
-      priority_strat_level = priority_pred->get_strat_level();
+   switch(global_info) {
+      case 0x01: {
+         predicate_id pred;
+         byte asc_desc;
+         field_num priority_argument;
+         priority_type global_prio;
+         
+         READ_CODE(&pred, sizeof(predicate_id));
+         READ_CODE(&priority_argument, sizeof(field_num));
+         READ_CODE(&asc_desc, sizeof(byte));
+         
+         global_prio = (asc_desc ? PRIORITY_ASC : PRIORITY_DESC);
+         priority_pred = predicates[pred];
+         priority_argument -= 2;
+         priority_pred->set_global_priority(global_prio, priority_argument);
+         priority_strat_level = priority_pred->get_strat_level();
+      }
+      break;
+      case 0x02: {
+         READ_CODE(&initial_priority, sizeof(float_val));
+      }
+      break;
+      default: break;
    }
    
    // read predicate code

@@ -53,6 +53,7 @@ private:
    std::vector<predicate*> route_predicates;
    
    bool safe;
+   float_val initial_priority;
 
    mutable predicate *init;
 
@@ -91,6 +92,8 @@ public:
 	inline bool is_global_priority_asc(void) const { return priority_pred->is_global_priority_asc(); }
 	inline bool is_global_priority_desc(void) const { return priority_pred->is_global_priority_desc(); }
 	inline bool has_global_priority(void) const { return priority_pred != NULL; }
+
+   inline float_val get_initial_priority(void) const { return initial_priority; }
 	
    predicate *get_predicate_by_name(const std::string&) const;
    

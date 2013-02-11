@@ -873,6 +873,8 @@ threads_prio::init(const size_t)
    {
       thread_intrusive_node *cur_node((thread_intrusive_node*)it->second);
       
+      cur_node->set_float_priority_level(state.all->PROGRAM->get_initial_priority());
+
       init_node(cur_node);
 
 		cur_node->prioritized_tuples.set_type(priority_type);
