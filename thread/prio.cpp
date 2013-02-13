@@ -707,12 +707,13 @@ threads_prio::schedule_next(node *n)
 {
    thread_intrusive_node *tn((thread_intrusive_node*)n);
    double prio(0.0);
+   static const double add = 100.0;
    if(prio_queue.empty()) {
-      prio = 1.0;
+      prio = add;
    } else {
       heap_priority pr(prio_queue.min_value());
 
-      prio = pr.float_priority + 1.0;
+      prio = pr.float_priority + add;
    }
 
    set_node_priority(n, prio);
@@ -721,23 +722,27 @@ threads_prio::schedule_next(node *n)
 void
 threads_prio::add_node_priority_other(node *n, const double priority)
 {
+#if 0
    // this is called by the other scheduler!
    priority_add_item item;
    item.typ = ADD_PRIORITY;
    item.val = priority;
    item.target = n;
    priority_buffer.push(item);
+#endif
 }
 
 void
 threads_prio::set_node_priority_other(node *n, const double priority)
 {
    // this is called by the other scheduler!
+#if 0
    priority_add_item item;
    item.typ = SET_PRIORITY;
    item.val = priority;
    item.target = n;
    priority_buffer.push(item);
+#endif
 }
 
 void

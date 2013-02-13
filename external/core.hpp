@@ -13,6 +13,7 @@ namespace external
 {
    
 argument node_priority(const argument);
+argument cpu_id(const argument);
 
 }
 

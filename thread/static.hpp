@@ -13,7 +13,7 @@
 #include "queue/safe_complex_pqueue.hpp"
 #include "queue/safe_double_queue.hpp"
 
-#define TASK_STEALING 1
+//#define TASK_STEALING 1
 #define STEALING_ROUND_MAX 5000
 
 namespace sched
