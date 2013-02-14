@@ -1,7 +1,7 @@
 
 Dependencies:
 	- Boost
-		- MPI
+		- MPI (optional)
 		- Threads
    - libreadline
 	- A compiler
@@ -15,3 +15,22 @@ Installation:
 Execution:
 	./meld -f bytecodefile -c scheduler
 	Use ./meld -h for help
+
+Directories:
+   - db: implements the database, including facts (tuples) and nodes
+   - external: implements the available external functions (callable in meld programs)
+   - mem: memory allocator for objects used during execution. This improves multithreaded performance since the default allocator is sequential.
+   - process: the machine class starts the execution of the virtual machine (program argument, scheduler type and number of threads). There are also MPI management classes.
+   - queue: many types of queues here, including priority queues. It's all template code.
+   - runtime: classes for list and string objects used for meld objects.
+   - sched: sched::base is the base class for all the available schedulers.
+      A scheduler implements a way of executing meld. The simplest scheduler is sched/serial for sequential execution.
+   - stat: code for generating execution statistics.
+   - thread: multithreaded schedulers.
+   - ui: manages communication with browser interface.
+   - utils: utilities.
+   - vm: the core of the virtual machine, executes VM instructions.
+
+Important files:
+   - meld.cpp: main meld program.
+   - server.cpp: server program for using the web interface.
