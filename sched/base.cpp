@@ -17,6 +17,25 @@ using namespace db;
 namespace sched
 {
 	
+static bool init(void);
+
+pthread_key_t sched_key;
+static bool started(init());
+
+static void
+cleanup_sched_key(void)
+{
+   pthread_key_delete(sched_key);
+}
+
+static bool
+init(void)
+{
+   int ret(pthread_key_create(&sched_key, NULL));
+   assert(ret == 0);
+   atexit(cleanup_sched_key);
+   return true;
+}
 	
 void
 base::do_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
@@ -218,6 +237,7 @@ base::base(const vm::process_id _id, vm::all *_all):
    , processed_facts(0), sent_facts(0), ins_state(statistics::NOW_ACTIVE)
 #endif
 {
+   pthread_setspecific(sched_key, this);
 }
 
 }

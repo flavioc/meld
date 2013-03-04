@@ -28,6 +28,8 @@ namespace process {
 namespace sched
 {
 
+extern pthread_key_t sched_key;
+
 class base
 {
 protected:
