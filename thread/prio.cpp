@@ -810,7 +810,15 @@ threads_prio::set_node_priority(node *n, const double priority)
                // priority > 0
                assert(priority > 0.0);
                // we check if new priority is bigger than the current priority
-               if(tn->get_float_priority_level() < priority) {
+               bool must_change(false);
+
+               switch(priority_type) {
+                  case HEAP_FLOAT_DESC: must_change = tn->get_float_priority_level() < priority; break;
+                  case HEAP_FLOAT_ASC: must_change = tn->get_float_priority_level() > priority; break;
+                  default: assert(false);
+               }
+
+               if(must_change) {
                   heap_priority pr;
                   pr.float_priority = priority;
                   tn->set_float_priority_level(priority);
@@ -861,13 +869,13 @@ threads_prio::init(const size_t)
 
 		switch(p->get_field_type(field)) {
 			case FIELD_INT:
-				if(state.all->PROGRAM->is_global_priority_asc())
-					priority_type = HEAP_INT_ASC;
-				else
+				if(state.all->PROGRAM->is_priority_asc()) {
+               priority_type = HEAP_INT_ASC;
+            } else
 					priority_type = HEAP_INT_DESC;
 				break;
 			case FIELD_FLOAT:
-				if(state.all->PROGRAM->is_global_priority_asc())
+				if(state.all->PROGRAM->is_priority_asc())
 					priority_type = HEAP_FLOAT_ASC;
 				else
 					priority_type = HEAP_FLOAT_DESC;
@@ -878,7 +886,21 @@ threads_prio::init(const size_t)
 
 	} else {
 		// normal priorities
-		priority_type = HEAP_FLOAT_DESC;
+      switch(state.all->PROGRAM->get_priority_type()) {
+         case FIELD_FLOAT:
+            if(state.all->PROGRAM->is_priority_desc())
+               priority_type = HEAP_FLOAT_DESC;
+            else
+               priority_type = HEAP_FLOAT_ASC;
+            break;
+         case FIELD_INT:
+            if(state.all->PROGRAM->is_priority_desc())
+               priority_type = HEAP_INT_DESC;
+            else
+               priority_type = HEAP_INT_ASC;
+            break;
+         default: assert(false);
+      }
 	}
 
    prio_queue.set_type(priority_type);
@@ -894,7 +916,7 @@ threads_prio::init(const size_t)
    {
       thread_intrusive_node *cur_node((thread_intrusive_node*)it->second);
       
-      cur_node->set_float_priority_level(state.all->PROGRAM->get_initial_priority());
+      cur_node->set_priority_level(state.all->PROGRAM->get_initial_priority());
 
       init_node(cur_node);
 
@@ -961,10 +983,8 @@ threads_prio::gather_next_tuples(db::node *node, simple_tuple_list& ls)
 
 	thread_intrusive_node *no((thread_intrusive_node*)node);
 
-   if(no->get_local_strat_level() >= state.all->PROGRAM->get_priority_strat_level()) {
-      while(!no->prioritized_tuples.empty()) {
-         ls.push_back(no->prioritized_tuples.pop());
-      }
+   while(!no->prioritized_tuples.empty()) {
+      ls.push_back(no->prioritized_tuples.pop());
    }
 }
 

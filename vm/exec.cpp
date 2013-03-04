@@ -323,7 +323,7 @@ execute_send(const pcounter& pc, state& state)
          return;
       }
 
-      if(state.use_local_tuples) {
+      if(state.use_local_tuples || state.persistent_only) {
 			const predicate *pred(tuple->get_predicate());
 			
 #ifdef USE_UI
@@ -957,7 +957,9 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 	state.tuple_queue = old_tuple_queue;	\
    state.is_linear = old_is_linear
 
-	if(iter_options_random(options)) {
+   if(state.persistent_only) {
+      // do nothing
+   } else if(iter_options_random(options)) {
 		utils::shuffle_vector(tuples, state.randgen);
 	} else if(iter_options_min(options)) {
 		const field_num field(iter_options_min_arg(options_arguments));
@@ -1152,6 +1154,8 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 
 	// tuples from current queue
 	if(this_is_linear) {
+      assert(!state.persistent_only);
+
    	db::simple_tuple_vector active_tuples = state.sched->gather_active_tuples(state.node, pred->get_id());
 
 		if(iter_options_random(options))
@@ -1195,7 +1199,7 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 	}
 	
 	// current set of tuples
-	{
+   if(!state.persistent_only) {
 		/* XXXX
 		if(iter_options_random(options))
 			utils::shuffle_vector(state.local_tuples, state.randgen);

@@ -49,7 +49,7 @@ size_t SCHEDULE_NEXT_PREDICATE_ID(6);
 BOOST_STATIC_ASSERT(sizeof(uint_val) == 4);
 
 program::program(const string& _filename):
-   filename(_filename), initial_priority(0.0),
+   filename(_filename),
    init(NULL), priority_pred(NULL)
 {
 	size_t position(0);
@@ -186,30 +186,51 @@ program::program(const string& _filename):
 	byte global_info;
 	
 	READ_CODE(&global_info, sizeof(byte));
+
+   initial_priority.int_priority = 0;
+   initial_priority.float_priority = 0.0;
 	
    switch(global_info) {
       case 0x01: {
          predicate_id pred;
          byte asc_desc;
          field_num priority_argument;
-         priority_type global_prio;
          
          READ_CODE(&pred, sizeof(predicate_id));
          READ_CODE(&priority_argument, sizeof(field_num));
          READ_CODE(&asc_desc, sizeof(byte));
          
-         global_prio = (asc_desc ? PRIORITY_ASC : PRIORITY_DESC);
+         priority_order = (asc_desc ? PRIORITY_ASC : PRIORITY_DESC);
          priority_pred = predicates[pred];
          priority_argument -= 2;
-         priority_pred->set_global_priority(global_prio, priority_argument);
+         priority_pred->set_global_priority(priority_order, priority_argument);
          priority_strat_level = priority_pred->get_strat_level();
+         priority_type = priority_pred->get_field_type(get_priority_argument());
       }
       break;
       case 0x02: {
-         READ_CODE(&initial_priority, sizeof(float_val));
+         byte type(0x0);
+         byte asc_desc;
+
+         READ_CODE(&type, sizeof(byte));
+         switch(type) {
+            case 0x01: priority_type = FIELD_FLOAT; break;
+            case 0x02: priority_type = FIELD_INT; break;
+            default: assert(false);
+         }
+
+         READ_CODE(&asc_desc, sizeof(byte));
+         priority_order = (asc_desc ? PRIORITY_ASC : PRIORITY_DESC);
+
+         if(priority_type == FIELD_FLOAT)
+            READ_CODE(&initial_priority.float_priority, sizeof(float_val));
+         else
+            READ_CODE(&initial_priority.int_priority, sizeof(int_val));
       }
       break;
-      default: break;
+      default:
+      priority_type = FIELD_FLOAT; 
+      break;
    }
    
    // read predicate code
@@ -237,6 +258,13 @@ program::program(const string& _filename):
       READ_CODE(code, code_size);
 
       rules[i]->set_bytecode(code_size, code);
+
+      byte is_persistent(0x0);
+
+      READ_CODE(&is_persistent, sizeof(byte));
+
+      if(is_persistent == 0x1)
+         rules[i]->set_as_persistent();
 
       uint_val num_preds;
 

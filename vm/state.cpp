@@ -255,18 +255,34 @@ state::mark_active_rules(void)
 }
 
 bool
-state::add_fact_to_node(vm::tuple *tpl)
+state::add_fact_to_node(vm::tuple *tpl, vm::ref_count count)
 {
-	return node->add_tuple(tpl, 1);
+	return node->add_tuple(tpl, count);
+}
+
+void
+state::do_persistent_tuples(void)
+{
+   // we grab the stratification level here
+   while(!generated_persistent_tuples.empty()) {
+      db::simple_tuple *stpl(generated_persistent_tuples.front());
+      vm::tuple *tpl(stpl->get_tuple());
+
+      generated_persistent_tuples.pop_front();
+
+      if(!tpl->is_aggregate() || (tpl->is_aggregate() && stpl->get_generated_run())) {
+         stpl->set_generated_run(false);
+         process_persistent_tuple(stpl, tpl);
+      } else {
+         // aggregate
+         add_to_aggregate(stpl);
+      }
+   }
 }
 
 void
 state::mark_rules_using_local_tuples(void)
 {
-#ifndef USE_RULE_COUNTING
-	predicates_to_check.clear();
-#endif
-	fill_n(predicates, all->PROGRAM->num_predicates(), false);
    bool has_level(false);
 	
 	for(db::simple_tuple_list::iterator it(local_tuples.begin());
@@ -285,15 +301,7 @@ state::mark_rules_using_local_tuples(void)
          delete stpl;
          it = local_tuples.erase(it);
       } else if(tpl->is_persistent()) {
-			const bool is_new(add_fact_to_node(tpl));
-#ifdef USE_RULE_COUNTING
-			node->matcher.register_tuple(tpl, 1, is_new);
-#endif
-			if(is_new)
-				mark_predicate_to_run(tpl->get_predicate());
-			else
-				delete tpl;
-			delete stpl;
+         generated_persistent_tuples.push_back(stpl);
 			it = local_tuples.erase(it);
 		} else if(tpl->is_action()) {
 			assert(false);
@@ -305,8 +313,6 @@ state::mark_rules_using_local_tuples(void)
 			it++;
 		}
 	}
-	
-	mark_active_rules();
 }
 
 void
@@ -332,6 +338,70 @@ state::process_consumed_local_tuples(void)
 }
 
 void
+state::add_to_aggregate(db::simple_tuple *stpl)
+{
+   vm::tuple *tpl(stpl->get_tuple());
+   const predicate *pred(tpl->get_predicate());
+   vm::ref_count count(stpl->get_count());
+   agg_configuration *agg(NULL);
+
+   if(count < 0) {
+      agg = node->remove_agg_tuple(tpl, -count);
+   } else {
+      agg = node->add_agg_tuple(tpl, count);
+   }
+
+   simple_tuple_list list;
+
+   agg->generate(pred->get_aggregate_type(), pred->get_aggregate_field(), list);
+
+   for(simple_tuple_list::iterator it(list.begin()); it != list.end(); ++it) {
+      simple_tuple *stpl(*it);
+      stpl->set_generated_run(true); // mark as true aggregate
+      generated_persistent_tuples.push_back(stpl);
+   }
+}
+
+void
+state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
+{
+   if(stpl->get_count() > 0) {
+      const bool is_new(add_fact_to_node(tpl));
+
+      setup(tpl, node, stpl->get_count());
+      use_local_tuples = false;
+      persistent_only = true;
+      execute_bytecode(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this);
+
+#ifdef USE_RULE_COUNTING
+      node->matcher.register_tuple(tpl, stpl->get_count(), is_new);
+#endif
+
+      if(is_new) {
+         mark_predicate_to_run(tpl->get_predicate());
+      } else {
+         delete tpl;
+      }
+      delete stpl;
+   } else {
+      node::delete_info deleter(node->delete_tuple(tpl, -stpl->get_count()));
+
+#ifdef USE_RULE_COUNTING
+      node->matcher.deregister_tuple(tpl, stpl->get_count());
+#endif
+
+      if(deleter.to_delete()) { // to be removed
+         setup(tpl, node, stpl->get_count());
+         persistent_only = true;
+         use_local_tuples = false;
+         execute_bytecode(all->PROGRAM->get_predicate_bytecode(tuple->get_predicate_id()), *this);
+         deleter();
+      } else
+         delete tuple;
+   }
+}
+
+void
 state::process_generated_tuples(void)
 {
 	/* move from generated tuples to local_tuples */
@@ -346,29 +416,20 @@ state::process_generated_tuples(void)
 		all->MACHINE->route_self(sched, node, *it);
 	}
 	
-	for(simple_tuple_vector::iterator it(generated_persistent_tuples.begin()), end(generated_persistent_tuples.end());
-		it != end;
-		it++)
-	{
-		simple_tuple *stpl(*it);
-		vm::tuple *tpl(stpl->get_tuple());
-		
-		const bool is_new(add_fact_to_node(tpl));
-		
-#ifdef USE_RULE_COUNTING
-		node->matcher.register_tuple(tpl, stpl->get_count(), is_new);
-#endif
-
-		if(is_new)
-			mark_predicate_to_run(tpl->get_predicate());
-		else
-			delete tpl;
-		delete stpl;
-	}
+   do_persistent_tuples();
 	
 	assert(generated_tuples.empty());
 	generated_persistent_tuples.clear();
 	generated_other_level.clear();
+}
+
+void
+state::start_matching(void)
+{
+#ifndef USE_RULE_COUNTING
+	predicates_to_check.clear();
+#endif
+	fill_n(predicates, all->PROGRAM->num_predicates(), false);
 }
 
 void
@@ -381,7 +442,10 @@ state::run_node(db::node *no)
 #endif
 
 	sched->gather_next_tuples(node, local_tuples);
+   start_matching();
 	mark_rules_using_local_tuples();
+   do_persistent_tuples();
+	mark_active_rules();
 
 #ifdef DEBUG_RULES
 	cout << "Strat level: " << current_level << " got " << local_tuples.size() << " tuples " << endl;
@@ -398,13 +462,12 @@ state::run_node(db::node *no)
 		rules[rule] = false;
 #ifdef USE_RULE_COUNTING
 		node->matcher.clear_dropped_rules();
-#else
-		predicates_to_check.clear();
 #endif
-		fill_n(predicates, all->PROGRAM->num_predicates(), false);
+      start_matching();
 		
 		setup(NULL, node, 1);
 		use_local_tuples = true;
+      persistent_only = false;
 		execute_rule(rule, *this);
 
 		process_consumed_local_tuples();
@@ -477,6 +540,7 @@ state::state(vm::all *_all):
 #ifdef DEBUG_MODE
    , print_instrs(false)
 #endif
+   , persistent_only(false)
    , all(_all)
 {
 #ifdef CORE_STATISTICS

@@ -21,13 +21,16 @@ rule_matcher::register_predicate_availability(const predicate *pred)
 	for(predicate::rule_iterator it(pred->begin_rules()), end(pred->end_rules()); it != end; it++) {
 		vm::rule_id rule(*it);
 
+      if(rules[rule].ignore)
+         continue;
+
       rules[rule].total_have++;
 		if(rules[rule].total_have == rules[rule].total_needed) {
 #ifdef DEBUG_RULES
 			cout << "Rule " << rule << " activated" << endl;
 #endif
-			active_rules.insert(rule);
-			dropped_rules.erase(rule);
+         active_rules.insert(rule);
+         dropped_rules.erase(rule);
 		}
 	}
 }
@@ -38,12 +41,15 @@ rule_matcher::register_predicate_unavailability(const predicate *pred)
 	for(predicate::rule_iterator it(pred->begin_rules()), end(pred->end_rules()); it != end; it++) {
 		vm::rule_id rule(*it);
 
+      if(rules[rule].ignore)
+         continue;
+
 		if(rules[rule].total_have == rules[rule].total_needed) {
 #ifdef DEBUG_RULES
 			cout << "Rule " << rule << " deactivated" << endl;
 #endif
-			active_rules.erase(rule);
-			dropped_rules.insert(rule);
+         active_rules.erase(rule);
+         dropped_rules.insert(rule);
 		}
 
 		rules[rule].total_have--;
@@ -107,6 +113,7 @@ rule_matcher::rule_matcher(vm::program *prog)
 	{
 		rule_matcher_obj& obj(*it);
 		
+      obj.ignore = prog->get_rule(rid)->as_persistent();
 		obj.total_have = 0;
 		obj.total_needed = prog->get_rule(rid)->num_predicates();
 	}

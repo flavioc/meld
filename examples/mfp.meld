@@ -41,24 +41,6 @@ type linear token(node).
 type linear proc-return(node, int).
 type linear do-init-height(node, int).
 
-prio change-excess < do-push.
-prio accumulate-excess < do-push.
-/* THIS IS NEEDED */
-prio init-height2 < init-height.
-prio init-height2-check-arcs < init-height.
-/* NOT NEEDED, BUT USEFUL */
-prio change-excess < do-push.
-prio accumulate-excess < do-push.
-prio init-height-check < init-height.
-prio init-height < push-request.
-prio init-height2 < push-request.
-prio init-height-check < push-request.
-/* NEEDED */
-/* height may trigger push-request before we get the new edge-height through new-height */
-prio new-height < height.
-prio new-height < push-request.
-prio new-height < edge-height.
-
 const source = 0.
 const sink = 1.
 const normal = 2.

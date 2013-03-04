@@ -21,6 +21,7 @@ private:
       public:
          size_t total_have;
          size_t total_needed;
+         bool ignore;
    };
 
 	typedef std::vector<rule_matcher_obj> rule_vector;

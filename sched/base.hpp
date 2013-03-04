@@ -93,7 +93,6 @@ public:
    inline void new_work_self(db::node *node, db::simple_tuple *stpl, const process::work_modifier mod = process::mods::NOTHING)
    {
       process::work work(node, stpl, process::mods::LOCAL_TUPLE | mod);
-      node->push_auto(stpl);
       new_work(node, work);
    }
    
@@ -101,7 +100,6 @@ public:
    inline void new_work_agg(db::node *node, db::simple_tuple *stpl)
    {
       process::work work(node, stpl, process::mods::LOCAL_TUPLE | process::mods::FORCE_AGGREGATE);
-      node->push_auto(stpl);
       new_agg(work);
    }
    

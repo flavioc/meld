@@ -65,6 +65,7 @@ base::do_agg_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
          return;
       }
       break;
+#if 0
       case AGG_LOCALLY_GENERATED: {
          const strat_level level(pred->get_agg_strat_level());
          
@@ -73,6 +74,7 @@ base::do_agg_tuple_add(node *node, vm::tuple *tuple, const ref_count count)
          }
       }
       break;
+#endif
       case AGG_NEIGHBORHOOD:
       case AGG_NEIGHBORHOOD_AND_SELF: {
          const neighbor_agg_configuration *neighbor_conf(dynamic_cast<neighbor_agg_configuration*>(conf));

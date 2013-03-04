@@ -90,10 +90,10 @@ node::add_agg_tuple(vm::tuple *tuple, const ref_count many)
    return agg->add_to_set(tuple, many);
 }
 
-void
+agg_configuration*
 node::remove_agg_tuple(vm::tuple *tuple, const ref_count many)
 {
-   add_agg_tuple(tuple, -many);
+   return add_agg_tuple(tuple, -many);
 }
 
 simple_tuple_list

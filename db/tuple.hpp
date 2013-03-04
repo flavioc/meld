@@ -56,6 +56,11 @@ public:
       generated_this_run = v;
    }
 
+   inline bool get_generated_run(void) const
+   {
+      return generated_this_run;
+   }
+
    inline bool must_be_deleted(void) const
    {
       return to_delete;

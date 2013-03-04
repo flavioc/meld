@@ -23,6 +23,7 @@ class rule
 		code_size_t code_size;
 		typedef std::vector<predicate*> predicate_vector;
       predicate_vector predicates;
+      bool is_persistent;
 
    public:
 	
@@ -40,11 +41,15 @@ class rule
 		inline byte_code get_bytecode(void) const { return code; }
 		inline size_t num_predicates(void) const { return predicates.size(); }
 
+      inline void set_as_persistent(void) { is_persistent = true; }
+      inline bool as_persistent(void) const { return is_persistent; }
+
 		typedef predicate_vector::const_iterator predicate_iterator;
 		inline predicate_iterator begin_predicates(void) const { return predicates.begin(); }
 		inline predicate_iterator end_predicates(void) const { return predicates.end(); }
 
-      explicit rule(const rule_id _id, const std::string& _str): id(_id), str(_str) { }
+      explicit rule(const rule_id _id, const std::string& _str):
+         id(_id), str(_str), is_persistent(false) { }
 
 		~rule(void) { delete []code; }
 };

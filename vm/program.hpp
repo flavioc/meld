@@ -14,6 +14,7 @@
 #include "vm/tuple.hpp"
 #include "vm/rule.hpp"
 #include "runtime/string.hpp"
+#include "queue/heap_implementation.hpp"
 #ifdef USE_UI
 #include <json_spirit.h>
 #endif
@@ -54,7 +55,6 @@ private:
    std::vector<predicate*> route_predicates;
    
    bool safe;
-   float_val initial_priority;
 
    mutable predicate *init;
 
@@ -64,6 +64,9 @@ private:
 	
 	predicate *priority_pred;
    strat_level priority_strat_level;
+   field_type priority_type;
+   vm::priority_type priority_order;
+   heap_priority initial_priority;
 
    void print_predicate_code(std::ostream&, predicate*) const;
    
@@ -83,18 +86,13 @@ public:
 
 	inline predicate *get_priority_predicate(void) const { return priority_pred; }
 	inline field_num get_priority_argument(void) const { return priority_pred->get_priority_argument(); }
-   inline field_type get_priority_type(void) const {
-      if(has_global_priority())
-         return priority_pred->get_field_type(get_priority_argument());
-      else
-         return FIELD_FLOAT;
-   }
+   inline field_type get_priority_type(void) const { return priority_type; }
    inline strat_level get_priority_strat_level(void) const { return priority_strat_level; }
-	inline bool is_global_priority_asc(void) const { return priority_pred->is_global_priority_asc(); }
-	inline bool is_global_priority_desc(void) const { return priority_pred->is_global_priority_desc(); }
+	inline bool is_priority_asc(void) const { return priority_order == PRIORITY_ASC; }
+	inline bool is_priority_desc(void) const { return priority_order == PRIORITY_DESC; }
 	inline bool has_global_priority(void) const { return priority_pred != NULL; }
 
-   inline float_val get_initial_priority(void) const { return initial_priority; }
+   inline heap_priority get_initial_priority(void) const { return initial_priority; }
 	
    predicate *get_predicate_by_name(const std::string&) const;
    

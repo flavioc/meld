@@ -25,6 +25,10 @@ rule::print(ostream& out, const vm::program *const prog) const
       out << pred->get_name() << endl;
 		
 	}
+   if(is_persistent)
+      out << "Is persistent" << endl;
+   else
+      out << "Not persistent" << endl;
 
    instrs_print(code, code_size, 0, prog, out);
 }

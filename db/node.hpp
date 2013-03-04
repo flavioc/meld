@@ -13,7 +13,6 @@
 
 #include "vm/tuple.hpp"
 #include "vm/predicate.hpp"
-#include "vm/strata.hpp"
 #include "db/tuple.hpp"
 #include "db/tuple_aggregate.hpp"
 #include "mem/allocator.hpp"
@@ -83,18 +82,6 @@ private:
    friend class process::process;
    friend class process::machine;
    
-   vm::strata strats;
-   
-   inline void push_auto(const simple_tuple *stpl)
-   {
-      strats.push_queue(stpl->get_strat_level());
-   }
-   
-   inline void pop_auto(const simple_tuple *stpl)
-   {
-      strats.pop_queue(stpl->get_strat_level());
-   }
-
    sched::base *owner;
    
 public:
@@ -109,7 +96,7 @@ public:
    delete_info delete_tuple(vm::tuple *, vm::ref_count);
    
    db::agg_configuration* add_agg_tuple(vm::tuple*, const vm::ref_count);
-   void remove_agg_tuple(vm::tuple*, const vm::ref_count);
+   db::agg_configuration* remove_agg_tuple(vm::tuple*, const vm::ref_count);
    simple_tuple_list end_iteration(void);
    
    const edge_set& get_edge_set(const vm::predicate_id id) const {
@@ -117,11 +104,6 @@ public:
       return edge_info.find(id)->second;
    }
 
-   inline vm::strat_level get_local_strat_level(void)
-   {
-      return strats.get_current_level();
-   }
-   
    void delete_by_index(const vm::predicate*, const vm::match&);
    void delete_by_leaf(const vm::predicate*, tuple_trie_leaf*);
    void delete_all(const vm::predicate*);

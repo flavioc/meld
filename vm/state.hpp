@@ -50,6 +50,7 @@ private:
 #endif
 	
    void purge_runtime_objects(void);
+   void start_matching(void);
 #ifdef CORE_STATISTICS
    void init_core_statistics(void);
 #endif
@@ -78,9 +79,10 @@ public:
    bool use_local_tuples;
    db::simple_tuple_list local_tuples;
 	db::simple_tuple_list generated_tuples;
-	db::simple_tuple_vector generated_persistent_tuples;
+	db::simple_tuple_list generated_persistent_tuples;
 	db::simple_tuple_vector generated_other_level;
 	vm::strat_level current_level;
+   bool persistent_only;
    vm::all *all;
 #ifdef USE_UI
    static bool UI;
@@ -157,7 +159,7 @@ public:
 	inline void add_string(runtime::rstring::ptr str) { free_rstring.push_back(str); }
    inline void add_generated_tuple(db::simple_tuple *tpl) { tpl->set_generated_run(true); generated_tuples.push_back(tpl); }
    
-	bool add_fact_to_node(vm::tuple *);
+	bool add_fact_to_node(vm::tuple *, vm::ref_count count = 1);
 	
 #ifndef USE_RULE_COUNTING
 	void mark_predicate_rules(const vm::predicate *);
@@ -167,6 +169,9 @@ public:
 	
 	void mark_predicate_to_run(const vm::predicate *);
 	void mark_active_rules(void);
+   void add_to_aggregate(db::simple_tuple *);
+   void do_persistent_tuples(void);
+   void process_persistent_tuple(db::simple_tuple *, vm::tuple *);
 	void process_consumed_local_tuples(void);
 	void process_generated_tuples(void);
 	void mark_rules_using_local_tuples(void);
