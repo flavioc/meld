@@ -3,14 +3,14 @@ include #shortest-data.meld
 
 type linear path(node, int, int).
 
-priority path/2 asc.
+priority path/2 @asc.
 
-const finalnode = @4.
-const startnode = @1.
+const finalnode = @1.
+const startnode = @4.
 const used = 1.
 const notused = 0.
 
-path(finalnode, 0, 0).
+path(startnode, 0, 0).
 
 path(A, B, used), path(A, B, notused)
 	-o path(A, B, used).
@@ -18,6 +18,6 @@ path(A, B, used), path(A, B, notused)
 path(A, B1, X), path(A, B2, Y), B1 <= B2
    -o path(A, B1, X).
 
-path(A, D, notused), A <> startnode
-   -o {B, W | !edge(B, A, W) | path(B, D + W, notused)}, path(A, D, used).
+path(A, D, notused), A <> finalnode
+   -o {B, W | !edge(A, B, W) | path(B, D + W, notused)}, path(A, D, used).
 

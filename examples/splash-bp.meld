@@ -31,6 +31,7 @@ priority @initial 100.
 
 const global-potential =  [-0.0, -2.0, -4, -6, -8, -2, -0, -2, -4, -6, -4, -2, -0, -2, -4, -6, -4, -2, -0, -2, -8, -6, -4, -2, -0].
 const initial-message = [-1.60944, -1.60944, -1.60944, -1.60944, -1.60944].
+const initial-belief = [-1.60944, -1.60944, -1.60944, -1.60944, -1.60944].
 const damping = 0.1.
 const bound = 0.0001.
 //const bound = str2float(@arg1).
@@ -41,7 +42,7 @@ const right = 3.
 const maxnodes = str2int(@arg1).
 
 // setups initial node belief and some other things
-start(A) -o belief(A, [-1.60944, -1.60944, -1.60944, -1.60944, -1.60944]),
+start(A) -o belief(A, initial-belief),
             {B, Side | !edge(A, B, Side) | neighbor-belief(A, B, initial-message),
                                sent-neighbor-belief(A, B, initial-message)},
             waiting(A).
@@ -73,10 +74,12 @@ nodelistlength(All) > maxnodes
 // or not yet schedule to be visited in Next.
 token(A, All, [A | Next])
    -o [collect => L | Side | !edge(A, L, Side),
-         0 = nodelistcount(All, L), 0 = nodelistcount(Next, L), nodepriority(L) > 0.0 | send-token1(A, All, nodelistappend(Next, L))].
+         0 = nodelistcount(All, L), 0 = nodelistcount(Next, L),
+         nodepriority(L) > 0.0, cpu-id(L) = cpu-id(A) | send-token1(A, All, nodelistappend(Next, L))].
 
 // the previous rule forces the token to be sent to the next node
 // we schedule node B to be run and send the token to it
+send-token1(A, All, []) -o first-phase(A, All, nodelistreverse(All)).
 send-token1(A, All, [B | Next]) -o send-token2(A, All, [B | Next], B).
 send-token2(A, All, Next, B) -o schedule-next(B), token(B, nodelistappend(All, [B]), Next).
 
