@@ -122,6 +122,7 @@ public:
 
 	inline runtime::rstring::ptr get_default_string(const size_t i) const
 	{
+      assert(i < default_strings.size());
 		return default_strings[i];
 	}
    

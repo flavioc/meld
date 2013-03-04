@@ -82,7 +82,11 @@ val_string(const instr_val v, pcounter *pm, const program *prog)
       pcounter_move_node(pm);
       return ret;
 	} else if(val_is_string(v)) {
-		const string ret(string("\"") + prog->get_default_string(pcounter_uint(*pm))->get_content() + "\"");
+      const uint_val id(pcounter_uint(*pm));
+      runtime::rstring::ptr p(prog->get_default_string(id));
+
+      assert(p != NULL);
+		const string ret(string("\"") + p->get_content() + "\"");
 		pcounter_move_uint(pm);
 		return ret;
 	} else if(val_is_arg(v)) {
