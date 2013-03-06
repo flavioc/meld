@@ -346,7 +346,11 @@ execute_send(const pcounter& pc, state& state)
 					state.generated_persistent_tuples.push_back(stuple);
 				} else {
 					simple_tuple *stuple(new simple_tuple(tuple, state.count));
-					state.generated_tuples.push_back(stuple);
+					if(tuple->is_reused()) // push into persistent list, since it is a reused tuple
+						state.generated_persistent_tuples.push_back(stuple);
+					else
+						state.generated_tuples.push_back(stuple);
+						
 #ifdef USE_RULE_COUNTING
 					state.node->matcher.register_tuple(tuple, 1);
 #endif
@@ -939,7 +943,13 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 		pcounter first, state& state, tuple_vector& tuples, const predicate *pred)
 {
    const bool old_is_linear = state.is_linear;
-	const bool this_is_linear = pred->is_linear_pred();
+	const bool this_is_linear = (pred->is_linear_pred() && !state.persistent_only);
+
+#ifndef NDEBUG
+   if(pred->is_linear_pred() && state.persistent_only) {
+      assert(pred->is_reused_pred());
+   }
+#endif
 	
 #define PUSH_CURRENT_STATE(TUPLE, TUPLE_LEAF, TUPLE_QUEUE)		\
 	tuple *old_tuple = state.tuple;										\
@@ -1523,15 +1533,25 @@ execute_remove(pcounter pc, state& state)
 		if(is_a_leaf) {
 			state.node->matcher.deregister_tuple(tpl, 1);
 		}
+		// the else case is done at state.cpp
 	}
 #endif
 
-	if(is_a_leaf) {
-		//cout << "Remove " << *state.get_tuple(reg) << endl;
-   	state.node->delete_by_leaf(state.get_tuple(reg)->get_predicate(), state.get_leaf(reg));
+   vm::tuple *tpl(state.get_tuple(reg));
+
+   assert(tpl != NULL);
+
+   if(tpl->is_reused() && state.use_local_tuples) {
+		state.generated_persistent_tuples.push_back(new simple_tuple(tpl, -1));
+		if(is_a_leaf)
+			state.leaves_for_deletion.push_back(make_pair((predicate*)tpl->get_predicate(), state.get_leaf(reg)));
 	} else {
-		//cout << "Remove by queue" << endl;
-		//state.get_tuple_queue(reg)->will_delete();
+		if(is_a_leaf) {
+			//cout << "Remove " << *state.get_tuple(reg) << endl;
+   		state.node->delete_by_leaf(tpl->get_predicate(), state.get_leaf(reg));
+		} else {
+			// tuple was marked before, it will be deleted after this round
+		}
 	}
 }
 

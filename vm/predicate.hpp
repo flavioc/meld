@@ -56,6 +56,7 @@ private:
    bool is_linear;
    bool is_reverse_route;
    bool is_action;
+   bool is_reused;
    priority_type global_prio;
    field_num priority_argument;
 
@@ -98,6 +99,8 @@ public:
 	inline bool is_persistent_pred(void) const { return !is_linear_pred(); }
 
    inline bool is_action_pred(void) const { return is_action; }
+
+   inline bool is_reused_pred(void) const { return is_reused; }
    
    inline field_num get_aggregate_field(void) const { return agg_info->field; }
    inline aggregate_type get_aggregate_type(void) const { return agg_info->type; }

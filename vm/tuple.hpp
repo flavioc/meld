@@ -98,6 +98,7 @@ public:
    inline bool is_aggregate(void) const { return pred->is_aggregate(); }
    inline bool is_linear(void) const { return pred->is_linear_pred(); }
    inline bool is_action(void) const { return pred->is_action_pred(); }
+   inline bool is_reused(void) const { return pred->is_reused_pred(); }
    
    void print(std::ostream&) const;
 #ifdef USE_UI

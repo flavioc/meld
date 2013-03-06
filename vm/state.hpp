@@ -81,6 +81,9 @@ public:
 	db::simple_tuple_list generated_tuples;
 	db::simple_tuple_list generated_persistent_tuples;
 	db::simple_tuple_vector generated_other_level;
+	// leaves scheduled for deletion (for use with reused linear tuples + retraction)
+	// we cannot delete them immediately because then the tuple would be deleted
+	std::list< std::pair<vm::predicate*, db::tuple_trie_leaf*> > leaves_for_deletion;
 	vm::strat_level current_level;
    bool persistent_only;
    vm::all *all;

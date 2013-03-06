@@ -277,7 +277,26 @@ state::do_persistent_tuples(void)
          // aggregate
          add_to_aggregate(stpl);
       }
+
+		if(!tpl->is_reused()) {
+			//delete stpl;
+		} else {
+			if(stpl->get_count() < 0)
+				delete stpl;
+		}
    }
+
+	while(!leaves_for_deletion.empty()) {
+		pair<vm::predicate*, db::tuple_trie_leaf*> p(leaves_for_deletion.front());
+		vm::predicate* pred(p.first);
+		db::tuple_trie_leaf *leaf(p.second);
+		
+		leaves_for_deletion.pop_front();
+		
+		node->delete_by_leaf(pred, leaf);
+	}
+	
+	assert(leaves_for_deletion.empty());
 }
 
 void
@@ -295,12 +314,12 @@ state::mark_rules_using_local_tuples(void)
          current_level = stpl->get_strat_level();
          has_level = true;
       }
-		
+
       if(!stpl->can_be_consumed()) {
          delete tpl;
          delete stpl;
          it = local_tuples.erase(it);
-      } else if(tpl->is_persistent()) {
+      } else if(tpl->is_persistent() || tpl->is_reused()) {
          generated_persistent_tuples.push_back(stpl);
 			it = local_tuples.erase(it);
 		} else if(tpl->is_action()) {
@@ -366,8 +385,8 @@ void
 state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
 {
    if(stpl->get_count() > 0) {
-      const bool is_new(add_fact_to_node(tpl));
-
+		const bool is_new(add_fact_to_node(tpl));
+		
       setup(tpl, node, stpl->get_count());
       use_local_tuples = false;
       persistent_only = true;
@@ -378,26 +397,35 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
 #endif
 
       if(is_new) {
-         mark_predicate_to_run(tpl->get_predicate());
+        	mark_predicate_to_run(tpl->get_predicate());
       } else {
-         delete tpl;
+        	delete tpl;
       }
       delete stpl;
    } else {
-      node::delete_info deleter(node->delete_tuple(tpl, -stpl->get_count()));
+		if(tpl->is_reused()) {
+			setup(tpl, node, stpl->get_count());
+			persistent_only = true;
+			use_local_tuples = false;
+			execute_bytecode(all->PROGRAM->get_predicate_bytecode(tuple->get_predicate_id()), *this);
+			// this will be deleted during processing of local tuples!
+		} else {
+			cout << "Delete " << *tpl << endl;
+      	node::delete_info deleter(node->delete_tuple(tpl, -stpl->get_count()));
 
 #ifdef USE_RULE_COUNTING
-      node->matcher.deregister_tuple(tpl, stpl->get_count());
+      	node->matcher.deregister_tuple(tpl, stpl->get_count());
 #endif
 
-      if(deleter.to_delete()) { // to be removed
-         setup(tpl, node, stpl->get_count());
-         persistent_only = true;
-         use_local_tuples = false;
-         execute_bytecode(all->PROGRAM->get_predicate_bytecode(tuple->get_predicate_id()), *this);
-         deleter();
-      } else
-         delete tuple;
+      	if(deleter.to_delete()) { // to be removed
+         	setup(tpl, node, stpl->get_count());
+         	persistent_only = true;
+         	use_local_tuples = false;
+         	execute_bytecode(all->PROGRAM->get_predicate_bytecode(tuple->get_predicate_id()), *this);
+         	deleter();
+      	} else
+         	delete tpl;
+		}
    }
 }
 
@@ -470,8 +498,8 @@ state::run_node(db::node *no)
       persistent_only = false;
 		execute_rule(rule, *this);
 
-		process_consumed_local_tuples();
 		process_generated_tuples();
+		process_consumed_local_tuples();
 		mark_active_rules();
 	}
 
