@@ -90,6 +90,10 @@ public:
 #ifdef USE_UI
    static bool UI;
 #endif
+#ifdef USE_SIM
+   static bool SIM;
+   size_t sim_instr_counter;
+#endif
 
 #ifdef CORE_STATISTICS
    size_t stat_rules_ok;
@@ -177,6 +181,7 @@ public:
    void process_persistent_tuple(db::simple_tuple *, vm::tuple *);
 	void process_consumed_local_tuples(void);
 	void process_generated_tuples(void);
+	void process_others(void);
 	void mark_rules_using_local_tuples(void);
 	void run_node(db::node *);
    void setup(vm::tuple*, db::node*, const ref_count);

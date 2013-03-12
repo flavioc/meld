@@ -119,6 +119,7 @@ bool
 run_program(int argc, char **argv, const char *program, const vm::machine_arguments& margs)
 {
 	assert(utils::file_exists(string(program)));
+	assert(num_threads > 0);
 
 	try {
       double start_time(0.0);

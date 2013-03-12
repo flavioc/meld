@@ -17,6 +17,9 @@ namespace vm
 #ifdef USE_UI
 bool state::UI = false;
 #endif
+#ifdef USE_SIM
+bool state::SIM = false;
+#endif
 
 bool
 state::linear_tuple_can_be_used(vm::tuple *tpl, const vm::ref_count max) const
@@ -410,7 +413,6 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
 			execute_bytecode(all->PROGRAM->get_predicate_bytecode(tuple->get_predicate_id()), *this);
 			// this will be deleted during processing of local tuples!
 		} else {
-			cout << "Delete " << *tpl << endl;
       	node::delete_info deleter(node->delete_tuple(tpl, -stpl->get_count()));
 
 #ifdef USE_RULE_COUNTING
@@ -430,12 +432,8 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
 }
 
 void
-state::process_generated_tuples(void)
+state::process_others(void)
 {
-	/* move from generated tuples to local_tuples */
-	local_tuples.splice(local_tuples.end(), generated_tuples);
-	/* tuples were already marked in vm/exec.cpp (execute_send) */
-	
 	for(simple_tuple_vector::iterator it(generated_other_level.begin()), end(generated_other_level.end());
 		it != end;
 		it++)
@@ -444,11 +442,22 @@ state::process_generated_tuples(void)
 		all->MACHINE->route_self(sched, node, *it);
 	}
 	
+	generated_other_level.clear();
+}
+
+void
+state::process_generated_tuples(void)
+{
+	/* move from generated tuples to local_tuples */
+	local_tuples.splice(local_tuples.end(), generated_tuples);
+	/* tuples were already marked in vm/exec.cpp (execute_send) */
+	
    do_persistent_tuples();
+
+	process_others();
 	
 	assert(generated_tuples.empty());
 	generated_persistent_tuples.clear();
-	generated_other_level.clear();
 }
 
 void
@@ -473,6 +482,7 @@ state::run_node(db::node *no)
    start_matching();
 	mark_rules_using_local_tuples();
    do_persistent_tuples();
+	process_others();
 	mark_active_rules();
 
 #ifdef DEBUG_RULES

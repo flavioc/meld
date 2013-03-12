@@ -1722,6 +1722,11 @@ eval_loop:
 		if(state.print_instrs)
          instr_print_simple(pc, 0, state.all->PROGRAM, cout);
 #endif      
+#ifdef USE_SIM
+      if(state::SIM) {
+         ++state.sim_instr_counter;
+      }
+#endif
 
 #ifdef CORE_STATISTICS
 		state.stat_instructions_executed++;
@@ -1920,13 +1925,21 @@ eval_loop:
       }
    }
 }
+
+static inline return_type
+do_execute(byte_code code, state& state)
+{
+   const return_type ret(execute((pcounter)code, state));
+
+   state.cleanup();
+   return ret;
+}
    
 execution_return
 execute_bytecode(byte_code code, state& state)
 {
-   const return_type ret(execute((pcounter)code, state));
+   const return_type ret(do_execute(code, state));
    
-   state.cleanup();
 	state.unmark_generated_tuples();
 	
 #ifdef CORE_STATISTICS
@@ -1949,14 +1962,12 @@ execute_rule(const rule_id rule_id, state& state)
 	
 	vm::rule *rule(state.all->PROGRAM->get_rule(rule_id));
 
-   execute(rule->get_bytecode(), state);
+   do_execute(rule->get_bytecode(), state);
 
 #ifdef CORE_STATISTICS
    if(state.stat_rules_activated == 0)
       state.stat_rules_failed++;
 #endif
-
-   state.cleanup();
 }
 
 }

@@ -10,7 +10,7 @@ const startnode = @4.
 const used = 1.
 const notused = 0.
 
-path(startnode, 0, 0).
+path(startnode, 0, notused).
 
 path(A, B, used), path(A, B, notused)
 	-o path(A, B, used).

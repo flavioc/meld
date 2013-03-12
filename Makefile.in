@@ -107,9 +107,10 @@ OBJS = utils/utils.o \
 			 stat/slice_set.o \
 			 ui/manager.o \
 			 ui/client.o \
-			 interface.o
+			 interface.o \
+			 sched/sim.o
 
-all: meld print predicates server
+all: meld print predicates server simulator
 
 meld: $(OBJS) meld.o
 	$(COMPILE) meld.o -o meld $(LDFLAGS)
@@ -122,6 +123,9 @@ predicates: $(OBJS) predicates.o
 
 server: $(OBJS) server.o
 	$(COMPILE) server.o -o server -lreadline $(LDFLAGS)
+
+simulator: $(OBJS) simulator.o
+	$(COMPILE) simulator.o -o simulator $(LDFLAGS)
 
 depend:
 	makedepend -- $(CXXFLAGS) -- $(shell find . -name '*.cpp')

@@ -46,7 +46,10 @@
 #define MARK_OWNED_NODES
 
 /* use ui interface */
-//#define USE_UI
+#define USE_UI
+
+/* use simulator */
+#define USE_SIM
 
 /* use memory pools for each thread or not */
 const bool USE_ALLOCATOR = true;

@@ -15,6 +15,7 @@
 #include "interface.hpp"
 #include "sched/serial.hpp"
 #include "sched/serial_ui.hpp"
+#include "sched/sim.hpp"
 //#include "thread/mpi_dynamic.hpp"
 //#include "thread/mpi_single.hpp"
 //#include "thread/mpi_static.hpp"
@@ -60,6 +61,11 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, const bool f
 #ifdef USE_UI
       if(state::UI) {
          LOG_SET_COLOR(node, tpl->get_int(0), tpl->get_int(1), tpl->get_int(2));
+      }
+#endif
+#ifdef USE_SIM
+      if(state::SIM) {
+			((sim_sched*)sched)->set_color(node, tpl->get_int(0), tpl->get_int(1), tpl->get_int(2));
       }
 #endif
    } else if(pid == SETEDGELABEL_PREDICATE_ID) {
@@ -331,6 +337,8 @@ get_creation_function(const scheduler_type sched_type)
          return database::create_node_fn(sched::serial_local::create_node);
 		case SCHED_SERIAL_UI:
 			return database::create_node_fn(sched::serial_ui_local::create_node);
+		case SCHED_SIM:
+			return database::create_node_fn(sched::sim_sched::create_node);
       case SCHED_UNKNOWN:
          return NULL;
    }
@@ -391,6 +399,9 @@ machine::machine(const string& file, router& _rout, const size_t th,
          break;
 		case SCHED_SERIAL_UI:
 			this->all->ALL_THREADS.push_back(dynamic_cast<sched::base*>(new sched::serial_ui_local(this->all)));
+			break;
+		case SCHED_SIM:
+			this->all->ALL_THREADS.push_back(dynamic_cast<sched::base*>(new sched::sim_sched(this->all)));
 			break;
       case SCHED_UNKNOWN: assert(false); break;
    }

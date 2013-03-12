@@ -46,7 +46,7 @@ serial_local::assert_end_iteration(void) const
 
 node*
 serial_local::get_work(void)
-{  
+{
    if(current_node != NULL) {
       if(!current_node->has_work()) {
          current_node->set_in_queue(false);

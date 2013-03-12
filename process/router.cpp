@@ -25,8 +25,10 @@ router::set_nodes_total(const size_t total, vm::all *all)
 {
    nodes_per_remote = total / world_size;
    
+#ifndef USE_SIM
    if(nodes_per_remote == 0)
       throw database_error("Number of nodes is less than the number of remote machines");
+#endif
 
    all->NUM_NODES_PER_PROCESS = nodes_per_remote;
    

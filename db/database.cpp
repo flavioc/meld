@@ -87,9 +87,14 @@ database::create_node(void)
 {
    utils::spinlock::scoped_lock l(mtx);
 
-   ++max_node_id;
-   ++max_translated_id;
-
+	if(nodes.empty()) {
+		max_node_id = 0;
+		max_translated_id = 0;
+	} else {
+   	++max_node_id;
+   	++max_translated_id;
+	}
+	
    node *ret(create_fn(max_node_id, max_translated_id, all));
    
    translation[max_node_id] = max_translated_id;
