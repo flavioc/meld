@@ -17,11 +17,18 @@ class sim_sched: public sched::base
 {
 protected:
 	
+	typedef uint64_t message_type;
+	static const size_t MAXLENGTH = 512 / sizeof(sim_sched::message_type);
+	
 	sim_node *current_node;
 	boost::asio::ip::tcp::socket *socket;
 	std::list<process::work> tmp_work;
-	vm::predicate *neighbor_pred;
-	vm::predicate *tap_pred;
+	static vm::predicate *neighbor_pred;
+	static vm::predicate *tap_pred;
+	static bool thread_mode;
+	static bool stop_all;
+	static queue::push_safe_linear_queue<message_type*> socket_messages;
+	bool slave;
 	
 private:
    
@@ -69,9 +76,18 @@ public:
    explicit sim_sched(vm::all *all):
       sched::base(0, all),
       current_node(NULL),
-		socket(NULL)
+		socket(NULL),
+		slave(false)
    {
    }
+
+	explicit sim_sched(vm::all *all, const vm::process_id id, sim_node *_node):
+		sched::base(id, all),
+		current_node(_node),
+		socket(NULL),
+		slave(true)
+	{
+	}
    
 	virtual ~sim_sched(void);
 };

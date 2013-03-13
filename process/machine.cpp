@@ -232,6 +232,14 @@ machine::execute_const_code(void)
 }
 
 void
+machine::init_thread(sched::base *sched)
+{
+	all->ALL_THREADS.push_back(sched);
+	all->NUM_THREADS++;
+	sched->start();
+}
+
+void
 machine::start(void)
 {
 	// execute constants code
@@ -244,15 +252,15 @@ machine::start(void)
       alarm_thread = new boost::thread(bind(&machine::slice_function, this));
    }
    
-   for(size_t i(1); i < num_threads; ++i)
+   for(size_t i(1); i < all->NUM_THREADS; ++i)
       this->all->ALL_THREADS[i]->start();
    this->all->ALL_THREADS[0]->start();
    
-   for(size_t i(1); i < num_threads; ++i)
+   for(size_t i(1); i < all->NUM_THREADS; ++i)
       this->all->ALL_THREADS[i]->join();
       
 #ifndef NDEBUG
-   for(size_t i(1); i < num_threads; ++i)
+   for(size_t i(1); i < all->NUM_THREADS; ++i)
       assert(this->all->ALL_THREADS[i-1]->num_iterations() == this->all->ALL_THREADS[i]->num_iterations());
    if(this->all->PROGRAM->is_safe())
       assert(this->all->ALL_THREADS[0]->num_iterations() == 1);
@@ -350,7 +358,6 @@ machine::machine(const string& file, router& _rout, const size_t th,
 		const scheduler_type _sched_type, const machine_arguments& margs):
    all(new vm::all()),
    filename(file),
-   num_threads(th),
    sched_type(_sched_type),
    rout(_rout),
    alarm_thread(NULL),
@@ -364,15 +371,15 @@ machine::machine(const string& file, router& _rout, const size_t th,
    
    this->all->ARGUMENTS = margs;
    this->all->DATABASE =  new database(filename, get_creation_function(_sched_type), this->all);
-   this->all->NUM_THREADS = num_threads;
+   this->all->NUM_THREADS = th;
    this->all->MACHINE = this;
    
    switch(sched_type) {
       case SCHED_THREADS:
-         sched::static_local::start(num_threads, this->all);
+         sched::static_local::start(all->NUM_THREADS, this->all);
          break;
       case SCHED_THREADS_PRIO:
-         sched::threads_prio::start(num_threads, this->all);
+         sched::threads_prio::start(all->NUM_THREADS, this->all);
          break;
 #if 0
       case SCHED_THREADS_SINGLE_LOCAL:
@@ -406,7 +413,7 @@ machine::machine(const string& file, router& _rout, const size_t th,
       case SCHED_UNKNOWN: assert(false); break;
    }
    
-   assert(this->all->ALL_THREADS.size() == num_threads);
+   assert(this->all->ALL_THREADS.size() == all->NUM_THREADS);
 }
 
 machine::~machine(void)
@@ -415,7 +422,7 @@ machine::~machine(void)
    // so we must delete this in correct order
    delete this->all->DATABASE;
    
-   for(process_id i(0); i != num_threads; ++i)
+   for(process_id i(0); i != all->NUM_THREADS; ++i)
       delete all->ALL_THREADS[i];
 
    delete this->all->PROGRAM;
@@ -423,7 +430,7 @@ machine::~machine(void)
    if(alarm_thread)
       delete alarm_thread;
       
-   mem::cleanup(num_threads);
+   mem::cleanup(all->NUM_THREADS);
 }
 
 }

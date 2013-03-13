@@ -31,7 +31,6 @@ private:
    
    vm::all *all;
    const std::string filename;
-   const size_t num_threads;
    const sched::scheduler_type sched_type;
    
    router& rout;
@@ -59,6 +58,7 @@ public:
    
    void route(const db::node *, sched::base *, const db::node::node_id, db::simple_tuple*);
    
+	void init_thread(sched::base *);
    void start(void);
    
    explicit machine(const std::string&, router&, const size_t, const sched::scheduler_type, const vm::machine_arguments& args = vm::machine_arguments());

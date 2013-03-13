@@ -8,6 +8,7 @@
 #include "sched/base.hpp"
 #include "queue/intrusive.hpp"
 #include "queue/safe_simple_pqueue.hpp"
+#include "queue/safe_linear_queue.hpp"
 
 namespace sched
 { 
@@ -17,7 +18,8 @@ class sim_node: public db::node
 public:
 	
 	size_t timestamp;
-	queue::heap_queue<db::simple_tuple*> tuple_pqueue; 
+	queue::heap_queue<db::simple_tuple*> tuple_pqueue; // for deterministic computation
+	queue::push_safe_linear_queue<db::simple_tuple*> pending; // for fast computation
    
 	inline bool has_work(void) const { return !tuple_pqueue.empty(); }
 
