@@ -1,0 +1,9 @@
+
+How to compile this mock simulator:
+$ make
+
+To run:
+$ ./simulator <port>
+
+A document on the message format and other details is available here:
+https://docs.google.com/document/d/1PEjegkBLQb6umXY7-5P8vV0cMgAAcxMnQXpPzUhTMzk/edit
