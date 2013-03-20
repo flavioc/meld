@@ -1,10 +1,14 @@
 
+#include "conf.hpp"
+
 #include <iostream>
 #include <string>
 #include <vector>
 #include <exception>
+#ifdef USE_UI
 #include <readline/readline.h>
 #include <readline/history.h>
+#endif
 #include <boost/algorithm/string.hpp>
 #include <boost/thread.hpp>
 
