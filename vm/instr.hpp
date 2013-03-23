@@ -234,7 +234,6 @@ inline reg_num alloc_reg(pcounter pc) { return reg_get(pc, 2); }
 
 /* CALL */
 
-
 inline external_function_id call_extern_id(pcounter pc) { return (external_function_id)byte_get(pc, 1); }
 inline size_t call_num_args(pcounter pc) { return (size_t)byte_get(pc, 2); }
 inline reg_num call_dest(pcounter pc) { return reg_get(pc, 3); }

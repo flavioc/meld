@@ -11,27 +11,25 @@ using namespace utils;
 namespace db
 {
 
-#ifdef COMPILE_MPI
 void
-simple_tuple::pack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm) const
+simple_tuple::pack(byte *buf, const size_t buf_size, int *pos) const
 {
-   MPI_Pack((void*)&count, 1, MPI_SHORT, buf, buf_size, pos, comm);
+   utils::pack<short>((void*)&count, 1, buf, buf_size, pos);
    
-   data->pack(buf, buf_size, pos, comm);
+   data->pack(buf, buf_size, pos);
 }
 
 simple_tuple*
-simple_tuple::unpack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm, vm::program *prog)
+simple_tuple::unpack(byte *buf, const size_t buf_size, int *pos, vm::program *prog)
 {
    ref_count count;
    
-   MPI_Unpack(buf, buf_size, pos, &count, 1, MPI_SHORT, comm);
+   utils::unpack<short>(buf, buf_size, pos, &count, 1);
    
-   vm::tuple *tpl(vm::tuple::unpack(buf, buf_size, pos, comm, prog));
+   vm::tuple *tpl(vm::tuple::unpack(buf, buf_size, pos, prog));
    
    return new simple_tuple(tpl, count);
 }
-#endif
 
 simple_tuple::~simple_tuple(void)
 {

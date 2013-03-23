@@ -93,16 +93,14 @@ public:
    
    inline void add_count(const vm::ref_count& inc) { count += inc; }
    
-#ifdef COMPILE_MPI
    inline size_t storage_size(void) const
    {
       return sizeof(vm::ref_count) + data->get_storage_size();
    }
    
-   void pack(utils::byte *, const size_t, int *, MPI_Comm) const;
+   void pack(utils::byte *, const size_t, int *) const;
    
-   static simple_tuple* unpack(utils::byte *, const size_t, int *, MPI_Comm, vm::program *);
-#endif
+   static simple_tuple* unpack(utils::byte *, const size_t, int *, vm::program *);
 
    static simple_tuple* create_new(vm::tuple *tuple) { return new simple_tuple(tuple, 1); }
 

@@ -5,6 +5,7 @@
 #include "db/node.hpp"
 #include "utils/utils.hpp"
 #include "vm/state.hpp"
+#include "utils/serialization.hpp"
 #ifdef USE_UI
 #include "ui/macros.hpp"
 #endif
@@ -236,7 +237,6 @@ tuple::~tuple(void)
    allocator<tuple_field>().deallocate(fields, pred->num_fields());
 }
 
-#ifdef COMPILE_MPI
 
 size_t
 tuple::get_storage_size(void) const
@@ -268,39 +268,39 @@ tuple::get_storage_size(void) const
 }
 
 void
-tuple::pack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm) const
+tuple::pack(byte *buf, const size_t buf_size, int *pos) const
 {
    const predicate_id id(get_predicate_id());
    
    assert(*pos <= (int)buf_size);
-   MPI_Pack((void*)&id, 1, MPI_UNSIGNED_CHAR, buf, buf_size, pos, comm);
+   utils::pack<char>((void*)&id, 1, buf, buf_size, pos);
    assert(*pos <= (int)buf_size);
    
    for(field_num i(0); i < num_fields(); ++i) {
       switch(get_field_type(i)) {
          case FIELD_INT: {
                const int_val val(get_int(i));
-               MPI_Pack((void*)&val, 1, MPI_INT, buf, buf_size, pos, comm);
+               utils::pack<int_val>((void*)&val, 1, buf, buf_size, pos);
             }
             break;
          case FIELD_FLOAT: {
                const float_val val(get_float(i));
-               MPI_Pack((void*)&val, 1, MPI_FLOAT, buf, buf_size, pos, comm);
+               utils::pack<float_val>((void*)&val, 1, buf, buf_size, pos);
             }
             break;
          case FIELD_NODE: {
                const node_val val(get_node(i));
-               MPI_Pack((void*)&val, 1, MPI_UNSIGNED, buf, buf_size, pos, comm);
+               utils::pack<node_val>((void*)&val, 1, buf, buf_size, pos);
             }
             break;
          case FIELD_LIST_INT:
-            int_list::pack(get_int_list(i), MPI_INT, buf, buf_size, pos, comm);
+            int_list::pack(get_int_list(i), buf, buf_size, pos);
             break;
          case FIELD_LIST_FLOAT:
-            float_list::pack(get_float_list(i), MPI_FLOAT, buf, buf_size, pos, comm);
+            float_list::pack(get_float_list(i), buf, buf_size, pos);
             break;
          case FIELD_LIST_NODE:
-            node_list::pack(get_node_list(i), MPI_UNSIGNED, buf, buf_size, pos, comm);
+            node_list::pack(get_node_list(i), buf, buf_size, pos);
             break;
          default:
             throw type_error("unsupported field type to pack");
@@ -310,36 +310,36 @@ tuple::pack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm) const
 }
 
 void
-tuple::load(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm)
+tuple::load(byte *buf, const size_t buf_size, int *pos)
 {
    for(field_num i(0); i < num_fields(); ++i) {
       switch(get_field_type(i)) {
          case FIELD_INT: {
                int_val val;
-               MPI_Unpack(buf, buf_size, pos, &val, 1, MPI_INT, comm);
+               utils::unpack<int_val>(buf, buf_size, pos, &val, 1);
                set_int(i, val);
             }
             break;
          case FIELD_FLOAT: {
                float_val val;
-               MPI_Unpack(buf, buf_size, pos, &val, 1, MPI_FLOAT, comm);
+               utils::unpack<float_val>(buf, buf_size, pos, &val, 1);
                set_float(i, val);
             }
             break;
          case FIELD_NODE: {
                node_val val;
-               MPI_Unpack(buf, buf_size, pos, &val, 1, MPI_UNSIGNED, comm);
+               utils::unpack<node_val>(buf, buf_size, pos, &val, 1);
                set_node(i, val);
             }
             break;
          case FIELD_LIST_INT:
-            set_int_list(i, int_list::unpack(MPI_INT, buf, buf_size, pos, comm));
+            set_int_list(i, int_list::unpack(buf, buf_size, pos));
             break;
          case FIELD_LIST_FLOAT:
-            set_float_list(i, float_list::unpack(MPI_FLOAT, buf, buf_size, pos, comm));
+            set_float_list(i, float_list::unpack(buf, buf_size, pos));
             break;
          case FIELD_LIST_NODE:
-            set_node_list(i, node_list::unpack(MPI_UNSIGNED, buf, buf_size, pos, comm));
+            set_node_list(i, node_list::unpack(buf, buf_size, pos));
             break;
          default:
             throw type_error("unsupported field type to unpack");
@@ -348,20 +348,19 @@ tuple::load(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm)
 }
 
 tuple*
-tuple::unpack(byte *buf, const size_t buf_size, int *pos, MPI_Comm comm, vm::program *prog)
+tuple::unpack(byte *buf, const size_t buf_size, int *pos, vm::program *prog)
 {
    predicate_id pred_id;
    
-   MPI_Unpack(buf, buf_size, pos, &pred_id, 1, MPI_UNSIGNED_CHAR, comm);
+   utils::unpack<byte>(buf, buf_size, pos, &pred_id, 1);
    
    tuple *ret(new tuple(prog->get_predicate(pred_id)));
    
-   ret->load(buf, buf_size, pos, comm);
+   ret->load(buf, buf_size, pos);
    
    return ret;
    
 }
-#endif
 
 ostream& operator<<(ostream& cout, const tuple& tuple)
 {
