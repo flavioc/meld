@@ -302,6 +302,59 @@ execute_alloc(const pcounter& pc, state& state)
 }
 
 static inline void
+execute_send_self(tuple *tuple, state& state)
+{
+#ifdef DEBUG_MODE
+   cout << "\t" << *tuple << " -> self " << state.node->get_id() << endl;
+#endif
+   if(tuple->is_action()) {
+      state.all->MACHINE->run_action(state.sched,
+            state.node, tuple);
+      return;
+   }
+
+   if(state.use_local_tuples || state.persistent_only) {
+      const predicate *pred(tuple->get_predicate());
+
+#ifdef USE_UI
+      if(state::UI) {
+         if(tuple->is_persistent()) {
+            LOG_PERSISTENT_DERIVATION(state.node, tuple);
+         } else if(tuple->is_linear() && !tuple->is_action()) {
+            LOG_LINEAR_DERIVATION(state.node, tuple);
+         }
+      }
+#endif
+
+      if(pred->get_strat_level() != state.current_level) {
+         simple_tuple *stuple(new simple_tuple(tuple, state.count));
+         assert(stuple->can_be_consumed());
+         state.generated_other_level.push_back(stuple);
+      } else {
+         if(tuple->is_persistent()) {
+            simple_tuple *stuple(new simple_tuple(tuple, state.count));
+            state.generated_persistent_tuples.push_back(stuple);
+         } else {
+            simple_tuple *stuple(new simple_tuple(tuple, state.count));
+            if(tuple->is_reused()) // push into persistent list, since it is a reused tuple
+               state.generated_persistent_tuples.push_back(stuple);
+            else
+               state.generated_tuples.push_back(stuple);
+
+#ifdef USE_RULE_COUNTING
+            state.node->matcher.register_tuple(tuple, 1);
+#endif
+            state.mark_predicate_to_run(pred);
+         }
+      }
+   } else {
+      simple_tuple *stuple(new simple_tuple(tuple, state.count));
+      state.all->MACHINE->route_self(state.sched, state.node, stuple);
+      state.add_generated_tuple(stuple);
+   }
+}
+
+static inline void
 execute_send(const pcounter& pc, state& state)
 {
    const reg_num msg(send_msg(pc));
@@ -314,54 +367,7 @@ execute_send(const pcounter& pc, state& state)
 #endif
 
    if(msg == dest) {
-#ifdef DEBUG_MODE
-      cout << "\t" << *tuple << " -> self " << state.node->get_id() << endl;
-#endif
-      if(tuple->is_action()) {
-         state.all->MACHINE->run_action(state.sched,
-               state.node, tuple);
-         return;
-      }
-
-      if(state.use_local_tuples || state.persistent_only) {
-			const predicate *pred(tuple->get_predicate());
-			
-#ifdef USE_UI
-         if(state::UI) {
-            if(tuple->is_persistent()) {
-               LOG_PERSISTENT_DERIVATION(state.node, tuple);
-            } else if(tuple->is_linear() && !tuple->is_action()) {
-               LOG_LINEAR_DERIVATION(state.node, tuple);
-            }
-			}
-#endif
-			
-			if(pred->get_strat_level() != state.current_level) {
-				simple_tuple *stuple(new simple_tuple(tuple, state.count));
-				assert(stuple->can_be_consumed());
-				state.generated_other_level.push_back(stuple);
-			} else {
-				if(tuple->is_persistent()) {
-					simple_tuple *stuple(new simple_tuple(tuple, state.count));
-					state.generated_persistent_tuples.push_back(stuple);
-				} else {
-					simple_tuple *stuple(new simple_tuple(tuple, state.count));
-					if(tuple->is_reused()) // push into persistent list, since it is a reused tuple
-						state.generated_persistent_tuples.push_back(stuple);
-					else
-						state.generated_tuples.push_back(stuple);
-						
-#ifdef USE_RULE_COUNTING
-					state.node->matcher.register_tuple(tuple, 1);
-#endif
-					state.mark_predicate_to_run(pred);
-				}
-			}
-      } else {
-			simple_tuple *stuple(new simple_tuple(tuple, state.count));
-         state.all->MACHINE->route_self(state.sched, state.node, stuple);
-         state.add_generated_tuple(stuple);
-		}
+      execute_send_self(tuple, state);
    } else {
 #ifdef DEBUG_MODE
       cout << "\t" << *tuple << " -> " << dest_val << endl;
@@ -1702,6 +1708,74 @@ execute_new_node(const pcounter& pc, state& state)
 #endif
 }
 
+static inline void
+execute_new_axioms(pcounter pc, state& state)
+{
+   const pcounter end(pc + new_axioms_jump(pc));
+   pc += NEW_AXIOMS_BASE;
+
+   while(pc < end) {
+      // read axions until the end!
+      predicate_id pid(predicate_get(pc, 0));
+      predicate *pred(state.all->PROGRAM->get_predicate(pid));
+      tuple *tpl(new tuple(pred));
+
+      pc++;
+
+      for(size_t i(0), num_fields(pred->num_fields());
+            i != num_fields;
+            ++i)
+      {
+         switch(pred->get_field_type(i)) {
+            case FIELD_INT:
+               tpl->set_int(i, pcounter_int(pc));
+               pcounter_move_int(&pc);
+               break;
+            case FIELD_FLOAT:
+               tpl->set_float(i, pcounter_float(pc));
+               pcounter_move_float(&pc);
+               break;
+            case FIELD_NODE:
+               tpl->set_node(i, pcounter_node(pc));
+               pcounter_move_node(&pc);
+               break;
+            case FIELD_LIST_INT: {
+               stack_int_list s;
+
+               while(*pc++ == 1) {
+                  s.push(pcounter_int(pc));
+                  pcounter_move_int(&pc);
+               }
+
+               tpl->set_int_list(i, from_stack_to_list<stack_int_list, int_list>(s));
+            }
+            break;
+            case FIELD_LIST_FLOAT: {
+               stack_float_list s;
+
+               while(*pc++ == 1) {
+                  s.push(pcounter_float(pc));
+                  pcounter_move_float(&pc);
+               }
+               tpl->set_float_list(i, from_stack_to_list<stack_float_list, float_list>(s));
+            }
+            break;
+            case FIELD_LIST_NODE: {
+               stack_node_list s;
+               while(*pc++ == 1) {
+                  s.push(pcounter_node(pc));
+                  pcounter_move_node(&pc);
+               }
+               tpl->set_node_list(i, from_stack_to_list<stack_node_list, node_list>(s));
+            }
+            break;
+            default: assert(false);
+         }
+      }
+      execute_send_self(tpl, state);
+   }
+}
+
 static inline return_type
 execute(pcounter pc, state& state)
 {
@@ -1893,6 +1967,10 @@ eval_loop:
            execute_new_node(pc, state);
            break;
 
+         case NEW_AXIOMS_INSTR:
+           execute_new_axioms(pc, state);
+           break;
+
 			case SAVE_ORIGINAL_INSTR:
 			{
 				state.original_status = state::ORIGINAL_CAN_BE_USED;
@@ -1955,9 +2033,10 @@ execute_bytecode(byte_code code, state& state)
 void
 execute_rule(const rule_id rule_id, state& state)
 {
-	//cout << "Running rule " << state.all->PROGRAM->get_rule(rule_id)->get_string() << endl;
+#ifdef DEBUG_MODE
+	cout << "Running rule " << state.all->PROGRAM->get_rule(rule_id)->get_string() << endl;
+#endif
    
-   //state.node->print(cout);
    //state.all->DATABASE->print_db(cout);
 	
 	vm::rule *rule(state.all->PROGRAM->get_rule(rule_id));
@@ -1968,6 +2047,7 @@ execute_rule(const rule_id rule_id, state& state)
    if(state.stat_rules_activated == 0)
       state.stat_rules_failed++;
 #endif
+   //state.node->print(cout);
 }
 
 }

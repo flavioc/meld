@@ -418,6 +418,10 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          cout << "NEW NODE TO " << reg_string(new_node_reg(pc)) << endl;
          break;
 
+      case NEW_AXIOMS_INSTR:
+         cout << "NEW AXIOMS ..." << endl;
+         break;
+
     	case ELSE_INSTR:
 		default:
          throw malformed_instr_error("unknown instruction code");

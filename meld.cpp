@@ -131,6 +131,9 @@ main(int argc, char **argv)
 	
    try {
       run_program(argc, argv, program, margs);
+   } catch(vm::load_file_error& err) {
+      cerr << "File error: " << err.what() << endl;
+      exit(EXIT_FAILURE);
    } catch(machine_error& err) {
       cerr << "VM error: " << err.what() << endl;
       exit(EXIT_FAILURE);

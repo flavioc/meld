@@ -32,6 +32,7 @@ extern size_t SETEDGELABEL_PREDICATE_ID;
 extern size_t WRITE_STRING_PREDICATE_ID;
 extern size_t ADD_PRIORITY_PREDICATE_ID;
 extern size_t SCHEDULE_NEXT_PREDICATE_ID;
+extern size_t SETCOLOR2_PREDICATE_ID;
 
 class program
 {
@@ -137,8 +138,8 @@ public:
 
 class load_file_error : public std::runtime_error {
  public:
-    explicit load_file_error(const std::string& filename) :
-         std::runtime_error(std::string("unable to load byte-code file ") + filename)
+    explicit load_file_error(const std::string& filename, const std::string& reason) :
+         std::runtime_error(std::string("unable to load byte-code file ") + filename + ": " + reason)
     {}
 };
 

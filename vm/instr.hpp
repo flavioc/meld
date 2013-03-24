@@ -15,6 +15,9 @@ namespace vm {
 typedef unsigned char instr_val;
 typedef unsigned char reg_num;
 
+const size_t MAGIC_SIZE = sizeof(uint64_t);
+const uint64_t MAGIC = 0x6c696620646c656d;
+
 namespace instr {
 
 const size_t field_size = 2;
@@ -62,6 +65,7 @@ const size_t RULE_BASE           = 1 + uint_size;
 const size_t RULE_DONE_BASE      = 1;
 const size_t SAVE_ORIGINAL_BASE  = 1 + jump_size;
 const size_t NEW_NODE_BASE       = 2;
+const size_t NEW_AXIOMS_BASE     = 1 + jump_size;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -84,6 +88,7 @@ enum instr_type {
    RULE_DONE_INSTR      =  0x11,
    SAVE_ORIGINAL_INSTR  =  0x12,
    NEW_NODE_INSTR       =  0x13,
+   NEW_AXIOMS_INSTR     =  0x14,
    CALL_INSTR		      =  0x20,
    MOVE_INSTR		      =  0x30,
    ALLOC_INSTR		      =  0x40,
@@ -324,6 +329,9 @@ inline code_offset_t save_original_jump(const pcounter pc) { return jump_get(pc,
 
 /* NEW NODE */
 inline reg_num new_node_reg(const pcounter pc) { return reg_get(pc, 1); }
+
+/* NEW AXIOMS */
+inline code_offset_t new_axioms_jump(const pcounter pc) { return jump_get(pc, 1); }
 
 /* advance function */
 
@@ -667,6 +675,9 @@ advance(pcounter pc)
 
       case NEW_NODE_INSTR:
          return pc + NEW_NODE_BASE;
+
+      case NEW_AXIOMS_INSTR:
+         return pc + new_axioms_jump(pc);
 				
       case ELSE_INSTR:
       default:

@@ -21,8 +21,11 @@ database::database(const string& filename, create_node_fn _create_fn, vm::all *_
    node::node_id real_id;
    
    ifstream fp(filename.c_str(), ios::in | ios::binary);
+
+   fp.seekg(vm::MAGIC_SIZE, ios_base::cur); // skip magic
+   fp.seekg(2*sizeof(uint32_t), ios_base::cur); // skip version
    
-   fp.seekg(sizeof(byte), ios_base::cur);
+   fp.seekg(sizeof(byte), ios_base::cur); // skip number of definitions
    
    fp.read((char*)&num_nodes, sizeof(int_val));
    

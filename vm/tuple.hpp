@@ -56,6 +56,7 @@ public:
    define_set(node_list, runtime::node_list*, set_ptr(field, (ptr_val)val); runtime::node_list::inc_refs(val));
 
    inline void set_nil(const field_num& field) { set_ptr(field, null_ptr_val); }
+   inline void set_field(const field_num& field, tuple_field& f) { fields[field] = f; }
 #undef define_set
 
    size_t num_fields(void) const { return pred->num_fields(); }

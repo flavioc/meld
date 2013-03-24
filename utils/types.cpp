@@ -16,4 +16,12 @@ void print_byte(byte b)
    }
 }
 
+void print_uint64_t(uint64_t u)
+{
+   byte *b((byte*)&u);
+   for(size_t i(0); i < sizeof(uint64_t); ++i) {
+      print_byte(b[i]);
+   }
+}
+
 }

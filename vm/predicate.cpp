@@ -46,9 +46,6 @@ predicate::make_predicate_from_buf(byte *buf, code_size_t *code_size, const pred
    pred->is_reused = prop & PRED_REUSED;
    buf++;
 
-   if(pred->is_action)
-      assert(pred->is_linear); // must also be linear
-   
    // get aggregate information, if any
    if(pred->is_aggregate()) {
       unsigned char agg = buf[0];
