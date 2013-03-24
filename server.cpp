@@ -102,7 +102,7 @@ show_inter_help(void)
 static void
 show_version(void)
 {
-	cout << "Meld Parallel Environment " << VERSION << endl;
+	cout << "Meld Parallel Environment " << MAJOR_VERSION << "." << MINOR_VERSION << endl;
 	cout << "using ";
 	switch(sched_type) {
 		case SCHED_SERIAL_UI:

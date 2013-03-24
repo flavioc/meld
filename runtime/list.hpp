@@ -14,6 +14,7 @@
 
 #include "utils/types.hpp"
 #include "utils/atomic.hpp"
+#include "utils/serialization.hpp"
 #include "mem/base.hpp"
 
 #include "vm/defs.hpp"
@@ -111,14 +112,12 @@ public:
       return sizeof(unsigned int) + elem_size * length(ptr);
    }
    
-#ifdef COMPILE_MPI
    static inline
-	void pack(const list_ptr ptr, MPI_Datatype typ,
-          utils::byte *buf, const size_t buf_size, int *pos, MPI_Comm comm)
+	void pack(const list_ptr ptr, utils::byte *buf, const size_t buf_size, int *pos)
    {
       const size_t len(length(ptr));
       
-      MPI_Pack((void*)&len, 1, MPI_UNSIGNED, buf, buf_size, pos, comm);
+      utils::pack<unsigned int>((void*)&len, 1, buf, buf_size, pos);
       
       list_ptr p(ptr);
       
@@ -128,18 +127,17 @@ public:
          if(is_null(p))
             return;
          
-         MPI_Pack((void *)&(p->head), 1, typ, buf, buf_size, pos, comm);
+         utils::pack<T>((void *)&(p->head), 1, buf, buf_size, pos);
          p = p->get_tail();
       }
    }
    
    static inline
-	list_ptr unpack(MPI_Datatype typ, utils::byte *buf,
-            const size_t buf_size, int *pos, MPI_Comm comm)
+	list_ptr unpack(utils::byte *buf, const size_t buf_size, int *pos)
    {
       size_t len(0);
       
-      MPI_Unpack(buf, buf_size, pos, &len, 1, MPI_UNSIGNED, comm);
+      utils::unpack<unsigned int>(buf, buf_size, pos, &len, 1);
       
       list_ptr prev(null_list());
       list_ptr init(null_list());
@@ -147,7 +145,7 @@ public:
       while(len > 0) {
          T head;
 
-         MPI_Unpack(buf, buf_size, pos, &head, 1, typ, comm);
+         utils::unpack<T>(buf, buf_size, pos, &head, 1);
          
          list_ptr n(new cons(null_list(), head));
          
@@ -163,7 +161,6 @@ public:
       
       return init;
    }
-#endif
 
    static inline
    list_ptr copy(list_ptr ptr)

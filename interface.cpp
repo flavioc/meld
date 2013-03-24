@@ -17,6 +17,7 @@ using namespace process;
 using namespace sched;
 using namespace std;
 using namespace utils;
+using namespace vm;
 
 scheduler_type sched_type = SCHED_UNKNOWN;
 size_t num_threads = 0;
@@ -167,6 +168,9 @@ run_program(int argc, char **argv, const char *program, const vm::machine_argume
       }
 
 	} catch(machine_error& err) {
+      finish();
+      throw err;
+   } catch(load_file_error& err) {
       finish();
       throw err;
    } catch(db::database_error& err) {

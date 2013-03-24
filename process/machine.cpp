@@ -68,6 +68,26 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, const bool f
 			((sim_sched*)sched)->set_color(node, tpl->get_int(0), tpl->get_int(1), tpl->get_int(2));
       }
 #endif
+   } else if(pid == SETCOLOR2_PREDICATE_ID) {
+#ifdef USE_SIM
+      if(state::SIM) {
+         // XXX
+         int r(0), g(0), b(0);
+         switch(tpl->get_int(0)) {
+            case 0: r = 255; break; // RED
+            case 1: r = 255; g = 160; break; // ORANGE
+            case 2: r = 255; g = 247; break; // YELLOW
+            case 3: g = 255; break; // GREEN
+            case 4: g = 191; b = 255; // AQUA
+            case 5: b = 255; break; // BLUE
+            case 6: r = 255; g = 255; b = 255; break; // WHITE
+            case 7: r = 139; b = 204; break; // PURPLE
+            case 8: r = 255; g = 192; b = 203; break; // PINK
+            default: assert(false); break;
+         }
+			((sim_sched*)sched)->set_color(node, r, g, b);
+      }
+#endif
    } else if(pid == SETEDGELABEL_PREDICATE_ID) {
 #ifdef USE_UI
       if(state::UI) {

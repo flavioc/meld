@@ -19,9 +19,17 @@
 #define TAP 7
 #define SET_COLOR 8
 #define USE_THREADS 9
+#define ADD_NEIGHBOR_COUNT 10
+#define REMOVE_NEIGHBOR_COUNT 11
+#define SEND_MESSAGE 12
+#define RECEIVE_MESSAGE 13
+#define ACCEL 14
+#define SHAKE 15
+#define ADD_VACANT 16
+#define REMOVE_VACANT 17
 
 // comment this for threaded mode
-#define DETERMINISTIC
+//#define DETERMINISTIC
 
 typedef uint64_t message_type;
 const int max_length = 512 / sizeof(message_type);
@@ -81,12 +89,13 @@ write_to_socket(int sock, message_type *data)
 static inline void
 write_create_n_nodes(int sock, const int n)
 {
-   message_type data[4];
+   message_type data[5];
    int timestamp = 0;
-   data[0] = 3;
+   data[0] = 4;
    data[1] = CREATE_N_NODES;
-   data[2] = (message_type)n;
-   data[3] = (message_type)timestamp; // timestamp
+   data[2] = (message_type)timestamp; // timestamp
+   data[3] = (message_type)-1;
+   data[4] = (message_type)n;
 
    cout << "Create " << n << " nodes" << endl;
    write_to_socket(sock, data);
@@ -116,8 +125,8 @@ write_run_node(int sock, int node)
 
    data[0] = 3;
    data[1] = RUN_NODE;
-   data[2] = (message_type)node;
-   data[3] = (message_type)until;
+   data[2] = (message_type)until;
+   data[3] = (message_type)node;
 
    cout << "Run node " << node << " until " << until << endl;
    write_to_socket(sock, data);
@@ -127,22 +136,24 @@ write_run_node(int sock, int node)
 static void
 write_use_threads(int sock)
 {
-   message_type data[2];
+   message_type data[4];
 
-   data[0] = 1;
+   data[0] = 3;
    data[1] = USE_THREADS;
+   data[2] = 0;
+   data[3] = -1;
 
    write_to_socket(sock, data);
 }
 #endif
 
 static message_type
-handle_data(message_type *data)
+handle_data(message_type *data, int sock)
 {
    switch(data[1]) {
       case NODE_RUN: {
-                        message_type node(data[2]);
-                        message_type ts(data[3]);
+                        message_type ts(data[2]);
+                        message_type node(data[3]);
                         message_type numnodes(data[4]);
                         cout << "Node " << node << " ts " << ts << " numnodes " << numnodes << endl;
                         timestamps[node] = ts;
@@ -164,15 +175,36 @@ handle_data(message_type *data)
                      }
                      break;
       case SET_COLOR: {
-                         message_type node(data[2]);
-                         message_type r(data[3]);
-                         message_type g(data[4]);
-                         message_type b(data[5]);
+                         message_type ts(data[2]); // ignore
+                         message_type node(data[3]);
+                         message_type r(data[4]);
+                         message_type g(data[5]);
+                         message_type b(data[6]);
+                         message_type intensity(data[7]);
 
-                         cout << "Set color " << node << " " << r << " " << g << " " << b << endl;
+                         (void)ts;
+
+                         cout << "Set color " << node << " " << r << " " << g << " " << b << " " << intensity << endl;
                       }
                       break;
+      case SEND_MESSAGE: {
+                            message_type ts(data[2]);
+                            message_type node(data[3]);
+                            message_type face(data[4]);
+
+                            cout << ts << " Send message from " << node;
+                            
+                            if(face != (message_type)-1) {
+                               cout << " to face " << face;
+                            }
+                            cout << endl;
+
+                            data[1] = RECEIVE_MESSAGE;
+                            sendto(sock, data, data[0] + sizeof(message_type), 0, (struct sockaddr *)&cliaddr, sizeof(cliaddr));
+                         }
+                         break;
       default:
+                         cout << "Wrong message " << data[1] << endl;
          assert(false);
    }
 
@@ -192,72 +224,165 @@ force_read(int sock)
 
    length = recvfrom(sock, data + 1, data[0], 0, (struct sockaddr *)&cliaddr, &clilen);
 
+   cout << "Read one message length=" << length << " data[0]=" << data[0] << endl;
    assert(length == (size_t)data[0]);
 
-   message_type ret = handle_data(data);
+   message_type ret = handle_data(data, sock);
    return ret == NODE_RUN;
 }
 
 static void
 write_stop(int sock)
 {
-   message_type data[2];
-   data[0] = 1;
+   message_type data[4];
+   data[0] = 3;
    data[1] = STOP;
+   data[2] = 0;
+   data[3] = -1;
 
    write_to_socket(sock, data);
 }
 
 static void
-write_neighbor(int sock, int in, int out, int side, message_type msg)
+activate_node(int no)
 {
-   if(!active_nodes[in]) {
-      active_nodes[in] = true;
-      pqueue.push_back(in);
+   if(!active_nodes[no]) {
+      active_nodes[no] = true;
+      pqueue.push_back(no);
    }
-   nexttimestamps[in] = max(nexttimestamps[in], timestamps[in] + 1);
-
-   message_type data[6];
-   data[0] = 5;
-   data[1] = msg;
-   data[2] = (message_type)in;
-   data[3] = (message_type)out;
-   data[4] = (message_type)side; // neighbor type
-   data[5] = (message_type)timestamps[in]; // timestamp
-
-   assert(timestamps[in] < nexttimestamps[in]);
-
-   write_to_socket(sock, data);
+   nexttimestamps[no] = max(nexttimestamps[no], timestamps[no] + 1);
 }
 
 static void
 write_add_neighbor(int sock, int in, int out, int side)
 {
-   write_neighbor(sock, in, out, side, ADD_NEIGHBOR);
+   activate_node(in);
+
+   message_type data[6];
+   data[0] = 5;
+   data[1] = ADD_NEIGHBOR;
+   data[2] = (message_type)timestamps[in]; // timestamp
+   data[3] = (message_type)in;
+   data[4] = (message_type)out;
+   data[5] = (message_type)side; // neighbor type
+
+   write_to_socket(sock, data);
 }
 
 static void
-write_remove_neighbor(int sock, int in, int out, int side)
+write_remove_neighbor(int sock, int in, int side)
 {
-   write_neighbor(sock, in, out, side, REMOVE_NEIGHBOR);
+   activate_node(in);
+
+   message_type data[5];
+   data[0] = 4;
+   data[1] = REMOVE_NEIGHBOR;
+   data[2] = (message_type)timestamps[in]; // timestamp
+   data[3] = (message_type)in;
+   data[4] = (message_type)side; // neighbor type
+
+   write_to_socket(sock, data);
+}
+
+static void
+write_add_vacant(int sock, int no, int side)
+{
+   activate_node(no);
+
+   message_type data[5];
+   data[0] = 4;
+   data[1] = ADD_VACANT;
+   data[2] = (message_type)timestamps[no];
+   data[3] = (message_type)no;
+   data[4] = (message_type)side;
+
+   write_to_socket(sock, data);
+}
+
+static void
+write_remove_vacant(int sock, int no, int side)
+{
+   activate_node(no);
+
+   message_type data[5];
+   data[0] = 4;
+   data[1] = REMOVE_VACANT;
+   data[2] = (message_type)timestamps[no];
+   data[3] = (message_type)no;
+   data[4] = (message_type)side;
+
+   write_to_socket(sock, data);
+}
+
+static void
+write_neighbor_count(int sock, int no, int count, message_type msg)
+{
+   activate_node(no);
+
+   message_type data[6];
+   data[0] = 5;
+   data[1] = msg;
+   data[2] = (message_type)timestamps[no]; // timestamp
+   data[3] = (message_type)no;
+   data[4] = (message_type)count;
+
+   write_to_socket(sock, data);
+}
+
+static void
+write_add_neighbor_count(int sock, int no, int count)
+{
+   write_neighbor_count(sock, no, count, ADD_NEIGHBOR_COUNT);
+}
+
+static void
+write_remove_neighbor_count(int sock, int no, int count)
+{
+   write_neighbor_count(sock, no, count, REMOVE_NEIGHBOR_COUNT);
 }
 
 static void
 write_tap(int sock, int node)
 {
-   if(!active_nodes[node]) {
-      active_nodes[node] = true;
-      pqueue.push_back(node);
-   }
-   nexttimestamps[node] = max(nexttimestamps[node], timestamps[node] + 1);
+   activate_node(node);
 
    message_type data[4];
    data[0] = 3;
    data[1] = TAP;
-   data[2] = (message_type)node;
-   data[3] = (message_type)timestamps[node]; // timestamp
+   data[2] = (message_type)timestamps[node]; // timestamp
+   data[3] = (message_type)node;
 
-   assert(timestamps[node] < nexttimestamps[node]);
+   write_to_socket(sock, data);
+}
+
+static void
+write_accel(int sock, int node, int f)
+{
+   activate_node(node);
+
+   message_type data[5];
+   data[0] = 4;
+   data[1] = ACCEL;
+   data[2] = (message_type)timestamps[node];
+   data[3] = (message_type)node;
+   data[4] = (message_type)f;
+
+   write_to_socket(sock, data);
+}
+
+static void
+write_shake(int sock, int node, int x, int y, int z)
+{
+   activate_node(node);
+
+   message_type data[7];
+   data[0] = 6;
+   data[1] = SHAKE;
+   data[2] = (message_type)timestamps[node];
+   data[3] = (message_type)node;
+   data[4] = (message_type)x;
+   data[5] = (message_type)y;
+   data[6] = (message_type)z;
 
    write_to_socket(sock, data);
 }
@@ -324,7 +449,7 @@ main(int argc, char **argv)
              write_add_neighbor(connfd, 0, 1, 5);
           } else if(x == 1) {
              x = 2;
-             write_remove_neighbor(connfd, 0, 1, 5);
+             write_remove_neighbor(connfd, 0, 5);
           } else if(x == 5) {
              write_tap(connfd, 1);
              x++;
@@ -338,25 +463,70 @@ main(int argc, char **argv)
     }
 #else
     write_use_threads(connfd);
-    write_create_n_nodes(connfd, 3);
+    write_create_n_nodes(connfd, 6);
     // this loops adds and removes a neighbor fact and then adds a tap
     while(true) {
-       sleep(1);
+       usleep(1000);
        if(is_data_available(connfd)) {
          force_read(connfd);
        }
        x++;
        if(x == 1) {
+          write_accel(connfd, 0, 2);
+          write_shake(connfd, 0, 1, 2, 3);
           write_add_neighbor(connfd, 0, 1, 5);
        }
        if(x == 2) {
-          write_remove_neighbor(connfd, 0, 1, 5);
+          // remove previous neighbor
+          write_remove_neighbor(connfd, 0, 5);
+
+          write_add_neighbor(connfd, 0, 1, 2);
+          write_add_neighbor_count(connfd, 0, 1);
+          write_add_neighbor(connfd, 1, 0, 3);
+          write_add_neighbor_count(connfd, 1, 4);
+          write_add_neighbor(connfd, 1, 2, 0);
+          write_add_neighbor(connfd, 2, 1, 5);
+          write_add_neighbor_count(connfd, 2, 1);
+          write_add_neighbor(connfd, 1, 4, 2);
+          write_add_neighbor(connfd, 4, 1, 3);
+          write_add_neighbor_count(connfd, 4, 1);
+          write_add_neighbor(connfd, 1, 3, 5);
+          write_add_neighbor(connfd, 3, 1, 0);
+          write_add_neighbor_count(connfd, 3, 2);
+          write_add_neighbor(connfd, 3, 5, 5);
+          write_add_neighbor(connfd, 5, 3, 0);
+          write_add_neighbor_count(connfd, 5, 1);
+
+          // all north/south vacants
+          for(size_t i(0); i <= 5; ++i) {
+             write_add_vacant(connfd, i, 1);
+             write_add_vacant(connfd, i, 4);
+          }
+
+          int no_bottom[3] = {0, 2, 4};
+          for(size_t i(0); i < 3; ++i)
+             write_add_vacant(connfd, no_bottom[i], 0);
+          int no_top[3] = {0, 4, 5};
+          for(size_t i(0); i < 3; ++i)
+             write_add_vacant(connfd, no_top[i], 5);
+          int no_east[4] = {2, 4, 3, 5};
+          for(size_t i(0); i < 4; ++i)
+             write_add_vacant(connfd, no_east[i], 2);
+          int no_west[4] = {0, 2, 3, 5};
+          for(size_t i(0); i < 4; ++i)
+             write_add_vacant(connfd, no_west[i], 3);
        }
        if(x == 3) {
           write_tap(connfd, 1);
        }
        if(x == 5) {
           write_stop(connfd);
+          cout << "Wrote stop" << endl;
+          usleep(200);
+          while(is_data_available(connfd))
+             force_read(connfd);
+          close(connfd);
+          close(listenfd);
           exit(EXIT_SUCCESS);
        }
     }

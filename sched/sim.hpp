@@ -19,22 +19,35 @@ protected:
 	
 	typedef uint64_t message_type;
 	static const size_t MAXLENGTH = 512 / sizeof(sim_sched::message_type);
+
+   typedef struct {
+      process::work work;
+      size_t timestamp;
+      sim_node *src;
+   } work_info;
 	
 	sim_node *current_node;
 	boost::asio::ip::tcp::socket *socket;
-	std::list<process::work> tmp_work;
+	std::list<work_info> tmp_work;
 	static vm::predicate *neighbor_pred;
 	static vm::predicate *tap_pred;
+	static vm::predicate *neighbor_count_pred;
+	static vm::predicate *accel_pred;
+	static vm::predicate *shake_pred;
+	static vm::predicate *vacant_pred;
 	static bool thread_mode;
 	static bool stop_all;
 	static queue::push_safe_linear_queue<message_type*> socket_messages;
 	bool slave;
 	
 private:
-   
+
    virtual void assert_end(void) const;
    virtual void assert_end_iteration(void) const;
    virtual void generate_aggs(void);
+   void send_pending_messages(void);
+   void schedule_new_message(message_type *);
+   void add_received_tuple(sim_node *, size_t, db::simple_tuple*);
    
 public:
 	

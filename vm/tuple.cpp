@@ -273,7 +273,7 @@ tuple::pack(byte *buf, const size_t buf_size, int *pos) const
    const predicate_id id(get_predicate_id());
    
    assert(*pos <= (int)buf_size);
-   utils::pack<char>((void*)&id, 1, buf, buf_size, pos);
+   utils::pack<predicate_id>((void*)&id, 1, buf, buf_size, pos);
    assert(*pos <= (int)buf_size);
    
    for(field_num i(0); i < num_fields(); ++i) {
@@ -352,7 +352,7 @@ tuple::unpack(byte *buf, const size_t buf_size, int *pos, vm::program *prog)
 {
    predicate_id pred_id;
    
-   utils::unpack<byte>(buf, buf_size, pos, &pred_id, 1);
+   utils::unpack<predicate_id>(buf, buf_size, pos, &pred_id, 1);
    
    tuple *ret(new tuple(prog->get_predicate(pred_id)));
    

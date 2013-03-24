@@ -16,7 +16,7 @@ void pack(void *data, const size_t size, byte *buf, const size_t buf_size, int* 
    assert(*pos + sizeof(T) * size <= buf_size);
 
    memcpy(buf + *pos, data, sizeof(T) * size);
-   *pos = *pos + sizeof(T);
+   *pos = *pos + sizeof(T) * size;
 }
 
 template <typename T>
@@ -25,6 +25,7 @@ void unpack(byte *buf, const size_t buf_size, int *pos, void *data, const size_t
    assert(*pos + sizeof(T) * size <= buf_size);
 
    memcpy(data, buf + *pos, sizeof(T) * size);
+   *pos = *pos + sizeof(T) * size;
 }
 
 }
