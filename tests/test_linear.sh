@@ -13,6 +13,6 @@ run_test linear-keep1
 run_test linear-keep2
 run_test linear-ref-use
 run_test linear-repeat
+run_test dfs
 run_test mfp
 run_test mwst
-run_test dfs
