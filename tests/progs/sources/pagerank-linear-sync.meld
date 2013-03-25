@@ -1,0 +1,48 @@
+
+type route input(node, node).
+type route output(node, node).
+type linear pagerank(node, float, int).
+type numLinks(node, int).
+type numInput(node, int).
+type linear accumulator(node, float, int, int).
+type linear newrank(node, node, float, int).
+type linear start(node).
+type linear gen-acc(node).
+
+const damping = 0.85.
+const iterations = 10. //str2int(@arg1).
+const pages = @world.
+
+start(A).
+
+start(A) -o [count => C | B | !output(A, B) | !numLinks(A, C)],
+            [count => C | B | !input(A, B) | !numInput(A, C)],
+            gen-acc(A),
+            pagerank(A, 1.0 / float(pages), 0).
+
+gen-acc(A),
+!numInput(A, T)
+   -o accumulator(A, 0.0, T, 1).
+
+pagerank(A, V, Id),
+!numLinks(A, C),
+Id < iterations,
+Result = V / float(C)
+	-o {B | !output(A, B) | newrank(B, A, Result, Id + 1)}.
+
+accumulator(A, Acc, 0, Id),
+!numInput(A, T),
+V = damping + (1.0 - damping) * Acc,
+Id <= iterations
+	-o pagerank(A, V, Id),
+		accumulator(A, 0.0, T, Id + 1).
+
+//newrank(A, B, V, Id), accumulator(A, Acc, T, Id), T > 0
+//   -o [sum => S, count => C | D | newrank(A, D, S, Id) | accumulator(A, Acc + V + S, T - 1 - C)].
+
+newrank(A, B, V, Id),
+accumulator(A, Acc, T, Id),
+T > 0	-o accumulator(A, Acc + V, T - 1, Id).
+
+accumulator(A, _, _, Id), Id = (iterations + 1) -o 1.
+
