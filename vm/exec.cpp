@@ -1036,13 +1036,15 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 			switch(p.first) {
 				case ITER_DB: {
 					tuple_trie_leaf *tuple_leaf((tuple_trie_leaf*)p.second);
-			      tuple *match_tuple(tuple_leaf->get_underlying_tuple());
 
 			      if(this_is_linear) {
-			         if(!state.linear_tuple_can_be_used(match_tuple, tuple_leaf->get_count()))
+			         if(!state.linear_tuple_can_be_used(tuple_leaf))
 			            continue;
-			         state.using_new_linear_tuple(match_tuple);
+			         state.using_new_linear_tuple(tuple_leaf);
 			      }
+
+			      tuple *match_tuple(tuple_leaf->get_underlying_tuple());
+               assert(match_tuple != NULL);
 
 					PUSH_CURRENT_STATE(match_tuple, tuple_leaf, NULL);
 
@@ -1050,8 +1052,8 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 
 					POP_STATE();
 
-			      if(this_is_linear)
-			         state.no_longer_using_linear_tuple(match_tuple);
+			      if(ret != RETURN_LINEAR && ret != RETURN_DERIVED && this_is_linear)
+			         state.no_longer_using_linear_tuple(tuple_leaf); // not used during derivation
 				}
 				break;
 				case ITER_QUEUE: {
@@ -1130,13 +1132,16 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
       ++it)
    {
       tuple_trie_leaf *tuple_leaf(*it);
-      tuple *match_tuple(tuple_leaf->get_underlying_tuple());
-      
+
       if(this_is_linear) {
-         if(!state.linear_tuple_can_be_used(match_tuple, tuple_leaf->get_count()))
+         if(!state.linear_tuple_can_be_used(tuple_leaf))
             continue;
-         state.using_new_linear_tuple(match_tuple);
+         state.using_new_linear_tuple(tuple_leaf);
       }
+
+      // we get the tuple later since the previous leaf may have been deleted
+      tuple *match_tuple(tuple_leaf->get_underlying_tuple());
+      assert(match_tuple != NULL);
     
 #if defined(TRIE_MATCHING_ASSERT) && defined(TRIE_MATCHING)
       assert(do_matches(pc, match_tuple, state));
@@ -1159,13 +1164,17 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 
 		POP_STATE();
       
-      if(this_is_linear)
-         state.no_longer_using_linear_tuple(match_tuple);
-      
-      if(ret == RETURN_LINEAR)
+      if(ret == RETURN_LINEAR) {
          return ret;
-      if(ret == RETURN_DERIVED && state.is_linear)
+      }
+
+      if(ret == RETURN_DERIVED && state.is_linear) {
          return RETURN_DERIVED;
+      }
+
+      if(ret != RETURN_LINEAR && ret != RETURN_DERIVED && this_is_linear) {
+         state.no_longer_using_linear_tuple(tuple_leaf); // not consumed
+      }
    }
 
 	// tuples from current queue
@@ -1202,8 +1211,6 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 			if(!(ret == RETURN_LINEAR || ret == RETURN_DERIVED)) { // tuple not consumed
 				if(this_is_linear) {
 					stpl->will_not_delete(); // oops, revert
-            } else {
-               cout << "\tConsumed " << match_tuple << endl;
             }
 			}
 		
@@ -1249,15 +1256,15 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 			if(!(ret == RETURN_LINEAR || ret == RETURN_DERIVED)) { // tuple not consumed
 				if(this_is_linear) {
 					stpl->will_not_delete(); // oops, revert
-            } else {
-               cout << "\tConsumed " << match_tuple << endl;
             }
 			}
 		
-			if(ret == RETURN_LINEAR)
+			if(ret == RETURN_LINEAR) { 
 				return ret;
-			if(state.is_linear && ret == RETURN_DERIVED)
+         }
+			if(state.is_linear && ret == RETURN_DERIVED) {
 				return ret;
+         }
 		}
 	}
    

@@ -38,7 +38,7 @@ private:
    std::list<runtime::node_list*, mem::allocator<runtime::node_list*> > free_node_list;
 	std::list<runtime::rstring::ptr, mem::allocator<runtime::rstring::ptr> > free_rstring;
    
-   typedef std::pair<vm::tuple *, vm::ref_count> pair_linear;
+   typedef std::pair<db::tuple_trie_leaf *, vm::ref_count> pair_linear;
    typedef std::list<pair_linear> list_linear;
 
 	/* execution data for when using rules */
@@ -186,9 +186,9 @@ public:
 	void run_node(db::node *);
    void setup(vm::tuple*, db::node*, const ref_count);
    void cleanup(void);
-   bool linear_tuple_can_be_used(vm::tuple *, const vm::ref_count) const;
-   void using_new_linear_tuple(vm::tuple *);
-   void no_longer_using_linear_tuple(vm::tuple *);
+   bool linear_tuple_can_be_used(db::tuple_trie_leaf *) const;
+   void using_new_linear_tuple(db::tuple_trie_leaf *);
+   void no_longer_using_linear_tuple(db::tuple_trie_leaf *);
    void unmark_generated_tuples(void);
 
    explicit state(sched::base *, vm::all *);

@@ -22,23 +22,25 @@ bool state::SIM = false;
 #endif
 
 bool
-state::linear_tuple_can_be_used(vm::tuple *tpl, const vm::ref_count max) const
+state::linear_tuple_can_be_used(db::tuple_trie_leaf *leaf) const
 {
+   assert(leaf != NULL);
+
    for(list_linear::const_iterator it(used_linear_tuples.begin()), end(used_linear_tuples.end());
       it != end;
       it++)
    {
       const pair_linear& p(*it);
       
-      if(p.first == tpl)
-         return p.second < max;
+      if(p.first == leaf)
+         return p.second > 0;
    }
    
    return true; // not found, first time
 }
 
 void
-state::using_new_linear_tuple(vm::tuple *tpl)
+state::using_new_linear_tuple(db::tuple_trie_leaf *leaf)
 {
    for(list_linear::iterator it(used_linear_tuples.begin()), end(used_linear_tuples.end());
       it != end;
@@ -46,18 +48,19 @@ state::using_new_linear_tuple(vm::tuple *tpl)
    {
       pair_linear& p(*it);
       
-      if(p.first == tpl) {
-         p.second++;
+      if(p.first == leaf) {
+         assert(p.second > 0);
+         p.second--;
          return;
       }
    }
    
-   // new
-   used_linear_tuples.push_front(pair_linear(tpl, 1));
+   // first time, get the count
+   used_linear_tuples.push_front(pair_linear(leaf, leaf->get_count() - 1));
 }
 
 void
-state::no_longer_using_linear_tuple(vm::tuple *tpl)
+state::no_longer_using_linear_tuple(db::tuple_trie_leaf *leaf)
 {
    for(list_linear::iterator it(used_linear_tuples.begin()), end(used_linear_tuples.end());
       it != end;
@@ -65,10 +68,8 @@ state::no_longer_using_linear_tuple(vm::tuple *tpl)
    {
       pair_linear &p(*it);
       
-      if(p.first == tpl) {
-         p.second--;
-         if(p.second == 0)
-            used_linear_tuples.erase(it);
+      if(p.first == leaf) {
+         p.second++; // a free count
          return;
       }
    }
@@ -118,7 +119,7 @@ void
 state::cleanup(void)
 {
    purge_runtime_objects();
-   assert(used_linear_tuples.empty());
+   used_linear_tuples.clear();
 }
 
 void
