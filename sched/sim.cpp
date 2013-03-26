@@ -278,11 +278,12 @@ sim_sched::get_work(void)
 					message_type ts(reply[2]);
                message_type node(reply[3]);
 					message_type n(reply[4]);
+               message_type start_id(reply[5]);
                (void)node; // we dont care about it
                cout << "Create " << n << " nodes" << endl;
 					
 					for(message_type i(0); i != n; ++i) {
-						db::node *no(state.all->DATABASE->create_node());
+						db::node *no(state.all->DATABASE->create_node_id(start_id + i));
 						init_node(no);
 						if(thread_mode) {
 							sim_sched *th(new sim_sched(state.all, state.all->NUM_THREADS, (sim_node*)no));
@@ -524,6 +525,7 @@ sim_sched::get_work(void)
 			case STOP: {
 				//cout << "STOP" << endl;
 				stop_all = true;
+            sleep(1);
             send_pending_messages();
             usleep(200);
 				return NULL;

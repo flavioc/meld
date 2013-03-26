@@ -78,12 +78,13 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, const bool f
             case 1: r = 255; g = 160; break; // ORANGE
             case 2: r = 255; g = 247; break; // YELLOW
             case 3: g = 255; break; // GREEN
-            case 4: g = 191; b = 255; // AQUA
+            case 4: g = 191; b = 255; break; // AQUA
             case 5: b = 255; break; // BLUE
             case 6: r = 255; g = 255; b = 255; break; // WHITE
             case 7: r = 139; b = 204; break; // PURPLE
             case 8: r = 255; g = 192; b = 203; break; // PINK
-            default: assert(false); break;
+            case -1: return; break;
+            default: cout << "Invalid color " << tpl->get_int(0) << endl; assert(false); break;
          }
 			((sim_sched*)sched)->set_color(node, r, g, b);
       }

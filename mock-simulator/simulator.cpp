@@ -89,13 +89,14 @@ write_to_socket(int sock, message_type *data)
 static inline void
 write_create_n_nodes(int sock, const int n)
 {
-   message_type data[5];
+   message_type data[6];
    int timestamp = 0;
-   data[0] = 4;
+   data[0] = 5;
    data[1] = CREATE_N_NODES;
    data[2] = (message_type)timestamp; // timestamp
    data[3] = (message_type)-1;
    data[4] = (message_type)n;
+   data[5] = 0;
 
    cout << "Create " << n << " nodes" << endl;
    write_to_socket(sock, data);
@@ -466,7 +467,7 @@ main(int argc, char **argv)
     write_create_n_nodes(connfd, 6);
     // this loops adds and removes a neighbor fact and then adds a tap
     while(true) {
-       usleep(1000);
+       sleep(1);
        if(is_data_available(connfd)) {
          force_read(connfd);
        }
@@ -522,7 +523,7 @@ main(int argc, char **argv)
        if(x == 5) {
           write_stop(connfd);
           cout << "Wrote stop" << endl;
-          usleep(200);
+          sleep(1);
           while(is_data_available(connfd))
              force_read(connfd);
           close(connfd);

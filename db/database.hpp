@@ -66,6 +66,7 @@ public:
    
    node* find_node(const node::node_id) const;
    node* create_node(void);
+   node* create_node_id(const node::node_id);
    
    void print_db(std::ostream&) const;
    void dump_db(std::ostream&) const;

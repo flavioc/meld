@@ -86,6 +86,26 @@ database::find_node(const node::node_id id) const
 }
 
 node*
+database::create_node_id(const db::node::node_id id)
+{
+   utils::spinlock::scoped_lock l(mtx);
+   if(max_node_id > 0) {
+      assert(max_node_id < id);
+      assert(max_translated_id < id);
+   }
+
+   max_node_id = id;
+   max_translated_id = id;
+
+   node *ret(create_fn(max_node_id, max_translated_id, all));
+   
+   translation[max_node_id] = max_translated_id;
+   nodes[max_node_id] = ret;
+
+   return ret;
+}
+
+node*
 database::create_node(void)
 {
    utils::spinlock::scoped_lock l(mtx);
