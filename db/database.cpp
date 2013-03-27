@@ -79,8 +79,11 @@ node*
 database::find_node(const node::node_id id) const
 {
    map_nodes::const_iterator it(nodes.find(id));
-   
-   assert(it != nodes.end());
+
+   if(it == nodes.end()) {
+      cerr << "Could not find node with id " << id << endl;
+      abort();
+   }
    
    return it->second;
 }

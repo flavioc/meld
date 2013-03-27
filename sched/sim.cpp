@@ -401,14 +401,16 @@ sim_sched::get_work(void)
                no_in->neighbor_count++;
                cout << in << " neighbor count went up to " << no_in->neighbor_count << endl;
                add_neighbor_count(ts, no_in, no_in->neighbor_count, 1);
+               *face = out;
+               add_neighbor(ts, no_in, side, out, 1);
             } else {
-               // remove old node
-               add_neighbor(ts, no_in, *face, side, -1);
+               if(*face != out) {
+                  // remove old node
+                  add_neighbor(ts, no_in, *face, side, -1);
+                  *face = out;
+                  add_neighbor(ts, no_in, side, out, 1);
+               }
             }
-
-            *face = out;
-
-            add_neighbor(ts, no_in, side, out, 1);
 			}
 			break;
          case REMOVE_NEIGHBOR: {

@@ -272,6 +272,7 @@ state::do_persistent_tuples(void)
       db::simple_tuple *stpl(generated_persistent_tuples.front());
       vm::tuple *tpl(stpl->get_tuple());
 
+      cout << "Processing " << *stpl << " " << stpl->get_count() << endl;
       generated_persistent_tuples.pop_front();
 
       if(!tpl->is_aggregate() || (tpl->is_aggregate() && stpl->get_generated_run())) {
