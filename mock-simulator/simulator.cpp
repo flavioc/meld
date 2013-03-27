@@ -288,6 +288,7 @@ write_remove_neighbor(int sock, int in, int side)
 static void
 write_add_vacant(int sock, int no, int side)
 {
+   return;
    activate_node(no);
 
    message_type data[5];
@@ -303,6 +304,7 @@ write_add_vacant(int sock, int no, int side)
 static void
 write_remove_vacant(int sock, int no, int side)
 {
+   return;
    activate_node(no);
 
    message_type data[5];
@@ -318,6 +320,7 @@ write_remove_vacant(int sock, int no, int side)
 static void
 write_neighbor_count(int sock, int no, int count, message_type msg)
 {
+   return;
    activate_node(no);
 
    message_type data[6];

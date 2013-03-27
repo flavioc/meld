@@ -179,6 +179,49 @@ sim_sched::add_received_tuple(sim_node *no, size_t ts, db::simple_tuple *stpl)
    }
 }
 
+void
+sim_sched::add_neighbor(const size_t ts, sim_node *no, const node_val out, const int side, const int count)
+{
+   if(!neighbor_pred)
+      return;
+
+   vm::tuple *tpl(new vm::tuple(neighbor_pred));
+   tpl->set_node(0, out);
+   tpl->set_int(1, side);
+				
+   db::simple_tuple *stpl(new db::simple_tuple(tpl, count));
+				
+   add_received_tuple(no, ts, stpl);
+}
+
+void
+sim_sched::add_neighbor_count(const size_t ts, sim_node *no, const size_t total, const int count)
+{
+   if(!neighbor_count_pred)
+      return;
+
+   vm::tuple *tpl(new vm::tuple(neighbor_count_pred));
+   tpl->set_int(0, (int_val)total);
+
+   db::simple_tuple *stpl(new db::simple_tuple(tpl, count));
+
+   add_received_tuple(no, ts, stpl);
+}
+
+void
+sim_sched::add_vacant(const size_t ts, sim_node *no, const int side, const int count)
+{
+   if(!vacant_pred)
+      return;
+
+   vm::tuple *tpl(new vm::tuple(vacant_pred));
+   tpl->set_int(0, side);
+
+   db::simple_tuple *stpl(new db::simple_tuple(tpl, count));
+
+   add_received_tuple(no, ts, stpl);
+}
+
 node*
 sim_sched::get_work(void)
 {
@@ -254,6 +297,7 @@ sim_sched::get_work(void)
 	}
 	
 	while(true) {
+      // ADD_VACANT, REMOVE_VACANT and ADD_NEIGHBOR_COUNT, REMOVE_NEIGHBOR_COUNT go away
 		
 		if(!socket->available()) {
          send_pending_messages();
@@ -290,6 +334,10 @@ sim_sched::get_work(void)
 							no->set_owner(th);
 							state.all->MACHINE->init_thread(th);
 						}
+                  for(int side = 0; side <= 5; ++side) {
+                     add_vacant(ts, (sim_node *)no, side, 1);
+                  }
+                  add_neighbor_count(ts, (sim_node *)no, 0, 1);
 					}
 				}
 				break;
@@ -322,7 +370,7 @@ sim_sched::get_work(void)
             if(face == (message_type)-1) {
                target = origin;
             } else {
-               target = dynamic_cast<sim_node*>(state.all->DATABASE->find_node((db::node::node_id)(origin->get_node_at_face(face))));
+               target = dynamic_cast<sim_node*>(state.all->DATABASE->find_node((db::node::node_id)*(origin->get_node_at_face(face))));
             }
 
             int pos(5 * sizeof(message_type));
@@ -344,20 +392,26 @@ sim_sched::get_work(void)
             cout << ts << " neighbor(" << in << ", " << out << ", " << side << ")" << endl;
 				
 				sim_node *no_in(dynamic_cast<sim_node*>(state.all->DATABASE->find_node(in)));
-            no_in->faces[side] = out;
+            node_val *face(no_in->get_node_at_face(side));
 
-            if(neighbor_pred) {
-               vm::tuple *tpl(new vm::tuple(neighbor_pred));
-               tpl->set_node(0, out);
-               tpl->set_int(1, side);
-				
-               db::simple_tuple *stpl(new db::simple_tuple(tpl, 1));
-				
-               add_received_tuple(no_in, ts, stpl);
+            if(*face == -1) {
+               // remove vacant first, add 1 to neighbor count
+               add_vacant(ts, no_in, side, -1);
+               add_neighbor_count(ts, no_in, no_in->neighbor_count, -1);
+               no_in->neighbor_count++;
+               cout << in << " neighbor count went up to " << no_in->neighbor_count << endl;
+               add_neighbor_count(ts, no_in, no_in->neighbor_count, 1);
+            } else {
+               // remove old node
+               add_neighbor(ts, no_in, *face, side, -1);
             }
+
+            *face = out;
+
+            add_neighbor(ts, no_in, side, out, 1);
 			}
 			break;
-			case REMOVE_NEIGHBOR: {
+         case REMOVE_NEIGHBOR: {
 				message_type ts(reply[2]);
 				message_type in(reply[3]);
 				int side((int)reply[4]);
@@ -365,67 +419,24 @@ sim_sched::get_work(void)
             cout << ts << " remove neighbor(" << in << ", " << side << ")" << endl;
 				
 				sim_node *no_in(dynamic_cast<sim_node*>(state.all->DATABASE->find_node(in)));
+            node_val *face(no_in->get_node_at_face(side));
 
-            map<int, node_val>::iterator it(no_in->faces.find(side));
-
-            assert(it != no_in->faces.end());
-            node_val out(it->second);
-
-            no_in->faces.erase(it);
-				
-            if(neighbor_pred) {
-               vm::tuple *tpl(new vm::tuple(neighbor_pred));
-               tpl->set_node(0, out);
-               tpl->set_int(1, side);
-               
-               db::simple_tuple *stpl(new db::simple_tuple(tpl, -1));
-               
-               add_received_tuple(no_in, ts, stpl);
+            if(*face == -1) {
+               // remove vacant first, add 1 to neighbor count
+               cerr << "Current face is vacant, cannot remove node!" << endl;
+               assert(false);
+            } else {
+               // remove old node
+               add_neighbor_count(ts, no_in, no_in->neighbor_count, -1);
+               no_in->neighbor_count--;
+               add_neighbor_count(ts, no_in, no_in->neighbor_count, 1);
             }
-			}
-			break;
-         case ADD_VACANT: {
-            message_type ts(reply[2]);
-            message_type node(reply[3]);
-            int side((int)reply[4]);
 
-            cout << ts << " vacant(" << node << ", " << side << ")" << endl;
+            add_neighbor(ts, no_in, side, *face, -1);
 
-				sim_node *no_in(dynamic_cast<sim_node*>(state.all->DATABASE->find_node(node)));
-
-            assert(no_in->faces.find(side) == no_in->faces.end());
-
-            if(vacant_pred) {
-               vm::tuple *tpl(new vm::tuple(vacant_pred));
-               tpl->set_int(0, side);
-
-               db::simple_tuple *stpl(new db::simple_tuple(tpl, 1));
-
-               add_received_tuple(no_in, ts, stpl);
-            }
-         }
-         break;
-         case REMOVE_VACANT: {
-            message_type ts(reply[2]);
-            message_type node(reply[3]);
-            int side((int)reply[4]);
-
-            cout << ts << " remove vacant(" << node << ", " << side << ")" << endl;
-
-				sim_node *no_in(dynamic_cast<sim_node*>(state.all->DATABASE->find_node(node)));
-
-            assert(no_in->faces.find(side) == no_in->faces.end());
-
-            if(vacant_pred) {
-               vm::tuple *tpl(new vm::tuple(vacant_pred));
-               tpl->set_int(0, side);
-
-               db::simple_tuple *stpl(new db::simple_tuple(tpl, -1));
-
-               add_received_tuple(no_in, ts, stpl);
-            }
-         }
-         break;
+            *face = -1; // now vacant
+          }
+          break;
 			case TAP: {
 				message_type ts(reply[2]);
 				message_type node(reply[3]);
@@ -442,44 +453,6 @@ sim_sched::get_work(void)
             }
 			}
 			break;
-         case ADD_NEIGHBOR_COUNT: {
-				message_type ts(reply[2]);
-            message_type node(reply[3]);
-            message_type count(reply[4]);
-
-            cout << ts << " neighborCount(" << node << ", " << count << endl;
-
-            sim_node *no(dynamic_cast<sim_node*>(state.all->DATABASE->find_node(node)));
-
-            if(neighbor_count_pred) {
-               vm::tuple *tpl(new vm::tuple(neighbor_count_pred));
-               tpl->set_int(0, (int_val)count);
-
-               db::simple_tuple *stpl(new db::simple_tuple(tpl, 1));
-
-               add_received_tuple(no, ts, stpl);
-            }
-         }
-         break;
-         case REMOVE_NEIGHBOR_COUNT: {
-				message_type ts(reply[2]);
-            message_type node(reply[3]);
-            message_type count(reply[4]);
-
-            cout << ts << " remove neighborCount(" << node << ", " << count << ")" << endl;
-
-            sim_node *no(dynamic_cast<sim_node*>(state.all->DATABASE->find_node(node)));
-
-            if(neighbor_count_pred) {
-               vm::tuple *tpl(new vm::tuple(neighbor_count_pred));
-               tpl->set_int(0, (int_val)count);
-
-               db::simple_tuple *stpl(new db::simple_tuple(tpl, -1));
-
-               add_received_tuple(no, ts, stpl);
-            }
-         }
-         break;
          case ACCEL: {
             message_type ts(reply[2]);
             message_type node(reply[3]);

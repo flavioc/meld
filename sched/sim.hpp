@@ -48,6 +48,9 @@ private:
    void send_pending_messages(void);
    void schedule_new_message(message_type *);
    void add_received_tuple(sim_node *, size_t, db::simple_tuple*);
+   void add_vacant(const size_t, sim_node *, const int, const int);
+   void add_neighbor(const size_t, sim_node *, const vm::node_val, const int, const int);
+   void add_neighbor_count(const size_t, sim_node *, const size_t, const int);
    
 public:
 	
