@@ -326,8 +326,9 @@ sim_sched::get_work(void)
 					message_type n(reply[4]);
                message_type start_id(reply[5]);
                (void)node; // we dont care about it
-               cout << "Create " << n << " nodes from:" << start_id << endl;
-					
+#ifdef DEBUG
+               cout << "Create " << n << " nodes from " << start_id << endl;
+#endif
 					for(message_type i(0); i != n; ++i) {
 						db::node *no(state.all->DATABASE->create_node_id(start_id + i));
 						init_node(no);
@@ -599,6 +600,8 @@ sim_sched::gather_next_tuples(db::node *node, simple_tuple_list& ls)
 	heap_priority pr;
 	
 	// we want to get all the tuples until no->timestamp
+
+	no->pending.pop_list(ls);
 	
 	while(!no->tuple_pqueue.empty()) {
 		pr = no->tuple_pqueue.min_value();
@@ -609,8 +612,6 @@ sim_sched::gather_next_tuples(db::node *node, simple_tuple_list& ls)
 		db::simple_tuple *stpl(no->tuple_pqueue.pop());
 		ls.push_back(stpl);
 	}
-	
-	no->pending.pop_list(ls);
 }
 
 }
