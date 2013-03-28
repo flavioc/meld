@@ -56,61 +56,71 @@ CXXFLAGS = $(CFLAGS)
 LDFLAGS = $(PROFILING) $(LIBRARY_DIRS) $(LIBRARIES)
 COMPILE = $(CXX) $(CXXFLAGS) $(OBJS)
 
-OBJS = utils/utils.o \
-		 	utils/types.o \
-			utils/fs.o \
-			 vm/program.o \
-			 vm/predicate.o \
-			 vm/types.o \
-			 vm/instr.o \
-			 vm/state.o \
-			 vm/tuple.o \
-			 vm/exec.o \
-			 vm/external.o \
-			 vm/rule.o \
-			 vm/rule_matcher.o \
-			 db/node.o \
-			 db/tuple.o \
-			 db/agg_configuration.o \
-			 db/tuple_aggregate.o \
-			 db/neighbor_tuple_aggregate.o \
-			 db/database.o \
-			 db/trie.o \
-			 db/neighbor_agg_configuration.o \
-			 process/machine.o \
-			 process/remote.o \
-			 process/router.o \
-			 mem/thread.o \
-			 mem/center.o \
-			 mem/stat.o \
-			 sched/base.o \
-			 sched/common.o \
-			 sched/mpi/message.o \
-			 sched/mpi/message_buffer.o \
-			 sched/mpi/request.o \
-			 sched/serial.o \
-			 sched/serial_ui.o \
-			 thread/static.o \
-			 thread/prio.o \
-			 sched/thread/threaded.o \
-			 sched/thread/assert.o \
-			 sched/mpi/tokenizer.o \
-			 sched/mpi/handler.o \
-			 external/math.o \
-			 external/lists.o \
-			 external/utils.o \
-			 external/strings.o \
-			 external/others.o \
-			 external/core.o \
-			 stat/stat.o \
-			 stat/slice.o \
-			 stat/slice_set.o \
-			 ui/manager.o \
-			 ui/client.o \
-			 interface.o \
-			 sched/sim.o
+SRCS = utils/utils.cpp \
+		 	utils/types.cpp \
+			utils/fs.cpp \
+			 vm/program.cpp \
+			 vm/predicate.cpp \
+			 vm/types.cpp \
+			 vm/instr.cpp \
+			 vm/state.cpp \
+			 vm/tuple.cpp \
+			 vm/exec.cpp \
+			 vm/external.cpp \
+			 vm/rule.cpp \
+			 vm/rule_matcher.cpp \
+			 db/node.cpp \
+			 db/tuple.cpp \
+			 db/agg_configuration.cpp \
+			 db/tuple_aggregate.cpp \
+			 db/neighbor_tuple_aggregate.cpp \
+			 db/database.cpp \
+			 db/trie.cpp \
+			 db/neighbor_agg_configuration.cpp \
+			 process/machine.cpp \
+			 process/remote.cpp \
+			 process/router.cpp \
+			 mem/thread.cpp \
+			 mem/center.cpp \
+			 mem/stat.cpp \
+			 sched/base.cpp \
+			 sched/common.cpp \
+			 sched/mpi/message.cpp \
+			 sched/mpi/message_buffer.cpp \
+			 sched/mpi/request.cpp \
+			 sched/serial.cpp \
+			 sched/serial_ui.cpp \
+			 thread/static.cpp \
+			 thread/prio.cpp \
+			 sched/thread/threaded.cpp \
+			 sched/thread/assert.cpp \
+			 sched/mpi/tokenizer.cpp \
+			 sched/mpi/handler.cpp \
+			 external/math.cpp \
+			 external/lists.cpp \
+			 external/utils.cpp \
+			 external/strings.cpp \
+			 external/others.cpp \
+			 external/core.cpp \
+			 stat/stat.cpp \
+			 stat/slice.cpp \
+			 stat/slice_set.cpp \
+			 ui/manager.cpp \
+			 ui/client.cpp \
+			 interface.cpp \
+			 sched/sim.cpp
+
+OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
 all: meld print predicates server simulator
+	echo $(OBJS)
+
+-include Makefile.externs
+Makefile.externs:	Makefile
+	@echo "Remaking Makefile.externs"
+	@/bin/rm -f Makefile.externs
+	@for i in $(SRCS); do $(CXX) $(CXXFLAGS) -MM -MT $${i/%.cpp/.o} $$i >> Makefile.externs; done
+	@echo "Makefile.externs ready"
 
 meld: $(OBJS) meld.o
 	$(COMPILE) meld.o -o meld $(LDFLAGS)
@@ -122,14 +132,16 @@ predicates: $(OBJS) predicates.o
 	$(COMPILE) predicates.o -o predicates $(LDFLAGS)
 
 server: $(OBJS) server.o
-	$(COMPILE) server.o -o server -lreadline $(LDFLAGS)
+	$(COMPILE) server.o -o server $(LDFLAGS)
 
 simulator: $(OBJS) simulator.o
 	$(COMPILE) simulator.o -o simulator $(LDFLAGS)
 
 depend:
 	makedepend -- $(CXXFLAGS) -- $(shell find . -name '*.cpp')
-	
+
 clean:
 	find . -name '*.o' | xargs rm -f
-	rm -f meld predicates print server
+	rm -f meld predicates print server Makefile.externs
+# DO NOT DELETE
+
