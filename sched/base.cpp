@@ -212,10 +212,17 @@ base::loop(void)
    // cout << "DONE " << id << endl;
 }
 
+base*
+base::get_scheduler(void)
+{
+   sched::base *s((sched::base*)pthread_getspecific(sched_key));
+   return s;
+}
 	
 void
 base::start(void)
 {
+   pthread_setspecific(sched_key, this);
    if(id == 0) {
       thread = new boost::thread();
       loop();
@@ -237,7 +244,7 @@ base::base(const vm::process_id _id, vm::all *_all):
    , processed_facts(0), sent_facts(0), ins_state(statistics::NOW_ACTIVE)
 #endif
 {
-   pthread_setspecific(sched_key, this);
+
 }
 
 }

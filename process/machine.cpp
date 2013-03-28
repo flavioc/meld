@@ -84,7 +84,7 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, const bool f
             case 7: r = 139; b = 204; break; // PURPLE
             case 8: r = 255; g = 192; b = 203; break; // PINK
             case -1: return; break;
-            default: cout << "Invalid color " << tpl->get_int(0) << endl; assert(false); break;
+            default: cout << "Invalid color " << tpl->get_int(0) << endl; break;
          }
 			((sim_sched*)sched)->set_color(node, r, g, b);
       }

@@ -33,6 +33,8 @@ using namespace std;
 #define ADD_VACANT 16
 #define REMOVE_VACANT 17
 
+//#define DEBUG
+
 namespace sched
 {
 	
@@ -161,7 +163,6 @@ sim_sched::send_pending_messages(void)
 {
    while(!socket_messages.empty()) {
       message_type *data(socket_messages.pop());
-      cout << "Wrote message " << data[0] << endl;
       boost::asio::write(*socket, boost::asio::buffer(data, data[0] + sizeof(message_type)));
       delete []data;
    }
@@ -346,7 +347,9 @@ sim_sched::get_work(void)
 				message_type until(reply[2]);
 				message_type node(reply[3]);
 
+#ifdef DEBUG
             cout << "Run node " << node << " until " << until << endl;
+#endif
 				
 				assert(!thread_mode);
 				
@@ -377,7 +380,9 @@ sim_sched::get_work(void)
             int pos(5 * sizeof(message_type));
             simple_tuple *stpl(simple_tuple::unpack((utils::byte*)reply, reply[0] + sizeof(message_type), &pos, state.all->PROGRAM));
 
+#ifdef DEBUG
             cout << "Receive message " << origin->get_id() << " to " << target->get_id() << " " << *stpl << endl;
+#endif
 
             heap_priority pr;
             pr.int_priority = ts;
@@ -390,7 +395,9 @@ sim_sched::get_work(void)
 				node_val out((node_val)reply[4]);
 				int side((int)reply[5]);
 
+#ifdef DEBUG
             cout << ts << " neighbor(" << in << ", " << out << ", " << side << ")" << endl;
+#endif
 				
 				sim_node *no_in(dynamic_cast<sim_node*>(state.all->DATABASE->find_node(in)));
             node_val *face(no_in->get_node_at_face(side));
@@ -400,16 +407,18 @@ sim_sched::get_work(void)
                add_vacant(ts, no_in, side, -1);
                add_neighbor_count(ts, no_in, no_in->neighbor_count, -1);
                no_in->neighbor_count++;
+#ifdef DEBUG
                cout << in << " neighbor count went up to " << no_in->neighbor_count << endl;
+#endif
                add_neighbor_count(ts, no_in, no_in->neighbor_count, 1);
                *face = out;
-               add_neighbor(ts, no_in, side, out, 1);
+               add_neighbor(ts, no_in, out, side, 1);
             } else {
                if(*face != out) {
                   // remove old node
                   add_neighbor(ts, no_in, *face, side, -1);
                   *face = out;
-                  add_neighbor(ts, no_in, side, out, 1);
+                  add_neighbor(ts, no_in, out, side, 1);
                }
             }
 			}
@@ -419,7 +428,9 @@ sim_sched::get_work(void)
 				message_type in(reply[3]);
 				int side((int)reply[4]);
 
+#ifdef DEBUG
             cout << ts << " remove neighbor(" << in << ", " << side << ")" << endl;
+#endif
 				
 				sim_node *no_in(dynamic_cast<sim_node*>(state.all->DATABASE->find_node(in)));
             node_val *face(no_in->get_node_at_face(side));
@@ -435,7 +446,7 @@ sim_sched::get_work(void)
                add_neighbor_count(ts, no_in, no_in->neighbor_count, 1);
             }
 
-            add_neighbor(ts, no_in, side, *face, -1);
+            add_neighbor(ts, no_in, *face, side, -1);
 
             *face = -1; // now vacant
           }
@@ -527,8 +538,6 @@ sim_sched::set_color(db::node *n, const int r, const int g, const int b)
 	data[i++] = (message_type)b;
    data[i++] = 0; // intensity
 
-   cout << "Set color " << r << " " << g << " " << b << endl;
-	
    schedule_new_message(data);
 }
 

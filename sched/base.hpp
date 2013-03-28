@@ -172,6 +172,8 @@ public:
       (void)sl;
 #endif
    }
+
+   static base* get_scheduler(void);
    
 	explicit base(const vm::process_id, vm::all *);
    
