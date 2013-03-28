@@ -1,6 +1,6 @@
 
-/* A Distributed Algorithm for the Maximum Flow Problem */
-/* presentation: http://www2.lifl.fr/ispdc2005/presentations/ispdc-maxflow-PHAM.pdf */
+// A Distributed Algorithm for the Maximum Flow Problem */
+// presentation: http://www2.lifl.fr/ispdc2005/presentations/ispdc-maxflow-PHAM.pdf */
 
 type typ(node, int).
 type linear state(node, int).
@@ -83,6 +83,12 @@ initialize(A) -o
    [count => Outbound | B, W, Out | !edge(A, B, W, Out), Out = output | !outbound(A, Outbound)],
    may-do-init-height(A).
 
+/* 6. upon receipt of (NEW-HEIGHT, h) msg from w */
+new-height(A, W, H),
+token(A),
+edge-height(A, W, _)
+   -o edge-height(A, W, H), token(A).
+
 may-do-init-height(A),
 !typ(A, sink)
    -o do-init-height(A, return-initialize).
@@ -102,12 +108,6 @@ height(A, Height)
       {B, W, R, T | !edge(A, B, W, T), rv(A, B, R), R <> 0 | new-height(B, A, Height), rv(A, B, R) },
       height(A, Height),
       proc-return(A, Ret).
-
-/* 6. upon receipt of (NEW-HEIGHT, h) msg from w */
-new-height(A, W, H),
-token(A),
-edge-height(A, W, _)
-   -o edge-height(A, W, H), token(A).
 
 /* 5. upon receipt of (init-height, h) from w */
 init-height(A, W, H),
