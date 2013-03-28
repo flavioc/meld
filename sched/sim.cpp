@@ -314,6 +314,7 @@ sim_sched::get_work(void)
 		
 		switch(reply[1]) {
 			case USE_THREADS: {
+			  cout << "Run in threads mode" << endl;
 				thread_mode = true;
 			}
 			break;
