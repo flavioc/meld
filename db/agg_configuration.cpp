@@ -15,6 +15,8 @@ agg_configuration::add_to_set(vm::tuple *tpl, const ref_count many)
    assert(many > 0 || (many < 0 && !vals.empty()));
 
    changed = true; // this is important
+
+   const size_t start_size(vals.size());
    
    if(many > 0) {
       
@@ -22,6 +24,8 @@ agg_configuration::add_to_set(vm::tuple *tpl, const ref_count many)
          // repeated tuple
          delete tpl;
       }
+
+      assert(vals.size() == start_size + many);
    } else {
       // to delete
       trie::delete_info deleter(vals.delete_tuple(tpl, -many)); // note the minus sign
@@ -30,6 +34,7 @@ agg_configuration::add_to_set(vm::tuple *tpl, const ref_count many)
       }
       
       delete tpl;
+      assert(vals.size() == start_size + many);
    }
 }
 
@@ -38,8 +43,6 @@ agg_configuration::test(vm::tuple *tpl, const field_num agg_field) const
 {
    if(vals.empty())
       return false;
-
-   assert(!vals.empty());
 
    const_iterator it(vals.begin());
    
@@ -76,6 +79,8 @@ agg_configuration::matches_first_int_arg(const int_val val) const
 vm::tuple*
 agg_configuration::generate_max_int(const field_num field) const
 {
+   assert(!vals.empty());
+
    const_iterator end(vals.end());
    const_iterator it(vals.begin());
    vm::tuple *max_tpl((*it)->get_tuple());

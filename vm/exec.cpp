@@ -337,8 +337,9 @@ execute_send_self(tuple *tuple, state& state)
          } else {
             simple_tuple *stuple(new simple_tuple(tuple, state.count));
             if(tuple->is_reused()) // push into persistent list, since it is a reused tuple
+            {
                state.generated_persistent_tuples.push_back(stuple);
-            else
+            } else
                state.generated_tuples.push_back(stuple);
 
 #ifdef USE_RULE_COUNTING
@@ -1803,6 +1804,7 @@ eval_loop:
 		if(state.print_instrs)
          instr_print_simple(pc, 0, state.all->PROGRAM, cout);
 #endif      
+
 #ifdef USE_SIM
       if(state::SIM) {
          ++state.sim_instr_counter;

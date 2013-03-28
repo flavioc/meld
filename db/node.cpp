@@ -74,6 +74,7 @@ node::add_agg_tuple(vm::tuple *tuple, const ref_count many)
       // add new
       
       if(aggregate_safeness_uses_neighborhood(pred->get_agg_safeness())) {
+         assert(false);
          const predicate *remote_pred(pred->get_remote_pred());
          edge_set edges(get_edge_set(remote_pred->get_id()));
          if(pred->get_agg_safeness() == AGG_NEIGHBORHOOD_AND_SELF) {

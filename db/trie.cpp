@@ -609,11 +609,10 @@ trie::sanity_check(void) const
    //assert(root->count_refs() == (size_t)number_of_references);
 }
 
+// inserts the data inside the trie
 trie_node*
 trie::check_insert(void *data, const ref_count many, val_stack& vals, type_stack& typs, bool& found)
 {
-   basic_invariants();
-   
    if(vals.empty()) {
       // 0-arity tuple
       if(!root->is_leaf()) {
@@ -629,7 +628,7 @@ trie::check_insert(void *data, const ref_count many, val_stack& vals, type_stack
          
          leaf->add_count(many);
       }
-      
+
       return root;
    }
    
@@ -701,6 +700,10 @@ trie::check_insert(void *data, const ref_count many, val_stack& vals, type_stack
          found = false;
          
          assert(!root->is_leaf());
+         assert(first_leaf != NULL);
+         assert(root->child != NULL);
+         assert(number_of_references > 0);
+         basic_invariants();
          
          return parent;
       }
@@ -718,6 +721,7 @@ trie::check_insert(void *data, const ref_count many, val_stack& vals, type_stack
    trie_leaf *orig(parent->get_leaf());
    
    orig->add_count(many);
+   assert(first_leaf != NULL && last_leaf != NULL);
    
    basic_invariants();
    
@@ -732,6 +736,11 @@ trie::commit_delete(trie_node *node, ref_count many)
    number_of_references -= many;
    assert(number_of_references >= 0);
    inner_delete_by_leaf(node->get_leaf(), 0);
+   if(!(number_of_references == 0 || (number_of_references > 0 && first_leaf != NULL))) {
+      cout << " =========== > " << number_of_references << endl;
+      cout << root->child << endl;
+   }
+   basic_invariants();
 }
 
 void
@@ -742,6 +751,8 @@ trie::delete_by_leaf(trie_leaf *leaf)
    assert(number_of_references >= 0);
    inner_delete_by_leaf(leaf, 1);
    sanity_check();
+   assert((number_of_references == 0 && root->child != NULL) || (number_of_references > 0 && root->child));
+   assert(number_of_references == 0 || (number_of_references > 0 && first_leaf != NULL && last_leaf != NULL));
 }
 
 // we assume that number_of_references was decrement previous to this
@@ -766,12 +777,16 @@ trie::inner_delete_by_leaf(trie_leaf *leaf, const ref_count count)
       leaf->prev->next = leaf->next;
       
    const bool equal_first(leaf == first_leaf);
-   if(equal_first)
+   if(equal_first) {
+      assert(leaf->prev == NULL);
       first_leaf = first_leaf->next;
+   }
    
    const bool equal_last(leaf == last_leaf);
-   if(equal_last)
+   if(equal_last) {
+      assert(leaf->next == NULL);
       last_leaf = last_leaf->prev;
+   }
       
    if(equal_first && equal_last) {
       assert(last_leaf == NULL);
@@ -893,7 +908,6 @@ tuple_trie::check_insert(vm::tuple *tpl, const ref_count many, bool& found)
    
    trie_node *ret(trie::check_insert((void*)tpl, many, vals, typs, found));
 
-
    return ret;
 }
 
@@ -903,14 +917,13 @@ tuple_trie::insert_tuple(vm::tuple *tpl, const ref_count many)
    sanity_check();
 
    bool found;
+   number_of_references += many;
    check_insert(tpl, many, found);
    
    if(found) {
       assert(root->child != NULL);
       assert(number_of_references > 0);
    }
- 
-   number_of_references += many;
    
    sanity_check();
    basic_invariants();
@@ -946,10 +959,13 @@ tuple_trie::delete_tuple(vm::tuple *tpl, const ref_count many)
    
    trie_leaf *leaf(node->get_leaf());
    
-   if(leaf->to_delete())
+   if(leaf->to_delete()) {
+      // for this branch, we will decrease number_of_references later
       return delete_info(this, true, node, many);
-   else
+   } else {
+      number_of_references -= many;
       return delete_info(false);
+   }
 }
 
 void
@@ -1292,8 +1308,9 @@ agg_trie::find_configuration(vm::tuple *tpl)
    bool found;
    trie_node *node(trie::check_insert(NULL, 1, vals, typs, found));
    
-   if(!found)
+   if(!found) {
       ++number_of_references;
+   }
    
    return (agg_trie_leaf*)node->get_leaf();
 }
