@@ -3,3 +3,8 @@ meld
 print
 *.code
 *.ast
+Makefile.externs
+.,*
+predicates
+server
+simulator

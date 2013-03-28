@@ -315,6 +315,7 @@ sim_sched::get_work(void)
 		
 		switch(reply[1]) {
 			case USE_THREADS: {
+			  cout << "Run in threads mode" << endl;
 				thread_mode = true;
 			}
 			break;
@@ -325,8 +326,7 @@ sim_sched::get_work(void)
 					message_type n(reply[4]);
                message_type start_id(reply[5]);
                (void)node; // we dont care about it
-
-               cout << "Create " << n << " nodes from " << start_id << endl;
+               cout << "Create " << n << " nodes from:" << start_id << endl;
 					
 					for(message_type i(0); i != n; ++i) {
 						db::node *no(state.all->DATABASE->create_node_id(start_id + i));

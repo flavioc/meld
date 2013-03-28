@@ -9,12 +9,16 @@
 - Boost (must include boost-thread, boost-system-mt, boost-date-time-mt, boost-regex-mt, boost-serialization-mt and boost-mpi-mt)
 
 ;; Use your operating system facilities to install such packages.
+
+;; on my (seth's) ubuntu (64-bit) system:
+;;  sudo apt-get install mpi-default-dev
+;;  sudo apt-get install libboost-all-dev
+;; 
 ;; Now, we'll download the virtual machine source code:
 $ git clone https://github.com/flavioc/meld.git
 
 ;; Let's compile the virtual machine:
 $ cd meld
-$ ./bootstrap.sh
 $ make
 
 ;; To run a program
