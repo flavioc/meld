@@ -54,6 +54,9 @@ private:
 #ifdef CORE_STATISTICS
    void init_core_statistics(void);
 #endif
+   db::simple_tuple* search_for_negative_tuple_partial_agg(db::simple_tuple *);
+   db::simple_tuple* search_for_negative_tuple_full_agg(db::simple_tuple *);
+   db::simple_tuple* search_for_negative_tuple_normal(db::simple_tuple *);
 
 public:
 	

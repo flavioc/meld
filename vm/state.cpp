@@ -264,6 +264,76 @@ state::add_fact_to_node(vm::tuple *tpl, vm::ref_count count)
 	return node->add_tuple(tpl, count);
 }
 
+static inline bool
+tuple_for_assertion(db::simple_tuple *stpl)
+{
+   return ((stpl->get_tuple())->is_aggregate() && stpl->get_generated_run())
+      || !stpl->get_tuple()->is_aggregate();
+}
+
+db::simple_tuple*
+state::search_for_negative_tuple_partial_agg(db::simple_tuple *stpl)
+{
+   vm::tuple *tpl(stpl->get_tuple());
+
+   for(db::simple_tuple_list::iterator it(generated_persistent_tuples.begin());
+         it != generated_persistent_tuples.end(); ++it)
+   {
+      db::simple_tuple *stpl2(*it);
+      vm::tuple *tpl2(stpl2->get_tuple());
+
+      if(tpl2->is_aggregate() && !stpl2->get_generated_run() &&
+            stpl2->get_count() == -1 && *tpl2 == *tpl)
+      {
+         generated_persistent_tuples.erase(it);
+         return stpl2;
+      }
+   }
+
+   return NULL;
+}
+
+db::simple_tuple*
+state::search_for_negative_tuple_normal(db::simple_tuple *stpl)
+{
+   vm::tuple *tpl(stpl->get_tuple());
+
+   for(db::simple_tuple_list::iterator it(generated_persistent_tuples.begin());
+         it != generated_persistent_tuples.end(); ++it)
+   {
+      db::simple_tuple *stpl2(*it);
+      vm::tuple *tpl2(stpl2->get_tuple());
+
+      if(!tpl2->is_aggregate() && stpl2->get_count() == -1 && *tpl2 == *tpl)
+      {
+         generated_persistent_tuples.erase(it);
+         return stpl2;
+      }
+   }
+
+   return NULL;
+}
+
+db::simple_tuple*
+state::search_for_negative_tuple_full_agg(db::simple_tuple *stpl)
+{
+   vm::tuple *tpl(stpl->get_tuple());
+
+   for(db::simple_tuple_list::iterator it(generated_persistent_tuples.begin());
+         it != generated_persistent_tuples.end(); ++it)
+   {
+      db::simple_tuple *stpl2(*it);
+      vm::tuple *tpl2(stpl2->get_tuple());
+
+      if(tpl2->is_aggregate() && stpl2->get_generated_run() && stpl2->get_count() == -1 && *tpl2 == *tpl)
+      {
+         generated_persistent_tuples.erase(it);
+         return stpl2;
+      }
+   }
+
+   return NULL;
+}
 void
 state::do_persistent_tuples(void)
 {
@@ -274,7 +344,45 @@ state::do_persistent_tuples(void)
 
       generated_persistent_tuples.pop_front();
 
-      if(!tpl->is_aggregate() || (tpl->is_aggregate() && stpl->get_generated_run())) {
+      if(stpl->get_count() == 1 && (tpl->is_aggregate() && !stpl->get_generated_run())) {
+         db::simple_tuple *stpl2(search_for_negative_tuple_partial_agg(stpl));
+         if(stpl2) {
+            if(node->get_id() == 1) {
+               //cout << "=========> Deleted " << *stpl << " " << *stpl2 << endl;
+            }
+            simple_tuple::wipeout(stpl);
+            simple_tuple::wipeout(stpl2);
+	         continue;
+         }
+      }
+
+      if(stpl->get_count() == 1 && (tpl->is_aggregate() && stpl->get_generated_run())) {
+         db::simple_tuple *stpl2(search_for_negative_tuple_full_agg(stpl));
+         if(stpl2) {
+            if(node->get_id() == 1) {
+               //cout << "=========> Deleted " << *stpl << " " << *stpl2 << endl;
+            }
+            simple_tuple::wipeout(stpl);
+            simple_tuple::wipeout(stpl2);
+	         continue;
+         }
+      }
+
+#if 0
+      if(stpl->get_count() == 1 && !tpl->is_aggregate()) {
+         db::simple_tuple *stpl2(search_for_negative_tuple_normal(stpl));
+         if(stpl2) {
+            if(node->get_id() == 1) {
+               cout << "========> Deleted normal " << *stpl << endl;
+            }
+            simple_tuple::wipeout(stpl);
+            simple_tuple::wipeout(stpl2);
+            continue;
+         }
+      }
+#endif
+
+      if(tuple_for_assertion(stpl)) {
          stpl->set_generated_run(false);
          process_persistent_tuple(stpl, tpl);
       } else {
