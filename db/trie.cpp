@@ -648,8 +648,11 @@ trie::check_insert(void *data, const ref_count many, val_stack& vals, type_stack
       cur = parent->match(field, typ, vals, typs, count);
       
       if(cur == NULL) {
-         // insert
-         assert(many > 0);
+         if(many < 0) {
+            cerr << "Tuple not found in the trie" << endl;
+            return NULL; // tuple not found in the trie
+         }
+         // else do insertion
          assert(!parent->is_leaf());
          
          ++count;
@@ -954,6 +957,11 @@ tuple_trie::delete_tuple(vm::tuple *tpl, const ref_count many)
    
    bool found;
    trie_node *node(check_insert(tpl, -many, found));
+
+   if(node == NULL) {
+      // already deleted
+      return delete_info(false);
+   }
    
    assert(found);
    

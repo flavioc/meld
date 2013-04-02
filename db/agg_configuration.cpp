@@ -34,7 +34,6 @@ agg_configuration::add_to_set(vm::tuple *tpl, const ref_count many)
       }
       
       delete tpl;
-      assert(vals.size() == start_size + many);
    }
 }
 

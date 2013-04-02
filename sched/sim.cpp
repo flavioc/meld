@@ -388,7 +388,10 @@ sim_sched::get_work(void)
 
             heap_priority pr;
             pr.int_priority = ts;
-            target->tuple_pqueue.insert(stpl, pr);
+            if(stpl->get_count() > 0)
+               target->tuple_pqueue.insert(stpl, pr);
+            else
+               target->rtuple_pqueue.insert(stpl, pr);
          }
          break;
 			case ADD_NEIGHBOR: {
