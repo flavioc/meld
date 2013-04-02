@@ -195,7 +195,6 @@ program::program(const string& _filename):
       predicates[i]->cache_info(this);
       if(predicates[i]->is_aggregate() && predicates[i]->is_unsafe_agg()) {
          safe = false;
-			break;
 		}
    }
 

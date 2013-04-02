@@ -498,7 +498,7 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
 {
    if(stpl->get_count() > 0) {
 		const bool is_new(add_fact_to_node(tpl));
-		
+
       setup(tpl, node, stpl->get_count());
       use_local_tuples = false;
       persistent_only = true;
