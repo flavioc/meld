@@ -48,6 +48,7 @@ public:
 	size_t timestamp;
    size_t neighbor_count;
 	queue::heap_queue<db::simple_tuple*> tuple_pqueue; // for deterministic computation
+	queue::heap_queue<db::simple_tuple*> rtuple_pqueue; // same as before but with retraction facts
 	queue::push_safe_linear_queue<db::simple_tuple*> pending; // for fast computation
 
 	inline bool has_work(void) const { return !tuple_pqueue.empty(); }

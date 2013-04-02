@@ -142,6 +142,7 @@ public:
       return take->data;
    }
 
+   // not thread safe!
 	template <class Alloc>
 	inline void pop_list(std::list<T, Alloc>& vec)
 	{

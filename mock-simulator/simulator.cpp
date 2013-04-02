@@ -19,17 +19,13 @@
 #define TAP 7
 #define SET_COLOR 8
 #define USE_THREADS 9
-#define ADD_NEIGHBOR_COUNT 10
-#define REMOVE_NEIGHBOR_COUNT 11
 #define SEND_MESSAGE 12
 #define RECEIVE_MESSAGE 13
 #define ACCEL 14
 #define SHAKE 15
-#define ADD_VACANT 16
-#define REMOVE_VACANT 17
 
 // comment this for threaded mode
-//#define DETERMINISTIC
+#define DETERMINISTIC
 
 typedef uint64_t message_type;
 const int max_length = 512 / sizeof(message_type);
@@ -432,7 +428,7 @@ main(int argc, char **argv)
 
    int x = 0;
 #ifdef DETERMINISTIC
-    write_create_n_nodes(connfd, 3);
+    write_create_n_nodes(connfd, 6);
 
     // this loops adds and removes a neighbor fact and then adds a tap
     while (true)
@@ -454,6 +450,16 @@ main(int argc, char **argv)
           } else if(x == 1) {
              x = 2;
              write_remove_neighbor(connfd, 0, 5);
+             write_add_neighbor(connfd, 0, 1, 2);
+             write_add_neighbor(connfd, 1, 0, 3);
+             write_add_neighbor(connfd, 1, 2, 0);
+             write_add_neighbor(connfd, 2, 1, 5);
+             write_add_neighbor(connfd, 1, 4, 2);
+             write_add_neighbor(connfd, 4, 1, 3);
+             write_add_neighbor(connfd, 1, 3, 5);
+             write_add_neighbor(connfd, 3, 1, 0);
+             write_add_neighbor(connfd, 3, 5, 5);
+             write_add_neighbor(connfd, 5, 3, 0);
           } else if(x == 5) {
              write_tap(connfd, 1);
              x++;
@@ -485,40 +491,15 @@ main(int argc, char **argv)
           write_remove_neighbor(connfd, 0, 5);
 
           write_add_neighbor(connfd, 0, 1, 2);
-          write_add_neighbor_count(connfd, 0, 1);
           write_add_neighbor(connfd, 1, 0, 3);
-          write_add_neighbor_count(connfd, 1, 4);
           write_add_neighbor(connfd, 1, 2, 0);
           write_add_neighbor(connfd, 2, 1, 5);
-          write_add_neighbor_count(connfd, 2, 1);
           write_add_neighbor(connfd, 1, 4, 2);
           write_add_neighbor(connfd, 4, 1, 3);
-          write_add_neighbor_count(connfd, 4, 1);
           write_add_neighbor(connfd, 1, 3, 5);
           write_add_neighbor(connfd, 3, 1, 0);
-          write_add_neighbor_count(connfd, 3, 2);
           write_add_neighbor(connfd, 3, 5, 5);
           write_add_neighbor(connfd, 5, 3, 0);
-          write_add_neighbor_count(connfd, 5, 1);
-
-          // all north/south vacants
-          for(size_t i(0); i <= 5; ++i) {
-             write_add_vacant(connfd, i, 1);
-             write_add_vacant(connfd, i, 4);
-          }
-
-          int no_bottom[3] = {0, 2, 4};
-          for(size_t i(0); i < 3; ++i)
-             write_add_vacant(connfd, no_bottom[i], 0);
-          int no_top[3] = {0, 4, 5};
-          for(size_t i(0); i < 3; ++i)
-             write_add_vacant(connfd, no_top[i], 5);
-          int no_east[4] = {2, 4, 3, 5};
-          for(size_t i(0); i < 4; ++i)
-             write_add_vacant(connfd, no_east[i], 2);
-          int no_west[4] = {0, 2, 3, 5};
-          for(size_t i(0); i < 4; ++i)
-             write_add_vacant(connfd, no_west[i], 3);
        }
        if(x == 3) {
           write_tap(connfd, 1);

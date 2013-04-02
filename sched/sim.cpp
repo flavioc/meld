@@ -24,16 +24,13 @@ using namespace std;
 #define TAP 7
 #define SET_COLOR 8
 #define USE_THREADS 9
-#define ADD_NEIGHBOR_COUNT 10
-#define REMOVE_NEIGHBOR_COUNT 11
 #define SEND_MESSAGE 12
 #define RECEIVE_MESSAGE 13
 #define ACCEL 14
 #define SHAKE 15
-#define ADD_VACANT 16
-#define REMOVE_VACANT 17
 
-//#define DEBUG
+// debug messages for simulation
+#define DEBUG
 
 namespace sched
 {
@@ -144,7 +141,10 @@ sim_sched::new_work(const node *_src, work& new_work)
 		if(current_node == NULL) {
          heap_priority pr;
 			pr.int_priority = 0; // this is the init tuple...
-			to->tuple_pqueue.insert(stpl, pr);
+         if(stpl->get_count() > 0)
+            to->tuple_pqueue.insert(stpl, pr);
+         else
+            to->rtuple_pqueue.insert(stpl, pr);
 		} else {
          sim_node *src(dynamic_cast<sim_node*>((node*)_src));
          const size_t timestamp(src->timestamp + state.sim_instr_counter);
@@ -176,7 +176,10 @@ sim_sched::add_received_tuple(sim_node *no, size_t ts, db::simple_tuple *stpl)
    } else {
       heap_priority pr;
       pr.int_priority = ts;
-      no->tuple_pqueue.insert(stpl, pr);
+      if(stpl->get_count() > 0)
+         no->tuple_pqueue.insert(stpl, pr);
+      else
+         no->rtuple_pqueue.insert(stpl, pr);
    }
 }
 
@@ -298,8 +301,6 @@ sim_sched::get_work(void)
 	}
 	
 	while(true) {
-      // ADD_VACANT, REMOVE_VACANT and ADD_NEIGHBOR_COUNT, REMOVE_NEIGHBOR_COUNT go away
-		
 		if(!socket->available()) {
          send_pending_messages();
 			usleep(100);
@@ -548,7 +549,6 @@ sim_sched::schedule_new_message(message_type *data)
 	if(thread_mode) {
 		socket_messages.push(data);
 	} else {
-      cout << "Sent new color" << endl;
 		boost::asio::write(*socket, boost::asio::buffer(data, data[0] + sizeof(message_type)));
 		delete []data;
 	}
@@ -612,6 +612,15 @@ sim_sched::gather_next_tuples(db::node *node, simple_tuple_list& ls)
 		db::simple_tuple *stpl(no->tuple_pqueue.pop());
 		ls.push_back(stpl);
 	}
+
+   while(!no->rtuple_pqueue.empty()) {
+      pr = no->rtuple_pqueue.min_value();
+      if(pr.int_priority > no->timestamp)
+         break;
+      
+      db::simple_tuple *stpl(no->rtuple_pqueue.pop());
+      ls.push_back(stpl);
+   }
 }
 
 }
