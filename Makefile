@@ -29,7 +29,7 @@ ARCH = -march=x86-64
 DEBUG = -g
 WARNINGS = -Wall -Wextra #-Werror
 C0X = -std=c++0x
-UILIBRARIES = -lwebsocketpp -ljson_spirit
+UILIBRARIES = #-lwebsocketpp -ljson_spirit
 
 CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) $(COX)
 LIBRARIES = -pthread -lm -lboost_thread-mt -lboost_system-mt \
