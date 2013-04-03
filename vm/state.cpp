@@ -2,6 +2,9 @@
 #include "vm/state.hpp"
 #include "process/machine.hpp"
 #include "vm/exec.hpp"
+#ifdef USE_SIM
+#include "sched/nodes/sim.hpp"
+#endif
 
 using namespace vm;
 using namespace db;
@@ -334,11 +337,23 @@ state::search_for_negative_tuple_full_agg(db::simple_tuple *stpl)
 
    return NULL;
 }
-void
+
+bool
+state::check_instruction_limit(void) const
+{
+   return sim_instr_use && sim_instr_counter >= sim_instr_limit;
+}
+
+bool
 state::do_persistent_tuples(void)
 {
    // we grab the stratification level here
    while(!generated_persistent_tuples.empty()) {
+#ifdef USE_SIM
+      if(check_instruction_limit()) {
+         return false;
+      }
+#endif
       db::simple_tuple *stpl(generated_persistent_tuples.front());
       vm::tuple *tpl(stpl->get_tuple());
 
@@ -409,6 +424,8 @@ state::do_persistent_tuples(void)
 	}
 	
 	assert(leaves_for_deletion.empty());
+
+   return true;
 }
 
 void
@@ -550,23 +567,8 @@ state::process_others(void)
 		/* no need to mark tuples */
 		all->MACHINE->route_self(sched, node, *it);
 	}
-	
+
 	generated_other_level.clear();
-}
-
-void
-state::process_generated_tuples(void)
-{
-	/* move from generated tuples to local_tuples */
-	local_tuples.splice(local_tuples.end(), generated_tuples);
-	/* tuples were already marked in vm/exec.cpp (execute_send) */
-	
-   do_persistent_tuples();
-
-	process_others();
-	
-	assert(generated_tuples.empty());
-	generated_persistent_tuples.clear();
 }
 
 void
@@ -581,6 +583,8 @@ state::start_matching(void)
 void
 state::run_node(db::node *no)
 {
+   bool aborted(false);
+
 	this->node = no;
 	
 #ifdef DEBUG_RULES
@@ -590,15 +594,23 @@ state::run_node(db::node *no)
 	sched->gather_next_tuples(node, local_tuples);
    start_matching();
 	mark_rules_using_local_tuples();
-   do_persistent_tuples();
-	process_others();
-	mark_active_rules();
+   if(do_persistent_tuples()) {
+      // if using the simulator, we check if we exhausted the available time to run
+      mark_active_rules();
+   } else
+      aborted = true;
 
 #ifdef DEBUG_RULES
 	cout << "Strat level: " << current_level << " got " << local_tuples.size() << " tuples " << endl;
 #endif
 
 	while(!rule_queue.empty()) {
+#ifdef USE_SIM
+      if(check_instruction_limit()) {
+         break;
+      }
+#endif
+
 		rule_id rule(rule_queue.pop());
 		
 #ifdef DEBUG_RULES
@@ -617,11 +629,17 @@ state::run_node(db::node *no)
       persistent_only = false;
 		execute_rule(rule, *this);
 
-		process_generated_tuples();
 		process_consumed_local_tuples();
+      /* move from generated tuples to local_tuples */
+      local_tuples.splice(local_tuples.end(), generated_tuples);
+      if(!do_persistent_tuples()) {
+         aborted = true;
+         break;
+      }
 		mark_active_rules();
 	}
 
+   // push remaining tuples into node
 	for(db::simple_tuple_list::iterator it(local_tuples.begin()), end(local_tuples.end());
 		it != end;
 		++it)
@@ -630,13 +648,46 @@ state::run_node(db::node *no)
 		vm::tuple *tpl(stpl->get_tuple());
 		
 		if(stpl->can_be_consumed()) {
-			add_fact_to_node(tpl);
+         if(aborted) {
+#ifdef USE_SIM
+            sched::sim_node *snode(dynamic_cast<sched::sim_node*>(node));
+            snode->pending.push(stpl);
+#else
+            assert(false);
+#endif
+         } else {
+            add_fact_to_node(tpl);
+         }
 		} else
 			delete tpl;
 		delete stpl;
 	}
 
 	local_tuples.clear();
+   rule_queue.clear();
+
+   // push other level tuples
+   process_others();
+
+   // store any remaining persistent tuples
+   for(simple_tuple_list::iterator it(generated_persistent_tuples.begin()), end(generated_persistent_tuples.end());
+         it != end;
+         ++it)
+   {
+      assert(aborted);
+#ifdef USE_SIM
+      sched::sim_node *snode(dynamic_cast<sched::sim_node*>(node));
+      snode->pending.push(*it);
+#else
+      assert(false);
+#endif
+   }
+	
+   generated_persistent_tuples.clear();
+#ifdef USE_SIM
+   if(sim_instr_use && sim_instr_counter < sim_instr_limit)
+      ++sim_instr_counter;
+#endif
 }
 
 #ifdef CORE_STATISTICS
@@ -680,6 +731,9 @@ state::state(sched::base *_sched, vm::all *_all):
 	predicates = new bool[all->PROGRAM->num_predicates()];
 	fill_n(predicates, all->PROGRAM->num_predicates(), false);
 	rule_queue.set_type(HEAP_INT_ASC);
+#ifdef USE_SIM
+   sim_instr_use = false;
+#endif
 }
 
 state::state(vm::all *_all):
@@ -692,6 +746,9 @@ state::state(vm::all *_all):
 {
 #ifdef CORE_STATISTICS
    init_core_statistics();
+#endif
+#ifdef USE_SIM
+   sim_instr_use = false;
 #endif
 }
 

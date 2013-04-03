@@ -96,6 +96,8 @@ public:
 #ifdef USE_SIM
    static bool SIM;
    size_t sim_instr_counter;
+   size_t sim_instr_limit;
+   bool sim_instr_use;
 #endif
 
 #ifdef CORE_STATISTICS
@@ -180,10 +182,12 @@ public:
 	void mark_predicate_to_run(const vm::predicate *);
 	void mark_active_rules(void);
    void add_to_aggregate(db::simple_tuple *);
-   void do_persistent_tuples(void);
+   bool do_persistent_tuples(void);
    void process_persistent_tuple(db::simple_tuple *, vm::tuple *);
 	void process_consumed_local_tuples(void);
-	void process_generated_tuples(void);
+#ifdef USE_SIM
+   bool check_instruction_limit(void) const;
+#endif
 	void process_others(void);
 	void mark_rules_using_local_tuples(void);
 	void run_node(db::node *);

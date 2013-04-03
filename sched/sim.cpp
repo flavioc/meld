@@ -147,10 +147,9 @@ sim_sched::new_work(const node *_src, work& new_work)
             to->rtuple_pqueue.insert(stpl, pr);
 		} else {
          sim_node *src(dynamic_cast<sim_node*>((node*)_src));
-         const size_t timestamp(src->timestamp + state.sim_instr_counter);
          work_info info;
          info.work = new_work;
-         info.timestamp = timestamp;
+         info.timestamp = state.sim_instr_counter;
          info.src = src;
 
 			tmp_work.push_back(info);
@@ -271,7 +270,6 @@ sim_sched::get_work(void)
          stpl->pack((utils::byte*)reply, msg_size + sizeof(message_type), &pos);
 
          assert((size_t)pos == msg_size + sizeof(message_type));
-         cout << "Sent message " << *stpl << endl;
 
          simple_tuple::wipeout(stpl);
 
@@ -280,12 +278,17 @@ sim_sched::get_work(void)
          nodes.insert(no);
 		}
 		tmp_work.clear();
+
+      if(!current_node->pending.empty()) {
+         nodes.insert(current_node);
+      }
+
+      current_node->timestamp = state.sim_instr_counter;
 		
-		size_t time_spent(state.sim_instr_counter);
       size_t i(0);
 		reply[i++] = (4 + nodes.size()) * sizeof(message_type);
 		reply[i++] = NODE_RUN;
-		reply[i++] = (message_type)(current_node->timestamp + time_spent); // timestamp
+		reply[i++] = (message_type)current_node->timestamp;
 		reply[i++] = (message_type)current_node->get_id();
 		reply[i++] = (message_type)nodes.size();
 		
@@ -349,18 +352,20 @@ sim_sched::get_work(void)
 				message_type until(reply[2]);
 				message_type node(reply[3]);
 
-#ifdef DEBUG
-            cout << "Run node " << node << " until " << until << endl;
-#endif
-				
 				assert(!thread_mode);
 				
-				//cout << "Run node " << node << " until " << until << endl;
 				db::node *no(state.all->DATABASE->find_node((db::node::node_id)node));
 				
 				current_node = (sim_node*)no;
-				current_node->timestamp = (size_t)until;
-				state.sim_instr_counter = 0;
+
+#ifdef DEBUG
+            cout << "Run node " << node << " from " << current_node->timestamp << " until " << until << endl;
+#endif
+            // instruction counter starts at current node timestamp
+				state.sim_instr_counter = current_node->timestamp;
+            // and will go at least until 'until'
+            state.sim_instr_limit = (size_t)until;
+            state.sim_instr_use = true;
 				
 				return no;
 			}
@@ -407,7 +412,7 @@ sim_sched::get_work(void)
 				sim_node *no_in(dynamic_cast<sim_node*>(state.all->DATABASE->find_node(in)));
             node_val *face(no_in->get_node_at_face(side));
 
-            if(*face == -1) {
+            if(*face == (node_val)-1) {
                // remove vacant first, add 1 to neighbor count
                add_vacant(ts, no_in, side, -1);
                add_neighbor_count(ts, no_in, no_in->neighbor_count, -1);
@@ -440,7 +445,7 @@ sim_sched::get_work(void)
 				sim_node *no_in(dynamic_cast<sim_node*>(state.all->DATABASE->find_node(in)));
             node_val *face(no_in->get_node_at_face(side));
 
-            if(*face == -1) {
+            if(*face == (node_val)-1) {
                // remove vacant first, add 1 to neighbor count
                cerr << "Current face is vacant, cannot remove node!" << endl;
                assert(false);
@@ -624,6 +629,13 @@ sim_sched::gather_next_tuples(db::node *node, simple_tuple_list& ls)
       db::simple_tuple *stpl(no->rtuple_pqueue.pop());
       ls.push_back(stpl);
    }
+
+#if 0
+   for(simple_tuple_list::iterator it(ls.begin()), end(ls.end()); it != end; ++it) {
+      simple_tuple *stpl(*it);
+      cout << *stpl << endl;
+   }
+#endif
 }
 
 }

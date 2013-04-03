@@ -754,8 +754,6 @@ trie::delete_by_leaf(trie_leaf *leaf)
    assert(number_of_references >= 0);
    inner_delete_by_leaf(leaf, 1);
    sanity_check();
-   assert((number_of_references == 0 && root->child != NULL) || (number_of_references > 0 && root->child));
-   assert(number_of_references == 0 || (number_of_references > 0 && first_leaf != NULL && last_leaf != NULL));
 }
 
 // we assume that number_of_references was decrement previous to this

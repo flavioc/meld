@@ -167,6 +167,11 @@ public:
 			heapifydown(index);
 		}
 	}
+
+   void clear(void)
+   {
+      heap.clear();
+   }
 	
 	HEAP_DEFINE_MIN_VALUE;
 	

@@ -107,7 +107,7 @@ write_create_n_nodes(int sock, const int n)
       active_nodes[i] = true;
       pqueue.push_back(i);
       timestamps[i] = timestamp;
-      nexttimestamps[i] = timestamp;
+      nexttimestamps[i] = timestamp + 1;
    }
    assert(active_nodes.size() == (size_t)total_nodes);
 }
@@ -279,66 +279,6 @@ write_remove_neighbor(int sock, int in, int side)
    data[4] = (message_type)side; // neighbor type
 
    write_to_socket(sock, data);
-}
-
-static void
-write_add_vacant(int sock, int no, int side)
-{
-   return;
-   activate_node(no);
-
-   message_type data[5];
-   data[0] = 4;
-   data[1] = ADD_VACANT;
-   data[2] = (message_type)timestamps[no];
-   data[3] = (message_type)no;
-   data[4] = (message_type)side;
-
-   write_to_socket(sock, data);
-}
-
-static void
-write_remove_vacant(int sock, int no, int side)
-{
-   return;
-   activate_node(no);
-
-   message_type data[5];
-   data[0] = 4;
-   data[1] = REMOVE_VACANT;
-   data[2] = (message_type)timestamps[no];
-   data[3] = (message_type)no;
-   data[4] = (message_type)side;
-
-   write_to_socket(sock, data);
-}
-
-static void
-write_neighbor_count(int sock, int no, int count, message_type msg)
-{
-   return;
-   activate_node(no);
-
-   message_type data[6];
-   data[0] = 5;
-   data[1] = msg;
-   data[2] = (message_type)timestamps[no]; // timestamp
-   data[3] = (message_type)no;
-   data[4] = (message_type)count;
-
-   write_to_socket(sock, data);
-}
-
-static void
-write_add_neighbor_count(int sock, int no, int count)
-{
-   write_neighbor_count(sock, no, count, ADD_NEIGHBOR_COUNT);
-}
-
-static void
-write_remove_neighbor_count(int sock, int no, int count)
-{
-   write_neighbor_count(sock, no, count, REMOVE_NEIGHBOR_COUNT);
 }
 
 static void
