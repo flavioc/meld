@@ -229,6 +229,20 @@ j&j&j&j&j&j&j&j} {jump} \\
 & if that's the case, then stop execution, \\
 & else continue by jumping to the outer block. \\
 \\
+\inst{NEW AXIOMS} {0&0&0&1&1&1&1&0 \\\hline
+j&j&j&j&j&j&j&j \\\hline
+j&j&j&j&j&j&j&j \\\hline
+j&j&j&j&j&j&j&j \\\hline
+j&j&j&j&j&j&j&j} {jump} \\
+& after the instruction and jump address, there is an arbitrary \\
+& number of tuples to be instantiated. \\
+& the first byte of each tuple is the predicate code \\
+& the tuple arguments follow next. \\
+& arguments may be integers, floats, node addresses or serialized lists \\
+& if the list is nil, there is a 0x0 byte, if not, there is 0x1 byte followed \\
+& by the element of the list and the rest of the list. \\
+& the jump argument indicates the next instruction and where the tuples end \\
+\\
 \end{tabular}
 
 \begin{tabular}{lll}
