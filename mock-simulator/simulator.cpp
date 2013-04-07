@@ -25,7 +25,7 @@
 #define SHAKE 15
 
 // comment this for threaded mode
-#define DETERMINISTIC
+//#define DETERMINISTIC
 
 typedef uint64_t message_type;
 const int max_length = 512 / sizeof(message_type);

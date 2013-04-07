@@ -80,15 +80,15 @@ public:
 	bool print_instrs;
 #endif
    bool use_local_tuples;
-   db::simple_tuple_list local_tuples;
-	db::simple_tuple_list generated_tuples;
-	db::simple_tuple_list generated_persistent_tuples;
-	db::simple_tuple_vector generated_other_level;
+   db::simple_tuple_list local_tuples; // current available tuples not yet in the database
+	db::simple_tuple_list generated_tuples; // tuples generated while running the rule
+	db::simple_tuple_list generated_persistent_tuples; // persistent tuples while running the rule
+	db::simple_tuple_vector generated_other_level; // tuples for later computation (another stratification level or time delay)
 	// leaves scheduled for deletion (for use with reused linear tuples + retraction)
 	// we cannot delete them immediately because then the tuple would be deleted
 	std::list< std::pair<vm::predicate*, db::tuple_trie_leaf*> > leaves_for_deletion;
 	vm::strat_level current_level;
-   bool persistent_only;
+   bool persistent_only; // we are running one persistent tuple (not a rule)
    vm::all *all;
 #ifdef USE_UI
    static bool UI;
@@ -189,7 +189,7 @@ public:
    bool check_instruction_limit(void) const;
 #endif
 	void process_others(void);
-	void mark_rules_using_local_tuples(void);
+   vm::strat_level mark_rules_using_local_tuples(db::simple_tuple_list&);
 	void run_node(db::node *);
    void setup(vm::tuple*, db::node*, const ref_count);
    void cleanup(void);

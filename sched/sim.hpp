@@ -4,6 +4,7 @@
 
 #include <boost/asio.hpp>
 #include <list>
+#include <queue>
 
 #include "sched/base.hpp"
 #include "sched/nodes/sim.hpp"
@@ -12,7 +13,7 @@
 
 namespace sched
 {
-   
+
 class sim_sched: public sched::base
 {
 protected:
@@ -20,15 +21,18 @@ protected:
 	typedef uint64_t message_type;
 	static const size_t MAXLENGTH = 512 / sizeof(sim_sched::message_type);
 
+	sim_node *current_node;
+	boost::asio::ip::tcp::socket *socket;
+
    typedef struct {
       process::work work;
       size_t timestamp;
       sim_node *src;
    } work_info;
 	
-	sim_node *current_node;
-	boost::asio::ip::tcp::socket *socket;
+   // for deterministic simulation: work generated during execution of a node
 	std::list<work_info> tmp_work;
+
 	static vm::predicate *neighbor_pred;
 	static vm::predicate *tap_pred;
 	static vm::predicate *neighbor_count_pred;

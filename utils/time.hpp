@@ -54,6 +54,18 @@ operator<<(std::ostream& cout, const execution_time& t)
    return cout;
 }
 
+typedef uint64_t unix_timestamp;
+
+inline unix_timestamp
+get_timestamp(void)
+{
+   struct timeval tv;
+   gettimeofday(&tv, NULL);
+
+   return tv.tv_sec * (unix_timestamp)1000 +
+      tv.tv_usec/1000;
+}
+
 }
 
 #endif

@@ -75,10 +75,10 @@ j&j&j&j&j&j&j&j} {id, options, options arg, jump\_offset, matchlist}
 \\
 \inst{SEND}  {0&0&0&0&1&0&0&0\\\hline
 0&0&0&r$_1$&r$_1$&r$_1$&r$_1$&r$_1$\\\hline
-0&0&0&r$_2$&r$_2$&r$_2$&r$_2$&r$_2$} {reg$_1$, reg$_2$}
+0&0&0&r$_2$&r$_2$&r$_2$&r$_2$&r$_2$} {reg$_1$, reg$_2$} \\
 & sends the tuple in {\it reg$_1$} along the path in {\it reg$_2$}\\
 & if {\it reg$_1$ = reg$_2$} then the tuple is stored locally\\
-\\
+   \\
 \inst{REMOVE} {1&0&0&r&r&r&r&r} {reg}
 & delete tuple stored in reg from database\\
 \\
@@ -94,16 +94,16 @@ j&j&j&j&j&j&j&j} {id, options, options arg, jump\_offset, matchlist}
 0&0&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$} {val$_1$, val$_2$}
 & sets {\it val$_2$} = {\it not val$_1$}\\
 \\
-\inst{MOVE}  {0&0&1&1&0&0&0&0\\\hline
-0&0&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$\\\hline
-0&0&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$} {val$_1$, val$_2$}
-& copies {\it val$_1$} to {\it val$_2$}\\
-\\
 \end{tabular}
 
 \begin{tabular}{lll}
 INSTRUCTION & BYTE FORMAT & ARGS\\
 \hline
+\\
+\inst{MOVE}  {0&0&1&1&0&0&0&0\\\hline
+0&0&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$\\\hline
+0&0&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$} {val$_1$, val$_2$}
+& copies {\it val$_1$} to {\it val$_2$}\\
 \\
 \inst{MOVE-NIL}  {0&1&1&1&0&0&0&0\\\hline
 0&0&v&v&v&v&v&v} {val}
@@ -150,11 +150,6 @@ INSTRUCTION & BYTE FORMAT & ARGS\\
 0&0&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$} {val$_1$, val$_2$}
 & sets {\it val$_2$} = {\it tail val$_1$}\\
 & $t$ is the list type (00 = int, 01 = float, 02 = addr) \\
-\\
-\inst{FLOAT}    {0&0&0&0&1&0&0&1\\\hline
-0&0&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$\\\hline
-0&0&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$} {val$_1$, val$_2$}
-& sets {\it val$_2$} = {\it (float)val$_1$}\\
 \\
 \end{tabular}
 
@@ -211,6 +206,11 @@ INSTRUCTION & BYTE FORMAT & ARGS\\
 INSTRUCTION & BYTE FORMAT & ARGS\\
 \hline
 \\
+\inst{FLOAT}    {0&0&0&0&1&0&0&1\\\hline
+0&0&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$\\\hline
+0&0&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$} {val$_1$, val$_2$}
+& sets {\it val$_2$} = {\it (float)val$_1$}\\
+\\
 \inst{RULE} {0&0&0&1&0&0&0&0} {id} \\
 & rule \textit{id} is gonna be executed \\
 \\
@@ -239,10 +239,19 @@ j&j&j&j&j&j&j&j} {jump} \\
 & the first byte of each tuple is the predicate code \\
 & the tuple arguments follow next. \\
 & arguments may be integers, floats, node addresses or serialized lists \\
-& if the list is nil, there is a 0x0 byte, if not, there is 0x1 byte followed \\
-& by the element of the list and the rest of the list. \\
-& the jump argument indicates the next instruction and where the tuples end \\
+& if the list is nil, there is a 0x0 byte, if not, \\
+& there is 0x1 byte followed by the element \\
+& of the list and the rest of the list. the jump argument \\
+& indicates the next instruction and where the tuples end \\
 \\
+\inst{SEND DELAY} {0&0&0&1&0&1&0&1 \\\hline
+0&0&0&r$_1$&r$_1$&r$_1$&r$_1$&r$_1$\\\hline
+0&0&0&r$_2$&r$_2$&r$_2$&r$_2$&r$_2$\\\hline
+t&t&t&t&t&t&t&t} {reg$_1$, reg$_2$, time} \\
+& sends the tuple in {\it reg$_1$} along the path in {\it reg$_2$}\\
+& if {\it reg$_1$ = reg$_2$} then the tuple is stored locally\\
+& time indicates the delay, in seconds, in the derivation \\
+   \\
 \end{tabular}
 
 \begin{tabular}{lll}

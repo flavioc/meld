@@ -49,6 +49,7 @@ get_node_val(pcounter& m, state& state)
 static inline node_val
 get_node_val(const pcounter& m, state& state)
 {
+   (void)state;
    return pcounter_node(m);
 }
 
@@ -337,9 +338,8 @@ execute_send_self(tuple *tuple, state& state)
          } else {
             simple_tuple *stuple(new simple_tuple(tuple, state.count));
             if(tuple->is_reused()) // push into persistent list, since it is a reused tuple
-            {
                state.generated_persistent_tuples.push_back(stuple);
-            } else
+            else
                state.generated_tuples.push_back(stuple);
 
 #ifdef USE_RULE_COUNTING
@@ -379,6 +379,41 @@ execute_send(const pcounter& pc, state& state)
       }
 #endif
       simple_tuple *stuple(new simple_tuple(tuple, state.count));
+      state.all->MACHINE->route(state.node, state.sched, (node::node_id)dest_val, stuple);
+   }
+}
+
+static inline void
+execute_send_delay(const pcounter& pc, state& state)
+{
+   const reg_num msg(send_delay_msg(pc));
+   const reg_num dest(send_delay_dest(pc));
+   const node_val dest_val(state.get_node(dest));
+   tuple *tuple(state.get_tuple(msg));
+
+#ifdef CORE_STATISTICS
+   state.stat_predicate_proven[tuple->get_predicate_id()]++;
+#endif
+
+   simple_tuple *stuple(new simple_tuple(tuple, state.count));
+   stuple->set_delay(send_delay_time(pc));
+
+   if(msg == dest) {
+      if(state.use_local_tuples || state.persistent_only) {
+         state.generated_other_level.push_back(stuple);
+      } else {
+         state.all->MACHINE->route_self(state.sched, state.node, stuple);
+         state.add_generated_tuple(stuple);
+      }
+   } else {
+#ifdef DEBUG_MODE
+      cout << "\t" << *tuple << " -> " << dest_val << endl;
+#endif
+#ifdef USE_UI
+      if(state::UI) {
+         LOG_TUPLE_SEND(state.node, state.all->DATABASE->find_node((node::node_id)dest_val), tuple);
+      }
+#endif
       state.all->MACHINE->route(state.node, state.sched, (node::node_id)dest_val, stuple);
    }
 }
@@ -1911,6 +1946,10 @@ eval_loop:
             
          case SEND_INSTR:
             execute_send(pc, state);
+            break;
+
+         case SEND_DELAY_INSTR:
+            execute_send_delay(pc, state);
             break;
             
          case OP_INSTR:

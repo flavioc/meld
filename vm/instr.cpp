@@ -422,6 +422,14 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          cout << "NEW AXIOMS ..." << endl;
          break;
 
+      case SEND_DELAY_INSTR:
+         cout << "SEND " << reg_string(send_delay_msg(pc))
+              << " TO " << reg_string(send_delay_dest(pc))
+              << " WITH DELAY " << send_delay_time(pc) << "s"
+              << endl;
+
+         break;
+
     	case ELSE_INSTR:
 		default:
          throw malformed_instr_error("unknown instruction code");

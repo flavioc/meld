@@ -13,7 +13,6 @@ using namespace db;
 using namespace vm;
 using namespace process;
 using boost::asio::ip::tcp;
-using namespace std;
 
 #define CREATE_N_NODES 1
 #define RUN_NODE 2
@@ -45,6 +44,8 @@ vm::predicate* sim_sched::vacant_pred(NULL);
 bool sim_sched::thread_mode(false);
 bool sim_sched::stop_all(false);
 queue::push_safe_linear_queue<sim_sched::message_type*> sim_sched::socket_messages;
+
+using namespace std;
 	
 sim_sched::~sim_sched(void)
 {
@@ -136,7 +137,11 @@ sim_sched::new_work(const node *_src, work& new_work)
 	db::simple_tuple *stpl(new_work.get_tuple());
 	
 	if(thread_mode) {
-		to->pending.push(stpl);
+      if(stpl->has_delay()) {
+         to->add_delay_work(new_work, stpl->get_delay());
+      } else {
+         to->pending.push(stpl);
+      }
 	} else {
 		if(current_node == NULL) {
          heap_priority pr;
@@ -229,12 +234,11 @@ node*
 sim_sched::get_work(void)
 {
 	if(slave) {
-		while(current_node->pending.empty()) {
+		while(current_node->pending.empty() && !current_node->delayed_available()) {
 			usleep(100);
 			if(stop_all)
 				return NULL;
 		}
-		assert(!current_node->pending.empty());
 		return current_node;
 	}
 	
@@ -374,7 +378,7 @@ sim_sched::get_work(void)
             assert(!thread_mode);
             message_type ts(reply[2]);
             message_type node(reply[3]);
-            message_type face(reply[4]);
+            face_t face((face_t)reply[4]);
             sim_node *origin(dynamic_cast<sim_node*>(state.all->DATABASE->find_node((db::node::node_id)node)));
             sim_node *target(NULL);
 
@@ -403,7 +407,7 @@ sim_sched::get_work(void)
 				message_type ts(reply[2]);
 				message_type in(reply[3]);
 				node_val out((node_val)reply[4]);
-				int side((int)reply[5]);
+				face_t side((face_t)reply[5]);
 
 #ifdef DEBUG
             cout << ts << " neighbor(" << in << ", " << out << ", " << side << ")" << endl;
@@ -436,7 +440,7 @@ sim_sched::get_work(void)
          case REMOVE_NEIGHBOR: {
 				message_type ts(reply[2]);
 				message_type in(reply[3]);
-				int side((int)reply[4]);
+				face_t side((face_t)reply[4]);
 
 #ifdef DEBUG
             cout << ts << " remove neighbor(" << in << ", " << side << ")" << endl;
@@ -605,31 +609,13 @@ sim_sched::gather_next_tuples(db::node *node, simple_tuple_list& ls)
 {
 	sim_node *no((sim_node*)node);
 	
-	heap_priority pr;
-	
-	// we want to get all the tuples until no->timestamp
-
 	no->pending.pop_list(ls);
+
+   if(state.sim_instr_use)
+      no->get_tuples_until_timestamp(ls, state.sim_instr_limit);
+
+   no->add_delayed_tuples(ls);
 	
-	while(!no->tuple_pqueue.empty()) {
-		pr = no->tuple_pqueue.min_value();
-		
-		if(pr.int_priority > no->timestamp)
-			break;
-		
-		db::simple_tuple *stpl(no->tuple_pqueue.pop());
-		ls.push_back(stpl);
-	}
-
-   while(!no->rtuple_pqueue.empty()) {
-      pr = no->rtuple_pqueue.min_value();
-      if(pr.int_priority > no->timestamp)
-         break;
-      
-      db::simple_tuple *stpl(no->rtuple_pqueue.pop());
-      ls.push_back(stpl);
-   }
-
 #if 0
    for(simple_tuple_list::iterator it(ls.begin()), end(ls.end()); it != end; ++it) {
       simple_tuple *stpl(*it);

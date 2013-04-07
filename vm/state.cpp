@@ -428,29 +428,31 @@ state::do_persistent_tuples(void)
    return true;
 }
 
-void
-state::mark_rules_using_local_tuples(void)
+vm::strat_level
+state::mark_rules_using_local_tuples(db::simple_tuple_list& ls)
 {
    bool has_level(false);
-	
-	for(db::simple_tuple_list::iterator it(local_tuples.begin());
-		it != local_tuples.end(); )
+   vm::strat_level level;
+
+	for(db::simple_tuple_list::iterator it(ls.begin());
+		it != ls.end(); )
 	{
 		db::simple_tuple *stpl(*it);
+      cout << "Marking " << *stpl << endl;
 		vm::tuple *tpl(stpl->get_tuple());
 
       if(!has_level) {
-         current_level = stpl->get_strat_level();
+         level = stpl->get_strat_level();
          has_level = true;
       }
 
       if(!stpl->can_be_consumed()) {
          delete tpl;
          delete stpl;
-         it = local_tuples.erase(it);
+         it = ls.erase(it);
       } else if(tpl->is_persistent() || tpl->is_reused()) {
          generated_persistent_tuples.push_back(stpl);
-			it = local_tuples.erase(it);
+			it = ls.erase(it);
 		} else if(tpl->is_action()) {
 			assert(false);
 		} else {
@@ -461,6 +463,8 @@ state::mark_rules_using_local_tuples(void)
 			it++;
 		}
 	}
+
+   return level;
 }
 
 void
@@ -591,9 +595,10 @@ state::run_node(db::node *no)
    cout << "Node " << node->get_id() << endl;
 #endif
 
+   assert(local_tuples.empty());
 	sched->gather_next_tuples(node, local_tuples);
    start_matching();
-	mark_rules_using_local_tuples();
+	current_level = mark_rules_using_local_tuples(local_tuples);
    if(do_persistent_tuples()) {
       // if using the simulator, we check if we exhausted the available time to run
       mark_active_rules();
@@ -604,7 +609,7 @@ state::run_node(db::node *no)
 	cout << "Strat level: " << current_level << " got " << local_tuples.size() << " tuples " << endl;
 #endif
 
-	while(!rule_queue.empty()) {
+	while(!rule_queue.empty() && !aborted) {
 #ifdef USE_SIM
       if(check_instruction_limit()) {
          break;
@@ -630,6 +635,15 @@ state::run_node(db::node *no)
 		execute_rule(rule, *this);
 
 		process_consumed_local_tuples();
+#ifdef USE_SIM
+      if(sim_instr_use && !check_instruction_limit()) {
+         // gather new tuples
+         db::simple_tuple_list new_tuples;
+         sched::sim_node *snode(dynamic_cast<sched::sim_node*>(node));
+         snode->get_tuples_until_timestamp(new_tuples, sim_instr_limit);
+         local_tuples.splice(local_tuples.end(), new_tuples);
+      }
+#endif
       /* move from generated tuples to local_tuples */
       local_tuples.splice(local_tuples.end(), generated_tuples);
       if(!do_persistent_tuples()) {
@@ -652,15 +666,18 @@ state::run_node(db::node *no)
 #ifdef USE_SIM
             sched::sim_node *snode(dynamic_cast<sched::sim_node*>(node));
             snode->pending.push(stpl);
+            cout << "local Pushing " << *stpl << endl;
 #else
             assert(false);
 #endif
          } else {
             add_fact_to_node(tpl);
+            delete stpl;
          }
-		} else
+		} else {
 			delete tpl;
-		delete stpl;
+         delete stpl;
+      }
 	}
 
 	local_tuples.clear();
