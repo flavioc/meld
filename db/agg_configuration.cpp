@@ -12,7 +12,7 @@ void
 agg_configuration::add_to_set(vm::tuple *tpl, const ref_count many)
 {
    assert(many != 0);
-   assert(many > 0 || (many < 0 && !vals.empty()));
+   //assert(many > 0 || (many < 0 && !vals.empty()));
 
    changed = true; // this is important
 

@@ -2064,7 +2064,14 @@ do_execute(byte_code code, state& state)
 execution_return
 execute_bytecode(byte_code code, state& state)
 {
+#ifdef DEBUG_MODE
+   if(state.node && state.tuple && state.node->get_id() == 2) {
+      cout << "Processing " << *(state.tuple) << " " << state.count << endl;
+   }
+#endif
+
    const return_type ret(do_execute(code, state));
+
    
 	state.unmark_generated_tuples();
 	

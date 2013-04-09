@@ -33,6 +33,8 @@ private:
 	bool to_delete;
    // if tuple was generated during this rule, mark as it as such so that it cannot be used yet
    bool generated_this_run;
+   // if tuple is a final aggregate
+   bool is_final_aggregate;
 
 public:
 
@@ -85,6 +87,16 @@ public:
       return !to_delete && !generated_this_run;
    }
 
+   inline bool is_aggregate(void) const
+   {
+      return is_final_aggregate;
+   }
+
+   inline void set_as_aggregate(void)
+   {
+      is_final_aggregate = true;
+   }
+
    inline bool has_delay(void) const
    {
       return delay > 0;
@@ -129,10 +141,15 @@ public:
 
    explicit simple_tuple(vm::tuple *_tuple, const vm::ref_count _count):
       data(_tuple), count(_count), delay(0),
-      to_delete(false), generated_this_run(false)
+      to_delete(false), generated_this_run(false),
+      is_final_aggregate(false)
    {}
 
-   explicit simple_tuple(void) {} // for serialization purposes
+   explicit simple_tuple(void): // for serialization purposes
+      delay(0), to_delete(false), generated_this_run(false),
+      is_final_aggregate(false)
+   {
+   }
 
    ~simple_tuple(void);
 };

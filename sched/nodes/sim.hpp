@@ -67,6 +67,9 @@ public:
 
    inline bool delayed_available(void) const
    {
+      if(delay_queue.empty())
+         return false;
+
       utils::unix_timestamp now(utils::get_timestamp());
       const delay_work& t(delay_queue.top());
 

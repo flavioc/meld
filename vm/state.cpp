@@ -270,7 +270,7 @@ state::add_fact_to_node(vm::tuple *tpl, vm::ref_count count)
 static inline bool
 tuple_for_assertion(db::simple_tuple *stpl)
 {
-   return ((stpl->get_tuple())->is_aggregate() && stpl->get_generated_run())
+   return ((stpl->get_tuple())->is_aggregate() && stpl->is_aggregate())
       || !stpl->get_tuple()->is_aggregate();
 }
 
@@ -285,7 +285,7 @@ state::search_for_negative_tuple_partial_agg(db::simple_tuple *stpl)
       db::simple_tuple *stpl2(*it);
       vm::tuple *tpl2(stpl2->get_tuple());
 
-      if(tpl2->is_aggregate() && !stpl2->get_generated_run() &&
+      if(tpl2->is_aggregate() && !stpl2->is_aggregate() &&
             stpl2->get_count() == -1 && *tpl2 == *tpl)
       {
          generated_persistent_tuples.erase(it);
@@ -328,7 +328,7 @@ state::search_for_negative_tuple_full_agg(db::simple_tuple *stpl)
       db::simple_tuple *stpl2(*it);
       vm::tuple *tpl2(stpl2->get_tuple());
 
-      if(tpl2->is_aggregate() && stpl2->get_generated_run() && stpl2->get_count() == -1 && *tpl2 == *tpl)
+      if(tpl2->is_aggregate() && stpl2->is_aggregate() && stpl2->get_count() == -1 && *tpl2 == *tpl)
       {
          generated_persistent_tuples.erase(it);
          return stpl2;
@@ -356,10 +356,11 @@ state::do_persistent_tuples(void)
 #endif
       db::simple_tuple *stpl(generated_persistent_tuples.front());
       vm::tuple *tpl(stpl->get_tuple());
+      cout << "Process " << *stpl << endl;
 
       generated_persistent_tuples.pop_front();
 
-      if(stpl->get_count() == 1 && (tpl->is_aggregate() && !stpl->get_generated_run())) {
+      if(stpl->get_count() == 1 && (tpl->is_aggregate() && !stpl->is_aggregate())) {
          db::simple_tuple *stpl2(search_for_negative_tuple_partial_agg(stpl));
          if(stpl2) {
             if(node->get_id() == 1) {
@@ -371,7 +372,7 @@ state::do_persistent_tuples(void)
          }
       }
 
-      if(stpl->get_count() == 1 && (tpl->is_aggregate() && stpl->get_generated_run())) {
+      if(stpl->get_count() == 1 && (tpl->is_aggregate() && stpl->is_aggregate())) {
          db::simple_tuple *stpl2(search_for_negative_tuple_full_agg(stpl));
          if(stpl2) {
             if(node->get_id() == 1) {
@@ -398,19 +399,11 @@ state::do_persistent_tuples(void)
 #endif
 
       if(tuple_for_assertion(stpl)) {
-         stpl->set_generated_run(false);
          process_persistent_tuple(stpl, tpl);
       } else {
          // aggregate
          add_to_aggregate(stpl);
       }
-
-		if(!tpl->is_reused()) {
-			//delete stpl;
-		} else {
-			if(stpl->get_count() < 0)
-				delete stpl;
-		}
    }
 
 	while(!leaves_for_deletion.empty()) {
@@ -438,7 +431,6 @@ state::mark_rules_using_local_tuples(db::simple_tuple_list& ls)
 		it != ls.end(); )
 	{
 		db::simple_tuple *stpl(*it);
-      cout << "Marking " << *stpl << endl;
 		vm::tuple *tpl(stpl->get_tuple());
 
       if(!has_level) {
@@ -452,7 +444,7 @@ state::mark_rules_using_local_tuples(db::simple_tuple_list& ls)
          it = ls.erase(it);
       } else if(tpl->is_persistent() || tpl->is_reused()) {
          generated_persistent_tuples.push_back(stpl);
-			it = ls.erase(it);
+         it = ls.erase(it);
 		} else if(tpl->is_action()) {
 			assert(false);
 		} else {
@@ -509,7 +501,7 @@ state::add_to_aggregate(db::simple_tuple *stpl)
 
    for(simple_tuple_list::iterator it(list.begin()); it != list.end(); ++it) {
       simple_tuple *stpl(*it);
-      stpl->set_generated_run(true); // mark as true aggregate
+      stpl->set_as_aggregate();
       generated_persistent_tuples.push_back(stpl);
    }
 }
@@ -541,7 +533,7 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
 			persistent_only = true;
 			use_local_tuples = false;
 			execute_bytecode(all->PROGRAM->get_predicate_bytecode(tuple->get_predicate_id()), *this);
-			// this will be deleted during processing of local tuples!
+         delete stpl;
 		} else {
       	node::delete_info deleter(node->delete_tuple(tpl, -stpl->get_count()));
 
@@ -666,7 +658,6 @@ state::run_node(db::node *no)
 #ifdef USE_SIM
             sched::sim_node *snode(dynamic_cast<sched::sim_node*>(node));
             snode->pending.push(stpl);
-            cout << "local Pushing " << *stpl << endl;
 #else
             assert(false);
 #endif
@@ -675,8 +666,7 @@ state::run_node(db::node *no)
             delete stpl;
          }
 		} else {
-			delete tpl;
-         delete stpl;
+         db::simple_tuple::wipeout(stpl);
       }
 	}
 
@@ -687,14 +677,15 @@ state::run_node(db::node *no)
    process_others();
 
    // store any remaining persistent tuples
+   sched::sim_node *snode(dynamic_cast<sched::sim_node*>(node));
    for(simple_tuple_list::iterator it(generated_persistent_tuples.begin()), end(generated_persistent_tuples.end());
          it != end;
          ++it)
    {
       assert(aborted);
 #ifdef USE_SIM
-      sched::sim_node *snode(dynamic_cast<sched::sim_node*>(node));
-      snode->pending.push(*it);
+      db::simple_tuple *stpl(*it);
+      snode->pending.push(stpl);
 #else
       assert(false);
 #endif
