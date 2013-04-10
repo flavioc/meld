@@ -925,7 +925,6 @@ build_match_object(match& m, pcounter pc, state& state, const predicate *pred)
 typedef enum {
 	ITER_DB,
 	ITER_QUEUE,
-	ITER_ORIGINAL,
 	ITER_LOCAL
 } iter_type_t;
 
@@ -945,8 +944,6 @@ private:
 				return ((simple_tuple*)l.second)->get_tuple();
 			case ITER_DB:
 				return ((tuple_trie_leaf*)l.second)->get_underlying_tuple();
-			case ITER_ORIGINAL:
-				return (tuple*)l.second;
 			default: assert(false); return NULL;
 		}
 	}
@@ -1056,9 +1053,6 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 			everything.push_back(iter_object(ITER_DB, (void*)tuple_leaf));
 		}
 		
-		if(state.original_status == state::ORIGINAL_CAN_BE_USED)
-			everything.push_back(iter_object(ITER_ORIGINAL, (void*)state.original_tuple));
-		
 		//cout << "Sorting " << everything.size() << endl;
 		
 		sort(everything.begin(), everything.end(), tuple_sorter(field, pred));
@@ -1133,22 +1127,6 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 					if(!(ret == RETURN_LINEAR || ret == RETURN_DERIVED)) {
 						stpl->will_not_delete();
 					}
-				}
-				break;
-				case ITER_ORIGINAL: {
-					tuple *match_tuple((tuple*)p.second);
-			
-					if(state.original_status == state::ORIGINAL_WAS_CONSUMED)
-						continue;
-				
-					PUSH_CURRENT_STATE(match_tuple, NULL, NULL);
-			
-					ret = execute(first, state);
-			
-					POP_STATE();
-			
-					if(ret == RETURN_LINEAR || ret == RETURN_DERIVED)
-						state.original_status = state::ORIGINAL_WAS_CONSUMED;
 				}
 				break;
 				default: assert(false);
@@ -1301,25 +1279,6 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 			if(state.is_linear && ret == RETURN_DERIVED) {
 				return ret;
          }
-		}
-	}
-   
-	// must attempt to use original tuple, if possible
-	if(state.original_status == state::ORIGINAL_CAN_BE_USED) {
-		if(state.original_tuple->get_predicate() == pred && do_matches(pc, state.original_tuple, state)) {
-			PUSH_CURRENT_STATE(state.original_tuple, NULL, NULL);
-			
-			return_type ret = execute(first, state);
-			
-			POP_STATE();
-			
-			if((ret == RETURN_LINEAR || ret == RETURN_DERIVED) && this_is_linear)
-				state.original_status = state::ORIGINAL_WAS_CONSUMED;
-			
-			if(ret == RETURN_LINEAR)
-				return ret;
-			if(ret == RETURN_DERIVED && state.is_linear)
-				return ret;
 		}
 	}
    
@@ -2019,34 +1978,6 @@ eval_loop:
            execute_new_axioms(pc, state);
            break;
 
-			case SAVE_ORIGINAL_INSTR:
-			{
-				state.original_status = state::ORIGINAL_CAN_BE_USED;
-				
-            const bool old_is_linear(state.is_linear);
-            
-            state.is_linear = false;
-            
-            return_type ret(execute(pc + SAVE_ORIGINAL_BASE, state));
-
-				assert(ret != RETURN_LINEAR);
-				assert(ret != RETURN_NO_RETURN);
-				assert(ret != RETURN_DERIVED);
-
-            state.is_linear = old_is_linear;
-
-				assert(ret == RETURN_OK);
-				
-				if(state.original_status == state::ORIGINAL_WAS_CONSUMED)
-					return RETURN_LINEAR; // consumed!
-				else
-					state.original_status = state::ORIGINAL_CANNOT_BE_USED;
-            
-            pc += save_original_jump(pc);
-
-            goto eval_loop;
-         }
-            
          default: throw vm_exec_error("unsupported instruction");
       }
    }

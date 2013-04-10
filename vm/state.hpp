@@ -60,12 +60,6 @@ private:
 
 public:
 	
-	vm::tuple *original_tuple;
-	enum {
-		ORIGINAL_CAN_BE_USED,
-		ORIGINAL_CANNOT_BE_USED,
-		ORIGINAL_WAS_CONSUMED
-	} original_status;
    vm::tuple *tuple;
    db::tuple_trie_leaf *tuple_leaf;
 	db::simple_tuple *tuple_queue;

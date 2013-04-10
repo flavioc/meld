@@ -406,13 +406,6 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
       case RULE_DONE_INSTR:
          cout << "RULE DONE" << endl;
          break;
-      case SAVE_ORIGINAL_INSTR:
-         cout << "SAVE ORIGINAL" << endl;
-         if(recurse) {
-            instrs_print_until(advance(pc), pc + save_original_jump(pc), tabcount + 1, prog, cout);
-            return pc + save_original_jump(pc);
-         }
-         break;
 
       case NEW_NODE_INSTR:
          cout << "NEW NODE TO " << reg_string(new_node_reg(pc)) << endl;

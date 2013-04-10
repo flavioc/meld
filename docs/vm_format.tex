@@ -217,18 +217,6 @@ INSTRUCTION & BYTE FORMAT & ARGS\\
 \inst{RULE DONE} {0&0&0&1&0&0&0&0} {} \\
 & rule \textit{id} has been matched \\
 \\
-\inst{SAVE ORIGINAL} {0&0&0&1&0&0&1&0 \\\hline
-j&j&j&j&j&j&j&j \\\hline
-j&j&j&j&j&j&j&j \\\hline
-j&j&j&j&j&j&j&j \\\hline
-j&j&j&j&j&j&j&j} {jump} \\
-& save initial tuple and run the following \\
-& code until we hit a return. \\
-& the original tuple may be consumed \\
-& in the process. \\
-& if that's the case, then stop execution, \\
-& else continue by jumping to the outer block. \\
-\\
 \inst{NEW AXIOMS} {0&0&0&1&1&1&1&0 \\\hline
 j&j&j&j&j&j&j&j \\\hline
 j&j&j&j&j&j&j&j \\\hline

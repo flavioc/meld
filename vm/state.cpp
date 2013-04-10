@@ -146,8 +146,6 @@ void
 state::setup(vm::tuple *tpl, db::node *n, const ref_count count)
 {
    this->use_local_tuples = false;
-	this->original_tuple = tpl;
-   this->original_status = ORIGINAL_CANNOT_BE_USED;
    this->tuple = tpl;
    this->tuple_leaf = NULL;
    this->node = n;
