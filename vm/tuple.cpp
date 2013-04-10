@@ -133,6 +133,24 @@ tuple::copy_except(const field_num field) const
    return ret;
 }
 
+static inline void
+print_int(ostream& out, const int_val val)
+{
+   out << val;
+}
+
+static inline void
+print_float(ostream& out, const float_val val)
+{
+   out << val;
+}
+
+static inline void
+print_node(ostream& out, const node_val node)
+{
+   out << "@" << node;
+}
+
 void
 tuple::print(ostream& cout) const
 {
@@ -149,22 +167,22 @@ tuple::print(ostream& cout) const
          
       switch(get_field_type(i)) {
          case FIELD_INT:
-            cout << get_int(i);
+            print_int(cout, get_int(i));
             break;
          case FIELD_FLOAT:
-            cout << get_float(i);
+            print_float(cout, get_float(i));
             break;
          case FIELD_LIST_INT:
-            int_list::print(cout, get_int_list(i));
+            int_list::print(cout, get_int_list(i), print_int);
             break;
          case FIELD_LIST_FLOAT:
-            float_list::print(cout, get_float_list(i));
+            float_list::print(cout, get_float_list(i), print_float);
             break;
          case FIELD_LIST_NODE:
-            node_list::print(cout, get_node_list(i));
+            node_list::print(cout, get_node_list(i), print_node);
             break;
          case FIELD_NODE:
-            cout << "@" << get_node(i);
+            print_node(cout, get_node(i));
             break;
 			case FIELD_STRING:
 				cout << '"' << get_string(i)->get_content() << '"';

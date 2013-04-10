@@ -75,19 +75,21 @@ public:
       delete this;
    }
    
-   void print(std::ostream& cout, const bool first) const
+   typedef void (*print_function)(std::ostream&, const T);
+
+   void print(std::ostream& cout, const bool first, print_function print) const
    {
       if(first)
          cout << "[";
       else
          cout << ",";
       
-      cout << head;
+      print(cout, head);
       
       if(is_null(tail))
          cout << "]";
       else
-         tail->print(cout, false);
+         tail->print(cout, false, print);
    }
    
    static inline list_ptr null_list(void) { return (list_ptr)0; }
@@ -183,12 +185,12 @@ public:
    }
    
    static inline
-	void print(std::ostream& cout, list_ptr ls)
+	void print(std::ostream& cout, list_ptr ls, print_function print)
 	{
       if(is_null(ls))
          cout << "[]";
       else
-         cout << *ls;
+         ls->print(cout, true, print);
    }
    
    static inline
@@ -254,15 +256,6 @@ public:
       set_tail(_tail);
    }
 };
-
-template <typename T>
-std::ostream&
-operator<<(std::ostream& cout, const cons<T>& ls)
-{
-   ls.print(cout, true);
-   
-   return cout;
-}
 
 typedef cons<vm::int_val> int_list;
 typedef cons<vm::float_val> float_list;
