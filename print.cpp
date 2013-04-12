@@ -17,15 +17,19 @@ main(int argc, char **argv)
    }
    
    const string file(argv[1]);
-   
-   program prog(file);
-   
-   if(argc == 2)
-      prog.print_bytecode(cout);
-   else {
-      for(int i(2); i < argc; ++i) {
-         prog.print_bytecode_by_predicate(cout, string(argv[i]));
+
+   try {
+      program prog(file);
+      if(argc == 2)
+         prog.print_bytecode(cout);
+      else {
+         for(int i(2); i < argc; ++i) {
+            prog.print_bytecode_by_predicate(cout, string(argv[i]));
+         }
       }
+   } catch(vm::load_file_error& err) {
+      cerr << "File error: " << err.what() << endl;
+      exit(EXIT_FAILURE);
    }
    
    return EXIT_SUCCESS;
