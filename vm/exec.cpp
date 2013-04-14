@@ -326,7 +326,6 @@ execute_send_self(tuple *tuple, state& state)
          }
       }
 #endif
-
       if(pred->get_strat_level() != state.current_level) {
          simple_tuple *stuple(new simple_tuple(tuple, state.count));
          assert(stuple->can_be_consumed());
@@ -362,6 +361,11 @@ execute_send(const pcounter& pc, state& state)
    const reg_num dest(send_dest(pc));
    const node_val dest_val(state.get_node(dest));
    tuple *tuple(state.get_tuple(msg));
+
+   if(state.count < 0 && tuple->is_linear() && !tuple->is_reused()) {
+      delete tuple;
+      return;
+   }
 
 #ifdef CORE_STATISTICS
    state.stat_predicate_proven[tuple->get_predicate_id()]++;
