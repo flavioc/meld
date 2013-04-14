@@ -235,10 +235,13 @@ j&j&j&j&j&j&j&j} {jump} \\
 \inst{SEND DELAY} {0&0&0&1&0&1&0&1 \\\hline
 0&0&0&r$_1$&r$_1$&r$_1$&r$_1$&r$_1$\\\hline
 0&0&0&r$_2$&r$_2$&r$_2$&r$_2$&r$_2$\\\hline
+t&t&t&t&t&t&t&t\\\hline
+t&t&t&t&t&t&t&t\\\hline
+t&t&t&t&t&t&t&t\\\hline
 t&t&t&t&t&t&t&t} {reg$_1$, reg$_2$, time} \\
 & sends the tuple in {\it reg$_1$} along the path in {\it reg$_2$}\\
 & if {\it reg$_1$ = reg$_2$} then the tuple is stored locally\\
-& time indicates the delay, in seconds, in the derivation \\
+& time indicates the delay (in milliseconds) of the derivation \\
    \\
 \end{tabular}
 

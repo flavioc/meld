@@ -53,12 +53,12 @@ private:
 
 public:
 
-   void add_delay_work(process::work& work, const vm::uint_val seconds)
+   void add_delay_work(process::work& work, const vm::uint_val milliseconds)
    {
       delay_work w;
 
       w.work = work;
-      w.when = utils::get_timestamp() + seconds * 1000;
+      w.when = utils::get_timestamp() + milliseconds;
 
       delay_mtx.lock();
       delay_queue.push(w);

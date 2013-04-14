@@ -65,7 +65,7 @@ const size_t RULE_BASE           = 1 + uint_size;
 const size_t RULE_DONE_BASE      = 1;
 const size_t NEW_NODE_BASE       = 2;
 const size_t NEW_AXIOMS_BASE     = 1 + jump_size;
-const size_t SEND_DELAY_BASE     = 4;
+const size_t SEND_DELAY_BASE     = 3 + uint_size;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -335,7 +335,7 @@ inline code_offset_t new_axioms_jump(const pcounter pc) { return jump_get(pc, 1)
 
 inline reg_num send_delay_msg(pcounter pc) { return reg_get(pc, 1); }
 inline reg_num send_delay_dest(pcounter pc) { return reg_get(pc, 2); }
-inline uint_val send_delay_time(pcounter pc) { return (uint_val)reg_get(pc, 3); }
+inline uint_val send_delay_time(pcounter pc) { return pcounter_uint(pc + 3); }
 
 /* advance function */
 
