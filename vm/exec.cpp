@@ -403,6 +403,9 @@ execute_send_delay(const pcounter& pc, state& state)
    stuple->set_delay(send_delay_time(pc));
 
    if(msg == dest) {
+#ifdef DEBUG_MODE
+      cout << "\t" << *tuple << " -> self " << state.node->get_id() << endl;
+#endif
       if(state.use_local_tuples || state.persistent_only) {
          state.generated_other_level.push_back(stuple);
       } else {
