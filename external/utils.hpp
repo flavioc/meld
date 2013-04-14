@@ -19,6 +19,7 @@ argument float2str(const argument);
 argument truncate(const argument, const argument);
 argument float2int(const argument);
 argument wastetime(const argument);
+argument node2int(const argument);
    
 }
 }

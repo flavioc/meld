@@ -440,6 +440,10 @@ state::mark_rules_using_local_tuples(db::simple_tuple_list& ls)
          delete tpl;
          delete stpl;
          it = ls.erase(it);
+      } else if(tpl->is_action()) {
+         all->MACHINE->run_action(sched, node, tpl);
+         delete stpl;
+         it = ls.erase(it);
       } else if(tpl->is_persistent() || tpl->is_reused()) {
          generated_persistent_tuples.push_back(stpl);
          it = ls.erase(it);

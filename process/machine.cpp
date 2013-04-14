@@ -125,7 +125,8 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, const bool f
 void
 machine::route_self(sched::base *sched, node *node, simple_tuple *stpl)
 {
-   assert(!stpl->get_tuple()->is_action());
+   assert((stpl->has_delay() && stpl->get_tuple()->is_action()) ||
+         !stpl->get_tuple()->is_action());
    sched->new_work_self(node, stpl);
 }
 

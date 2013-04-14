@@ -100,5 +100,13 @@ wastetime(EXTERNAL_ARG(x))
 	RETURN_INT(x);
 }
 
+argument
+node2int(EXTERNAL_ARG(x))
+{
+   DECLARE_NODE(x);
+
+   RETURN_INT((int_val)x);
+}
+
 }
 }
