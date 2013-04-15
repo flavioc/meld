@@ -41,6 +41,9 @@ protected:
 	static vm::predicate *vacant_pred;
 	static bool thread_mode;
 	static bool stop_all;
+   // for initial node instantiation
+   static utils::unix_timestamp start_time;
+   static bool all_instantiated;
 	static queue::push_safe_linear_queue<message_type*> socket_messages;
 	bool slave;
 	
@@ -52,9 +55,25 @@ private:
    void send_pending_messages(void);
    void schedule_new_message(message_type *);
    void add_received_tuple(sim_node *, size_t, db::simple_tuple*);
-   void add_vacant(const size_t, sim_node *, const int, const int);
-   void add_neighbor(const size_t, sim_node *, const vm::node_val, const int, const int);
+   void add_vacant(const size_t, sim_node *, const face_t, const int);
+   void add_neighbor(const size_t, sim_node *, const vm::node_val, const face_t, const int);
    void add_neighbor_count(const size_t, sim_node *, const size_t, const int);
+   void instantiate_all_nodes(void);
+   db::node* master_get_work(void);
+   void handle_deterministic_computation(void);
+   void handle_create_n_nodes(vm::deterministic_timestamp, size_t, db::node::node_id);
+   db::node* handle_run_node(const vm::deterministic_timestamp, const db::node::node_id);
+   void handle_receive_message(const vm::deterministic_timestamp, const db::node::node_id,
+         const face_t, utils::byte *, int, const int);
+   void handle_add_neighbor(const vm::deterministic_timestamp, const db::node::node_id,
+         const db::node::node_id, const face_t);
+   void handle_remove_neighbor(const vm::deterministic_timestamp,
+      const db::node::node_id, const face_t);
+   void handle_tap(const vm::deterministic_timestamp, const db::node::node_id);
+   void handle_accel(const vm::deterministic_timestamp, const db::node::node_id,
+         const vm::int_val);
+   void handle_shake(const vm::deterministic_timestamp, const db::node::node_id,
+         const vm::int_val, const vm::int_val, const vm::int_val);
    
 public:
 	

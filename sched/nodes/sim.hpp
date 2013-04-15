@@ -17,13 +17,25 @@ namespace sched
 { 
 
 enum face_t {
+   INVALID_FACE = -1,
    BOTTOM = 0,
-   NORTH,
-   EAST,
-   WEST,
-   SOUTH,
-   TOP
+   NORTH = 1,
+   EAST = 2,
+   WEST = 3,
+   SOUTH = 4,
+   TOP = 5
 };
+
+inline face_t& operator++(face_t &f)
+{
+   f = static_cast<face_t>(f + 1);
+   return f;
+}
+
+inline face_t operator++(face_t& f, int) {
+   ++f;
+   return f;
+}
 
 class sim_node: public db::node
 {
@@ -51,7 +63,15 @@ private:
 
    std::priority_queue<delay_work, std::vector<delay_work>, delay_work_comparator> delay_queue;
 
+   bool instantiated_flag;
+   size_t neighbor_count;
+
 public:
+
+   static const vm::node_val NO_NEIGHBOR = (vm::node_val)-1;
+
+   static const face_t INITIAL_FACE = BOTTOM;
+   static const face_t FINAL_FACE = TOP;
 
    void add_delay_work(process::work& work, const vm::uint_val milliseconds)
    {
@@ -108,22 +128,21 @@ public:
       }
    }
 
-   int get_face(const vm::node_val node) {
-      if(node == bottom) return 0;
-      if(node == north) return 1;
-      if(node == east) return 2;
-      if(node == west) return 3;
-      if(node == south) return 4;
-      if(node == top) return 5;
-      return -1;
+   face_t get_face(const vm::node_val node) {
+      if(node == bottom) return BOTTOM;
+      if(node == north) return NORTH;
+      if(node == east) return EAST;
+      if(node == west) return WEST;
+      if(node == south) return SOUTH;
+      if(node == top) return TOP;
+      return INVALID_FACE;
    }
 	
    /// XXX move this to private
-	size_t timestamp;
-   size_t neighbor_count;
+   vm::deterministic_timestamp timestamp;
 	queue::heap_queue<db::simple_tuple*> tuple_pqueue; // for deterministic computation
 	queue::heap_queue<db::simple_tuple*> rtuple_pqueue; // same as before but with retraction facts
-	queue::push_safe_linear_queue<db::simple_tuple*> pending; // for fast computation
+	queue::push_safe_linear_queue<db::simple_tuple*> pending; // for threaded computation
 
 	inline bool has_work(void) const { return !tuple_pqueue.empty(); }
 
@@ -159,8 +178,38 @@ public:
       assert(!has_work());
    }
 
+   inline bool has_been_instantiated(void) const
+   {
+      return instantiated_flag;
+   }
+
+   inline void set_instantiated(const bool flag)
+   {
+      instantiated_flag = flag;
+   }
+
+   inline void inc_neighbor_count(void)
+   {
+      ++neighbor_count;
+   }
+
+   inline void dec_neighbor_count(void)
+   {
+      --neighbor_count;
+   }
+
+   inline size_t get_neighbor_count(void) const
+   {
+      return neighbor_count;
+   }
+
    explicit sim_node(const db::node::node_id _id, const db::node::node_id _trans, vm::all *all):
-		db::node(_id, _trans, all), timestamp(0), neighbor_count(0)
+		db::node(_id, _trans, all),
+      top(NO_NEIGHBOR), bottom(NO_NEIGHBOR), east(NO_NEIGHBOR),
+      west(NO_NEIGHBOR), north(NO_NEIGHBOR), south(NO_NEIGHBOR),
+      instantiated_flag(false),
+      neighbor_count(0),
+      timestamp(0)
    {
       top = bottom = west = east = north = south = -1;
 		tuple_pqueue.set_type(HEAP_INT_ASC);

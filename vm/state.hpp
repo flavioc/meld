@@ -21,6 +21,7 @@ namespace sched {
 
 namespace vm {
 	
+typedef size_t deterministic_timestamp;
 
 class state
 {
@@ -89,8 +90,8 @@ public:
 #endif
 #ifdef USE_SIM
    static bool SIM;
-   size_t sim_instr_counter;
-   size_t sim_instr_limit;
+   deterministic_timestamp sim_instr_counter;
+   deterministic_timestamp sim_instr_limit;
    bool sim_instr_use;
 #endif
 

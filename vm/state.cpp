@@ -376,6 +376,7 @@ state::do_persistent_tuples(void)
             if(node->get_id() == 1) {
                //cout << "=========> Deleted " << *stpl << " " << *stpl2 << endl;
             }
+            assert(stpl != stpl2);
             simple_tuple::wipeout(stpl);
             simple_tuple::wipeout(stpl2);
 	         continue;
@@ -447,8 +448,6 @@ state::mark_rules_using_local_tuples(db::simple_tuple_list& ls)
       } else if(tpl->is_persistent() || tpl->is_reused()) {
          generated_persistent_tuples.push_back(stpl);
          it = ls.erase(it);
-		} else if(tpl->is_action()) {
-			assert(false);
 		} else {
 #ifdef USE_RULE_COUNTING
 			node->matcher.register_tuple(tpl, stpl->get_count());
