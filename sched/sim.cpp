@@ -137,6 +137,16 @@ sim_sched::init(const size_t num_threads)
 }
 
 void
+sim_sched::new_work_delay(sched::base *target, work& new_work, const uint_val delay)
+{
+   assert(thread_mode);
+   if(thread_mode) {
+      sim_node *to(dynamic_cast<sim_node*>(new_work.get_node()));
+      to->add_delay_work(new_work, delay);
+   }
+}
+
+void
 sim_sched::new_work(const node *_src, work& new_work)
 {
    sim_node *to(dynamic_cast<sim_node*>(new_work.get_node()));
@@ -144,11 +154,7 @@ sim_sched::new_work(const node *_src, work& new_work)
 	db::simple_tuple *stpl(new_work.get_tuple());
 	
 	if(thread_mode) {
-      if(stpl->has_delay()) {
-         to->add_delay_work(new_work, stpl->get_delay());
-      } else {
-         to->pending.push(stpl);
-      }
+      to->pending.push(stpl);
 	} else {
 		if(current_node == NULL) {
          heap_priority pr;
@@ -163,6 +169,7 @@ sim_sched::new_work(const node *_src, work& new_work)
          info.work = new_work;
          info.timestamp = state.sim_instr_counter;
          info.src = src;
+         cout << _src->get_id() << " new work " << *stpl << endl;
 
 			tmp_work.push_back(info);
 		}

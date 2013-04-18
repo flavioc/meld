@@ -277,6 +277,8 @@ state::search_for_negative_tuple_partial_agg(db::simple_tuple *stpl)
 {
    vm::tuple *tpl(stpl->get_tuple());
 
+   assert(!stpl->is_aggregate());
+
    for(db::simple_tuple_list::iterator it(generated_persistent_tuples.begin());
          it != generated_persistent_tuples.end(); ++it)
    {
@@ -354,7 +356,6 @@ state::do_persistent_tuples(void)
 #endif
       db::simple_tuple *stpl(generated_persistent_tuples.front());
       vm::tuple *tpl(stpl->get_tuple());
-      cout << "Process " << *stpl << endl;
 
       generated_persistent_tuples.pop_front();
 

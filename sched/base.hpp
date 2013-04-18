@@ -107,6 +107,12 @@ public:
    
    // work to be sent to the same thread
    virtual void new_work(const db::node *, process::work&) = 0;
+   // delayed work to be sent to the target thread
+   virtual void new_work_delay(sched::base *, process::work&, const vm::uint_val)
+   {
+      assert(false);
+   }
+
    // new aggregate
    virtual void new_agg(process::work&) = 0;
    // work to be sent to a different thread

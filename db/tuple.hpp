@@ -27,8 +27,6 @@ class simple_tuple: public mem::base
 private:
    vm::tuple *data;
    vm::ref_count count;
-   // time delay
-   vm::uint_val delay;
    // tuple is dead and must be deleted at the end of rule execution
 	bool to_delete;
    // if tuple was generated during this rule, mark as it as such so that it cannot be used yet
@@ -97,21 +95,6 @@ public:
       is_final_aggregate = true;
    }
 
-   inline bool has_delay(void) const
-   {
-      return delay > 0;
-   }
-
-   inline vm::uint_val get_delay(void) const
-   {
-      return delay;
-   }
-
-   inline void set_delay(const vm::uint_val _delay)
-   {
-      delay = _delay;
-   }
-
    void print(std::ostream&) const;
 
    inline vm::ref_count get_count(void) const { return count; }
@@ -140,13 +123,13 @@ public:
    static void wipeout(simple_tuple *stpl) { delete stpl->get_tuple(); delete stpl; }
 
    explicit simple_tuple(vm::tuple *_tuple, const vm::ref_count _count):
-      data(_tuple), count(_count), delay(0),
+      data(_tuple), count(_count),
       to_delete(false), generated_this_run(false),
       is_final_aggregate(false)
    {}
 
    explicit simple_tuple(void): // for serialization purposes
-      delay(0), to_delete(false), generated_this_run(false),
+      to_delete(false), generated_this_run(false),
       is_final_aggregate(false)
    {
    }

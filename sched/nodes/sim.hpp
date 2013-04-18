@@ -2,8 +2,6 @@
 #ifndef SCHED_NODES_SIM_HPP
 #define SCHED_NODES_SIM_HPP
 
-#include <queue>
-
 #include "mem/base.hpp"
 #include "db/tuple.hpp"
 #include "utils/spinlock.hpp"
@@ -12,6 +10,7 @@
 #include "queue/safe_simple_pqueue.hpp"
 #include "queue/safe_linear_queue.hpp"
 #include "utils/time.hpp"
+#include "queue/safe_general_pqueue.hpp"
 
 namespace sched
 { 
@@ -40,8 +39,6 @@ inline face_t operator++(face_t& f, int) {
 class sim_node: public db::node
 {
 private:
-   boost::mutex delay_mtx;
-
    vm::node_val top;
    vm::node_val bottom;
    vm::node_val east;
@@ -49,19 +46,7 @@ private:
    vm::node_val north;
    vm::node_val south;
 
-   typedef struct {
-      process::work work;
-      // unix time in milliseconds
-      utils::unix_timestamp when;
-   } delay_work;
-
-   struct delay_work_comparator {
-      bool operator() (const delay_work& a, const delay_work& b) {
-         return a.when < b.when;
-      }
-   };
-
-   std::priority_queue<delay_work, std::vector<delay_work>, delay_work_comparator> delay_queue;
+   queue::general_pqueue<process::work, utils::unix_timestamp> delay_queue;
 
    bool instantiated_flag;
    size_t neighbor_count;
@@ -75,14 +60,7 @@ public:
 
    void add_delay_work(process::work& work, const vm::uint_val milliseconds)
    {
-      delay_work w;
-
-      w.work = work;
-      w.when = utils::get_timestamp() + milliseconds;
-
-      delay_mtx.lock();
-      delay_queue.push(w);
-      delay_mtx.unlock();
+      delay_queue.push(work, utils::get_timestamp() + milliseconds);
    }
 
    inline bool delayed_available(void) const
@@ -91,9 +69,9 @@ public:
          return false;
 
       utils::unix_timestamp now(utils::get_timestamp());
-      const delay_work& t(delay_queue.top());
+      utils::unix_timestamp best(delay_queue.top_priority());
 
-      return t.when < now;
+      return best < now;
    }
 
    inline void add_delayed_tuples(db::simple_tuple_list& ls)
@@ -101,15 +79,10 @@ public:
       utils::unix_timestamp now(utils::get_timestamp());
 
       while(!delay_queue.empty()) {
-         delay_mtx.lock();
-         const delay_work& t(delay_queue.top());
-         delay_mtx.unlock();
+         const utils::unix_timestamp best(delay_queue.top_priority());
 
-         if(t.when < now) {
-            ls.push_back(t.work.get_tuple());
-            delay_mtx.lock();
-            delay_queue.pop();
-            delay_mtx.unlock();
+         if(best < now) {
+            ls.push_back(delay_queue.pop().get_tuple());
          } else
             break;
       }

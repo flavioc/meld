@@ -400,18 +400,12 @@ execute_send_delay(const pcounter& pc, state& state)
 #endif
 
    simple_tuple *stuple(new simple_tuple(tuple, state.count));
-   stuple->set_delay(send_delay_time(pc));
 
    if(msg == dest) {
 #ifdef DEBUG_MODE
       cout << "\t" << *tuple << " -> self " << state.node->get_id() << endl;
 #endif
-      if(state.use_local_tuples || state.persistent_only) {
-         state.generated_other_level.push_back(stuple);
-      } else {
-         state.all->MACHINE->route_self(state.sched, state.node, stuple);
-         state.add_generated_tuple(stuple);
-      }
+      state.all->MACHINE->route_self(state.sched, state.node, stuple, send_delay_time(pc));
    } else {
 #ifdef DEBUG_MODE
       cout << "\t" << *tuple << " -> " << dest_val << endl;
@@ -421,7 +415,7 @@ execute_send_delay(const pcounter& pc, state& state)
          LOG_TUPLE_SEND(state.node, state.all->DATABASE->find_node((node::node_id)dest_val), tuple);
       }
 #endif
-      state.all->MACHINE->route(state.node, state.sched, (node::node_id)dest_val, stuple);
+      state.all->MACHINE->route(state.node, state.sched, (node::node_id)dest_val, stuple, send_delay_time(pc));
    }
 }
 

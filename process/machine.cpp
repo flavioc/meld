@@ -123,15 +123,19 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, const bool f
 }
 
 void
-machine::route_self(sched::base *sched, node *node, simple_tuple *stpl)
+machine::route_self(sched::base *sched, node *node, simple_tuple *stpl, const uint_val delay)
 {
-   assert((stpl->has_delay() && stpl->get_tuple()->is_action()) ||
-         !stpl->get_tuple()->is_action());
-   sched->new_work_self(node, stpl);
+   if(delay > 0) {
+      work new_work(node, stpl);
+      sched->new_work_delay(sched, new_work, delay);
+   } else {
+      assert(!stpl->get_tuple()->is_action());
+      sched->new_work_self(node, stpl);
+   }
 }
 
 void
-machine::route(const node* from, sched::base *sched_caller, const node::node_id id, simple_tuple* stpl)
+machine::route(const node* from, sched::base *sched_caller, const node::node_id id, simple_tuple* stpl, const uint_val delay)
 {  
    remote* rem(rout.find_remote(id));
    
@@ -146,7 +150,10 @@ machine::route(const node* from, sched::base *sched_caller, const node::node_id 
       sched::base *sched_other(sched_caller->find_scheduler(node));
 		const predicate *pred(stpl->get_predicate());
 
-		if(pred->is_action_pred()) {
+      if(delay > 0) {
+			work new_work(node, stpl);
+         sched_caller->new_work_delay(sched_caller, new_work, delay);
+      } else if(pred->is_action_pred()) {
 			run_action(sched_other, node, stpl->get_tuple(), sched_caller != sched_other);
 			delete stpl;
 		} else if(sched_other == sched_caller) {
@@ -164,6 +171,7 @@ machine::route(const node* from, sched::base *sched_caller, const node::node_id 
       // remote, mpi machine
       
       assert(rout.use_mpi());
+      assert(delay == 0);
       
       message *msg(new message(id, stpl));
       

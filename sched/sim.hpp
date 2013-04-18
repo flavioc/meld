@@ -81,8 +81,9 @@ public:
    
    virtual void new_agg(process::work&);
    virtual void new_work(const db::node *, process::work&);
+   virtual void new_work_delay(base *, process::work&, const vm::uint_val);
    
-   virtual void new_work_other(sched::base *, process::work&)
+   virtual void new_work_other(base *, process::work&)
    {
       assert(false);
    }
