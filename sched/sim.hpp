@@ -8,8 +8,7 @@
 
 #include "sched/base.hpp"
 #include "sched/nodes/sim.hpp"
-//#include "queue/unsafe_double_queue.hpp"
-//#include "queue/intrusive.hpp"
+#include "queue/safe_general_pqueue.hpp"
 
 namespace sched
 {
@@ -32,6 +31,9 @@ protected:
 	
    // for deterministic simulation: work generated during execution of a node
 	std::list<work_info> tmp_work;
+
+   // delayed tuples for deterministic execution
+   queue::general_pqueue<work_info, utils::unix_timestamp> delay_queue;
 
 	static vm::predicate *neighbor_pred;
 	static vm::predicate *tap_pred;
@@ -74,6 +76,8 @@ private:
          const vm::int_val);
    void handle_shake(const vm::deterministic_timestamp, const db::node::node_id,
          const vm::int_val, const vm::int_val, const vm::int_val);
+   void check_delayed_queue(void);
+   void send_send_message(const work_info&, const vm::deterministic_timestamp);
    
 public:
 	
@@ -81,7 +85,7 @@ public:
    
    virtual void new_agg(process::work&);
    virtual void new_work(const db::node *, process::work&);
-   virtual void new_work_delay(base *, process::work&, const vm::uint_val);
+   virtual void new_work_delay(base *, const db::node *, process::work&, const vm::uint_val);
    
    virtual void new_work_other(base *, process::work&)
    {

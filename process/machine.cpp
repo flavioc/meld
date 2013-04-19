@@ -127,7 +127,7 @@ machine::route_self(sched::base *sched, node *node, simple_tuple *stpl, const ui
 {
    if(delay > 0) {
       work new_work(node, stpl);
-      sched->new_work_delay(sched, new_work, delay);
+      sched->new_work_delay(sched, node, new_work, delay);
    } else {
       assert(!stpl->get_tuple()->is_action());
       sched->new_work_self(node, stpl);
@@ -152,7 +152,7 @@ machine::route(const node* from, sched::base *sched_caller, const node::node_id 
 
       if(delay > 0) {
 			work new_work(node, stpl);
-         sched_caller->new_work_delay(sched_caller, new_work, delay);
+         sched_caller->new_work_delay(sched_caller, from, new_work, delay);
       } else if(pred->is_action_pred()) {
 			run_action(sched_other, node, stpl->get_tuple(), sched_caller != sched_other);
 			delete stpl;

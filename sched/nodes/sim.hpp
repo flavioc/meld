@@ -124,8 +124,9 @@ public:
       while(!tuple_pqueue.empty()) {
          heap_priority pr = tuple_pqueue.min_value();
          
-         if((size_t)pr.int_priority > until)
+         if((size_t)pr.int_priority > until) {
             break;
+         }
          
          db::simple_tuple *stpl(tuple_pqueue.pop());
          ls.push_back(stpl);

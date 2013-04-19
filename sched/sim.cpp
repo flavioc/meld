@@ -137,12 +137,17 @@ sim_sched::init(const size_t num_threads)
 }
 
 void
-sim_sched::new_work_delay(sched::base *target, work& new_work, const uint_val delay)
+sim_sched::new_work_delay(sched::base *target, const db::node *_src, work& new_work, const uint_val delay)
 {
-   assert(thread_mode);
    if(thread_mode) {
       sim_node *to(dynamic_cast<sim_node*>(new_work.get_node()));
       to->add_delay_work(new_work, delay);
+   } else {
+      work_info info;
+      info.work = new_work;
+      info.timestamp = state.sim_instr_counter;
+      info.src = dynamic_cast<sim_node*>((node*)_src);
+      delay_queue.push(info, utils::get_timestamp() + delay);
    }
 }
 
@@ -271,42 +276,47 @@ sim_sched::instantiate_all_nodes(void)
 }
 
 void
+sim_sched::send_send_message(const work_info& info, const deterministic_timestamp ts)
+{
+   message_type reply[MAXLENGTH];
+
+   db::simple_tuple *stpl(info.work.get_tuple());
+   const size_t stpl_size(stpl->storage_size());
+   const size_t msg_size = 4 * sizeof(message_type) + stpl_size;
+   sim_node *no(dynamic_cast<sim_node*>(info.work.get_node()));
+   size_t i = 0;
+   reply[i++] = (message_type)msg_size;
+   reply[i++] = SEND_MESSAGE;
+   reply[i++] = (message_type)ts;
+   reply[i++] = (message_type)info.src->get_id();
+   reply[i++] = (message_type)info.src->get_face(no->get_id());
+
+   cout << info.src->get_id() << " Send " << *stpl << endl;
+
+   int pos = i * sizeof(message_type);
+   stpl->pack((utils::byte*)reply, msg_size + sizeof(message_type), &pos);
+
+   assert((size_t)pos == msg_size + sizeof(message_type));
+
+   simple_tuple::wipeout(stpl);
+
+   boost::asio::write(*socket, boost::asio::buffer(reply, reply[0] + sizeof(message_type)));
+}
+
+void
 sim_sched::handle_deterministic_computation(void)
 {
-	message_type reply[MAXLENGTH];
-   std::set<sim_node*> nodes; // all nodes touched
-
-   // go through all new work and pack several SEND_MESSAGE messages
-   // so we can send it all at once
+   std::set<sim_node*> nodes; // all touched nodes
 
    for(list<work_info>::iterator it(tmp_work.begin()), end(tmp_work.end());
       it != end;
       ++it)
    {
-      db::simple_tuple *stpl(it->work.get_tuple());
-      const size_t stpl_size(stpl->storage_size());
-      const size_t msg_size = 4 * sizeof(message_type) + stpl_size;
-      sim_node *no(dynamic_cast<sim_node*>(it->work.get_node()));
-      size_t i = 0;
-      reply[i++] = (message_type)msg_size;
-      reply[i++] = SEND_MESSAGE;
-      reply[i++] = (message_type)it->timestamp;
-      reply[i++] = (message_type)it->src->get_id();
-      reply[i++] = (message_type)it->src->get_face(no->get_id());
-
-      cout << current_node->get_id() << " Send " << *stpl << endl;
-
-      int pos = i * sizeof(message_type);
-      stpl->pack((utils::byte*)reply, msg_size + sizeof(message_type), &pos);
-
-      assert((size_t)pos == msg_size + sizeof(message_type));
-
-      simple_tuple::wipeout(stpl);
-
-      boost::asio::write(*socket, boost::asio::buffer(reply, reply[0] + sizeof(message_type)));
-
-      nodes.insert(no);
+      const work_info& info(*it);
+      send_send_message(info, info.timestamp);
+      nodes.insert(dynamic_cast<sim_node*>(info.work.get_node()));
    }
+
    tmp_work.clear();
 
    if(!current_node->pending.empty()) {
@@ -316,6 +326,7 @@ sim_sched::handle_deterministic_computation(void)
    current_node->timestamp = state.sim_instr_counter;
    
    size_t i(0);
+	message_type reply[MAXLENGTH];
    reply[i++] = (4 + nodes.size()) * sizeof(message_type);
    reply[i++] = NODE_RUN;
    reply[i++] = (message_type)current_node->timestamp;
@@ -527,6 +538,24 @@ sim_sched::handle_shake(const deterministic_timestamp ts, const db::node::node_i
    }
 }
 
+void
+sim_sched::check_delayed_queue(void)
+{
+   const utils::unix_timestamp now(utils::get_timestamp());
+
+   while(!delay_queue.empty()) {
+      const utils::unix_timestamp best(delay_queue.top_priority());
+
+      if(best < now) {
+         work_info info(delay_queue.pop());
+         sim_node *target(dynamic_cast<sim_node*>(info.work.get_node()));
+         send_send_message(info, max(dynamic_cast<sim_node*>(info.src)->timestamp, target->timestamp + 1));
+      } else {
+         return;
+      }
+   }
+}
+
 node*
 sim_sched::master_get_work(void)
 {
@@ -552,8 +581,13 @@ sim_sched::master_get_work(void)
                all_instantiated = true;
             }
          }
+         if(!thread_mode) {
+            check_delayed_queue();
+         }
 			continue;
-		}
+		} else {
+//         cout << "Not available" << endl;
+      }
 		
 		size_t length =
 			socket->read_some(boost::asio::buffer(reply, sizeof(message_type)));
@@ -708,8 +742,9 @@ sim_sched::gather_next_tuples(db::node *node, simple_tuple_list& ls)
 	
 	no->pending.pop_list(ls);
 
-   if(state.sim_instr_use)
+   if(state.sim_instr_use) {
       no->get_tuples_until_timestamp(ls, state.sim_instr_limit);
+   }
 
    no->add_delayed_tuples(ls);
 	
