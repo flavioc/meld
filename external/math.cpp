@@ -203,5 +203,18 @@ residual(EXTERNAL_ARG(l1), EXTERNAL_ARG(l2))
    RETURN_FLOAT(residual);
 }
 
+argument
+intpower(EXTERNAL_ARG(n1), EXTERNAL_ARG(n2))
+{
+   DECLARE_INT(n1);
+   DECLARE_INT(n2);
+
+   int_val result(1);
+   for(int i(0); i < n2; ++i)
+      result *= n1;
+
+   RETURN_INT(result);
+}
+
 }
 }

@@ -155,6 +155,7 @@ init_external_functions(void)
    register_external_function(EXTERNAL1(nodelistlast, FIELD_NODE, FIELD_LIST_NODE));
    register_external_function(EXTERNAL1(cpu_id, FIELD_INT, FIELD_NODE));
    register_external_function(EXTERNAL1(node2int, FIELD_INT, FIELD_NODE));
+   register_external_function(EXTERNAL2(intpower, FIELD_INT, FIELD_INT, FIELD_INT));
 
    atexit(cleanup_externals);
    

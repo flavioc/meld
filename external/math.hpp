@@ -19,6 +19,7 @@ argument divide(const argument, const argument);
 argument convolve(const argument, const argument);
 argument addfloatlists(const argument, const argument);
 argument residual(const argument, const argument);
+argument intpower(const argument, const argument);
 
 }
 
