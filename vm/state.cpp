@@ -301,6 +301,9 @@ state::search_for_negative_tuple_normal(db::simple_tuple *stpl)
 {
    vm::tuple *tpl(stpl->get_tuple());
 
+   assert(!tpl->is_aggregate());
+   assert(!stpl->is_aggregate());
+
    for(db::simple_tuple_list::iterator it(generated_persistent_tuples.begin());
          it != generated_persistent_tuples.end(); ++it)
    {
@@ -351,6 +354,7 @@ state::do_persistent_tuples(void)
    while(!generated_persistent_tuples.empty()) {
 #ifdef USE_SIM
       if(check_instruction_limit()) {
+         cout << "oops " << endl;
          return false;
       }
 #endif
@@ -359,14 +363,18 @@ state::do_persistent_tuples(void)
 
       generated_persistent_tuples.pop_front();
 
+      // XXX crashes when calling wipeout below
       if(stpl->get_count() == 1 && (tpl->is_aggregate() && !stpl->is_aggregate())) {
          db::simple_tuple *stpl2(search_for_negative_tuple_partial_agg(stpl));
          if(stpl2) {
-            if(node->get_id() == 1) {
-               //cout << "=========> Deleted " << *stpl << " " << *stpl2 << endl;
+            if(node->get_id() == 7) {
+               cout << "=========> Deleted " << *stpl << " " << *stpl2 << endl;
             }
-            simple_tuple::wipeout(stpl);
-            simple_tuple::wipeout(stpl2);
+            assert(stpl != stpl2);
+            //assert(stpl2->get_tuple() != stpl->get_tuple());
+            //assert(stpl2->get_predicate() == stpl->get_predicate());
+            //simple_tuple::wipeout(stpl);
+            //simple_tuple::wipeout(stpl2);
 	         continue;
          }
       }
@@ -374,29 +382,32 @@ state::do_persistent_tuples(void)
       if(stpl->get_count() == 1 && (tpl->is_aggregate() && stpl->is_aggregate())) {
          db::simple_tuple *stpl2(search_for_negative_tuple_full_agg(stpl));
          if(stpl2) {
-            if(node->get_id() == 1) {
-               //cout << "=========> Deleted " << *stpl << " " << *stpl2 << endl;
+            if(node->get_id() == 7) {
+               cout << "=========> Deleted " << *stpl << " " << *stpl2 << endl;
             }
             assert(stpl != stpl2);
-            simple_tuple::wipeout(stpl);
-            simple_tuple::wipeout(stpl2);
+            /*if(stpl2->get_tuple() == stpl->get_tuple()) {
+               cout << "fail " << *(stpl2->get_tuple()) << endl;
+            }
+            assert(stpl2->get_tuple() != stpl->get_tuple());
+            assert(stpl2->get_predicate() == stpl->get_predicate());*/
+            //simple_tuple::wipeout(stpl);
+            //simple_tuple::wipeout(stpl2);
 	         continue;
          }
       }
 
-#if 0
       if(stpl->get_count() == 1 && !tpl->is_aggregate()) {
          db::simple_tuple *stpl2(search_for_negative_tuple_normal(stpl));
          if(stpl2) {
             if(node->get_id() == 1) {
                cout << "========> Deleted normal " << *stpl << endl;
             }
-            simple_tuple::wipeout(stpl);
-            simple_tuple::wipeout(stpl2);
+            //simple_tuple::wipeout(stpl);
+            //simple_tuple::wipeout(stpl2);
             continue;
          }
       }
-#endif
 
       if(tuple_for_assertion(stpl)) {
          process_persistent_tuple(stpl, tpl);
