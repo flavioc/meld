@@ -215,7 +215,11 @@ router::find_remote(const node::node_id id) const
 void
 router::base_constructor(const size_t num_threads, int argc, char **argv, const bool use_mpi)
 {
-#ifdef COMPILE_MPI
+#ifndef COMPILE_MPI
+   (void)argc;
+   (void)argv;
+   (void)use_mpi;
+#else
    if(argv != NULL && argc > 0 && use_mpi) {
       static const int mpi_required_support(MPI_THREAD_MULTIPLE);
       int mpi_thread_support;
