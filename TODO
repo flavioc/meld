@@ -1,5 +1,0 @@
-- Implement intrusive versions of the following queues:
-	- push_safe_linear_queue (intrusive_push_safe_linear_queue)
-	- safe_linear_queue (intrusive_safe_linear_queue)
-	- unsafe_linear_queue (intrusive_unsafe_linear_queue)
-	- unsafe_linear_queue_count (intrusive_unsafe_linear_queue_count)
