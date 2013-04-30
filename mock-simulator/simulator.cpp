@@ -25,7 +25,7 @@
 #define SHAKE 15
 
 // comment this for threaded mode
-#define DETERMINISTIC
+//#define DETERMINISTIC
 
 typedef uint64_t message_type;
 const int max_length = 512 / sizeof(message_type);
@@ -282,7 +282,6 @@ force_read(int sock)
 
    length = recvfrom(sock, data + 1, data[0], 0, (struct sockaddr *)&cliaddr, &clilen);
 
-   cout << "Read one message length=" << length << " data[0]=" << data[0] << endl;
    assert(length == (size_t)data[0]);
 
    message_type ret = handle_data(data, sock);

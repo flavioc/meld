@@ -32,7 +32,7 @@ static const int TIME_TO_INSTANTIATE = 500;
 #define SHAKE 15
 
 // debug messages for simulation
-#define DEBUG
+// #define DEBUG
 
 namespace sched
 {
@@ -174,8 +174,6 @@ sim_sched::new_work(const node *_src, work& new_work)
          info.work = new_work;
          info.timestamp = state.sim_instr_counter;
          info.src = src;
-         cout << _src->get_id() << " new work " << *stpl << endl;
-
 			tmp_work.push_back(info);
 		}
 	}
@@ -407,7 +405,7 @@ sim_sched::handle_receive_message(const deterministic_timestamp ts, db::node::no
             &offset, state.all->PROGRAM));
 
 #ifdef DEBUG
-   cout << "Receive message " << origin->get_id() << " to " << target->get_id() << " " << *stpl << endl;
+   cout << "Receive message " << origin->get_id() << " to " << target->get_id() << " " << *stpl << " with priority " << ts << endl;
 #endif
 
    heap_priority pr;
