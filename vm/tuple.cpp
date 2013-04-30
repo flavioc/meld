@@ -71,6 +71,9 @@ tuple::field_equal(const tuple& other, const field_num i) const
 bool
 tuple::operator==(const tuple& other) const
 {
+   if(get_predicate() != other.get_predicate())
+      return false;
+
    for(field_num i = 0; i < num_fields(); ++i)
       if(!field_equal(other, i))
          return false;
