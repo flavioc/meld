@@ -103,7 +103,7 @@ manager::~manager(void)
 	UI_ADD_FIELD(main_obj, P1, P2)
 #define DECLARE_JSON(TYPE) 							\
 	Object main_obj; 										\
-	ADD_FIELD("version", VERSION); 					\
+	ADD_FIELD("version", MAJOR_VERSION); 			\
 	ADD_FIELD("msg", TYPE)
 #define ADD_NODE_FIELD(NODE) 							\
 	UI_ADD_NODE_FIELD(main_obj, NODE)

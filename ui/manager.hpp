@@ -7,6 +7,7 @@
 #include <list>
 #include <cstdlib>
 #ifdef USE_UI
+#include <boost/thread/locks.hpp>
 #include <websocketpp/websocketpp.hpp>
 #endif
 #include <map>
