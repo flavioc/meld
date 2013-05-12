@@ -14,6 +14,8 @@ using namespace vm;
 using namespace process;
 using boost::asio::ip::tcp;
 
+#ifdef USE_SIM
+
 // when running in thread mode, the VM waits this milliseconds to instantiate all neighbor facts
 static const int TIME_TO_INSTANTIATE = 500;
 
@@ -755,3 +757,4 @@ sim_sched::gather_next_tuples(db::node *node, simple_tuple_list& ls)
 }
 
 }
+#endif

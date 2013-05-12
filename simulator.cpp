@@ -20,6 +20,7 @@ using namespace sched;
 using namespace boost;
 using namespace utils;
 
+#ifdef USE_SIM
 static char *progname = NULL;
 static char *meldprog = NULL;
 static int port = 0;
@@ -82,6 +83,7 @@ read_arguments(int argc, char **argv)
 	
 	return program_arguments;
 }
+#endif
 
 int
 main(int argc, char **argv)

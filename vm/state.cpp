@@ -341,11 +341,13 @@ state::search_for_negative_tuple_full_agg(db::simple_tuple *stpl)
    return NULL;
 }
 
+#ifdef USE_SIM
 bool
 state::check_instruction_limit(void) const
 {
    return sim_instr_use && sim_instr_counter >= sim_instr_limit;
 }
+#endif
 
 bool
 state::do_persistent_tuples(void)
@@ -685,6 +687,7 @@ state::run_node(db::node *no)
    // push other level tuples
    process_others();
 
+#ifdef USE_SIM
    // store any remaining persistent tuples
    sched::sim_node *snode(dynamic_cast<sched::sim_node*>(node));
    for(simple_tuple_list::iterator it(generated_persistent_tuples.begin()), end(generated_persistent_tuples.end());
@@ -692,13 +695,10 @@ state::run_node(db::node *no)
          ++it)
    {
       assert(aborted);
-#ifdef USE_SIM
       db::simple_tuple *stpl(*it);
       snode->pending.push(stpl);
-#else
-      assert(false);
-#endif
    }
+#endif
 	
    generated_persistent_tuples.clear();
 #ifdef USE_SIM

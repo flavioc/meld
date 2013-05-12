@@ -375,8 +375,10 @@ get_creation_function(const scheduler_type sched_type)
          return database::create_node_fn(sched::serial_local::create_node);
 		case SCHED_SERIAL_UI:
 			return database::create_node_fn(sched::serial_ui_local::create_node);
+#ifdef USE_SIM
 		case SCHED_SIM:
 			return database::create_node_fn(sched::sim_sched::create_node);
+#endif
       case SCHED_UNKNOWN:
          return NULL;
    }
@@ -437,9 +439,11 @@ machine::machine(const string& file, router& _rout, const size_t th,
 		case SCHED_SERIAL_UI:
 			this->all->ALL_THREADS.push_back(dynamic_cast<sched::base*>(new sched::serial_ui_local(this->all)));
 			break;
+#ifdef USE_SIM
 		case SCHED_SIM:
 			this->all->ALL_THREADS.push_back(dynamic_cast<sched::base*>(new sched::sim_sched(this->all)));
 			break;
+#endif
       case SCHED_UNKNOWN: assert(false); break;
    }
    
