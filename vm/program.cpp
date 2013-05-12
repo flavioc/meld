@@ -62,9 +62,10 @@ program::program(const string& _filename):
       throw load_file_error(filename, "unable to open file");
 
    // read magic
-   uint64_t magic;
-   READ_CODE(&magic, sizeof(uint64_t));
-   if(magic != MAGIC)
+   uint32_t magic1, magic2;
+   READ_CODE(&magic1, sizeof(magic1));
+   READ_CODE(&magic2, sizeof(magic2));
+   if(magic1 != MAGIC1 || magic2 != MAGIC2)
       throw load_file_error(filename, "not a meld byte code file");
 
    // read version

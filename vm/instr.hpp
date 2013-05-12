@@ -16,7 +16,8 @@ typedef unsigned char instr_val;
 typedef unsigned char reg_num;
 
 const size_t MAGIC_SIZE = sizeof(uint64_t);
-const uint64_t MAGIC = 0x6c696620646c656d;
+const uint32_t MAGIC1 = 0x646c656d;
+const uint32_t MAGIC2 = 0x6c696620;
 
 namespace instr {
 
