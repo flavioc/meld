@@ -1537,6 +1537,9 @@ execute_remove(pcounter pc, state& state)
 	if(state.use_local_tuples) {
 		
 		vm::tuple *tpl(state.get_tuple(reg));
+#ifdef DEBUG_MODE
+      cout << "\tdelete " << *tpl << endl;
+#endif
 		assert(tpl != NULL);
 		
 		if(is_a_leaf) {

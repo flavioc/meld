@@ -363,49 +363,45 @@ state::do_persistent_tuples(void)
 
       generated_persistent_tuples.pop_front();
 
-      // XXX crashes when calling wipeout below
-      if(stpl->get_count() == 1 && (tpl->is_aggregate() && !stpl->is_aggregate())) {
-         db::simple_tuple *stpl2(search_for_negative_tuple_partial_agg(stpl));
-         if(stpl2) {
-            if(node->get_id() == 7) {
+      if(tpl->is_persistent()) {
+         // XXX crashes when calling wipeout below
+         if(stpl->get_count() == 1 && (tpl->is_aggregate() && !stpl->is_aggregate())) {
+            db::simple_tuple *stpl2(search_for_negative_tuple_partial_agg(stpl));
+            if(stpl2) {
                cout << "=========> Deleted " << *stpl << " " << *stpl2 << endl;
+               assert(stpl != stpl2);
+               //assert(stpl2->get_tuple() != stpl->get_tuple());
+               //assert(stpl2->get_predicate() == stpl->get_predicate());
+               //simple_tuple::wipeout(stpl);
+               //simple_tuple::wipeout(stpl2);
+               continue;
             }
-            assert(stpl != stpl2);
-            //assert(stpl2->get_tuple() != stpl->get_tuple());
-            //assert(stpl2->get_predicate() == stpl->get_predicate());
-            //simple_tuple::wipeout(stpl);
-            //simple_tuple::wipeout(stpl2);
-	         continue;
          }
-      }
 
-      if(stpl->get_count() == 1 && (tpl->is_aggregate() && stpl->is_aggregate())) {
-         db::simple_tuple *stpl2(search_for_negative_tuple_full_agg(stpl));
-         if(stpl2) {
-            if(node->get_id() == 7) {
+         if(stpl->get_count() == 1 && (tpl->is_aggregate() && stpl->is_aggregate())) {
+            db::simple_tuple *stpl2(search_for_negative_tuple_full_agg(stpl));
+            if(stpl2) {
                cout << "=========> Deleted " << *stpl << " " << *stpl2 << endl;
+               assert(stpl != stpl2);
+               /*if(stpl2->get_tuple() == stpl->get_tuple()) {
+                  cout << "fail " << *(stpl2->get_tuple()) << endl;
+               }
+               assert(stpl2->get_tuple() != stpl->get_tuple());
+               assert(stpl2->get_predicate() == stpl->get_predicate());*/
+               //simple_tuple::wipeout(stpl);
+               //simple_tuple::wipeout(stpl2);
+               continue;
             }
-            assert(stpl != stpl2);
-            /*if(stpl2->get_tuple() == stpl->get_tuple()) {
-               cout << "fail " << *(stpl2->get_tuple()) << endl;
-            }
-            assert(stpl2->get_tuple() != stpl->get_tuple());
-            assert(stpl2->get_predicate() == stpl->get_predicate());*/
-            //simple_tuple::wipeout(stpl);
-            //simple_tuple::wipeout(stpl2);
-	         continue;
          }
-      }
 
-      if(stpl->get_count() == 1 && !tpl->is_aggregate()) {
-         db::simple_tuple *stpl2(search_for_negative_tuple_normal(stpl));
-         if(stpl2) {
-            if(node->get_id() == 1) {
-               cout << "========> Deleted normal " << *stpl << endl;
+         if(stpl->get_count() == 1 && !tpl->is_aggregate()) {
+            db::simple_tuple *stpl2(search_for_negative_tuple_normal(stpl));
+            if(stpl2) {
+               cout << "========> Deleted normal " << *stpl << " " << *stpl2 << endl;
+               //simple_tuple::wipeout(stpl);
+               //simple_tuple::wipeout(stpl2);
+               continue;
             }
-            //simple_tuple::wipeout(stpl);
-            //simple_tuple::wipeout(stpl2);
-            continue;
          }
       }
 
@@ -417,8 +413,8 @@ state::do_persistent_tuples(void)
       }
    }
 
-	while(!leaves_for_deletion.empty()) {
-		pair<vm::predicate*, db::tuple_trie_leaf*> p(leaves_for_deletion.front());
+   while(!leaves_for_deletion.empty()) {
+      pair<vm::predicate*, db::tuple_trie_leaf*> p(leaves_for_deletion.front());
 		vm::predicate* pred(p.first);
 		db::tuple_trie_leaf *leaf(p.second);
 		

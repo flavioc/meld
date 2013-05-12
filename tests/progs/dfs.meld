@@ -50,7 +50,7 @@ type linear first-time(node).
 discover(@1, @1).
 first-time(A).
 
-// DISCOVER message from j */
+// DISCOVER message from j
 discover(A, J),
 first-time(A)
    -o father(A, J),
@@ -63,18 +63,18 @@ discover(A, J),
 !edge(A, J)
    -o return(J, A).
 
-// new: just check if some unvisited node exists */
+// new: just check if some unvisited node exists
 check-if-only-neighbor(A, J),
 unvisited(A, X)
    -o unvisited(A, X).
 
-// no unvisited nodes */
+// no unvisited nodes
 check-if-only-neighbor(A, Node),
 !edge(A, Node)
    -o return(Node, A),
       setcolor(A, 0, 255, 255).
 
-// RETURN message from q */
+// RETURN message from q
 return(A, Q),
 unvisited(A, K),
 !edge(A, K)
@@ -92,13 +92,13 @@ return(A, Q),
 father(A, A)
    -o stop(A), father(A, A).
 
-// VISITED message from k */
+// VISITED message from k
 visited(A, K),
 unvisited(A, K),
 !edge(A, K)
    -o ack(K, A).
 
-// ACK message from j */
+// ACK message from j
 ack(A, J),
 flag(A, J, _),
 flag(A, J2, 1),
@@ -110,5 +110,4 @@ ack(A, J),
 flag(A, J, _)
    -o flag(A, J, 0),
       return(A, A).
-
 

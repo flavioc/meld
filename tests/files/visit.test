@@ -1,0 +1,12 @@
+0
+visited()
+1
+visited()
+2
+!edge(@0)
+!edge(@1)
+visited()
+3
+!edge(@0)
+!edge(@2)
+visited()

@@ -1,0 +1,19 @@
+
+type route edge(node, node).
+type linear visit(node).
+type linear unvisited(node).
+type linear visited(node).
+
+!edge(@1, @2).
+!edge(@2, @3).
+!edge(@1, @4).
+!edge(@2, @4).
+
+unvisited(@1). unvisited(@2). unvisited(@3). unvisited(@4).
+visit(@1).
+
+visit(A), unvisited(A) -o
+   {B | !edge(A, B) | visit(B)}, visited(A).
+
+visit(A), visited(A) -o visited(A).
+
