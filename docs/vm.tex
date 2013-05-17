@@ -1,0 +1,244 @@
+\documentclass[11pt]{article}
+% \documentclass[11pt,twoside]{article}
+
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{comment}
+\usepackage{url}
+\usepackage{amsmath}
+\usepackage{syntax}
+
+\title{Meld VM Architecture}
+\author{Flavio Cruz}
+
+\begin{document}
+   
+   
+\maketitle
+   
+   
+\section{Directories}
+
+In this section I'll give a brief overview of every main directory in the virtual machine code. After this section, I'll give some details about further important concepts and a few "how to"'s for accomplishing certain tasks.
+
+\subsection{vm}
+
+This directory implements the core of the virtual machine. It is where the execution engine, the matching engine, byte code reading and tuple definitions are implemented.
+
+\begin{description}
+   \item[exec] This is where the instructions are executed.
+   \item[external] Every single external function must be registered in this class.
+   \item[instr] This module defines all the instructions and instruction sizes. Code for printing byte-code is also included.
+   \item[predicate] This class defines the predicate: its name, arguments, types, etc.
+   \item[program] The class \texttt{program} is responsible for reading a byte-code file and then instantiating all predicates and rules.
+   \item[rule] The class \texttt{rule} represents a rule. That includes the byte-code, predicates used, string representation, etc.
+   \item[match] Represents a matching for tuples that need to be retrieved from the database.
+   \item[all] This class encapsulates every information that is used during the execution of an instance of the virtual machine. Allows you to know how many threads are running, the contents of the database, the current program, etc.
+   \item[rule\_matcher] A rule matcher contains information about currently active facts of some node. When a certain subset of facts are present, the rule matcher may activate rules to be executed.
+   \item[state] The \texttt{state} class implements rule matching and calls the \texttt{exec} module when it wants to run a rule.
+   \item[types] Utilities and functions to handle argument types of predicates.
+   \item[tuple] This represents a tuple in the system. A tuple is composed of a predicate plus an array of argument values. Argument values are defined in \texttt{defs.hpp} by the union \texttt{tuple\_field}.
+\end{description}
+
+\subsection{db}
+
+\begin{description}
+   \item[database] Stores all nodes in the program.
+   \item[tuple] Implements a \texttt{simple\_tuple} which is a tuple and a reference count. It is used in the database when storing tuples.
+   \item[trie] Implements a trie data structure that stores \texttt{simple\_tuple}'s.
+   \item[node] The \texttt{node} class instantiates a trie for each predicate. It stores all the tuple information of a node.
+   \item[tuple\_aggregate] Stores all \texttt{agg\_configuration}'s of a predicate. If a predicate uses an aggregate, it will have a \texttt{tuple_aggregate} to store all its configurations. For example, predicate \texttt{f(node, int, min int)} will have as many configurations as the number of different integers in the second argument.
+   \item[agg\_configuration] Stores tuples for a single aggregate configuration. In the previous example we could store facts \texttt{f(2, 3)}, \texttt{f(2, 4)} for the configuration \texttt{f(2, \_)}.
+\end{description}
+
+\subsection{sched}
+
+A \emph{scheduler} represents a particular evaluation strategy for running the underlying graph model that represents the Meld program. For example, we may implement a scheduler that is able to run concurrently with other threads. Please remember that one scheduler is instantiated for each thread.
+
+\begin{description}
+   \item[base] The base scheduler from where every schedulers inherits from.
+   \item[serial] This is a special scheduler that is intended to be run with only thread. It performs sequential execution of programs.
+   \item[serial\_ui] Very similar to the one above, however the scheduler also communicates with a webserver that is showing the results of execution.
+   \item[sim] This one may run several threads. It connects with the blinky blocks simulator to send new events and receive new facts about what happens to the simulated blinky block.
+   \item[types] The different types of schedulers. When adding a new one, we must add a new definition here.
+   \item[thread] Contains several utilities for threaded schedulers, namely termination barriers and thread state.
+   \item[mpi] Utilities for handling MPI-based schedulers. This is a somewhat abandoned directory.
+\end{description}
+
+\subsection{process}
+
+After the \texttt{exec} module, this is the second most important component of the VM. Here, we setup the execution threads and other processes to run the VM.
+
+\begin{description}
+   \item[machine] A \texttt{machine} class is the main class that needs to be instantiated to run a particular meld program. It accepts as arguments the program file, number of threads and type of scheduler.
+   \item[remote] Represents a remote VM that is cooperating with the VM to run a program. This is related to MPI.
+   \item[router] Contains a set of \texttt{remote}'s that represent remote VMs. Also allows message sending and receiving to those remote.
+\end{description}
+
+\subsection{mem}
+
+This is the memory subsystem of the Virtual Machine. It's responsible for allocating memory objects and avoid contention when using threads.
+
+\begin{description}
+   \item[allocator] Implements a memory allocator that must be used by STL containers.
+   \item[base] Objects that are dynamically allocated during VM execution must inherit from this class.
+   \item[center] Main entry point for the allocator.
+   \item[chunk] Abstraction for a memory block that contains a certain number of objects of the same size.
+   \item[chunkgroup] Groups several \texttt{chunk}'s for the same object size.
+   \item[pool] Groups several \texttt{chunkgroup}'s for allocating objects of any size.
+   \item[stat] For statistical purposes.
+   \item[thread] This allows threads to retrieve their private \texttt{pool}.
+\end{description}
+
+\subsection{queue}
+
+This directory implements different versions of queues and priority queues. Queues may use \texttt{mutexes} for dealing with data races, use lock-free mechanisms or may be unsafe. They may also use double linked lists of single linked lists. Optionally, queues may be intrusive or not. Most priority queues use a binary heap.
+
+\subsection{external}
+
+This directory implements all the external functions that can be used by meld programs. Note that they are organized by files, depending on the external function purpose.
+
+\subsection{thread}
+
+This thread contains the different threaded schedulers. They allow running the VM on multicore architectures.
+
+\begin{description}
+   \item[static] Implements threaded execution using work stealing for load balancing.
+   \item[prio] Same as before, except nodes can have priority of execution.
+\end{description}
+
+There are some other files inside this directory, but they are somewhat abandoned.
+
+\subsection{.}
+
+\begin{description}
+   \item[meld.cpp] The main VM program. Launches programs with certain schedulers.
+   \item[print.cpp] Prints the content of byte-code.
+   \item[predicates.cpp] Prints the predicates of byte-code.
+   \item[simulator.cpp] Runs the VM with the blinky blocks simulator.
+   \item[server.cpp] Runs a VM webserver that connects with a Javascript program (for visualization purposes).
+\end{description}
+
+\section{Adding external functions}
+
+To add a new external function we need to declare the function in the compiler and implement it in the VM. The VM recognizes a set of $N$ external functions, where each function has an unique ID between $0$ and $N$. Both compiler and VM need to agree on each function ID.
+
+\begin{itemize}
+   \item Edit \texttt{external.lisp} and declare new function at the end of the file.
+   \item Implement function in directory \texttt{external/}.
+   \item Edit \texttt{vm/external.cpp} and add a new \texttt{register\_external\_function} at the end.
+\end{itemize}
+
+Please see examples of function implementations to understand how to get arguments and how to return new values.
+
+\section{Adding new action facts}
+
+Adding new action facts is similar to adding a new external function:
+
+\begin{itemize}
+   \item Edit \texttt{models/parallel.lisp} in the compiler. Add new \texttt{deftuple} at the end. The compiler will take all the predicate definition in this file and add it to each program. Note that each predicate has a \texttt{predicate\_id} inside the VM that starts at $0$ and ends at $N-1$, where $N$ is the number of predicates in the program. The predicates in that Lisp file will have the first IDs, in the same order as they appear in the file. For example, the first predicate has ID 0 and is called \texttt{\_init}.
+   \item Now we know which predicate ID our new action will have. Edit \texttt{vm/program.hpp} and add a new constant for the action you want. The examples are very clear.
+   \item Every time an action is derived, the VM knows immediately that it is an action since that information is included in the byte-code. The function \texttt{void machine::run_action} is run in order to "run" the action. Please add a new \texttt{switch} case for your intended action using the constant you defined before.
+\end{itemize}
+
+\section{Node Implementation}
+
+Each node is represented using an object of the class \texttt{db::node}. Each node has a map from predicate ID to a \texttt{db::trie}. The trie stores facts by using each tuple argument as the prefix in order to share tuples according to common prefixes. Still, at each trie leaf we store the \texttt{vm::tuple} so we can have easy access to tuples when searching.
+
+The tries also enable faster searching if, for example, we want to match the first argument against some constant. This is done by using a \texttt{vm::match} object.
+
+Efficient deletion of tuple leaves is also supported since sometimes we need to remove tuples from the database.
+
+\subsection{Node ID's}
+
+Every node is represented by an ID that is not associated with the node address in memory during execution. The ID is from 0 to $N-1$, where $N$ is the number of nodes currently in the program.
+
+The ID used in the Meld source may not be the same as the one used in the byte-code. The meld compiler will try to optimize the topology of the program by following route axioms so that closer nodes are stored in the same thread/machine. This is also done in order to have consistent node IDs starting at 0. Anyway, the ID used in the source code is still available is called the translation ID.
+
+\subsection{Rule Matcher}
+
+Every node has an object that maintains the information about which rules are about to be fired. Every fact that is added or removed from the database must be registered in the matcher in order to know if a rule can now be run or is no longer applicable.
+
+More information about this in the next section.
+
+\section{How rules are executed}
+
+The rule matching engine is mostly implemented in \texttt{vm/state.cpp}. After the scheduler returns a node with some work in it (\texttt{vm::state::run\_node}), we call \texttt{gather\_next\_tuples} on the scheduler to retrieve the node's pending tuples. Note the pending tuples are tuples that were sent by other nodes.
+
+Next, we go through those tuples (\texttt{mark\_rules\_using\_local\_tuples}) and mark them as new tuples. What this does is using the node's rule matcher to increase the counts of those predicates. When the count of predicate goes from 0 to 1, we go through all the rules where this predicate applies and increase the satisfied predicates for that rule. If all predicates of a rule are present then we mark that rule as applicable.
+
+In \texttt{mark\_active\_rules}, we go through all applicable rules and add them to a rule priority queue that contains all rules that will be run. This priority queue allows us to prioritize the rules by using the order in which they appeared in the meld source code.
+
+Before using the rule queue, we first use all the persistent tuples (\texttt{do\_persistent\_tuples}) to derive new persistent tuples through the application of persistent rules. Persistent rules are rules that use only persistent tuples. For each persistent tuple we execute the process associated with that predicate. This process goes through all the persistent rules where the predicate appears and tries to match the rest of the rule.
+
+We handle persistent tuples as a special case since we do not want repeated derivations of the same tuple, which can happen in some specific situations. Note, however, each byte-code contains both the persistent predicate processes (use \texttt{./print} to see examples) and also non-persistent rules code. These differ because in the former we try to apply several rules at once, while in the later we apply just a single rule, from the beginning.
+
+Inside \texttt{run\_node} there is then a big \texttt{while} loop that, first retrieves the next rule in the priority queue and then runs it. While the rule runs, it has access both to the node's database but also to the temporary list of tuples (\texttt{local\_tuples}) that we retrieved before. All consumed tuples in this list are marked and so we check them and decrease their counts in the rule matcher. Tuples that were derived during the execution of the rule are put in the \texttt{generated\_tuples} list and are then put back into the temporary list (\texttt{local\_tuples}). Rules that are no longer applicable because tuples were consumed are removed from the priority queue so they no longer get to run.
+
+All the previous process repeats again and again, until we have no more applicable rules.
+
+\section{How instructions are executed}
+
+The execution engine is implemented in \texttt{vm/exec.cpp}. The class \texttt{vm::state} contains all the information about the execution state, including registers, current tuple, generated lists, etc.
+
+Execution goes from instruction to instruction until a \texttt{RETURN} instruction is found. Every time we want to match some tuple in a rule, we do search on the database and set of temporary tuples. We iterate over the search results and do a subcall on the execution engine with a different tuple each time. The subcall will eventually return and depending on the result we may need to try the next tuple of the search results, because the matching failed. The level of nesting for subcalls will correspond to the number of different predicates used in a rule.
+
+For more information about the instruction format, please read \texttt{docs/vm\_format.pdf}.
+
+\section{Adding new schedulers}
+
+In order to extend the VM with new computation behavior, we need to implement a custom scheduler. For example, one can implement a sequential scheduler (just for executing programs sequentially) or implement a threaded scheduler, where we have several schedulers (one per thread) that run concurrently. The possibilities are many.
+
+To create a new scheduler we must create a new scheduler class that inherits from \texttt{sched::base}. The base class is a virtual class because there are several methods that need to be implement in order to get custom behavior.
+
+// extend switch in process/machine.cpp
+Finally, in order to instantiate the scheduler objects, we need to edit the \texttt{process/machine.cpp} constructor (inside \texttt{switch}). One may create several objects (for example, as many as the threads asked for) or just one.
+
+\subsection{Adding new scheduler type}
+
+Each scheduler is identified by a constant.
+In file \texttt{sched/types.hpp} you need to define a new scheduler inside \texttt{scheduler\_type}.
+
+\subsection{Extending node type}
+
+Depending on the scheduler, we may also need to extend the base node type (\texttt{db::node}) because we need extra information at the node level for the scheduler to work. First thing that we need to do is to create a new class that inherits from the base node class.
+
+Each scheduler class must implement the \texttt{static} function \texttt{create\_node}. It receives as arguments the node ID and translate ID and creates a new node (from the custom class). The function \texttt{get\_creation\_function} in \texttt{process::machine} also needs to be edited to take into account this new function.
+
+\subsection{Essential methods}
+
+Next, we describe the most essential methods that need to be written in order to get the correct scheduling behavior.
+
+\begin{description}
+\item[find\_scheduler] This method must return the scheduler responsible for a specific node.
+\item[new\_work] A new work (tuple) is being sent to some node. This will be called when a node sends a tuple to another node in the same "scheduler" (this is found through \texttt{find\_scheduler}).
+\item[new\_work\_delay] Same as before, but the work should be delayed before it is used.
+\item[new\_agg] A new aggregate tuple has been created. Essentially this should work as \texttt{new\_work}.
+\item[new\_work\_other] A new tuple has been sent to a node in some other scheduler. When \texttt{find\_scheduler} returns a different scheduler than the calling scheduler, this method is called instead. Note that this method is called on the sending scheduler, not the target scheduler.
+\item[new\_work\_remote] This is called when there is some work on a node that is located in a remote location.
+\item[gather\_next\_tuples] This method must return all tuples that are available for computation at a given node owned by the scheduler.
+\item[gather\_active\_tuples] This method can be called during execution, it should return any tuples of a given predicate of a node, if any exist.
+\item[init] This method is called at the beginning of the execution.
+\item[end] This is called at the end.
+\item[get\_work] This function must return either \texttt{NULL} when there is no more work to be done or a node pointer if that node has some work to be done. Expect \texttt{gather\_next\_tuples} soon after \texttt{get\_work}. 
+\end{description}
+
+\subsection{Examples}
+
+Many examples of custom schedulers are available in the VM:
+
+\begin{description}
+   \item[sched/serial] For sequential execution.
+   \item[sched/serial\_ui] Sequential execution with user interface communication.
+   \item[sched/sim] For use with blinky blocks simulator.
+   \item[thread/static] Threaded execution.
+   \item[thread/prio] For threaded execution with priorities.
+\end{description}
+
+\section{How to Call the VM}
+
+In order to call the virtual machine one must first instantiate a \texttt{process::machine} object with the program file, number of threads and scheduler type as arguments. After that we need to call \texttt{start()} on that object so that the machine starts executing. \texttt{start()} will only return when the computation is done.
+
+Different types of exceptions may be thrown, see \texttt{interface.cpp} for an example.
+
+\end{document}
