@@ -57,7 +57,8 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, const bool f
 	
 	assert(tpl->is_action());
 	
-	if(pid == SETCOLOR_PREDICATE_ID) {
+   switch(pid) {
+      case SETCOLOR_PREDICATE_ID:
 #ifdef USE_UI
       if(state::UI) {
          LOG_SET_COLOR(node, tpl->get_int(0), tpl->get_int(1), tpl->get_int(2));
@@ -68,10 +69,10 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, const bool f
 			((sim_sched*)sched)->set_color(node, tpl->get_int(0), tpl->get_int(1), tpl->get_int(2));
       }
 #endif
-   } else if(pid == SETCOLOR2_PREDICATE_ID) {
+      break;
+      case SETCOLOR2_PREDICATE_ID:
 #ifdef USE_SIM
       if(state::SIM) {
-         // XXX
          int r(0), g(0), b(0);
          switch(tpl->get_int(0)) {
             case 0: r = 255; break; // RED
@@ -89,35 +90,44 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, const bool f
 			((sim_sched*)sched)->set_color(node, r, g, b);
       }
 #endif
-   } else if(pid == SETEDGELABEL_PREDICATE_ID) {
+      break;
+      case SETEDGELABEL_PREDICATE_ID:
 #ifdef USE_UI
       if(state::UI) {
          LOG_SET_EDGE_LABEL(node->get_id(), tpl->get_node(0), tpl->get_string(1)->get_content());
       }
 #endif
-   } else if(pid == SET_PRIORITY_PREDICATE_ID) {
+      break;
+      case SET_PRIORITY_PREDICATE_ID:
       if(from_other)
          sched->set_node_priority_other(node, tpl->get_float(0));
       else {
          sched->set_node_priority(node, tpl->get_float(0));
       }
-   } else if(pid == ADD_PRIORITY_PREDICATE_ID) {
+      break;
+      case ADD_PRIORITY_PREDICATE_ID:
       if(from_other)
          sched->add_node_priority_other(node, tpl->get_float(0));
       else
          sched->add_node_priority(node, tpl->get_float(0));
-   } else if(pid == WRITE_STRING_PREDICATE_ID) {
-		runtime::rstring::ptr s(tpl->get_string(0));
+      break;
+      case WRITE_STRING_PREDICATE_ID: {
+         runtime::rstring::ptr s(tpl->get_string(0));
 
-		cout << s->get_content() << endl;
-   } else if(pid == SCHEDULE_NEXT_PREDICATE_ID) {
+         cout << s->get_content() << endl;
+        }
+      break;
+      case SCHEDULE_NEXT_PREDICATE_ID:
       if(!from_other) {
          sched->schedule_next(node);
       } else {
          assert(false);
       }
-	} else
+      break;
+      default:
 		assert(false);
+      break;
+   }
 
 	delete tpl;
 }

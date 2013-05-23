@@ -603,9 +603,9 @@ state::run_node(db::node *no)
    start_matching();
 	current_level = mark_rules_using_local_tuples(local_tuples);
    if(do_persistent_tuples()) {
-      // if using the simulator, we check if we exhausted the available time to run
       mark_active_rules();
    } else
+      // if using the simulator, we check if we exhausted the available time to run
       aborted = true;
 
 #ifdef DEBUG_RULES

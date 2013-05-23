@@ -26,13 +26,13 @@ namespace process {
 namespace vm {
 
 const size_t INIT_PREDICATE_ID(0);
-extern size_t SET_PRIORITY_PREDICATE_ID;
-extern size_t SETCOLOR_PREDICATE_ID;
-extern size_t SETEDGELABEL_PREDICATE_ID;
-extern size_t WRITE_STRING_PREDICATE_ID;
-extern size_t ADD_PRIORITY_PREDICATE_ID;
-extern size_t SCHEDULE_NEXT_PREDICATE_ID;
-extern size_t SETCOLOR2_PREDICATE_ID;
+const size_t SET_PRIORITY_PREDICATE_ID(1);
+const size_t SETCOLOR_PREDICATE_ID(2);
+const size_t SETEDGELABEL_PREDICATE_ID(3);
+const size_t WRITE_STRING_PREDICATE_ID(4);
+const size_t ADD_PRIORITY_PREDICATE_ID(5);
+const size_t SCHEDULE_NEXT_PREDICATE_ID(6);
+const size_t SETCOLOR2_PREDICATE_ID(7);
 
 class program
 {

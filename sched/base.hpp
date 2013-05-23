@@ -106,7 +106,7 @@ public:
    }
    
    // work to be sent to the same thread
-   virtual void new_work(const db::node *, process::work&) = 0;
+   virtual void new_work(const db::node *from, process::work&) = 0;
    // delayed work to be sent to the target thread
    virtual void new_work_delay(sched::base *, const db::node *, process::work&, const vm::uint_val)
    {
