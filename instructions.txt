@@ -70,8 +70,8 @@ $ git clone https://github.com/flavioc/cl-meld.git
 
 ;; Before you can load up the compiler, you need to patch CL-Yacc so that it supports comments in the source code:
 
-$ cd ~/.site/cl-yacc
-$ patch -p1 < ~/cl-meld/yacc-comments.patch
+$ cd ~/.sbcl/site/cl-yacc-0.3
+$ patch -p0 < ~/cl-meld/yacc-comments.patch
 $ cd ~/cl-meld
 $ sbcl
 
