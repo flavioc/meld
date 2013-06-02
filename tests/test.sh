@@ -59,10 +59,11 @@ run_serial_n ()
 	SCHED=${1}
 	TIMES=${2}
 
-	echo "Running ${TEST} ${TIMES} times (SCHED: ${SCHED})..."
+	echo -n "Running ${TEST} ${TIMES} times (SCHED: ${SCHED})..."
 	for((I=1; I <= ${TIMES}; I++)); do
 		do_serial ${SCHED}
 	done
+   echo " OK!"
 }
 
 run_test_n ()
