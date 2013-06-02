@@ -1,54 +1,77 @@
 0
-___egde(@1)@1
-___egde(@4)@1
-_init()@1
-edge(@1)@1
-pagerank(4, 1.00921)@1
-pagerank(5, 1.00972)@1
-calcRank(4, 1.06139, @0)@1
-calcRank(5, 1.06478, @0)@1
-calcRank(6, 1.06513, @0)@1
-numLinks(1)@1
+!edge(@1)
+!pagerank(0, 0.2)
+!pagerank(1, 0.88)
+!pagerank(2, 0.98425)
+!pagerank(3, 1.00686)
+!pagerank(4, 1.00921)
+!pagerank(5, 1.00972)
+!calcRank(1, 0.2, @0)
+!calcRank(2, 0.895, @3)
+!calcRank(3, 1.04575, @3)
+!calcRank(4, 1.06139, @3)
+!calcRank(5, 1.06478, @3)
+!calcRank(6, 1.06513, @3)
+!numLinks(1)
 1
-___egde(@0)@1
-___egde(@2)@1
-___egde(@3)@1
-_init()@1
-edge(@0)@1
-edge(@2)@1
-pagerank(4, 1.27956)@1
-pagerank(5, 1.28026)@1
-calcRank(4, 2.86373, @0)@1
-calcRank(5, 2.86842, @0)@1
-calcRank(6, 2.86943, @0)@1
-numLinks(2)@1
+!edge(@0)
+!edge(@2)
+!pagerank(0, 0.2)
+!pagerank(1, 0.94)
+!pagerank(2, 1.2415)
+!pagerank(3, 1.27277)
+!pagerank(4, 1.27956)
+!pagerank(5, 1.28026)
+!calcRank(1, 0.6, @0)
+!calcRank(2, 2.61, @4)
+!calcRank(3, 2.8185, @4)
+!calcRank(4, 2.86373, @4)
+!calcRank(5, 2.86842, @4)
+!calcRank(6, 2.86943, @4)
+!numLinks(2)
 2
-___egde(@1)@1
-___egde(@4)@1
-_init()@1
-edge(@1)@1
-pagerank(4, 1.00921)@1
-pagerank(5, 1.00972)@1
-calcRank(4, 1.06139, @0)@1
-calcRank(5, 1.06478, @0)@1
-calcRank(6, 1.06513, @0)@1
-numLinks(1)@1
+!edge(@1)
+!pagerank(0, 0.2)
+!pagerank(1, 0.88)
+!pagerank(2, 0.98425)
+!pagerank(3, 1.00686)
+!pagerank(4, 1.00921)
+!pagerank(5, 1.00972)
+!calcRank(1, 0.2, @1)
+!calcRank(2, 0.895, @3)
+!calcRank(3, 1.04575, @3)
+!calcRank(4, 1.06139, @3)
+!calcRank(5, 1.06478, @3)
+!calcRank(6, 1.06513, @3)
+!numLinks(1)
 3
-_init()@1
-edge(@1)@1
-pagerank(4, 0.85)@1
-pagerank(5, 0.85)@1
-calcRank(4, 0, @0)@1
-calcRank(5, 0, @0)@1
-calcRank(6, 0, @0)@1
-numLinks(1)@1
+!edge(@0)
+!edge(@2)
+!pagerank(0, 0.2)
+!pagerank(1, 0.85)
+!pagerank(2, 0.85)
+!pagerank(3, 0.85)
+!pagerank(4, 0.85)
+!pagerank(5, 0.85)
+!calcRank(1, 0, @3)
+!calcRank(2, 0, @3)
+!calcRank(3, 0, @3)
+!calcRank(4, 0, @3)
+!calcRank(5, 0, @3)
+!calcRank(6, 0, @3)
+!numLinks(2)
 4
-_init()@1
-edge(@0)@1
-edge(@2)@1
-pagerank(4, 0.85)@1
-pagerank(5, 0.85)@1
-calcRank(4, 0, @0)@1
-calcRank(5, 0, @0)@1
-calcRank(6, 0, @0)@1
-numLinks(2)@1
+!edge(@1)
+!pagerank(0, 0.2)
+!pagerank(1, 0.85)
+!pagerank(2, 0.85)
+!pagerank(3, 0.85)
+!pagerank(4, 0.85)
+!pagerank(5, 0.85)
+!calcRank(1, 0, @4)
+!calcRank(2, 0, @4)
+!calcRank(3, 0, @4)
+!calcRank(4, 0, @4)
+!calcRank(5, 0, @4)
+!calcRank(6, 0, @4)
+!numLinks(1)

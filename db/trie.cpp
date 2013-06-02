@@ -705,8 +705,6 @@ trie::check_insert(void *data, const ref_count many, val_stack& vals, type_stack
          assert(!root->is_leaf());
          assert(first_leaf != NULL);
          assert(root->child != NULL);
-         assert(number_of_references > 0);
-         basic_invariants();
          
          return parent;
       }
