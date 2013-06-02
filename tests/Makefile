@@ -11,7 +11,7 @@ test-tl:
 	@bash test_all.sh tl
 
 test-serial:
-	@bash test_all.sh serial
+	@bash test_all.sh sl
 
 test:
 	@bash test_all.sh all
