@@ -356,12 +356,15 @@ state::do_persistent_tuples(void)
    while(!generated_persistent_tuples.empty()) {
 #ifdef USE_SIM
       if(check_instruction_limit()) {
-         cout << "oops " << endl;
          return false;
       }
 #endif
       db::simple_tuple *stpl(generated_persistent_tuples.front());
       vm::tuple *tpl(stpl->get_tuple());
+
+#ifdef DEBUG_RULES
+      cout << "Running process for " << *stpl << endl;
+#endif
 
       generated_persistent_tuples.pop_front();
 
@@ -370,7 +373,6 @@ state::do_persistent_tuples(void)
          if(stpl->get_count() == 1 && (tpl->is_aggregate() && !stpl->is_aggregate())) {
             db::simple_tuple *stpl2(search_for_negative_tuple_partial_agg(stpl));
             if(stpl2) {
-               cout << "=========> Deleted " << *stpl << " " << *stpl2 << endl;
                assert(stpl != stpl2);
                //assert(stpl2->get_tuple() != stpl->get_tuple());
                //assert(stpl2->get_predicate() == stpl->get_predicate());
@@ -383,7 +385,6 @@ state::do_persistent_tuples(void)
          if(stpl->get_count() == 1 && (tpl->is_aggregate() && stpl->is_aggregate())) {
             db::simple_tuple *stpl2(search_for_negative_tuple_full_agg(stpl));
             if(stpl2) {
-               cout << "=========> Deleted " << *stpl << " " << *stpl2 << endl;
                assert(stpl != stpl2);
                /*if(stpl2->get_tuple() == stpl->get_tuple()) {
                   cout << "fail " << *(stpl2->get_tuple()) << endl;
@@ -399,7 +400,6 @@ state::do_persistent_tuples(void)
          if(stpl->get_count() == 1 && !tpl->is_aggregate()) {
             db::simple_tuple *stpl2(search_for_negative_tuple_normal(stpl));
             if(stpl2) {
-               cout << "========> Deleted normal " << *stpl << " " << *stpl2 << endl;
                //simple_tuple::wipeout(stpl);
                //simple_tuple::wipeout(stpl2);
                continue;
@@ -523,10 +523,12 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
    if(stpl->get_count() > 0) {
 		const bool is_new(add_fact_to_node(tpl));
 
-      setup(tpl, node, stpl->get_count());
-      use_local_tuples = false;
-      persistent_only = true;
-      execute_bytecode(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this);
+      if(is_new) {
+         setup(tpl, node, stpl->get_count());
+         use_local_tuples = false;
+         persistent_only = true;
+         execute_bytecode(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this);
+      }
 
 #ifdef USE_RULE_COUNTING
       node->matcher.register_tuple(tpl, stpl->get_count(), is_new);
@@ -602,15 +604,15 @@ state::run_node(db::node *no)
 	sched->gather_next_tuples(node, local_tuples);
    start_matching();
 	current_level = mark_rules_using_local_tuples(local_tuples);
+#ifdef DEBUG_RULES
+	cout << "Strat level: " << current_level << " got " << local_tuples.size() << " tuples " << endl;
+#endif
+
    if(do_persistent_tuples()) {
       mark_active_rules();
    } else
       // if using the simulator, we check if we exhausted the available time to run
       aborted = true;
-
-#ifdef DEBUG_RULES
-	cout << "Strat level: " << current_level << " got " << local_tuples.size() << " tuples " << endl;
-#endif
 
 	while(!rule_queue.empty() && !aborted) {
 #ifdef USE_SIM

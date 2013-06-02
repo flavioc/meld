@@ -20,3 +20,4 @@ run_test mfp
 run_test mwst
 run_test shortest_path1
 run_test shortest_path2
+run_test right_connectivity1
