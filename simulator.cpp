@@ -108,7 +108,7 @@ main(int argc, char **argv)
 	show_database = true;
 	
 	try {
-      run_program(argc, argv, meldprog, margs);
+      run_program(argc, argv, meldprog, margs, NULL);
    } catch(machine_error& err) {
       cerr << "VM error: " << err.what() << endl;
       exit(EXIT_FAILURE);

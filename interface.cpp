@@ -117,7 +117,7 @@ finish(void)
 }
 
 bool
-run_program(int argc, char **argv, const char *program, const vm::machine_arguments& margs)
+run_program(int argc, char **argv, const char *program, const vm::machine_arguments& margs, const char *data_file)
 {
 	assert(utils::file_exists(string(program)));
 	assert(num_threads > 0);
@@ -138,7 +138,7 @@ run_program(int argc, char **argv, const char *program, const vm::machine_argume
       }
 
       router rout(num_threads, argc, argv, is_mpi_sched(sched_type));
-      machine mac(program, rout, num_threads, sched_type, margs);
+      machine mac(program, rout, num_threads, sched_type, margs, data_file == NULL ? string("") : string(data_file));
 
 #ifdef USE_UI
       if(ui::man != NULL) {

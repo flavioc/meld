@@ -16,14 +16,16 @@ using namespace std;
 using namespace sched;
 
 static char *program = NULL;
+static char *data_file = NULL;
 static char *progname = NULL;
 
 static void
 help(void)
 {
 	cerr << "meld: execute meld program" << endl;
-	cerr << "meld -f <program file> -c <scheduler> -- arg1 arg2 ... argN" << endl;
+	cerr << "meld -f <program file> -c <scheduler> [options] -- arg1 arg2 ... argN" << endl;
 	cerr << "\t-f <name>\tmeld program" << endl;
+   cerr << "\t-r <data file>\tdata file for meld program" << endl;
 	help_schedulers();
 	cerr << "\t-t \t\ttime execution" << endl;
 	cerr << "\t-m \t\tmemory statistics" << endl;
@@ -50,6 +52,16 @@ read_arguments(int argc, char **argv)
                help();
 
             program = argv[1];
+
+            argc--;
+            argv++;
+         }
+         break;
+         case 'r': {
+            if(data_file != NULL || argc < 2)
+               help();
+
+            data_file = argv[1];
 
             argc--;
             argv++;
@@ -130,7 +142,7 @@ main(int argc, char **argv)
 	}
 	
    try {
-      run_program(argc, argv, program, margs);
+      run_program(argc, argv, program, margs, data_file);
    } catch(vm::load_file_error& err) {
       cerr << "File error: " << err.what() << endl;
       exit(EXIT_FAILURE);

@@ -225,6 +225,26 @@ predicate::print(ostream& cout) const
    }
 }
 
+bool
+predicate::operator==(const predicate& other) const
+{
+   if(id != other.id)
+      return false;
+
+   if(num_fields() != other.num_fields())
+      return false;
+
+   if(name != other.name)
+      return false;
+
+   for(size_t i = 0; i < num_fields(); ++i) {
+      if(types[i] != other.types[i])
+         return false;
+   }
+
+   return true;
+}
+
 ostream& operator<<(ostream& cout, const predicate& pred)
 {
    pred.print(cout);

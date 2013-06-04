@@ -43,7 +43,7 @@ public:
    
    explicit thread_node(const db::node::node_id _id, const db::node::node_id _trans, vm::all *all):
       in_queue_node(_id, _trans, all),
-      queue(vm::program::MAX_STRAT_LEVEL)
+      queue(all->PROGRAM->MAX_STRAT_LEVEL)
    {}
    
    virtual ~thread_node(void) { }

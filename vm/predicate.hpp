@@ -126,6 +126,11 @@ public:
    field_num get_priority_argument(void) const { return priority_argument; }
 	inline bool is_global_priority_asc(void) const { return global_prio == PRIORITY_ASC; }
 	inline bool is_global_priority_desc(void) const { return global_prio == PRIORITY_DESC; }
+
+   bool operator==(const predicate&) const;
+   bool operator!=(const predicate& other) const {
+      return !operator==(other);
+   }
    
    static predicate* make_predicate_from_buf(utils::byte *buf, code_size_t *code_size, const predicate_id);
 };

@@ -38,6 +38,7 @@ class rule
 			code = _code;
 		}
 		
+      inline code_size_t get_codesize(void) const { return code_size; }
 		inline byte_code get_bytecode(void) const { return code; }
 		inline size_t num_predicates(void) const { return predicates.size(); }
 

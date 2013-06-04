@@ -42,7 +42,7 @@ private:
 	size_t num_args;
    size_t number_rules;
 
-   std::vector<rule *> rules;
+   std::vector<rule*> rules;
    
    std::vector<predicate*> predicates;
   
@@ -56,6 +56,7 @@ private:
    std::vector<predicate*> route_predicates;
    
    bool safe;
+   bool is_data_file;
 
    mutable predicate *init;
 
@@ -73,7 +74,7 @@ private:
    
 public:
 
-   static strat_level MAX_STRAT_LEVEL;
+   strat_level MAX_STRAT_LEVEL;
 
    inline size_t num_rules(void) const { return number_rules; }
 	inline size_t num_args_needed(void) const { return num_args; }
@@ -130,6 +131,9 @@ public:
    tuple* new_tuple(const predicate_id&) const;
    
    inline bool is_safe(void) const { return safe; }
+   inline bool is_data(void) const { return is_data_file; }
+
+   bool add_data_file(const vm::program&);
    
    explicit program(const std::string&);
    

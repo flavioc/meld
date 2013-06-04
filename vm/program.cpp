@@ -29,8 +29,6 @@ static const size_t PREDICATE_DESCRIPTOR_SIZE = sizeof(code_size_t) +
                                                 PRED_ARGS_MAX +
                                                 PRED_NAME_SIZE_MAX +
                                                 PRED_AGG_INFO_MAX;
-strat_level program::MAX_STRAT_LEVEL(0);
-
 #define READ_CODE(TO, SIZE) do { \
 	fp.read((char *)(TO), SIZE);	\
 	position += (SIZE);				\
@@ -152,6 +150,8 @@ program::program(const string& _filename):
 	
 	READ_CODE(const_code, const_code_size);
 
+   MAX_STRAT_LEVEL = 0;
+
    // read predicate information
    for(size_t i(0); i < num_predicates; ++i) {
       code_size_t size;
@@ -182,6 +182,8 @@ program::program(const string& _filename):
 
    initial_priority.int_priority = 0;
    initial_priority.float_priority = 0.0;
+
+   is_data_file = false;
 	
    switch(global_info) {
       case 0x01: {
@@ -219,6 +221,10 @@ program::program(const string& _filename):
             READ_CODE(&initial_priority.float_priority, sizeof(float_val));
          else
             READ_CODE(&initial_priority.int_priority, sizeof(int_val));
+      }
+      break;
+      case 0x03: { // data file
+         is_data_file = true;
       }
       break;
       default:
@@ -360,6 +366,8 @@ program::print_predicates(ostream& cout) const
       cout << ">> Safe program" << endl;
    else
       cout << ">> Unsafe program" << endl;
+   if(is_data())
+      cout << ">> Data file" << endl;
    for(size_t i(0); i < num_predicates(); ++i) {
       cout << predicates[i] << " " << *predicates[i] << endl;
    }
@@ -458,6 +466,66 @@ tuple*
 program::new_tuple(const predicate_id& id) const
 {
    return new tuple(get_predicate(id));
+}
+
+bool
+program::add_data_file(const program& other)
+{
+   if(num_predicates() < other.num_predicates()) {
+      return false;
+   }
+
+   for(size_t i(0); i < other.num_predicates(); ++i) {
+      predicate *mine(predicates[i]);
+      predicate *oth(other.get_predicate(i));
+      if(*mine != *oth) {
+         return false;
+      }
+   }
+
+   assert(rules.size() > 0);
+   assert(other.rules.size() > 0);
+
+   vm::rule *init_rule(rules[0]);
+   vm::rule *init_rule_data(other.rules[0]);
+   byte_code init_code(init_rule->get_bytecode());
+   byte_code init_code_data(init_rule_data->get_bytecode());
+
+   // let's skip initial code for the data code
+   byte_code pc(init_code_data);
+   pc = advance(pc); // RULE
+   pc = advance(pc); // ITERATE init
+
+#if 0
+   instrs_print(init_code, init_rule->get_codesize(), 0, this, cout);
+   cout << "" << endl;
+   instrs_print(init_code_data, init_rule_data->get_codesize(), 0, this, cout);
+   cout << "" << endl;
+#endif
+
+   // this is the size of the things we want to skip
+   code_size_t initial_size(pc - init_code_data);
+   // this is the size of the data code we are going to copy over
+   code_size_t extra_size(init_rule_data->get_codesize() - initial_size - RETURN_BASE - NEXT_BASE - RETURN_DERIVED_BASE - REMOVE_BASE);
+
+   //instrs_print(pc, extra_size, 0, this, cout);
+   // allocate new code
+   code_size_t new_size(init_rule->get_codesize() + extra_size);
+   byte_code new_init_code = new byte_code_el[new_size];
+   // copy original code for RULE and ITERATE init code
+   memcpy(new_init_code, init_code, (pc - init_code_data));
+   // copy extra data code
+   memcpy(new_init_code + initial_size, pc, extra_size);
+   // copy rest of original code
+   memcpy(new_init_code + initial_size + extra_size, init_code + initial_size, init_rule->get_codesize() - initial_size);
+   // let's get the ITERATE instruction
+   byte_code pc2(advance(new_init_code));
+   *iter_jump_ptr(pc2) = iter_jump(pc2) + extra_size; // change how much we need to jump in the iterate
+   //instrs_print(new_init_code, init_rule->get_codesize() + extra_size, 0, this, cout);
+   // set new code and size
+   init_rule->set_bytecode(new_size, new_init_code);
+   delete init_code;
+   return true;
 }
 
 }

@@ -14,6 +14,6 @@ extern bool memory_statistics;
 
 void parse_sched(char *);
 void help_schedulers(void);
-bool run_program(int, char **, const char *, const vm::machine_arguments&);
+bool run_program(int, char **, const char *, const vm::machine_arguments&, const char *);
 
 #endif

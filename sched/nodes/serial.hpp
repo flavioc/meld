@@ -49,7 +49,7 @@ public:
    explicit serial_node(const db::node::node_id _id, const db::node::node_id _trans, vm::all *all):
       in_queue_node(_id, _trans, all),
       INIT_DOUBLE_QUEUE_NODE(),
-      queue(vm::program::MAX_STRAT_LEVEL)
+      queue(all->PROGRAM->MAX_STRAT_LEVEL)
    {}
 
    virtual ~serial_node(void) { }

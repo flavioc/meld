@@ -397,7 +397,7 @@ get_creation_function(const scheduler_type sched_type)
 }
 
 machine::machine(const string& file, router& _rout, const size_t th,
-		const scheduler_type _sched_type, const machine_arguments& margs):
+		const scheduler_type _sched_type, const machine_arguments& margs, const string& data_file):
    all(new vm::all()),
    filename(file),
    sched_type(_sched_type),
@@ -405,14 +405,30 @@ machine::machine(const string& file, router& _rout, const size_t th,
    alarm_thread(NULL),
    slices(th)
 {
+    bool added_data_file(false);
+
     this->all->PROGRAM = new vm::program(file);
+    if(this->all->PROGRAM->is_data())
+       throw machine_error(string("cannot run data files"));
+    if(data_file != string("")) {
+       if(file_exists(data_file)) {
+          vm::program data(data_file);
+          if(!this->all->PROGRAM->add_data_file(data)) {
+             throw machine_error(string("could not import data file"));
+          }
+          added_data_file = true;
+       } else {
+          throw machine_error(string("data file ") + data_file + string(" not found"));
+       }
+    }
+
     this->all->ROUTER = &_rout;
     
     if(margs.size() < this->all->PROGRAM->num_args_needed())
         throw machine_error(string("this program requires ") + utils::to_string(all->PROGRAM->num_args_needed()) + " arguments");
    
    this->all->ARGUMENTS = margs;
-   this->all->DATABASE =  new database(filename, get_creation_function(_sched_type), this->all);
+   this->all->DATABASE = new database(added_data_file ? data_file : filename, get_creation_function(_sched_type), this->all);
    this->all->NUM_THREADS = th;
    this->all->MACHINE = this;
    
