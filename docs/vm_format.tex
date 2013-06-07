@@ -246,6 +246,28 @@ t&t&t&t&t&t&t&t} {reg$_1$, reg$_2$, time} \\
 \end{tabular}
 
 \begin{tabular}{lll}
+INSTRUCTION & BYTE FORMAT & ARGS\\
+\hline
+\\
+\inst{PUSH}    {0&0&0&1&0&1&1&0} {}\\
+& pushes an unintialized value into the stack \\
+\\
+\inst{POP}     {0&0&0&1&0&1&1&1} {} \\
+& pops a value from the stack \\
+\\
+\inst{PUSH REGS}  {0&0&0&1&1&0&0&0} {} \\
+& pushes all registers into the stack \\
+\\
+\inst{POP REGS}  {0&0&0&1&1&0&0&1} {} \\
+& pops all registers from the stack and restores their values \\
+\\
+\inst{CALLF}    {0&0&0&1&1&0&1&0\\\hline
+i&i&i&i&i&i&i&i} {id} \\
+& calls a Meld function \\
+\\
+\end{tabular}
+
+\begin{tabular}{lll}
 OP & BYTE FORMAT\\
 \hline
 \\
@@ -321,6 +343,12 @@ VALUE & BYTE FORMAT & ARGS\\
 \\
 \val{CONST} {0&0&1&0&0&0} {const id}
 & the next 4 bytes indicates the constant id\\
+\\
+\val{STACK} {0&0&1&0&0&1} {offset}
+& use the element at offset from the top of the stack (4 byte unsigned int) \\
+\\
+\val{PC-COUNTER} {0&0&1&0&1&0} {}
+& refers to the program counter \\
 \\
 \end{tabular}
 \vspace{0.3in}\\

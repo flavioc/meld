@@ -72,11 +72,11 @@ val_string(const instr_val v, pcounter *pm, const program *prog)
    } else if(val_is_int(v)) {
       const string ret(to_string(pcounter_int(*pm)));
       pcounter_move_int(pm);
-      return ret;
+      return string("INT ") + ret;
    } else if(val_is_float(v)) {
       const string ret(to_string(pcounter_float(*pm)));
       pcounter_move_float(pm);
-      return ret;
+      return string("FLOAT ") + ret;
    } else if(val_is_node(v)) {
       const string ret(string("@") + to_string(pcounter_node(*pm)));
       pcounter_move_node(pm);
@@ -95,6 +95,14 @@ val_string(const instr_val v, pcounter *pm, const program *prog)
 		pcounter_move_argument_id(pm);
 
 		return ret;
+   } else if(val_is_stack(v)) {
+      const offset_num offset(pcounter_offset_num(*pm));
+
+      pcounter_move_offset_num(pm);
+
+      return string("STACK ") + to_string((int)offset);
+   } else if(val_is_pcounter(v)) {
+      return string("PCOUNTER");
 	} else if(val_is_const(v)) {
 		const string ret(string("CONST ") + to_string(pcounter_const_id(*pm)));
 		
@@ -422,6 +430,29 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
               << endl;
 
          break;
+
+      case PUSH_INSTR:
+         cout << "PUSH" << endl;
+         break;
+
+      case POP_INSTR:
+         cout << "POP" << endl;
+         break;
+
+      case PUSH_REGS_INSTR:
+         cout << "PUSH REGS" << endl;
+         break;
+
+      case POP_REGS_INSTR:
+         cout << "POP REGS" << endl;
+         break;
+
+      case CALLF_INSTR: {
+         const callf_id id(callf_get_id(pc));
+
+         cout << "CALLF " << to_string((int)id) << endl;
+         break;
+      }
 
     	case ELSE_INSTR:
 		default:

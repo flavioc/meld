@@ -63,8 +63,8 @@ program::program(const string& _filename):
    uint32_t major_version, minor_version;
    READ_CODE(&major_version, sizeof(uint32_t));
    READ_CODE(&minor_version, sizeof(uint32_t));
-   if(major_version != MAJOR_VERSION || minor_version != MINOR_VERSION)
-      throw load_file_error(filename, string("invalid byte-code file, required ") + to_string(MAJOR_VERSION) + "." + to_string(MINOR_VERSION));
+   if(major_version == 0 && minor_version < 5)
+      throw load_file_error(filename, string("unsupported byte code version"));
 
    // read number of predicates
    byte buf[PREDICATE_DESCRIPTOR_SIZE];
@@ -151,6 +151,26 @@ program::program(const string& _filename):
 	READ_CODE(const_code, const_code_size);
 
    MAX_STRAT_LEVEL = 0;
+
+   // get function code
+   if(major_version > 0 || (major_version == 0 && minor_version > 5)) {
+      uint_val n_functions;
+
+      READ_CODE(&n_functions, sizeof(uint_val));
+      cout << "Functions " << n_functions << endl;
+
+      functions.resize(n_functions);
+
+      for(size_t i(0); i < n_functions; ++i) {
+         code_size_t fun_size;
+
+         READ_CODE(&fun_size, sizeof(code_size_t));
+         byte_code fun_code(new byte_code_el[fun_size]);
+         READ_CODE(fun_code, fun_size);
+
+         functions[i] = new vm::function(fun_code, fun_size);
+      }
+   }
 
    // read predicate information
    for(size_t i(0); i < num_predicates; ++i) {
@@ -291,6 +311,9 @@ program::~program(void)
 	for(size_t i(0); i < num_rules(); ++i) {
 		delete rules[i];
 	}
+   for(size_t i(0); i < functions.size(); ++i) {
+      delete functions[i];
+   }
 	delete []const_code;
    MAX_STRAT_LEVEL = 0;
 }
@@ -328,6 +351,18 @@ program::print_bytecode(ostream& out) const
 	out << "CONST CODE" << endl;
 	
 	instrs_print(const_code, const_code_size, 0, this, out);
+
+   out << endl;
+
+   out << "FUNCTION CODE" << endl;
+   for(size_t i(0); i < functions.size(); ++i) {
+      out << "FUNCTION " << i << endl;
+      instrs_print(functions[i]->get_bytecode(), functions[i]->get_bytecode_size(), 0, this, out);
+      out << endl;
+   }
+
+   out << endl;
+   out << "PREDICATE CODE" << endl;
 	
    for(size_t i = 0; i < num_predicates(); ++i) {
       predicate_id id = (predicate_id)i;

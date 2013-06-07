@@ -90,6 +90,9 @@ move_to_reg(const pcounter& m, state& state,
 			state.set_tuple_queue(reg, state.tuple_queue);
       assert(!(state.tuple_leaf != NULL && state.tuple_queue != NULL));
 		state.set_tuple(reg, state.tuple);
+   } else if(val_is_stack(from)) {
+      const offset_num off(pcounter_offset_num(m));
+      state.set_reg(reg, state.stack[state.stack.size() - 1 - off]);
    } else {
       throw vm_exec_error("invalid move to reg");
    }
@@ -136,6 +139,16 @@ move_to_field(pcounter m, state& state, const instr_val& from)
 		tuple *tuple(state.get_tuple(val_field_reg(m)));
 		
 		tuple->set_string(val_field_num(m), state.all->get_argument(id));
+   } else if(val_is_stack(from)) {
+      const offset_num off(pcounter_offset_num(m));
+
+      pcounter_move_offset_num(&m);
+
+		tuple *tuple(state.get_tuple(val_field_reg(m)));
+
+		const field_num to_field(val_field_num(m));
+
+      tuple->set_field(to_field, state.stack[state.stack.size() - 1 - off]);
 	} else if(val_is_const(from)) {
 		const const_id cid(pcounter_const_id(m));
 		
@@ -237,6 +250,23 @@ move_to_field(pcounter m, state& state, const instr_val& from)
 }
 
 static inline void
+move_to_stack(pcounter pc, pcounter m, state& state, const instr_val& from)
+{
+   if(val_is_pcounter(from)) {
+      const int off((int)pcounter_offset_num(m));
+      state.stack[state.stack.size() - 1 - off].ptr_field = (vm::ptr_val)advance(pc);
+   } else if(val_is_int(from)) {
+		const int_val it(pcounter_int(m));
+		
+		pcounter_move_int(&m);
+
+      const int off((int)pcounter_offset_num(m));
+      state.stack[state.stack.size() - 1 - off].int_field = it;
+   } else
+		throw vm_exec_error("invalid move to stack (move_to_stack)");
+}
+
+static inline void
 move_to_const(pcounter m, state& state, const instr_val& from)
 {
 	if(val_is_float(from)) {
@@ -280,7 +310,17 @@ move_to_const(pcounter m, state& state, const instr_val& from)
 }
 
 static inline void
-execute_move(const pcounter& pc, state& state)
+move_to_pcounter(pcounter& pc, const pcounter pm, state& state, const instr_val from)
+{
+   if(val_is_stack(from)) {
+      const offset_num off(pcounter_offset_num(pm));
+      pc = (pcounter)state.stack[state.stack.size() - 1 - off].ptr_field;
+   } else
+      throw vm_exec_error("invalid move to pcounter (move_to_pcounter)");
+}
+
+static inline void
+execute_move(pcounter& pc, state& state)
 {
    const instr_val to(move_to(pc));
    
@@ -290,6 +330,10 @@ execute_move(const pcounter& pc, state& state)
       move_to_field(pc + MOVE_BASE, state, move_from(pc));
 	else if(val_is_const(to))
 		move_to_const(pc + MOVE_BASE, state, move_from(pc));
+   else if(val_is_stack(to))
+      move_to_stack(pc, pc + MOVE_BASE, state, move_from(pc));
+   else if(val_is_pcounter(to))
+      move_to_pcounter(pc, pc + MOVE_BASE, state, move_from(pc));
    else
       throw vm_exec_error("invalid move target");
 }
@@ -661,6 +705,9 @@ void set_op_function<int_val>(const pcounter& m, const instr_val& dest,
       const field_num field(val_field_num(m));
       
       tuple->set_int(field, val);
+   } else if(val_is_stack(dest)) {
+      const offset_num off(pcounter_offset_num(m));
+      state.stack[state.stack.size() - 1 - off].int_field = val;
    } else
       throw vm_exec_error("invalid destination for int value");
 }
@@ -1982,6 +2029,33 @@ eval_loop:
            execute_new_axioms(pc, state);
            break;
 
+         case PUSH_INSTR:
+           state.stack.push_back(tuple_field());
+           break;
+
+         case POP_INSTR:
+           state.stack.pop_back();
+           break;
+
+         case PUSH_REGS_INSTR:
+           state.stack.insert(state.stack.end(),
+                 state.regs, state.regs + NUM_REGS);
+           break;
+
+         case POP_REGS_INSTR:
+           copy(state.stack.end() - NUM_REGS, state.stack.end(), state.regs);
+           state.stack.resize(state.stack.size() - NUM_REGS);
+           break;
+
+         case CALLF_INSTR: {
+              const vm::callf_id id(callf_get_id(pc));
+              function *fun(state.all->PROGRAM->get_function(id));
+
+              pc = fun->get_bytecode();
+              goto eval_loop;
+           }
+           break;
+
          default: throw vm_exec_error("unsupported instruction");
       }
    }
@@ -1990,9 +2064,11 @@ eval_loop:
 static inline return_type
 do_execute(byte_code code, state& state)
 {
+   assert(state.stack.empty());
    const return_type ret(execute((pcounter)code, state));
 
    state.cleanup();
+   assert(state.stack.empty());
    return ret;
 }
    

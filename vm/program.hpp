@@ -13,6 +13,7 @@
 #include "vm/defs.hpp"
 #include "vm/tuple.hpp"
 #include "vm/rule.hpp"
+#include "vm/function.hpp"
 #include "runtime/string.hpp"
 #include "queue/heap_implementation.hpp"
 #ifdef USE_UI
@@ -43,6 +44,8 @@ private:
    size_t number_rules;
 
    std::vector<rule*> rules;
+
+   std::vector<function*> functions;
    
    std::vector<predicate*> predicates;
   
@@ -84,6 +87,11 @@ public:
    inline rule *get_rule(const rule_id id) const {
       assert(id < number_rules);
       return rules[id];
+   }
+
+   inline function *get_function(const size_t id) const {
+      assert(id < functions.size());
+      return functions[id];
    }
 
 	inline predicate *get_priority_predicate(void) const { return priority_pred; }

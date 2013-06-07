@@ -14,6 +14,8 @@ namespace vm {
 
 typedef unsigned char instr_val;
 typedef unsigned char reg_num;
+typedef unsigned char offset_num;
+typedef unsigned char callf_id;
 
 const size_t MAGIC_SIZE = sizeof(uint64_t);
 const uint32_t MAGIC1 = 0x646c656d;
@@ -36,6 +38,8 @@ const size_t nil_size = 0;
 const size_t tuple_size = 0;
 const size_t index_size = 1;
 const size_t jump_size = 4;
+const size_t stack_val_size = sizeof(offset_num);
+const size_t pcounter_val_size = 0;
 
 const size_t SEND_BASE           = 3;
 const size_t OP_BASE             = 5;
@@ -67,6 +71,11 @@ const size_t RULE_DONE_BASE      = 1;
 const size_t NEW_NODE_BASE       = 2;
 const size_t NEW_AXIOMS_BASE     = 1 + jump_size;
 const size_t SEND_DELAY_BASE     = 3 + uint_size;
+const size_t PUSH_BASE           = 1;
+const size_t POP_BASE            = 1;
+const size_t PUSH_REGS_BASE      = 1;
+const size_t POP_REGS_BASE       = 1;
+const size_t CALLF_BASE          = 2;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -90,6 +99,11 @@ enum instr_type {
    NEW_NODE_INSTR       =  0x13,
    NEW_AXIOMS_INSTR     =  0x14,
    SEND_DELAY_INSTR     =  0x15,
+   PUSH_INSTR           =  0x16,
+   POP_INSTR            =  0x17,
+   PUSH_REGS_INSTR      =  0x18,
+   POP_REGS_INSTR       =  0x19,
+   CALLF_INSTR          =  0x1A,
    CALL_INSTR		      =  0x20,
    MOVE_INSTR		      =  0x30,
    ALLOC_INSTR		      =  0x40,
@@ -155,6 +169,8 @@ inline bool val_is_node(const instr_val x) { return x == 0x05; }
 inline bool val_is_string(const instr_val x) { return x == 0x06; }
 inline bool val_is_arg(const instr_val x) { return x == 0x07; }
 inline bool val_is_const(const instr_val x) { return x == 0x08; }
+inline bool val_is_stack(const instr_val x) { return x == 0x09; }
+inline bool val_is_pcounter(const instr_val x) { return x == 0x0A; }
 
 inline int_val pcounter_int(const pcounter pc) { return *(int_val *)pc; }
 inline code_size_t pcounter_code_size(const pcounter pc) { return *(code_size_t *)pc; }
@@ -163,6 +179,7 @@ inline node_val pcounter_node(const pcounter pc) { return *(node_val *)pc; }
 inline uint_val pcounter_uint(const pcounter pc) { return *(uint_val *)pc; }
 inline argument_id pcounter_argument_id(const pcounter pc) { return (argument_id)*pc; }
 inline const_id pcounter_const_id(const pcounter pc) { return pcounter_uint(pc); }
+inline offset_num pcounter_offset_num(const pcounter pc) { return *pc; }
 
 inline reg_num val_reg(const instr_val x) { return x & 0x1f; }
 inline field_num val_field_num(const pcounter x) { return *x & 0xff; }
@@ -176,6 +193,7 @@ inline void pcounter_move_node(pcounter *pc) { *pc = *pc + node_size; }
 inline void pcounter_move_uint(pcounter *pc) { *pc = *pc + uint_size; }
 inline void pcounter_move_argument_id(pcounter *pc) { *pc = *pc + argument_size; }
 inline void pcounter_move_const_id(pcounter *pc) { pcounter_move_uint(pc); }
+inline void pcounter_move_offset_num(pcounter *pc) { *pc = *pc + stack_val_size; }
 
 /* common instruction functions */
 
@@ -339,6 +357,10 @@ inline reg_num send_delay_msg(pcounter pc) { return reg_get(pc, 1); }
 inline reg_num send_delay_dest(pcounter pc) { return reg_get(pc, 2); }
 inline uint_val send_delay_time(pcounter pc) { return pcounter_uint(pc + 3); }
 
+/* CALLF id */
+
+inline callf_id callf_get_id(const pcounter pc) { return *(pc + 1); }
+
 /* advance function */
 
 enum instr_argument_type {
@@ -386,6 +408,10 @@ STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING>(const instr_val v)
 		return argument_size;
    else if(val_is_const(v))
 		return int_size;
+   else if(val_is_stack(v))
+      return stack_val_size;
+   else if(val_is_pcounter(v))
+      return pcounter_val_size;
 	else
       throw malformed_instr_error("invalid instruction argument value");
 }
@@ -413,6 +439,10 @@ STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING_NOT_NIL>(const instr_val v)
 		return val_size;
 	else if(val_is_const(v))
 		return int_size;
+   else if(val_is_stack(v))
+      return stack_val_size;
+   else if(val_is_pcounter(v))
+      return pcounter_val_size;
    else {
       throw malformed_instr_error("invalid instruction argument value");
    }
@@ -430,6 +460,8 @@ size_t arg_size<ARGUMENT_INT>(const instr_val v)
       return field_size;
 	else if(val_is_const(v))
 		return int_size;
+   else if(val_is_stack(v))
+      return stack_val_size;
    else
       throw malformed_instr_error("invalid instruction int value");
 }
@@ -443,6 +475,10 @@ STATIC_INLINE size_t arg_size<ARGUMENT_WRITABLE>(const instr_val v)
       return field_size;
 	else if(val_is_const(v))
 		return int_size;
+   else if(val_is_stack(v))
+      return stack_val_size;
+   else if(val_is_pcounter(v))
+      return pcounter_val_size;
    else
       throw malformed_instr_error("invalid instruction writable value");
 }
@@ -456,6 +492,8 @@ STATIC_INLINE size_t arg_size<ARGUMENT_LIST>(const instr_val v)
       return field_size;
    else if(val_is_nil(v))
       return nil_size;
+   else if(val_is_stack(v))
+      return stack_val_size;
    else
       throw malformed_instr_error("invalid instruction list value");
 }
@@ -481,6 +519,10 @@ STATIC_INLINE size_t arg_size<ARGUMENT_NON_LIST>(const instr_val v)
 		return val_size;
 	else if(val_is_const(v))
 		return int_size;
+   else if(val_is_stack(v))
+      return stack_val_size;
+   else if(val_is_pcounter(v))
+      return pcounter_val_size;
    else
       throw malformed_instr_error("invalid instruction non-list value");
 }
@@ -494,6 +536,8 @@ STATIC_INLINE size_t arg_size<ARGUMENT_BOOL>(const instr_val v)
       return field_size;
 	else if(val_is_const(v))
 		return int_size;
+   else if(val_is_stack(v))
+      return stack_val_size;
    else
       throw malformed_instr_error("invalid instruction bool value");
 }
@@ -511,6 +555,8 @@ STATIC_INLINE size_t arg_size<ARGUMENT_NODE>(const instr_val v)
       return node_size;
 	else if(val_is_const(v))
 		return int_size;
+   else if(val_is_stack(v))
+      return stack_val_size;
    else
       throw malformed_instr_error("invalid instruction node value");
 }
@@ -684,6 +730,21 @@ advance(pcounter pc)
       
       case SEND_DELAY_INSTR:
          return pc + SEND_DELAY_BASE;
+
+      case PUSH_INSTR:
+         return pc + PUSH_BASE;
+
+      case POP_INSTR:
+         return pc + POP_BASE;
+
+      case PUSH_REGS_INSTR:
+         return pc + PUSH_REGS_BASE;
+
+      case POP_REGS_INSTR:
+         return pc + POP_REGS_BASE;
+
+      case CALLF_INSTR:
+         return pc + CALLF_BASE;
 				
       case ELSE_INSTR:
       default:
