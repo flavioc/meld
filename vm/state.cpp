@@ -362,10 +362,6 @@ state::do_persistent_tuples(void)
       db::simple_tuple *stpl(generated_persistent_tuples.front());
       vm::tuple *tpl(stpl->get_tuple());
 
-#ifdef DEBUG_RULES
-      cout << "Running process for " << *stpl << endl;
-#endif
-
       generated_persistent_tuples.pop_front();
 
       if(tpl->is_persistent()) {
@@ -408,9 +404,15 @@ state::do_persistent_tuples(void)
       }
 
       if(tuple_for_assertion(stpl)) {
+#ifdef DEBUG_RULES
+      cout << ">>>>>>>>>>>>> Running process for " << node->get_id() << " " << *stpl << endl;
+#endif
          process_persistent_tuple(stpl, tpl);
       } else {
          // aggregate
+#ifdef DEBUG_RULES
+      cout << ">>>>>>>>>>>>> Adding aggregate " << node->get_id() << " " << *stpl << endl;
+#endif
          add_to_aggregate(stpl);
       }
    }

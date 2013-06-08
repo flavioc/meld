@@ -6,7 +6,7 @@ type belief(node, int, list float).
 type globalpotential(node, list float).
 type message(node, int, node, list float).
 
-type beliefmul(node, int, sum list float [-> edge]).
+type beliefmul(node, int, sum list float).
 
 extern list float normalize(list float).
 extern list float damp(list float, list float, float).

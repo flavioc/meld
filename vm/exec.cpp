@@ -13,6 +13,8 @@
 #include "ui/manager.hpp"
 #endif
 
+//#define DEBUG_SENDS
+
 using namespace vm;
 using namespace vm::instr;
 using namespace std;
@@ -349,8 +351,8 @@ execute_alloc(const pcounter& pc, state& state)
 static inline void
 execute_send_self(tuple *tuple, state& state)
 {
-#ifdef DEBUG_MODE
-   cout << "\t" << *tuple << " -> self " << state.node->get_id() << endl;
+#if defined(DEBUG_MODE) || defined(DEBUG_SENDS)
+   cout << "\t" << *tuple << " " << state.count << " -> self " << state.node->get_id() << endl;
 #endif
    if(tuple->is_action()) {
       state.all->MACHINE->run_action(state.sched,
@@ -418,8 +420,8 @@ execute_send(const pcounter& pc, state& state)
    if(msg == dest) {
       execute_send_self(tuple, state);
    } else {
-#ifdef DEBUG_MODE
-      cout << "\t" << *tuple << " -> " << dest_val << endl;
+#if defined(DEBUG_MODE) || defined(DEBUG_SENDS)
+      cout << "\t" << *tuple << " " << state.count << " -> " << dest_val << endl;
 #endif
 #ifdef USE_UI
       if(state::UI) {

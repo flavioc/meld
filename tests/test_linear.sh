@@ -25,5 +25,5 @@ run_test pagerank1
 run_test pagerank2
 run_test all_pairs1
 run_test all_pairs2
-run_test bp1
 run_test neural_network1
+run_test bp1

@@ -157,7 +157,6 @@ program::program(const string& _filename):
       uint_val n_functions;
 
       READ_CODE(&n_functions, sizeof(uint_val));
-      cout << "Functions " << n_functions << endl;
 
       functions.resize(n_functions);
 

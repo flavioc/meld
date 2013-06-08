@@ -1,6 +1,6 @@
 
 type pagerank(node, int, float).
-type calcRank(node, int, sum float [<- edge]).
+type calcRank(node, int, sum float).
 type numLinks(node, sum int).
 
 const damping = 0.85.
