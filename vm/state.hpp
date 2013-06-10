@@ -59,13 +59,6 @@ private:
 
 public:
 
-   void print_stack(void) {
-      std::cout << "Stack size " << stack.size() << std::endl;
-      for(size_t i(0); i < stack.size(); ++i) {
-         std::cout << stack[i].int_field << std::endl;
-      }
-   }
-	
    typedef tuple_field reg;
    reg regs[NUM_REGS];
    std::vector<tuple_field> stack;
@@ -162,6 +155,8 @@ public:
 	inline void set_tuple_queue(const reg_num& num, db::simple_tuple *stpl) { is_leaf[num] = false; saved_stuples[num] = stpl; }
 	inline db::simple_tuple* get_tuple_queue(const reg_num& num) const { return saved_stuples[num]; }
 	inline bool is_it_a_leaf(const reg_num& num) const { return is_leaf[num]; }
+
+   inline tuple_field* get_stack_at(const offset_num& off) { return &stack[stack.size() - 1 - off]; }
    
    inline void copy_reg(const reg_num& reg_from, const reg_num& reg_to) {
       regs[reg_to] = regs[reg_from];

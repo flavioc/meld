@@ -95,7 +95,7 @@ move_to_reg(const pcounter& m, state& state,
 		state.set_tuple(reg, state.tuple);
    } else if(val_is_stack(from)) {
       const offset_num off(pcounter_offset_num(m));
-      state.set_reg(reg, state.stack[state.stack.size() - 1 - off]);
+      state.set_reg(reg, *state.get_stack_at(off));
    } else {
       throw vm_exec_error("invalid move to reg");
    }
@@ -151,7 +151,7 @@ move_to_field(pcounter m, state& state, const instr_val& from)
 
 		const field_num to_field(val_field_num(m));
 
-      tuple->set_field(to_field, state.stack[state.stack.size() - 1 - off]);
+      tuple->set_field(to_field, *state.get_stack_at(off));
 	} else if(val_is_const(from)) {
 		const const_id cid(pcounter_const_id(m));
 		
@@ -257,14 +257,14 @@ move_to_stack(pcounter pc, pcounter m, state& state, const instr_val& from)
 {
    if(val_is_pcounter(from)) {
       const int off((int)pcounter_offset_num(m));
-      state.stack[state.stack.size() - 1 - off].ptr_field = (vm::ptr_val)advance(pc);
+      state.get_stack_at(off)->ptr_field = (vm::ptr_val)advance(pc);
    } else if(val_is_int(from)) {
 		const int_val it(pcounter_int(m));
 		
 		pcounter_move_int(&m);
 
       const int off((int)pcounter_offset_num(m));
-      state.stack[state.stack.size() - 1 - off].int_field = it;
+      state.get_stack_at(off)->int_field = it;
    } else
 		throw vm_exec_error("invalid move to stack (move_to_stack)");
 }
@@ -317,7 +317,7 @@ move_to_pcounter(pcounter& pc, const pcounter pm, state& state, const instr_val 
 {
    if(val_is_stack(from)) {
       const offset_num off(pcounter_offset_num(pm));
-      pc = (pcounter)state.stack[state.stack.size() - 1 - off].ptr_field;
+      pc = (pcounter)(state.get_stack_at(off)->ptr_field);
    } else
       throw vm_exec_error("invalid move to pcounter (move_to_pcounter)");
 }
@@ -710,7 +710,7 @@ void set_op_function<int_val>(const pcounter& m, const instr_val& dest,
       tuple->set_int(field, val);
    } else if(val_is_stack(dest)) {
       const offset_num off(pcounter_offset_num(m));
-      state.stack[state.stack.size() - 1 - off].int_field = val;
+      state.get_stack_at(off)->int_field = val;
    } else
       throw vm_exec_error("invalid destination for int value");
 }
@@ -729,7 +729,7 @@ void set_op_function<float_val>(const pcounter& m, const instr_val& dest,
    } else if(val_is_stack(dest)) {
       const offset_num off(pcounter_offset_num(m));
 
-      state.stack[state.stack.size() - 1 - off].float_field = val;
+      state.get_stack_at(off)->float_field = val;
    } else
       throw vm_exec_error("invalid destination for float value");
 }
