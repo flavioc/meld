@@ -725,6 +725,10 @@ void set_op_function<float_val>(const pcounter& m, const instr_val& dest,
       const field_num field(val_field_num(m));
       
       tuple->set_float(field, val);
+   } else if(val_is_stack(dest)) {
+      const offset_num off(pcounter_offset_num(m));
+
+      state.stack[state.stack.size() - 1 - off].float_field = val;
    } else
       throw vm_exec_error("invalid destination for float value");
 }
