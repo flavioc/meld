@@ -14,6 +14,7 @@ if len(sys.argv) < 8:
 	sys.exit(1)
 	
 print 'type route edge(node, node, float).'
+print 'type inbound(node, int).'
 
 side = int(sys.argv[1])
 outerside = int(sys.argv[2])
@@ -60,9 +61,13 @@ def write_coord(id, row, col):
 def write_inner(id):
 	print "!inner(@" + str(id) + ")."
 
+def write_inbound(id, number):
+	print "!inbound(@" + str(id) + ", " + str(number) + ")."
+
 def do_node(row, col):
 	isouter = inside_outer(row, col)
 	id = row * side + col
+	write_inbound(id, 4)
 	if WRITE_COORDS:
 		write_coord(id, row, col)
 	if isouter:

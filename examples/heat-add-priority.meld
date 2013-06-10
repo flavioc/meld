@@ -1,8 +1,6 @@
 
 include #heat-data.meld
 
-type inbound(node, int).
-type linear countinbound(node).
 type linear heat(node, float).
 type linear heatchanged(node, float, float).
 type linear neighborchanged(node, node, float, float, float).
@@ -11,6 +9,8 @@ type linear acc(node, float, int).
 type linear count(node, int).
 type coord(node, int, int).
 type inner(node).
+
+priority @order @desc.
 
 const epsilon = str2float(@arg1).
 const delta = str2float(@arg2).
@@ -21,10 +21,6 @@ heatchanged(A, 0.0, 0.0).
 delta(A, 0.0, 0.0).
 acc(A, 0.0, 0).
 count(A, 0).
-countinbound(A).
-
-countinbound(A) -o
-   [ count => X | B, W | !edge(B, A, W) | !inbound(A, if X = 0 then 1 else X end) ].
 
 /* neighbor heat has changed... we add this to delta + acc */
 neighborchanged(A, B, V, O, _),
