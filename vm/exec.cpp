@@ -14,6 +14,7 @@
 #endif
 
 //#define DEBUG_SENDS
+//#define DEBUG_INSTRS
 
 using namespace vm;
 using namespace vm::instr;
@@ -1854,7 +1855,9 @@ eval_loop:
 #ifdef DEBUG_MODE
 		if(state.print_instrs)
          instr_print_simple(pc, 0, state.all->PROGRAM, cout);
-#endif      
+#elif defined(DEBUG_INSTRS)
+      instr_print_simple(pc, 0, state.all->PROGRAM, cout);
+#endif
 
 #ifdef USE_SIM
       if(state::SIM) {
