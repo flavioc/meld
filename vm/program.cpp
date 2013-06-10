@@ -205,11 +205,11 @@ program::program(const string& _filename):
    is_data_file = false;
 	
    switch(global_info) {
-      case 0x01: {
+      case 0x01: { // priority by predicate
          predicate_id pred;
          byte asc_desc;
          field_num priority_argument;
-         
+
          READ_CODE(&pred, sizeof(predicate_id));
          READ_CODE(&priority_argument, sizeof(field_num));
          READ_CODE(&asc_desc, sizeof(byte));
@@ -222,7 +222,7 @@ program::program(const string& _filename):
          priority_type = priority_pred->get_field_type(get_priority_argument());
       }
       break;
-      case 0x02: {
+      case 0x02: { // normal priority
          byte type(0x0);
          byte asc_desc;
 
@@ -248,6 +248,7 @@ program::program(const string& _filename):
       break;
       default:
       priority_type = FIELD_FLOAT; 
+      priority_order = PRIORITY_DESC;
       break;
    }
    
@@ -400,6 +401,7 @@ program::print_predicates(ostream& cout) const
       cout << ">> Safe program" << endl;
    else
       cout << ">> Unsafe program" << endl;
+   cout << "Priorities: " << (priority_order == PRIORITY_ASC ? "ascending" : "descending") << endl;
    if(is_data())
       cout << ">> Data file" << endl;
    for(size_t i(0); i < num_predicates(); ++i) {
