@@ -1,13 +1,13 @@
 
-include #heat-data.meld
-
+type inbound(node, int).
+type route edge(node, node, float).
+type coord(node, int, int).
+type inner(node).
 type linear heat(node, float).
 type linear heatchanged(node, float, float).
 type linear neighborchanged(node, node, float, float).
 type linear delta(node, float, float).
 type linear count(node, int).
-type coord(node, int, int).
-type inner(node).
 
 priority @order @desc.
 

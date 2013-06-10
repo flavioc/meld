@@ -515,6 +515,7 @@ program::add_data_file(const program& other)
       predicate *mine(predicates[i]);
       predicate *oth(other.get_predicate(i));
       if(*mine != *oth) {
+         cerr << "Predicates " << *mine << " and " << *oth << " are different" << endl;
          return false;
       }
    }

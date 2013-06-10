@@ -13,8 +13,11 @@ if len(sys.argv) < 8:
 	print "Usage: generate_heat_grid.py <side> <outer side> <outer weight> <inner weight> <transition weight> <inside heat> <outside heat> [threads]"
 	sys.exit(1)
 	
-print 'type route edge(node, node, float).'
 print 'type inbound(node, int).'
+print 'type route edge(node, node, float).'
+print 'type coord(node, int, int).'
+print 'type inner(node).'
+print 'type linear heat(node, float).'
 
 side = int(sys.argv[1])
 outerside = int(sys.argv[2])
