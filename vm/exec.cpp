@@ -1267,7 +1267,7 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 		
 			PUSH_CURRENT_STATE(match_tuple, NULL, stpl);
 		
-			if(iter_options_to_delete(options)) {
+			if(iter_options_to_delete(options) || this_is_linear) {
 				assert(this_is_linear);
 				stpl->will_delete(); // this will avoid future gathers of this tuple!
 			}
@@ -1278,10 +1278,14 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 			POP_STATE();
 
 			if(!(ret == RETURN_LINEAR || ret == RETURN_DERIVED)) { // tuple not consumed
-				if(this_is_linear) {
+				if(iter_options_to_delete(options) || this_is_linear) {
 					stpl->will_not_delete(); // oops, revert
             }
 			}
+
+         if(!iter_options_to_delete(options) && this_is_linear) {
+            stpl->will_not_delete();
+         }
 		
 			if(ret == RETURN_LINEAR)
 				return ret;
@@ -1301,8 +1305,9 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 			simple_tuple *stpl(*it);
 			tuple *match_tuple(stpl->get_tuple());
 
-			if(!stpl->can_be_consumed())
+			if(!stpl->can_be_consumed()) {
 				continue;
+         }
 				
 			if(match_tuple->get_predicate() != pred)
 				continue;
@@ -1312,9 +1317,9 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 		
 			PUSH_CURRENT_STATE(match_tuple, NULL, stpl);
 		
-			if(iter_options_to_delete(options)) {
+			if(iter_options_to_delete(options) || this_is_linear) {
 				assert(this_is_linear);
-				stpl->will_delete(); // this will avoid future gathers of this tuple!
+				stpl->will_delete(); // this will avoid future uses of this tuple!
 			}
 		
 			// execute...
@@ -1323,10 +1328,14 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 			POP_STATE();
 
 			if(!(ret == RETURN_LINEAR || ret == RETURN_DERIVED)) { // tuple not consumed
-				if(this_is_linear) {
+				if(this_is_linear || iter_options_to_delete(options)) {
 					stpl->will_not_delete(); // oops, revert
             }
 			}
+
+         if(!iter_options_to_delete(options) && this_is_linear) {
+            stpl->will_not_delete();
+         }
 		
 			if(ret == RETURN_LINEAR) { 
 				return ret;
