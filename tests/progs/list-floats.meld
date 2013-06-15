@@ -1,0 +1,4 @@
+
+type linear f(node, list float).
+
+f(@0, [1.5, 3.14, 2, 3]).

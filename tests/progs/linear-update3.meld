@@ -1,0 +1,10 @@
+
+type linear update(node).
+type linear ok(node).
+type linear one(node).
+
+update(@0).
+
+update(A), update(A) -o update(A), one(A).
+
+update(A) -o ok(A).
