@@ -1,0 +1,355 @@
+
+type linear state(node, int).
+type route edge(node, node, float).
+type linear start(node).
+type linear edgetype(node, node, int).
+type linear connect(node, node, int).
+type linear findcount(node, int).
+type linear level(node, int).
+type linear initiate(node, node, int, float, int).
+type linear inc-if-find(node, int).
+type linear core(node, float).
+type linear inbranch(node, node).
+type linear best-wt(node, float).
+type linear best-edge(node, node).
+type linear do-test-if-find(node, int).
+type linear dotest(node).
+type linear report(node, node, float).
+type linear test(node, node, int, float).
+type linear test-edge(node, node).
+type linear accept(node, node).
+type linear maysendreject(node, node, node).
+type linear reject(node, node).
+type linear may-change-best-edge(node, node).
+type linear doreport(node).
+type linear may-set-best-edge(node, node, float).
+type linear do-change-root(node).
+type linear halt(node).
+type linear change-root(node).
+
+/* must uncomment the following for this to work under fact proving */
+/*prio dotest < edgetype.*/
+/*prio start < edgetype.*/
+/*prio dotest < test-edge.*/
+/*prio dotest < level.*/
+/*prio dotest < core.*/
+/*prio inc-if-find < doreport.*/
+
+const sleeping = 0.
+const find = 1.
+const found = 2.
+const basic = 0.
+const rejected = 1.
+const branch = 2.
+const infinity = 999999.9.
+
+!edge(@1, @2, 1.1). edgetype(@1, @2, basic). !edge(@2, @1, 1.1). edgetype(@2, @1, basic).
+!edge(@1, @3, 1.7). edgetype(@1, @3, basic). !edge(@3, @1, 1.7). edgetype(@3, @1, basic).
+!edge(@3, @5, 3.8). edgetype(@3, @5, basic). !edge(@5, @3, 3.8). edgetype(@5, @3, basic).
+!edge(@5, @6, 2.1). edgetype(@5, @6, basic). !edge(@6, @5, 2.1). edgetype(@6, @5, basic).
+!edge(@5, @1, 2.6). edgetype(@5, @1, basic). !edge(@1, @5, 2.6). edgetype(@1, @5, basic).
+!edge(@2, @4, 3.1). edgetype(@2, @4, basic). !edge(@4, @2, 3.1). edgetype(@4, @2, basic).
+!edge(@6, @4, 3.7). edgetype(@6, @4, basic). !edge(@4, @6, 3.7). edgetype(@4, @6, basic).
+
+state(A, sleeping).
+best-edge(A, A).
+best-wt(A, infinity).
+test-edge(A, A).
+inbranch(A, A).
+core(A, 0.0).
+start(A).
+
+/* ======================= */
+/* (2) procedure wakeup    */
+/* ======================= */
+
+[:min W |
+	start(A),
+	state(A, SN),
+	SN = sleeping,
+	!edge(A, B, W),
+   edgetype(A, B, Type)	]
+		-o state(A, found), edgetype(A, B, branch),
+		connect(B, A, 0),
+		findcount(A, 0), level(A, 0).
+
+/* ==================== */
+/* (3) response to receipt of Connect(L) on edge J */
+/* ==================== */
+
+/* if L < LN */
+connect(A, J, L),
+level(A, LN),
+L < LN,
+edgetype(A, J, OldType),
+!edge(A, J, Weight),
+state(A, SN),
+core(A, FN)
+	-o edgetype(A, J, branch),
+		inc-if-find(A, SN),
+		state(A, SN),
+		core(A, FN),
+		level(A, LN),
+		initiate(J, A, LN, FN, SN).
+
+inc-if-find(A, State),
+State = find,
+findcount(A, N)
+	-o findcount(A, N + 1).
+
+inc-if-find(A, State),
+State <> find
+	-o 1.
+
+/* else case: L >= LN and SE(J) <> Basic */
+connect(A, J, L),
+level(A, LN),
+L >= LN,
+edgetype(A, J, NotBasic),
+NotBasic <> basic,
+!edge(A, J, Wj)
+	-o initiate(J, A, LN + 1, Wj, find),
+		level(A, LN),
+		edgetype(A, J, NotBasic).
+
+/* ================== */
+/* (4) response to receipt of initiate(L, F, S) on edge J */
+/* ================== */
+
+initiate(A, J, L, F, S),
+level(A, LN),
+state(A, SN),
+core(A, FN),
+inbranch(A, _),
+best-edge(A, _),
+best-wt(A, _)
+	-o level(A, L),
+		state(A, S),
+		core(A, F),
+		inbranch(A, J),
+		best-edge(A, A),
+		best-wt(A, infinity),
+		{B, W, Branch | !edge(A, B, W), B <> J, edgetype(A, B, Branch), Branch = branch |
+					edgetype(A, B, Branch), inc-if-find(A, S), initiate(B, A, L, F, S) },
+		do-test-if-find(A, S).
+
+do-test-if-find(A, Find),
+Find = find
+	-o dotest(A).
+
+do-test-if-find(A, State), State <> find -o 1.
+
+/* =========== */
+/* (5): procedure test */
+/* =========== */
+
+/* if adjacent edges in state Basic */
+[:min W |
+	dotest(A),
+	!edge(A, B, W),
+	edgetype(A, B, Basic),
+	Basic = basic,
+  	test-edge(A, _),
+	level(A, LN),
+	core(A, FN) ]
+	-o test-edge(A, B), edgetype(A, B, Basic), core(A, FN), level(A, LN), test(B, A, LN, FN).
+
+/* no adjacent edges in state basic */
+dotest(A),
+test-edge(A, _)
+	-o test-edge(A, A), doreport(A).
+
+/* ============= */
+/* (6): response to receipt of test(L, F) on edge J */
+/* ============= */
+
+/* if L > LN: no rule needed! */
+
+/* else case FN = F and F = FN */
+/* if SE(j) = Basic then SE(j) <- rejected; */
+test(A, J, L, F),
+level(A, LN),
+L <= LN,
+core(A, FN),
+F = FN,
+test-edge(A, TestEdge)
+	-o level(A, LN),
+		core(A, FN),
+		test-edge(A, TestEdge),
+		{Basic | edgetype(A, J, Basic), Basic = basic | edgetype(A, J, rejected)},
+		maysendreject(A, TestEdge, J).
+
+maysendreject(A, TestEdge, J),
+TestEdge = J
+	-o dotest(A).
+
+maysendreject(A, TestEdge, J),
+TestEdge <> J,
+!edge(A, J, _)
+	-o reject(J, A).
+
+maysendreject(A, TestEdge, J),
+TestEdge = A
+	-o 1.
+
+/* else case L <= LN and FN <> F */
+test(A, J, L, F),
+!edge(A, J, _),
+level(A, LN),
+L <= LN,
+core(A, FN),
+FN <> F
+	-o level(A, LN),
+		core(A, FN),
+		accept(J, A).
+
+/* ============== */
+/* (7): response to receipt of accept on edge J */
+/* ============= */
+
+accept(A, J),
+test-edge(A, _)
+	-o test-edge(A, A), /* test-edge <- nil */
+		may-change-best-edge(A, J).
+
+may-change-best-edge(A, J),
+best-wt(A, BW),
+!edge(A, J, ThisW),
+ThisW < BW,
+best-edge(A, _)
+	-o best-edge(A, J), best-wt(A, ThisW), doreport(A).
+
+may-change-best-edge(A, J),
+best-wt(A, BW),
+!edge(A, J, ThisW),
+ThisW >= BW
+	-o best-wt(A, BW), doreport(A).
+
+/* =============== */
+/* (8): response to receipt of reject on edge j */
+/* =============== */
+
+reject(A, J)
+	-o {W, Basic | !edge(A, J, W), edgetype(A, J, Basic), Basic = basic | edgetype(A, J, rejected)},
+		dotest(A).
+
+/* =================== */
+/* (9): procedure report */
+/* =================== */
+
+doreport(A),
+findcount(A, FC),
+FC = 0,
+test-edge(A, Nil), /* A = A nil */
+Nil = A,
+state(A, SN),
+inbranch(A, In),
+!edge(A, In, _),
+best-wt(A, BW)
+	-o findcount(A, 0),
+		test-edge(A, A),
+		state(A, found),
+		best-wt(A, BW),
+		inbranch(A, In),
+		report(In, A, BW).
+
+doreport(A)	-o 1.
+
+/* =================== */
+/* (10): response to receipt of Report(W) on edge J */
+/* ================ */
+
+/* J != in-branch */
+report(A, J, W),
+inbranch(A, InBranch),
+InBranch <> J,
+findcount(A, FindCount)
+	-o inbranch(A, InBranch),
+		findcount(A, FindCount - 1),
+		may-set-best-edge(A, J, W).
+
+may-set-best-edge(A, J, W),
+best-wt(A, BW),
+W < BW,
+best-edge(A, _)
+	-o best-wt(A, W), best-edge(A, J), doreport(A).
+
+may-set-best-edge(A, J, W),
+best-wt(A, BW),
+W >= BW
+	-o best-wt(A, BW), doreport(A).
+
+/* if j = in-branch, SN != find, W > BW */
+report(A, J, W),
+inbranch(A, InBranch),
+InBranch = J,
+state(A, SN),
+SN <> find,
+best-wt(A, BW),
+W > BW
+	-o inbranch(A, InBranch),
+		state(A, SN),
+		best-wt(A, BW),
+		do-change-root(A).
+
+/* if j = in-branch, SN != find, W <= BW, BW = infinity */
+report(A, J, W),
+inbranch(A, InBranch),
+InBranch = J,
+state(A, SN),
+SN <> find,
+best-wt(A, BW),
+W <= BW,
+W = infinity,
+BW = infinity
+	-o inbranch(A, InBranch),
+		state(A, SN),
+		best-wt(A, BW),
+		halt(A).
+
+/* if j = in-branch, SN != find, W <= BW, BW <> infinity */
+/* this deletes report() */
+report(A, J, W),
+inbranch(A, InBranch),
+InBranch = J,
+state(A, SN),
+SN <> find,
+best-wt(A, BW),
+W <= BW,
+W <> infinity
+	-o inbranch(A, InBranch),
+		state(A, SN),
+		best-wt(A, BW).
+
+/* ================= */
+/* (11): procedure change-root */
+/* ================= */
+
+/* if SE(best-edge) = Branch */
+do-change-root(A),
+best-edge(A, B),
+!edge(A, B, _),
+edgetype(A, B, Branch),
+Branch = branch
+	-o best-edge(A, B),
+		edgetype(A, B, Branch),
+		change-root(B).
+
+/* if SE(best-edge) <> Branch */
+do-change-root(A),
+best-edge(A, B),
+!edge(A, B, _),
+edgetype(A, B, Branch),
+Branch <> branch,
+level(A, LN)
+	-o best-edge(A, B),
+		edgetype(A, B, branch),
+		level(A, LN),
+		connect(B, A, LN).
+		
+/* =============== */
+/* (12): response to receipt of change-root */
+/* =============== */
+
+change-root(A) -o do-change-root(A).
+

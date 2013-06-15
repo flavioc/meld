@@ -1,0 +1,318 @@
+
+// A Distributed Algorithm for the Maximum Flow Problem */
+// presentation: http://www2.lifl.fr/ispdc2005/presentations/ispdc-maxflow-PHAM.pdf */
+
+type typ(node, int).
+type linear state(node, int).
+type linear height(node, int).
+type linear excess(node, float).
+type route edge(node, node, int, int).
+type linear nbInitHeightMsgs(node, int).
+type linear rv(node, node, float).
+type linear rv-copy(node, node, float).
+type linear rv-copy2(node, node, float).
+type linear initialize(node).
+type linear init-height(node, node, int).
+type linear new-height(node, node, int).
+type linear edge-height(node, node, int).
+type linear init-height-check(node, int).
+type linear init-height2(node, node, int).
+type linear init-height2-check-arcs(node).
+type linear init-height3-check-arcs(node).
+type linear change-excess(node).
+type outbound(node, int).
+type linear do-push(node, int).
+type linear accumulate-excess(node).
+type linear push-request(node, node, float).
+type linear find-all-push-requests(node, float).
+type linear push-request2(node, float).
+type linear push-request3(node, float).
+type linear push-request4(node, float).
+type linear push-request-ans(node, node, float).
+type linear push-check-excesses(node, int).
+type linear may-do-lift(node, float).
+type linear do-lift(node).
+type linear to-select(node, int).
+type linear select-best-height(node).
+type linear minimize-height(node).
+type linear lift-min-height(node, int).
+type linear may-do-init-height(node).
+type linear token(node).
+type linear proc-return(node, int).
+type linear do-init-height(node, int).
+
+const source = 0.
+const sink = 1.
+const normal = 2.
+const active = 0.
+const inactive = 1.
+const input = 0.
+const output = 1.
+const dolift = 1.
+const nolift = 0.
+const return-initialize = 0.
+const return-init-height = 1.
+const return-init-height-source = 2.
+const return-change-excess = 3.
+
+/* s: 0 | a: 1 | b: 2 | c: 3 | d: 4 | t: 5 */
+!edge(@0, @1, 13, output). !edge(@1, @0, 13, input).
+!edge(@0, @2, 11, output). !edge(@2, @0, 11, input).
+!edge(@1, @2, 1, output). !edge(@2, @1, 1, input).
+!edge(@1, @3, 8, output). !edge(@3, @1, 8, input).
+!edge(@2, @3, 10, output). !edge(@3, @2, 10, input).
+!edge(@2, @4, 11, output). !edge(@4, @2, 11, input).
+!edge(@3, @4, 2, output). !edge(@4, @3, 2, input).
+!edge(@3, @5, 15, output). !edge(@5, @3, 15, input).
+!edge(@4, @5, 7, output). !edge(@5, @4, 7, input).
+!typ(@0, source).
+!typ(@5, sink).
+!typ(@1, normal). !typ(@2, normal). !typ(@3, normal). !typ(@4, normal).
+
+/* 3. initialization */
+height(A, 0).
+excess(A, 0).
+state(A, inactive).
+nbInitHeightMsgs(A, 0).
+initialize(A).
+
+initialize(A) -o
+   {B, W, T | !edge(A, B, W, T), T = output | rv(A, B, float(W))},
+   {B, W, T | !edge(A, B, W, T), T = input | rv(A, B, 0)},
+   {B, W, T | !edge(A, B, W, T) | edge-height(A, B, 0)},
+   [count => Outbound | B, W, Out | !edge(A, B, W, Out), Out = output | !outbound(A, Outbound)],
+   may-do-init-height(A).
+
+/* 6. upon receipt of (NEW-HEIGHT, h) msg from w */
+new-height(A, W, H),
+token(A),
+edge-height(A, W, _)
+   -o edge-height(A, W, H), token(A).
+
+may-do-init-height(A),
+!typ(A, sink)
+   -o do-init-height(A, return-initialize).
+
+proc-return(A, return-initialize)
+   -o token(A).
+
+may-do-init-height(A),
+!typ(A, NotSink),
+NotSink <> sink
+   -o token(A).
+
+/* init-height() */
+do-init-height(A, Ret),
+height(A, Height)
+   -o {B, W, R, T | !edge(A, B, W, T), rv(A, B, R), R = 0 | init-height(B, A, Height), rv(A, B, R) },
+      {B, W, R, T | !edge(A, B, W, T), rv(A, B, R), R <> 0 | new-height(B, A, Height), rv(A, B, R) },
+      height(A, Height),
+      proc-return(A, Ret).
+
+/* 5. upon receipt of (init-height, h) from w */
+init-height(A, W, H),
+token(A),
+edge-height(A, W, _)
+   -o edge-height(A, W, H),
+      init-height2(A, W, H).
+
+init-height2(A, W, H),
+!typ(A, NotSource),
+NotSource <> source
+   -o init-height-check(A, H).
+
+init-height-check(A, H),
+height(A, Height),
+Height = 0 || Height > H + 1
+   -o height(A, H + 1), do-init-height(A, return-init-height).
+
+proc-return(A, return-init-height)
+   -o token(A).
+
+init-height-check(A, H) -o token(A).
+
+init-height2(A, W, H),
+!typ(A, source),
+nbInitHeightMsgs(A, IH)
+   -o nbInitHeightMsgs(A, IH + 1),
+      init-height2-check-arcs(A).
+
+init-height2-check-arcs(A),
+nbInitHeightMsgs(A, Total),
+!outbound(A, Out),
+Out = Total
+   -o nbInitHeightMsgs(A, Total),
+      init-height3-check-arcs(A).
+
+init-height2-check-arcs(A),
+nbInitHeightMsgs(A, Total),
+!outbound(A, Out),
+Out <> Total
+   -o nbInitHeightMsgs(A, Total), token(A).
+
+init-height3-check-arcs(A),
+height(A, Height),
+excess(A, Excess)
+   -o height(A, @world),
+      change-excess(A).
+
+proc-return(A, return-change-excess),
+state(A, State)
+   -o state(A, active),
+      do-init-height(A, return-init-height-source).
+
+proc-return(A, return-init-height-source)
+   -o do-push(A, nolift).
+
+change-excess(A)
+   -o {B, W | rv(A, B, W) | rv-copy(A, B, W), rv-copy2(A, B, W)},
+      accumulate-excess(A).
+
+accumulate-excess(A)
+   -o [sum => W | B | rv-copy2(A, B, W) | excess(A, W)],
+      {B, W | rv-copy(A, B, W) | rv(A, B, W)},
+      proc-return(A, return-change-excess).
+
+/* 7. push() */
+do-push(A, dolift),
+!typ(A, sink),
+excess(A, Excess)
+   -o excess(A, Excess),
+      may-do-lift(A, Excess).
+
+/* return immediately */
+do-push(A, nolift),
+!typ(A, sink)
+   -o token(A).
+
+do-push(A, Type),
+!typ(A, NotSink),
+NotSink <> sink
+   -o push-check-excesses(A, Type).
+
+push-check-excesses(A, Type),
+excess(A, Excess),
+Excess > 0,
+edge-height(A, U, EH),
+rv(A, U, RV),
+RV > 0,
+height(A, H),
+EH < H,
+!edge(A, U, _, _),
+Delta = if Excess < RV then Excess else RV end
+   -o excess(A, Excess - Delta),
+      rv(A, U, RV - Delta),
+      edge-height(A, U, EH),
+      height(A, H),
+      push-request(U, A, Delta),
+      push-check-excesses(A, Type).
+
+push-check-excesses(A, nolift) -o token(A).
+push-check-excesses(A, dolift),
+excess(A, Excess)
+   -o excess(A, Excess),
+      may-do-lift(A, Excess).
+
+/* 8. upon receipt of (push-request delta) msg from w */
+push-request(A, W, Delta),
+token(A),
+edge-height(A, W, EH),
+height(A, H),
+EH > H,
+rv(A, W, RV)
+   -o edge-height(A, W, EH),
+      height(A, H),
+      rv(A, W, RV + Delta),
+      find-all-push-requests(A, Delta).
+
+/* this is different from the paper... we collect all the requests to push them all at once */
+find-all-push-requests(A, Acc),
+push-request(A, W, Delta),
+edge-height(A, W, EH),
+height(A, H),
+EH > H,
+rv(A, W, RV)
+   -o edge-height(A, W, EH),
+      height(A, H),
+      rv(A, W, RV + Delta),
+      find-all-push-requests(A, Acc + Delta).
+ 
+/* no more push-requests */
+find-all-push-requests(A, Acc)
+   -o push-request2(A, Acc).
+
+push-request(A, W, Delta),
+edge-height(A, W, EH),
+height(A, H),
+EH <= H,
+!edge(A, W, _, _)
+   -o edge-height(A, W, EH),
+      height(A, H),
+      push-request-ans(W, A, Delta),
+      token(A).
+
+push-request2(A, Delta),
+state(A, inactive),
+!typ(A, NotSink),
+NotSink <> sink
+   -o state(A, active),
+      push-request3(A, Delta).
+
+/* state not inactive or type not sink */
+push-request2(A, Delta) -o push-request3(A, Delta).
+
+push-request3(A, Delta),
+excess(A, Excess)
+   -o excess(A, Excess + Delta),
+      push-request4(A, Delta).
+
+push-request4(A, Delta),
+!typ(A, sink)
+   -o token(A).
+
+push-request4(A, Delta),
+!typ(A, NotSink),
+NotSink <> sink
+   -o do-push(A, dolift).
+
+/* 9. upon receipt of (push-request-ans, Delta, NOK) msg from W */
+push-request-ans(A, W, Delta),
+excess(A, Excess),
+state(A, State),
+rv(A, W, RV)
+   -o excess(A, Excess + Delta),
+      state(A, active),
+      rv(A, W, RV + Delta),
+      do-push(A, dolift).
+
+may-do-lift(A, Val),
+Val > 0
+   -o do-lift(A).
+
+may-do-lift(A, Val),
+Val <= 0
+   -o token(A).
+
+/* 10. lift */
+do-lift(A),
+!typ(A, normal)
+   -o select-best-height(A).
+
+/* node is sink or source... */
+do-lift(A) -o token(A).
+
+select-best-height(A),
+excess(A, Excess)
+   -o excess(A, Excess),
+      {B, W, H | rv(A, B, W), W >= Excess, edge-height(A, B, H) | rv(A, B, W), edge-height(A, B, H), to-select(A, H)},
+      minimize-height(A).
+
+minimize-height(A)
+   -o [min => H | to-select(A, H) | lift-min-height(A, H)].
+
+lift-min-height(A, H),
+height(A, OldHeight)
+   -o height(A, H + 1),
+      {B, W, Out | !edge(A, B, W, Out) | new-height(B, A, H + 1)},
+      do-push(A, nolift).
+      
