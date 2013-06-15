@@ -1,0 +1,49 @@
+
+type edge(node, node).
+type linear neighbor-color(node, node, int, int).
+type linear new-neighbor-color(node, node, int).
+type linear color(node, int).
+type linear update(node).
+type linear start(node).
+type linear select-best-color(node).
+type linear neighbor-pick-color(node, node, int).
+type linear invalid-colors(node, list int, int).
+type linear to-select-color(node, node, int, int).
+type linear new-color(node, int).
+type linear update-neighbors(node, int).
+
+const number-colors = 3.
+const invalid-color = 0.
+
+start(A).
+
+start(A) -o {B | !edge(A, B) | neighbor-color(A, B, invalid-color, 0)},
+            color(A, randint(number-colors) + 1),
+            update(A).
+
+new-neighbor-color(A, B, New),
+neighbor-color(A, B, Old, _)
+   -o neighbor-color(A, B, New, 1).
+
+select-best-color(A) -o [collect => L | B | neighbor-pick-color(A, B, L) |
+            invalid-colors(A, intlistsort(intlistremoveduplicates(L)), 1)].
+
+invalid-colors(A, [], C) -o update-neighbors(A, C).
+invalid-colors(A, [invalid-color | Ls], C) -o invalid-colors(A, Ls, C).
+invalid-colors(A, [C | Ls], C) -o invalid-colors(A, Ls, C + 1).
+invalid-colors(A, [Cx | Ls], C), Cx > C -o update-neighbors(A, C).
+
+update-neighbors(A, C),
+color(A, _)
+   -o {B | !edge(A, B) | new-neighbor-color(B, A, C)},
+      {B, NC, Flag | to-select-color(A, B, NC, Flag), NC <> C, Flag = 1 | neighbor-color(A, B, NC, 0)},
+      {B, Flag | to-select-color(A, B, C, Flag), Flag = 1 | neighbor-color(A, B, invalid-color, 0), update(B)},
+      {B, NC, Flag | to-select-color(A, B, NC, Flag), Flag = 0 | neighbor-color(A, B, NC, 0)},
+      color(A, C).
+
+update(A), update(A) -o update(A).
+
+update(A) -o
+   {B, NC, Flag | !edge(A, B), neighbor-color(A, B, NC, Flag) | neighbor-pick-color(A, B, NC), to-select-color(A, B, NC, Flag)},
+   select-best-color(A).
+
