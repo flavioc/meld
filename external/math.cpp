@@ -37,6 +37,8 @@ normalize(EXTERNAL_ARG(x))
    ptr = ptr->get_tail();
    while(!float_list::is_null(ptr)) {
       const float_val val(ptr->get_head());
+
+      assert(!isnan(val));
    
       if(val > max_value)
          max_value = val;
@@ -111,6 +113,8 @@ divide(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
    stack_float_list vals;
    
    while(!float_list::is_null(ptr1) && !float_list::is_null(ptr2)) {
+      assert(!isnan(ptr1->get_head()));
+      assert(!isnan(ptr2->get_head()));
       vals.push(ptr1->get_head() - ptr2->get_head());
       
       ptr1 = ptr1->get_tail();
@@ -139,6 +143,9 @@ convolve(EXTERNAL_ARG(bin_fact), EXTERNAL_ARG(ls))
       while(!float_list::is_null(ptr)) {
          const float_val other(ptr->get_head());
          const float_val val_bin(float_list::get((float_list*)bin_fact, x + y * length, 0.0));
+
+         assert(!isnan(other));
+         assert(!isnan(val_bin));
          sum += std::exp(val_bin + other);
          
          ptr = ptr->get_tail();
@@ -169,6 +176,8 @@ addfloatlists(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
    stack_float_list vals;
    
    while(!float_list::is_null(ptr1) && !float_list::is_null(ptr2)) {
+      assert(!isnan(ptr1->get_head()));
+      assert(!isnan(ptr2->get_head()));
       vals.push(ptr1->get_head() + ptr2->get_head());
       
       ptr1 = ptr1->get_tail();
@@ -192,6 +201,8 @@ residual(EXTERNAL_ARG(l1), EXTERNAL_ARG(l2))
    size_t size(0);
 
    while(!float_list::is_null(ls1) && !float_list::is_null(ls2)) {
+      assert(!isnan(ls1->get_head()));
+      assert(!isnan(ls2->get_head()));
       residual += std::abs(std::exp(ls1->get_head()) - std::exp(ls2->get_head()));
       ls1 = ls1->get_tail();
       ls2 = ls2->get_tail();
