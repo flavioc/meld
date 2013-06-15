@@ -401,7 +401,8 @@ program::print_predicates(ostream& cout) const
       cout << ">> Safe program" << endl;
    else
       cout << ">> Unsafe program" << endl;
-   cout << "Priorities: " << (priority_order == PRIORITY_ASC ? "ascending" : "descending") << endl;
+   cout << "Priorities: " << (priority_order == PRIORITY_ASC ? "ascending" : "descending") << " ";
+   cout << "initial: " << (priority_type == FIELD_FLOAT ? initial_priority.float_priority : initial_priority.int_priority) << endl;
    if(is_data())
       cout << ">> Data file" << endl;
    for(size_t i(0); i < num_predicates(); ++i) {
