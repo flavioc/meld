@@ -7,9 +7,6 @@ all:
 test-serial:
 	@bash test_all.sh sl
 
-test:
-	@bash test_all.sh all
-
 compiled:
 	@mkdir -p code
 	@compile-directory progs code
