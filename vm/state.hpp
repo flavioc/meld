@@ -149,6 +149,7 @@ public:
    
    inline void set_reg(const reg_num& num, const reg val) { regs[num] = val; }
    inline void set_nil(const reg_num& num) { set_ptr(num, null_ptr_val); }
+   inline reg get_reg(const reg_num& num) { return regs[num]; }
    
    inline void set_leaf(const reg_num& num, db::tuple_trie_leaf* leaf) { is_leaf[num] = true; saved_leafs[num] = leaf; }
    inline db::tuple_trie_leaf* get_leaf(const reg_num& num) const { return saved_leafs[num]; }

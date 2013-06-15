@@ -263,8 +263,27 @@ move_to_stack(pcounter pc, pcounter m, state& state, const instr_val& from)
 		
 		pcounter_move_int(&m);
 
-      const int off((int)pcounter_offset_num(m));
+      const offset_num off(pcounter_offset_num(m));
       state.get_stack_at(off)->int_field = it;
+   } else if(val_is_float(from)) {
+		const float_val flt(pcounter_float(m));
+      
+      pcounter_move_float(&m);
+
+      const offset_num off(pcounter_offset_num(m));
+      state.get_stack_at(off)->float_field = flt;
+
+   } else if(val_is_reg(from)) {
+		const reg_num reg(val_reg(from));
+      const offset_num off(pcounter_offset_num(m));
+      *(state.get_stack_at(off)) = state.get_reg(reg);
+	} else if(val_is_const(from)) {
+		const const_id cid(pcounter_const_id(m));
+		
+		pcounter_move_const_id(&m);
+
+      const offset_num off(pcounter_offset_num(m));
+      *(state.get_stack_at(off)) = state.all->get_const(cid);
    } else
 		throw vm_exec_error("invalid move to stack (move_to_stack)");
 }
