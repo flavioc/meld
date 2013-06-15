@@ -173,6 +173,65 @@ intlistappend(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
    RETURN_INT_LIST(ptr);
 }
 
+static bool
+cmp_ints(const int_val i, const int_val j)
+{
+   return i > j;
+}
+
+argument
+intlistsort(EXTERNAL_ARG(ls))
+{
+   DECLARE_INT_LIST(ls);
+
+   int_list *p((int_list*)ls);
+   vector_int_list vec;
+
+   while(!int_list::is_null(p)) {
+      vec.push_back(p->get_head());
+      p = p->get_tail();
+   }
+
+   sort(vec.begin(), vec.end(), cmp_ints);
+
+   int_list *ptr(from_vector_to_reverse_list<vector_int_list, int_list>(vec));
+
+   RETURN_INT_LIST(ptr);
+}
+
+argument
+intlistremoveduplicates(EXTERNAL_ARG(ls))
+{
+   DECLARE_INT_LIST(ls);
+
+   int_list *p((int_list*)ls);
+   vector_int_list vec;
+
+   while(!int_list::is_null(p)) {
+      vec.push_back(p->get_head());
+      p = p->get_tail();
+   }
+
+   vector<bool, mem::allocator<bool> > marked(vec.size(), true);
+   stack_int_list s;
+
+   for(size_t i(0); i < vec.size(); ++i) {
+      if(marked[i] == false) {
+         continue;
+      }
+      // this will be kept
+      s.push(vec[i]);
+      for(size_t j(i+1); j < vec.size(); ++j) {
+         if(vec[j] == vec[i])
+            marked[j] = false;
+      }
+   }
+
+   int_list *ptr(from_stack_to_list<stack_int_list, int_list>(s));
+
+   RETURN_INT_LIST(ptr);
+}
+
 argument
 str2intlist(EXTERNAL_ARG(str))
 {

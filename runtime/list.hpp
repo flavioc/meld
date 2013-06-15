@@ -263,6 +263,7 @@ typedef cons<vm::node_val> node_list;
 typedef std::stack<vm::float_val, std::deque<vm::float_val, mem::allocator<vm::float_val> > > stack_float_list;
 typedef std::stack<vm::int_val, std::deque<vm::int_val, mem::allocator<vm::int_val> > > stack_int_list;
 typedef std::stack<vm::node_val, std::deque<vm::node_val, mem::allocator<vm::node_val> > > stack_node_list;
+typedef std::vector<vm::int_val, mem::allocator<vm::int_val> > vector_int_list;
 
 template <class TStack, class TList>
 static inline TList*
@@ -290,6 +291,20 @@ from_stack_to_reverse_list(TStack& stk)
    }
 
    return from_stack_to_list<TStack, TList>(stk2);
+}
+
+/* adds elements of the vector in reverse order */
+template <class TVector, class TList>
+static inline TList *
+from_vector_to_reverse_list(TVector& vec)
+{
+   TList *ptr(TList::null_list());
+
+   for(typename TVector::iterator it(vec.begin()), end(vec.end()); it != end; ++it) {
+      ptr = new TList(ptr, *it);
+   }
+
+   return ptr;
 }
 
 }
