@@ -1,16 +1,11 @@
 
-type route edge(node, node, int).
-type potential(node, list float).
-type pixel(node, int, int).
+include #sbp-data200.meld
 
 type linear token(node, list node, list node).
 type linear waiting(node).
 type linear first-phase(node, list node, list node).
-type route linear first-phase-send(node, list node, list node, node).
-type linear send-token1(node, list node, list node).
-type route linear send-token2(node, list node, list node, node).
-type route linear second-phase-send(node, list node, node).
-type route linear second-phase(node, list node, node).
+type linear send-token(node, list node, list node).
+type linear second-phase(node, list node, node).
 
 type linear belief(node, list float).
 type linear new-neighbor-belief(node, node, list float). // neighbor sent an update
@@ -74,13 +69,12 @@ nodelistlength(All) > maxnodes
 token(A, All, [A | Next])
    -o [collect => L | Side | !edge(A, L, Side),
          0 = nodelistcount(All, L), 0 = nodelistcount(Next, L),
-         nodepriority(L) > 0.0, cpu-id(L) = cpu-id(A) | send-token1(A, All, nodelistappend(Next, L))].
+         nodepriority(L) > 0.0, cpu-id(L) = cpu-id(A) | send-token(A, All, nodelistappend(Next, L))].
 
 // the previous rule forces the token to be sent to the next node
 // we schedule node B to be run and send the token to it
-send-token1(A, All, []) -o first-phase(A, All, nodelistreverse(All)).
-send-token1(A, All, [B | Next]) -o send-token2(A, All, [B | Next], B).
-send-token2(A, All, Next, B) -o schedule-next(B), token(B, nodelistappend(All, [B]), Next).
+send-token(A, All, []) -o first-phase(A, All, nodelistreverse(All)).
+send-token(A, All, [B | Next]) -o schedule-next(B), token(B, nodelistappend(All, [B]), [B | Next]).
 
 // RULES FOR FIRST PHASE
 
@@ -88,17 +82,17 @@ send-token2(A, All, Next, B) -o schedule-next(B), token(B, nodelistappend(All, [
 // and this is the last node
 // we still have to run the 'update' function
 // but we'll start the second phase on 'B'
+first-phase(A, [A], [A]) -o second-phase(A, [], A).
 first-phase(A, [A, B | Next], [A])
-   -o second-phase-send(A, [B | Next], B), update(A).
+   -o update(A), schedule-next(B), second-phase(B, [B | Next], A).
 // in this case, the first phase is not yet done
 // we run the update function on 'A' and send the first phase fact to 'B'
 first-phase(A, All, [A, B | Next])
-   -o first-phase-send(A, All, [B | Next], B), update(A).
-first-phase-send(A, All, Next, B)
-   -o schedule-next(B), first-phase(B, All, Next).
+   -o update(A), schedule-next(B), first-phase(B, All, [B | Next]).
 
 // RULES FOR SECOND PHASE
 
+second-phase(A, [], _) -o waiting(A), update(A), set-priority(A, 0.0).
 // in this rule, we are running the second phase on the last node (last node in the tree)
 // note that we need to send 'waiting' to the previous node and to this node
 // we also make sure the priority of this node is 0 so we don't start
@@ -110,9 +104,7 @@ second-phase(A, [A], Back)
 // note that we always need to derive back the 'waiting' on 'Back'
 // so that this node can become part of a splash tree later on.
 second-phase(A, [A, B | Next], Back)
-   -o update(A), waiting(Back), second-phase-send(A, [B | Next], B).
-second-phase-send(A, Next, B)
-   -o schedule-next(B), second-phase(B, Next, A).
+   -o update(A), waiting(Back), schedule-next(B), second-phase(B, [B | Next], A).
 
 // NORMAL CODE STARTS HERE
 
