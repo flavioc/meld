@@ -31,6 +31,7 @@ const size_t uint_size = sizeof(int_val);
 const size_t float_size = sizeof(float_val);
 const size_t node_size = sizeof(node_val);
 const size_t string_size = sizeof(int_val);
+const size_t ptr_size = sizeof(ptr_val);
 const size_t argument_size = 1;
 const size_t reg_size = 0;
 const size_t host_size = 0;
@@ -158,6 +159,12 @@ inline instr_type fetch(pcounter pc) { return (instr_type)*pc; }
 
 /* val related functions */
 
+enum val_code {
+   VAL_TUPLE = 0x1f,
+   VAL_PCOUNTER = 0x0A,
+   VAL_PTR = 0x0B
+};
+
 inline bool val_is_reg(const instr_val x) { return x & 0x20; }
 inline bool val_is_tuple(const instr_val x) { return x == 0x1f; }
 inline bool val_is_float(const instr_val x) { return x == 0x00; }
@@ -170,7 +177,8 @@ inline bool val_is_string(const instr_val x) { return x == 0x06; }
 inline bool val_is_arg(const instr_val x) { return x == 0x07; }
 inline bool val_is_const(const instr_val x) { return x == 0x08; }
 inline bool val_is_stack(const instr_val x) { return x == 0x09; }
-inline bool val_is_pcounter(const instr_val x) { return x == 0x0A; }
+inline bool val_is_pcounter(const instr_val x) { return x == VAL_PCOUNTER; }
+inline bool val_is_ptr(const instr_val x) { return x == VAL_PTR; }
 
 inline int_val pcounter_int(const pcounter pc) { return *(int_val *)pc; }
 inline code_size_t pcounter_code_size(const pcounter pc) { return *(code_size_t *)pc; }
@@ -180,6 +188,7 @@ inline uint_val pcounter_uint(const pcounter pc) { return *(uint_val *)pc; }
 inline argument_id pcounter_argument_id(const pcounter pc) { return (argument_id)*pc; }
 inline const_id pcounter_const_id(const pcounter pc) { return pcounter_uint(pc); }
 inline offset_num pcounter_offset_num(const pcounter pc) { return *pc; }
+inline ptr_val pcounter_ptr(const pcounter pc) { return *(ptr_val *)pc; }
 
 inline reg_num val_reg(const instr_val x) { return x & 0x1f; }
 inline field_num val_field_num(const pcounter x) { return *x & 0xff; }
@@ -194,6 +203,7 @@ inline void pcounter_move_uint(pcounter *pc) { *pc = *pc + uint_size; }
 inline void pcounter_move_argument_id(pcounter *pc) { *pc = *pc + argument_size; }
 inline void pcounter_move_const_id(pcounter *pc) { pcounter_move_uint(pc); }
 inline void pcounter_move_offset_num(pcounter *pc) { *pc = *pc + stack_val_size; }
+inline void pcounter_move_ptr(pcounter *pc) { *pc = *pc + ptr_size; }
 
 /* common instruction functions */
 
@@ -232,6 +242,8 @@ inline instr_op op_op(pcounter pc) { return (instr_op)(*(pc + 4) & 0x1f); }
 
 inline instr_val move_from(pcounter pc) { return val_get(pc, 1); }
 inline instr_val move_to(pcounter pc) { return val_get(pc, 2); }
+inline pcounter move_from_ptr(pcounter pc) { return pc + 1; }
+inline pcounter move_to_ptr(pcounter pc) { return pc + 2; }
 
 /* ITERATE pred MATCHING */
 
@@ -241,7 +253,6 @@ inline predicate_id iter_predicate(pcounter pc) { return predicate_get(pc, 1); }
 inline utils::byte iter_options(pcounter pc) { return byte_get(pc, 2); }
 inline utils::byte iter_options_argument(pcounter pc) { return byte_get(pc, 3); }
 inline code_offset_t iter_jump(pcounter pc) { return jump_get(pc, 4); }
-inline pcounter iter_jump_ptr(pcounter pc) { return pc + 4; }
 inline bool iter_match_end(iter_match m) { return (*(m + 1) & 0xc0) == 0x40; }
 inline bool iter_match_none(iter_match m) { return (*(m + 1) & 0xc0) == 0xc0; }
 inline instr_val iter_match_val(iter_match m) { return val_get((pcounter)m, 1); }
@@ -412,6 +423,8 @@ STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING>(const instr_val v)
       return stack_val_size;
    else if(val_is_pcounter(v))
       return pcounter_val_size;
+   else if(val_is_ptr(v))
+      return ptr_size;
 	else
       throw malformed_instr_error("invalid instruction argument value");
 }
@@ -443,6 +456,8 @@ STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING_NOT_NIL>(const instr_val v)
       return stack_val_size;
    else if(val_is_pcounter(v))
       return pcounter_val_size;
+   else if(val_is_ptr(v))
+      return ptr_size;
    else {
       throw malformed_instr_error("invalid instruction argument value");
    }
@@ -523,6 +538,8 @@ STATIC_INLINE size_t arg_size<ARGUMENT_NON_LIST>(const instr_val v)
       return stack_val_size;
    else if(val_is_pcounter(v))
       return pcounter_val_size;
+   else if(val_is_ptr(v))
+      return ptr_size;
    else
       throw malformed_instr_error("invalid instruction non-list value");
 }

@@ -11,7 +11,7 @@ typedef unsigned short field_num;
 typedef uint32_t uint_val;
 typedef int32_t int_val;
 typedef float float_val;
-typedef unsigned long int ptr_val;
+typedef uint64_t ptr_val;
 typedef uint32_t node_val;
 typedef uint32_t worker_val;
 typedef bool bool_val;

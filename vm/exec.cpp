@@ -96,6 +96,9 @@ move_to_reg(const pcounter& m, state& state,
    } else if(val_is_stack(from)) {
       const offset_num off(pcounter_offset_num(m));
       state.set_reg(reg, *state.get_stack_at(off));
+   } else if(val_is_ptr(from)) {
+      const ptr_val val(pcounter_ptr(m));
+      state.set_ptr(val_reg(from), val);
    } else {
       throw vm_exec_error("invalid move to reg");
    }
@@ -337,6 +340,9 @@ move_to_pcounter(pcounter& pc, const pcounter pm, state& state, const instr_val 
    if(val_is_stack(from)) {
       const offset_num off(pcounter_offset_num(pm));
       pc = (pcounter)(state.get_stack_at(off)->ptr_field);
+   } else if(val_is_ptr(from)) {
+      const ptr_val val(pcounter_ptr(pm));
+      pc = (pcounter)val;
    } else
       throw vm_exec_error("invalid move to pcounter (move_to_pcounter)");
 }

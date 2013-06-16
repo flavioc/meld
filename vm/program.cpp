@@ -300,6 +300,8 @@ program::program(const string& _filename):
          rules[i]->add_predicate(pred);
       }
    }
+
+   data_rule = NULL;
 }
 
 program::~program(void)
@@ -311,6 +313,8 @@ program::~program(void)
 	for(size_t i(0); i < num_rules(); ++i) {
 		delete rules[i];
 	}
+   if(data_rule != NULL)
+      delete data_rule;
    for(size_t i(0); i < functions.size(); ++i) {
       delete functions[i];
    }
@@ -506,7 +510,7 @@ program::new_tuple(const predicate_id& id) const
 }
 
 bool
-program::add_data_file(const program& other)
+program::add_data_file(program& other)
 {
    if(num_predicates() < other.num_predicates()) {
       return false;
@@ -524,51 +528,22 @@ program::add_data_file(const program& other)
    assert(rules.size() > 0);
    assert(other.rules.size() > 0);
 
+   data_rule = other.rules[0];
+   other.rules.erase(other.rules.begin());
+   other.number_rules--;
+
    vm::rule *init_rule(rules[0]);
-   vm::rule *init_rule_data(other.rules[0]);
    byte_code init_code(init_rule->get_bytecode());
-   byte_code init_code_data(init_rule_data->get_bytecode());
+   init_code += init_rule->get_codesize();
 
-   // let's skip initial code for the data code
-   byte_code pc(init_code_data);
-   pc = advance(pc); // RULE
-   pc = advance(pc); // ITERATE init
+   init_code -= (RETURN_BASE + NEXT_BASE + RETURN_DERIVED_BASE + MOVE_BASE + ptr_size);
+   assert(fetch(init_code) == MOVE_INSTR);
+   assert(val_is_ptr(move_from(init_code)));
+   assert(val_is_reg(move_to(init_code)));
+   *move_to_ptr(init_code) = VAL_PCOUNTER;
+   *((ptr_val *)(init_code + MOVE_BASE)) = (ptr_val)data_rule->get_bytecode();
 
-   // this is the size of the things we want to skip
-   code_size_t initial_size(pc - init_code_data);
-
-#if 0
-   instrs_print(init_code, init_rule->get_codesize(), 0, this, cout);
-   cout << "" << endl;
-   instrs_print(pc, init_rule_data->get_codesize() - initial_size, 0, this, cout);
-   cout << "" << endl;
-#endif
-
-   // this is the size of the data code we are going to copy over
-   code_size_t extra_size(init_rule_data->get_codesize() - initial_size - RETURN_BASE - NEXT_BASE - RETURN_DERIVED_BASE - REMOVE_BASE);
-
-  // instrs_print(pc, extra_size, 0, this, cout);
-  // cout << endl;
-
-   //instrs_print(pc, extra_size, 0, this, cout);
-   // allocate new code
-   code_size_t new_size(init_rule->get_codesize() + extra_size);
-   byte_code new_init_code = new byte_code_el[new_size];
-   // copy original code for RULE and ITERATE init code
-   memcpy(new_init_code, init_code_data, initial_size);
-
-   // copy extra data code
-   memcpy(new_init_code + initial_size, pc, extra_size);
-   // copy rest of original code
-   memcpy(new_init_code + initial_size + extra_size, init_code + initial_size, init_rule->get_codesize() - initial_size);
-
-   // let's get the ITERATE instruction
-   byte_code pc2(advance(new_init_code));
-   *iter_jump_ptr(pc2) = iter_jump(pc2) + extra_size; // change how much we need to jump in the iterate
-   //instrs_print(new_init_code, init_rule->get_codesize() + extra_size, 0, this, cout);
-   // set new code and size
-   init_rule->set_bytecode(new_size, new_init_code);
-   delete init_code;
+   //instrs_print(init_rule->get_bytecode(), init_rule->get_codesize(), 0, this, cout);
    return true;
 }
 

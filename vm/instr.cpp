@@ -109,6 +109,12 @@ val_string(const instr_val v, pcounter *pm, const program *prog)
 		pcounter_move_const_id(pm);
 		
 		return ret;
+   } else if(val_is_ptr(v)) {
+      const string ret(string("PTR ") + to_string(pcounter_ptr(*pm)));
+
+      pcounter_move_ptr(pm);
+
+      return ret;
    } else
 		throw type_error("Unrecognized val type " + to_string(v) + " (val_string)");
    
@@ -419,8 +425,54 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          cout << "NEW NODE TO " << reg_string(new_node_reg(pc)) << endl;
          break;
 
-      case NEW_AXIOMS_INSTR:
-         cout << "NEW AXIOMS ..." << endl;
+      case NEW_AXIOMS_INSTR: {
+         cout << "NEW AXIOMS" << endl;
+         const pcounter end(pc + new_axioms_jump(pc));
+         pcounter p(pc);
+         p += NEW_AXIOMS_BASE;
+
+         while(p < end) {
+            // read axions until the end!
+            predicate_id pid(predicate_get(p, 0));
+            predicate *pred(prog->get_predicate(pid));
+            print_tab(tabcount+1);
+            cout << pred->get_name() << "(";
+
+            p++;
+
+            for(size_t i(0), num_fields(pred->num_fields());
+                  i != num_fields;
+                  ++i)
+            {
+               switch(pred->get_field_type(i)) {
+                  case FIELD_INT:
+                     cout << pcounter_int(p);
+                     pcounter_move_int(&p);
+                     break;
+                  case FIELD_FLOAT:
+                     cout << pcounter_float(p);
+                     pcounter_move_float(&p);
+                     break;
+                  case FIELD_NODE:
+                     cout << "@" << pcounter_node(p);
+                     pcounter_move_node(&p);
+                     break;
+                  case FIELD_LIST_FLOAT:
+                     cout << "[";
+                     while(*p++ == 1) {
+                        cout << pcounter_float(p) << ", ";
+                        pcounter_move_float(&p);
+                     }
+                     cout << "]";
+                     break;
+                  default: assert(false);
+               }
+               if(i != num_fields-1)
+                  cout << ", ";
+            }
+            cout << ")" << endl;
+         }
+                             }
          break;
 
       case SEND_DELAY_INSTR:

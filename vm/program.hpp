@@ -61,6 +61,8 @@ private:
    bool safe;
    bool is_data_file;
 
+   rule *data_rule;
+
    mutable predicate *init;
 
 	typedef std::vector<runtime::rstring::ptr> string_store;
@@ -141,7 +143,7 @@ public:
    inline bool is_safe(void) const { return safe; }
    inline bool is_data(void) const { return is_data_file; }
 
-   bool add_data_file(const vm::program&);
+   bool add_data_file(vm::program&);
    
    explicit program(const std::string&);
    
