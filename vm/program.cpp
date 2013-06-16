@@ -534,28 +534,34 @@ program::add_data_file(const program& other)
    pc = advance(pc); // RULE
    pc = advance(pc); // ITERATE init
 
+   // this is the size of the things we want to skip
+   code_size_t initial_size(pc - init_code_data);
+
 #if 0
    instrs_print(init_code, init_rule->get_codesize(), 0, this, cout);
    cout << "" << endl;
-   instrs_print(init_code_data, init_rule_data->get_codesize(), 0, this, cout);
+   instrs_print(pc, init_rule_data->get_codesize() - initial_size, 0, this, cout);
    cout << "" << endl;
 #endif
 
-   // this is the size of the things we want to skip
-   code_size_t initial_size(pc - init_code_data);
    // this is the size of the data code we are going to copy over
    code_size_t extra_size(init_rule_data->get_codesize() - initial_size - RETURN_BASE - NEXT_BASE - RETURN_DERIVED_BASE - REMOVE_BASE);
+
+  // instrs_print(pc, extra_size, 0, this, cout);
+  // cout << endl;
 
    //instrs_print(pc, extra_size, 0, this, cout);
    // allocate new code
    code_size_t new_size(init_rule->get_codesize() + extra_size);
    byte_code new_init_code = new byte_code_el[new_size];
    // copy original code for RULE and ITERATE init code
-   memcpy(new_init_code, init_code, (pc - init_code_data));
+   memcpy(new_init_code, init_code_data, initial_size);
+
    // copy extra data code
    memcpy(new_init_code + initial_size, pc, extra_size);
    // copy rest of original code
    memcpy(new_init_code + initial_size + extra_size, init_code + initial_size, init_rule->get_codesize() - initial_size);
+
    // let's get the ITERATE instruction
    byte_code pc2(advance(new_init_code));
    *iter_jump_ptr(pc2) = iter_jump(pc2) + extra_size; // change how much we need to jump in the iterate
