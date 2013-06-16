@@ -1,9 +1,8 @@
 
-include #sbp-data50.meld
-
 type route edge(node, node, int).
 type potential(node, list float).
 type pixel(node, int, int).
+
 type linear token(node, list node, list node).
 type linear waiting(node).
 type linear first-phase(node, list node, list node).

@@ -1,6 +1,4 @@
 
-include #sbp-data50.meld
-
 type route edge(node, node, int).
 type potential(node, list float).
 type pixel(node, int, int).
@@ -29,11 +27,13 @@ const bottom = 1.
 const left = 2.
 const right = 3.
 
+start(A).
+
 // setups initial node belief and some other things
 start(A) -o belief(A, [-1.60944, -1.60944, -1.60944, -1.60944, -1.60944]),
             {B, Side | !edge(A, B, Side) | neighbor-belief(A, B, initial-message),
-                               sent-neighbor-belief(A, B, initial-message)}.
-                                
+                               sent-neighbor-belief(A, B, initial-message)},
+            update(A).
 
 // if we have two update functions, just run one of them
 update(A), update(A) -o update(A).
@@ -42,9 +42,6 @@ update(A), update(A) -o update(A).
 neighbor-belief(A, B, Belief),
 new-neighbor-belief(A, B, NewBelief)
    -o neighbor-belief(A, B, NewBelief).
-
-start(A).
-update(A).
 
 // make a copy of neighbors beliefs in order to add them up
 copy-messages(A),
