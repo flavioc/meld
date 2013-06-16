@@ -599,14 +599,6 @@ threads_prio::set_next_node(void)
       
       assert(has_work());
 
-#ifdef DO_ONE_PASS_FIRST
-      if(to_takeout > 0) {
-         const bool suc(queue_nodes.pop(current_node));
-         if(!suc)
-            continue;
-         taken_from_priority_queue = false;
-      } else
-#endif
 		if(!prio_queue.empty()) {
 			current_node = prio_queue.pop();
          //cout << "Picked node " << current_node->get_id() << " with " << current_node->get_int_priority_level() << endl;
@@ -624,13 +616,6 @@ loop_check:
       assert(current_node != NULL);
       assert(current_node->in_queue());
 
-#ifdef DO_ONE_PASS_FIRST
-      if(!current_node->has_been_touched) {
-         --to_takeout;
-         current_node->has_been_touched = true;
-      }
-#endif
-      
       check_if_current_useless();
    }
    
@@ -760,20 +745,6 @@ threads_prio::set_node_priority(node *n, const double priority)
 {
 	thread_intrusive_node *tn((thread_intrusive_node*)n);
 
-#ifdef DO_ONE_PASS_FIRST
-   if(!tn->has_been_touched) {
-#ifdef PROFILE_QUEUE
-		prio_marked++;
-#endif
-		assert(tn != current_node);
-      if(priority != 0) {
-         tn->set_priority_level(priority);
-         tn->mark_priority();
-      }
-      return;
-   }
-#endif
-	
 #ifdef DEBUG_PRIORITIES
    if(priority > 0)
       tn->has_been_prioritized = true;
@@ -908,10 +879,6 @@ threads_prio::init(const size_t)
    database::map_nodes::iterator it(state.all->DATABASE->get_node_iterator(remote::self->find_first_node(id)));
    database::map_nodes::iterator end(state.all->DATABASE->get_node_iterator(remote::self->find_last_node(id)));
    
-#ifdef DO_ONE_PASS_FIRST
-   to_takeout = 0;
-#endif
-
    for(; it != end; ++it)
    {
       thread_intrusive_node *cur_node((thread_intrusive_node*)it->second);
@@ -925,10 +892,6 @@ threads_prio::init(const size_t)
       assert(cur_node->get_owner() == this);
       assert(cur_node->in_queue());
       assert(cur_node->has_work());
-
-#ifdef DO_ONE_PASS_FIRST
-      ++to_takeout;
-#endif
    }
    
    threads_synchronize();

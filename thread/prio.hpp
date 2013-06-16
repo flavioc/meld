@@ -12,8 +12,6 @@
 #include "queue/safe_double_queue.hpp"
 #include "sched/thread/threaded.hpp"
 
-//#define DO_ONE_PASS_FIRST
-
 namespace sched
 {
 
@@ -49,10 +47,6 @@ protected:
    typedef std::map<db::node *, int, std::less<db::node *>,
            mem::allocator< std::pair<const db::node *, int> > > node_priorities;
    node_priorities node_map;
-
-#ifdef DO_ONE_PASS_FIRST
-   size_t to_takeout;
-#endif
 
 #ifdef TASK_STEALING
    virtual void check_stolen_nodes(void);

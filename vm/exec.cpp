@@ -1614,11 +1614,10 @@ execute_remove(pcounter pc, state& state)
 #endif
 
 	const bool is_a_leaf(state.is_it_a_leaf(reg));
+   vm::tuple *tpl(state.get_tuple(reg));
 
 #ifdef USE_RULE_COUNTING
 	if(state.use_local_tuples) {
-		
-		vm::tuple *tpl(state.get_tuple(reg));
 #ifdef DEBUG_MODE
       cout << "\tdelete " << *tpl << endl;
 #endif
@@ -1631,8 +1630,6 @@ execute_remove(pcounter pc, state& state)
 	}
 #endif
 
-   vm::tuple *tpl(state.get_tuple(reg));
-
    assert(tpl != NULL);
 
    if(tpl->is_reused() && state.use_local_tuples) {
@@ -1640,7 +1637,7 @@ execute_remove(pcounter pc, state& state)
 		if(is_a_leaf)
 			state.leaves_for_deletion.push_back(make_pair((predicate*)tpl->get_predicate(), state.get_leaf(reg)));
 	} else {
-		if(is_a_leaf) {
+		if(is_a_leaf) { // tuple was fetched from database
 			//cout << "Remove " << *state.get_tuple(reg) << endl;
    		state.node->delete_by_leaf(tpl->get_predicate(), state.get_leaf(reg));
 		} else {
