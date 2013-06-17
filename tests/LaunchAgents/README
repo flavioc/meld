@@ -1,0 +1,6 @@
+These are files for setting up a launchd script for testing Meld every day.
+
+Edit meld.test.plist and change the directory of the run_tests.sh script.
+Run:
+launchctl load meld.test.plist
+launchctl start meld.test
