@@ -17,7 +17,7 @@ if [ -z "$EXCEPT_LIST" ]; then
 else
    for file in `ls code/*.m`; do
       if not_excluded `basename $file .m`; then
-         run_test $file
+         run_test $file || exit 1
       fi
    done
 fi
