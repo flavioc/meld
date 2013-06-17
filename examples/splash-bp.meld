@@ -78,11 +78,11 @@ send-token(A, All, [B | Next]) -o schedule-next(B), token(B, nodelistappend(All,
 
 // RULES FOR FIRST PHASE
 
+first-phase(A, [A], [A]) -o second-phase(A, [], A).
 // we are currently in some node 'A' running the first phase
 // and this is the last node
 // we still have to run the 'update' function
 // but we'll start the second phase on 'B'
-first-phase(A, [A], [A]) -o second-phase(A, [], A).
 first-phase(A, [A, B | Next], [A])
    -o update(A), schedule-next(B), second-phase(B, [B | Next], A).
 // in this case, the first phase is not yet done
@@ -92,7 +92,9 @@ first-phase(A, All, [A, B | Next])
 
 // RULES FOR SECOND PHASE
 
-second-phase(A, [], _) -o waiting(A), update(A), set-priority(A, 0.0).
+// this only happens when the tree had only a single node.
+// we must run the update, since it was not run in the first pass.
+second-phase(A, [], _) -o set-priority(A, 0.0), waiting(A), update(A).
 // in this rule, we are running the second phase on the last node (last node in the tree)
 // note that we need to send 'waiting' to the previous node and to this node
 // we also make sure the priority of this node is 0 so we don't start
