@@ -10,7 +10,5 @@
 </array>
 <key>StartInterval</key>
 <integer>86400</integer>
-<key>KeepAlive</key>
-<true/>
 </dict>
 </plist>
