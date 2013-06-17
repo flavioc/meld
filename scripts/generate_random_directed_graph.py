@@ -29,7 +29,7 @@ for i in range(total):
 	for j in range(links):
 		link = random.randint(1, total - 1)
 		if link == i:
-			link = (link + 1) % (total - 1)
+			link = (link + 1) % total
 		if not list_has(list, link):
 			list.append(link)
 	for link in list:

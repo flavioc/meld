@@ -29,10 +29,10 @@ def add_neighbor(src, dst):
 
 def print_neighbors():
 	for src, dsts in neighbors.iteritems():
-		print src, dsts
+		print (src, dsts)
 
 # add neighbors
-for node, data in db.iteritems():
+for node, data in db.items():
 	for d in data:
 		name = d['name']
 		args = d['args']
@@ -41,7 +41,7 @@ for node, data in db.iteritems():
 
 colors = {}
 # add colors
-for node, data in db.iteritems():
+for node, data in db.items():
 	checked = False
 	for d in data:
 		name = d['name']
@@ -50,11 +50,11 @@ for node, data in db.iteritems():
 			args = d['args']
 			color = int(args[0])
 			if color == 0:
-				print "Invalid color"
+				print("Invalid color")
 				sys.exit(1)
 			try:
 				older = colors[node]
-				print "Color already set for node", node
+				print ("Color already set for node", node)
 				sys.exit(1)
 			except:
 				colors[node] = color
@@ -64,7 +64,7 @@ for node, data in db.iteritems():
 						try:
 							other = colors[edge]
 							if other == color:
-								print "Node " + str(node) + " has same color as " + str(edge)
+								print("Node " + str(node) + " has same color as " + str(edge))
 								sys.exit(1)
 						except:
 							pass
@@ -72,7 +72,7 @@ for node, data in db.iteritems():
 					# All fine
 					pass
 	if checked is False:
-		print "No color was set for node", node
+		print("No color was set for node", node)
 		sys.exit(1)
 
-print "ALL OK"
+print("ALL OK")

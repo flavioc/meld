@@ -19,6 +19,10 @@ def write_edge(a, b):
 	if weight is not None:
 		sys.stdout.write("," + str(weight))
 	print ")."
+
+def write_dedge(a, b):
+	write_edge(a, b)
+	write_edge(b, a)
 	
 def write_edgew(a, b, w):
    sys.stdout.write("!edge(@" + str(a) + ",@" + str(b) + "," + ('{0:f}'.format(w)) + ").\n")
