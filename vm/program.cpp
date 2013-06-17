@@ -43,7 +43,7 @@ BOOST_STATIC_ASSERT(sizeof(uint_val) == 4);
 
 program::program(const string& _filename):
    filename(_filename),
-   init(NULL), priority_pred(NULL)
+   init(NULL)
 {
 	size_t position(0);
    
@@ -206,20 +206,8 @@ program::program(const string& _filename):
 	
    switch(global_info) {
       case 0x01: { // priority by predicate
-         predicate_id pred;
-         byte asc_desc;
-         field_num priority_argument;
-
-         READ_CODE(&pred, sizeof(predicate_id));
-         READ_CODE(&priority_argument, sizeof(field_num));
-         READ_CODE(&asc_desc, sizeof(byte));
-         
-         priority_order = (asc_desc ? PRIORITY_ASC : PRIORITY_DESC);
-         priority_pred = predicates[pred];
-         priority_argument -= 2;
-         priority_pred->set_global_priority(priority_order, priority_argument);
-         priority_strat_level = priority_pred->get_strat_level();
-         priority_type = priority_pred->get_field_type(get_priority_argument());
+         cerr << "Not supported anymore" << endl;
+         assert(false);
       }
       break;
       case 0x02: { // normal priority

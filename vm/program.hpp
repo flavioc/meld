@@ -26,6 +26,11 @@ namespace process {
 
 namespace vm {
 
+typedef enum {
+   PRIORITY_ASC,
+   PRIORITY_DESC
+} priority_type;
+
 const size_t INIT_PREDICATE_ID(0);
 const size_t SET_PRIORITY_PREDICATE_ID(1);
 const size_t SETCOLOR_PREDICATE_ID(2);
@@ -69,7 +74,6 @@ private:
 	
 	string_store default_strings;
 	
-	predicate *priority_pred;
    strat_level priority_strat_level;
    field_type priority_type;
    vm::priority_type priority_order;
@@ -96,13 +100,10 @@ public:
       return functions[id];
    }
 
-	inline predicate *get_priority_predicate(void) const { return priority_pred; }
-	inline field_num get_priority_argument(void) const { return priority_pred->get_priority_argument(); }
    inline field_type get_priority_type(void) const { return priority_type; }
    inline strat_level get_priority_strat_level(void) const { return priority_strat_level; }
 	inline bool is_priority_asc(void) const { return priority_order == PRIORITY_ASC; }
 	inline bool is_priority_desc(void) const { return priority_order == PRIORITY_DESC; }
-	inline bool has_global_priority(void) const { return priority_pred != NULL; }
 
    inline heap_priority get_initial_priority(void) const { return initial_priority; }
 	

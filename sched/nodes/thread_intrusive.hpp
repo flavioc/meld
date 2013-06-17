@@ -26,17 +26,8 @@ private:
 	
 public:
 
-   bool moving_around;
+   bool moving_around; // for debugging task stealing
 	
-	typedef queue::heap_queue<db::simple_tuple*> prio_tuples_queue;
-	prio_tuples_queue prioritized_tuples;
-
-	heap_priority get_min_value(void) const { return prioritized_tuples.min_value(); }
-	
-	virtual bool has_prio_work(void) const { return !prioritized_tuples.empty(); }
-	virtual bool has_normal_work(void) const { return thread_node::has_work(); }
-	virtual bool has_work(void) const { return thread_node::has_work() || !prioritized_tuples.empty(); }
-
 	inline heap_priority get_priority_level(void) { return priority_level; }
 	inline vm::int_val get_int_priority_level(void) { return priority_level.int_priority; }
 	inline vm::float_val get_float_priority_level(void) { return priority_level.float_priority; }

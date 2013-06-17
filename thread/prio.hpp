@@ -28,8 +28,6 @@ protected:
 
 	heap_type priority_type;
 	
-	queue::push_safe_linear_queue<process::work> prio_tuples;
-
    typedef enum {
       ADD_PRIORITY,
       SET_PRIORITY
@@ -61,8 +59,6 @@ protected:
    void make_inactive(void);
    virtual void generate_aggs(void);
    virtual bool busy_wait(void);
-	void add_prio_tuple(process::work, thread_intrusive_node *, db::simple_tuple *);
-	void retrieve_prio_tuples(void);
    void check_priority_buffer(void);
 
 	inline void add_to_priority_queue(thread_intrusive_node *node)
@@ -81,7 +77,7 @@ protected:
       }
    }
    
-   virtual bool has_work(void) const { return static_local::has_work() || !prio_queue.empty() || !prio_tuples.empty(); }
+   virtual bool has_work(void) const { return static_local::has_work() || !prio_queue.empty(); }
 
 public:
    
@@ -107,7 +103,6 @@ public:
    
    threads_prio *find_scheduler(const db::node *);
 	virtual db::simple_tuple_vector gather_active_tuples(db::node *, const vm::predicate_id);
-   virtual void gather_next_tuples(db::node *, db::simple_tuple_list&);
    
    static db::node *create_node(const db::node::node_id id, const db::node::node_id trans, vm::all *all)
    {

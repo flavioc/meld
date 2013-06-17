@@ -200,30 +200,6 @@ threads_prio::check_priority_buffer(void)
 }
 
 void
-threads_prio::retrieve_prio_tuples(void)
-{
-	while(!prio_tuples.empty()) {
-		work new_work(prio_tuples.pop());
-		thread_intrusive_node *to(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
-		threads_prio *owner((threads_prio *)to->get_owner());
-		
-		if(owner == this) {
-			add_prio_tuple(new_work, to, new_work.get_tuple());
-		} else {
-			owner->prio_tuples.push(new_work);
-			
-			spinlock::scoped_lock l(owner->lock);
-      
-         if(owner->is_inactive() && owner->has_work())
-         {
-            owner->set_active();
-            assert(owner->is_active());
-         }
-		}
-	}
-}
-
-void
 threads_prio::new_agg(work& new_work)
 {
    thread_intrusive_node *to(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
@@ -239,87 +215,6 @@ threads_prio::new_agg(work& new_work)
 }
 
 void
-threads_prio::add_prio_tuple(work new_work, thread_intrusive_node *to, db::simple_tuple *stpl)
-{
-	const field_num field(state.all->PROGRAM->get_priority_argument());
-	vm::tuple *tpl(stpl->get_tuple());
-	heap_priority valp;
-	const bool has_prio_tuples(!to->prioritized_tuples.empty());
-	tuple_field val(tpl->get_field(field));
-	heap_priority min_before;
-
-	if(has_prio_tuples)
-		min_before = to->get_min_value();
-	
-	switch(priority_type) {
-		case HEAP_INT_ASC:
-		case HEAP_INT_DESC:
-			valp.int_priority = val.int_field;
-			break;
-		case HEAP_FLOAT_ASC:
-		case HEAP_FLOAT_DESC:
-			valp.float_priority = val.float_field;
-			break;
-		default: assert(false);
-	}
-
-	to->prioritized_tuples.insert(new_work.get_tuple(), valp);
-
-	if(to != current_node) {
-		spinlock::scoped_lock l(to->spin);
-			
-		if(priority_queue::in_queue(to)) {
-			assert(!node_queue::in_queue(to));
-				
-			const heap_priority min_now(to->get_min_value());
-				
-			assert(has_prio_tuples);
-
-			bool different_priority(false);
-
-			switch(priority_type) {
-				case HEAP_INT_DESC:
-				case HEAP_INT_ASC: different_priority = min_now.int_priority != min_before.int_priority; break;
-				case HEAP_FLOAT_DESC:
-				case HEAP_FLOAT_ASC: different_priority = min_now.float_priority != min_before.float_priority; break;
-				default: assert(false);
-			}
-				
-			if(different_priority) {
-#ifdef PROFILE_QUEUE
-				prio_moved_pqueue++;
-#endif
-            to->set_priority_level(min_now);
-				prio_queue.move_node(to, min_now);
-			}
-		} else {
-			if(node_queue::in_queue(to)) {
-#ifdef PROFILE_QUEUE
-				prio_removed_pqueue++;
-#endif
-				queue_nodes.remove(to);
-			}
-			assert(!node_queue::in_queue(to));
-				
-#ifdef PROFILE_QUEUE
-			prio_add_pqueue++;
-#endif
-         //cout << "Add " << to->get_id() << " with " << to->get_min_value().int_priority << endl;
-         to->set_priority_level(to->get_min_value());
-			prio_queue.insert(to, to->get_min_value());
-		}
-			
-		assert(priority_queue::in_queue(to));
-		assert(!node_queue::in_queue(to));
-			
-		if(!to->in_queue())
-			to->set_in_queue(true);
-			
-		assert(to->in_queue());
-	}
-}
-
-void
 threads_prio::new_work(const node *, work& new_work)
 {
    thread_intrusive_node *to(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
@@ -329,15 +224,11 @@ threads_prio::new_work(const node *, work& new_work)
 	db::simple_tuple *stpl(new_work.get_tuple());
 	const vm::predicate *pred(stpl->get_predicate());
 	
-	if(pred->is_global_priority()) {
-		add_prio_tuple(new_work, to, stpl);
-	} else {
-   	to->add_work(new_work.get_tuple());
-		if(!to->in_queue()) {
-  			to->set_in_queue(true);
-			add_to_queue(to);
-	   }   
-   }
+   to->add_work(new_work.get_tuple());
+   if(!to->in_queue()) {
+      to->set_in_queue(true);
+      add_to_queue(to);
+   }   
 
 	assert(to->in_queue());
 }
@@ -355,39 +246,21 @@ threads_prio::new_work_other(sched::base *, work& new_work)
 	db::simple_tuple *stpl(node_new_work.get_tuple());
 	const vm::predicate *pred(stpl->get_predicate());
 	
-	if(pred->is_global_priority()) {
-		threads_prio *owner(dynamic_cast<threads_prio*>(tnode->get_owner()));
-		
-		owner->prio_tuples.push(new_work);
-		
-   	if(this != owner) {
-      	spinlock::scoped_lock l2(owner->lock);
-         
-      	if(owner->is_inactive() && owner->has_work())
-      	{
-         	owner->set_active();
-         	assert(owner->is_active());
-      	}
-   	} else {
-      	assert(is_active());
-   	}
-	} else {
-      threads_prio *owner(dynamic_cast<threads_prio*>(tnode->get_owner()));
+   threads_prio *owner(dynamic_cast<threads_prio*>(tnode->get_owner()));
 
-      owner->buffer.push(new_work);
+   owner->buffer.push(new_work);
 
-   	if(this != owner) {
-      	spinlock::scoped_lock l2(owner->lock);
-         
-      	if(owner->is_inactive() && owner->has_work())
-      	{
-         	owner->set_active();
-         	assert(owner->is_active());
-      	}
-   	} else {
-      	assert(is_active());
-   	}
-	}
+   if(this != owner) {
+      spinlock::scoped_lock l2(owner->lock);
+      
+      if(owner->is_inactive() && owner->has_work())
+      {
+         owner->set_active();
+         assert(owner->is_active());
+      }
+   } else {
+      assert(is_active());
+   }
    
 #ifdef INSTRUMENTATION
    sent_facts++;
@@ -431,7 +304,6 @@ threads_prio::busy_wait(void)
       }
 #endif
       retrieve_tuples();
-   	retrieve_prio_tuples();
       check_priority_buffer();
       BUSY_LOOP_MAKE_INACTIVE()
       BUSY_LOOP_CHECK_TERMINATION_THREADS()
@@ -475,8 +347,7 @@ threads_prio::check_if_current_useless(void)
 {
 	assert(current_node->in_queue());
 	
-	if(!state.all->PROGRAM->has_global_priority() &&
-         !prio_queue.empty() && !current_node->has_work())
+	if(!prio_queue.empty() && !current_node->has_work())
    {
       current_node->set_in_queue(false);
       switch(state.all->PROGRAM->get_priority_type()) {
@@ -496,41 +367,6 @@ threads_prio::check_if_current_useless(void)
       //cout << "Prio: " << current_node->get_float_priority_level() << endl;
       taken_from_priority_queue = true;
       return false;
-	} else if(state.all->PROGRAM->has_global_priority() && !prio_queue.empty() && current_node->has_prio_work()) {
-		const heap_priority current_min(prio_queue.min_value());
-		const heap_priority node_min(current_node->get_min_value());
-
-      assert(state.all->PROGRAM->has_global_priority());
-		
-#ifdef PROFILE_QUEUE
-		prio_nodes_compared++;
-#endif
-
-		bool is_current_best(false);
-
-		switch(priority_type) {
-			case HEAP_INT_ASC: is_current_best = (current_min.int_priority < node_min.int_priority); break;
-			case HEAP_INT_DESC: is_current_best = (current_min.int_priority > node_min.int_priority); break;
-			case HEAP_FLOAT_ASC: is_current_best = (current_min.float_priority < node_min.float_priority); break;
-			case HEAP_FLOAT_DESC: is_current_best = (current_min.float_priority > node_min.float_priority); break;
-			default: assert(false);
-		}
-		
-		if(is_current_best) {
-			// put back into priority queue
-			prio_queue.insert(current_node, node_min);
-			assert(priority_queue::in_queue(current_node));
-			current_node = prio_queue.pop();
-         //cout << "Changing to node " << current_node->get_id() << " with priority " << current_min.int_priority << endl; 
-         taken_from_priority_queue = true;
-#ifdef PROFILE_QUEUE
-			prio_nodes_changed++;
-#endif
-		}
-		
-		assert(current_node->in_queue());
-		assert(current_node->has_work());
-		return false;
 	} else if(!current_node->has_work()) {
       
       current_node->set_in_queue(false);
@@ -589,7 +425,6 @@ threads_prio::set_next_node(void)
       check_stolen_nodes();
 #endif
       retrieve_tuples();
-		retrieve_prio_tuples();
       check_priority_buffer();
 		
       if(!has_work()) {
@@ -629,7 +464,6 @@ loop_check:
 node*
 threads_prio::get_work(void)
 {
-	retrieve_prio_tuples();
    check_priority_buffer();
 	
    if(!set_next_node())
@@ -654,15 +488,6 @@ threads_prio::end(void)
 	cout << "prio_immediate: " << prio_immediate << endl;
 	cout << "prio_marked: " << prio_marked << endl;
 	cout << "prio_count: " << prio_count << endl;
-#endif
-#ifdef PROFILE_QUEUE
-	if(state::all->PROGRAM->has_global_priority()) {
-		cout << "Moved nodes in priority queue count: " << prio_moved_pqueue << endl;
-		cout << "Removed from normal queue count: " << prio_removed_pqueue << endl;
-		cout << "Added to priority queue count: " << prio_add_pqueue << endl;
-		cout << "Changed nodes count: " << prio_nodes_changed << endl;
-		cout << "Compared nodes count: " << prio_nodes_compared << endl;
-	}
 #endif
 	
 #if defined(DEBUG_PRIORITIES)
@@ -834,45 +659,22 @@ threads_prio::init(const size_t)
 {
    prio_db = state.all->DATABASE;
 
-	if(state.all->PROGRAM->has_global_priority()) {
-		predicate *p(state.all->PROGRAM->get_priority_predicate());
-		const field_num field(state.all->PROGRAM->get_priority_argument());
-
-		switch(p->get_field_type(field)) {
-			case FIELD_INT:
-				if(state.all->PROGRAM->is_priority_asc()) {
-               priority_type = HEAP_INT_ASC;
-            } else
-					priority_type = HEAP_INT_DESC;
-				break;
-			case FIELD_FLOAT:
-				if(state.all->PROGRAM->is_priority_asc())
-					priority_type = HEAP_FLOAT_ASC;
-				else
-					priority_type = HEAP_FLOAT_DESC;
-				break;
-			default:
-				assert(false);
-		}
-
-	} else {
-		// normal priorities
-      switch(state.all->PROGRAM->get_priority_type()) {
-         case FIELD_FLOAT:
-            if(state.all->PROGRAM->is_priority_desc())
-               priority_type = HEAP_FLOAT_DESC;
-            else
-               priority_type = HEAP_FLOAT_ASC;
-            break;
-         case FIELD_INT:
-            if(state.all->PROGRAM->is_priority_desc())
-               priority_type = HEAP_INT_DESC;
-            else
-               priority_type = HEAP_INT_ASC;
-            break;
-         default: assert(false);
-      }
-	}
+   // normal priorities
+   switch(state.all->PROGRAM->get_priority_type()) {
+      case FIELD_FLOAT:
+         if(state.all->PROGRAM->is_priority_desc())
+            priority_type = HEAP_FLOAT_DESC;
+         else
+            priority_type = HEAP_FLOAT_ASC;
+         break;
+      case FIELD_INT:
+         if(state.all->PROGRAM->is_priority_desc())
+            priority_type = HEAP_INT_DESC;
+         else
+            priority_type = HEAP_INT_ASC;
+         break;
+      default: assert(false);
+   }
 
    prio_queue.set_type(priority_type);
 
@@ -887,8 +689,6 @@ threads_prio::init(const size_t)
 
       init_node(cur_node);
 
-		cur_node->prioritized_tuples.set_type(priority_type);
-      
       assert(cur_node->get_owner() == this);
       assert(cur_node->in_queue());
       assert(cur_node->has_work());
@@ -914,41 +714,15 @@ threads_prio::gather_active_tuples(db::node *node, const vm::predicate_id pred)
 	
 	typedef thread_node::queue_type fact_queue;
 	
-	if(p->is_global_priority()) {
-		typedef thread_intrusive_node::prio_tuples_queue prio_queue;
-		for(prio_queue::const_iterator it(no->prioritized_tuples.begin()),
-				end(no->prioritized_tuples.end());
-			it != end; ++it)
-		{
-			node_work w(*it);
-			simple_tuple *stpl(w.get_tuple());
-		
-			if(stpl->can_be_consumed())
-				ls.push_back(stpl);
-		}
-	} else {
-		for(fact_queue::const_iterator it(no->queue.begin()), end(no->queue.end()); it != end; ++it) {
-			node_work w(*it);
-			simple_tuple *stpl(w.get_tuple());
+   for(fact_queue::const_iterator it(no->queue.begin()), end(no->queue.end()); it != end; ++it) {
+      node_work w(*it);
+      simple_tuple *stpl(w.get_tuple());
 		
 			if(stpl->can_be_consumed() && stpl->get_predicate_id() == pred)
 				ls.push_back(stpl);
-		}
-	}
+   }
 	
 	return ls;
-}
-
-void
-threads_prio::gather_next_tuples(db::node *node, simple_tuple_list& ls)
-{
-   static_local::gather_next_tuples(node, ls);
-
-	thread_intrusive_node *no((thread_intrusive_node*)node);
-
-   while(!no->prioritized_tuples.empty()) {
-      ls.push_back(no->prioritized_tuples.pop());
-   }
 }
 
 void
