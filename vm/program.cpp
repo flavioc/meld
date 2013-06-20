@@ -152,8 +152,8 @@ program::program(const string& _filename):
 
    MAX_STRAT_LEVEL = 0;
 
-   // get function code
-   if(major_version > 0 || (major_version == 0 && minor_version > 5)) {
+   if(major_version > 0 || (major_version == 0 && minor_version >= 6)) {
+      // get function code
       uint_val n_functions;
 
       READ_CODE(&n_functions, sizeof(uint_val));
@@ -168,6 +168,32 @@ program::program(const string& _filename):
          READ_CODE(fun_code, fun_size);
 
          functions[i] = new vm::function(fun_code, fun_size);
+      }
+
+      if(major_version > 0 || minor_version >= 7) {
+         // get external functions definitions
+         uint_val n_externs;
+
+         READ_CODE(&n_externs, sizeof(uint_val));
+
+         for(size_t i(0); i < n_externs; ++i) {
+            uint_val extern_id;
+
+            READ_CODE(&extern_id, sizeof(uint_val));
+            char extern_name[256];
+
+            READ_CODE(extern_name, sizeof(extern_name));
+
+            char skip_filename[1024];
+
+            READ_CODE(skip_filename, sizeof(skip_filename));
+
+            ptr_val skip_ptr;
+
+            READ_CODE(&skip_ptr, sizeof(skip_ptr));
+
+            cout << "Id " << extern_id << " " << extern_name << endl;
+         }
       }
    }
 

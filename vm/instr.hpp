@@ -77,6 +77,7 @@ const size_t POP_BASE            = 1;
 const size_t PUSH_REGS_BASE      = 1;
 const size_t POP_REGS_BASE       = 1;
 const size_t CALLF_BASE          = 2;
+const size_t CALLE_BASE          = 4;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -105,6 +106,7 @@ enum instr_type {
    PUSH_REGS_INSTR      =  0x18,
    POP_REGS_INSTR       =  0x19,
    CALLF_INSTR          =  0x1A,
+   CALLE_INSTR          =  0x1B,
    CALL_INSTR		      =  0x20,
    MOVE_INSTR		      =  0x30,
    ALLOC_INSTR		      =  0x40,
@@ -274,6 +276,13 @@ inline external_function_id call_extern_id(pcounter pc) { return (external_funct
 inline size_t call_num_args(pcounter pc) { return (size_t)byte_get(pc, 2); }
 inline reg_num call_dest(pcounter pc) { return reg_get(pc, 3); }
 inline instr_val call_val(pcounter pc) { return val_get(pc, 0); }
+
+/* CALLE (similar to CALL) */
+
+inline external_function_id calle_extern_id(pcounter pc) { return (external_function_id)byte_get(pc, 1); }
+inline size_t calle_num_args(pcounter pc) { return (size_t)byte_get(pc, 2); }
+inline reg_num calle_dest(pcounter pc) { return reg_get(pc, 3); }
+inline instr_val calle_val(pcounter pc) { return val_get(pc, 0); }
 
 /* MOVE-NIL TO dst */
 
@@ -663,6 +672,10 @@ advance(pcounter pc)
       case CALL_INSTR:
          return pc + CALL_BASE
                    + instr_call_args_size(pc + CALL_BASE, call_num_args(pc));
+
+      case CALLE_INSTR:
+         return pc + CALLE_BASE
+                   + instr_call_args_size(pc + CALLE_BASE, calle_num_args(pc));
                    
       case DELETE_INSTR:
          return pc + DELETE_BASE

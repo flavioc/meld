@@ -319,6 +319,25 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
             cout << ")" << endl;
    		}
    		break;
+   	case CALLE_INSTR: {
+            pcounter m = pc + CALL_BASE;
+            const external_function_id id(calle_extern_id(pc));
+
+   	      cout << "CALLE func(" << id << "):"
+   	           << calle_num_args(pc) << " TO "
+                 << reg_string(calle_dest(pc)) << " = (";
+            
+            for(size_t i = 0; i < calle_num_args(pc); ++i) {
+               if(i != 0)
+                  cout << ", ";
+               
+               pcounter val_ptr(m);
+               m += val_size;
+               cout << val_string(calle_val(val_ptr), &m, prog);
+            }
+            cout << ")" << endl;
+   		}
+   		break;
       case DELETE_INSTR: {
             pcounter m = pc + DELETE_BASE;
             const predicate_id pred_id(delete_predicate(pc));
