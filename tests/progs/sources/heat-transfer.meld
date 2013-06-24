@@ -1,0 +1,46 @@
+
+type linear heatchanged(node, float, float).
+type linear neighborchanged(node, node, float, float).
+type linear delta(node, float, float).
+type linear count(node, int).
+
+priority @order @desc.
+
+const epsilon = 0.1. //str2float(@arg1).
+const delta = 7.5. // str2float(@arg2).
+
+fun fabs(float X) : float = if X >= 0.0 then 1 * X else -1.0 * X end.
+
+heatchanged(A, 0.0, 0.0).
+delta(A, 0.0, 0.0).
+count(A, 0).
+
+/* neighbor heat has changed... we add this to delta */
+neighborchanged(A, B, V, O),
+delta(A, P1, P2),
+!edge(B, A, W)
+   -o delta(A, P1 + V * W, P2 + O * W).
+
+/* we changed our heat, send this information to neighbors */
+heatchanged(A, O, X),
+heat(A, V),
+fabs(X) > delta, 
+!inbound(A, T)
+   -o heat(A, V),
+      {B, W | !edge(A, B, W) | add-priority(B, fabs(X) / delta),
+         neighborchanged(B, A, V / float(T), O / float(T))}.
+
+/* ... same thing, except delta was not big enough to change priority */
+heatchanged(A, O, X),
+heat(A, V),
+!inbound(A, T)
+   -o heat(A, V),
+      {B, W | !edge(A, B, W) | neighborchanged(B, A, V / float(T), O / float(T))}.
+
+delta(A, Plus, Minus),
+heat(A, V),
+count(A, C),
+!inbound(A, X),
+fabs(Plus - Minus) > epsilon
+   -o heatchanged(A, V, Plus - Minus), heat(A, V + Plus - Minus), count(A, C + 1), delta(A, 0.0, 0.0).
+

@@ -192,7 +192,7 @@ program::program(const string& _filename):
 
             READ_CODE(&skip_ptr, sizeof(skip_ptr));
 
-            cout << "Id " << extern_id << " " << extern_name << endl;
+            //cout << "Id " << extern_id << " " << extern_name << endl;
          }
       }
    }
