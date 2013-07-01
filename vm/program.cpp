@@ -192,7 +192,19 @@ program::program(const string& _filename):
 
             READ_CODE(&skip_ptr, sizeof(skip_ptr));
 
-            //cout << "Id " << extern_id << " " << extern_name << endl;
+            uint_val num_args;
+
+            READ_CODE(&num_args, sizeof(num_args));
+
+            //cout << "Id " << extern_id << " " << extern_name << " ";
+
+            for(uint_val j(0); j != num_args + 1; ++j) {
+               byte b;
+               READ_CODE(&b, sizeof(byte));
+               field_type type = (field_type)b;
+               //cout << field_type_string(type) << " ";
+            }
+            //cout << endl;
          }
       }
    }
