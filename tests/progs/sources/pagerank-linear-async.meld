@@ -1,0 +1,61 @@
+
+type route input(node, node).
+type route output(node, node).
+
+type linear pagerank(node, float).
+type linear neighbor-rank(node, node, float).
+type linear start(node).
+type linear update(node).
+type linear new-neighbor-rank(node, node, float).
+type linear add-neighbor-ranks(node).
+type linear sum-ranks(node, float).
+type linear neighbor-rank-copy(node, node, float).
+type linear check-residual(node, float, float).
+type linear updates(node, int).
+
+type numOutput(node, int).
+type numInput(node, int).
+
+priority @initial 100.
+
+const damping = 0.85.
+const bound = 0.01.
+const pages = @world.
+
+start(A).
+
+start(A) -o [count => C | B | !output(A, B) | !numOutput(A, C)],
+            [count => C | B | !input(A, B) | !numInput(A, C)],
+            { B | !input(A, B) | neighbor-rank(A, B, 1.0 / float(pages))},
+            pagerank(A, 1.0 / float(pages)),
+            updates(A, 0),
+            update(A).
+
+new-neighbor-rank(A, B, V),
+neighbor-rank(A, B, OldV)
+   -o neighbor-rank(A, B, V).
+
+add-neighbor-ranks(A)
+   -o [sum => X | B | neighbor-rank-copy(A, B, X) | sum-ranks(A, X)].
+
+check-residual(A, Res, Rank),
+Res > bound
+   -o {B | !output(A, B) | update(B), new-neighbor-rank(B, A, Rank)}.
+check-residual(A, _, Rank)
+   -o {B | !output(A, B) | new-neighbor-rank(B, A, Rank)}.
+
+sum-ranks(A, Acc),
+!numInput(A, T),
+V = damping + (1.0 - damping) * Acc,
+pagerank(A, Old)
+   -o pagerank(A, V),
+      check-residual(A, if Old > V then Old - V else V - Old end, V).
+
+update(A), update(A) -o update(A).
+
+update(A),
+updates(A, N) -o
+   {B, V | neighbor-rank(A, B, V) | neighbor-rank(A, B, V), neighbor-rank-copy(A, B, V) },
+   add-neighbor-ranks(A),
+   updates(A, N + 1).
+
