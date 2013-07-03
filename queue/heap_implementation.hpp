@@ -2,6 +2,8 @@
 #ifndef QUEUE_HEAP_IMPLEMENTATION_HPP
 #define QUEUE_HEAP_IMPLEMENTATION_HPP
 
+#include "vm/defs.hpp"
+
 typedef enum {
 	HEAP_INT_ASC,
 	HEAP_INT_DESC,
@@ -10,8 +12,8 @@ typedef enum {
 } heap_type;
 
 typedef union {
-	int int_priority;
-	float float_priority;
+   vm::int_val int_priority;
+   vm::float_val float_priority;
 } heap_priority;
 
 #define HEAP_DEFINE_DATA \
