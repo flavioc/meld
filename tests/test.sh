@@ -30,8 +30,8 @@ run_diff ()
 	fi
 	DIFF=`diff -u ${FILE} test.out`
 	if [ ! -z "${DIFF}" ]; then
-		echo "DIFFERENCES!!!"
 		diff -u ${FILE} test.out
+		echo "!!!!!! DIFFERENCES IN FILE ${TEST} ($TO_RUN)"
 		exit 1
 	fi
 	rm test.out
