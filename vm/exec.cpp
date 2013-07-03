@@ -15,6 +15,7 @@
 
 //#define DEBUG_SENDS
 //#define DEBUG_INSTRS
+//#define DEBUG_RULES
 
 using namespace vm;
 using namespace vm::instr;
@@ -2139,7 +2140,7 @@ execute_bytecode(byte_code code, state& state)
 void
 execute_rule(const rule_id rule_id, state& state)
 {
-#ifdef DEBUG_MODE
+#if defined(DEBUG_MODE) || defined(DEBUG_RULES)
 	cout << "Running rule " << state.all->PROGRAM->get_rule(rule_id)->get_string() << endl;
 #endif
    
