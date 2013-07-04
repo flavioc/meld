@@ -1,0 +1,74 @@
+
+type left(node, node).
+type right(node, node).
+type down(node, node).
+type coord(node, int, int).
+type linear propagate-left(node, list node, list int).
+type linear propagate-right(node, list node, list int).
+type linear receive-down(node, list node, list int).
+type linear test-and-send-down(node, list node, list int).
+type linear test-y(node, int, list int, list node, list int).
+type linear test-diag-left(node, int, int, list int, list node, list int).
+type linear test-diag-right(node, int, int, list int, list node, list int).
+type linear send-down(node, list node, list int).
+type linear final-state(node, list node, list int).
+
+const size = 8.
+
+receive-down(@0, [], []).
+
+receive-down(A, Nodes, Coords)
+   -o {R | !right(A, R), R <> A | propagate-right(R, Nodes, Coords)},
+      {L | !left(A, L), L <> A | propagate-left(L, Nodes, Coords)},
+      test-and-send-down(A, Nodes, Coords).
+
+propagate-left(A, Nodes, Coords)
+   -o {L | !left(A, L), L <> A | propagate-left(L, Nodes, Coords)},
+      test-and-send-down(A, Nodes, Coords).
+
+propagate-right(A, Nodes, Coords)
+   -o {R | !right(A, R), R <> A | propagate-right(R, Nodes, Coords)},
+      test-and-send-down(A, Nodes, Coords).
+
+test-and-send-down(A, Nodes, Coords),
+!coord(A, X, Y)
+   -o test-y(A, Y, Coords, Nodes, Coords).
+
+test-y(A, Y, [], Nodes, Coords), !coord(A, OX, OY) -o test-diag-left(A, OX - 1, OY - 1, Coords, Nodes, Coords).
+test-y(A, Y, [X, Y1 | RestCoords], Nodes, Coords), Y = Y1 -o 1. // fail
+test-y(A, Y, [X, Y1 | RestCoords], Nodes, Coords), Y <> Y1 -o test-y(A, Y, RestCoords, Nodes, Coords).
+
+test-diag-left(A, X, Y, _, Nodes, Coords),
+X < 0 || Y < 0,
+!coord(A, OX, OY)
+   -o test-diag-right(A, OX - 1, OY + 1, Coords, Nodes, Coords).
+
+test-diag-left(A, X, Y, [X1, Y1 | RestCoords], Nodes, Coords),
+X = X1, Y = Y1
+   -o 1. // fail
+
+test-diag-left(A, X, Y, [X1, Y1 | RestCoords], Nodes, Coords),
+X <> X1 || Y <> Y1
+   -o test-diag-left(A, X - 1, Y - 1, RestCoords, Nodes, Coords).
+
+test-diag-right(A, X, Y, [], Nodes, Coords),
+X < 0 || Y >= size,
+!coord(A, OX, OY)
+   -o send-down(A, [A | Nodes], [OX, OY | Coords]).
+
+test-diag-right(A, X, Y, [X1, Y1 | RestCoords], Nodes, Coords),
+X = X1, Y = Y1
+   -o 1. // fail
+
+test-diag-right(A, X, Y, [X1, Y1 | RestCoords], Nodes, Coords),
+X <> X1 || Y <> Y1
+   -o test-diag-right(A, X - 1, Y + 1, RestCoords, Nodes, Coords).
+
+send-down(A, Nodes, Coords),
+!down(A, A)
+   -o final-state(A, Nodes, Coords).
+
+send-down(A, Nodes, Coords),
+!down(A, B),
+A <> B
+   -o receive-down(B, Nodes, Coords).
