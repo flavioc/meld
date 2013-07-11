@@ -484,6 +484,22 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
                      }
                      cout << "]";
                      break;
+                  case FIELD_LIST_INT:
+                     cout << "[";
+                     while(*p++ == 1) {
+                        cout << pcounter_int(p) << ", ";
+                        pcounter_move_int(&p);
+                     }
+                     cout << "]";
+                     break;
+                  case FIELD_LIST_NODE:
+                     cout << "[";
+                     while(*p++ == 1) {
+                        cout << "@" << pcounter_node(p) << ", ";
+                        pcounter_move_node(&p);
+                     }
+                     cout << "]";
+                     break;
                   default: assert(false);
                }
                if(i != num_fields-1)
