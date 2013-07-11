@@ -1,5 +1,8 @@
 
 #include <cmath>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/uniform_real.hpp>
+#include <boost/random/variate_generator.hpp>
 
 #include "runtime/list.hpp"
 #include "external/math.hpp"
@@ -227,5 +230,88 @@ intpower(EXTERNAL_ARG(n1), EXTERNAL_ARG(n2))
    RETURN_INT(result);
 }
 
+static boost::mt19937 *generator = NULL;
+static boost::uniform_real<> *uni_dist = NULL;
+static boost::variate_generator<boost::mt19937&, boost::uniform_real<> > *de_uni = NULL;
+
+static void
+de_finish(void)
+{
+   delete de_uni;
+   delete uni_dist;
+   delete generator;
+}
+
+static bool
+de_init(void)
+{
+   generator = new boost::mt19937(std::time(0));
+   uni_dist = new boost::uniform_real<>(0, 1);
+   de_uni = new boost::variate_generator<boost::mt19937&, boost::uniform_real<> >(*generator, *uni_dist);
+   atexit(de_finish);
+   return true;
+}
+
+static bool de_start(de_init());
+
+static int
+create_random_bm(int size_bitmask)
+{
+   int j;
+   double cur_random = de_uni->operator()();
+   double threshold = 0;
+   for(j = 0; j < size_bitmask - 1; ++j) {
+      threshold += pow(2.0, -1 * j - 1);
+
+      if(cur_random < threshold)
+         break;
+   }
+
+   return j;
+}
+
+argument
+degeneratevector(EXTERNAL_ARG(k), EXTERNAL_ARG(bits))
+{
+   DECLARE_INT(k);
+   DECLARE_INT(bits);
+
+   int finalBitCount = bits - 1;
+   long rndVal;
+   stack_int_list vals;
+
+   for(int j(0); j != k; ++j) {
+      rndVal = create_random_bm(finalBitCount);
+      vals.push((1 << ((bits - 2) - rndVal)));
+   }
+
+   int_list *ptr(from_stack_to_list<stack_int_list, int_list>(vals));
+
+   RETURN_INT_LIST(ptr);
+}
+
+argument
+demergemessages(EXTERNAL_ARG(v1), EXTERNAL_ARG(v2))
+{
+   DECLARE_INT_LIST(v1);
+   DECLARE_INT_LIST(v2);
+   int_list *ls1((int_list*)v1);
+   int_list *ls2((int_list*)v2);
+
+   stack_int_list s;
+
+   while(!int_list::is_null(ls1)) {
+      assert(!int_list::is_null(ls2));
+      s.push(ls1->get_head() | ls2->get_head());
+      ls1 = ls1->get_tail();
+      ls2 = ls2->get_tail();
+   }
+
+   int_list *ret(from_stack_to_reverse_list<stack_int_list, int_list>(s));
+
+   RETURN_INT_LIST(ret);
+}
+
 }
 }
+

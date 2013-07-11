@@ -158,6 +158,9 @@ init_external_functions(void)
    register_external_function(EXTERNAL2(intpower, FIELD_INT, FIELD_INT, FIELD_INT));
    register_external_function(EXTERNAL1(intlistsort, FIELD_LIST_INT, FIELD_LIST_INT));
    register_external_function(EXTERNAL1(intlistremoveduplicates, FIELD_LIST_INT, FIELD_LIST_INT));
+   register_external_function(EXTERNAL2(degeneratevector, FIELD_LIST_INT, FIELD_INT, FIELD_INT));
+   register_external_function(EXTERNAL2(demergemessages, FIELD_LIST_INT, FIELD_LIST_INT, FIELD_LIST_INT));
+   register_external_function(EXTERNAL2(intlistequal, FIELD_INT, FIELD_LIST_INT, FIELD_LIST_INT));
 
    atexit(cleanup_externals);
    

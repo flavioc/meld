@@ -21,6 +21,10 @@ argument addfloatlists(const argument, const argument);
 argument residual(const argument, const argument);
 argument intpower(const argument, const argument);
 
+/* for the diameter estimation algorithm */
+argument degeneratevector(const argument, const argument);
+argument demergemessages(const argument, const argument);
+
 }
 
 }

@@ -233,6 +233,37 @@ intlistremoveduplicates(EXTERNAL_ARG(ls))
 }
 
 argument
+intlistequal(EXTERNAL_ARG(l1), EXTERNAL_ARG(l2))
+{
+   DECLARE_INT_LIST(l1);
+   DECLARE_INT_LIST(l2);
+   int_list *ls1((int_list*)l1);
+   int_list *ls2((int_list*)l2);
+   int_val ret(1);
+   while(!int_list::is_null(ls1)) {
+      if(int_list::is_null(ls2)) {
+         ret = 0;
+         RETURN_INT(ret);
+      }
+
+      if(ls1->get_head() != ls2->get_head()) {
+         ret = 0;
+         RETURN_INT(ret);
+      }
+
+      ls1 = ls1->get_tail();
+      ls2 = ls2->get_tail();
+   }
+
+   if(!int_list::is_null(ls2)) {
+      ret = 0;
+      RETURN_INT(ret);
+   }
+
+   RETURN_INT(ret);
+}
+
+argument
 str2intlist(EXTERNAL_ARG(str))
 {
    DECLARE_STRING(str);
