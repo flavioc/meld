@@ -1,6 +1,5 @@
 
 #include "db/tuple_aggregate.hpp"
-#include "db/neighbor_agg_configuration.hpp"
 
 using namespace vm;
 using namespace std;

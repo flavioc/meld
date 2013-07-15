@@ -20,7 +20,6 @@
 #include "vm/defs.hpp"
 #include "vm/match.hpp"
 #include "utils/atomic.hpp"
-#include "db/edge_set.hpp"
 #include "vm/rule_matcher.hpp"
 #include "vm/all.hpp"
 
@@ -66,15 +65,6 @@ private:
    // sets of tuple aggregates
    aggregate_map aggs;
    
-   typedef std::tr1::unordered_map<vm::predicate_id,
-                           edge_set,
-                           std::tr1::hash<vm::predicate_id>,
-                           std::equal_to<vm::predicate_id>,
-                           mem::allocator<std::pair<const vm::predicate_id, edge_set> > >
-                  edge_map; 
-   
-   edge_map edge_info;
-   
    tuple_trie* get_storage(const vm::predicate*);
    
    // code to handle local stratification
@@ -99,11 +89,6 @@ public:
    db::agg_configuration* remove_agg_tuple(vm::tuple*, const vm::ref_count);
    simple_tuple_list end_iteration(void);
    
-   const edge_set& get_edge_set(const vm::predicate_id id) const {
-      assert(edge_info.find(id) != edge_info.end());
-      return edge_info.find(id)->second;
-   }
-
    void delete_by_index(const vm::predicate*, const vm::match&);
    void delete_by_leaf(const vm::predicate*, tuple_trie_leaf*);
    void delete_all(const vm::predicate*);

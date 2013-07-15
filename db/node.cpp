@@ -4,7 +4,6 @@
 
 #include "db/node.hpp"
 #include "vm/state.hpp"
-#include "db/neighbor_tuple_aggregate.hpp"
 #include "utils/utils.hpp"
 
 #ifdef USE_UI
@@ -39,17 +38,6 @@ node::add_tuple(vm::tuple *tpl, ref_count many)
    const predicate* pred(tpl->get_predicate());
    tuple_trie *tr(get_storage(pred));
    
-   if(pred->is_route_pred() && pred->is_persistent_pred()) {
-      const predicate_id pred_id(pred->get_id());
-      edge_map::iterator it(edge_info.find(pred_id));
-      
-      assert(it != edge_info.end());
-      
-      edge_set& s(it->second);
-      
-      s.insert(tpl->get_node(0));
-   }
-   
    return tr->insert_tuple(tpl, many);
 }
 
@@ -71,19 +59,7 @@ node::add_agg_tuple(vm::tuple *tuple, const ref_count many)
    tuple_aggregate *agg;
    
    if(it == aggs.end()) {
-      // add new
-      
-      if(aggregate_safeness_uses_neighborhood(pred->get_agg_safeness())) {
-         assert(false);
-         const predicate *remote_pred(pred->get_remote_pred());
-         edge_set edges(get_edge_set(remote_pred->get_id()));
-         if(pred->get_agg_safeness() == AGG_NEIGHBORHOOD_AND_SELF) {
-            edges.insert(id);
-         }
-         agg = new neighbor_tuple_aggregate(pred, edges);
-      } else
-         agg = new tuple_aggregate(pred);
-            
+      agg = new tuple_aggregate(pred);
       aggs[pred_id] = agg;
    } else
       agg = it->second;
@@ -297,11 +273,6 @@ node::dump_json(void) const
 void
 node::init(void)
 {
-   for(size_t i(0); i < all->PROGRAM->num_route_predicates(); ++i) {
-      const predicate *pred(all->PROGRAM->get_route_predicate(i));
-      
-      edge_info[pred->get_id()] = edge_set();
-   }
 }
 
 ostream&
