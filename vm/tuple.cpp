@@ -251,6 +251,7 @@ tuple::~tuple(void)
          case FIELD_LIST_INT: int_list::dec_refs(get_int_list(i)); break;
          case FIELD_LIST_FLOAT: float_list::dec_refs(get_float_list(i)); break;
          case FIELD_LIST_NODE: node_list::dec_refs(get_node_list(i)); break;
+         case FIELD_STRING: get_string(i)->dec_refs(); break;
          default: break;
       }
    }
