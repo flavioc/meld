@@ -16,8 +16,6 @@ size_t
 field_type_size(field_type type)
 {
    switch(type) {
-      case FIELD_WORKER:
-         return sizeof(worker_val);
       case FIELD_INT:
          return sizeof(int_val);
       case FIELD_FLOAT:
@@ -48,7 +46,6 @@ field_type_string(field_type type)
       case FIELD_LIST_INT: return string("int list");
       case FIELD_LIST_FLOAT: return string("float list");
 		case FIELD_LIST_NODE: return string("node list");
-      case FIELD_WORKER: return string("worker");
 		case FIELD_STRING: return string("string");
       default:
          throw type_error("Unrecognized field type " + to_string(type) + " (field_type_string)");

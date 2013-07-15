@@ -14,7 +14,6 @@ enum field_type {
    FIELD_LIST_INT = 0x3,
    FIELD_LIST_FLOAT = 0x4,
    FIELD_LIST_NODE = 0x5,
-   FIELD_WORKER = 0x6,
 	FIELD_STRING = 0x9
 };
 

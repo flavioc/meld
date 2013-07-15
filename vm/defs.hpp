@@ -13,7 +13,6 @@ typedef int32_t int_val;
 typedef double float_val;
 typedef uint64_t ptr_val;
 typedef uint32_t node_val;
-typedef uint32_t worker_val;
 typedef bool bool_val;
 typedef unsigned char predicate_id;
 typedef unsigned short process_id;
