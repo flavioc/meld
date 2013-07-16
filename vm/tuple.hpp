@@ -71,6 +71,8 @@ public:
    
    void pack(utils::byte *, const size_t, int *) const;
    void load(utils::byte *, const size_t, int *);
+
+   void copy_runtime(void);
    
    static tuple* unpack(utils::byte *, const size_t, int *, vm::program *);
 
