@@ -387,8 +387,6 @@ tuple::unpack(byte *buf, const size_t buf_size, int *pos, vm::program *prog)
 void
 tuple::copy_runtime(void)
 {
-   assert_tuple();
-
    for(field_num i(0); i < num_fields(); ++i) {
       switch(get_field_type(i)) {
          case FIELD_LIST_INT: {
