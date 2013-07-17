@@ -37,6 +37,7 @@ static const size_t PREDICATE_DESCRIPTOR_SIZE = sizeof(code_size_t) +
 	fp.seekg(SIZE, ios_base::cur);	\
 	position += (SIZE);	\
 } while(false)
+#define VERSION_AT_LEAST(MAJ, MIN) (major_version > (MAJ) || (major_version == (MAJ) && minor_version >= (MIN)))
 
 // most integers in the byte-code have 4 bytes
 BOOST_STATIC_ASSERT(sizeof(uint_val) == 4);
@@ -60,10 +61,12 @@ program::program(const string& _filename):
       throw load_file_error(filename, "not a meld byte code file");
 
    // read version
-   uint32_t major_version, minor_version;
    READ_CODE(&major_version, sizeof(uint32_t));
    READ_CODE(&minor_version, sizeof(uint32_t));
-   if(major_version == 0 && minor_version < 5)
+   if(!VERSION_AT_LEAST(0, 5))
+      throw load_file_error(filename, string("unsupported byte code version"));
+
+   if(VERSION_AT_LEAST(0, 10))
       throw load_file_error(filename, string("unsupported byte code version"));
 
    // read number of predicates
@@ -82,6 +85,51 @@ program::program(const string& _filename):
 	READ_CODE(&num_nodes, sizeof(uint_val));
 
 	SEEK_CODE(num_nodes * database::node_size);
+
+   // read imported/exported predicates
+   if(VERSION_AT_LEAST(0, 9)) {
+      uint32_t number_imported_predicates;
+
+      READ_CODE(&number_imported_predicates, sizeof(number_imported_predicates));
+
+      for(uint32_t i(0); i < number_imported_predicates; ++i) {
+         uint32_t size;
+         READ_CODE(&size, sizeof(size));
+
+         char buf_imp[size + 1];
+         READ_CODE(buf_imp, size);
+         buf_imp[size] = '\0';
+
+         READ_CODE(&size, sizeof(size));
+         char buf_as[size + 1];
+         READ_CODE(buf_as, size);
+         buf_as[size] = '\0';
+
+         READ_CODE(&size, sizeof(size));
+         char buf_file[size + 1];
+         READ_CODE(buf_file, size);
+         buf_file[size] = '\0';
+
+         cout << "import " << buf_imp << " as " << buf_as << " from " << buf_file << endl;
+
+         imported_predicates.push_back(new import(buf_imp, buf_as, buf_file));
+      }
+      assert(imported_predicates.size() == number_imported_predicates);
+
+      uint32_t number_exported_predicates;
+
+      READ_CODE(&number_exported_predicates, sizeof(number_exported_predicates));
+
+      for(uint32_t i(0); i < number_exported_predicates; ++i) {
+         uint32_t str_size;
+         READ_CODE(&str_size, sizeof(str_size));
+         char buf[str_size + 1];
+         READ_CODE(buf, str_size);
+         buf[str_size] = '\0';
+         exported_predicates.push_back(string(buf));
+      }
+      assert(exported_predicates.size() == number_exported_predicates);
+   }
 
 	// get number of args needed
 	byte n_args;
@@ -152,7 +200,7 @@ program::program(const string& _filename):
 
    MAX_STRAT_LEVEL = 0;
 
-   if(major_version > 0 || (major_version == 0 && minor_version >= 6)) {
+   if(VERSION_AT_LEAST(0, 6)) {
       // get function code
       uint_val n_functions;
 
@@ -223,7 +271,7 @@ program::program(const string& _filename):
       if(predicates[i]->is_route_pred())
          route_predicates.push_back(predicates[i]);
    }
-   
+
    safe = true;
    for(size_t i(0); i < num_predicates; ++i) {
       predicates[i]->cache_info(this);
@@ -345,6 +393,9 @@ program::~program(void)
       delete functions[i];
    }
 	delete []const_code;
+   for(size_t i(0); i < imported_predicates.size(); ++i) {
+      delete imported_predicates[i];
+   }
    MAX_STRAT_LEVEL = 0;
 }
 
@@ -378,6 +429,8 @@ program::print_predicate_code(ostream& out, predicate* p) const
 void
 program::print_bytecode(ostream& out) const
 {
+   out << "VERSION " << major_version << "." << minor_version << endl << endl;
+
 	out << "CONST CODE" << endl;
 	
 	instrs_print(const_code, const_code_size, 0, this, out);
@@ -431,12 +484,21 @@ program::print_predicates(ostream& cout) const
       cout << ">> Safe program" << endl;
    else
       cout << ">> Unsafe program" << endl;
-   cout << "Priorities: " << (priority_order == PRIORITY_ASC ? "ascending" : "descending") << " ";
+   cout << ">> Priorities: " << (priority_order == PRIORITY_ASC ? "ascending" : "descending") << " ";
    cout << "initial: " << (priority_type == FIELD_FLOAT ? initial_priority.float_priority : initial_priority.int_priority) << endl;
    if(is_data())
       cout << ">> Data file" << endl;
+   cout << ">> Predicates:" << endl;
    for(size_t i(0); i < num_predicates(); ++i) {
       cout << predicates[i] << " " << *predicates[i] << endl;
+   }
+   cout << ">> Imported Predicates:" << endl;
+   for(size_t i(0); i < imported_predicates.size(); i++) {
+      cout << *imported_predicates[i] << endl;
+   }
+   cout << ">> Exported Predicates:" << endl;
+   for(size_t i(0); i < exported_predicates.size(); i++) {
+      cout << exported_predicates[i] << endl;
    }
 }
 

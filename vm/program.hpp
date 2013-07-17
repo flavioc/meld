@@ -16,6 +16,7 @@
 #include "vm/function.hpp"
 #include "runtime/string.hpp"
 #include "queue/heap_implementation.hpp"
+#include "vm/import.hpp"
 #ifdef USE_UI
 #include <json_spirit.h>
 #endif
@@ -45,6 +46,11 @@ class program
 private:
 
    const std::string filename;
+   uint32_t major_version, minor_version;
+
+   std::vector<import*> imported_predicates;
+   std::vector<std::string> exported_predicates;
+
 	size_t num_args;
    size_t number_rules;
 
