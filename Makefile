@@ -88,7 +88,7 @@ SRCS = utils/utils.cpp \
 			 sched/mpi/request.cpp \
 			 sched/serial.cpp \
 			 sched/serial_ui.cpp \
-			 thread/static.cpp \
+			 thread/threads.cpp \
 			 thread/prio.cpp \
 			 sched/thread/threaded.cpp \
 			 sched/thread/assert.cpp \

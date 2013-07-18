@@ -39,13 +39,13 @@ void
 threads_prio::assert_end(void) const
 {
    assert(priority_buffer.empty());
-	static_local::assert_end();
+	threads_sched::assert_end();
 }
 
 void
 threads_prio::assert_end_iteration(void) const
 {
-	static_local::assert_end_iteration();
+	threads_sched::assert_end_iteration();
    assert(priority_buffer.empty());
 }
 
@@ -630,7 +630,7 @@ void
 threads_prio::write_slice(statistics::slice& sl) const
 {
 #ifdef INSTRUMENTATION
-   static_local::write_slice(sl);
+   threads_sched::write_slice(sl);
    sl.priority_queue = prio_queue.size();
 #else
    (void)sl;
@@ -638,7 +638,7 @@ threads_prio::write_slice(statistics::slice& sl) const
 }
 
 threads_prio::threads_prio(const vm::process_id _id, vm::all *all):
-   static_local(_id, all)
+   threads_sched(_id, all)
 {
 }
 

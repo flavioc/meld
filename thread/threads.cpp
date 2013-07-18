@@ -1,7 +1,7 @@
 #include <iostream>
 #include <boost/thread/barrier.hpp>
 
-#include "thread/static.hpp"
+#include "thread/threads.hpp"
 #include "db/database.hpp"
 #include "db/tuple.hpp"
 #include "process/remote.hpp"
@@ -20,7 +20,7 @@ namespace sched
 {
 
 void
-static_local::assert_end(void) const
+threads_sched::assert_end(void) const
 {
    assert(!has_work());
    assert(is_inactive());
@@ -30,7 +30,7 @@ static_local::assert_end(void) const
 }
 
 void
-static_local::assert_end_iteration(void) const
+threads_sched::assert_end_iteration(void) const
 {
    assert(!has_work());
    assert(is_inactive());
@@ -40,7 +40,7 @@ static_local::assert_end_iteration(void) const
 }
 
 void
-static_local::new_agg(work& new_work)
+threads_sched::new_agg(work& new_work)
 {
    thread_intrusive_node *to(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
    
@@ -55,7 +55,7 @@ static_local::new_agg(work& new_work)
 }
 
 void
-static_local::new_work(const node *, work& new_work)
+threads_sched::new_work(const node *, work& new_work)
 {
    thread_intrusive_node *to(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
    
@@ -73,7 +73,7 @@ static_local::new_work(const node *, work& new_work)
 }
 
 void
-static_local::new_work_other(sched::base *, work& new_work)
+threads_sched::new_work_other(sched::base *, work& new_work)
 {
    assert(is_active());
    
@@ -81,7 +81,7 @@ static_local::new_work_other(sched::base *, work& new_work)
    
    assert(tnode->get_owner() != NULL);
    
-   static_local *owner(dynamic_cast<static_local*>(tnode->get_owner()));
+   threads_sched *owner(dynamic_cast<threads_sched*>(tnode->get_owner()));
 
    owner->buffer.push(new_work);
 
@@ -104,12 +104,12 @@ static_local::new_work_other(sched::base *, work& new_work)
 }
 
 void
-static_local::retrieve_tuples(void)
+threads_sched::retrieve_tuples(void)
 {
    while(!buffer.empty()) {
       work new_work(buffer.pop());
 		thread_intrusive_node *to(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
-      static_local *owner(dynamic_cast<static_local*>(to->get_owner()));
+      threads_sched *owner(dynamic_cast<threads_sched*>(to->get_owner()));
 
       if(owner == this) {
          to->add_work(new_work.get_tuple());
@@ -132,7 +132,7 @@ static_local::retrieve_tuples(void)
 
 #ifdef COMPILE_MPI
 void
-static_local::new_work_remote(remote *, const node::node_id, message *)
+threads_sched::new_work_remote(remote *, const node::node_id, message *)
 {
    assert(false);
 }
@@ -140,7 +140,7 @@ static_local::new_work_remote(remote *, const node::node_id, message *)
 
 #ifdef TASK_STEALING
 void
-static_local::check_stolen_nodes(void)
+threads_sched::check_stolen_nodes(void)
 {
    if(state.all->NUM_THREADS == 1)
       return;
@@ -159,12 +159,12 @@ static_local::check_stolen_nodes(void)
 }
 
 void
-static_local::clear_steal_requests(void)
+threads_sched::clear_steal_requests(void)
 {
 }
 
 thread_intrusive_node*
-static_local::steal_node(void)
+threads_sched::steal_node(void)
 {
    thread_intrusive_node *node(NULL);
    queue_nodes.pop(node);
@@ -172,13 +172,13 @@ static_local::steal_node(void)
 }
 
 size_t
-static_local::number_of_nodes(void) const
+threads_sched::number_of_nodes(void) const
 {
    return queue_nodes.size();
 }
 
 void
-static_local::answer_steal_requests(void)
+threads_sched::answer_steal_requests(void)
 {
    static const size_t MIN_NODES = 1;
    const size_t total_nodes(number_of_nodes());
@@ -200,7 +200,7 @@ static_local::answer_steal_requests(void)
       }
       ++j;
 
-      static_local *target((static_local*)state.all->ALL_THREADS[tid]);
+      threads_sched *target((threads_sched*)state.all->ALL_THREADS[tid]);
 
       assert(target != this);
 
@@ -237,13 +237,13 @@ static_local::answer_steal_requests(void)
 #endif
 
 void
-static_local::generate_aggs(void)
+threads_sched::generate_aggs(void)
 {
    iterate_static_nodes(id);
 }
 
 bool
-static_local::busy_wait(void)
+threads_sched::busy_wait(void)
 {
    ins_idle;
    
@@ -267,7 +267,7 @@ static_local::busy_wait(void)
 }
 
 bool
-static_local::terminate_iteration(void)
+threads_sched::terminate_iteration(void)
 {
    START_ROUND();
    
@@ -280,7 +280,7 @@ static_local::terminate_iteration(void)
 }
 
 void
-static_local::finish_work(db::node *no)
+threads_sched::finish_work(db::node *no)
 {
    base::finish_work(no);
    
@@ -290,7 +290,7 @@ static_local::finish_work(db::node *no)
 }
 
 bool
-static_local::check_if_current_useless(void)
+threads_sched::check_if_current_useless(void)
 {
    if(!current_node->has_work()) {
       spinlock::scoped_lock lock(current_node->spin);
@@ -308,7 +308,7 @@ static_local::check_if_current_useless(void)
 }
 
 bool
-static_local::set_next_node(void)
+threads_sched::set_next_node(void)
 {
    if(current_node != NULL)
       check_if_current_useless();
@@ -341,7 +341,7 @@ static_local::set_next_node(void)
 }
 
 node*
-static_local::get_work(void)
+threads_sched::get_work(void)
 {  
    if(!set_next_node())
       return NULL;
@@ -363,12 +363,12 @@ static_local::get_work(void)
 }
 
 void
-static_local::end(void)
+threads_sched::end(void)
 {
 }
 
 void
-static_local::init(const size_t)
+threads_sched::init(const size_t)
 {
    const node::node_id first_node(remote::self->find_first_node(id));
    const node::node_id last_node(remote::self->find_last_node(id));
@@ -390,7 +390,7 @@ static_local::init(const size_t)
 }
 
 simple_tuple_vector
-static_local::gather_active_tuples(db::node *node, const vm::predicate_id pred)
+threads_sched::gather_active_tuples(db::node *node, const vm::predicate_id pred)
 {
 	simple_tuple_vector ls;
 	thread_node *no((thread_node*)node);
@@ -408,20 +408,20 @@ static_local::gather_active_tuples(db::node *node, const vm::predicate_id pred)
 }
 
 void
-static_local::gather_next_tuples(db::node *node, simple_tuple_list& ls)
+threads_sched::gather_next_tuples(db::node *node, simple_tuple_list& ls)
 {
 	thread_intrusive_node *no((thread_intrusive_node*)node);
    no->queue.top_list(ls);
 }
 
-static_local*
-static_local::find_scheduler(const node *n)
+threads_sched*
+threads_sched::find_scheduler(const node *n)
 {
-   return (static_local*)((thread_intrusive_node*)n)->get_owner();
+   return (threads_sched*)((thread_intrusive_node*)n)->get_owner();
 }
 
 void
-static_local::write_slice(statistics::slice& sl) const
+threads_sched::write_slice(statistics::slice& sl) const
 {
 #ifdef INSTRUMENTATION
    base::write_slice(sl);
@@ -437,7 +437,7 @@ static_local::write_slice(statistics::slice& sl) const
 #endif
 }
 
-static_local::static_local(const vm::process_id _id, vm::all *all):
+threads_sched::threads_sched(const vm::process_id _id, vm::all *all):
    base(_id, all),
    current_node(NULL)
 #ifdef TASK_STEALING
@@ -449,7 +449,7 @@ static_local::static_local(const vm::process_id _id, vm::all *all):
 {
 }
 
-static_local::~static_local(void)
+threads_sched::~threads_sched(void)
 {
 #ifdef TASK_STEALING
    clear_steal_requests();

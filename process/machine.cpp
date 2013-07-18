@@ -16,11 +16,8 @@
 #include "sched/serial.hpp"
 #include "sched/serial_ui.hpp"
 #include "sched/sim.hpp"
-//#include "thread/mpi_dynamic.hpp"
-//#include "thread/mpi_single.hpp"
-//#include "thread/mpi_static.hpp"
+#include "thread/threads.hpp"
 #include "thread/prio.hpp"
-#include "thread/static.hpp"
 
 using namespace process;
 using namespace db;
@@ -366,7 +363,7 @@ get_creation_function(const scheduler_type sched_type)
 {
    switch(sched_type) {
       case SCHED_THREADS:
-         return database::create_node_fn(sched::static_local::create_node);
+         return database::create_node_fn(sched::threads_sched::create_node);
       case SCHED_THREADS_PRIO:
          return database::create_node_fn(sched::threads_prio::create_node);
 #if 0
@@ -434,7 +431,7 @@ machine::machine(const string& file, router& _rout, const size_t th,
    
    switch(sched_type) {
       case SCHED_THREADS:
-         sched::static_local::start(all->NUM_THREADS, this->all);
+         sched::threads_sched::start(all->NUM_THREADS, this->all);
          break;
       case SCHED_THREADS_PRIO:
          sched::threads_prio::start(all->NUM_THREADS, this->all);

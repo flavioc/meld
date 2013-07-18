@@ -1,6 +1,6 @@
 
-#ifndef THREAD_STATIC_HPP
-#define THREAD_STATIC_HPP
+#ifndef THREAD_THREADS_HPP
+#define THREAD_THREADS_HPP
 
 #include <boost/thread/barrier.hpp>
 #include <vector>
@@ -20,7 +20,7 @@
 namespace sched
 {
 
-class static_local: public sched::base,
+class threads_sched: public sched::base,
                     public sched::threaded
 {
 protected:
@@ -81,7 +81,7 @@ public:
    virtual void end(void);
    virtual bool terminate_iteration(void);
    
-   static_local *find_scheduler(const db::node *);
+   threads_sched *find_scheduler(const db::node *);
    virtual db::simple_tuple_vector gather_active_tuples(db::node *, const vm::predicate_id);
    virtual void gather_next_tuples(db::node *, db::simple_tuple_list&);
 	
@@ -90,13 +90,13 @@ public:
       return new thread_intrusive_node(id, trans, all);
    }
    
-   DEFINE_START_FUNCTION(static_local);
+   DEFINE_START_FUNCTION(threads_sched);
    
    virtual void write_slice(statistics::slice&) const;
    
-   explicit static_local(const vm::process_id, vm::all *);
+   explicit threads_sched(const vm::process_id, vm::all *);
    
-   virtual ~static_local(void);
+   virtual ~threads_sched(void);
 };
 
 }
