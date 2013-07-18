@@ -30,7 +30,6 @@ using namespace utils;
 #ifdef USE_UI
 using namespace websocketpp;
 using namespace ui;
-#endif
 
 static char *progname = NULL;
 static int port = 0;
@@ -158,7 +157,6 @@ parse_command(string cmd)
 	return COMMAND_NONE;
 }
 
-#ifdef USE_UI
 static void
 show_status(void)
 {
@@ -181,6 +179,8 @@ run_server(void)
 int
 main(int argc, char **argv)
 {
+   (void)argc;
+   (void)argv;
 #ifdef USE_UI
    read_arguments(argc, argv);
 

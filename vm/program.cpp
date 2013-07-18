@@ -249,7 +249,7 @@ program::program(const string& _filename):
             for(uint_val j(0); j != num_args + 1; ++j) {
                byte b;
                READ_CODE(&b, sizeof(byte));
-               field_type type = (field_type)b;
+               //field_type type = (field_type)b;
                //cout << field_type_string(type) << " ";
             }
             //cout << endl;

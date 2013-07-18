@@ -88,6 +88,8 @@ read_arguments(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
+   (void)argc;
+   (void)argv;
 #ifdef USE_SIM
 	vm::machine_arguments margs(read_arguments(argc, argv));
 	

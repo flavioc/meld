@@ -50,88 +50,26 @@ threads_prio::assert_end_iteration(void) const
 }
 
 #ifdef TASK_STEALING
-void
-threads_prio::check_stolen_nodes(void)
+
+thread_intrusive_node*
+threads_prio::steal_node(void)
 {
-   while(!stolen_nodes_buffer.empty()) {
-      thread_intrusive_node *n(stolen_nodes_buffer.pop());
+   thread_intrusive_node *node(NULL);
 
-      assert(n->in_queue());
-
-#ifdef INSTRUMENTATION
-      stolen_total++;
-#endif
-			
-		// nodes may have been added
-		if(priority_queue::in_queue(n))
-			continue;
-		if(node_queue::in_queue(n))
-			continue;
-
-      assert(n->moving_around);
-
-		if(n->has_priority_level()) {
-         assert(!priority_queue::in_queue(n));
-			prio_queue.insert(n, n->get_priority_level());
-		} else {
-      	queue_nodes.push_tail(n);
-		}
-      n->moving_around = false;
-		assert(n->in_queue());
+   if(steal_flag) {
+      if(!queue_nodes.empty())
+         queue_nodes.pop(node);
+      else if(!prio_queue.empty())
+         node = prio_queue.pop();
+      steal_flag = false;
+   } else {
+      if(!prio_queue.empty())
+         node = prio_queue.pop();
+      else if(!queue_nodes.empty())
+         queue_nodes.pop(node);
+      steal_flag = true;
    }
-}
-
-void
-threads_prio::answer_steal_requests(void)
-{
-   bool flag(true);
-
-   while(!steal_request_buffer.empty() && (!queue_nodes.empty() || !prio_queue.empty())) {
-      threads_prio *target((threads_prio*)steal_request_buffer.pop());
-      thread_intrusive_node *node(NULL);
-
-      size_t size(queue_nodes.size() + prio_queue.size());
-      const size_t frac((int)((double)size * (double)state.all->TASK_STEALING_FACTOR));
-      size = max(min(size, (size_t)4), frac);
-
-      while(size > 0 && (!queue_nodes.empty() || !prio_queue.empty())) {
-         node = NULL;
-
-         if(flag) {
-            if(!queue_nodes.empty())
-               queue_nodes.pop(node);
-            else if(!prio_queue.empty())
-               node = prio_queue.pop();
-            flag = false;
-         } else {
-            if(!prio_queue.empty())
-               node = prio_queue.pop();
-            else if(!queue_nodes.empty())
-               queue_nodes.pop(node);
-            flag = true;
-         }
-		
-         if(node == NULL)
-            continue;
-
-         assert(node != NULL);
-         assert(node != current_node);
-         assert(node->get_owner() == this);
-         assert(node->in_queue());
-
-         node->moving_around = true;
-         node->set_owner(target);
-         target->stolen_nodes_buffer.push(node);
-         size--;
-      }
-
-      spinlock::scoped_lock l(target->lock);
-   
-      if(target->is_inactive() && target->has_work())
-      {
-         target->set_active();
-      }
-   }
+   return node;
 }
 #endif
 
@@ -221,9 +159,6 @@ threads_prio::new_work(const node *, work& new_work)
    
    assert_thread_push_work();
    
-	db::simple_tuple *stpl(new_work.get_tuple());
-	const vm::predicate *pred(stpl->get_predicate());
-	
    to->add_work(new_work.get_tuple());
    if(!to->in_queue()) {
       to->set_in_queue(true);
@@ -243,8 +178,6 @@ threads_prio::new_work_other(sched::base *, work& new_work)
    assert_thread_push_work();
    
    node_work node_new_work(new_work);
-	db::simple_tuple *stpl(node_new_work.get_tuple());
-	const vm::predicate *pred(stpl->get_predicate());
 	
    threads_prio *owner(dynamic_cast<threads_prio*>(tnode->get_owner()));
 
@@ -284,24 +217,11 @@ threads_prio::generate_aggs(void)
 bool
 threads_prio::busy_wait(void)
 {
-#ifdef TASK_STEALING
-   ins_sched;
-   make_steal_request();
-   size_t count(0);
-#endif
-   
    ins_idle;
 
    while(!has_work()) {
 #ifdef TASK_STEALING
       check_stolen_nodes();
-      ++count;
-      if(count == STEALING_ROUND_MAX) {
-         ins_sched;
-         make_steal_request();
-         ins_idle;
-         count = 0;
-      }
 #endif
       retrieve_tuples();
       check_priority_buffer();
@@ -390,33 +310,9 @@ threads_prio::check_if_current_useless(void)
    return false;
 }
 
-//#define USE_DELTA_ADJUST
-#define ROUND 1000
-
-#ifdef ROUND
-static size_t next_round(ROUND);
-#endif
-
 bool
 threads_prio::set_next_node(void)
 {
-#ifdef USE_DELTA_ADJUST
-   if(id == 0) {
-      next_round--;
-      if(next_round == 0) {
-         next_round = ROUND;
-         if(prio_queue.empty()) {
-            const float_val cur(state::get_const_float(1));
-            if(cur > 0.5) {
-               const float_val up(cur / 2.0);
-               //cout << "Current " << cur << " new " << up << endl;
-               state::set_const_float(1, up);
-            }
-         }
-      }
-   }
-#endif
-
    if(current_node != NULL)
       check_if_current_useless();
    
@@ -515,7 +411,6 @@ threads_prio::end(void)
 void
 threads_prio::schedule_next(node *n)
 {
-   thread_intrusive_node *tn((thread_intrusive_node*)n);
    double prio(0.0);
    static const double add = 100.0;
    if(prio_queue.empty()) {
@@ -539,6 +434,9 @@ threads_prio::add_node_priority_other(node *n, const double priority)
    item.val = priority;
    item.target = n;
    priority_buffer.push(item);
+#else
+   (void)n;
+   (void)priority;
 #endif
 }
 
@@ -552,6 +450,9 @@ threads_prio::set_node_priority_other(node *n, const double priority)
    item.val = priority;
    item.target = n;
    priority_buffer.push(item);
+#else
+   (void)n;
+   (void)priority;
 #endif
 }
 
@@ -684,8 +585,9 @@ threads_prio::init(const size_t)
    for(; it != end; ++it)
    {
       thread_intrusive_node *cur_node((thread_intrusive_node*)it->second);
+      heap_priority initial(state.all->PROGRAM->get_initial_priority());
       
-      cur_node->set_priority_level(state.all->PROGRAM->get_initial_priority());
+      cur_node->set_priority_level(initial);
 
       init_node(cur_node);
 
@@ -710,7 +612,6 @@ threads_prio::gather_active_tuples(db::node *node, const vm::predicate_id pred)
 {
 	simple_tuple_vector ls;
 	thread_intrusive_node *no((thread_intrusive_node*)node);
-	predicate *p(state.all->PROGRAM->get_predicate(pred));
 	
 	typedef thread_node::queue_type fact_queue;
 	

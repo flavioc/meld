@@ -47,8 +47,11 @@ protected:
    node_priorities node_map;
 
 #ifdef TASK_STEALING
-   virtual void check_stolen_nodes(void);
-   virtual void answer_steal_requests(void);
+   bool steal_flag;
+   thread_intrusive_node *steal_node(void);
+   virtual size_t number_of_nodes(void) const {
+      return queue_nodes.size() + prio_queue.size();
+   }
 #endif
 	
    virtual void assert_end(void) const;

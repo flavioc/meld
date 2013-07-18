@@ -125,6 +125,8 @@ run_program(int argc, char **argv, const char *program, const vm::machine_argume
 	try {
       double start_time(0.0);
       execution_time tm;
+
+      (void)start_time;
       
       if(time_execution) {
 #ifdef COMPILE_MPI

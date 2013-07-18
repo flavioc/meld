@@ -12,9 +12,10 @@
 #include "sched/nodes/thread_intrusive.hpp"
 #include "queue/safe_complex_pqueue.hpp"
 #include "queue/safe_double_queue.hpp"
+#include "utils/random.hpp"
 
-//#define TASK_STEALING 1
-#define STEALING_ROUND_MAX 5000
+#define TASK_STEALING 1
+#define STEALING_ROUND_MAX 1000000
 
 namespace sched
 {
@@ -29,21 +30,22 @@ protected:
    queue::push_safe_linear_queue<process::work> buffer;
    
    thread_intrusive_node *current_node;
+   mutable utils::randgen rand;
 
-   queue::push_safe_linear_queue<sched::base*> steal_request_buffer;
    queue::push_safe_linear_queue<thread_intrusive_node*> stolen_nodes_buffer;
 
 #ifdef TASK_STEALING
-   bool answer_requests;
+   int answer_requests;
 #ifdef INSTRUMENTATION
    mutable size_t stolen_total;
    mutable size_t steal_requests;
 #endif
 
    void clear_steal_requests(void);
-   virtual void make_steal_request(void);
-   virtual void check_stolen_nodes(void);
+   void check_stolen_nodes(void);
    virtual void answer_steal_requests(void);
+   virtual thread_intrusive_node* steal_node(void);
+   virtual size_t number_of_nodes(void) const;
 #endif
    
    virtual void assert_end(void) const;

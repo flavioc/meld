@@ -436,7 +436,7 @@ vm::strat_level
 state::mark_rules_using_local_tuples(db::simple_tuple_list& ls)
 {
    bool has_level(false);
-   vm::strat_level level;
+   vm::strat_level level = 0;
 
 	for(db::simple_tuple_list::iterator it(ls.begin());
 		it != ls.end(); )

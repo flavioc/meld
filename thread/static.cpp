@@ -140,32 +140,6 @@ static_local::new_work_remote(remote *, const node::node_id, message *)
 
 #ifdef TASK_STEALING
 void
-static_local::make_steal_request(void)
-{
-   if(state.all->NUM_THREADS == 1)
-      return;
-
-   size_t num_requests(1);
-
-   while(num_requests > 0) {
-      const size_t _target(random_unsigned(state.all->NUM_THREADS));
-
-      assert(_target < state.all->NUM_THREADS);
-      static_local *target((static_local*)state.all->ALL_THREADS[_target]);
-      assert(target->get_id() == _target && target->get_id() < state.all->NUM_THREADS);
-
-      if(target == this)
-         continue;
-
-      target->steal_request_buffer.push(this);
-#ifdef INSTRUMENTATION
-      steal_requests++;
-#endif
-      --num_requests;
-   }
-}
-
-void
 static_local::check_stolen_nodes(void)
 {
    if(state.all->NUM_THREADS == 1)
@@ -177,7 +151,7 @@ static_local::check_stolen_nodes(void)
       assert(n->in_queue());
 
       n->moving_around = false;
-      queue_nodes.push_tail(n);
+      add_to_queue(n);
 #ifdef INSTRUMENTATION
       stolen_total++;
 #endif
@@ -187,47 +161,77 @@ static_local::check_stolen_nodes(void)
 void
 static_local::clear_steal_requests(void)
 {
-   while(!steal_request_buffer.empty()) {
-      steal_request_buffer.pop();
-   }
+}
+
+thread_intrusive_node*
+static_local::steal_node(void)
+{
+   thread_intrusive_node *node(NULL);
+   queue_nodes.pop(node);
+   return node;
+}
+
+size_t
+static_local::number_of_nodes(void) const
+{
+   return queue_nodes.size();
 }
 
 void
 static_local::answer_steal_requests(void)
 {
-   while(!steal_request_buffer.empty() && !queue_nodes.empty()) {
-      assert(!steal_request_buffer.empty());
+   static const size_t MIN_NODES = 1;
+   const size_t total_nodes(number_of_nodes());
+   if(total_nodes <= MIN_NODES)
+      return;
 
-      static_local *target((static_local*)steal_request_buffer.pop());
-      assert(target != NULL && target != this);
-      assert(target->get_id() < state.all->NUM_THREADS);
+   size_t total_threads(
+         min(min(state.all->NUM_THREADS-1, (size_t)3),
+            max((size_t)1, min(state.all->NUM_THREADS, (size_t)((double)state.all->NUM_THREADS * 0.5)))));
+   size_t start_thread(rand(state.all->NUM_THREADS));
+   thread_intrusive_node *node(NULL);
 
-      thread_intrusive_node *node(NULL);
+   for(size_t i(0), j(0); j < total_threads; ++i) {
+      size_t tid((start_thread + i) % state.all->NUM_THREADS);
 
-      size_t size(queue_nodes.size());
-      const size_t frac((int)((double)size * (double)state.all->TASK_STEALING_FACTOR));
-      size = max(min(size, (size_t)4), frac);
-
-      while(size > 0 && !queue_nodes.empty()) {
-         node = NULL;
-         queue_nodes.pop(node);
-         assert(node != NULL);
-         assert(node != current_node);
-         assert(node->get_owner() == this);
-         assert(node->in_queue());
-         node->moving_around = true;
-         node->set_owner(target);
-         target->stolen_nodes_buffer.push(node);
-         --size;
+      if(tid == id) {
+         start_thread = rand(state.all->NUM_THREADS);
+         continue;
       }
+      ++j;
 
-      spinlock::scoped_lock l(target->lock);
+      static_local *target((static_local*)state.all->ALL_THREADS[tid]);
+
+      assert(target != this);
+
+      if(target->is_inactive()) {
+         size_t size(number_of_nodes());
+         if(size <= MIN_NODES)
+            return;
+
+         const size_t frac((int)((double)size * (1.0 / (double)state.all->NUM_THREADS)));
+         size = min(max((size_t)1, frac), size);
+
+         while(size > 0 && number_of_nodes() != 0) {
+            node = steal_node();
+            assert(node != NULL);
+            assert(node != current_node);
+            assert(node->get_owner() == this);
+            assert(node->in_queue());
+            node->moving_around = true;
+            node->set_owner(target);
+            target->stolen_nodes_buffer.push(node);
+            --size;
+         }
+
+         spinlock::scoped_lock l(target->lock);
    
-      if(target->is_inactive() && target->has_work())
-      {
-         target->set_active();
-         assert(target->is_active());
+         if(target->is_inactive()) {
+            target->set_active();
+            assert(target->is_active());
+         }
       }
+
    }
 }
 #endif
@@ -241,24 +245,11 @@ static_local::generate_aggs(void)
 bool
 static_local::busy_wait(void)
 {
-#ifdef TASK_STEALING
-   ins_sched;
-   make_steal_request();
-   size_t count(0);
-#endif
-
    ins_idle;
    
    while(!has_work()) {
 #ifdef TASK_STEALING
       check_stolen_nodes();
-      ++count;
-      if(count == STEALING_ROUND_MAX) {
-         ins_sched;
-         make_steal_request();
-         ins_idle;
-         count = 0;
-      }
 #endif
       retrieve_tuples();
       BUSY_LOOP_MAKE_INACTIVE()
@@ -356,11 +347,10 @@ static_local::get_work(void)
       return NULL;
 
 #ifdef TASK_STEALING
-   if(answer_requests) {
+   answer_requests++;
+   if(answer_requests == 1) {
       answer_steal_requests();
-      answer_requests = false;
-   } else {
-      answer_requests = true;
+      answer_requests = 0;
    }
 #endif
 
@@ -451,7 +441,7 @@ static_local::static_local(const vm::process_id _id, vm::all *all):
    base(_id, all),
    current_node(NULL)
 #ifdef TASK_STEALING
-   , answer_requests(true)
+   , answer_requests(0)
 #endif
 #if defined(TASK_STEALING) && defined(INSTRUMENTATION)
    , stolen_total(0), steal_requests(0)
