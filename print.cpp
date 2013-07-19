@@ -12,7 +12,7 @@ int
 main(int argc, char **argv)
 {
    if(argc < 2) {
-      fprintf(stderr, "usage: print <bytecode file>\n");
+      fprintf(stderr, "usage: print <bytecode file> [code | rules | info | prog]\n");
       return EXIT_FAILURE;
    }
    
@@ -22,9 +22,19 @@ main(int argc, char **argv)
       program prog(file);
       if(argc == 2)
          prog.print_bytecode(cout);
-      else {
-         for(int i(2); i < argc; ++i) {
-            prog.print_bytecode_by_predicate(cout, string(argv[i]));
+      if(argc == 3) {
+         const string arg(argv[2]);
+
+         if(arg == "code") {
+            prog.print_bytecode(cout);
+         } else if(arg == "rules") {
+            prog.print_rules(cout);
+         } else if(arg == "info") {
+            prog.print_predicates(cout);
+         } else if(arg == "prog") {
+            prog.print_program(cout);
+         } else {
+            cerr << "Don't know what to do" << endl;
          }
       }
    } catch(vm::load_file_error& err) {

@@ -121,6 +121,8 @@ public:
    
    void print_bytecode(std::ostream&) const;
    void print_predicates(std::ostream&) const;
+   void print_rules(std::ostream&) const;
+   void print_program(std::ostream&) const;
    void print_bytecode_by_predicate(std::ostream&, const std::string&) const;
 #ifdef USE_UI
 	json_spirit::Value dump_json(void) const;

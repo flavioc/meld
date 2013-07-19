@@ -110,7 +110,7 @@ SRCS = utils/utils.cpp \
 
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
-all: meld print predicates server simulator
+all: meld print server simulator
 	echo $(OBJS)
 
 -include Makefile.externs
@@ -125,9 +125,6 @@ meld: $(OBJS) meld.o
 
 print: $(OBJS) print.o
 	$(COMPILE) print.o -o print $(LDFLAGS)
-
-predicates: $(OBJS) predicates.o
-	$(COMPILE) predicates.o -o predicates $(LDFLAGS)
 
 server: $(OBJS) server.o
 	$(COMPILE) server.o -o server $(LDFLAGS)

@@ -478,6 +478,24 @@ program::print_bytecode_by_predicate(ostream& out, const string& name) const
 }
 
 void
+program::print_program(ostream& out) const
+{
+   for(size_t i(0); i < number_rules; ++i) {
+      out << rules[i]->get_string() << endl;
+   }
+}
+
+void
+program::print_rules(ostream& out) const
+{
+   for(size_t i(0); i < number_rules; ++i) {
+      out << endl;
+      out << "RULE " << i << endl;
+      out << rules[i]->get_string() << endl;
+   }
+}
+
+void
 program::print_predicates(ostream& cout) const
 {
    if(is_safe())
