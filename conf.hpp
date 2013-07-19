@@ -16,17 +16,11 @@
 /* activate this to collect statistics on memory use */
 //#define MEMORY_STATISTICS 1
 
-/* activate tuple matching using the trie structure */
-#define TRIE_MATCHING 1
-
 /* activate debug mode */
 //#define DEBUG_MODE 1
 
 /* activate special code for testing trie matching */
 // #define TRIE_MATCHING_ASSERT 1
-
-/* use old method of counting neighborhood aggregates */
-// #define USE_OLD_NEIGHBOR_CHECK 1
 
 /* gather statistics about the core VM execution */
 //#define CORE_STATISTICS 1
