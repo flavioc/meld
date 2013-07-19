@@ -165,10 +165,14 @@ public:
 
 	void copy_reg2const(const reg_num&, const const_id&);
    
-   inline void add_float_list(runtime::float_list *ls) { free_float_list.push_back(ls); }
-   inline void add_int_list(runtime::int_list *ls) { free_int_list.push_back(ls); }
-   inline void add_node_list(runtime::node_list *ls) { free_node_list.push_back(ls); }
-	inline void add_string(runtime::rstring::ptr str) { free_rstring.push_back(str); }
+   inline void add_float_list(runtime::float_list *ls) { ls->inc_refs();
+                                                         free_float_list.push_back(ls); }
+   inline void add_int_list(runtime::int_list *ls) { ls->inc_refs();
+                                                     free_int_list.push_back(ls); }
+   inline void add_node_list(runtime::node_list *ls) { ls->inc_refs();
+                                                       free_node_list.push_back(ls); }
+	inline void add_string(runtime::rstring::ptr str) { str->inc_refs();
+                                                       free_rstring.push_back(str); }
    inline void add_generated_tuple(db::simple_tuple *tpl) { tpl->set_generated_run(true); generated_tuples.push_back(tpl); }
    
 	bool add_fact_to_node(vm::tuple *, vm::ref_count count = 1);
