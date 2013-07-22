@@ -1,8 +1,0 @@
-
-type counter(node, int).
-
-const iter = 1000.
-
-counter(A, N + 1) :-
-	counter(A, N),
-	N < iter.
