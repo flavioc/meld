@@ -33,3 +33,7 @@ def write_dedgew(a, b, w):
 
 def simple_write_edge(a, b):
 	sys.stdout.write("!edge(@" + str(a) + ",@" + str(b) + ").\n")
+
+def write_inout(a, b):
+	sys.stdout.write("!output(@" + str(a) + ", @" + str(b) + "). ")
+	sys.stdout.write("!input(@" + str(b) + ", @" + str(a) + ").\n")
