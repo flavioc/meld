@@ -4,11 +4,11 @@
 
 #include <boost/asio.hpp>
 #include <list>
-#include <queue>
 
 #include "sched/base.hpp"
 #include "sched/nodes/sim.hpp"
 #include "queue/safe_general_pqueue.hpp"
+#include "queue/safe_linear_queue.hpp"
 
 namespace sched
 {

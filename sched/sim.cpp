@@ -13,6 +13,12 @@ using namespace db;
 using namespace vm;
 using namespace process;
 using boost::asio::ip::tcp;
+using std::cout;
+using std::endl;
+using std::max;
+using std::cerr;
+using std::list;
+using std::set;
 
 #ifdef USE_SIM
 
@@ -52,8 +58,6 @@ bool sim_sched::all_instantiated(false);
 utils::unix_timestamp sim_sched::start_time(0);
 queue::push_safe_linear_queue<sim_sched::message_type*> *sim_sched::socket_messages(NULL);
 
-using namespace std;
-	
 sim_sched::~sim_sched(void)
 {
 	if(socket != NULL && !slave) {
@@ -79,7 +83,7 @@ sim_sched::init(const size_t num_threads)
 	assert(it == end);
 	
 	state::SIM = true;
-   socket_messages = new queue::push_safe_linear_queue<sim_sched::message_type*>();
+   sim_sched::socket_messages = new queue::push_safe_linear_queue<sim_sched::message_type*>();
 	
 	try {
    	// add socket
