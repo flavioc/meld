@@ -6,6 +6,12 @@ bench_times ()
 	bash threads_even.sh th $file
 }
 
+mpi_times ()
+{
+# to complete
+   return 1
+}
+
 instrument ()
 {
 	bash instrument.sh th code/$1.m
@@ -13,8 +19,12 @@ instrument ()
 
 my_run ()
 {
-	#bench_times $*
+	bench_times $*
 	#instrument $*
 }
 
-#my_run neural_network_32_16p
+LIST="8queens"
+
+for prog in $LIST; do
+   my_run $prog
+done

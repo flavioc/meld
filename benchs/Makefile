@@ -2,6 +2,9 @@
 all:
 	@echo "Nothing to do. Type 'make compiled' if you want to compile the benchmarks."
 
+run:
+	@bash run.sh
+
 compiled:
 	@mkdir -p code
 	@compile-directory progs code
