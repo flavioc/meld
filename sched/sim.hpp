@@ -46,7 +46,7 @@ protected:
    // for initial node instantiation
    static utils::unix_timestamp start_time;
    static bool all_instantiated;
-	static queue::push_safe_linear_queue<message_type*> socket_messages;
+	static queue::push_safe_linear_queue<message_type*> *socket_messages;
 	bool slave;
 	
 private:

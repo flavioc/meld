@@ -50,13 +50,15 @@ bool sim_sched::thread_mode(false);
 bool sim_sched::stop_all(false);
 bool sim_sched::all_instantiated(false);
 utils::unix_timestamp sim_sched::start_time(0);
-queue::push_safe_linear_queue<sim_sched::message_type*> sim_sched::socket_messages;
+queue::push_safe_linear_queue<sim_sched::message_type*> *sim_sched::socket_messages(NULL);
 
 using namespace std;
 	
 sim_sched::~sim_sched(void)
 {
-	if(socket != NULL) {
+	if(socket != NULL && !slave) {
+      delete socket_messages;
+      socket_messages = NULL;
 		//socket->close();
 		//delete socket;
 	}
@@ -77,6 +79,7 @@ sim_sched::init(const size_t num_threads)
 	assert(it == end);
 	
 	state::SIM = true;
+   socket_messages = new queue::push_safe_linear_queue<sim_sched::message_type*>();
 	
 	try {
    	// add socket
@@ -184,8 +187,8 @@ sim_sched::new_work(const node *_src, work& new_work)
 void
 sim_sched::send_pending_messages(void)
 {
-   while(!socket_messages.empty()) {
-      message_type *data(socket_messages.pop());
+   while(!socket_messages->empty()) {
+      message_type *data(socket_messages->pop());
       boost::asio::write(*socket, boost::asio::buffer(data, data[0] + sizeof(message_type)));
       delete []data;
    }
@@ -690,7 +693,7 @@ void
 sim_sched::schedule_new_message(message_type *data)
 {
 	if(thread_mode) {
-		socket_messages.push(data);
+		socket_messages->push(data);
 	} else {
 		boost::asio::write(*socket, boost::asio::buffer(data, data[0] + sizeof(message_type)));
 		delete []data;
