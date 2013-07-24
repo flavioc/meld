@@ -385,6 +385,8 @@ execute_send_self(tuple *tuple, state& state)
       if(state.count > 0)
          state.all->MACHINE->run_action(state.sched,
                state.node, tuple);
+      else
+         delete tuple;
       return;
    }
 
