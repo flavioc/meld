@@ -382,8 +382,9 @@ execute_send_self(tuple *tuple, state& state)
    cout << "\t" << *tuple << " " << state.count << " -> self " << state.node->get_id() << endl;
 #endif
    if(tuple->is_action()) {
-      state.all->MACHINE->run_action(state.sched,
-            state.node, tuple);
+      if(state.count > 0)
+         state.all->MACHINE->run_action(state.sched,
+               state.node, tuple);
       return;
    }
 
