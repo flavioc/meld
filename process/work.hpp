@@ -73,11 +73,6 @@ public:
       mod = w.mod;
    }
 
-   void set_work_with_rules(db::node *_node)
-   {
-      node = _node;
-   }
-   
    explicit work(db::node *_node, db::simple_tuple *_tuple,
       const work_modifier _mod):
       node_work(_tuple, _mod),
