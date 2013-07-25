@@ -51,6 +51,7 @@ private:
    bool is_reverse_route;
    bool is_action;
    bool is_reused;
+   bool is_cycle;
 
    std::vector<rule_id> affected_rules;
    
@@ -93,6 +94,8 @@ public:
    inline bool is_action_pred(void) const { return is_action; }
 
    inline bool is_reused_pred(void) const { return is_reused; }
+
+   inline bool is_cycle_pred(void) const { return is_cycle; }
    
    inline field_num get_aggregate_field(void) const { return agg_info->field; }
    inline aggregate_type get_aggregate_type(void) const { return agg_info->type; }

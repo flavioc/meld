@@ -16,6 +16,7 @@ namespace vm {
 #define PRED_LINEAR 0x08
 #define PRED_ACTION 0x10
 #define PRED_REUSED 0x20
+#define PRED_CYCLE 0x40
 #define PRED_AGG_LOCAL 0x01
 #define PRED_AGG_REMOTE 0x02
 #define PRED_AGG_REMOTE_AND_SELF 0x04
@@ -44,6 +45,7 @@ predicate::make_predicate_from_buf(byte *buf, code_size_t *code_size, const pred
    pred->is_reverse_route = prop & PRED_REVERSE_ROUTE;
    pred->is_action = prop & PRED_ACTION;
    pred->is_reused = prop & PRED_REUSED;
+   pred->is_cycle = prop & PRED_CYCLE;
    buf++;
 
    // get aggregate information, if any
@@ -194,6 +196,8 @@ predicate::print(ostream& cout) const
       cout << ",action";
    if(is_reused)
       cout << ",reused";
+   if(is_cycle)
+      cout << ",cycle";
    
    cout << "]";
    
