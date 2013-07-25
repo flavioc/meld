@@ -61,12 +61,9 @@ class work: public node_work
 private:
    
    db::node *node;
-   bool use_rules;
    
 public:
    
-   inline bool using_rules(void) const { return use_rules; }
-
    inline db::node* get_node(void) const { return node; }
    
    void copy_from_node(db::node *_node, node_work& w)
@@ -79,7 +76,6 @@ public:
    void set_work_with_rules(db::node *_node)
    {
       node = _node;
-      use_rules = true;
    }
    
    explicit work(db::node *_node, db::simple_tuple *_tuple,
@@ -90,12 +86,12 @@ public:
    }
    
    explicit work(db::node *_node, db::simple_tuple *_tuple):
-      node_work(_tuple), node(_node), use_rules(false)
+      node_work(_tuple), node(_node)
    {
    }
    
    explicit work(void):
-      node_work(), node(NULL), use_rules(false)
+      node_work(), node(NULL)
    {
    }
 
