@@ -990,10 +990,12 @@ tuple_trie::print(ostream& cout) const
       it != end();
       it++)
    {
-      simple_tuple *stuple(*it);
+      tuple_trie_leaf *leaf(*it);
 		if(left_to_write == FACTS_PER_LINE)
 			cout << "\t";
-      cout << *stuple;
+      cout << *(leaf->get_underlying_tuple());
+      if(leaf->get_count() > 1)
+         cout << "@" << leaf->get_count();
 		--left_to_write;
 		if(left_to_write == 0) {
 			left_to_write = FACTS_PER_LINE;
@@ -1015,8 +1017,11 @@ tuple_trie::dump(ostream& cout) const
       it != end();
       it++)
    {
-      simple_tuple *stuple(*it);
-      ls.push_back(utils::to_string(*stuple));
+      tuple_trie_leaf *stuple(*it);
+      string tuple_str(utils::to_string(*(stuple->get_underlying_tuple())));
+      if(stuple->get_count() > 1)
+         tuple_str += string("@") + utils::to_string(stuple->get_count());
+      ls.push_back(tuple_str);
    }
    
    ls.sort();

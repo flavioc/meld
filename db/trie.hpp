@@ -178,31 +178,33 @@ private:
    friend class tuple_trie;
    friend class tuple_trie_iterator;
    
-   simple_tuple* tpl;
+   vm::tuple *tpl;
+   vm::ref_count count;
    
 public:
 
    MEM_METHODS(tuple_trie_leaf)
    
-	inline vm::tuple *get_underlying_tuple(void) const { return tpl->get_tuple(); }
+	inline vm::tuple *get_underlying_tuple(void) const { return tpl; }
 	
-   inline simple_tuple *get_tuple(void) const { return tpl; }
+   //inline simple_tuple *get_tuple(void) const { return new db::simple_tuple(tpl, count); }
    
-   virtual inline size_t get_count(void) const { return tpl->get_count(); }
+   virtual inline size_t get_count(void) const { return count; }
    
-   virtual inline void add_count(const vm::ref_count many) { tpl->add_count(many); }
+   virtual inline void add_count(const vm::ref_count many) { count += many; }
    
-   virtual inline bool to_delete(void) const { return tpl->reached_zero(); }
+   virtual inline bool to_delete(void) const { return count == 0; }
    
    explicit tuple_trie_leaf(simple_tuple *_tpl):
       trie_leaf(),
-      tpl(_tpl)
+      tpl(_tpl->get_tuple()),
+      count(_tpl->get_count())
    {
    }
    
    virtual ~tuple_trie_leaf(void)
    {
-      simple_tuple::wipeout(tpl);
+      delete tpl;
    }
 };
 
@@ -221,11 +223,11 @@ public:
       return current_leaf;
    }
    
-   inline simple_tuple* operator*(void) const
+   inline tuple_trie_leaf* operator*(void) const
    {
       assert(current_leaf != NULL);
       
-      return current_leaf->get_tuple();
+      return current_leaf;
    }
    
    inline bool operator==(const tuple_trie_iterator& it) const
