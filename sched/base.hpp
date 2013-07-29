@@ -85,7 +85,7 @@ public:
 
    virtual void init_node(db::node *node)
    {
-      db::simple_tuple *stpl(db::simple_tuple::create_new(new vm::tuple(state.all->PROGRAM->get_init_predicate())));
+      db::simple_tuple *stpl(db::simple_tuple::create_new(new vm::tuple(state.all->PROGRAM->get_init_predicate()), 0));
       new_work_self(node, stpl);
       node->init();
       node->set_owner(this);

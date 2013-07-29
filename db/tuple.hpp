@@ -27,9 +27,10 @@ class simple_tuple: public mem::base
 private:
    vm::tuple *data;
    vm::ref_count count;
+   vm::depth_t depth;
    // tuple is dead and must be deleted at the end of rule execution
 	bool to_delete;
-   // if tuple was generated during this rule, mark as it as such so that it cannot be used yet
+   // if tuple was generated during this rule, mark as it as such so that it cannot be used
    bool generated_this_run;
    // if tuple is a final aggregate
    bool is_final_aggregate;
@@ -106,6 +107,8 @@ public:
    inline void dec_count(const vm::ref_count& inc) { assert(inc > 0); count -= inc; }
    
    inline void add_count(const vm::ref_count& inc) { count += inc; }
+
+   inline vm::depth_t get_depth(void) const { return depth; }
    
    inline size_t storage_size(void) const
    {
@@ -116,14 +119,14 @@ public:
    
    static simple_tuple* unpack(utils::byte *, const size_t, int *, vm::program *);
 
-   static simple_tuple* create_new(vm::tuple *tuple) { return new simple_tuple(tuple, 1); }
+   static simple_tuple* create_new(vm::tuple *tuple, const vm::depth_t depth) { return new simple_tuple(tuple, 1, depth); }
 
-   static simple_tuple* remove_new(vm::tuple *tuple) { return new simple_tuple(tuple, -1); }
+   static simple_tuple* remove_new(vm::tuple *tuple, const vm::depth_t depth) { return new simple_tuple(tuple, -1, depth); }
    
    static void wipeout(simple_tuple *stpl) { delete stpl->get_tuple(); delete stpl; }
 
-   explicit simple_tuple(vm::tuple *_tuple, const vm::ref_count _count):
-      data(_tuple), count(_count),
+   explicit simple_tuple(vm::tuple *_tuple, const vm::ref_count _count, const vm::depth_t _depth = 0):
+      data(_tuple), count(_count), depth(_depth),
       to_delete(false), generated_this_run(false),
       is_final_aggregate(false)
    {}

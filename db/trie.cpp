@@ -493,6 +493,7 @@ trie::delete_path(trie_node *node)
    
    if(node == root) // reached root
    {
+      assert(node->child == NULL);
       node->hashed = false;
       return;
    }
@@ -611,13 +612,13 @@ trie::sanity_check(void) const
 
 // inserts the data inside the trie
 trie_node*
-trie::check_insert(void *data, const ref_count many, val_stack& vals, type_stack& typs, bool& found)
+trie::check_insert(void *data, const ref_count many, const depth_t depth, val_stack& vals, type_stack& typs, bool& found)
 {
    if(vals.empty()) {
       // 0-arity tuple
       if(!root->is_leaf()) {
          found = false;
-         trie_leaf *leaf(create_leaf(data, many));
+         trie_leaf *leaf(create_leaf(data, many, depth));
          root->set_leaf(leaf);
          leaf->node = root;
          leaf->prev = leaf->next = NULL;
@@ -626,7 +627,8 @@ trie::check_insert(void *data, const ref_count many, val_stack& vals, type_stack
          found = true;
          trie_leaf *leaf(root->get_leaf());
          
-         leaf->add_count(many);
+         leaf->add_new(depth, many);
+         assert(many > 0);
       }
 
       return root;
@@ -649,7 +651,6 @@ trie::check_insert(void *data, const ref_count many, val_stack& vals, type_stack
       
       if(cur == NULL) {
          if(many < 0) {
-            cerr << "Tuple not found in the trie" << endl;
             return NULL; // tuple not found in the trie
          }
          // else do insertion
@@ -684,7 +685,7 @@ trie::check_insert(void *data, const ref_count many, val_stack& vals, type_stack
          assert(typs.empty());
          
          // parent is now set as a leaf
-         trie_leaf *leaf(create_leaf(data, many));
+         trie_leaf *leaf(create_leaf(data, many, depth));
          leaf->node = parent;
          parent->set_leaf(leaf);
          leaf->next = NULL;
@@ -721,7 +722,11 @@ trie::check_insert(void *data, const ref_count many, val_stack& vals, type_stack
    assert(parent->is_leaf());
    trie_leaf *orig(parent->get_leaf());
    
-   orig->add_count(many);
+   if(many > 0)
+      orig->add_new(depth, many);
+   else
+      orig->sub(depth, many);
+
    assert(first_leaf != NULL && last_leaf != NULL);
    
    basic_invariants();
@@ -730,41 +735,45 @@ trie::check_insert(void *data, const ref_count many, val_stack& vals, type_stack
 }
 
 void
-trie::commit_delete(trie_node *node, ref_count many)
+trie::commit_delete(trie_node *node, const ref_count many)
 {
    assert(node->is_leaf());
 
    number_of_references -= many;
    assert(number_of_references >= 0);
-   inner_delete_by_leaf(node->get_leaf(), 0);
+   inner_delete_by_leaf(node->get_leaf(), 0, 0);
+#if 0
    if(!(number_of_references == 0 || (number_of_references > 0 && first_leaf != NULL))) {
       cout << " =========== > " << number_of_references << endl;
       cout << root->child << endl;
    }
+#endif
    basic_invariants();
 }
 
 void
-trie::delete_by_leaf(trie_leaf *leaf)
+trie::delete_by_leaf(trie_leaf *leaf, const depth_t depth)
 {
    sanity_check();
    --number_of_references;
    assert(number_of_references >= 0);
-   inner_delete_by_leaf(leaf, 1);
+   inner_delete_by_leaf(leaf, 1, depth);
    sanity_check();
 }
 
 // we assume that number_of_references was decrement previous to this
 void
-trie::inner_delete_by_leaf(trie_leaf *leaf, const ref_count count)
+trie::inner_delete_by_leaf(trie_leaf *leaf, const ref_count count, const depth_t depth)
 {
    if(count != 0) {
       assert(count > 0);
-      leaf->add_count(-count);
+      leaf->sub(depth, -count);
    }
    
-   if(!leaf->to_delete())
+   if(!leaf->to_delete()) {
+      cout << "not to delete" << endl;
       return;
+   }
  
    assert(leaf->to_delete());
    
@@ -891,7 +900,7 @@ trie::~trie(void)
 }
 
 trie_node*
-tuple_trie::check_insert(vm::tuple *tpl, const ref_count many, bool& found)
+tuple_trie::check_insert(vm::tuple *tpl, const ref_count many, const depth_t depth, bool& found)
 {
    //cout << "Starting insertion of " << *tpl << endl;
  
@@ -905,19 +914,19 @@ tuple_trie::check_insert(vm::tuple *tpl, const ref_count many, bool& found)
       }
    }
    
-   trie_node *ret(trie::check_insert((void*)tpl, many, vals, typs, found));
+   trie_node *ret(trie::check_insert((void*)tpl, many, depth, vals, typs, found));
 
    return ret;
 }
 
 bool
-tuple_trie::insert_tuple(vm::tuple *tpl, const ref_count many)
+tuple_trie::insert_tuple(vm::tuple *tpl, const ref_count many, const depth_t depth)
 {
    sanity_check();
 
    bool found;
    number_of_references += many;
-   check_insert(tpl, many, found);
+   check_insert(tpl, many, depth, found);
    
    if(found) {
       assert(root->child != NULL);
@@ -946,17 +955,17 @@ tuple_trie::insert_tuple(vm::tuple *tpl, const ref_count many)
 }
 
 trie::delete_info
-tuple_trie::delete_tuple(vm::tuple *tpl, const ref_count many)
+tuple_trie::delete_tuple(vm::tuple *tpl, const ref_count many, const depth_t depth)
 {
    assert(many > 0);
    basic_invariants();
    
    bool found;
-   trie_node *node(check_insert(tpl, -many, found));
+   trie_node *node(check_insert(tpl, -many, depth, found));
 
    if(node == NULL) {
       // already deleted
-      return delete_info(false);
+      return delete_info(NULL, this, false, NULL, 0);
    }
    
    assert(found);
@@ -965,10 +974,11 @@ tuple_trie::delete_tuple(vm::tuple *tpl, const ref_count many)
    
    if(leaf->to_delete()) {
       // for this branch, we will decrease number_of_references later
-      return delete_info(this, true, node, many);
+      // in commit_delete
+      return delete_info((tuple_trie_leaf*)leaf, this, true, node, many);
    } else {
       number_of_references -= many;
-      return delete_info(false);
+      return delete_info((tuple_trie_leaf*)leaf, this, false, node, many);
    }
 }
 
@@ -1315,7 +1325,7 @@ agg_trie::find_configuration(vm::tuple *tpl)
    }
    
    bool found;
-   trie_node *node(trie::check_insert(NULL, 1, vals, typs, found));
+   trie_node *node(trie::check_insert(NULL, 1, 0, vals, typs, found));
    
    if(!found) {
       ++number_of_references;
@@ -1331,7 +1341,8 @@ agg_trie::erase(agg_trie_iterator& it)
    agg_trie_leaf *next_leaf((agg_trie_leaf*)leaf->next);
    trie_node *node(leaf->node);
    
-   commit_delete(node, leaf->get_count());
+   leaf->set_zero_refs();
+   commit_delete(node, 1);
    
    return agg_trie_iterator(next_leaf);
 }

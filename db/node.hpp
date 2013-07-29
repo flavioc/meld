@@ -82,15 +82,15 @@ public:
    inline void set_owner(sched::base *_owner) { owner = _owner; }
    inline sched::base *get_owner(void) const { return owner; }
    
-   bool add_tuple(vm::tuple*, vm::ref_count);
-   delete_info delete_tuple(vm::tuple *, vm::ref_count);
+   bool add_tuple(vm::tuple*, const vm::ref_count, const vm::depth_t);
+   delete_info delete_tuple(vm::tuple *, const vm::ref_count, const vm::depth_t);
    
-   db::agg_configuration* add_agg_tuple(vm::tuple*, const vm::ref_count);
-   db::agg_configuration* remove_agg_tuple(vm::tuple*, const vm::ref_count);
+   db::agg_configuration* add_agg_tuple(vm::tuple*, const vm::ref_count, const vm::depth_t);
+   db::agg_configuration* remove_agg_tuple(vm::tuple*, const vm::ref_count, const vm::depth_t);
    simple_tuple_list end_iteration(void);
    
    void delete_by_index(const vm::predicate*, const vm::match&);
-   void delete_by_leaf(const vm::predicate*, tuple_trie_leaf*);
+   void delete_by_leaf(const vm::predicate*, tuple_trie_leaf*, const vm::depth_t);
    void delete_all(const vm::predicate*);
    
    virtual void assert_end(void) const;

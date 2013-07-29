@@ -14,7 +14,7 @@ tuple_aggregate::create_configuration(void) const
 }
    
 agg_configuration*
-tuple_aggregate::add_to_set(vm::tuple *tpl, const ref_count many)
+tuple_aggregate::add_to_set(vm::tuple *tpl, const ref_count many, const depth_t depth)
 {
    agg_trie_leaf *leaf(vals.find_configuration(tpl));
    agg_configuration *conf;
@@ -26,7 +26,14 @@ tuple_aggregate::add_to_set(vm::tuple *tpl, const ref_count many)
       conf = leaf->get_conf();
    }
    
-   conf->add_to_set(tpl, many);
+#if 0
+   conf->print(cout);
+#endif
+   conf->add_to_set(tpl, many, depth);
+#if 0
+   cout << "Add " << *tpl << " " << many << " with depth " << depth << endl;
+   conf->print(cout);
+#endif
    
    return conf;
 }
