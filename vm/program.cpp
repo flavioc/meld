@@ -287,6 +287,7 @@ program::program(const string& _filename):
 
    initial_priority.int_priority = 0;
    initial_priority.float_priority = 0.0;
+   priority_static = false;
 
    is_data_file = false;
 	
@@ -301,19 +302,17 @@ program::program(const string& _filename):
          byte asc_desc;
 
          READ_CODE(&type, sizeof(byte));
-         switch(type) {
-            case 0x01: priority_type = FIELD_FLOAT; break;
-            case 0x02: priority_type = FIELD_INT; break;
-            default: assert(false);
-         }
+         priority_type = FIELD_FLOAT;
+         assert(type == 0x01);
 
          READ_CODE(&asc_desc, sizeof(byte));
-         priority_order = (asc_desc ? PRIORITY_ASC : PRIORITY_DESC);
-
-         if(priority_type == FIELD_FLOAT)
-            READ_CODE(&initial_priority.float_priority, sizeof(float_val));
+         if(asc_desc & 0x01)
+            priority_order = PRIORITY_ASC;
          else
-            READ_CODE(&initial_priority.int_priority, sizeof(int_val));
+            priority_order = PRIORITY_DESC;
+         priority_static = (asc_desc & 0x02) ? true : false;
+
+         READ_CODE(&initial_priority.float_priority, sizeof(float_val));
       }
       break;
       case 0x03: { // data file
@@ -504,6 +503,8 @@ program::print_predicates(ostream& cout) const
       cout << ">> Unsafe program" << endl;
    cout << ">> Priorities: " << (priority_order == PRIORITY_ASC ? "ascending" : "descending") << " ";
    cout << "initial: " << (priority_type == FIELD_FLOAT ? initial_priority.float_priority : initial_priority.int_priority) << endl;
+   if(priority_static)
+      cout << ">> No work stealing" << endl;
    if(is_data())
       cout << ">> Data file" << endl;
    cout << ">> Predicates:" << endl;

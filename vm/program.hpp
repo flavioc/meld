@@ -83,6 +83,7 @@ private:
    strat_level priority_strat_level;
    field_type priority_type;
    vm::priority_type priority_order;
+   bool priority_static;
    heap_priority initial_priority;
 
    void print_predicate_code(std::ostream&, predicate*) const;
@@ -112,6 +113,7 @@ public:
 	inline bool is_priority_desc(void) const { return priority_order == PRIORITY_DESC; }
 
    inline heap_priority get_initial_priority(void) const { return initial_priority; }
+   inline bool is_static_priority(void) const { return priority_static; }
 	
    predicate *get_predicate_by_name(const std::string&) const;
    
