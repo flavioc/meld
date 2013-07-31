@@ -617,18 +617,23 @@ trie::check_insert(void *data, const ref_count many, const depth_t depth, val_st
    if(vals.empty()) {
       // 0-arity tuple
       if(!root->is_leaf()) {
+         // branch not found
          found = false;
-         trie_leaf *leaf(create_leaf(data, many, depth));
-         root->set_leaf(leaf);
-         leaf->node = root;
-         leaf->prev = leaf->next = NULL;
-         first_leaf = last_leaf = leaf;
+         if(many > 0) {
+            trie_leaf *leaf(create_leaf(data, many, depth));
+            root->set_leaf(leaf);
+            leaf->node = root;
+            leaf->prev = leaf->next = NULL;
+            first_leaf = last_leaf = leaf;
+         }
       } else {
          found = true;
          trie_leaf *leaf(root->get_leaf());
          
-         leaf->add_new(depth, many);
-         assert(many > 0);
+         if(many > 0)
+            leaf->add_new(depth, many);
+         else
+            leaf->sub(depth, many);
       }
 
       return root;
