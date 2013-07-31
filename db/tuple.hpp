@@ -112,7 +112,7 @@ public:
    
    inline size_t storage_size(void) const
    {
-      return sizeof(vm::ref_count) + sizeof(vm::depth_t) + sizeof(vm::depth_t) + data->get_storage_size();
+      return sizeof(vm::ref_count) + sizeof(vm::depth_t) + data->get_storage_size();
    }
    
    void pack(utils::byte *, const size_t, int *) const;
