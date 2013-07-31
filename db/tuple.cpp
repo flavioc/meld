@@ -14,7 +14,8 @@ namespace db
 void
 simple_tuple::pack(byte *buf, const size_t buf_size, int *pos) const
 {
-   utils::pack<short>((void*)&count, 1, buf, buf_size, pos);
+   utils::pack<ref_count>((void*)&count, 1, buf, buf_size, pos);
+   utils::pack<depth_t>((void*)&depth, 1, buf, buf_size, pos);
    
    data->pack(buf, buf_size, pos);
 }
@@ -23,12 +24,14 @@ simple_tuple*
 simple_tuple::unpack(byte *buf, const size_t buf_size, int *pos, vm::program *prog)
 {
    ref_count count;
+   depth_t depth;
    
-   utils::unpack<short>(buf, buf_size, pos, &count, 1);
+   utils::unpack<ref_count>(buf, buf_size, pos, &count, 1);
+   utils::unpack<vm::depth_t>(buf, buf_size, pos, &depth, 1);
    
    vm::tuple *tpl(vm::tuple::unpack(buf, buf_size, pos, prog));
    
-   return new simple_tuple(tpl, count);
+   return new simple_tuple(tpl, count, depth);
 }
 
 simple_tuple::~simple_tuple(void)
