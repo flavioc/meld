@@ -1,0 +1,66 @@
+
+type route input(node, node, float).
+type route output(node, node, float).
+
+type linear pagerank(node, float).
+type linear input-rank(node, node, float).
+type linear start(node).
+type linear update(node).
+type linear new-input-rank(node, node, float).
+type linear add-input-ranks(node, float).
+type linear sum-ranks(node, float).
+type linear input-rank-copy(node, node, float).
+type linear output-rank(node, node, float).
+type linear new-output-rank(node, node, float).
+type linear updates(node, int).
+
+type numOutput(node, int).
+type numInput(node, int).
+
+priority @initial 100.
+
+const damping = 0.15.
+const bound = 0.00001.
+const pages = @world.
+const start-pagerank = 1.0.
+
+fun fabs(float X) : float = if X > 0.0 then X else -1.0 * X end.
+
+start(A).
+
+start(A) -o [count => C | B, W | !output(A, B, W) | !numOutput(A, C)],
+            [count => C | B, W | !input(A, B, W) | !numInput(A, C)],
+            { B, W | !input(A, B, W) | input-rank(A, B, start-pagerank)},
+            { B, W | !output(A, B, W) | output-rank(A, B, 0.0) },
+            pagerank(A, start-pagerank),
+            updates(A, 0),
+            update(A).
+
+new-input-rank(A, B, V),
+input-rank(A, B, OldV)
+   -o input-rank(A, B, V).
+
+new-output-rank(A, B, V),
+output-rank(A, B, OldV)
+   -o output-rank(A, B, V).
+
+add-input-ranks(A, Total)
+   -o [sum => V | B | input-rank-copy(A, B, V) | sum-ranks(A, (V + Total))].
+
+sum-ranks(A, Acc),
+V = damping/float(@world) + (1.0 - damping) * Acc,
+pagerank(A, Old)
+   -o pagerank(A, V),
+      {B, W, O | !output(A, B, W), output-rank(A, B, O), fabs(O - V) * W > bound |
+            update(B), new-input-rank(B, A, V), output-rank(A, B, O)},
+      {B, W, O | !output(A, B, W), output-rank(A, B, O), fabs(O - V) * W <= bound |
+            new-input-rank(B, A, V), output-rank(A, B, O)}.
+
+update(A), update(A) -o update(A).
+
+update(A),
+updates(A, N) -o
+   {B, V, W | input-rank(A, B, V), !input(A, B, W) | input-rank(A, B, V), input-rank-copy(A, B, V * W) , new-output-rank(B, A, V)},
+   add-input-ranks(A, 0.0),
+   updates(A, N + 1).
+
