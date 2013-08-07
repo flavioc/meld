@@ -1,0 +1,3 @@
+
+include #sources/greedy-graph-coloring.meld
+include #data/graph-coloring-search_engines.meld
