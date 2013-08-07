@@ -39,3 +39,4 @@ for line in f:
 		w = 1.0 / float(size)
 		for dest in vec[1:len(vec)-1]:
 			write_inout(id, dest, w)
+

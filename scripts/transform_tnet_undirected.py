@@ -15,7 +15,7 @@ if len(sys.argv) < 2:
    
 f = open(sys.argv[1], "rb")
 
-print "type route edge(node, node, int)."
+print "type route edge(node, node)."
 
 edges = {}
 
