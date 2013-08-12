@@ -9,7 +9,7 @@ import sys
 from lib import simple_write_edge
 
 if len(sys.argv) != 2:
-	print "usage: transform_pagerank.py <file>"
+	print "usage: transform_link_analysis_pagerank.py <file>"
 	sys.exit(1)
 
 output_meld = True
@@ -23,12 +23,10 @@ if output_meld:
 
 def write_inout(i, o, w):
 	if output_meld:
-		print "!output(@" + str(i) + ", @" + str(o) + ", " + str(w) + ")."
-		print "!input(@" + str(o) + ", @" + str(i) + ", " + str(w) + ")."
+		print "!output(@" + str(i) + ", @" + str(o) + ", " + str("%.7f" % w) + ")."
+		print "!input(@" + str(o) + ", @" + str(i) + ", " + str("%.7f" % w) + ")."
 	else:
 		print str(i) + "\t" + str(o) + "\t" + str(w)
-
-edge_list = {}
 
 for line in f:
 	line = line.rstrip('\n')
