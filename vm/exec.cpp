@@ -16,6 +16,7 @@
 //#define DEBUG_SENDS
 //#define DEBUG_INSTRS
 //#define DEBUG_RULES
+//#define DEBUG_REMOVE
 
 using namespace vm;
 using namespace vm::instr;
@@ -1066,7 +1067,7 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 		pcounter first, state& state, tuple_vector& tuples, const predicate *pred)
 {
    const bool old_is_linear = state.is_linear;
-	const bool this_is_linear = (pred->is_linear_pred() && !state.persistent_only);
+	const bool this_is_linear = (pred->is_linear_pred() && !state.persistent_only && iter_options_to_delete(options));
 
 #ifndef NDEBUG
    if(pred->is_linear_pred() && state.persistent_only) {
@@ -1102,6 +1103,7 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 		typedef vector<iter_object, mem::allocator<iter_object> > vector_of_everything;
       vector_of_everything everything;
 
+#if 0
       if(true) {
          simple_tuple_vector queue_tuples(state.sched->gather_active_tuples(state.node, pred->get_id()));
 		
@@ -1112,6 +1114,7 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
                everything.push_back(iter_object(ITER_QUEUE, (void*)*it));
          }
       }
+#endif
 
 		if(state.use_local_tuples) {
 			for(db::simple_tuple_list::iterator it(state.local_tuples.begin()), end(state.local_tuples.end());
@@ -1169,6 +1172,7 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 			         state.no_longer_using_linear_tuple(tuple_leaf); // not used during derivation
 				}
 				break;
+#if 0
 				case ITER_QUEUE: {
 					simple_tuple *stpl((simple_tuple*)p.second);
 					tuple *match_tuple(stpl->get_tuple());
@@ -1190,6 +1194,7 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 					}
 				}
 				break;
+#endif
 				case ITER_LOCAL: {
 					simple_tuple *stpl((simple_tuple*)p.second);
 					tuple *match_tuple(stpl->get_tuple());
@@ -1230,7 +1235,7 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
    {
       tuple_trie_leaf *tuple_leaf(*it);
 
-      if(this_is_linear) {
+      if(pred->is_linear_pred()) {
          if(!state.linear_tuple_can_be_used(tuple_leaf))
             continue;
          state.using_new_linear_tuple(tuple_leaf);
@@ -1247,7 +1252,7 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 #endif
 
 		PUSH_CURRENT_STATE(match_tuple, tuple_leaf, NULL, tuple_leaf->get_min_depth());
-		
+
       return_type ret;
       
       ret = execute(first, state);
@@ -1262,11 +1267,18 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
          return RETURN_DERIVED;
       }
 
-      if(ret != RETURN_LINEAR && ret != RETURN_DERIVED && this_is_linear) {
-         state.no_longer_using_linear_tuple(tuple_leaf); // not consumed
+      if(pred->is_linear_pred()) {
+         if(ret != RETURN_LINEAR && ret != RETURN_DERIVED) {
+            state.no_longer_using_linear_tuple(tuple_leaf); // not consumed because nothing was derived
+         }
+
+         if(!iter_options_to_delete(options)) {
+            state.no_longer_using_linear_tuple(tuple_leaf); // cannot be consumed because it would get generated again
+         }
       }
    }
 
+#if 0
 	// tuples from current queue
 	if(this_is_linear) {
       assert(!state.persistent_only);
@@ -1314,6 +1326,7 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 				return ret;
 		}
 	}
+#endif
 	
 	// current set of tuples
    if(!state.persistent_only) {
@@ -1338,8 +1351,7 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 		
 			PUSH_CURRENT_STATE(match_tuple, NULL, stpl, stpl->get_depth());
 		
-			if(iter_options_to_delete(options) || this_is_linear) {
-				assert(this_is_linear);
+			if(iter_options_to_delete(options) || pred->is_linear_pred()) {
 				stpl->will_delete(); // this will avoid future uses of this tuple!
 			}
 		
@@ -1348,16 +1360,18 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 		
 			POP_STATE();
 
-			if(!(ret == RETURN_LINEAR || ret == RETURN_DERIVED)) { // tuple not consumed
-				if(this_is_linear || iter_options_to_delete(options)) {
-					stpl->will_not_delete(); // oops, revert
+         if(pred->is_linear_pred()) {
+            if(!(ret == RETURN_LINEAR || ret == RETURN_DERIVED)) { // tuple not consumed
+               stpl->will_not_delete(); // oops, revert
             }
-			}
 
-         if(!iter_options_to_delete(options) && this_is_linear) {
-            stpl->will_not_delete();
+            if(!iter_options_to_delete(options)) {
+               // the tuple cannot be deleted
+               // we have just marked it for deletion in order to lock it
+               stpl->will_not_delete();
+            }
          }
-		
+
 			if(ret == RETURN_LINEAR) { 
 				return ret;
          }
@@ -1620,7 +1634,7 @@ execute_remove(pcounter pc, state& state)
 
 #ifdef USE_RULE_COUNTING
 	if(state.use_local_tuples) {
-#ifdef DEBUG_MODE
+#if defined(DEBUG_MODE) or defined(DEBUG_REMOVE)
       cout << "\tdelete " << *tpl << endl;
 #endif
 		assert(tpl != NULL);
