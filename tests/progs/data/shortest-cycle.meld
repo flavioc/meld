@@ -1,0 +1,7 @@
+type route edge(node, node, int).
+!edge(@3, @4, 10).
+!edge(@4, @3, 10).
+!edge(@2, @3, 9).
+!edge(@3, @2, 9).
+!edge(@2, @4, 5).
+!edge(@4, @2, 5).
