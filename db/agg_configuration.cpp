@@ -161,7 +161,7 @@ agg_configuration::generate_sum_int(const field_num field, vm::depth_t& depth) c
       tuple_trie_leaf *s(*it);
 
       depth = max(depth, s->get_max_depth());
-      for(ref_count i(0); i < s->get_count(); ++i)
+      for(ref_count_plus i(0); i < s->get_count(); ++i)
          sum_val += s->get_underlying_tuple()->get_int(field);
    }
 
@@ -183,7 +183,7 @@ agg_configuration::generate_sum_float(const field_num field, vm::depth_t& depth)
       tuple_trie_leaf *s(*it);
 
       depth = max(depth, s->get_max_depth());
-      for(ref_count i(0); i < s->get_count(); ++i)
+      for(ref_count_plus i(0); i < s->get_count(); ++i)
          sum_val += (*it)->get_underlying_tuple()->get_float(field);
    }
 

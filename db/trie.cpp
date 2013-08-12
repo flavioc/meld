@@ -740,7 +740,7 @@ trie::check_insert(void *data, const ref_count many, const depth_t depth, val_st
 }
 
 void
-trie::commit_delete(trie_node *node, const ref_count many)
+trie::commit_delete(trie_node *node, const ref_count_plus many)
 {
    assert(node->is_leaf());
 

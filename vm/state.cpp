@@ -560,18 +560,21 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
 		} else {
       	node::delete_info deleter(node->delete_tuple(tpl, -stpl->get_count(), stpl->get_depth()));
 
-#ifdef USE_RULE_COUNTING
-      	node->matcher.deregister_tuple(tpl, stpl->get_count());
-#endif
          if(!deleter.is_valid()) {
             // do nothing... it does not exist
          } else if(deleter.to_delete()) { // to be removed
+#ifdef USE_RULE_COUNTING
+            node->matcher.deregister_tuple(tpl, -stpl->get_count());
+#endif
          	setup(tpl, node, stpl->get_count(), stpl->get_depth());
          	persistent_only = true;
          	use_local_tuples = false;
          	execute_bytecode(all->PROGRAM->get_predicate_bytecode(tuple->get_predicate_id()), *this);
          	deleter();
       	} else if(tpl->is_cycle()) {
+#ifdef USE_RULE_COUNTING
+            node->matcher.deregister_tuple(tpl, -stpl->get_count());
+#endif
             depth_counter *dc(deleter.get_depth_counter());
             assert(dc != NULL);
 
@@ -585,8 +588,12 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
                   deleter();
                }
             }
-         } else
+         } else {
+#ifdef USE_RULE_COUNTING
+            node->matcher.deregister_tuple(tpl, -stpl->get_count());
+#endif
             delete tpl;
+         }
          delete stpl;
 		}
    }
@@ -623,7 +630,7 @@ state::run_node(db::node *no)
 	this->node = no;
 	
 #ifdef DEBUG_RULES
-   cout << "Node " << node->get_id() << endl;
+   cout << "Node " << node->get_id() << " (is " << node->get_translated_id() << ")" << endl;
 #endif
 
    assert(local_tuples.empty());

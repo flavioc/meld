@@ -17,6 +17,7 @@ typedef bool bool_val;
 typedef unsigned char predicate_id;
 typedef unsigned short process_id;
 typedef short ref_count;
+typedef uint64_t ref_count_plus;
 typedef unsigned char byte_code_el;
 typedef byte_code_el* byte_code;
 typedef uint32_t code_size_t;

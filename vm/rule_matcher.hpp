@@ -27,7 +27,7 @@ private:
 	typedef std::vector<rule_matcher_obj> rule_vector;
 
    rule_vector rules; /* availability statistics per rule */
-   std::vector<ref_count> predicate_count; /* number of tuples per predicate */
+   std::vector<ref_count_plus> predicate_count; /* number of tuples per predicate */
 
 	typedef std::set<rule_id, std::less<rule_id>, mem::allocator<rule_id> > set_rules;
 	set_rules active_rules; /* rules that *may* be derivable */
