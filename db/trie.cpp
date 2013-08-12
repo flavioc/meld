@@ -776,7 +776,6 @@ trie::inner_delete_by_leaf(trie_leaf *leaf, const ref_count count, const depth_t
    }
    
    if(!leaf->to_delete()) {
-      cout << "not to delete" << endl;
       return;
    }
  

@@ -238,8 +238,13 @@ class depth_counter: public mem::base
 
          assert(count < 0);
          
-         assert(it != counts.end());
-         it->second += count; // count is < 0
+         if(it == counts.end())
+            return true;
+
+         if(-count > it->second)
+            it->second = 0;
+         else
+            it->second += count; // count is < 0
          //std::cout << "Depth " << depth << " dropped to count " << it->second << "\n";
 
          assert(it->second >= 0);
@@ -339,7 +344,10 @@ public:
          const vm::ref_count many)
    {
       assert(many < 0);
-      count += many;
+      if(-many > count)
+         count = 0;
+      else
+         count += many;
       if(depths) {
          depths->sub(depth, many);
       }
