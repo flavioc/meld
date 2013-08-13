@@ -25,7 +25,7 @@ def write_dedge(a, b):
 	write_edge(b, a)
 	
 def write_edgew(a, b, w):
-   sys.stdout.write("!edge(@" + str(a) + ",@" + str(b) + "," + ('{0:f}'.format(w)) + ").\n")
+   sys.stdout.write("!edge(@" + str(a) + ",@" + str(b) + "," + str(w) + ").\n")
 
 def write_dedgew(a, b, w):
 	write_edgew(a, b, w)
