@@ -1,0 +1,21 @@
+// this computes all pairs shortest path for one tenth of the nodes in the graph
+
+type linear path(node, node, int, int).
+
+priority @order @asc.
+
+const used = 1.
+const notused = 0.
+
+node2int(A) % 5 = 0 -o set-priority(A, 0.1), path(A, A, 0, 0).
+
+path(A, X, B, used), path(A, X, B, notused)
+	-o path(A, X, B, used).
+
+path(A, U, B1, X), path(A, U, B2, Y), B1 <= B2
+   -o path(A, U, B1, X).
+
+path(A, X, D, notused)
+   -o {B, W | !edge(A, B, W) | path(B, X, D + W, notused), set-priority(B, float(D + W))}, path(A, X, D, used).
+
+
