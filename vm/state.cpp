@@ -753,10 +753,10 @@ state::init_core_statistics(void)
       stat_instructions_executed = 0;
       stat_moves_executed = 0;
       stat_ops_executed = 0;
-      stat_predicate_proven = new size_t[PROGRAM->num_predicates()];
-      stat_predicate_applications = new size_t[PROGRAM->num_predicates()];
-      stat_predicate_success = new size_t[PROGRAM->num_predicates()];
-      for(size_t i(0); i < PROGRAM->num_predicates(); ++i) {
+      stat_predicate_proven = new size_t[all->PROGRAM->num_predicates()];
+      stat_predicate_applications = new size_t[all->PROGRAM->num_predicates()];
+      stat_predicate_success = new size_t[all->PROGRAM->num_predicates()];
+      for(size_t i(0); i < all->PROGRAM->num_predicates(); ++i) {
          stat_predicate_proven[i] = 0;
          stat_predicate_applications[i] = 0;
          stat_predicate_success[i] = 0;
@@ -817,14 +817,14 @@ state::~state(void)
 		cout << "\tmoves: " << stat_moves_executed << endl;
 		cout << "\tops: " << stat_ops_executed << endl;
       cout << "Proven predicates:" << endl;
-      for(size_t i(0); i < PROGRAM->num_predicates(); ++i)
-         cout << "\t" << PROGRAM->get_predicate(i)->get_name() << " " << stat_predicate_proven[i] << endl;
+      for(size_t i(0); i < all->PROGRAM->num_predicates(); ++i)
+         cout << "\t" << all->PROGRAM->get_predicate(i)->get_name() << " " << stat_predicate_proven[i] << endl;
       cout << "Applications predicate:" << endl;
-      for(size_t i(0); i < PROGRAM->num_predicates(); ++i)
-         cout << "\t" << PROGRAM->get_predicate(i)->get_name() << " " << stat_predicate_applications[i] << endl;
+      for(size_t i(0); i < all->PROGRAM->num_predicates(); ++i)
+         cout << "\t" << all->PROGRAM->get_predicate(i)->get_name() << " " << stat_predicate_applications[i] << endl;
       cout << "Successes predicate:" << endl;
-      for(size_t i(0); i < PROGRAM->num_predicates(); ++i)
-         cout << "\t" << PROGRAM->get_predicate(i)->get_name() << " " << stat_predicate_success[i] << endl;
+      for(size_t i(0); i < all->PROGRAM->num_predicates(); ++i)
+         cout << "\t" << all->PROGRAM->get_predicate(i)->get_name() << " " << stat_predicate_success[i] << endl;
       delete []stat_predicate_proven;
       delete []stat_predicate_applications;
       delete []stat_predicate_success;

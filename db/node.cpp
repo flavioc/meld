@@ -258,8 +258,8 @@ node::dump_json(void) const
 		
 		for(tuple_trie::const_iterator jt(trie->begin()), end(trie->end()); jt != end; jt++)
 	   {
-			simple_tuple *stpl(*jt);
-			tuple *tpl(stpl->get_tuple());
+			tuple_trie_leaf *leaf(*jt);
+			tuple *tpl(leaf->get_underlying_tuple());
 			UI_ADD_ELEM(tpls, tpl->dump_json());
 		}
 		
