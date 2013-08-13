@@ -62,8 +62,8 @@ protected:
    void do_loop(void);
    void loop(void);
    void do_work(db::node *);
-   void do_agg_tuple_add(db::node *, vm::tuple *, const vm::ref_count);
-   void do_tuple_add(db::node *, vm::tuple *, const vm::ref_count);
+   void do_agg_tuple_add(db::node *, vm::tuple *, const vm::derivation_count);
+   void do_tuple_add(db::node *, vm::tuple *, const vm::derivation_count);
    
    virtual bool terminate_iteration(void) = 0;
    

@@ -14,7 +14,7 @@ tuple_aggregate::create_configuration(void) const
 }
    
 agg_configuration*
-tuple_aggregate::add_to_set(vm::tuple *tpl, const ref_count many, const depth_t depth)
+tuple_aggregate::add_to_set(vm::tuple *tpl, const derivation_count many, const depth_t depth)
 {
    agg_trie_leaf *leaf(vals.find_configuration(tpl));
    agg_configuration *conf;

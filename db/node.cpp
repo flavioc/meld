@@ -33,7 +33,7 @@ node::get_storage(const predicate* pred)
 }
 
 bool
-node::add_tuple(vm::tuple *tpl, const ref_count many, const depth_t depth)
+node::add_tuple(vm::tuple *tpl, const derivation_count many, const depth_t depth)
 {
    const predicate* pred(tpl->get_predicate());
    tuple_trie *tr(get_storage(pred));
@@ -42,7 +42,7 @@ node::add_tuple(vm::tuple *tpl, const ref_count many, const depth_t depth)
 }
 
 node::delete_info
-node::delete_tuple(vm::tuple *tuple, const ref_count many, const depth_t depth)
+node::delete_tuple(vm::tuple *tuple, const derivation_count many, const depth_t depth)
 {
    const predicate *pred(tuple->get_predicate());
    tuple_trie *tr(get_storage(pred));
@@ -51,7 +51,7 @@ node::delete_tuple(vm::tuple *tuple, const ref_count many, const depth_t depth)
 }
 
 agg_configuration*
-node::add_agg_tuple(vm::tuple *tuple, const ref_count many, const depth_t depth)
+node::add_agg_tuple(vm::tuple *tuple, const derivation_count many, const depth_t depth)
 {
    const predicate *pred(tuple->get_predicate());
    predicate_id pred_id(pred->get_id());
@@ -68,7 +68,7 @@ node::add_agg_tuple(vm::tuple *tuple, const ref_count many, const depth_t depth)
 }
 
 agg_configuration*
-node::remove_agg_tuple(vm::tuple *tuple, const ref_count many, const depth_t depth)
+node::remove_agg_tuple(vm::tuple *tuple, const derivation_count many, const depth_t depth)
 {
    return add_agg_tuple(tuple, -many, depth);
 }

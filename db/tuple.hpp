@@ -26,7 +26,7 @@ class simple_tuple: public mem::base
 {
 private:
    vm::tuple *data;
-   vm::ref_count count;
+   vm::derivation_count count;
    vm::depth_t depth;
    // tuple is dead and must be deleted at the end of rule execution
 	bool to_delete;
@@ -98,21 +98,21 @@ public:
 
    void print(std::ostream&) const;
 
-   inline vm::ref_count get_count(void) const { return count; }
+   inline vm::derivation_count get_count(void) const { return count; }
    
    inline bool reached_zero(void) const { return get_count() == 0; }
 
-   inline void inc_count(const vm::ref_count& inc) { assert(inc > 0); count += inc; }
+   inline void inc_count(const vm::derivation_count& inc) { assert(inc > 0); count += inc; }
 
-   inline void dec_count(const vm::ref_count& inc) { assert(inc > 0); count -= inc; }
+   inline void dec_count(const vm::derivation_count& inc) { assert(inc > 0); count -= inc; }
    
-   inline void add_count(const vm::ref_count& inc) { count += inc; }
+   inline void add_count(const vm::derivation_count& inc) { count += inc; }
 
    inline vm::depth_t get_depth(void) const { return depth; }
    
    inline size_t storage_size(void) const
    {
-      return sizeof(vm::ref_count) + sizeof(vm::depth_t) + data->get_storage_size();
+      return sizeof(vm::derivation_count) + sizeof(vm::depth_t) + data->get_storage_size();
    }
    
    void pack(utils::byte *, const size_t, int *) const;
@@ -125,7 +125,7 @@ public:
    
    static void wipeout(simple_tuple *stpl) { delete stpl->get_tuple(); delete stpl; }
 
-   explicit simple_tuple(vm::tuple *_tuple, const vm::ref_count _count, const vm::depth_t _depth = 0):
+   explicit simple_tuple(vm::tuple *_tuple, const vm::derivation_count _count, const vm::depth_t _depth = 0):
       data(_tuple), count(_count), depth(_depth),
       to_delete(false), generated_this_run(false),
       is_final_aggregate(false)

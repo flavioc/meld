@@ -34,7 +34,7 @@ public:
 
    simple_tuple_list generate(void);
 
-   agg_configuration* add_to_set(vm::tuple *, const vm::ref_count, const vm::depth_t);
+   agg_configuration* add_to_set(vm::tuple *, const vm::derivation_count, const vm::depth_t);
    
    bool no_changes(void) const;
    inline bool empty(void) const { return vals.empty(); }

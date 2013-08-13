@@ -53,7 +53,7 @@ public:
    inline bool is_empty(void) const { return vals.empty(); }
    inline size_t size(void) const { return vals.size(); }
 
-   virtual void add_to_set(vm::tuple *, const vm::ref_count, const vm::depth_t);
+   virtual void add_to_set(vm::tuple *, const vm::derivation_count, const vm::depth_t);
    
    bool matches_first_int_arg(const vm::int_val) const;
 

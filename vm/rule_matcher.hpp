@@ -27,7 +27,7 @@ private:
 	typedef std::vector<rule_matcher_obj> rule_vector;
 
    rule_vector rules; /* availability statistics per rule */
-   std::vector<ref_count_plus> predicate_count; /* number of tuples per predicate */
+   std::vector<ref_count> predicate_count; /* number of tuples per predicate */
 
 	typedef std::set<rule_id, std::less<rule_id>, mem::allocator<rule_id> > set_rules;
 	set_rules active_rules; /* rules that *may* be derivable */
@@ -41,10 +41,10 @@ public:
 
 #ifdef USE_RULE_COUNTING
    /* returns true if we did not have any tuples of this predicate */
-	bool register_tuple(tuple *, const ref_count, const bool is_new = true);
+	bool register_tuple(tuple *, const derivation_count, const bool is_new = true);
 
 	/* returns true if now we do not have any tuples of this predicate */
-	bool deregister_tuple(tuple *, const ref_count);
+	bool deregister_tuple(tuple *, const derivation_count);
 
 	void clear_dropped_rules(void)
 	{
