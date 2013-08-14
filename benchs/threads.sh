@@ -1,6 +1,6 @@
 #!/bin/bash
 # Runs threaded meld and takes execution times
-# EXTRA_ARGS variable can be used to pass other arguments to the executable.
+# MELD_ARGS are used to pass arguments to the meld program
 
 SCHEDULER="${1}"
 FILE="${2}"
@@ -21,7 +21,7 @@ do_time_sched ()
 {
 	FILE="${1}"
 	
-	TO_RUN="${EXEC} ${FILE} -c ${SCHEDULER}"
+	TO_RUN="${EXEC} ${FILE} -c ${SCHEDULER} -- ${MELD_ARGS}"
 	time_run_n "${TO_RUN}" "$(basename ${FILE} .m) ${SCHEDULER}"
 }
 
