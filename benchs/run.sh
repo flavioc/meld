@@ -1,15 +1,12 @@
 #!/bin/sh
 
+SCHEDULER=$1
+STEP=$2
+
 bench_times ()
 {
 	file="code/$1.m"
-	bash threads_even.sh th $file
-}
-
-mpi_times ()
-{
-# to complete
-   return 1
+	bash threads_even.sh $file $SCHEDULER $STEP
 }
 
 instrument ()
@@ -17,14 +14,13 @@ instrument ()
 	bash instrument.sh th code/$1.m
 }
 
-my_run ()
-{
-	bench_times $*
-	#instrument $*
-}
+if [ -z $STEP ]; then
+   echo "usage: run.sh <scheduler> <step=even|power> programs..."
+   exit 1
+fi
 
-LIST="8queens"
+LIST="${*:3}"
 
 for prog in $LIST; do
-   my_run $prog
+   bench_times $prog
 done
