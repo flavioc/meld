@@ -20,7 +20,7 @@ type numInput(node, int).
 priority @initial 100.
 
 const damping = 0.15.
-const bound = 0.00001.
+const bound = str2float(@arg1).
 const pages = @world.
 const start-pagerank = 1.0.
 
