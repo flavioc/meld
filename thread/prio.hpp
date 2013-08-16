@@ -58,10 +58,6 @@ protected:
    virtual void assert_end_iteration(void) const;
    bool set_next_node(void);
    bool check_if_current_useless();
-   void make_active(void);
-   void make_inactive(void);
-   virtual void generate_aggs(void);
-   virtual bool busy_wait(void);
    void check_priority_buffer(void);
 
 	inline void add_to_priority_queue(thread_intrusive_node *node)
@@ -81,31 +77,20 @@ protected:
    }
    
    virtual bool has_work(void) const { return threads_sched::has_work() || !prio_queue.empty(); }
+   void do_set_node_priority(db::node *, const double);
 
 public:
    
    virtual void init(const size_t);
    
-   virtual void new_agg(process::work&);
-   virtual void new_work(const db::node *, process::work&);
-   virtual void new_work_other(sched::base *, process::work&);
-#ifdef COMPILE_MPI
-   virtual void new_work_remote(process::remote *, const db::node::node_id, message *);
-#endif
-   
    virtual db::node* get_work(void);
-   virtual void finish_work(db::node *);
    virtual void end(void);
-   virtual bool terminate_iteration(void);
    
    virtual void set_node_priority(db::node *, const double);
 	virtual void add_node_priority(db::node *, const double);
    virtual void add_node_priority_other(db::node *, const double);
    virtual void set_node_priority_other(db::node *, const double);
    virtual void schedule_next(db::node *);
-   
-   threads_prio *find_scheduler(const db::node *);
-	virtual db::simple_tuple_vector gather_active_tuples(db::node *, const vm::predicate_id);
    
    static db::node *create_node(const db::node::node_id id, const db::node::node_id trans, vm::all *all)
    {

@@ -26,8 +26,6 @@ private:
 	
 public:
 
-   bool moving_around; // for debugging task stealing
-	
 	inline heap_priority get_priority_level(void) { return priority_level; }
 	inline vm::int_val get_int_priority_level(void) { return priority_level.int_priority; }
 	inline vm::float_val get_float_priority_level(void) { return priority_level.float_priority; }
@@ -53,7 +51,6 @@ public:
    explicit thread_intrusive_node(const db::node::node_id _id, const db::node::node_id _trans, vm::all *all):
 		thread_node(_id, _trans, all),
       INIT_DOUBLE_QUEUE_NODE(), INIT_PRIORITY_NODE(),
-      moving_around(false),
 		has_been_prioritized(false),
       has_been_touched(false)
    {

@@ -40,6 +40,9 @@ public:
       in_queue_node::assert_end_iteration();
       assert(!has_work());
    }
+
+   inline void lock(void) { spin.lock(); }
+   inline void unlock(void) { spin.unlock(); }
    
    explicit thread_node(const db::node::node_id _id, const db::node::node_id _trans, vm::all *all):
       in_queue_node(_id, _trans, all),

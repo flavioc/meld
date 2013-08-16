@@ -13,6 +13,7 @@ namespace utils
 template <typename T>
 void pack(void *data, const size_t size, byte *buf, const size_t buf_size, int* pos)
 {
+   (void)buf_size;
    assert(*pos + sizeof(T) * size <= buf_size);
 
    memcpy(buf + *pos, data, sizeof(T) * size);

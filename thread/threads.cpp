@@ -49,8 +49,8 @@ threads_sched::new_agg(work& new_work)
    to->add_work(new_work.get_tuple());
    
    if(!to->in_queue()) {
-      add_to_queue(to);
       to->set_in_queue(true);
+      add_to_queue(to);
    }
 }
 
@@ -60,16 +60,19 @@ threads_sched::new_work(const node *, work& new_work)
    thread_intrusive_node *to(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
    
    assert_thread_push_work();
+
+   to->lock();
    
    to->add_work(new_work.get_tuple());
    //cout << id << " Add to queue node " << to->get_id() << endl;
    
    if(!to->in_queue()) {
-      add_to_queue(to);
       to->set_in_queue(true);
+      add_to_queue(to);
    }
 
    assert(to->in_queue());
+   to->unlock();
 }
 
 void
@@ -78,16 +81,24 @@ threads_sched::new_work_other(sched::base *, work& new_work)
    assert(is_active());
    
    thread_node *tnode(dynamic_cast<thread_node*>(new_work.get_node()));
-   
-   assert(tnode->get_owner() != NULL);
+
+   tnode->lock();
    
    threads_sched *owner(dynamic_cast<threads_sched*>(tnode->get_owner()));
 
-   owner->buffer.push(new_work);
+   tnode->add_work(new_work.get_tuple());
 
-   //cout << id << " Add to buffer node " << tnode->get_id() << endl;
+   if(owner == this) {
+      if(!tnode->in_queue()) {
+         tnode->set_in_queue(true);
+         add_to_queue((thread_intrusive_node*)tnode);
+      }
+   } else {
+      if(!tnode->in_queue()) {
+         tnode->set_in_queue(true);
+         owner->add_to_queue((thread_intrusive_node*)tnode);
+      }
 
-   if(this != owner) {
       spinlock::scoped_lock l2(owner->lock);
       
       if(owner->is_inactive() && owner->has_work())
@@ -95,39 +106,12 @@ threads_sched::new_work_other(sched::base *, work& new_work)
          owner->set_active();
          assert(owner->is_active());
       }
-   } else {
-      assert(is_active());
-   }
 #ifdef INSTRUMENTATION
-   sent_facts++;
+      sent_facts++;
 #endif
-}
-
-void
-threads_sched::retrieve_tuples(void)
-{
-   while(!buffer.empty()) {
-      work new_work(buffer.pop());
-		thread_intrusive_node *to(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
-      threads_sched *owner(dynamic_cast<threads_sched*>(to->get_owner()));
-
-      if(owner == this) {
-         to->add_work(new_work.get_tuple());
-         if(!to->moving_around && !to->in_queue()) {
-            add_to_queue(to);
-            to->set_in_queue(true);
-         }
-      } else {
-         owner->buffer.push(new_work);
-         spinlock::scoped_lock l(owner->lock);
-      
-         if(owner->is_inactive() && owner->has_work())
-         {
-            owner->set_active();
-            assert(owner->is_active());
-         }
-      }
    }
+
+   tnode->unlock();
 }
 
 #ifdef COMPILE_MPI
@@ -140,27 +124,43 @@ threads_sched::new_work_remote(remote *, const node::node_id, message *)
 
 #ifdef TASK_STEALING
 void
-threads_sched::check_stolen_nodes(void)
+threads_sched::go_steal_nodes(void)
 {
    if(state.all->NUM_THREADS == 1)
       return;
 
-   while(!stolen_nodes_buffer.empty()) {
-      thread_intrusive_node *n(stolen_nodes_buffer.pop());
+   size_t tid(rand(state.all->NUM_THREADS));
 
-      assert(n->in_queue());
+   threads_sched *target((threads_sched*)state.all->ALL_THREADS[tid]);
 
-      n->moving_around = false;
-      add_to_queue(n);
-#ifdef INSTRUMENTATION
-      stolen_total++;
-#endif
+   if(target == this) {
+      return;
    }
-}
 
-void
-threads_sched::clear_steal_requests(void)
-{
+   if(!target->is_active())
+      return;
+
+   thread_intrusive_node *node(NULL);
+   size_t size = 1;
+   while(size > 0) {
+      if(target->number_of_nodes() < 3)
+         return;
+
+      node = target->steal_node();
+
+      if(node != NULL) {
+         node->lock();
+         node->set_owner(this);
+         node->set_in_queue(false);
+         add_to_queue(node);
+         node->set_in_queue(true);
+         node->unlock();
+#ifdef INSTRUMENTATION
+         stolen_total++;
+#endif
+      }
+      size--;
+   }
 }
 
 thread_intrusive_node*
@@ -176,64 +176,6 @@ threads_sched::number_of_nodes(void) const
 {
    return queue_nodes.size();
 }
-
-void
-threads_sched::answer_steal_requests(void)
-{
-   static const size_t MIN_NODES = 1;
-   const size_t total_nodes(number_of_nodes());
-   if(total_nodes <= MIN_NODES)
-      return;
-
-   size_t total_threads(
-         min(min(state.all->NUM_THREADS-1, (size_t)3),
-            max((size_t)1, min(state.all->NUM_THREADS, (size_t)((double)state.all->NUM_THREADS * 0.5)))));
-   size_t start_thread(rand(state.all->NUM_THREADS));
-   thread_intrusive_node *node(NULL);
-
-   for(size_t i(0), j(0); j < total_threads; ++i) {
-      size_t tid((start_thread + i) % state.all->NUM_THREADS);
-
-      if(tid == id) {
-         start_thread = rand(state.all->NUM_THREADS);
-         continue;
-      }
-      ++j;
-
-      threads_sched *target((threads_sched*)state.all->ALL_THREADS[tid]);
-
-      assert(target != this);
-
-      if(target->is_inactive()) {
-         size_t size(number_of_nodes());
-         if(size <= MIN_NODES)
-            return;
-
-         const size_t frac((int)((double)size * (1.0 / (double)state.all->NUM_THREADS)));
-         size = min(max((size_t)1, frac), size);
-
-         while(size > 0 && number_of_nodes() != 0) {
-            node = steal_node();
-            assert(node != NULL);
-            assert(node != current_node);
-            assert(node->get_owner() == this);
-            assert(node->in_queue());
-            node->moving_around = true;
-            node->set_owner(target);
-            target->stolen_nodes_buffer.push(node);
-            --size;
-         }
-
-         spinlock::scoped_lock l(target->lock);
-   
-         if(target->is_inactive()) {
-            target->set_active();
-            assert(target->is_active());
-         }
-      }
-
-   }
-}
 #endif
 
 void
@@ -245,13 +187,21 @@ threads_sched::generate_aggs(void)
 bool
 threads_sched::busy_wait(void)
 {
+#ifdef TASK_STEALING
+   uint64_t count(0);
+#endif
    ins_idle;
    
    while(!has_work()) {
 #ifdef TASK_STEALING
-      check_stolen_nodes();
+      if(!state.all->PROGRAM->is_static_priority()) {
+         count++;
+         if(count > 1) {
+            go_steal_nodes();
+            count = 0;
+         }
+      }
 #endif
-      retrieve_tuples();
       BUSY_LOOP_MAKE_INACTIVE()
       BUSY_LOOP_CHECK_TERMINATION_THREADS()
    }
@@ -314,11 +264,6 @@ threads_sched::set_next_node(void)
       check_if_current_useless();
    
    while (current_node == NULL) {   
-#ifdef TASK_STEALING
-      check_stolen_nodes();
-#endif
-      retrieve_tuples();
-
       if(!has_work()) {
          if(!busy_wait())
             return false;
@@ -345,14 +290,6 @@ threads_sched::get_work(void)
 {  
    if(!set_next_node())
       return NULL;
-
-#ifdef TASK_STEALING
-   answer_requests++;
-   if(answer_requests == 1) {
-      answer_steal_requests();
-      answer_requests = 0;
-   }
-#endif
 
    set_active_if_inactive();
    assert(current_node != NULL);
@@ -440,9 +377,6 @@ threads_sched::write_slice(statistics::slice& sl) const
 threads_sched::threads_sched(const vm::process_id _id, vm::all *all):
    base(_id, all),
    current_node(NULL)
-#ifdef TASK_STEALING
-   , answer_requests(0)
-#endif
 #if defined(TASK_STEALING) && defined(INSTRUMENTATION)
    , stolen_total(0), steal_requests(0)
 #endif
@@ -451,9 +385,6 @@ threads_sched::threads_sched(const vm::process_id _id, vm::all *all):
 
 threads_sched::~threads_sched(void)
 {
-#ifdef TASK_STEALING
-   clear_steal_requests();
-#endif
 }
    
 }

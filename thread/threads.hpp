@@ -35,15 +35,13 @@ protected:
    queue::push_safe_linear_queue<thread_intrusive_node*> stolen_nodes_buffer;
 
 #ifdef TASK_STEALING
-   int answer_requests;
 #ifdef INSTRUMENTATION
    mutable size_t stolen_total;
    mutable size_t steal_requests;
 #endif
 
    void clear_steal_requests(void);
-   void check_stolen_nodes(void);
-   virtual void answer_steal_requests(void);
+   void go_steal_nodes(void);
    virtual thread_intrusive_node* steal_node(void);
    virtual size_t number_of_nodes(void) const;
 #endif
@@ -56,7 +54,6 @@ protected:
    void make_inactive(void);
    virtual void generate_aggs(void);
    virtual bool busy_wait(void);
-   virtual void retrieve_tuples(void);
    
    virtual void add_to_queue(thread_intrusive_node *node)
    {

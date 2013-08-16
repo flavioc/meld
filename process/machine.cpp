@@ -96,6 +96,7 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, const bool f
 #endif
       break;
       case SET_PRIORITY_PREDICATE_ID:
+      assert(sched);
       if(from_other)
          sched->set_node_priority_other(node, tpl->get_float(0));
       else {
