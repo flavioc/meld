@@ -291,8 +291,20 @@ threads_prio::schedule_next(node *n)
 
       prio = pr.float_priority + add;
    }
+#ifdef TASK_STEALING
+   thread_intrusive_node *tn((thread_intrusive_node*)n);
+   tn->lock();
+   threads_prio *other((threads_prio*)tn->get_owner());
+   if(other == this) {
+      do_set_node_priority(n, prio);
+   } else {
+      // do nothing XXX
+   }
 
-   set_node_priority(n, prio);
+   tn->unlock();
+#else
+   do_set_node_priority(n, prio);
+#endif
 }
 
 void
