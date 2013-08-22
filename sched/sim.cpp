@@ -736,12 +736,6 @@ sim_sched::assert_end_iteration(void) const
 	assert_static_nodes_end_iteration(id, state.all);
 }
 
-simple_tuple_vector
-sim_sched::gather_active_tuples(db::node *node, const vm::predicate_id pred)
-{
-	return simple_tuple_vector();
-}
-
 void
 sim_sched::gather_next_tuples(db::node *node, simple_tuple_list& ls)
 {

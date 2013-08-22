@@ -326,24 +326,6 @@ threads_sched::init(const size_t)
    threads_synchronize();
 }
 
-simple_tuple_vector
-threads_sched::gather_active_tuples(db::node *node, const vm::predicate_id pred)
-{
-	simple_tuple_vector ls;
-	thread_node *no((thread_node*)node);
-	typedef thread_node::queue_type fact_queue;
-	
-	for(fact_queue::const_iterator it(no->queue.begin()), end(no->queue.end()); it != end; ++it) {
-		node_work w(*it);
-		simple_tuple *stpl(w.get_tuple());
-		
-		if(stpl->can_be_consumed() && stpl->get_predicate_id() == pred)
-			ls.push_back(stpl);
-	}
-	
-	return ls;
-}
-
 void
 threads_sched::gather_next_tuples(db::node *node, simple_tuple_list& ls)
 {
