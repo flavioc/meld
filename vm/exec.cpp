@@ -1022,7 +1022,6 @@ build_match_object(match& m, pcounter pc, state& state, const predicate *pred)
 
 typedef enum {
 	ITER_DB,
-	ITER_QUEUE,
 	ITER_LOCAL
 } iter_type_t;
 
@@ -1038,7 +1037,6 @@ private:
 	{
 		switch(l.first) {
 			case ITER_LOCAL:
-			case ITER_QUEUE:
 				return ((simple_tuple*)l.second)->get_tuple();
 			case ITER_DB:
 				return ((tuple_trie_leaf*)l.second)->get_underlying_tuple();
@@ -1116,19 +1114,6 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 		typedef vector<iter_object, mem::allocator<iter_object> > vector_of_everything;
       vector_of_everything everything;
 
-#if 0
-      if(true) {
-         simple_tuple_vector queue_tuples(state.sched->gather_active_tuples(state.node, pred->get_id()));
-		
-         for(simple_tuple_vector::iterator it(queue_tuples.begin()), end(queue_tuples.end());
-            it != end; ++it)
-         {
-            if(do_matches(pc, (*it)->get_tuple(), state))
-               everything.push_back(iter_object(ITER_QUEUE, (void*)*it));
-         }
-      }
-#endif
-
 		if(state.use_local_tuples) {
 			for(db::simple_tuple_list::iterator it(state.local_tuples.begin()), end(state.local_tuples.end());
 				it != end;
@@ -1185,29 +1170,6 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 			         state.no_longer_using_linear_tuple(tuple_leaf); // not used during derivation
 				}
 				break;
-#if 0
-				case ITER_QUEUE: {
-					simple_tuple *stpl((simple_tuple*)p.second);
-					tuple *match_tuple(stpl->get_tuple());
-
-					if(!stpl->can_be_consumed())
-						continue;
-						
-					PUSH_CURRENT_STATE(match_tuple, NULL, stpl, stpl->get_depth());
-
-					if(iter_options_to_delete(options))
-						stpl->will_delete(); // this will avoid future gathers of this tuple!
-
-					ret = execute(first, state);
-
-					POP_STATE();
-
-					if(!(ret == RETURN_LINEAR || ret == RETURN_DERIVED)) { // tuple not consumed
-						stpl->will_not_delete(); // oops, revert
-					}
-				}
-				break;
-#endif
 				case ITER_LOCAL: {
 					simple_tuple *stpl((simple_tuple*)p.second);
 					tuple *match_tuple(stpl->get_tuple());
