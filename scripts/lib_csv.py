@@ -15,33 +15,24 @@ def mkdir_p(path):
         else: raise
 
 def get_sched_name(sched):
-   if sched == 'sl':
-      return 'sl'
-   if sched[:2] == 'tl':
-      return 'tl'
-   if sched[:2] == 'td':
-      return 'td'
-   if sched[:2] == 'tx':
-      return 'tx'
-   if sched[:9] == 'mpistatic':
-      return 'mpi'
-   if sched[:9] == 'mpisingle':
-      return 'mix'
-   return 'sin'
+	if sched == 'sl':
+		return 'sl'
+	if sched[:3] == 'thp':
+		return 'thp'
+	if sched[:3] == 'ths':
+		return 'ths'
+	if sched[:2] == 'th':
+		return 'th'
+	return 'sl'
       
 def get_sched_threads(sched):
-   if sched == 'sl': return 1
-   part = sched[:2]
-   if part == 'tl' or part == 'td' or part == 'tx':
-      return int(sched[2:])
-   elif sched[:9] == 'mpistatic':
-      rest = sched[9:]
-      vec = rest.split('/')
-      return int(vec[0])
-   elif sched[:9] == 'mpisingle':
-      return sched[9:]
-   else:
-      return int(sched[3:])
+	if sched == 'sl': return 1
+	part = sched[:3]
+	if part == 'thp':
+		return int(sched[3:])
+	if part == 'ths':
+		return int(sched[3:])
+	return int(sched[2:])
       
 def build_results(vec):
    new_vec = vec[2:]

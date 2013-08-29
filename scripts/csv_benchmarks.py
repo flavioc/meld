@@ -15,6 +15,8 @@ import os
 import errno
 from lib_csv import *
 
+WRITE_COORD_IN_SPEEDUP = True
+
 def print_results():
    global data
    for bench, bench_data in data.iteritems():
@@ -34,23 +36,27 @@ def make_speedup(time, serial):
    
 def make_efficiency(time, serial, cpu):
    return my_round((serial / time) / float(cpu))
+
+def make_coord(th, thp):
+	return my_round(th / thp)
    
 def write_header(writer):
-   writer.writerow(['#cpu', 'tl', 'tx', 'sin', 'mpi'])
+	row = ['#cpu', 'th']
+	if HAS_THS:
+		row.append('ths')
+	if HAS_THP:
+		row.append('thp')
+		if WRITE_COORD_IN_SPEEDUP:
+			row.append('coord')
+	writer.writerow(row)
    
 def write_time_file(file, bench, bench_data):
    global CPUS
    writer = csv.writer(open(file, 'wb'), delimiter=' ')
    write_header(writer)
    for cpu in CPUS:
-      tl = bench_data['tl'][cpu]
-      tx = bench_data['tx'][cpu]
-      sin = bench_data['sin'][cpu]
-      mpi = bench_data['mpi'][cpu]
-      writer.writerow([cpu, my_round(tl),
-                            my_round(tx),
-                            my_round(sin),
-                            my_round(mpi)])
+      th = bench_data['th'][cpu]
+      writer.writerow([cpu, my_round(th)])
                            
 def write_speedup_file(file, bench, bench_data):
    global CPUS
@@ -63,14 +69,17 @@ def write_speedup_file(file, bench, bench_data):
    writer = csv.writer(open(file, 'wb'), delimiter=' ')
    write_header(writer)
    for cpu in CPUS:
-      tl = bench_data['tl'][cpu]
-      tx = bench_data['tx'][cpu]
-      sin = bench_data['sin'][cpu]
-      mpi = bench_data['mpi'][cpu]
-      writer.writerow([cpu, make_speedup(tl, serial),
-                            make_speedup(tx, serial),
-                            make_speedup(sin, serial),
-                            make_speedup(mpi, serial)])
+		th = bench_data['th'][cpu]
+		row = [cpu, make_speedup(th, serial)]
+		if HAS_THS:
+			ths = bench_data['ths'][cpu]
+			row.append(make_speedup(ths, serial))
+		if HAS_THP:
+			thp = bench_data['thp'][cpu]
+			row.append(make_speedup(thp, serial))
+			if WRITE_COORD_IN_SPEEDUP:
+				row.append(make_coord(th, thp))
+		writer.writerow(row)
 
 def write_efficiency_file(file, bench, bench_data):
    global CPUS
@@ -83,37 +92,18 @@ def write_efficiency_file(file, bench, bench_data):
    writer = csv.writer(open(file, 'wb'), delimiter=' ')
    write_header(writer)
    for cpu in CPUS:
-      tl = bench_data['tl'][cpu]
-      tx = bench_data['tx'][cpu]
-      sin = bench_data['sin'][cpu]
-      mpi = bench_data['mpi'][cpu]
-      writer.writerow([cpu, make_efficiency(tl, serial, cpu),
-                            make_efficiency(tx, serial, cpu),
-                            make_efficiency(sin, serial, cpu),
-                            make_efficiency(mpi, serial, cpu)])
+      th = bench_data['th'][cpu]
+      writer.writerow([cpu, make_efficiency(th, serial, cpu)])
 
-def write_mix_speedup_file(file, bench, bench_data):
-   global CPUS
-   serial = 0
-   try:
-      serial = lookup_serial_result(bench)
-   except KeyError:
-      print "Failed to get serial time for " + bench
-      sys.exit(1)
-   writer = csv.writer(open(file + "_curves", 'wb'), delimiter=' ')
-   writer.writerow(['#cpu', 'mpi', 'sin'])
-   for cpu in CPUS:
-      mpi = bench_data['mpi'][cpu]
-      sin = bench_data['sin'][cpu]
-      writer.writerow([cpu, make_speedup(mpi, serial), make_speedup(sin, serial)])
-   writer = csv.writer(open(file + "_points", 'wb'), delimiter=' ')
-   writer.writerow(['#total', 'speedup', 'type'])
-   for cpu, time in bench_data['mix'].iteritems():
-      vec = cpu.split('/')
-      proc = int(vec[0])
-      threads = int(vec[1])
-      writer.writerow([proc * threads, make_speedup(time, serial), str(proc) + "x" + str(threads)])
-   
+def write_coord_file(file, bench, bench_data):
+	global CPUS
+	writer = csv.writer(open(file, 'wb'), delimiter=' ')
+	writer.writerow(['#cpu', 'speedup'])
+	for cpu in CPUS:
+		th = bench_data['th'][cpu]
+		thp = bench_data['thp'][cpu]
+		writer.writerow([cpu, make_coord(th, thp)])
+
 def write_speedup_files():
    for bench, bench_data in data.iteritems():
       write_speedup_file(dir + "/speedup." + bench, bench, bench_data)
@@ -125,14 +115,19 @@ def write_time_files():
 def write_efficiency_files():
    for bench, bench_data in data.iteritems():
       write_efficiency_file(dir + "/efficiency." + bench, bench, bench_data)
-      
-def write_mix_speedup_files():
-   for bench, bench_data in data.iteritems():
-      try:
-         mix = bench_data['mix']
-         write_mix_speedup_file(dir + "/mix." + bench, bench, bench_data)
-      except KeyError:
-         continue
+
+def write_coord_files():
+	for bench, bench_data in data.iteritems():
+		write_coord_file(dir + "/coord." + bench, bench, bench_data)
+
+def detect(typ):
+	for bench, bench_data in data.iteritems():
+		try:
+			c = bench_data[typ]
+		except KeyError:
+			return False
+	return True
+		
       
 if len(sys.argv) < 3:
    print "Usage: genenerate_speedup_data.py <output dir> <bench file>"
@@ -142,9 +137,12 @@ dir = str(sys.argv[1])
 file = str(sys.argv[2])
 
 read_csv_file(file)
+HAS_THS = detect('ths')
+HAS_THP = detect('thp')
 
 mkdir_p(dir)
 write_speedup_files()
 write_time_files()
-write_efficiency_files()
-write_mix_speedup_files()
+if HAS_THP:
+	write_coord_files()
+#write_efficiency_files()
