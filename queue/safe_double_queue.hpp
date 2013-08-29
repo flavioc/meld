@@ -65,6 +65,9 @@ public:
    inline void move_up(node_type node)
    {
       utils::spinlock::scoped_lock l(mtx);
+
+      if(!in_queue(node))
+         return;
     
 		QUEUE_DEFINE_INTRUSIVE_MOVE_UP();
    }
@@ -72,6 +75,9 @@ public:
 	inline void remove(node_type node)
 	{
 		utils::spinlock::scoped_lock l(mtx);
+
+      if(!in_queue(node))
+         return;
 		
 		QUEUE_DEFINE_INTRUSIVE_REMOVE(node);
 	}
