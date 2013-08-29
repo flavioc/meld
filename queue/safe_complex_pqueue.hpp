@@ -6,7 +6,6 @@
 #include "queue/heap_implementation.hpp"
 #include "utils/spinlock.hpp"
 
-
 namespace queue
 {
 	
@@ -17,10 +16,13 @@ private:
 	
 	typedef T* heap_object;
 
+	mutable utils::spinlock mtx;
+
 	heap_type typ;
    static const bool debug = false;
 
-#define HEAP_GET_PRIORITY(OBJ) ((typ == HEAP_INT_ASC || typ == HEAP_INT_DESC) ? \
+#define HEAP_IS_INT() ((typ == HEAP_INT_ASC || typ == HEAP_INT_DESC))
+#define HEAP_GET_PRIORITY(OBJ) (HEAP_IS_INT() ? \
 					(__INTRUSIVE_PRIORITY(OBJ).int_priority) : (__INTRUSIVE_PRIORITY(OBJ).float_priority))
 #define HEAP_GET_POS(OBJ) __INTRUSIVE_POS(OBJ)
 #define HEAP_COMPARE(V1, V2) ((typ == HEAP_INT_ASC || typ == HEAP_FLOAT_ASC) ? ((V1) <= (V2)) : ((V1) >= (V2)))
@@ -99,26 +101,44 @@ public:
 	
 	void insert(heap_object node, const heap_priority prio)
 	{
+      utils::spinlock::scoped_lock l(mtx);
 		do_insert(node, prio);
 	}
 	
 	heap_priority min_value(void) const
 	{
+      utils::spinlock::scoped_lock l(mtx);
+
+      if(empty()) {
+         heap_priority pr;
+         if(HEAP_IS_INT())
+            pr.int_priority = 0;
+         else
+            pr.float_priority = 0.0;
+         return pr;
+      }
+
 		return __INTRUSIVE_PRIORITY(heap.front());
 	}
 	
 	heap_object pop(void)
 	{
+      utils::spinlock::scoped_lock l(mtx);
 		return do_pop();
 	}
 	
 	void remove(heap_object obj)
 	{
+      utils::spinlock::scoped_lock l(mtx);
+      if(!__INTRUSIVE_IN_PRIORITY_QUEUE(obj))
+         return;
 		do_remove(obj);
 	}
 	
 	void move_node(heap_object node, const heap_priority new_prio)
 	{
+      if(!__INTRUSIVE_IN_PRIORITY_QUEUE(node))
+         return; // not in the queue
 		do_remove(node);
 		do_insert(node, new_prio);
 	}

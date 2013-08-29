@@ -44,6 +44,7 @@ protected:
    void go_steal_nodes(void);
    virtual thread_intrusive_node* steal_node(void);
    virtual size_t number_of_nodes(void) const;
+   virtual void check_stolen_node(thread_intrusive_node *) {};
 #endif
    
    virtual void assert_end(void) const;

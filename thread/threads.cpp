@@ -150,6 +150,7 @@ threads_sched::go_steal_nodes(void)
 
       if(node != NULL) {
          node->lock();
+         check_stolen_node(node);
          node->set_owner(this);
          node->set_in_queue(false);
          add_to_queue(node);

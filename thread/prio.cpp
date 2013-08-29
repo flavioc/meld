@@ -51,6 +51,16 @@ threads_prio::assert_end_iteration(void) const
 
 #ifdef TASK_STEALING
 
+void
+threads_prio::check_stolen_node(thread_intrusive_node *tn)
+{
+   if(priority_queue::in_queue(tn)) {
+      prio_queue.remove(tn);
+   } else if(node_queue::in_queue(tn)) {
+      queue_nodes.remove(tn);
+   }
+}
+
 thread_intrusive_node*
 threads_prio::steal_node(void)
 {
@@ -447,7 +457,9 @@ threads_prio::do_set_node_priority(node *n, const double priority)
 #ifdef DEBUG_PRIORITIES
             //cout << "Add node " << tn->get_id() << " with priority " << priority << endl;
 #endif
-            queue_nodes.remove(tn);
+            if(node_queue::in_queue(tn)) {
+               queue_nodes.remove(tn);
+            }
             //cout << "Remove from main put into prio\n";
             assert(!priority_queue::in_queue(tn));
             add_to_priority_queue(tn);

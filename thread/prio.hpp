@@ -52,6 +52,7 @@ protected:
    virtual size_t number_of_nodes(void) const {
       return queue_nodes.size() + prio_queue.size();
    }
+   virtual void check_stolen_node(thread_intrusive_node *);
 #endif
 	
    virtual void assert_end(void) const;
