@@ -25,6 +25,7 @@ type linear check-residual(node, node, float, list float).
 
 priority @initial 100.
 priority @static.
+priority @cluster @static.
 
 const global-potential =  [-0.0, -2.0, -4, -6, -8, -2, -0, -2, -4, -6, -4, -2, -0, -2, -4, -6, -4, -2, -0, -2, -8, -6, -4, -2, -0].
 const initial-message = [-1.60944, -1.60944, -1.60944, -1.60944, -1.60944].

@@ -17,6 +17,8 @@ type linear sum-messages(node, list float).
 type linear update-messages(node, list float).
 type linear check-residual(node, node, float, list float).
 
+priority @cluster @static.
+
 const global-potential =  [-0.0, -2.0, -4, -6, -8, -2, -0, -2, -4, -6, -4, -2, -0, -2, -4, -6, -4, -2, -0, -2, -8, -6, -4, -2, -0].
 const initial-message = [-1.60944, -1.60944, -1.60944, -1.60944, -1.60944].
 const damping = 0.1.
