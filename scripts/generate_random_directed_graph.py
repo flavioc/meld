@@ -4,6 +4,8 @@ import sys
 import random
 from lib import *
 
+print_inout = True
+
 def list_has(list, x):
 	try:
 		list.index(x)
@@ -17,11 +19,15 @@ if len(sys.argv) < 2:
 
 total = int(sys.argv[1])
 
-if len(sys.argv) > 2:
-	set_weight(float(sys.argv[2]))
-	print "type route edge(node, node, float)."
+if print_inout:
+	print "type route input(node, node, float)."
+	print "type route output(node, node, float)."	
 else:
-	print "type route edge(node, node)."
+	if len(sys.argv) > 2:
+		set_weight(float(sys.argv[2]))
+		print "type route edge(node, node, float)."
+	else:
+		print "type route edge(node, node)."
 
 for i in range(total):
 	links = random.randint(1, int(total*0.75))
@@ -32,6 +38,12 @@ for i in range(total):
 			link = (link + 1) % total
 		if not list_has(list, link):
 			list.append(link)
-	for link in list:
-		write_edge(i, link)
+	if print_inout:
+		count = float(len(list))
+		w = 1.0 / count
+		for link in list:
+			write_winout(i, link, w)
+	else:
+		for link in list:
+			write_edge(i, link)
 		

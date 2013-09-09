@@ -7,6 +7,7 @@
 
 import sys
 from lib import simple_write_edge
+from lib import write_winout
 
 if len(sys.argv) != 2:
 	print "usage: transform_link_analysis_pagerank.py <file>"
@@ -21,10 +22,9 @@ if output_meld:
 	print "type output(node, node, float)."
 	print
 
-def write_inout(i, o, w):
+def my_write_inout(i, o, w):
 	if output_meld:
-		print "!output(@" + str(i) + ", @" + str(o) + ", " + str("%.7f" % w) + ")."
-		print "!input(@" + str(o) + ", @" + str(i) + ", " + str("%.7f" % w) + ")."
+		write_winout(i, o, w)
 	else:
 		print str(i) + "\t" + str(o) + "\t" + str(w)
 
@@ -36,5 +36,5 @@ for line in f:
 	if size > 0:
 		w = 1.0 / float(size)
 		for dest in vec[1:len(vec)-1]:
-			write_inout(id, dest, w)
+			my_write_inout(id, dest, w)
 

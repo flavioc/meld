@@ -48,6 +48,10 @@ def write_header(writer):
 		row.append('thp')
 		if WRITE_COORD_IN_SPEEDUP:
 			row.append('coord')
+	if HAS_THX:
+		row.append('thx')
+		if WRITE_COORD_IN_SPEEDUP and HAS_THS:
+			row.append('coords')
 	writer.writerow(row)
    
 def write_time_file(file, bench, bench_data):
@@ -79,6 +83,11 @@ def write_speedup_file(file, bench, bench_data):
 			row.append(make_speedup(thp, serial))
 			if WRITE_COORD_IN_SPEEDUP:
 				row.append(make_coord(th, thp))
+		if HAS_THX:
+			thx = bench_data['thx'][cpu]
+			row.append(make_speedup(thx, serial))
+			if WRITE_COORD_IN_SPEEDUP and HAS_THS:
+				row.append(make_coord(thx, bench_data['ths'][cpu]))
 		writer.writerow(row)
 
 def write_efficiency_file(file, bench, bench_data):
@@ -139,6 +148,7 @@ file = str(sys.argv[2])
 read_csv_file(file)
 HAS_THS = detect('ths')
 HAS_THP = detect('thp')
+HAS_THX = detect('thx')
 
 mkdir_p(dir)
 write_speedup_files()

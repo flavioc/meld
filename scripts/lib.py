@@ -37,3 +37,7 @@ def simple_write_edge(a, b):
 def write_inout(a, b):
 	sys.stdout.write("!output(@" + str(a) + ", @" + str(b) + "). ")
 	sys.stdout.write("!input(@" + str(b) + ", @" + str(a) + ").\n")
+
+def write_winout(a, b, w):
+	print "!output(@" + str(a) + ", @" + str(b) + ", " + str("%.7f" % w) + ")."
+	print "!input(@" + str(b) + ", @" + str(a) + ", " + str("%.7f" % w) + ")."

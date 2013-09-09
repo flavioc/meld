@@ -21,10 +21,14 @@ fi
 
 BASE_OUTPUT="$(echo $FILE | sed -e 's/\./_/g')"
 echo "Generating ${BASE_OUTPUT}.pdf..."
-if [ -z "${COORD}" ]; then
-   TITLE="${TITLE}" FILE="${FILE}" OUTPUT="$BASE_OUTPUT.pdf" gnuplot plot_speedup.plt
+if [ -z "${SCRIPT}" ]; then
+   if [ -z "${COORD}" ]; then
+      TITLE="${TITLE}" FILE="${FILE}" OUTPUT="$BASE_OUTPUT.pdf" gnuplot plot_speedup.plt
+   else
+      TITLE="${TITLE}" FILE="${FILE}" OUTPUT="$BASE_OUTPUT.pdf" gnuplot plot_speedup_shortest.plt
+   fi
 else
-   TITLE="${TITLE}" FILE="${FILE}" OUTPUT="$BASE_OUTPUT.pdf" gnuplot plot_speedup_with_coord.plt
+   TITLE="${TITLE}" FILE="${FILE}" OUTPUT="$BASE_OUTPUT.pdf" gnuplot $SCRIPT
 fi
 sleep 0.2
 pdfcrop "${BASE_OUTPUT}.pdf"

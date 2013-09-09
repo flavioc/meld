@@ -7,8 +7,9 @@ set pointsize 2
 set yrange [0:16]
 set y2range [0:16]
 set key left top
-set key box
+#set key box
 set key spacing 2
-set key width 5
-set key font "Helvetica, 25"
+set key width 10
+set key font "Helvetica, 30"
 set pointsize 3
+

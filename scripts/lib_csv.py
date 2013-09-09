@@ -21,6 +21,8 @@ def get_sched_name(sched):
 		return 'thp'
 	if sched[:3] == 'ths':
 		return 'ths'
+	if sched[:3] == 'thx':
+		return 'thx'
 	if sched[:2] == 'th':
 		return 'th'
 	return 'sl'
@@ -28,9 +30,7 @@ def get_sched_name(sched):
 def get_sched_threads(sched):
 	if sched == 'sl': return 1
 	part = sched[:3]
-	if part == 'thp':
-		return int(sched[3:])
-	if part == 'ths':
+	if part == 'thp' or part == 'thx' or part == 'ths':
 		return int(sched[3:])
 	return int(sched[2:])
       
