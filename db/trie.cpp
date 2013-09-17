@@ -155,13 +155,13 @@ trie_node::match(const tuple_field& field, const field_type& typ,
          case FIELD_FLOAT: next = hash->get_float(field.float_field); break;
          case FIELD_NODE: next = hash->get_node(field.node_field); break;
 			case FIELD_STRING: next = hash->get_uint(field.ptr_field); break;
-#define HASH_LIST(LIST_TYPE) { \
-            LIST_TYPE *ls((LIST_TYPE*)field.ptr_field);  \
-            next = hash->get_uint(LIST_TYPE::is_null(ls) ? 0 : 1); \
+         case FIELD_LIST_INT:
+         case FIELD_LIST_FLOAT:
+         case FIELD_LIST_NODE: {
+             runtime::cons *ls((runtime::cons*)field.ptr_field);
+             next = hash->get_uint(runtime::cons::is_null(ls) ? 0 : 1);
+             break;
          }
-         case FIELD_LIST_INT: HASH_LIST(int_list); break;
-         case FIELD_LIST_FLOAT: HASH_LIST(float_list); break;
-         case FIELD_LIST_NODE: HASH_LIST(node_list); break;
          default: assert(false);
 #undef HASH_LIST
       }
@@ -191,14 +191,14 @@ trie_node::match(const tuple_field& field, const field_type& typ,
 					return next;
 				break;
             
-#define MATCH_LIST(LIST_TYPE, FIELD_LIST_TYPE, FIELD_ITEM_TYPE, ITEM_FIELD) { \
-            LIST_TYPE *ls((LIST_TYPE*)field.ptr_field);  \
-            if(LIST_TYPE::is_null(ls)) { \
+#define MATCH_LIST(FIELD_LIST_TYPE, FIELD_ITEM_TYPE) { \
+            runtime::cons *ls((runtime::cons*)field.ptr_field);  \
+            if(runtime::cons::is_null(ls)) { \
                if(f.int_field == 0) return next; \
             } else { \
                   if(f.int_field == 1) { \
                      tuple_field head, tail; \
-                     head.ITEM_FIELD = ls->get_head(); \
+                     head = ls->get_head(); \
                      tail.ptr_field = (ptr_val)ls->get_tail(); \
                      vals.push(tail); \
                      typs.push(FIELD_LIST_TYPE); \
@@ -209,9 +209,9 @@ trie_node::match(const tuple_field& field, const field_type& typ,
                } \
             } \
       
-         case FIELD_LIST_INT: MATCH_LIST(int_list, FIELD_LIST_INT, FIELD_INT, int_field); break;
-         case FIELD_LIST_FLOAT: MATCH_LIST(float_list, FIELD_LIST_FLOAT, FIELD_FLOAT, float_field); break;
-         case FIELD_LIST_NODE: MATCH_LIST(node_list, FIELD_LIST_NODE, FIELD_NODE, node_field); break;
+         case FIELD_LIST_INT: MATCH_LIST(FIELD_LIST_INT, FIELD_INT); break;
+         case FIELD_LIST_FLOAT: MATCH_LIST(FIELD_LIST_FLOAT, FIELD_FLOAT); break;
+         case FIELD_LIST_NODE: MATCH_LIST(FIELD_LIST_NODE, FIELD_NODE); break;
          default: assert(false);
       }
       
@@ -228,14 +228,14 @@ trie_node::insert(const tuple_field& field, const field_type& type, val_stack& v
    trie_node *new_child;
    
    switch(type) {
-#define INSERT_LIST(LIST_TYPE, FIELD_LIST_TYPE, FIELD_ITEM_TYPE, ITEM_FIELD) { \
-      LIST_TYPE *ls((LIST_TYPE*)field.ptr_field); \
-      if(LIST_TYPE::is_null(ls)) { \
+#define INSERT_LIST(FIELD_LIST_TYPE, FIELD_ITEM_TYPE) { \
+      runtime::cons *ls((runtime::cons*)field.ptr_field); \
+      if(runtime::cons::is_null(ls)) { \
          f.ptr_field = 0; \
       } else { \
          f.ptr_field = 1; \
          tuple_field head, tail; \
-         head.ITEM_FIELD = ls->get_head(); \
+         head = ls->get_head(); \
          tail.ptr_field = (ptr_val)ls->get_tail(); \
          vals.push(tail); \
          typs.push(FIELD_LIST_TYPE); \
@@ -243,9 +243,9 @@ trie_node::insert(const tuple_field& field, const field_type& type, val_stack& v
          typs.push(FIELD_ITEM_TYPE); \
       } \
    }
-         case FIELD_LIST_INT: INSERT_LIST(int_list, FIELD_LIST_INT, FIELD_INT, int_field); break;
-         case FIELD_LIST_FLOAT: INSERT_LIST(float_list, FIELD_LIST_FLOAT, FIELD_FLOAT, float_field); break;
-         case FIELD_LIST_NODE: INSERT_LIST(node_list, FIELD_LIST_NODE, FIELD_NODE, node_field); break;
+         case FIELD_LIST_INT: INSERT_LIST(FIELD_LIST_INT, FIELD_INT); break;
+         case FIELD_LIST_FLOAT: INSERT_LIST(FIELD_LIST_FLOAT, FIELD_FLOAT); break;
+         case FIELD_LIST_NODE: INSERT_LIST(FIELD_LIST_NODE, FIELD_NODE); break;
          default:
             f = field;
             break;
@@ -726,7 +726,7 @@ trie::check_insert(void *data, const derivation_count many, const depth_t depth,
    
    assert(parent->is_leaf());
    trie_leaf *orig(parent->get_leaf());
-   
+
    if(many > 0)
       orig->add_new(depth, many);
    else

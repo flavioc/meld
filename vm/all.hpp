@@ -53,9 +53,7 @@ class all
 	define_get_const(int, int_val, *(int_val*)(consts + id))
 	define_get_const(float, float_val, *(float_val*)(consts + id))
 	define_get_const(ptr, ptr_val, *(ptr_val*)(consts + id));
-	define_get_const(int_list, runtime::int_list*, (runtime::int_list*)get_const_ptr(id))
-	define_get_const(float_list, runtime::float_list*, (runtime::float_list*)get_const_ptr(id))
-	define_get_const(node_list, runtime::node_list*, (runtime::node_list*)get_const_ptr(id))
+	define_get_const(cons, runtime::cons*, (runtime::cons*)get_const_ptr(id))
 	define_get_const(string, runtime::rstring::ptr, (runtime::rstring::ptr)get_const_ptr(id))
 	define_get_const(node, node_val, *(node_val*)(consts + id))
 	

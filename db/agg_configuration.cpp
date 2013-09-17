@@ -276,10 +276,10 @@ agg_configuration::generate_sum_list_float(const field_num field, vm::depth_t& d
    const_iterator end(vals.end());
    const_iterator it(vals.begin());
    vm::tuple *first_tpl((*it)->get_underlying_tuple());
-   float_list *first(first_tpl->get_float_list(field));
-   const size_t len(float_list::length(first));
+   cons *first(first_tpl->get_cons(field));
+   const size_t len(cons::length(first));
    const size_t num_lists(vals.size());
-   float_list *lists[num_lists];
+   cons *lists[num_lists];
    vm::tuple *ret(first_tpl->copy_except(field));
    
    for(size_t i(0); it != end; ++it) {
@@ -287,8 +287,8 @@ agg_configuration::generate_sum_list_float(const field_num field, vm::depth_t& d
       size_t count(size_t (stpl->get_count()));
       depth = max(stpl->get_max_depth(), depth);
       for(size_t j(0); j < count; ++j) {
-         lists[i++] = stpl->get_underlying_tuple()->get_float_list(field);
-         assert(float_list::length(lists[i-1]) == len);
+         lists[i++] = stpl->get_underlying_tuple()->get_cons(field);
+         assert(cons::length(lists[i-1]) == len);
       }
       assert(i <= num_lists);
    }
@@ -299,9 +299,9 @@ agg_configuration::generate_sum_list_float(const field_num field, vm::depth_t& d
       float_val sum(0.0);
       
       for(size_t j(0); j < num_lists; ++j) {
-         float_list *ls(lists[j]);
+         cons *ls(lists[j]);
          assert(ls != NULL);
-         sum += ls->get_head();
+         sum += ls->get_head().float_field;
          lists[j] = ls->get_tail();
       }
       
@@ -309,11 +309,11 @@ agg_configuration::generate_sum_list_float(const field_num field, vm::depth_t& d
    }
    
    for(size_t j(0); j < num_lists; ++j)
-      assert(float_list::is_null(lists[j]));
+      assert(cons::is_null(lists[j]));
    
-   float_list *ptr(from_stack_to_list<stack_float_list, float_list>(vals));
+   cons *ptr(from_stack_to_list<stack_float_list>(vals, build_from_float));
    
-   ret->set_float_list(field, ptr);
+   ret->set_cons(field, ptr);
    
    return ret;
 }

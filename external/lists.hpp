@@ -12,22 +12,21 @@ namespace vm
 namespace external
 {
    
-argument intlistlength(const argument);
-argument intlistdiff(const argument, const argument);
+argument listlength(const argument);
+argument listappend(const argument, const argument);
+argument listreverse(const argument);
+argument listlast(const argument);
+
 argument intlistnth(const argument, const argument);
+argument intlistdiff(const argument, const argument);
 argument intlistsub(const argument, const argument, const argument);
-argument intlistappend(const argument, const argument);
 argument intlistsort(const argument);
 argument intlistremoveduplicates(const argument);
 argument intlistequal(const argument, const argument);
 argument str2intlist(const argument);
 
 argument nodelistremove(const argument, const argument);
-argument nodelistlength(const argument);
 argument nodelistcount(const argument, const argument);
-argument nodelistappend(const argument, const argument);
-argument nodelistreverse(const argument);
-argument nodelistlast(const argument);
 
 }
 

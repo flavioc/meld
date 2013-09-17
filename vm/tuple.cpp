@@ -31,6 +31,24 @@ tuple::tuple(void):
 {
 }
 
+static bool
+equal_int(const tuple_field& f1, const tuple_field& f2)
+{
+   return f1.int_field == f2.int_field;
+}
+
+static bool
+equal_float(const tuple_field& f1, const tuple_field& f2)
+{
+   return f1.float_field == f2.float_field;
+}
+
+static bool
+equal_node(const tuple_field& f1, const tuple_field& f2)
+{
+   return f1.node_field == f2.node_field;
+}
+
 bool
 tuple::field_equal(const tuple& other, const field_num i) const
 {
@@ -46,15 +64,15 @@ tuple::field_equal(const tuple& other, const field_num i) const
             return false;
          break;
       case FIELD_LIST_INT:
-         if(!int_list::equal(get_int_list(i), other.get_int_list(i)))
+         if(!cons::equal(get_cons(i), other.get_cons(i), equal_int))
             return false;
          break;
       case FIELD_LIST_FLOAT:
-         if(!float_list::equal(get_float_list(i), other.get_float_list(i)))
+         if(!cons::equal(get_cons(i), other.get_cons(i), equal_float))
             return false;
          break;
       case FIELD_LIST_NODE:
-         if(!node_list::equal(get_node_list(i), other.get_node_list(i)))
+         if(!cons::equal(get_cons(i), other.get_cons(i), equal_node))
             return false;
          break;
       case FIELD_NODE:
@@ -95,13 +113,13 @@ tuple::copy_field(tuple *ret, const field_num i) const
          ret->set_node(i, get_node(i));
          break;
       case FIELD_LIST_INT:
-         ret->set_int_list(i, get_int_list(i));
+         ret->set_cons(i, get_cons(i));
          break;
       case FIELD_LIST_FLOAT:
-         ret->set_float_list(i, get_float_list(i));
+         ret->set_cons(i, get_cons(i));
          break;
       case FIELD_LIST_NODE:
-         ret->set_node_list(i, get_node_list(i));
+         ret->set_cons(i, get_cons(i));
          break;
       default:
          throw type_error("Unrecognized field type " + to_string((int)i) + ": " + to_string(get_field_type(i)));
@@ -137,21 +155,21 @@ tuple::copy_except(const field_num field) const
 }
 
 static inline void
-print_int(ostream& out, const int_val val)
+print_int(ostream& out, const tuple_field& val)
 {
-   out << val;
+   out << val.int_field;
 }
 
 static inline void
-print_float(ostream& out, const float_val val)
+print_float(ostream& out, const tuple_field& val)
 {
-   out << val;
+   out << val.float_field;
 }
 
 static inline void
-print_node(ostream& out, const node_val node)
+print_node(ostream& out, const tuple_field& val)
 {
-   out << "@" << node;
+   out << "@" << val.node_field;
 }
 
 void
@@ -170,22 +188,22 @@ tuple::print(ostream& cout) const
          
       switch(get_field_type(i)) {
          case FIELD_INT:
-            print_int(cout, get_int(i));
+            print_int(cout, get_field(i));
             break;
          case FIELD_FLOAT:
-            print_float(cout, get_float(i));
+            print_float(cout, get_field(i));
             break;
          case FIELD_LIST_INT:
-            int_list::print(cout, get_int_list(i), print_int);
+            cons::print(cout, get_cons(i), print_int);
             break;
          case FIELD_LIST_FLOAT:
-            float_list::print(cout, get_float_list(i), print_float);
+            cons::print(cout, get_cons(i), print_float);
             break;
          case FIELD_LIST_NODE:
-            node_list::print(cout, get_node_list(i), print_node);
+            cons::print(cout, get_cons(i), print_node);
             break;
          case FIELD_NODE:
-            print_node(cout, get_node(i));
+            print_node(cout, get_field(i));
             break;
 			case FIELD_STRING:
 				cout << '"' << get_string(i)->get_content() << '"';
@@ -248,9 +266,9 @@ tuple::~tuple(void)
 {
    for(field_num i = 0; i < num_fields(); ++i) {
       switch(get_field_type(i)) {
-         case FIELD_LIST_INT: int_list::dec_refs(get_int_list(i)); break;
-         case FIELD_LIST_FLOAT: float_list::dec_refs(get_float_list(i)); break;
-         case FIELD_LIST_NODE: node_list::dec_refs(get_node_list(i)); break;
+         case FIELD_LIST_NODE:
+         case FIELD_LIST_FLOAT:
+         case FIELD_LIST_INT: cons::dec_refs(get_cons(i)); break;
          case FIELD_STRING: get_string(i)->dec_refs(); break;
          default: break;
       }
@@ -273,13 +291,9 @@ tuple::get_storage_size(void) const
             ret += pred->get_field_size(i);
             break;
          case FIELD_LIST_INT:
-            ret += int_list::size_list(get_int_list(i), field_type_size(FIELD_INT));
-            break;
          case FIELD_LIST_FLOAT:
-            ret += float_list::size_list(get_float_list(i), field_type_size(FIELD_FLOAT));
-            break;
          case FIELD_LIST_NODE:
-            ret += node_list::size_list(get_node_list(i), field_type_size(FIELD_NODE));
+            ret += cons::size_list(get_cons(i));
             break;
          default:
             throw type_error("unsupport field type in tuple::get_storage_size");
@@ -316,13 +330,13 @@ tuple::pack(byte *buf, const size_t buf_size, int *pos) const
             }
             break;
          case FIELD_LIST_INT:
-            int_list::pack(get_int_list(i), buf, buf_size, pos);
+            cons::pack(get_cons(i), buf, buf_size, pos);
             break;
          case FIELD_LIST_FLOAT:
-            float_list::pack(get_float_list(i), buf, buf_size, pos);
+            cons::pack(get_cons(i), buf, buf_size, pos);
             break;
          case FIELD_LIST_NODE:
-            node_list::pack(get_node_list(i), buf, buf_size, pos);
+            cons::pack(get_cons(i), buf, buf_size, pos);
             break;
          default:
             throw type_error("unsupported field type to pack");
@@ -355,13 +369,13 @@ tuple::load(byte *buf, const size_t buf_size, int *pos)
             }
             break;
          case FIELD_LIST_INT:
-            set_int_list(i, int_list::unpack(buf, buf_size, pos));
+            set_cons(i, cons::unpack(buf, buf_size, pos));
             break;
          case FIELD_LIST_FLOAT:
-            set_float_list(i, float_list::unpack(buf, buf_size, pos));
+            set_cons(i, cons::unpack(buf, buf_size, pos));
             break;
          case FIELD_LIST_NODE:
-            set_node_list(i, node_list::unpack(buf, buf_size, pos));
+            set_cons(i, cons::unpack(buf, buf_size, pos));
             break;
          default:
             throw type_error("unsupported field type to unpack");
@@ -389,30 +403,16 @@ tuple::copy_runtime(void)
 {
    for(field_num i(0); i < num_fields(); ++i) {
       switch(get_field_type(i)) {
+         case FIELD_LIST_FLOAT:
+         case FIELD_LIST_NODE:
          case FIELD_LIST_INT: {
-               int_list *old(get_int_list(i));
-               int_list *ne(int_list::copy(old));
+               cons *old(get_cons(i));
+               cons *ne(cons::copy(old));
 
-               int_list::dec_refs(old);
-               set_int_list(i, ne);
+               cons::dec_refs(old);
+               set_cons(i, ne);
             }
             break;
-         case FIELD_LIST_FLOAT: {
-               float_list *old(get_float_list(i));
-               float_list *ne(float_list::copy(old));
-
-               float_list::dec_refs(old);
-               set_float_list(i, ne);
-           }
-           break;
-         case FIELD_LIST_NODE: {
-               node_list *old(get_node_list(i));
-               node_list *ne(node_list::copy(old));
-
-               node_list::dec_refs(old);
-               set_node_list(i, ne);
-           }
-           break;
          case FIELD_STRING: {
                rstring::ptr old(get_string(i));
                rstring::ptr ne(old->copy());

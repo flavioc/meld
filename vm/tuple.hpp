@@ -51,9 +51,7 @@ public:
    define_set(bool, const bool_val&, set_int(field, val ? 1 : 0));
    define_set(node, const node_val&, fields[field].node_field = val);
 	define_set(string, const runtime::rstring::ptr, set_ptr(field, (ptr_val)val); val->inc_refs());
-   define_set(int_list, runtime::int_list*, set_ptr(field, (ptr_val)val); runtime::int_list::inc_refs(val));
-   define_set(float_list, runtime::float_list*, set_ptr(field, (ptr_val)val); runtime::float_list::inc_refs(val));
-   define_set(node_list, runtime::node_list*, set_ptr(field, (ptr_val)val); runtime::node_list::inc_refs(val));
+   define_set(cons, runtime::cons*, set_ptr(field, (ptr_val)val); runtime::cons::inc_refs(val));
 
    inline void set_nil(const field_num& field) { set_ptr(field, null_ptr_val); }
    inline void set_field(const field_num& field, tuple_field& f) { fields[field] = f; }
@@ -89,9 +87,7 @@ public:
    define_get(bool_val, bool, get_int(field) ? true : false);
    define_get(node_val, node, fields[field].node_field);
 	define_get(runtime::rstring::ptr, string, (runtime::rstring::ptr)get_ptr(field));
-   define_get(runtime::int_list*, int_list, (runtime::int_list*)get_ptr(field));
-   define_get(runtime::float_list*, float_list, (runtime::float_list*)get_ptr(field));
-   define_get(runtime::node_list*, node_list, (runtime::node_list*)get_ptr(field));
+   define_get(runtime::cons*, cons, (runtime::cons*)get_ptr(field));
 
 #undef define_get
 

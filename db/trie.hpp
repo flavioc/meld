@@ -225,7 +225,7 @@ class depth_counter: public mem::base
             counts[depth] = (vm::ref_count)count;
             //std::cout << "New depth " << depth << " with count " << count << "\n";
          } else {
-            it->second =+ count;
+            it->second += count;
             //std::cout << "Depth " << depth << " now with count " << it->second << "\n";
          }
       }

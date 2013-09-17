@@ -32,9 +32,7 @@ private:
 	db::simple_tuple *saved_stuples[NUM_REGS];
 	bool is_leaf[NUM_REGS];
 	
-	std::list<runtime::float_list*, mem::allocator<runtime::float_list*> > free_float_list;
-   std::list<runtime::int_list*, mem::allocator<runtime::int_list*> > free_int_list;
-   std::list<runtime::node_list*, mem::allocator<runtime::node_list*> > free_node_list;
+	std::list<runtime::cons*, mem::allocator<runtime::cons*> > free_cons;
 	std::list<runtime::rstring::ptr, mem::allocator<runtime::rstring::ptr> > free_rstring;
    
    typedef std::pair<db::tuple_trie_leaf *, vm::ref_count> pair_linear;
@@ -124,9 +122,7 @@ public:
    define_get(ptr, ptr_val, return regs[num].ptr_field);
    define_get(bool, bool_val, return get_int(num) ? true : false);
 	define_get(string, runtime::rstring::ptr, return (runtime::rstring::ptr)get_ptr(num););
-   define_get(int_list, runtime::int_list*, return (runtime::int_list*)get_ptr(num));
-   define_get(float_list, runtime::float_list*, return (runtime::float_list*)get_ptr(num));
-   define_get(node_list, runtime::node_list*, return (runtime::node_list*)get_ptr(num));
+   define_get(cons, runtime::cons*, return (runtime::cons*)get_ptr(num));
    define_get(tuple, vm::tuple*, return (vm::tuple*)get_ptr(num));
    define_get(node, vm::node_val, return regs[num].node_field);
    
@@ -140,9 +136,7 @@ public:
    define_set(ptr, const ptr_val&, regs[num].ptr_field = val);
    define_set(bool, const bool_val&, set_int(num, val ? 1 : 0));
 	define_set(string, const runtime::rstring::ptr, set_ptr(num, (ptr_val)val));
-   define_set(int_list, runtime::int_list*, set_ptr(num, (ptr_val)val));
-   define_set(float_list, runtime::float_list*, set_ptr(num, (ptr_val)val));
-   define_set(node_list, runtime::node_list*, set_ptr(num, (ptr_val)val));
+   define_set(cons, runtime::cons*, set_ptr(num, (ptr_val)val));
    define_set(tuple, vm::tuple*, set_ptr(num, (ptr_val)val));
    define_set(node, const node_val, regs[num].node_field = val);
    
@@ -166,12 +160,8 @@ public:
 
 	void copy_reg2const(const reg_num&, const const_id&);
    
-   inline void add_float_list(runtime::float_list *ls) { ls->inc_refs();
-                                                         free_float_list.push_back(ls); }
-   inline void add_int_list(runtime::int_list *ls) { ls->inc_refs();
-                                                     free_int_list.push_back(ls); }
-   inline void add_node_list(runtime::node_list *ls) { ls->inc_refs();
-                                                       free_node_list.push_back(ls); }
+   inline void add_cons(runtime::cons *ls) { ls->inc_refs();
+                                             free_cons.push_back(ls); }
 	inline void add_string(runtime::rstring::ptr str) { str->inc_refs();
                                                        free_rstring.push_back(str); }
    inline void add_generated_tuple(db::simple_tuple *tpl) { tpl->set_generated_run(true); generated_tuples.push_back(tpl); }

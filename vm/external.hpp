@@ -24,17 +24,13 @@ typedef external_function_ptr0 external_function_ptr;
 #define DECLARE_INT(NAME) const int_val NAME(__ ## NAME.int_field)
 #define DECLARE_NODE(NAME) const node_val NAME(__ ## NAME.node_field)
 #define DECLARE_FLOAT(NAME) const float_val NAME(__ ## NAME.float_field)
-#define DECLARE_INT_LIST(NAME) const int_list *NAME((int_list *)__ ## NAME.ptr_field)
-#define DECLARE_FLOAT_LIST(NAME) const float_list *NAME((float_list *)__ ## NAME.ptr_field)
-#define DECLARE_NODE_LIST(NAME) const node_list *NAME((node_list *)__ ## NAME.ptr_field)
+#define DECLARE_LIST(NAME) const runtime::cons *NAME((runtime::cons *)__ ## NAME.ptr_field)
 #define DECLARE_STRING(NAME) const rstring::ptr NAME((rstring::ptr)__ ## NAME.ptr_field)
 #define RETURN_PTR(X) { argument _ret; _ret.ptr_field = (ptr_val)(X); return _ret; }
 #define RETURN_INT(X) { argument _ret; _ret.int_field = X; return _ret; }
 #define RETURN_FLOAT(X) { argument _ret; _ret.float_field = X; return _ret; }
 #define RETURN_NODE(X) { argument _ret; _ret.node_field = X; return _ret; }
-#define RETURN_INT_LIST(X) RETURN_PTR(X)
-#define RETURN_FLOAT_LIST(X) RETURN_PTR(X)
-#define RETURN_NODE_LIST(X) RETURN_PTR(X)
+#define RETURN_LIST(X) RETURN_PTR(X)
 #define RETURN_STRING(X) RETURN_PTR(X)
 
 class external_function

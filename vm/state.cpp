@@ -91,12 +91,8 @@ state::purge_runtime_objects(void)
    } \
    free_ ## TYPE .clear()
 
-#define PURGE_LIST(TYPE) \
-	PURGE_OBJ(TYPE ## _list)
+   PURGE_OBJ(cons);
 
-   PURGE_LIST(float);
-   PURGE_LIST(int);
-   PURGE_LIST(node);
 #undef PURGE_LIST
 	
 	PURGE_OBJ(rstring);
@@ -131,11 +127,9 @@ state::copy_reg2const(const reg_num& reg_from, const const_id& cid)
    all->set_const(cid, regs[reg_from]);
 	switch(all->PROGRAM->get_const_type(cid)) {
 		case FIELD_LIST_INT:
-			int_list::inc_refs(all->get_const_int_list(cid)); break;
 		case FIELD_LIST_FLOAT:
-			float_list::inc_refs(all->get_const_float_list(cid)); break;
 		case FIELD_LIST_NODE:
-			node_list::inc_refs(all->get_const_node_list(cid)); break;
+         runtime::cons::inc_refs(all->get_const_cons(cid)); break;
 		case FIELD_STRING:
 			all->get_const_string(cid)->inc_refs(); break;
 		default: break;
