@@ -23,19 +23,62 @@ namespace vm {
 #define PRED_AGG_IMMEDIATE 0x08
 #define PRED_AGG_UNSAFE 0x00
 
+type*
+read_type_from_reader(code_reader& read)
+{
+   byte f;
+   read.read_type<byte>(&f);
+   const field_type t((field_type)f);
+
+   switch(t) {
+      case FIELD_INT:
+      case FIELD_FLOAT:
+      case FIELD_NODE:
+      case FIELD_STRING:
+         return new type(t);
+      case FIELD_LIST:
+         return new list_type(read_type_from_reader(read));
+      case FIELD_STRUCT: {
+         byte size;
+         read.read_type<byte>(&size);
+         struct_type *ret = new struct_type((size_t)size);
+         for(size_t i(0); i < ret->get_size(); ++i)
+            ret->set_type(i, read_type_from_reader(read));
+         return ret;
+      }
+      default:
+         assert(false); break;
+   }
+   assert(false);
+   return NULL;
+}
+
+type*
+read_type_id_from_reader(code_reader& read, const vector<type*>& types)
+{
+   byte p;
+   read.read_type<byte>(&p);
+   const size_t pos((size_t)p);
+   assert(pos < types.size());
+
+   return types[pos];
+}
+
 predicate*
-predicate::make_predicate_from_buf(byte *buf, code_size_t *code_size, const predicate_id id)
+predicate::make_predicate_from_reader(code_reader& read, code_size_t *code_size, const predicate_id id,
+      const uint32_t major_version, const uint32_t minor_version,
+      const vector<type*>& types)
 {
    predicate *pred = new predicate();
    
    pred->id = id;
 
    // get code size
-   *code_size = (code_size_t)*((code_size_t*)buf);
-   buf += sizeof(code_size_t);
+   read.read_type<code_size_t>(code_size);
    
    // get predicate properties
-   byte prop = buf[0];
+   byte prop;
+   read.read_type<byte>(&prop);
    if(prop & PRED_AGG)
       pred->agg_info = new predicate::aggregate_info;
    else
@@ -46,35 +89,63 @@ predicate::make_predicate_from_buf(byte *buf, code_size_t *code_size, const pred
    pred->is_action = prop & PRED_ACTION;
    pred->is_reused = prop & PRED_REUSED;
    pred->is_cycle = prop & PRED_CYCLE;
-   buf++;
 
    // get aggregate information, if any
+   byte agg;
+   read.read_type<byte>(&agg);
    if(pred->is_aggregate()) {
-      unsigned char agg = buf[0];
-      
       pred->agg_info->safeness = AGG_UNSAFE;
       pred->agg_info->field = agg & 0xf;
       pred->agg_info->type = (aggregate_type)((0xf0 & agg) >> 4);
    }
-   buf++;
    
    // read stratification level
-   pred->level = (strat_level)buf[0];
-   buf++;
+   byte level;
+   read.read_type<byte>(&level);
+   pred->level = (strat_level)level;
 
    // read number of fields
-   pred->types.resize((size_t)buf[0]);
-   buf++;
+   byte nfields;
+   read.read_type<byte>(&nfields);
+   pred->types.resize((size_t)nfields);
    
    // read argument types
-   for(size_t i = 0; i < pred->num_fields(); ++i)
-      pred->types[i] = (field_type)buf[i];
-   buf += PRED_ARGS_MAX;
+   if(VERSION_AT_LEAST(0, 10)) {
+      for(size_t i(0); i < pred->num_fields(); ++i) {
+         pred->types[i] = read_type_id_from_reader(read, types);
+      }
+   } else {
+      for(size_t i = 0; i < PRED_ARGS_MAX; ++i) {
+         byte f;
+         read.read_type<byte>(&f);
+         if(i < pred->num_fields()) {
+            const field_type t((field_type)f);
+            switch(t) {
+               case 0x3:
+                  pred->types[i] = new list_type(new type(FIELD_INT));
+                  break;
+               case 0x4:
+                  pred->types[i] = new list_type(new type(FIELD_FLOAT));
+                  break;
+               case 0x5:
+                  pred->types[i] = new list_type(new type(FIELD_NODE));
+                  break;
+               default:
+                  pred->types[i] = new type(t);
+                  break;
+            }
+         }
+      }
+   }
    
    // read predicate name
-   pred->name = string((const char*)buf);
+   char name_buf[PRED_NAME_SIZE_MAX];
+   read.read_any(name_buf, PRED_NAME_SIZE_MAX);
+   pred->name = string((const char*)name_buf);
 
-   buf += PRED_NAME_SIZE_MAX;
+   char buf_vec[PRED_AGG_INFO_MAX];
+   read.read_any(buf_vec, PRED_AGG_INFO_MAX);
+   char *buf = buf_vec;
    
    if(pred->is_aggregate()) {
       if(buf[0] == PRED_AGG_LOCAL) {
@@ -110,7 +181,7 @@ predicate::build_field_info(void)
    fields_offset.resize(num_fields());
    
    for(size_t i = 0; i < num_fields(); ++i) {
-      const size_t size = field_type_size(types[i]);
+      const size_t size = types[i]->size();
       
       fields_size[i] = size;
       fields_offset[i] = offset;
@@ -149,6 +220,7 @@ predicate::predicate(void)
 predicate::~predicate(void)
 {
    delete agg_info;
+   // types are not deleted here, they are deleted in vm/program.
 }
 
 void
@@ -163,7 +235,7 @@ predicate::print_simple(ostream& cout) const
       if(i != 0)
          cout << ", ";
 
-      const string typ(field_type_string(types[i]));
+      const string typ(types[i]->string());
       
       if(is_aggregate() && agg_info->field == i)
          cout << aggregate_type_string(agg_info->type) << " " << typ;

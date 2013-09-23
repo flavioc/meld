@@ -38,7 +38,7 @@ has_value(const runtime::cons *_l, int_val v)
    runtime::cons *l((runtime::cons*)_l);
 
    while(!runtime::cons::is_null(l)) {
-      if(l->get_head().int_field == v) {
+      if(FIELD_INT(l->get_head()) == v) {
          return true;
       }
 
@@ -60,8 +60,8 @@ intlistdiff(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
 
    while(!runtime::cons::is_null(p)) {
 
-      if(!has_value(ls2, p->get_head().int_field))
-         s.push(p->get_head().int_field);
+      if(!has_value(ls2, FIELD_INT(p->get_head())))
+         s.push(FIELD_INT(p->get_head()));
 
       p = p->get_tail();
    }
@@ -83,7 +83,7 @@ intlistnth(EXTERNAL_ARG(ls), EXTERNAL_ARG(v))
    while(!runtime::cons::is_null(p)) {
 
       if(count == v) {
-         int_val r(p->get_head().int_field);
+         int_val r(FIELD_INT(p->get_head()));
 
          RETURN_INT(r);
       }
@@ -107,8 +107,8 @@ nodelistremove(EXTERNAL_ARG(ls), EXTERNAL_ARG(n))
 
    while(!runtime::cons::is_null(p)) {
 
-		if(p->get_head().node_field != n)
-			s.push(p->get_head().node_field);
+		if(FIELD_NODE(p->get_head()) != n)
+			s.push(FIELD_NODE(p->get_head()));
 
       p = p->get_tail();
    }
@@ -136,7 +136,7 @@ intlistsub(EXTERNAL_ARG(p), EXTERNAL_ARG(a), EXTERNAL_ARG(b))
    stack_int_list s;
 
    while(!runtime::cons::is_null(ls) && ctn < b) {
-      s.push(ls->get_head().int_field);
+      s.push(FIELD_INT(ls->get_head()));
 
       ls = ls->get_tail();
       ++ctn;
@@ -168,7 +168,10 @@ listappend(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
       p2 = p2->get_tail();
    }
 
-   runtime::cons *ptr(from_general_stack_to_list(s));
+   list_type *t(ls1->get_type());
+   if(t == NULL)
+      t = ls2->get_type();
+   runtime::cons *ptr(from_general_stack_to_list(s, t));
 
    RETURN_LIST(ptr);
 }
@@ -188,7 +191,7 @@ intlistsort(EXTERNAL_ARG(ls))
    vector_int_list vec;
 
    while(!runtime::cons::is_null(p)) {
-      vec.push_back(p->get_head().int_field);
+      vec.push_back(FIELD_INT(p->get_head()));
       p = p->get_tail();
    }
 
@@ -208,7 +211,7 @@ intlistremoveduplicates(EXTERNAL_ARG(ls))
    vector_int_list vec;
 
    while(!runtime::cons::is_null(p)) {
-      vec.push_back(p->get_head().int_field);
+      vec.push_back(FIELD_INT(p->get_head()));
       p = p->get_tail();
    }
 
@@ -246,7 +249,7 @@ intlistequal(EXTERNAL_ARG(l1), EXTERNAL_ARG(l2))
          RETURN_INT(ret);
       }
 
-      if(ls1->get_head().int_field != ls2->get_head().int_field) {
+      if(FIELD_INT(ls1->get_head()) != FIELD_INT(ls2->get_head())) {
          ret = 0;
          RETURN_INT(ret);
       }
@@ -297,7 +300,7 @@ nodelistcount(EXTERNAL_ARG(ls), EXTERNAL_ARG(el))
    int_val total(0);
 
    while(!runtime::cons::is_null(p)){
-      if(p->get_head().node_field == el) {
+      if(FIELD_NODE(p->get_head()) == el) {
          ++total;
       }
       p = p->get_tail();
@@ -318,7 +321,7 @@ listreverse(EXTERNAL_ARG(ls))
       p = p->get_tail();
    }
 
-   runtime::cons *ptr(from_general_stack_to_reverse_list(s));
+   runtime::cons *ptr(from_general_stack_to_reverse_list(s, ls->get_type()));
 
    RETURN_LIST(ptr);
 }

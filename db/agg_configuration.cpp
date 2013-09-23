@@ -34,7 +34,6 @@ agg_configuration::add_to_set(vm::tuple *tpl, const derivation_count many, const
       } else if(deleter.to_delete()) {
          deleter();
       } else if(tpl->is_cycle()) {
-         //cout << "Deleting in cycle" << endl;
          depth_counter *dc(deleter.get_depth_counter());
          assert(dc != NULL);
 
@@ -301,7 +300,7 @@ agg_configuration::generate_sum_list_float(const field_num field, vm::depth_t& d
       for(size_t j(0); j < num_lists; ++j) {
          cons *ls(lists[j]);
          assert(ls != NULL);
-         sum += ls->get_head().float_field;
+         sum += FIELD_FLOAT(ls->get_head());
          lists[j] = ls->get_tail();
       }
       
@@ -311,7 +310,7 @@ agg_configuration::generate_sum_list_float(const field_num field, vm::depth_t& d
    for(size_t j(0); j < num_lists; ++j)
       assert(cons::is_null(lists[j]));
    
-   cons *ptr(from_stack_to_list<stack_float_list>(vals, build_from_float));
+   cons *ptr(from_float_stack_to_list(vals));
    
    ret->set_cons(field, ptr);
    

@@ -6,6 +6,8 @@ using namespace std;
 
 namespace db
 {
+
+//#define DEBUG_AGGS
    
 agg_configuration*
 tuple_aggregate::create_configuration(void) const
@@ -26,11 +28,12 @@ tuple_aggregate::add_to_set(vm::tuple *tpl, const derivation_count many, const d
       conf = leaf->get_conf();
    }
    
-#if 0
+#ifdef DEBUG_AGGS
+   cout << "----> Before:" << endl;
    conf->print(cout);
 #endif
    conf->add_to_set(tpl, many, depth);
-#if 0
+#ifdef DEBUG_AGGS
    cout << "Add " << *tpl << " " << many << " with depth " << depth << endl;
    conf->print(cout);
 #endif

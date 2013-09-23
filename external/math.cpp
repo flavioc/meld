@@ -306,7 +306,7 @@ demergemessages(EXTERNAL_ARG(v1), EXTERNAL_ARG(v2))
 
    while(!runtime::cons::is_null(ls1)) {
       assert(!runtime::cons::is_null(ls2));
-      s.push(ls1->get_head().int_field | ls2->get_head().int_field);
+      s.push(FIELD_INT(ls1->get_head()) | FIELD_INT(ls2->get_head()));
       ls1 = ls1->get_tail();
       ls2 = ls2->get_tail();
    }

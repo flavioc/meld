@@ -13,6 +13,7 @@
 #include "vm/all.hpp"
 #include "utils/random.hpp"
 #include "queue/safe_simple_pqueue.hpp"
+#include "runtime/struct.hpp"
 
 // forward declaration
 namespace sched {
@@ -34,6 +35,7 @@ private:
 	
 	std::list<runtime::cons*, mem::allocator<runtime::cons*> > free_cons;
 	std::list<runtime::rstring::ptr, mem::allocator<runtime::rstring::ptr> > free_rstring;
+   std::list<runtime::struct1*, mem::allocator<runtime::struct1*> > free_struct1;
    
    typedef std::pair<db::tuple_trie_leaf *, vm::ref_count> pair_linear;
    typedef std::list<pair_linear> list_linear;
@@ -117,28 +119,30 @@ public:
    inline RET get_ ## WHAT (const reg_num& num) const { BODY; }
    
    define_get(reg, reg, return regs[num]);
-   define_get(int, int_val, return regs[num].int_field);
-   define_get(float, float_val, return regs[num].float_field);
-   define_get(ptr, ptr_val, return regs[num].ptr_field);
-   define_get(bool, bool_val, return get_int(num) ? true : false);
-	define_get(string, runtime::rstring::ptr, return (runtime::rstring::ptr)get_ptr(num););
-   define_get(cons, runtime::cons*, return (runtime::cons*)get_ptr(num));
+   define_get(int, int_val, return FIELD_INT(regs[num]));
+   define_get(float, float_val, return FIELD_FLOAT(regs[num]));
+   define_get(ptr, ptr_val, return FIELD_PTR(regs[num]));
+   define_get(bool, bool_val, return FIELD_BOOL(regs[num]));
+	define_get(string, runtime::rstring::ptr, return FIELD_STRING(regs[num]););
+   define_get(cons, runtime::cons*, return FIELD_CONS(regs[num]));
    define_get(tuple, vm::tuple*, return (vm::tuple*)get_ptr(num));
-   define_get(node, vm::node_val, return regs[num].node_field);
+   define_get(node, vm::node_val, return FIELD_NODE(regs[num]));
+   define_get(struct, runtime::struct1*, return FIELD_STRUCT(regs[num]));
    
 #undef define_get
 
 #define define_set(WHAT, ARG, BODY) 												\
    inline void set_ ## WHAT (const reg_num& num, ARG val) { BODY; };
    
-   define_set(float, const float_val&, regs[num].float_field = val);
-   define_set(int, const int_val&, regs[num].int_field = val);
-   define_set(ptr, const ptr_val&, regs[num].ptr_field = val);
-   define_set(bool, const bool_val&, set_int(num, val ? 1 : 0));
-	define_set(string, const runtime::rstring::ptr, set_ptr(num, (ptr_val)val));
-   define_set(cons, runtime::cons*, set_ptr(num, (ptr_val)val));
+   define_set(float, const float_val&, SET_FIELD_FLOAT(regs[num], val));
+   define_set(int, const int_val&, SET_FIELD_INT(regs[num], val));
+   define_set(ptr, const ptr_val&, SET_FIELD_PTR(regs[num], val));
+   define_set(bool, const bool_val&, SET_FIELD_BOOL(regs[num], val));
+	define_set(string, const runtime::rstring::ptr, SET_FIELD_STRING(regs[num], val));
+   define_set(cons, runtime::cons*, SET_FIELD_CONS(regs[num], val));
    define_set(tuple, vm::tuple*, set_ptr(num, (ptr_val)val));
-   define_set(node, const node_val, regs[num].node_field = val);
+   define_set(node, const node_val, SET_FIELD_NODE(regs[num], val));
+   define_set(struct, runtime::struct1*, SET_FIELD_STRUCT(regs[num], val));
    
 #undef define_set
    
@@ -164,6 +168,8 @@ public:
                                              free_cons.push_back(ls); }
 	inline void add_string(runtime::rstring::ptr str) { str->inc_refs();
                                                        free_rstring.push_back(str); }
+   inline void add_struct(runtime::struct1 *s) { s->inc_refs();
+                                                 free_struct1.push_back(s); }
    inline void add_generated_tuple(db::simple_tuple *tpl) { tpl->set_generated_run(true); generated_tuples.push_back(tpl); }
    
 	bool add_fact_to_node(vm::tuple *, const vm::derivation_count count = 1, const vm::depth_t depth = 0);

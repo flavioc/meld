@@ -78,6 +78,8 @@ const size_t PUSH_REGS_BASE      = 1;
 const size_t POP_REGS_BASE       = 1;
 const size_t CALLF_BASE          = 2;
 const size_t CALLE_BASE          = 4;
+const size_t STRUCT_VAL_BASE     = 4;
+const size_t MAKE_STRUCT_BASE    = 3;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -107,6 +109,9 @@ enum instr_type {
    POP_REGS_INSTR       =  0x19,
    CALLF_INSTR          =  0x1A,
    CALLE_INSTR          =  0x1B,
+   STRUCT_VAL_INSTR     =  0x1C,
+   MAKE_STRUCT_INSTR    =  0x1D,
+
    CALL_INSTR		      =  0x20,
    MOVE_INSTR		      =  0x30,
    ALLOC_INSTR		      =  0x40,
@@ -209,9 +214,7 @@ inline void pcounter_move_ptr(pcounter *pc) { *pc = *pc + ptr_size; }
 
 /* common instruction functions */
 
-/* XXX */
 inline code_offset_t jump_get(pcounter x, size_t off) { return pcounter_code_size(x + off); }
-
 inline reg_num reg_get(pcounter x, size_t off) { return (reg_num)(*(x + off) & 0x1f); }
 inline instr_val val_get(pcounter x, size_t off) { return (instr_val)(*(x + off) & 0x3f); }
 inline predicate_id predicate_get(pcounter x, size_t off) { return (predicate_id)(*(x + off) & 0x7f); }
@@ -295,29 +298,18 @@ inline instr_val test_nil_dest(pcounter pc) { return val_get(pc, 2); }
 
 /* CONS (a :: b) TO c */
 
-inline field_type get_list_type(pcounter pc, size_t off) {
-   switch(*(pc + off)) {
-      case 0: return FIELD_LIST_INT;
-      case 1: return FIELD_LIST_FLOAT;
-      case 2: return FIELD_LIST_NODE;
-   }
-   return FIELD_LIST_INT;
-}
-
-inline field_type cons_type(pcounter pc) { return get_list_type(pc, 1); }
+inline size_t cons_type(pcounter pc) { return (size_t)byte_get(pc, 1); }
 inline instr_val cons_head(pcounter pc) { return val_get(pc, 2); }
 inline instr_val cons_tail(pcounter pc) { return val_get(pc, 3); }
 inline instr_val cons_dest(pcounter pc) { return val_get(pc, 4); }
 
 /* HEAD list TO a */
 
-inline field_type head_type(pcounter pc) { return get_list_type(pc, 1); }
 inline instr_val head_cons(pcounter pc) { return val_get(pc, 2); }
 inline instr_val head_dest(pcounter pc) { return val_get(pc, 3); }
 
 /* TAIL list TO a */
 
-inline field_type tail_type(pcounter pc) { return get_list_type(pc, 1); }
 inline instr_val tail_cons(pcounter pc) { return val_get(pc, 2); }
 inline instr_val tail_dest(pcounter pc) { return val_get(pc, 3); }
 
@@ -362,16 +354,18 @@ inline reg_num remove_source(const pcounter pc) { return reg_get(pc, 1); }
 inline code_offset_t reset_linear_jump(const pcounter pc) { return jump_get(pc, 1); }
 
 /* RULE ID */
+
 inline size_t rule_get_id(const pcounter pc) { return pcounter_uint(pc + 1); }
 
 /* NEW NODE */
+
 inline reg_num new_node_reg(const pcounter pc) { return reg_get(pc, 1); }
 
 /* NEW AXIOMS */
 
 inline code_offset_t new_axioms_jump(const pcounter pc) { return jump_get(pc, 1); }
 
-/* SEND DELAY a TO B */
+/* SEND DELAY a TO b */
 
 inline reg_num send_delay_msg(pcounter pc) { return reg_get(pc, 1); }
 inline reg_num send_delay_dest(pcounter pc) { return reg_get(pc, 2); }
@@ -380,6 +374,17 @@ inline uint_val send_delay_time(pcounter pc) { return pcounter_uint(pc + 3); }
 /* CALLF id */
 
 inline callf_id callf_get_id(const pcounter pc) { return *(pc + 1); }
+
+/* MAKE STRUCT size to */
+
+inline size_t make_struct_type(pcounter pc) { return (size_t)byte_get(pc, 1); }
+inline instr_val make_struct_to(pcounter pc) { return val_get(pc, 2); }
+
+/* STRUCT VAL idx FROM a TO b */
+
+inline size_t struct_val_idx(pcounter pc) { return (size_t)byte_get(pc, 1); }
+inline instr_val struct_val_from(pcounter pc) { return val_get(pc, 2); }
+inline instr_val struct_val_to(pcounter pc) { return val_get(pc, 3); }
 
 /* advance function */
 
@@ -390,6 +395,7 @@ enum instr_argument_type {
    ARGUMENT_WRITABLE,
    ARGUMENT_LIST,
    ARGUMENT_NON_LIST,
+   ARGUMENT_STRUCT,
    ARGUMENT_BOOL,
    ARGUMENT_NODE
 };
@@ -520,6 +526,19 @@ STATIC_INLINE size_t arg_size<ARGUMENT_LIST>(const instr_val v)
       return stack_val_size;
    else
       throw malformed_instr_error("invalid instruction list value");
+}
+
+template <>
+STATIC_INLINE size_t arg_size<ARGUMENT_STRUCT>(const instr_val v)
+{
+   if(val_is_reg(v))
+      return reg_size;
+   else if(val_is_field(v))
+      return field_size;
+   else if(val_is_stack(v))
+      return stack_val_size;
+   else
+      throw malformed_instr_error("invalid instruction struct value");
 }
 
 template <>
@@ -775,10 +794,19 @@ advance(pcounter pc)
 
       case CALLF_INSTR:
          return pc + CALLF_BASE;
+
+      case MAKE_STRUCT_INSTR:
+         return pc + MAKE_STRUCT_BASE
+                   + arg_size<ARGUMENT_WRITABLE>(make_struct_to(pc));
+
+      case STRUCT_VAL_INSTR:
+         return pc + STRUCT_VAL_BASE
+                  + arg_size<ARGUMENT_STRUCT>(struct_val_from(pc))
+                  + arg_size<ARGUMENT_WRITABLE>(struct_val_to(pc));
 				
       case ELSE_INSTR:
       default:
-         throw malformed_instr_error("unknown instruction code");
+         throw malformed_instr_error("unknown instruction code (advance)");
    }
 }
 

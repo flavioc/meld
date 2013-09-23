@@ -92,10 +92,8 @@ state::purge_runtime_objects(void)
    free_ ## TYPE .clear()
 
    PURGE_OBJ(cons);
-
-#undef PURGE_LIST
-	
 	PURGE_OBJ(rstring);
+   PURGE_OBJ(struct1);
 	
 #undef PURGE_OBJ
 }
@@ -125,10 +123,8 @@ void
 state::copy_reg2const(const reg_num& reg_from, const const_id& cid)
 {
    all->set_const(cid, regs[reg_from]);
-	switch(all->PROGRAM->get_const_type(cid)) {
-		case FIELD_LIST_INT:
-		case FIELD_LIST_FLOAT:
-		case FIELD_LIST_NODE:
+	switch(all->PROGRAM->get_const_type(cid)->get_type()) {
+		case FIELD_LIST:
          runtime::cons::inc_refs(all->get_const_cons(cid)); break;
 		case FIELD_STRING:
 			all->get_const_string(cid)->inc_refs(); break;

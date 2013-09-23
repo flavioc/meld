@@ -50,12 +50,13 @@ class all
 
 #define define_get_const(WHAT, TYPE, CODE) TYPE get_const_ ## WHAT (const const_id& id) { return CODE; }
 	
-	define_get_const(int, int_val, *(int_val*)(consts + id))
-	define_get_const(float, float_val, *(float_val*)(consts + id))
-	define_get_const(ptr, ptr_val, *(ptr_val*)(consts + id));
-	define_get_const(cons, runtime::cons*, (runtime::cons*)get_const_ptr(id))
-	define_get_const(string, runtime::rstring::ptr, (runtime::rstring::ptr)get_const_ptr(id))
-	define_get_const(node, node_val, *(node_val*)(consts + id))
+	define_get_const(int, int_val, FIELD_INT(consts[id]))
+	define_get_const(float, float_val, FIELD_FLOAT(consts[id]))
+	define_get_const(ptr, ptr_val, FIELD_PTR(consts[id]));
+	define_get_const(cons, runtime::cons*, FIELD_CONS(consts[id]))
+	define_get_const(string, runtime::rstring*, FIELD_STRING(consts[id]))
+	define_get_const(node, node_val, FIELD_NODE(consts[id]))
+   define_get_const(struct, runtime::struct1*, FIELD_STRUCT(consts[id]))
 	
 #undef define_get_const
 
@@ -63,11 +64,11 @@ class all
 	
 #define define_set_const(WHAT, TYPE, CODE) void set_const_ ## WHAT (const const_id& id, const TYPE val) { CODE;}
 	
-	define_set_const(int, int_val&, *(int_val*)(consts + id) = val)
-	define_set_const(float, float_val&, *(float_val*)(consts + id) = val)
-	define_set_const(node, node_val&, *(node_val*)(consts +id) = val)
-	define_set_const(ptr, ptr_val&, *(ptr_val*)(consts + id) = val);
-	define_set_const(string, runtime::rstring::ptr, set_const_ptr(id, (ptr_val)val));
+	define_set_const(int, int_val&, SET_FIELD_INT(consts[id], val))
+	define_set_const(float, float_val&, SET_FIELD_FLOAT(consts[id], val))
+	define_set_const(node, node_val&, SET_FIELD_NODE(consts[id], val))
+	define_set_const(ptr, ptr_val&, SET_FIELD_PTR(consts[id], val))
+	define_set_const(string, runtime::rstring*, SET_FIELD_STRING(consts[id], val))
 	
 #undef define_set_const
 

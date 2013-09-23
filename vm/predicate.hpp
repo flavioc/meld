@@ -9,6 +9,7 @@
 #include "vm/types.hpp"
 #include "vm/defs.hpp"
 #include "utils/types.hpp"
+#include "vm/reader.hpp"
 
 namespace vm {
 
@@ -29,7 +30,7 @@ private:
    std::string name;
    strat_level level;
    
-   std::vector<field_type> types;
+   std::vector<type*> types;
    std::vector<size_t> fields_size;
    std::vector<size_t> fields_offset;
    
@@ -104,7 +105,7 @@ public:
    
    inline size_t num_fields(void) const { return types.size(); }
    
-   inline field_type get_field_type(const field_num field) const { return types[field]; }
+   inline type* get_field_type(const field_num field) const { return types[field]; }
    inline size_t get_field_size(const field_num field) const { return fields_size[field]; }
    
    inline std::string get_name(void) const { return name; }
@@ -121,9 +122,12 @@ public:
       return !operator==(other);
    }
    
-   static predicate* make_predicate_from_buf(utils::byte *buf, code_size_t *code_size, const predicate_id);
+   static predicate* make_predicate_from_reader(code_reader&, code_size_t *,
+         const predicate_id, const uint32_t, const uint32_t, const std::vector<type*>&);
 };
 
+type* read_type_from_reader(code_reader&);
+type* read_type_id_from_reader(code_reader&, const std::vector<type*>&);
 std::ostream& operator<<(std::ostream&, const predicate&);
 
 }

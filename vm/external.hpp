@@ -21,15 +21,15 @@ typedef argument (*external_function_ptr3)(argument, argument, argument);
 typedef external_function_ptr0 external_function_ptr;
 
 #define EXTERNAL_ARG(NAME) const argument __ ## NAME
-#define DECLARE_INT(NAME) const int_val NAME(__ ## NAME.int_field)
-#define DECLARE_NODE(NAME) const node_val NAME(__ ## NAME.node_field)
-#define DECLARE_FLOAT(NAME) const float_val NAME(__ ## NAME.float_field)
-#define DECLARE_LIST(NAME) const runtime::cons *NAME((runtime::cons *)__ ## NAME.ptr_field)
-#define DECLARE_STRING(NAME) const rstring::ptr NAME((rstring::ptr)__ ## NAME.ptr_field)
-#define RETURN_PTR(X) { argument _ret; _ret.ptr_field = (ptr_val)(X); return _ret; }
-#define RETURN_INT(X) { argument _ret; _ret.int_field = X; return _ret; }
-#define RETURN_FLOAT(X) { argument _ret; _ret.float_field = X; return _ret; }
-#define RETURN_NODE(X) { argument _ret; _ret.node_field = X; return _ret; }
+#define DECLARE_INT(NAME) const int_val NAME(FIELD_INT(__ ## NAME))
+#define DECLARE_NODE(NAME) const node_val NAME(FIELD_NODE(__ ## NAME))
+#define DECLARE_FLOAT(NAME) const float_val NAME(FIELD_FLOAT(__ ## NAME))
+#define DECLARE_LIST(NAME) const runtime::cons *NAME(FIELD_CONS(__ ## NAME))
+#define DECLARE_STRING(NAME) const rstring::ptr NAME(FIELD_STRING(__ ## NAME))
+#define RETURN_PTR(X) { argument _ret; SET_FIELD_PTR(_ret, X); return _ret; }
+#define RETURN_INT(X) { argument _ret; SET_FIELD_INT(_ret, X); return _ret; }
+#define RETURN_FLOAT(X) { argument _ret; SET_FIELD_FLOAT(_ret, X); return _ret; }
+#define RETURN_NODE(X) { argument _ret; SET_FIELD_NODE(_ret, X); return _ret; }
 #define RETURN_LIST(X) RETURN_PTR(X)
 #define RETURN_STRING(X) RETURN_PTR(X)
 
@@ -39,21 +39,21 @@ private:
    
    const size_t num_args;
    external_function_ptr ptr;
-   field_type ret;
-   field_type *spec;
+   type *ret;
+   type **spec;
    
 public:
    
    inline size_t get_num_args(void) const { return num_args; }
    
-   inline field_type get_return_type(void) const { return ret; }
-   inline field_type get_arg_type(const size_t i) const { return spec[i]; }
+   inline type* get_return_type(void) const { return ret; }
+   inline type* get_arg_type(const size_t i) const { return spec[i]; }
    
    inline external_function_ptr get_fun_ptr(void) const { return ptr; }
    
-   void set_arg_type(const size_t, const field_type);
+   void set_arg_type(const size_t, type*);
    
-   explicit external_function(external_function_ptr, const size_t, const field_type);
+   explicit external_function(external_function_ptr, const size_t, type*);
    
    ~external_function(void);
 };

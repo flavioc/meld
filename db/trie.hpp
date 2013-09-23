@@ -13,6 +13,7 @@
 #include "db/tuple.hpp"
 #include "vm/predicate.hpp"
 #include "vm/match.hpp"
+#include "vm/types.hpp"
 
 namespace db
 {
@@ -44,7 +45,7 @@ public:
    trie_node* get_by_float(const vm::float_val) const;
    trie_node* get_by_node(const vm::node_val) const;
    
-   void convert_hash(const vm::field_type&);
+   void convert_hash(vm::type*);
 
    inline bool is_hashed(void) const { return hashed; }
    inline trie_hash* get_hash(void) const { return (trie_hash*)child; }
@@ -66,9 +67,9 @@ public:
    
    size_t count_refs(void) const;
    
-   trie_node *match(const vm::tuple_field&, const vm::field_type&, vm::val_stack&, vm::type_stack&, size_t&) const;
+   trie_node *match(const vm::tuple_field&, vm::type*, vm::val_stack&, vm::type_stack&, size_t&) const;
    
-   trie_node *insert(const vm::tuple_field&, const vm::field_type&, vm::val_stack&, vm::type_stack&);
+   trie_node *insert(const vm::tuple_field&, vm::type*, vm::val_stack&, vm::type_stack&);
    
    explicit trie_node(const vm::tuple_field& _data):
       parent(NULL),
@@ -105,7 +106,7 @@ private:
    friend class trie_node;
    friend class tuple_trie_iterator;
    
-   const vm::field_type type;
+   vm::type *type;
    
    trie_node *parent;
    trie_node **buckets;
@@ -132,7 +133,7 @@ public:
 
    void expand(void);
    
-   explicit trie_hash(const vm::field_type&, trie_node*);
+   explicit trie_hash(vm::type *, trie_node*);
    
    ~trie_hash(void);
 };
@@ -542,6 +543,9 @@ private:
    }
    
    trie_node* check_insert(vm::tuple *, const vm::derivation_count, const vm::depth_t, bool&);
+
+   void visit(trie_node *n) const;
+   void do_visit(trie_node *, const int, std::stack<vm::type*>&) const;
    
 public:
 

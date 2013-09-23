@@ -16,6 +16,8 @@
 #include "utils/atomic.hpp"
 #include "utils/serialization.hpp"
 #include "mem/base.hpp"
+#include "vm/types.hpp"
+#include "runtime/common.hpp"
 
 #include "vm/defs.hpp"
 
@@ -37,6 +39,7 @@ private:
    const vm::tuple_field head;
    
    utils::atomic<vm::ref_count> refs;
+   vm::list_type *type;
    
    inline void set_tail(list_ptr t)
    {
@@ -50,6 +53,7 @@ public:
    
    const vm::tuple_field get_head(void) const { return head; }
    list_ptr get_tail(void) const { return tail; }
+   vm::list_type* get_type(void) const { return type; }
    
    inline void inc_refs(void)
 	 {
@@ -78,6 +82,7 @@ public:
       assert(zero_refs());
       if(!is_null(get_tail()))
          get_tail()->dec_refs();
+      decrement_runtime_data(get_head(), type->get_subtype());
       delete this;
    }
    
@@ -141,7 +146,7 @@ public:
    }
    
    static inline
-	list_ptr unpack(utils::byte *buf, const size_t buf_size, int *pos)
+	list_ptr unpack(utils::byte *buf, const size_t buf_size, int *pos, vm::list_type *t)
    {
       size_t len(0);
       
@@ -155,7 +160,7 @@ public:
 
          utils::unpack<vm::tuple_field>(buf, buf_size, pos, &head, 1);
          
-         list_ptr n(new cons(null_list(), head));
+         list_ptr n(new cons(null_list(), head, t));
          
          if(is_null(prev))
             init = n;
@@ -176,13 +181,13 @@ public:
       if(is_null(ptr))
          return null_list();
          
-      list_ptr init(new cons(null_list(), ptr->get_head()));
+      list_ptr init(new cons(null_list(), ptr->get_head(), ptr->type));
       list_ptr cur(init);
       
       ptr = ptr->get_tail();
    
       while (!is_null(ptr)) {
-         cur->set_tail(new cons(null_list(), ptr->get_head()));
+         cur->set_tail(new cons(null_list(), ptr->get_head(), ptr->type));
          cur = cur->get_tail();
          ptr = ptr->get_tail();
       }
@@ -258,9 +263,11 @@ public:
 		return ret;
 	}
 
-   explicit cons(list_ptr _tail, const vm::tuple_field _head):
-      head(_head), refs(0)
+   explicit cons(list_ptr _tail, const vm::tuple_field _head, vm::list_type *_type):
+      head(_head), refs(0), type(_type)
    {
+      assert(type != NULL);
+      increment_runtime_data(head, type->get_subtype());
       set_tail(_tail);
    }
 };
@@ -303,12 +310,12 @@ build_from_field(const vm::tuple_field v)
 
 template <class TStack, class Convert>
 static inline cons*
-from_stack_to_list(TStack& stk, vm::tuple_field (*conv)(const Convert))
+from_stack_to_list(TStack& stk, vm::tuple_field (*conv)(const Convert), vm::list_type *t)
 {
    cons *ptr(cons::null_list());
    
    while(!stk.empty()) {
-      ptr = new cons(ptr, conv(stk.top()));
+      ptr = new cons(ptr, conv(stk.top()), t);
       stk.pop();
    }
    
@@ -318,30 +325,30 @@ from_stack_to_list(TStack& stk, vm::tuple_field (*conv)(const Convert))
 static inline cons*
 from_float_stack_to_list(stack_float_list& stk)
 {
-   return from_stack_to_list<stack_float_list>(stk, build_from_float);
+   return from_stack_to_list<stack_float_list>(stk, build_from_float, vm::TYPE_LIST_FLOAT);
 }
 
 static inline cons*
 from_int_stack_to_list(stack_int_list& stk)
 {
-   return from_stack_to_list<stack_int_list>(stk, build_from_int);
+   return from_stack_to_list<stack_int_list>(stk, build_from_int, vm::TYPE_LIST_INT);
 }
 
 static inline cons*
 from_node_stack_to_list(stack_node_list& stk)
 {
-   return from_stack_to_list<stack_node_list>(stk, build_from_node);
+   return from_stack_to_list<stack_node_list>(stk, build_from_node, vm::TYPE_LIST_NODE);
 }
 
 static inline cons*
-from_general_stack_to_list(stack_general_list& stk)
+from_general_stack_to_list(stack_general_list& stk, vm::list_type *t)
 {
-   return from_stack_to_list<stack_general_list>(stk, build_from_field);
+   return from_stack_to_list<stack_general_list>(stk, build_from_field, t);
 }
 
 template <class TStack, class Convert>
 static inline cons*
-from_stack_to_reverse_list(TStack& stk, vm::tuple_field (*conv)(const Convert))
+from_stack_to_reverse_list(TStack& stk, vm::tuple_field (*conv)(const Convert), vm::list_type *t)
 {
    TStack stk2;
 
@@ -350,30 +357,30 @@ from_stack_to_reverse_list(TStack& stk, vm::tuple_field (*conv)(const Convert))
       stk.pop();
    }
 
-   return from_stack_to_list<TStack>(stk2, conv);
+   return from_stack_to_list<TStack>(stk2, conv, t);
 }
 
 static inline cons*
 from_int_stack_to_reverse_list(stack_int_list& stk)
 {
-   return from_stack_to_reverse_list<stack_int_list>(stk, build_from_int);
+   return from_stack_to_reverse_list<stack_int_list>(stk, build_from_int, vm::TYPE_LIST_INT);
 }
 
 static inline cons*
-from_general_stack_to_reverse_list(stack_general_list& stk)
+from_general_stack_to_reverse_list(stack_general_list& stk, vm::list_type *t)
 {
-   return from_stack_to_reverse_list<stack_general_list>(stk, build_from_field);
+   return from_stack_to_reverse_list<stack_general_list>(stk, build_from_field, t);
 }
 
 /* adds elements of the vector in reverse order */
 template <class TVector, class Convert>
 static inline cons*
-from_vector_to_reverse_list(TVector& vec, vm::tuple_field (*conv)(const Convert))
+from_vector_to_reverse_list(TVector& vec, vm::tuple_field (*conv)(const Convert), vm::list_type *t)
 {
    cons *ptr(cons::null_list());
 
    for(typename TVector::iterator it(vec.begin()), end(vec.end()); it != end; ++it) {
-      ptr = new cons(ptr, conv(*it));
+      ptr = new cons(ptr, conv(*it), t);
    }
 
    return ptr;
@@ -382,7 +389,7 @@ from_vector_to_reverse_list(TVector& vec, vm::tuple_field (*conv)(const Convert)
 static inline cons*
 from_int_vector_to_reverse_list(vector_int_list& vec)
 {
-   return from_vector_to_reverse_list(vec, build_from_int);
+   return from_vector_to_reverse_list(vec, build_from_int, vm::TYPE_LIST_INT);
 }
 
 }

@@ -11,6 +11,14 @@ using namespace std;
 using namespace utils;
 
 namespace vm {
+
+type *TYPE_INT(new type(FIELD_INT));
+type *TYPE_FLOAT(new type(FIELD_FLOAT));
+type *TYPE_NODE(new type(FIELD_NODE));
+type *TYPE_STRING(new type(FIELD_STRING));
+list_type *TYPE_LIST_INT(new list_type(new type(FIELD_INT)));
+list_type *TYPE_LIST_FLOAT(new list_type(new type(FIELD_FLOAT)));
+list_type *TYPE_LIST_NODE(new list_type(new type(FIELD_NODE)));
    
 size_t
 field_type_size(field_type type)
@@ -24,11 +32,11 @@ field_type_size(field_type type)
          return sizeof(node_val);
 		case FIELD_STRING:
 			return sizeof(ptr_val);
-      case FIELD_LIST_INT:
-      case FIELD_LIST_FLOAT:
-      case FIELD_LIST_NODE:
+      case FIELD_LIST:
          return sizeof(ptr_val);
-      
+      case FIELD_STRUCT:
+         return sizeof(ptr_val);
+
       default:
          throw type_error("Unrecognized field type " + to_string(type) + " (field_type_size)");
    }
@@ -43,10 +51,9 @@ field_type_string(field_type type)
       case FIELD_INT: return string("int");
       case FIELD_FLOAT: return string("float");
       case FIELD_NODE: return string("node");
-      case FIELD_LIST_INT: return string("int list");
-      case FIELD_LIST_FLOAT: return string("float list");
-		case FIELD_LIST_NODE: return string("node list");
 		case FIELD_STRING: return string("string");
+      case FIELD_LIST: return string("list");
+      case FIELD_STRUCT: return string("struct");
       default:
          throw type_error("Unrecognized field type " + to_string(type) + " (field_type_string)");
 	}

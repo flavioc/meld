@@ -172,6 +172,41 @@ print_tab(const int tabcount)
       cout << "  ";
 }
 
+static inline void
+print_axiom_data(pcounter& p, type *t, bool in_list = false)
+{
+   switch(t->get_type()) {
+      case FIELD_INT:
+         cout << pcounter_int(p);
+         pcounter_move_int(&p);
+         break;
+      case FIELD_FLOAT:
+         cout << pcounter_float(p);
+         pcounter_move_float(&p);
+         break;
+      case FIELD_NODE:
+         cout << "@" << pcounter_node(p);
+         pcounter_move_node(&p);
+         break;
+      case FIELD_LIST: {
+         if(!in_list) {
+            cout << "[";
+         }
+         if(*p++ == 0) {
+            cout << "]";
+            break;
+         }
+         list_type *lt((list_type*)t);
+         print_axiom_data(p, lt->get_subtype());
+         if(*p == 1)
+            cout << ", ";
+         print_axiom_data(p, lt, true);
+        }
+         break;
+      default: assert(false);
+   }
+}
+
 pcounter
 instr_print(pcounter pc, const bool recurse, const int tabcount, const program *prog, ostream& cout)
 {
@@ -367,11 +402,13 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          break;
    	case CONS_INSTR: {
    			pcounter m = pc + CONS_BASE;
+            const size_t type_id(cons_type(pc));
+            list_type *lt((list_type*)prog->get_type(type_id));
             const string head(val_string(cons_head(pc), &m, prog));
             const string tail(val_string(cons_tail(pc), &m, prog));
             const string dest(val_string(cons_dest(pc), &m, prog));
    			
-            cout << "CONS (" << head << "::" << tail << ") TO " << dest << endl;
+            cout << "CONS (" << head << "::" << tail << ") " << lt->string() << " TO " << dest << endl;
    		}
    		break;
    	case HEAD_INSTR: {
@@ -463,45 +500,9 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
                   i != num_fields;
                   ++i)
             {
-               switch(pred->get_field_type(i)) {
-                  case FIELD_INT:
-                     cout << pcounter_int(p);
-                     pcounter_move_int(&p);
-                     break;
-                  case FIELD_FLOAT:
-                     cout << pcounter_float(p);
-                     pcounter_move_float(&p);
-                     break;
-                  case FIELD_NODE:
-                     cout << "@" << pcounter_node(p);
-                     pcounter_move_node(&p);
-                     break;
-                  case FIELD_LIST_FLOAT:
-                     cout << "[";
-                     while(*p++ == 1) {
-                        cout << pcounter_float(p) << ", ";
-                        pcounter_move_float(&p);
-                     }
-                     cout << "]";
-                     break;
-                  case FIELD_LIST_INT:
-                     cout << "[";
-                     while(*p++ == 1) {
-                        cout << pcounter_int(p) << ", ";
-                        pcounter_move_int(&p);
-                     }
-                     cout << "]";
-                     break;
-                  case FIELD_LIST_NODE:
-                     cout << "[";
-                     while(*p++ == 1) {
-                        cout << "@" << pcounter_node(p) << ", ";
-                        pcounter_move_node(&p);
-                     }
-                     cout << "]";
-                     break;
-                  default: assert(false);
-               }
+               type *t(pred->get_field_type(i));
+               print_axiom_data(p, t);
+
                if(i != num_fields-1)
                   cout << ", ";
             }
@@ -540,6 +541,27 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          cout << "CALLF " << to_string((int)id) << endl;
          break;
       }
+
+      case MAKE_STRUCT_INSTR: {
+         const size_t type_id(make_struct_type(pc));
+         struct_type *st((struct_type*)prog->get_type(type_id));
+         const instr_val to(make_struct_to(pc));
+         pcounter m = pc + MAKE_STRUCT_BASE;
+
+         cout << "MAKE STRUCT " << st->string() << " TO " << val_string(to, &m, prog) << endl;
+      }
+      break;
+
+      case STRUCT_VAL_INSTR: {
+         const size_t idx(struct_val_idx(pc));
+         const instr_val from(struct_val_from(pc));
+         const instr_val to(struct_val_to(pc));
+         pcounter m = pc + STRUCT_VAL_BASE;
+
+         cout << "STRUCT VAL " << idx << " FROM " << val_string(from, &m, prog)
+            << " TO " << val_string(to, &m, prog) << endl;
+      }
+      break;
 
     	case ELSE_INSTR:
 		default:

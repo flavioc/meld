@@ -75,7 +75,7 @@ trie_node::get_by_int(const int_val val) const
       node = get_child();
    
    while (node) {
-      if(node->data.int_field == val)
+      if(FIELD_INT(node->data) == val)
          // found it !
          return node;
       
@@ -100,7 +100,7 @@ trie_node::get_by_float(const float_val val) const
       node = get_child();
    
    while (node) {
-      if(node->data.float_field == val)
+      if(FIELD_FLOAT(node->data) == val)
          // found it !
          return node;
       
@@ -125,7 +125,7 @@ trie_node::get_by_node(const node_val val) const
       node = get_child();
    
    while (node) {
-      if(node->data.node_field == val)
+      if(FIELD_NODE(node->data) == val)
          // found it !
          return node;
       
@@ -136,7 +136,7 @@ trie_node::get_by_node(const node_val val) const
 }
 
 trie_node*
-trie_node::match(const tuple_field& field, const field_type& typ,
+trie_node::match(const tuple_field& field, type *typ,
       val_stack& vals, type_stack& typs, size_t& count) const
 {
    assert(!is_leaf());
@@ -150,20 +150,17 @@ trie_node::match(const tuple_field& field, const field_type& typ,
       
    if(is_hashed()) {
       trie_hash *hash((trie_hash*)next);
-      switch(typ) {
-         case FIELD_INT: next = hash->get_int(field.int_field); break;
-         case FIELD_FLOAT: next = hash->get_float(field.float_field); break;
-         case FIELD_NODE: next = hash->get_node(field.node_field); break;
-			case FIELD_STRING: next = hash->get_uint(field.ptr_field); break;
-         case FIELD_LIST_INT:
-         case FIELD_LIST_FLOAT:
-         case FIELD_LIST_NODE: {
-             runtime::cons *ls((runtime::cons*)field.ptr_field);
-             next = hash->get_uint(runtime::cons::is_null(ls) ? 0 : 1);
-             break;
+      switch(typ->get_type()) {
+         case FIELD_INT: next = hash->get_int(FIELD_INT(field)); break;
+         case FIELD_FLOAT: next = hash->get_float(FIELD_FLOAT(field)); break;
+         case FIELD_NODE: next = hash->get_node(FIELD_NODE(field)); break;
+			case FIELD_STRING: next = hash->get_uint(FIELD_PTR(field)); break;
+         case FIELD_LIST: {
+            runtime::cons *ls(FIELD_CONS(field));
+            next = hash->get_uint(runtime::cons::is_null(ls) ? 0 : 1);
+            break;
          }
          default: assert(false);
-#undef HASH_LIST
       }
     }
    
@@ -172,46 +169,58 @@ trie_node::match(const tuple_field& field, const field_type& typ,
       
       ++count;
       
-      switch(typ) {
+      switch(typ->get_type()) {
          case FIELD_INT:
-            if(f.int_field == field.int_field) {
+            if(FIELD_INT(f) == FIELD_INT(field)) {
                return next;
             }
             break;
          case FIELD_FLOAT:
-            if(f.float_field == field.float_field)
+            if(FIELD_FLOAT(f) == FIELD_FLOAT(field))
                return next;
             break;
          case FIELD_NODE:
-            if(f.node_field == field.node_field)
+            if(FIELD_NODE(f) == FIELD_NODE(field))
                return next;
             break;
 			case FIELD_STRING:
-				if(f.node_field == field.ptr_field)
+				if(FIELD_STRING(f) == FIELD_STRING(field))
 					return next;
 				break;
+         case FIELD_STRUCT: {
+            runtime::struct1 *s(FIELD_STRUCT(field));
+            struct_type *st(s->get_type());
+
+            if(FIELD_INT(f) == st->get_size()) {
+               for(size_t i(st->get_size()); i > 0; --i) {
+                  vals.push(s->get_data(i-1));
+                  typs.push(st->get_type(i-1));
+               }
+               return next;
+            }
+         }
+         break;
+         case FIELD_LIST: {
+               runtime::cons *ls(FIELD_CONS(field));
+               if(runtime::cons::is_null(ls)) {
+                  if(FIELD_PTR(f) == 0)
+                     return next;
+               } else {
+                  if(FIELD_PTR(f) == 1) {
+                     tuple_field head, tail;
+                     list_type *lt((list_type*)typ);
+                     head = ls->get_head();
+                     SET_FIELD_CONS(tail, ls->get_tail());
+                     vals.push(tail);
+                     typs.push(typ);
+                     vals.push(head);
+                     typs.push(lt->get_subtype());
+                     return next;
+                  }
+               }
+            }
+            break;
             
-#define MATCH_LIST(FIELD_LIST_TYPE, FIELD_ITEM_TYPE) { \
-            runtime::cons *ls((runtime::cons*)field.ptr_field);  \
-            if(runtime::cons::is_null(ls)) { \
-               if(f.int_field == 0) return next; \
-            } else { \
-                  if(f.int_field == 1) { \
-                     tuple_field head, tail; \
-                     head = ls->get_head(); \
-                     tail.ptr_field = (ptr_val)ls->get_tail(); \
-                     vals.push(tail); \
-                     typs.push(FIELD_LIST_TYPE); \
-                     vals.push(head); \
-                     typs.push(FIELD_ITEM_TYPE); \
-                     return next; \
-                  } \
-               } \
-            } \
-      
-         case FIELD_LIST_INT: MATCH_LIST(FIELD_LIST_INT, FIELD_INT); break;
-         case FIELD_LIST_FLOAT: MATCH_LIST(FIELD_LIST_FLOAT, FIELD_FLOAT); break;
-         case FIELD_LIST_NODE: MATCH_LIST(FIELD_LIST_NODE, FIELD_NODE); break;
          default: assert(false);
       }
       
@@ -222,35 +231,54 @@ trie_node::match(const tuple_field& field, const field_type& typ,
 }
    
 trie_node*
-trie_node::insert(const tuple_field& field, const field_type& type, val_stack& vals, type_stack& typs)
+trie_node::insert(const tuple_field& field, type *t, val_stack& vals, type_stack& typs)
 {
    tuple_field f;
    trie_node *new_child;
    
-   switch(type) {
-#define INSERT_LIST(FIELD_LIST_TYPE, FIELD_ITEM_TYPE) { \
-      runtime::cons *ls((runtime::cons*)field.ptr_field); \
-      if(runtime::cons::is_null(ls)) { \
-         f.ptr_field = 0; \
-      } else { \
-         f.ptr_field = 1; \
-         tuple_field head, tail; \
-         head = ls->get_head(); \
-         tail.ptr_field = (ptr_val)ls->get_tail(); \
-         vals.push(tail); \
-         typs.push(FIELD_LIST_TYPE); \
-         vals.push(head); \
-         typs.push(FIELD_ITEM_TYPE); \
-      } \
-   }
-         case FIELD_LIST_INT: INSERT_LIST(FIELD_LIST_INT, FIELD_INT); break;
-         case FIELD_LIST_FLOAT: INSERT_LIST(FIELD_LIST_FLOAT, FIELD_FLOAT); break;
-         case FIELD_LIST_NODE: INSERT_LIST(FIELD_LIST_NODE, FIELD_NODE); break;
-         default:
+   switch(t->get_type()) {
+         case FIELD_LIST: {
+            runtime::cons *ls(FIELD_CONS(field));
+            if(runtime::cons::is_null(ls))
+               SET_FIELD_PTR(f, 0);
+            else {
+               SET_FIELD_PTR(f, 1);
+
+               tuple_field head, tail;
+               list_type *lt((list_type*)t);
+
+               head = ls->get_head();
+               SET_FIELD_PTR(tail, ls->get_tail());
+               vals.push(tail);
+               typs.push(lt);
+               vals.push(head);
+               typs.push(lt->get_subtype());
+            }
+            break;
+         }
+
+         case FIELD_STRUCT: {
+            runtime::struct1 *s(FIELD_STRUCT(field));
+            struct_type *st(s->get_type());
+
+            SET_FIELD_INT(f, st->get_size());
+
+            for(size_t i(st->get_size()); i > 0; --i) {
+               tuple_field d;
+               d = s->get_data(i-1);
+               vals.push(d);
+               typs.push(st->get_type(i-1));
+            }
+            break;
+         }
+
+         case FIELD_INT:
+         case FIELD_FLOAT:
+         case FIELD_NODE:
             f = field;
             break;
+         default: assert(false); break;
    }
-#undef INSERT_LIST
    
    new_child = new trie_node(f);
    
@@ -265,16 +293,22 @@ trie_node::insert(const tuple_field& field, const field_type& type, val_stack& v
       
       hash->total++;
       
-      switch(type) {
-         case FIELD_LIST_INT:
-         case FIELD_LIST_FLOAT:
-         case FIELD_LIST_NODE:
+      switch(t->get_type()) {
+         case FIELD_LIST: {
+               runtime::cons *c(FIELD_CONS(f));
+
+               if(runtime::cons::is_null(c))
+                  hash->insert_uint(0, new_child);
+               else
+                  hash->insert_uint(1, new_child);
+            }
+            break;
 			case FIELD_STRING:
-				hash->insert_uint(f.ptr_field, new_child);
+				hash->insert_uint(FIELD_PTR(f), new_child);
 				break;
-         case FIELD_INT: hash->insert_int(f.int_field, new_child); break;
-         case FIELD_FLOAT: hash->insert_float(f.float_field, new_child); break;
-         case FIELD_NODE: hash->insert_node(f.node_field, new_child); break;
+         case FIELD_INT: hash->insert_int(FIELD_INT(f), new_child); break;
+         case FIELD_FLOAT: hash->insert_float(FIELD_FLOAT(f), new_child); break;
+         case FIELD_NODE: hash->insert_node(FIELD_NODE(f), new_child); break;
          default: assert(false);
       }
    } else {
@@ -294,7 +328,7 @@ trie_node::insert(const tuple_field& field, const field_type& type, val_stack& v
 
 // put all children into hash table
 void
-trie_node::convert_hash(const field_type& type)
+trie_node::convert_hash(type *type)
 {
    assert(!is_hashed());
    
@@ -305,16 +339,22 @@ trie_node::convert_hash(const field_type& type)
    while (next != NULL) {
       trie_node *tmp(next->next);
       
-      switch(type) {
-         case FIELD_LIST_INT:
-         case FIELD_LIST_FLOAT:
-         case FIELD_LIST_NODE:
+      switch(type->get_type()) {
+         case FIELD_LIST: {
+               runtime::cons *c(FIELD_CONS(next->data));
+               if(runtime::cons::is_null(c))
+                  hash->insert_uint(0, next);
+               else 
+                  hash->insert_uint(1, next);
+           }
+           break;
+
 			case FIELD_STRING:
-				hash->insert_uint(next->data.ptr_field, next);
+				hash->insert_uint(FIELD_PTR(next->data), next);
 				break;
-         case FIELD_INT: hash->insert_int(next->data.int_field, next); break;
-         case FIELD_FLOAT: hash->insert_float(next->data.float_field, next); break;
-         case FIELD_NODE: hash->insert_node(next->data.node_field, next); break;
+         case FIELD_INT: hash->insert_int(FIELD_INT(next->data), next); break;
+         case FIELD_FLOAT: hash->insert_float(FIELD_FLOAT(next->data), next); break;
+         case FIELD_NODE: hash->insert_node(FIELD_NODE(next->data), next); break;
          default: assert(false);
       }
       
@@ -452,16 +492,18 @@ trie_hash::expand(void)
       while (next) {
          trie_node *tmp(next->next);
          
-         switch(type) {
-            case FIELD_LIST_INT:
-            case FIELD_LIST_FLOAT:
-            case FIELD_LIST_NODE:
+         switch(type->get_type()) {
 				case FIELD_STRING:
-					insert_uint(next->data.ptr_field, next);
+					insert_uint(FIELD_PTR(next->data), next);
 					break;
-            case FIELD_INT: insert_int(next->data.int_field, next); break;
-            case FIELD_FLOAT: insert_float(next->data.float_field, next); break;
-            case FIELD_NODE: insert_node(next->data.node_field, next); break;
+            case FIELD_LIST: {
+                  runtime::cons *c(FIELD_CONS(next->data));
+                  insert_uint(runtime::cons::is_null(c) ? 0 : 1, next);
+               }
+               break;
+            case FIELD_INT: insert_int(FIELD_INT(next->data), next); break;
+            case FIELD_FLOAT: insert_float(FIELD_FLOAT(next->data), next); break;
+            case FIELD_NODE: insert_node(FIELD_NODE(next->data), next); break;
             default: assert(false);
          }
          
@@ -472,7 +514,7 @@ trie_hash::expand(void)
    allocator<trie_node*>().deallocate(old_buckets, old_num_buckets);
 }
 
-trie_hash::trie_hash(const vm::field_type& _type, trie_node *_parent):
+trie_hash::trie_hash(vm::type *_type, trie_node *_parent):
    type(_type), parent(_parent), total(0)
 {
    buckets = allocator<trie_node*>().allocate(TRIE_HASH_BASE_BUCKETS);
@@ -645,7 +687,7 @@ trie::check_insert(void *data, const derivation_count many, const depth_t depth,
       assert(!vals.empty() && !typs.empty());
       
       tuple_field field(vals.top());
-      field_type typ(typs.top());
+      type *typ(typs.top());
       trie_node *cur;
       size_t count;
       
@@ -855,15 +897,15 @@ trie::delete_by_index(const match& m)
       if(!mtype.exact)
          break;
       
-      switch(mtype.type) {
+      switch(mtype.ty->get_type()) {
          case FIELD_INT:
-            node = node->get_by_int(mfield.int_field);
+            node = node->get_by_int(FIELD_INT(mfield));
             break;
          case FIELD_FLOAT:
-            node = node->get_by_float(mfield.float_field);
+            node = node->get_by_float(FIELD_FLOAT(mfield));
             break;
          case FIELD_NODE:
-            node = node->get_by_node(mfield.node_field);
+            node = node->get_by_node(FIELD_NODE(mfield));
             break;
          default: assert(false);
       }
@@ -1068,8 +1110,82 @@ struct continuation_frame {
 typedef utils::stack<continuation_frame> continuation_stack;
 
 void
+tuple_trie::do_visit(trie_node *n, const int tab, stack<type*>& s) const
+{
+   for(int i(0); i < tab; ++i)
+      cout << " ";
+
+   assert(!s.empty());
+   type *t = s.top();
+
+   cout << "pop " << s.size() << endl;
+   s.pop();
+
+   int pushes = 0;
+   switch(t->get_type()) {
+      case FIELD_FLOAT: cout << "float " << FIELD_FLOAT(n->data) << endl; break;
+      case FIELD_INT: cout << "int " << FIELD_INT(n->data) << endl; break;
+      case FIELD_NODE: cout << "node " << FIELD_NODE(n->data) << endl; break;
+      case FIELD_LIST: {
+         runtime::cons *l(FIELD_CONS(n->data));
+         if(runtime::cons::is_null(l)) {
+            cout << "]" << endl;
+         } else {
+            cout << "[" << endl;
+            list_type *lt((list_type*)t);
+            type *st(lt->get_subtype());
+            s.push(t);
+            s.push(st);
+            pushes++;
+            pushes++;
+         }
+      }
+      break;
+      default: cout << "bad type " << endl; assert(false);
+   }
+
+   if(!n->is_leaf()) {
+      trie_node *c = n->get_child();
+      while(c) {
+         do_visit(c, tab + 1, s);
+         c = c->next;
+      }
+   } else {
+      cout << "Got a leaf" << endl;
+   }
+
+   for(int i(0); i < pushes; ++i)
+      s.pop();
+
+   if(t) {
+      s.push(t);
+   }
+}
+
+void
+tuple_trie::visit(trie_node *n) const
+{
+   stack<type*> types;
+   for(int i(pred->num_fields()-1); i >= 0; --i) {
+      types.push(pred->get_field_type(i));
+   }
+
+   cout << "root" << endl;
+   n = n->child;
+   while(n) {
+      do_visit(n, 1, types);
+      n = n->next;
+   }
+}
+
+void
 tuple_trie::match_predicate(const match& m, tuple_vector& vec) const
 {
+
+  // cout << "Entering match predicate" << endl;
+   //print(cout);
+   //m.print(cout);
+   //visit(root);
    if(!m.has_any_exact()) {
       // just retrieve everything and be done with it
       match_predicate(vec);
@@ -1093,6 +1209,7 @@ tuple_trie::match_predicate(const match& m, tuple_vector& vec) const
    m.get_type_stack(typs);
    m.get_val_stack(vals);
 
+
    // dump(cout);
    // if it was a leaf, m would have no exact match
    assert(!root->is_leaf());
@@ -1110,7 +1227,6 @@ tuple_trie::match_predicate(const match& m, tuple_vector& vec) const
    cont.push(frm); } while(false)
    
 match_begin:
-   // printf("Start loop\n");
    assert(!vals.empty());
    assert(!typs.empty());
    
@@ -1121,23 +1237,22 @@ match_begin:
    assert(parent != NULL);
    
    if(mtype.exact) {
-      // printf("Match exact\n");
+     // printf("Match exact\n");
       // must do an exact match
       // there will be no continuation frames at this level
       mfield = vals.top();
-      switch(mtype.type) {
+      switch(mtype.ty->get_type()) {
          case FIELD_INT:
-            // printf("Match %d\n", mfield.int_field);
             if(parent->is_hashed()) {
                assert(going_down);
                
                trie_hash *hash((trie_hash*)node);
                
-               node = hash->get_int(mfield.int_field);
+               node = hash->get_int(FIELD_INT(mfield));
             }
             
             while(node) {
-               if(node->data.int_field == mfield.int_field)
+               if(FIELD_INT(node->data) == FIELD_INT(mfield))
                   goto match_succeeded_and_pop;
                node = node->next;
             }
@@ -1148,27 +1263,26 @@ match_begin:
                
                trie_hash *hash((trie_hash*)node);
                
-               node = hash->get_float(mfield.float_field);
+               node = hash->get_float(FIELD_FLOAT(mfield));
             }
             
             while(node) {
-               if(node->data.float_field == mfield.float_field)
+               if(FIELD_FLOAT(node->data) == FIELD_FLOAT(mfield))
                   goto match_succeeded_and_pop;
                node = node->next;
             }
             goto try_again;
          case FIELD_NODE:
-            // printf("Match node %d\n", mfield.node_field);
             if(parent->is_hashed()) {
                assert(going_down);
                
                trie_hash *hash((trie_hash*)node);
                
-               node = hash->get_node(mfield.node_field);
+               node = hash->get_node(FIELD_NODE(mfield));
             }
             
             while(node) {
-               if(node->data.node_field == mfield.node_field)
+               if(FIELD_NODE(node->data) == FIELD_NODE(mfield))
                   goto match_succeeded_and_pop;
                node = node->next;
             }
@@ -1237,21 +1351,18 @@ match_begin:
             ADD_ALT(node->next);
       }
       
-      switch(mtype.type) {
-#define MATCH_LIST_TYPE(LIST_ENUM, LIST_ITEM) \
-         case LIST_ENUM: { \
-            if(node->data.int_field == 0) \
-               goto match_succeeded_and_pop; \
-            else {   \
-               match_field f = {false, LIST_ITEM}; \
-               typs.push(f); vals.push(tuple_field()); \
-               goto match_succeeded; \
-            } \
-         }
-         MATCH_LIST_TYPE(FIELD_LIST_INT, FIELD_INT)
-         MATCH_LIST_TYPE(FIELD_LIST_FLOAT, FIELD_FLOAT)
-         MATCH_LIST_TYPE(FIELD_LIST_NODE, FIELD_NODE)
-#undef MATCH_LIST_TYPE
+      switch(mtype.ty->get_type()) {
+         case FIELD_LIST:
+            if(FIELD_PTR(node->data) == 0) {
+               goto match_succeeded_and_pop;
+            } else {
+               list_type *lt((list_type*)mtype.ty);
+               match_field f = {false, lt->get_subtype()};
+               typs.push(f);
+               vals.push(tuple_field());
+               goto match_succeeded;
+            }
+            break;
          case FIELD_INT:
          case FIELD_FLOAT:
          case FIELD_NODE:
@@ -1266,11 +1377,10 @@ match_succeeded_and_pop:
    typs.pop();
 
 match_succeeded:
-   //printf("Nice\n");
    
-   if(node->is_leaf())
-      // printf("Jump out!\n");
+   if(node->is_leaf()) {
       goto leaf_found;
+   }
    
    parent = node;
    node = node->child;
@@ -1281,8 +1391,6 @@ try_again:
    // match failed
    // use continuation stack to restore state at a given node
 
-   // printf("Failed\n");
-   
    if(cont.empty())
       return;
    
