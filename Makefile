@@ -106,12 +106,12 @@ SRCS = utils/utils.cpp \
 			 ui/manager.cpp \
 			 ui/client.cpp \
 			 interface.cpp \
-			 sched/sim.cpp
+			 sched/sim.cpp \
+			 runtime/common.cpp
 
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
 all: meld print server simulator
-	echo $(OBJS)
 
 -include Makefile.externs
 Makefile.externs:	Makefile
