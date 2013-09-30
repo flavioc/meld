@@ -1814,10 +1814,25 @@ execute_new_axioms(pcounter pc, state& state)
             ++i)
       {
          tuple_field field(axiom_read_data(pc, pred->get_field_type(i)));
-         if(pred->get_field_type(i)->get_type() == FIELD_LIST)
-            tpl->set_cons(i, FIELD_CONS(field));
-         else
-            tpl->set_field(i, field);
+
+         switch(pred->get_field_type(i)->get_type()) {
+            case FIELD_LIST:
+               tpl->set_cons(i, FIELD_CONS(field));
+               break;
+            case FIELD_STRUCT:
+               tpl->set_struct(i, FIELD_STRUCT(field));
+               break;
+            case FIELD_INT:
+            case FIELD_FLOAT:
+            case FIELD_NODE:
+               tpl->set_field(i, field);
+               break;
+            case FIELD_STRING:
+               tpl->set_string(i, FIELD_STRING(field));
+               break;
+            default:
+               throw vm_exec_error("don't know how to handle this type (execute_new_axioms)");
+         }
       }
       execute_send_self(tpl, state);
    }
