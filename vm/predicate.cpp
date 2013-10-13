@@ -119,8 +119,7 @@ predicate::make_predicate_from_reader(code_reader& read, code_size_t *code_size,
          byte f;
          read.read_type<byte>(&f);
          if(i < pred->num_fields()) {
-            const field_type t((field_type)f);
-            switch(t) {
+            switch(f) {
                case 0x3:
                   pred->types[i] = new list_type(new type(FIELD_INT));
                   break;
@@ -131,7 +130,7 @@ predicate::make_predicate_from_reader(code_reader& read, code_size_t *code_size,
                   pred->types[i] = new list_type(new type(FIELD_NODE));
                   break;
                default:
-                  pred->types[i] = new type(t);
+                  pred->types[i] = new type((field_type)f);
                   break;
             }
          }
