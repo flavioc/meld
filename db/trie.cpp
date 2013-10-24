@@ -191,7 +191,7 @@ trie_node::match(const tuple_field& field, type *typ,
             runtime::struct1 *s(FIELD_STRUCT(field));
             struct_type *st(s->get_type());
 
-            if(FIELD_INT(f) == st->get_size()) {
+            if(FIELD_INT(f) == (int_val)st->get_size()) {
                for(size_t i(st->get_size()); i > 0; --i) {
                   vals.push(s->get_data(i-1));
                   typs.push(st->get_type(i-1));
