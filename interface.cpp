@@ -12,6 +12,7 @@
 #include "utils/fs.hpp"
 #include "process/machine.hpp"
 #include "ui/manager.hpp"
+#include "vm/reader.hpp"
 
 using namespace process;
 using namespace sched;

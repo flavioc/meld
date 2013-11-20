@@ -63,6 +63,7 @@ public:
    }
    
    inline void construct(pointer p, const T& t) { new (p) T(t); }
+   inline void construct(pointer p) { new (p) T(); }
    inline void destroy(pointer p) { p->~T(); }
    
    inline bool operator==(allocator const&) { return true; }
