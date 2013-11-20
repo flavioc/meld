@@ -41,8 +41,6 @@ init(void)
 void
 create_pool(void)
 {
-   thread::id pid(this_thread::get_id());
-   
    pool *pl(new pool());
    pthread_setspecific(pool_key, pl);
 }

@@ -855,21 +855,6 @@ trie::inner_delete_by_leaf(trie_leaf *leaf, const derivation_count count, const 
    
    assert(root->next == NULL);
    assert(root->prev == NULL);
-
-#ifdef TRIE_ASSERT
-   leaf = first_leaf;
-   size_t count(0);
-   while(leaf) {
-      count += leaf->get_count();
-      if(!leaf->next)
-         assert(last_leaf == leaf);
-      leaf = leaf->next;
-   }
-   
-   assert(count == total);
-   
-   basic_invariants();
-#endif
 }
 
 void
@@ -983,19 +968,6 @@ tuple_trie::insert_tuple(vm::tuple *tpl, const derivation_count many, const dept
    basic_invariants();
    
    const bool is_new(!found);
-   
-#ifdef TRIE_ASSERT
-   trie_leaf *leaf(first_leaf);
-   size_t count(0);
-   while(leaf) {
-      count += leaf->get_count();
-      if(!leaf->next)
-         assert(last_leaf == leaf);
-      leaf = leaf->next;
-   }
-   
-   assert(count == total);
-#endif
    
    return is_new;
 }
