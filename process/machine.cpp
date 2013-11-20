@@ -7,7 +7,6 @@
 #include "vm/state.hpp"
 #include "vm/exec.hpp"
 #include "runtime/list.hpp"
-#include "sched/mpi/message.hpp"
 #include "mem/thread.hpp"
 #include "mem/stat.hpp"
 #include "stat/stat.hpp"
@@ -315,38 +314,10 @@ machine::start(void)
    const bool will_print(show_database || dump_database);
 
    if(will_print) {
-      if(rout.use_mpi()) {
-         if(show_database) {
-            const string filename(get_output_filename("db", remote::self->get_rank()));
-            ofstream fp(filename.c_str());
-            
-            all->DATABASE->print_db(fp);
-         }
-         if(dump_database) {
-            const string filename(get_output_filename("dump", remote::self->get_rank()));
-            ofstream fp(filename.c_str());
-            all->DATABASE->dump_db(fp);
-         }
-         
-         rout.barrier();
-         
-         // read and output files
-         if(remote::self->is_leader()) {
-            if(show_database) {
-               for(size_t i(0); i < remote::world_size; ++i)
-                  file_print_and_remove(get_output_filename("db", i));
-            }
-            if(dump_database) {
-               for(size_t i(0); i < remote::world_size; ++i)
-                  file_print_and_remove(get_output_filename("dump", i));
-            }
-         }
-      } else {
-         if(show_database)
-            all->DATABASE->print_db(cout);
-         if(dump_database)
-            all->DATABASE->dump_db(cout);
-      }
+      if(show_database)
+         all->DATABASE->print_db(cout);
+      if(dump_database)
+         all->DATABASE->dump_db(cout);
    }
 
    if(memory_statistics) {

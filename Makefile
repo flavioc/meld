@@ -71,17 +71,12 @@ SRCS = utils/utils.cpp \
 			 mem/stat.cpp \
 			 sched/base.cpp \
 			 sched/common.cpp \
-			 sched/mpi/message.cpp \
-			 sched/mpi/message_buffer.cpp \
-			 sched/mpi/request.cpp \
 			 sched/serial.cpp \
 			 sched/serial_ui.cpp \
 			 thread/threads.cpp \
 			 thread/prio.cpp \
 			 sched/thread/threaded.cpp \
 			 sched/thread/assert.cpp \
-			 sched/mpi/tokenizer.cpp \
-			 sched/mpi/handler.cpp \
 			 external/math.cpp \
 			 external/lists.cpp \
 			 external/utils.cpp \
