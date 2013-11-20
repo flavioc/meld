@@ -65,10 +65,6 @@ private:
    
    boost::mpi::environment *env;
    boost::mpi::communicator *world;
-   
-#ifdef DEBUG_SERIALIZATION_TIME
-   utils::execution_time serial_time;
-#endif
 #endif 
 
    void base_constructor(const size_t, int, char **, const bool);

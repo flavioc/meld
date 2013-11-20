@@ -38,10 +38,6 @@ tokenizer::send_token_as_leader(vm::all *all)
    assert(remote::self->is_leader());
    assert(has_global_tok == true);
    
-#ifdef DEBUG_REMOTE
-   cout << "Sent a white token / 0 from leader to" << endl;
-#endif
-
    tok.set_white();
    global_tok.set_white();
    global_tok.reset_count();

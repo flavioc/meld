@@ -47,10 +47,6 @@ mpi_handler::fetch_work(const process_id id, vm::all *all)
       }
       
       ++total_received;
-         
-#ifdef DEBUG_REMOTE
-      cout << "Received " << ms->size() << " works" << endl;
-#endif
    }
    
    if(total_received > 0) {

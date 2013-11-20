@@ -50,10 +50,6 @@ router::set_nodes_total(const size_t total, vm::all *all)
 req_obj
 router::send(remote *rem, const process_id& proc, const message_set& ms)
 {
-#ifdef DEBUG_SERIALIZATION_TIME
-   utils::execution_time::scope s(serial_time);
-#endif
-
    assert(rem != NULL);
 
    const int tag(get_thread_tag(proc));
@@ -65,10 +61,6 @@ router::send(remote *rem, const process_id& proc, const message_set& ms)
    
    ms.pack(buf, msg_size, *world);
    
-#ifdef DEBUG_REMOTE
-   cout << "Serializing " << msg_size << " bytes of " << ms.size() << " messages" << endl;
-#endif
-
    req_obj r;
    
    // define request memory
@@ -87,10 +79,6 @@ router::send(remote *rem, const process_id& proc, const message_set& ms)
 message_set*
 router::recv_attempt(const process_id proc, byte *recv_buf, vm::program *prog)
 {
-#ifdef DEBUG_SERIALIZATION_TIME
-   utils::execution_time::scope s(serial_time);
-#endif
-
    const int tag(get_thread_tag(proc));
 
    optional<mpi::status> stat;
@@ -289,10 +277,6 @@ router::~router(void)
       sched::mpi_handler::end();
    
       MPI_Finalize(); // must call this since MPI_Init_thread is not supported by boost
-      
-#ifdef DEBUG_SERIALIZATION_TIME
-      cout << "Serialization time: " << serial_time << endl;
-#endif
    }
 #endif
 }

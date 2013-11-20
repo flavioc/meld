@@ -30,10 +30,6 @@ message_buffer::transmit_list(remote *rem, const process_id proc, message_set& m
    
    req_handler.add_request(rem, obj);
    
-#ifdef DEBUG_REMOTE
-   cout << "Sent " << ms.size() << " messages to " << rem->get_rank() << ":" << proc << endl;
-#endif
-   
    assert(!req_handler.empty());
    
    ms.wipeout();
