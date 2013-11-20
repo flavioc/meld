@@ -13,7 +13,6 @@
 #include "db/tuple.hpp"
 #include "db/node.hpp"
 #include "vm/state.hpp"
-#include "sched/mpi/message.hpp"
 #include "utils/macros.hpp"
 #include "stat/slice.hpp"
 #include "process/work.hpp"

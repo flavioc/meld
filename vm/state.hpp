@@ -44,9 +44,6 @@ private:
 	bool *rules;
 	bool *predicates;
 	queue::heap_queue<vm::rule_id> rule_queue;
-#ifndef USE_RULE_COUNTING
-	std::vector<vm::predicate*> predicates_to_check;
-#endif
 	
    void purge_runtime_objects(void);
    void start_matching(void);
@@ -174,11 +171,7 @@ public:
    
 	bool add_fact_to_node(vm::tuple *, const vm::derivation_count count = 1, const vm::depth_t depth = 0);
 	
-#ifndef USE_RULE_COUNTING
-	void mark_predicate_rules(const vm::predicate *);
-#else
 	bool check_if_rule_predicate_activated(vm::rule *);
-#endif
 	
 	void mark_predicate_to_run(const vm::predicate *);
 	void mark_active_rules(void);

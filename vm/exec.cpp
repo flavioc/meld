@@ -417,9 +417,7 @@ execute_send_self(tuple *tuple, state& state)
             else
                state.generated_tuples.push_back(stuple);
 
-#ifdef USE_RULE_COUNTING
             state.node->matcher.register_tuple(tuple, 1);
-#endif
             state.mark_predicate_to_run(pred);
          }
       }
@@ -1592,7 +1590,6 @@ execute_remove(pcounter pc, state& state)
 	const bool is_a_leaf(state.is_it_a_leaf(reg));
    vm::tuple *tpl(state.get_tuple(reg));
 
-#ifdef USE_RULE_COUNTING
 	if(state.use_local_tuples) {
 #ifdef DEBUG_REMOVE
       cout << "\tdelete " << *tpl << endl;
@@ -1604,7 +1601,6 @@ execute_remove(pcounter pc, state& state)
 		}
 		// the else case is done at state.cpp
 	}
-#endif
 
    assert(tpl != NULL);
 

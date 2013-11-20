@@ -15,7 +15,6 @@ class rule_matcher
 {
 private:
 	
-#ifdef USE_RULE_COUNTING
    class rule_matcher_obj
    {
       public:
@@ -35,11 +34,9 @@ private:
 	
 	void register_predicate_availability(const predicate *);
 	void register_predicate_unavailability(const predicate *);
-#endif
 
 public:
 
-#ifdef USE_RULE_COUNTING
    /* returns true if we did not have any tuples of this predicate */
 	bool register_tuple(tuple *, const derivation_count, const bool is_new = true);
 
@@ -57,7 +54,6 @@ public:
 	rule_iterator end_active_rules(void) const { return active_rules.end(); }
 	rule_iterator begin_dropped_rules(void) const { return dropped_rules.begin(); }
 	rule_iterator end_dropped_rules(void) const { return dropped_rules.end(); }
-#endif
 
    rule_matcher(vm::program *);
 };

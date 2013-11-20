@@ -13,8 +13,6 @@ using namespace std;
 namespace vm
 {
 
-#ifdef USE_RULE_COUNTING
-
 void
 rule_matcher::register_predicate_availability(const predicate *pred)
 {
@@ -97,11 +95,9 @@ rule_matcher::deregister_tuple(tuple *tpl, const derivation_count count)
    predicate_count[id] -= count;
 	return ret;
 }
-#endif
 
 rule_matcher::rule_matcher(vm::program *prog)
 {
-#ifdef USE_RULE_COUNTING
 	predicate_count.resize(prog->num_predicates());
 	rules.resize(prog->num_rules());
 
@@ -118,7 +114,6 @@ rule_matcher::rule_matcher(vm::program *prog)
 		obj.total_have = 0;
 		obj.total_needed = prog->get_rule(rid)->num_predicates();
 	}
-#endif
 }
 
 }

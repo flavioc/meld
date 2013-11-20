@@ -165,30 +165,6 @@ state::setup(vm::tuple *tpl, db::node *n, const derivation_count count, const de
 #endif
 }
 
-#ifndef USE_RULE_COUNTING
-void
-state::mark_predicate_to_run(const predicate *pred)
-{
-	if(!predicates[pred->get_id()]) {
-		predicates[pred->get_id()] = true;
-		predicates_to_check.push_back((predicate*)pred);
-	}
-}
-
-void
-state::mark_predicate_rules(const predicate *pred)
-{
-	for(predicate::rule_iterator it(pred->begin_rules()), end(pred->end_rules()); it != end; it++) {
-		rule_id rule(*it);
-		if(!rules[rule]) {
-			rules[rule] = true;
-			heap_priority pr;
-			pr.int_priority = (int)rule;
-			rule_queue.insert(rule, pr);
-		}
-	}
-}
-#else
 void
 state::mark_predicate_to_run(const predicate *pred)
 {
@@ -210,12 +186,10 @@ state::check_if_rule_predicate_activated(vm::rule *rule)
 	
 	return false;
 }
-#endif
 
 void
 state::mark_active_rules(void)
 {
-#ifdef USE_RULE_COUNTING
 	for(rule_matcher::rule_iterator it(node->matcher.begin_active_rules()),
 		end(node->matcher.end_active_rules());
 		it != end;
@@ -247,14 +221,6 @@ state::mark_active_rules(void)
 			rule_queue.remove(rid, pr);
 		}
 	}
-#else
-	for(vector<predicate*>::iterator it(predicates_to_check.begin()), end(predicates_to_check.end());
-		it != end;
-		it++)
-	{
-		mark_predicate_rules(*it);
-	}
-#endif
 }
 
 bool
@@ -459,9 +425,7 @@ state::mark_rules_using_local_tuples(db::simple_tuple_list& ls)
          generated_persistent_tuples.push_back(stpl);
          it = ls.erase(it);
 		} else {
-#ifdef USE_RULE_COUNTING
 			node->matcher.register_tuple(tpl, stpl->get_count());
-#endif
 			mark_predicate_to_run(tpl->get_predicate());
 			it++;
 		}
@@ -481,9 +445,7 @@ state::process_consumed_local_tuples(void)
 		simple_tuple *stpl(*it);
 		if(!stpl->can_be_consumed()) {
 			vm::tuple *tpl(stpl->get_tuple());
-#ifdef USE_RULE_COUNTING
 			node->matcher.deregister_tuple(tpl, stpl->get_count());
-#endif
 			delete tpl;
 			delete stpl;
 			it = local_tuples.erase(it);
@@ -530,9 +492,7 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
          execute_bytecode(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this);
       }
 
-#ifdef USE_RULE_COUNTING
       node->matcher.register_tuple(tpl, stpl->get_count(), is_new);
-#endif
 
       if(is_new) {
         	mark_predicate_to_run(tpl->get_predicate());
@@ -553,18 +513,14 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
          if(!deleter.is_valid()) {
             // do nothing... it does not exist
          } else if(deleter.to_delete()) { // to be removed
-#ifdef USE_RULE_COUNTING
             node->matcher.deregister_tuple(tpl, -stpl->get_count());
-#endif
          	setup(tpl, node, stpl->get_count(), stpl->get_depth());
          	persistent_only = true;
          	use_local_tuples = false;
          	execute_bytecode(all->PROGRAM->get_predicate_bytecode(tuple->get_predicate_id()), *this);
          	deleter();
       	} else if(tpl->is_cycle()) {
-#ifdef USE_RULE_COUNTING
             node->matcher.deregister_tuple(tpl, -stpl->get_count());
-#endif
             depth_counter *dc(deleter.get_depth_counter());
             assert(dc != NULL);
 
@@ -579,9 +535,7 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
                }
             }
          } else {
-#ifdef USE_RULE_COUNTING
             node->matcher.deregister_tuple(tpl, -stpl->get_count());
-#endif
             delete tpl;
          }
          delete stpl;
@@ -606,9 +560,6 @@ state::process_others(void)
 void
 state::start_matching(void)
 {
-#ifndef USE_RULE_COUNTING
-	predicates_to_check.clear();
-#endif
 	fill_n(predicates, all->PROGRAM->num_predicates(), false);
 }
 
@@ -649,9 +600,7 @@ state::run_node(db::node *no)
 
 		/* delete rule and every check */
 		rules[rule] = false;
-#ifdef USE_RULE_COUNTING
 		node->matcher.clear_dropped_rules();
-#endif
       start_matching();
 		
 		setup(NULL, node, 1, 0);
