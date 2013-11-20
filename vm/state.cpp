@@ -526,6 +526,7 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
 
             if(dc->get_count(stpl->get_depth()) == 0) {
                vm::derivation_count deleted(deleter.delete_depths_above(stpl->get_depth()));
+               (void)deleted;
                if(deleter.to_delete()) {
                   setup(tpl, node, stpl->get_count(), stpl->get_depth());
                   persistent_only = true;

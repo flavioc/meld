@@ -31,6 +31,8 @@ static bool
 init(void)
 {
    int ret(pthread_key_create(&sched_key, NULL));
+   (void)ret;
+   (void)started;
    assert(ret == 0);
    atexit(cleanup_sched_key);
    return true;

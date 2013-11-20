@@ -385,6 +385,7 @@ threads_prio::set_node_priority(node *n, const double priority)
    }
    tn->unlock();
 #else
+   (void)tn;
    do_set_node_priority(n, priority);
 #endif
 }

@@ -16,7 +16,9 @@ agg_configuration::add_to_set(vm::tuple *tpl, const derivation_count many, const
 
    changed = true; // this is important
 
+#ifndef NDEBUG
    const size_t start_size(vals.size());
+#endif
    
    if(many > 0) {
       
@@ -38,8 +40,11 @@ agg_configuration::add_to_set(vm::tuple *tpl, const derivation_count many, const
          assert(dc != NULL);
 
          if(dc->get_count(depth) == 0) {
+#ifndef NDEBUG
             size_t old_size(vals.size());
+#endif
             vm::ref_count deleted(deleter.delete_depths_above(depth));
+            (void)deleted;
             if(deleter.to_delete()) {
                deleter();
             }

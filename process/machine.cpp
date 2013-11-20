@@ -240,6 +240,7 @@ machine::slice_function(void)
       
       const int ret(sigwait(&set, &sig));
 		
+      (void)ret;
 		assert(ret == 0);
       
       switch(sig) {

@@ -23,6 +23,7 @@ void pack(void *data, const size_t size, byte *buf, const size_t buf_size, int* 
 template <typename T>
 void unpack(byte *buf, const size_t buf_size, int *pos, void *data, const size_t size)
 {
+   (void)buf_size;
    assert(*pos + sizeof(T) * size <= buf_size);
 
    memcpy(data, buf + *pos, sizeof(T) * size);

@@ -93,6 +93,7 @@ intlistnth(EXTERNAL_ARG(ls), EXTERNAL_ARG(v))
    }
 
    assert(false);
+   RETURN_INT(-1);
 }
 
 argument
