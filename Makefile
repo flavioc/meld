@@ -1,4 +1,6 @@
 
+include conf.mk
+
 OS = $(shell uname -s)
 
 INCLUDE_DIRS = -I.
@@ -23,21 +25,30 @@ ifeq (exists, $(shell test -d /usr/lib64/openmpi/lib && echo exists))
 	LIBRARY_DIRS += -L/usr/lib64/openmpi/lib
 endif
 
-PROFILING = #-pg
-OPTIMIZATIONS = -O0
 ARCH = -march=x86-64
-DEBUG = -g
+ifeq ($(RELEASE), true)
+	DEBUG =
+	OPTIMIZATIONS = -O3 -DNDEBUG
+else
+	DEBUG = -g
+	PROFILING = -pg
+	OPTIMIZATIONS = -O0
+endif
+
 WARNINGS = -Wall -Wextra #-Werror
 C0X = -std=c++0x
-UILIBRARIES = #-lwebsocketpp -ljson_spirit
 
 CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) $(COX)
 LIBRARIES = -pthread -lm -lreadline -lboost_thread-mt -lboost_system-mt \
-				-lboost_date_time-mt -lboost_regex-mt $(UILIBRARIES)
+				-lboost_date_time-mt -lboost_regex-mt
 
-ifneq ($(COMPILE_MPI),)
+ifeq ($(COMPILE_MPI),true)
 	LIBRARIES += -lmpi -lmpi_cxx -lboost_serialization-mt -lboost_mpi-mt
 	CFLAGS += -DCOMPILE_MPI=1
+endif
+ifeq ($(INTERFACE),true)
+	LIBRARIES = -lwebsocketpp -ljson_spirit
+	CFLAGS += -DUSE_UI=1
 endif
 
 CXX = g++
