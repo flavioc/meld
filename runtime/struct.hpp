@@ -15,7 +15,7 @@ class struct1: public mem::base
 {
    private:
 
-      std::vector<vm::tuple_field, mem::allocator<vm::tuple_field> > fields;
+      vm::tuple_field *fields;
       utils::atomic<vm::ref_count> refs;
       vm::struct_type *typ;
 
@@ -60,10 +60,12 @@ class struct1: public mem::base
 
       explicit struct1(vm::struct_type *_typ): refs(0), typ(_typ) {
          assert(typ);
-         fields.resize(typ->get_size());
+         fields = mem::allocator<vm::tuple_field>().allocate(typ->get_size());
       }
 
-      ~struct1(void) { }
+      ~struct1(void) {
+         mem::allocator<vm::tuple_field>().deallocate(fields, typ->get_size());
+      }
 };
 
 }
