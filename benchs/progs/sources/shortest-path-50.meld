@@ -3,6 +3,7 @@
 type linear path(node, node, int, int).
 
 priority @order @asc.
+priority @cluster @static.
 
 const used = 1.
 const notused = 0.
