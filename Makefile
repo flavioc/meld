@@ -6,25 +6,6 @@ OS = $(shell uname -s)
 INCLUDE_DIRS = -I.
 LIBRARY_DIRS =
 
-ifeq (exists, $(shell test -d /usr/lib/openmpi/include && echo exists))
-	INCLUDE_DIRS += -I/usr/lib/openmpi/include
-endif
-ifeq (exists, $(shell test -d /opt/local/include && echo exists))
-	INCLUDE_DIRS += -I/opt/local/include
-endif
-ifeq (exists, $(shell test -d /opt/local/lib  && echo exists))
-	LIBRARY_DIRS += -L/opt/local/lib
-endif
-ifeq (exists, $(shell test -d /usr/include/openmpi-x86_64 && echo exists))
-	INCLUDE_DIRS += -I/usr/include/openmpi-x86_64/
-endif
-ifeq (exists, $(shell test -d /opt/local/include/openmpi && echo exists))
-	INCLUDE_DIRS += -I/opt/local/include/openmpi/
-endif
-ifeq (exists, $(shell test -d /usr/lib64/openmpi/lib && echo exists))
-	LIBRARY_DIRS += -L/usr/lib64/openmpi/lib
-endif
-
 ARCH = -march=x86-64
 ifeq ($(RELEASE), true)
 	DEBUG =
@@ -42,10 +23,6 @@ CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DI
 LIBRARIES = -pthread -lm -lreadline -lboost_thread-mt -lboost_system-mt \
 				-lboost_date_time-mt -lboost_regex-mt
 
-ifeq ($(COMPILE_MPI),true)
-	LIBRARIES += -lmpi -lmpi_cxx -lboost_serialization-mt -lboost_mpi-mt
-	CFLAGS += -DCOMPILE_MPI=1
-endif
 ifeq ($(INTERFACE),true)
 	LIBRARIES = -lwebsocketpp -ljson_spirit
 	CFLAGS += -DUSE_UI=1
