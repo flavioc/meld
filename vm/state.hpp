@@ -12,8 +12,10 @@
 #include "db/trie.hpp"
 #include "vm/all.hpp"
 #include "utils/random.hpp"
+#include "utils/time.hpp"
 #include "queue/safe_simple_pqueue.hpp"
 #include "runtime/struct.hpp"
+#include "vm/stat.hpp"
 
 // forward declaration
 namespace sched {
@@ -47,9 +49,6 @@ private:
 	
    void purge_runtime_objects(void);
    void start_matching(void);
-#ifdef CORE_STATISTICS
-   void init_core_statistics(void);
-#endif
    db::simple_tuple* search_for_negative_tuple_partial_agg(db::simple_tuple *);
    db::simple_tuple* search_for_negative_tuple_full_agg(db::simple_tuple *);
    db::simple_tuple* search_for_negative_tuple_normal(db::simple_tuple *);
@@ -84,6 +83,9 @@ public:
 	vm::strat_level current_level;
    bool persistent_only; // we are running one persistent tuple (not a rule)
    vm::all *all;
+#ifdef CORE_STATISTICS
+   core_statistics stat;
+#endif
 #ifdef USE_UI
    static bool UI;
 #endif
@@ -94,23 +96,6 @@ public:
    bool sim_instr_use;
 #endif
 
-#ifdef CORE_STATISTICS
-   size_t stat_rules_ok;
-   size_t stat_rules_failed;
-   size_t stat_db_hits;
-   size_t stat_tuples_used;
-   size_t stat_if_tests;
-	size_t stat_if_failed;
-	size_t stat_instructions_executed;
-	size_t stat_moves_executed;
-	size_t stat_ops_executed;
-   size_t *stat_predicate_proven;
-   size_t *stat_predicate_applications;
-   size_t *stat_predicate_success;
-
-	bool stat_inside_rule;
-	size_t stat_rules_activated;
-#endif
    
 #define define_get(WHAT, RET, BODY) \
    inline RET get_ ## WHAT (const reg_num& num) const { BODY; }

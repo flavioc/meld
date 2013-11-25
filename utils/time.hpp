@@ -40,8 +40,25 @@ public:
    inline size_t milliseconds(void) const { return dur.total_milliseconds(); }
    
    void print(std::ostream& cout) const { cout << milliseconds() << "ms"; }
+
+   inline bool operator<(const execution_time& other) const
+   {
+      return dur < other.dur;
+   }
+
+   inline bool operator>(const execution_time& other) const
+   {
+      return dur > other.dur;
+   }
+
+   inline bool operator==(const execution_time& other) const
+   {
+      return dur == other.dur;
+   }
    
    explicit execution_time(void) {}
+
+   execution_time(const execution_time& other): dur(other.dur) {}
    
    ~execution_time(void) {}   
 };

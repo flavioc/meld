@@ -11,6 +11,7 @@
 #include "queue/macros.hpp"
 #include "queue/iterators.hpp"
 #include "utils/spinlock.hpp"
+#include <iostream>
 
 namespace queue
 {

@@ -57,6 +57,7 @@ SRCS = utils/utils.cpp \
 			 vm/external.cpp \
 			 vm/rule.cpp \
 			 vm/rule_matcher.cpp \
+			 vm/stat.cpp \
 			 db/node.cpp \
 			 db/tuple.cpp \
 			 db/agg_configuration.cpp \
