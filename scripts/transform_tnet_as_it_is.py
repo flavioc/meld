@@ -45,4 +45,6 @@ for line in f:
 		d2 = random.randint(1, 10)
 	else:
 		d2 = d
-	write_edgew(vec[0], vec[1], d2)
+	src = int(vec[0]) - 1
+	dst = int(vec[1]) - 1
+	write_edgew(src, dst, d2)

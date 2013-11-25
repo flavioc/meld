@@ -11,6 +11,6 @@ set key font "Helvetica, 23"
 set key right top
 
 plot "`echo $FILE`" using 1:2 title 'GraphLab 1.0' w lp ls 1, \
-		 "`echo $FILE`" using 1:3 title 'Meld' w lp ls 6
+		 "`echo $FILE`" using 1:3 title 'LM' w lp ls 6
 
 
