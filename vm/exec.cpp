@@ -1114,7 +1114,7 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
       vector_of_everything everything;
 		if(state.use_local_tuples) {
 #ifdef CORE_STATISTICS
-         execution_time::scope s(state.stat.temporary_store_search_time);
+         execution_time::scope s(state.stat.ts_search_time_predicate[pred->get_id()]);
 #endif
 
 			for(db::simple_tuple_list::iterator it(state.local_tuples.begin()), end(state.local_tuples.end());
@@ -1325,7 +1325,7 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 				
          {
 #ifdef CORE_STATISTICS
-            execution_time::scope s(state.stat.temporary_store_search_time);
+				execution_time::scope s2(state.stat.ts_search_time_predicate[pred->get_id()]);
 #endif
             if(!do_matches(pc, match_tuple, state))
                continue;
@@ -1623,7 +1623,7 @@ execute_remove(pcounter pc, state& state)
 		if(is_a_leaf) { // tuple was fetched from database
 			//cout << "Remove " << *state.get_tuple(reg) << endl;
 #ifdef CORE_STATISTICS
-         execution_time::scope s(state.stat.database_deletion_time);
+         execution_time::scope s(state.stat.db_deletion_time_predicate[tpl->get_predicate_id()]);
 #endif
    		state.node->delete_by_leaf(tpl->get_predicate(), state.get_leaf(reg), 0);
 		} else {
@@ -1974,7 +1974,7 @@ eval_loop:
                build_match_object(mobj, pc + ITER_BASE, state, pred);
                {
 #ifdef CORE_STATISTICS
-                  execution_time::scope s(state.stat.database_search_time);
+                  execution_time::scope s(state.stat.db_search_time_predicate[pred_id]);
 #endif
                   state.node->match_predicate(pred_id, mobj, matches);
                }

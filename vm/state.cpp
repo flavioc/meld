@@ -227,7 +227,7 @@ bool
 state::add_fact_to_node(vm::tuple *tpl, const vm::derivation_count count, const vm::depth_t depth)
 {
 #ifdef CORE_STATISTICS
-   execution_time::scope s(stat.database_insertion_time);
+   execution_time::scope s(stat.db_insertion_time_predicate[tpl->get_predicate_id()]);
 #endif
 
 	return node->add_tuple(tpl, count, depth);
@@ -385,19 +385,18 @@ state::do_persistent_tuples(void)
       }
    }
    
-   {
+   while(!leaves_for_deletion.empty()) {
+      pair<vm::predicate*, db::tuple_trie_leaf*> p(leaves_for_deletion.front());
+      vm::predicate* pred(p.first);
+
 #ifdef CORE_STATISTICS
-      execution_time::scope s(stat.database_deletion_time);
+   	execution_time::scope s(stat.db_deletion_time_predicate[pred->get_id()]);
 #endif
-      while(!leaves_for_deletion.empty()) {
-         pair<vm::predicate*, db::tuple_trie_leaf*> p(leaves_for_deletion.front());
-         vm::predicate* pred(p.first);
-         db::tuple_trie_leaf *leaf(p.second);
-         
-         leaves_for_deletion.pop_front();
-         
-         node->delete_by_leaf(pred, leaf, 0);
-      }
+      db::tuple_trie_leaf *leaf(p.second);
+      
+      leaves_for_deletion.pop_front();
+      
+      node->delete_by_leaf(pred, leaf, 0);
    }
       
 	assert(leaves_for_deletion.empty());
@@ -446,6 +445,10 @@ state::mark_rules_using_local_tuples(db::simple_tuple_list& ls)
 void
 state::process_consumed_local_tuples(void)
 {
+#ifdef CORE_STATISTICS
+	execution_time::scope s(stat.clean_temporary_store_time);
+#endif
+
 	// process current set of tuples
 	for(db::simple_tuple_list::iterator it(local_tuples.begin());
 		it != local_tuples.end();
@@ -586,10 +589,18 @@ state::run_node(db::node *no)
 
    assert(local_tuples.empty());
 	sched->gather_next_tuples(node, local_tuples);
-   start_matching();
-	current_level = mark_rules_using_local_tuples(local_tuples);
-
+	{
+#ifdef CORE_STATISTICS
+		execution_time::scope s(stat.core_engine_time);
+#endif
+   	start_matching();
+		current_level = mark_rules_using_local_tuples(local_tuples);
+	}
+	
    if(do_persistent_tuples()) {
+#ifdef CORE_STATISTICS
+		execution_time::scope s(stat.core_engine_time);
+#endif
       mark_active_rules();
    } else
       // if using the simulator, we check if we exhausted the available time to run
@@ -609,9 +620,14 @@ state::run_node(db::node *no)
 #endif
 
 		/* delete rule and every check */
-		rules[rule] = false;
-		node->matcher.clear_dropped_rules();
-      start_matching();
+		{
+#ifdef CORE_STATISTICS
+			execution_time::scope s(stat.core_engine_time);
+#endif
+			rules[rule] = false;
+			node->matcher.clear_dropped_rules();
+      	start_matching();
+		}
 		
 		setup(NULL, node, 1, 0);
 		use_local_tuples = true;
@@ -634,7 +650,12 @@ state::run_node(db::node *no)
          aborted = true;
          break;
       }
-		mark_active_rules();
+		{
+#ifdef CORE_STATISTICS
+			execution_time::scope s(stat.core_engine_time);
+#endif
+			mark_active_rules();
+		}
 	}
 
    // push remaining tuples into node

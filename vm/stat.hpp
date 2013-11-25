@@ -38,11 +38,24 @@ class core_statistics {
       size_t *stat_predicate_applications;
       size_t *stat_predicate_success;
 
-      // execution time
-      utils::execution_time database_insertion_time;
-      utils::execution_time database_deletion_time;
-      utils::execution_time database_search_time;
-      utils::execution_time temporary_store_search_time;
+      // insertion time per predicate
+		std::vector<utils::execution_time> db_insertion_time_predicate;
+		
+		// deletion time per predicate
+		std::vector<utils::execution_time> db_deletion_time_predicate;
+		
+		// search time for each predicate
+		std::vector<utils::execution_time> db_search_time_predicate;
+		
+		// search time for each predicate
+		std::vector<utils::execution_time> ts_search_time_predicate;
+		
+		// time to clean temporary store
+		utils::execution_time clean_temporary_store_time;
+		
+		utils::execution_time core_engine_time;
+		
+		// run time per rule
       std::vector<utils::execution_time> rule_times;
 
    public:
