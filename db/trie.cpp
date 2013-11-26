@@ -137,7 +137,7 @@ trie_node::get_by_node(const node_val val) const
 
 trie_node*
 trie_node::match(const tuple_field& field, type *typ,
-      val_stack& vals, type_stack& typs, size_t& count) const
+      match_stack& mstk, size_t& count) const
 {
    assert(!is_leaf());
    
@@ -193,8 +193,8 @@ trie_node::match(const tuple_field& field, type *typ,
 
             if(FIELD_INT(f) == (int_val)st->get_size()) {
                for(size_t i(st->get_size()); i > 0; --i) {
-                  vals.push(s->get_data(i-1));
-                  typs.push(st->get_type(i-1));
+						match_field f = {false, st->get_type(i-1), s->get_data(i-1)};
+						mstk.push(f);
                }
                return next;
             }
@@ -211,10 +211,10 @@ trie_node::match(const tuple_field& field, type *typ,
                      list_type *lt((list_type*)typ);
                      head = ls->get_head();
                      SET_FIELD_CONS(tail, ls->get_tail());
-                     vals.push(tail);
-                     typs.push(typ);
-                     vals.push(head);
-                     typs.push(lt->get_subtype());
+							match_field f_tail = {false, typ, tail};
+							match_field f_head = {false, lt->get_subtype(), head};
+							mstk.push(f_tail);
+							mstk.push(f_head);
                      return next;
                   }
                }
@@ -231,7 +231,7 @@ trie_node::match(const tuple_field& field, type *typ,
 }
    
 trie_node*
-trie_node::insert(const tuple_field& field, type *t, val_stack& vals, type_stack& typs)
+trie_node::insert(const tuple_field& field, type *t, match_stack& mstk)
 {
    tuple_field f;
    trie_node *new_child;
@@ -249,10 +249,10 @@ trie_node::insert(const tuple_field& field, type *t, val_stack& vals, type_stack
 
                head = ls->get_head();
                SET_FIELD_PTR(tail, ls->get_tail());
-               vals.push(tail);
-               typs.push(lt);
-               vals.push(head);
-               typs.push(lt->get_subtype());
+					const match_field f_tail = {false, lt, tail};
+					const match_field f_head = {false, lt->get_subtype(), head};
+					mstk.push(f_tail);
+					mstk.push(f_head);
             }
             break;
          }
@@ -264,10 +264,8 @@ trie_node::insert(const tuple_field& field, type *t, val_stack& vals, type_stack
             SET_FIELD_INT(f, st->get_size());
 
             for(size_t i(st->get_size()); i > 0; --i) {
-               tuple_field d;
-               d = s->get_data(i-1);
-               vals.push(d);
-               typs.push(st->get_type(i-1));
+					const match_field f = {false, st->get_type(i-1), s->get_data(i-1)};
+					mstk.push(f);
             }
             break;
          }
@@ -654,9 +652,9 @@ trie::sanity_check(void) const
 
 // inserts the data inside the trie
 trie_node*
-trie::check_insert(void *data, const derivation_count many, const depth_t depth, val_stack& vals, type_stack& typs, bool& found)
+trie::check_insert(void *data, const derivation_count many, const depth_t depth, match_stack& mstk, bool& found)
 {
-   if(vals.empty()) {
+   if(mstk.empty()) {
       // 0-arity tuple
       if(!root->is_leaf()) {
          // branch not found
@@ -684,17 +682,17 @@ trie::check_insert(void *data, const derivation_count many, const depth_t depth,
    trie_node *parent(root);
    
    while (!parent->is_leaf()) {
-      assert(!vals.empty() && !typs.empty());
+      assert(!mstk.empty());
       
-      tuple_field field(vals.top());
-      type *typ(typs.top());
+		match_field f(mstk.top());
+		tuple_field field = f.field;
+		type *typ = f.ty;
       trie_node *cur;
       size_t count;
       
-      vals.pop();
-      typs.pop();
+		mstk.pop();
       
-      cur = parent->match(field, typ, vals, typs, count);
+      cur = parent->match(field, typ, mstk, count);
       
       if(cur == NULL) {
          if(many < 0) {
@@ -713,23 +711,22 @@ trie::check_insert(void *data, const derivation_count many, const depth_t depth,
             parent->get_hash()->expand();
          }
          
-         parent = parent->insert(field, typ, vals, typs);
+         parent = parent->insert(field, typ, mstk);
 
          assert(parent != root);
          
-         while(!vals.empty()) {
-            field = vals.top();
-            typ = typs.top();
-            vals.pop();
-            typs.pop();
+         while(!mstk.empty()) {
+				f = mstk.top();
+            field = f.field;
+            typ = f.ty;
+				mstk.pop();
             
             assert(!parent->is_leaf());
             
-            parent = parent->insert(field, typ, vals, typs);
+            parent = parent->insert(field, typ, mstk);
          }
          
-         assert(vals.empty());
-         assert(typs.empty());
+         assert(mstk.empty());
          
          // parent is now set as a leaf
          trie_leaf *leaf(create_leaf(data, many, depth));
@@ -760,8 +757,7 @@ trie::check_insert(void *data, const derivation_count many, const depth_t depth,
       parent = cur;
    }
    
-   assert(vals.empty());
-   assert(typs.empty());
+   assert(mstk.empty());
    assert(!root->is_leaf());
    
    found = true;
@@ -863,26 +859,23 @@ trie::delete_by_index(const match& m)
    basic_invariants();
    
    const size_t stack_size(m.size() + STACK_EXTRA_SIZE);
-   match_val_stack vals(stack_size);
-   match_type_stack typs(stack_size);
+   match_stack mstk(stack_size);
    
    trie_node *node(root);
    
-   // initialize stacks
-   m.get_type_stack(typs);
-   m.get_val_stack(vals);
+   // initialize stack
+   m.get_match_stack(mstk);
    
-   while(!vals.empty()) {
-      match_field mtype(typs.top());
-      tuple_field mfield(vals.top());
+   while(!mstk.empty()) {
+      match_field f = mstk.top();
+      tuple_field mfield = f.field;
       
-      typs.pop();
-      vals.pop();
+		mstk.pop();
       
-      if(!mtype.exact)
+      if(!f.exact)
          break;
       
-      switch(mtype.ty->get_type()) {
+      switch(f.ty->get_type()) {
          case FIELD_INT:
             node = node->get_by_int(FIELD_INT(mfield));
             break;
@@ -935,17 +928,16 @@ tuple_trie::check_insert(vm::tuple *tpl, const derivation_count many, const dept
 {
    //cout << "Starting insertion of " << *tpl << endl;
  
-   val_stack vals(tpl->num_fields() + STACK_EXTRA_SIZE);
-   type_stack typs(tpl->num_fields() + STACK_EXTRA_SIZE);
+	match_stack mstk(tpl->num_fields() + STACK_EXTRA_SIZE);
   
    if(tpl->num_fields() > 0) {
       for(int i(tpl->num_fields()-1); i >= 0; --i) {
-         vals.push(tpl->get_field(i));
-         typs.push(tpl->get_field_type(i));
+			const match_field f = {false, tpl->get_field_type(i), tpl->get_field(i)};
+			mstk.push(f);
       }
    }
    
-   trie_node *ret(trie::check_insert((void*)tpl, many, depth, vals, typs, found));
+   trie_node *ret(trie::check_insert((void*)tpl, many, depth, mstk, found));
 
    return ret;
 }
@@ -1140,8 +1132,7 @@ tuple_trie::visit(trie_node *n) const
 #define ADD_ALT(NODE) do { \
    assert((NODE) != NULL); \
    frm.next_node = NODE;   \
-   frm.vals_stack = vals;   \
-   frm.typs_stack = typs; \
+   frm.mstack = mstk;   	\
    cont_stack.push(frm); } while(false)
 
 void
@@ -1149,11 +1140,10 @@ tuple_trie::tuple_search_iterator::find_next(trie_continuation_frame& frm)
 {
 	trie_node *parent = NULL;
 	trie_node *node = NULL;
-	match_field mtype;
+	match_field f;
    tuple_field mfield;
    bool going_down = true;
-	match_val_stack vals;
-	match_type_stack typs;
+	match_stack mstk;
 
 	goto restore;
 
@@ -1171,25 +1161,23 @@ try_again:
 restore:
 	node = frm.next_node;
 	parent = node->parent;
-	vals = frm.vals_stack;
-	typs = frm.typs_stack;
+	mstk = frm.mstack;
 	going_down = false;
 	
 match_begin:
-	assert(!vals.empty());
-   assert(!typs.empty());
+	assert(!mstk.empty());
    
-   mtype = typs.top();
+   f = mstk.top();
    
    assert(node != NULL);
    assert(parent != NULL);
    
-   if(mtype.exact) {
+   if(f.exact) {
      // printf("Match exact\n");
       // must do an exact match
       // there will be no continuation frames at this level
-      mfield = vals.top();
-      switch(mtype.ty->get_type()) {
+      mfield = f.field;
+      switch(f.ty->get_type()) {
          case FIELD_INT:
             if(parent->is_hashed()) {
                assert(going_down);
@@ -1299,15 +1287,14 @@ match_begin:
             ADD_ALT(node->next);
       }
       
-      switch(mtype.ty->get_type()) {
+      switch(f.ty->get_type()) {
          case FIELD_LIST:
             if(FIELD_PTR(node->data) == 0) {
                goto match_succeeded_and_pop;
             } else {
-               list_type *lt((list_type*)mtype.ty);
-               match_field f = {false, lt->get_subtype()};
-               typs.push(f);
-               vals.push(tuple_field());
+               list_type *lt((list_type*)f.ty);
+               const match_field f = {false, lt->get_subtype(), tuple_field()};
+					mstk.push(f);
                goto match_succeeded;
             }
             break;
@@ -1321,8 +1308,7 @@ match_begin:
    }
    
 match_succeeded_and_pop:
-   vals.pop();
-   typs.pop();
+   mstk.pop();
 
 match_succeeded:
 	if(node->is_leaf()) {
@@ -1350,11 +1336,10 @@ tuple_trie::match_predicate(const match& m) const
       return tuple_search_iterator();
    
    const size_t stack_size(m.size() + STACK_EXTRA_SIZE);
-	trie_continuation_frame first_frm = {match_val_stack(stack_size), match_type_stack(stack_size), root->child};
+	trie_continuation_frame first_frm = {match_stack(stack_size), root->child};
    
    // initialize stacks
-   m.get_type_stack(first_frm.typs_stack);
-   m.get_val_stack(first_frm.vals_stack);
+   m.get_match_stack(first_frm.mstack);
 
    // dump(cout);
    // if it was a leaf, m would have no exact match
@@ -1375,20 +1360,18 @@ agg_trie::find_configuration(vm::tuple *tpl)
    const predicate *pred(tpl->get_predicate());
    
    const size_t stack_size(pred->get_aggregate_field() + STACK_EXTRA_SIZE);
-   val_stack vals(stack_size);
-   type_stack typs(stack_size);
+   match_stack mstk(stack_size);
   
    for(int i(pred->get_aggregate_field()-1); i >= 0; --i) {
-      vals.push(tpl->get_field(i));
-      typs.push(tpl->get_field_type(i));
+		const match_field f = {false, tpl->get_field_type(i), tpl->get_field(i)};
+		mstk.push(f);
    }
    
    bool found;
-   trie_node *node(trie::check_insert(NULL, 1, 0, vals, typs, found));
+   trie_node *node(trie::check_insert(NULL, 1, 0, mstk, found));
    
-   if(!found) {
+   if(!found)
       ++number_of_references;
-   }
    
    return (agg_trie_leaf*)node->get_leaf();
 }
