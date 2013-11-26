@@ -239,7 +239,8 @@ program::program(const string& _filename):
 
             for(uint32_t j(0); j != num_args + 1; ++j) {
                type *t = read_type_id_from_reader(read, types);
-               delete t;
+               (void)t;
+               //delete t;
             }
             //cout << endl;
          }
