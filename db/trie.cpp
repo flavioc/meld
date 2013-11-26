@@ -1062,24 +1062,11 @@ tuple_trie::dump(ostream& cout) const
    }
 }
 
-void
-tuple_trie::match_predicate(tuple_vector& vec) const
+tuple_trie::tuple_search_iterator
+tuple_trie::match_predicate(void) const
 {
-   for(const_iterator it(begin());
-      it != end();
-      it++)
-   {
-      vec.push_back(it.get_leaf());
-   }
+	return tuple_search_iterator((tuple_trie_leaf*)first_leaf);
 }
-
-struct continuation_frame {
-   match_val_stack vals_stack;
-   match_type_stack typs_stack;
-   trie_node *next_node;
-};
-
-typedef utils::stack<continuation_frame> continuation_stack;
 
 void
 tuple_trie::do_visit(trie_node *n, const int tab, stack<type*>& s) const
@@ -1150,61 +1137,50 @@ tuple_trie::visit(trie_node *n) const
    }
 }
 
-void
-tuple_trie::match_predicate(const match& m, tuple_vector& vec) const
-{
-
-  // cout << "Entering match predicate" << endl;
-   //print(cout);
-   //m.print(cout);
-   //visit(root);
-   if(!m.has_any_exact()) {
-      // just retrieve everything and be done with it
-      match_predicate(vec);
-      return;
-   }
-   
-   if(number_of_references == 0)
-      return;
-   
-   const size_t stack_size(m.size() + STACK_EXTRA_SIZE);
-   match_val_stack vals(stack_size);
-   match_type_stack typs(stack_size);
-   continuation_stack cont(stack_size);
-   
-   // cout << *pred << endl;
-   
-   trie_node *parent(root);
-   trie_node *node(root->child);
-   
-   // initialize stacks
-   m.get_type_stack(typs);
-   m.get_val_stack(vals);
-
-
-   // dump(cout);
-   // if it was a leaf, m would have no exact match
-   assert(!root->is_leaf());
-   
-   match_field mtype;
-   tuple_field mfield;
-   bool going_down = true;
-   continuation_frame frm;
-   
 #define ADD_ALT(NODE) do { \
    assert((NODE) != NULL); \
    frm.next_node = NODE;   \
    frm.vals_stack = vals;   \
    frm.typs_stack = typs; \
-   cont.push(frm); } while(false)
-   
+   cont_stack.push(frm); } while(false)
+
+void
+tuple_trie::tuple_search_iterator::find_next(trie_continuation_frame& frm)
+{
+	trie_node *parent = NULL;
+	trie_node *node = NULL;
+	match_field mtype;
+   tuple_field mfield;
+   bool going_down = true;
+	match_val_stack vals;
+	match_type_stack typs;
+
+	goto restore;
+
+try_again:
+	// use continuation stack to restore state at a given node
+
+	if(cont_stack.empty()) {
+		next = NULL;
+		return;
+	}
+
+	frm = cont_stack.top();
+	cont_stack.pop();
+
+restore:
+	node = frm.next_node;
+	parent = node->parent;
+	vals = frm.vals_stack;
+	typs = frm.typs_stack;
+	going_down = false;
+	
 match_begin:
-   assert(!vals.empty());
+	assert(!vals.empty());
    assert(!typs.empty());
    
    mtype = typs.top();
    
-   assert(number_of_references != 0);
    assert(node != NULL);
    assert(parent != NULL);
    
@@ -1349,43 +1325,42 @@ match_succeeded_and_pop:
    typs.pop();
 
 match_succeeded:
-   
-   if(node->is_leaf()) {
-      goto leaf_found;
-   }
+	if(node->is_leaf()) {
+		assert(node != NULL);
+		assert(node->is_leaf());
+
+		tuple_trie_leaf *leaf((tuple_trie_leaf*)node->get_leaf());
+		next = leaf; // NEW
+		return;
+	}
    
    parent = node;
    node = node->child;
    going_down = true;
    goto match_begin;
-   
-try_again:
-   // match failed
-   // use continuation stack to restore state at a given node
+}
 
-   if(cont.empty())
-      return;
+tuple_trie::tuple_search_iterator
+tuple_trie::match_predicate(const match& m) const
+{
+   if(!m.has_any_exact())
+      return match_predicate();
    
-   frm = cont.top();
-   cont.pop();
+   if(number_of_references == 0)
+      return tuple_search_iterator();
    
-   node = frm.next_node;
-   parent = node->parent;
-   vals = frm.vals_stack;
-   typs = frm.typs_stack;
-   going_down = false;
+   const size_t stack_size(m.size() + STACK_EXTRA_SIZE);
+	trie_continuation_frame first_frm = {match_val_stack(stack_size), match_type_stack(stack_size), root->child};
    
-   goto match_begin;
-   
-leaf_found:
-   assert(node != NULL);
-   assert(node->is_leaf());
+   // initialize stacks
+   m.get_type_stack(first_frm.typs_stack);
+   m.get_val_stack(first_frm.vals_stack);
 
-   tuple_trie_leaf *leaf((tuple_trie_leaf*)node->get_leaf());
-   //vm::tuple *tpl(leaf->get_tuple()->get_tuple());
-   // cout << "Added " << *tpl << endl;
-   vec.push_back(leaf);
-   goto try_again;
+   // dump(cout);
+   // if it was a leaf, m would have no exact match
+   assert(!root->is_leaf());
+
+	return tuple_search_iterator(first_frm);
 }
 
 agg_trie_leaf::~agg_trie_leaf(void)

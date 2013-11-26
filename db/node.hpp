@@ -97,8 +97,8 @@ public:
    virtual void assert_end_iteration(void) const {}
    void init(void);
    
-   void match_predicate(const vm::predicate_id, tuple_vector&) const;
-   void match_predicate(const vm::predicate_id, const vm::match&, tuple_vector&) const;
+   db::tuple_trie::tuple_search_iterator match_predicate(const vm::predicate_id) const;
+  	db::tuple_trie::tuple_search_iterator match_predicate(const vm::predicate_id, const vm::match&) const;
    
    size_t count_total(const vm::predicate_id) const;
    

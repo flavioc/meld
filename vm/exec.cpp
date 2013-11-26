@@ -1074,7 +1074,7 @@ public:
 
 static inline return_type
 execute_iter(pcounter pc, const utils::byte options, const utils::byte options_arguments,
-		pcounter first, state& state, tuple_vector& tuples, const predicate *pred)
+		pcounter first, state& state, tuple_trie::tuple_search_iterator tuples_it, const predicate *pred)
 {
    const bool old_is_linear = state.is_linear;
 	const bool this_is_linear = (pred->is_linear_pred() && !state.persistent_only && iter_options_to_delete(options));
@@ -1106,12 +1106,10 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 
    if(state.persistent_only) {
       // do nothing
-   } else if(iter_options_random(options)) {
-		utils::shuffle_vector(tuples, state.randgen);
-	} else if(iter_options_min(options)) {
-		const field_num field(iter_options_min_arg(options_arguments));
+   } else if(iter_options_min(options) || iter_options_random(options)) {
 		typedef vector<iter_object, mem::allocator<iter_object> > vector_of_everything;
       vector_of_everything everything;
+		
 		if(state.use_local_tuples) {
 #ifdef CORE_STATISTICS
          execution_time::scope s(state.stat.ts_search_time_predicate[pred->get_id()]);
@@ -1129,10 +1127,10 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 			}
 		}
 		
-		for(tuple_vector::iterator it(tuples.begin()), end(tuples.end());
-			it != end; ++it)
+		for(tuple_trie::tuple_search_iterator end(tuple_trie::match_end());
+			tuples_it != end; ++tuples_it)
 		{
-			tuple_trie_leaf *tuple_leaf(*it);
+			tuple_trie_leaf *tuple_leaf(*tuples_it);
 #ifdef TRIE_MATCHING_ASSERT
 	      assert(do_matches(pc, tuple_leaf->get_underlying_tuple(), state));
 #endif
@@ -1141,7 +1139,12 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 		
 		//cout << "Sorting " << everything.size() << endl;
 		
-		sort(everything.begin(), everything.end(), tuple_sorter(field, pred));
+		if(iter_options_min(options))
+			utils::shuffle_vector(everything, state.randgen);
+		else {
+			const field_num field(iter_options_min_arg(options_arguments));
+			sort(everything.begin(), everything.end(), tuple_sorter(field, pred));
+		}
 		
 		for(vector_of_everything::iterator it(everything.begin()), end(everything.end());
 			it != end; ++it)
@@ -1206,11 +1209,11 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 		return RETURN_NO_RETURN;
 	}
 
-   for(tuple_vector::iterator it(tuples.begin());
-      it != tuples.end();
-      ++it)
+   for(tuple_trie::tuple_search_iterator end(tuple_trie::match_end());
+      tuples_it != end;
+      ++tuples_it)
    {
-      tuple_trie_leaf *tuple_leaf(*it);
+      tuple_trie_leaf *tuple_leaf(*tuples_it);
 
       if(pred->is_linear_pred()) {
          if(!state.linear_tuple_can_be_used(tuple_leaf))
@@ -1963,7 +1966,6 @@ eval_loop:
             break;
             
          case ITER_INSTR: {
-               tuple_vector matches;
                const predicate_id pred_id(iter_predicate(pc));
                const predicate *pred(state.all->PROGRAM->get_predicate(pred_id));
                match mobj(pred);
@@ -1972,16 +1974,14 @@ eval_loop:
 					state.stat.stat_db_hits++;
 #endif
                build_match_object(mobj, pc + ITER_BASE, state, pred);
-               {
 #ifdef CORE_STATISTICS
-                  execution_time::scope s(state.stat.db_search_time_predicate[pred_id]);
+                  //execution_time::scope s(state.stat.db_search_time_predicate[pred_id]);
 #endif
-                  state.node->match_predicate(pred_id, mobj, matches);
-               }
+               tuple_trie::tuple_search_iterator it = state.node->match_predicate(pred_id, mobj);
 
                const return_type ret(execute_iter(pc + ITER_BASE,
 								iter_options(pc), iter_options_argument(pc),
-								advance(pc), state, matches, pred));
+								advance(pc), state, it, pred));
                   
                if(ret == RETURN_LINEAR)
                  return ret;

@@ -531,6 +531,14 @@ public:
    virtual ~trie(void);
 };
 
+struct trie_continuation_frame {
+   vm::match_val_stack vals_stack;
+   vm::match_type_stack typs_stack;
+   trie_node *next_node;
+};
+
+typedef utils::stack<trie_continuation_frame> trie_continuation_stack;
+
 class tuple_trie: public trie, public mem::base
 {
 private:
@@ -553,6 +561,89 @@ public:
    
    typedef tuple_trie_iterator iterator;
    typedef tuple_trie_iterator const_iterator;
+
+	// this search iterator uses either the leaf list
+	// or a continuation stack to retrieve the next valid match
+	// the leaf list is used because we want all the tuples from the trie
+   class tuple_search_iterator: public mem::base
+   {
+      public:
+         
+         typedef enum {
+            USE_LIST,
+            USE_STACK,
+            USE_END
+         } iterator_type;
+
+      private:
+
+         iterator_type type;
+         trie_continuation_stack cont_stack;
+			tuple_trie_leaf *next;
+			
+			inline void increment(void) {
+            if(type == USE_LIST)
+					next = (tuple_trie_leaf*)next->next;
+				else if(type == USE_STACK) {
+					if(cont_stack.empty())
+						next = NULL;
+					else {
+						trie_continuation_frame frm;
+						frm = cont_stack.top();
+						cont_stack.pop();
+						find_next(frm);
+					}
+				} else
+					assert(false);
+			}
+	
+      public:
+	
+			void find_next(trie_continuation_frame&);
+
+         inline tuple_search_iterator& operator++(void)
+         {
+				increment();
+				return *this;
+         }
+         
+         inline tuple_search_iterator operator++(int)
+         {
+				increment();
+            return *this;
+         }
+
+		   inline tuple_trie_leaf* operator*(void) const
+		   {
+				if(type == USE_LIST || type == USE_STACK)
+					return next;
+				else
+					return NULL;
+		   }
+
+         inline bool operator==(const tuple_search_iterator& it) const
+         {
+				return next == it.next;
+         }
+         
+         inline bool operator!=(const tuple_search_iterator& it) const { return !operator==(it); }
+
+         explicit tuple_search_iterator(tuple_trie_leaf *leaf):
+            type(USE_LIST), next(leaf)
+         {
+         }
+
+         // end iterator
+         explicit tuple_search_iterator(void): type(USE_END), next(NULL) {}
+
+			// iterator for use with continuation stack
+         explicit tuple_search_iterator(trie_continuation_frame& frm):
+				type(USE_STACK), next(NULL)
+         {
+				find_next(frm);
+         }
+   };
+
    
    // inserts tuple into the trie
    // returns false if tuple is repeated (+ ref count)
@@ -573,9 +664,10 @@ public:
    void print(std::ostream&) const;
    void dump(std::ostream&) const;
    
-   void match_predicate(const vm::match&, tuple_vector&) const;
+   tuple_search_iterator match_predicate(const vm::match&) const;
    
-   void match_predicate(tuple_vector&) const;
+   tuple_search_iterator match_predicate(void) const;
+	static inline tuple_search_iterator match_end(void) { return tuple_search_iterator(); }
    
    explicit tuple_trie(const vm::predicate *_pred): trie(), pred(_pred) { basic_invariants(); }
    

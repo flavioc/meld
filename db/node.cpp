@@ -93,30 +93,30 @@ node::end_iteration(void)
    return ret;
 }
 
-void
-node::match_predicate(const predicate_id id, tuple_vector& vec) const
+tuple_trie::tuple_search_iterator
+node::match_predicate(const predicate_id id) const
 {
    simple_tuple_map::const_iterator it(tuples.find(id));
    
    if(it == tuples.end())
-      return;
+      return tuple_trie::tuple_search_iterator();
    
    const tuple_trie *tr(it->second);
    
-   tr->match_predicate(vec);
+   return tr->match_predicate();
 }
 
-void
-node::match_predicate(const predicate_id id, const match& m, tuple_vector& vec) const
+tuple_trie::tuple_search_iterator
+node::match_predicate(const predicate_id id, const match& m) const
 {
    simple_tuple_map::const_iterator it(tuples.find(id));
    
    if(it == tuples.end())
-      return;
+      return tuple_trie::tuple_search_iterator();
    
    const tuple_trie *tr(it->second);
    
-   tr->match_predicate(m, vec);
+   return tr->match_predicate(m);
 }
 
 void
