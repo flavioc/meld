@@ -1129,14 +1129,15 @@ tuple_trie::visit(trie_node *n) const
    }
 }
 
-#define ADD_ALT(NODE) do { \
+#define ADD_ALT(PARENT, NODE) do { \
    assert((NODE) != NULL); \
-   frm.next_node = NODE;   \
+	frm.parent = (PARENT);	\
+   frm.node = NODE;   		\
    frm.mstack = mstk;   	\
    cont_stack.push(frm); } while(false)
 
 void
-tuple_trie::tuple_search_iterator::find_next(trie_continuation_frame& frm)
+tuple_trie::tuple_search_iterator::find_next(trie_continuation_frame& frm, const bool force_down)
 {
 	trie_node *parent = NULL;
 	trie_node *node = NULL;
@@ -1159,10 +1160,11 @@ try_again:
 	cont_stack.pop();
 
 restore:
-	node = frm.next_node;
-	parent = node->parent;
+
+	node = frm.node;
+	parent = frm.parent;
 	mstk = frm.mstack;
-	going_down = false;
+	going_down = false || force_down;
 	
 match_begin:
 	assert(!mstk.empty());
@@ -1173,7 +1175,6 @@ match_begin:
    assert(parent != NULL);
    
    if(f.exact) {
-     // printf("Match exact\n");
       // must do an exact match
       // there will be no continuation frames at this level
       mfield = f.field;
@@ -1181,7 +1182,6 @@ match_begin:
          case FIELD_INT:
             if(parent->is_hashed()) {
                assert(going_down);
-               
                trie_hash *hash((trie_hash*)node);
                
                node = hash->get_int(FIELD_INT(mfield));
@@ -1226,7 +1226,6 @@ match_begin:
          default: assert(false);
       }
    } else {
-      //printf("Match all\n");
       
       if(parent->is_hashed()) {
          trie_hash *hash((trie_hash*)node);
@@ -1248,7 +1247,7 @@ match_begin:
             assert(node != NULL);
             
             if(node->next)
-               ADD_ALT(node->next);
+               ADD_ALT(parent, node->next);
             else {
                // find another valid bucket
                ++buckets;
@@ -1256,7 +1255,7 @@ match_begin:
                   ;
                
                if(buckets != end_buckets)
-                  ADD_ALT(*buckets);
+                  ADD_ALT(parent, *buckets);
             }
          } else {
             // must continue traversing the hash table
@@ -1271,20 +1270,20 @@ match_begin:
             trie_node **current_bucket(node->bucket);
             
             if(node->next)
-               ADD_ALT(node->next);
+               ADD_ALT(parent, node->next);
             else {
                // must find new bucket
                ++current_bucket;
                for(; *current_bucket == NULL && current_bucket < end_buckets; ++current_bucket)
                   ;
                if(current_bucket != end_buckets)
-                  ADD_ALT(*current_bucket);
+                  ADD_ALT(parent, *current_bucket);
             }
          }
       } else {
          // push first alternative
          if(node->next)
-            ADD_ALT(node->next);
+            ADD_ALT(parent, node->next);
       }
       
       switch(f.ty->get_type()) {
@@ -1336,7 +1335,7 @@ tuple_trie::match_predicate(const match& m) const
       return tuple_search_iterator();
    
    const size_t stack_size(m.size() + STACK_EXTRA_SIZE);
-	trie_continuation_frame first_frm = {match_stack(stack_size), root->child};
+	trie_continuation_frame first_frm = {match_stack(stack_size), root, root->child};
    
    // initialize stacks
    m.get_match_stack(first_frm.mstack);

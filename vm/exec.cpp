@@ -1137,15 +1137,14 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 			everything.push_back(iter_object(ITER_DB, (void*)tuple_leaf));
 		}
 		
-		//cout << "Sorting " << everything.size() << endl;
-		
-		if(iter_options_min(options))
+		if(iter_options_random(options))
 			utils::shuffle_vector(everything, state.randgen);
-		else {
+		else if(iter_options_min(options)) {
 			const field_num field(iter_options_min_arg(options_arguments));
+			
 			sort(everything.begin(), everything.end(), tuple_sorter(field, pred));
-		}
-		
+		} else throw vm_exec_error("do not know how to use this selector");
+
 		for(vector_of_everything::iterator it(everything.begin()), end(everything.end());
 			it != end; ++it)
 		{
@@ -1900,7 +1899,6 @@ execute(pcounter pc, state& state)
 eval_loop:
 
 #ifdef DEBUG_INSTRS
-		if(state.print_instrs)
          instr_print_simple(pc, 0, state.all->PROGRAM, cout);
 #endif
 

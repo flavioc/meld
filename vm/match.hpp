@@ -81,7 +81,7 @@ public:
             switch(matches[i].ty->get_type()) {
                case FIELD_INT: cout << (int)i << " -> " << FIELD_INT(matches[i].field) << std::endl; break;
                case FIELD_FLOAT: cout << (int)i << " -> " << FIELD_FLOAT(matches[i].field) << std::endl; break;
-               case FIELD_NODE: cout << (int)i << " -> " << FIELD_NODE(matches[i].field) << std::endl; break;
+               case FIELD_NODE: cout << (int)i << " -> @" << FIELD_NODE(matches[i].field) << std::endl; break;
                default: assert(false);
             }
          }

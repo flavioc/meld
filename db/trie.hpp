@@ -533,7 +533,8 @@ public:
 
 struct trie_continuation_frame {
    vm::match_stack mstack;
-   trie_node *next_node;
+	trie_node *parent;
+   trie_node *node;
 };
 
 typedef utils::stack<trie_continuation_frame> trie_continuation_stack;
@@ -598,7 +599,7 @@ public:
 	
       public:
 	
-			void find_next(trie_continuation_frame&);
+			void find_next(trie_continuation_frame&, const bool force_down = false);
 
          inline tuple_search_iterator& operator++(void)
          {
@@ -633,7 +634,7 @@ public:
          explicit tuple_search_iterator(trie_continuation_frame& frm):
 				type(USE_STACK), next(NULL)
          {
-				find_next(frm);
+				find_next(frm, true);
          }
    };
 
