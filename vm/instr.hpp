@@ -32,6 +32,7 @@ const size_t float_size = sizeof(float_val);
 const size_t node_size = sizeof(node_val);
 const size_t string_size = sizeof(int_val);
 const size_t ptr_size = sizeof(ptr_val);
+const size_t bool_size = 1;
 const size_t argument_size = 1;
 const size_t reg_size = 0;
 const size_t host_size = 0;
@@ -169,12 +170,14 @@ inline instr_type fetch(pcounter pc) { return (instr_type)*pc; }
 enum val_code {
    VAL_TUPLE = 0x1f,
    VAL_PCOUNTER = 0x0A,
-   VAL_PTR = 0x0B
+   VAL_PTR = 0x0B,
+   VAL_BOOL = 0x0C
 };
 
 inline bool val_is_reg(const instr_val x) { return x & 0x20; }
 inline bool val_is_tuple(const instr_val x) { return x == 0x1f; }
 inline bool val_is_float(const instr_val x) { return x == 0x00; }
+inline bool val_is_bool(const instr_val x) { return x == VAL_BOOL; }
 inline bool val_is_int(const instr_val x) { return x == 0x01; }
 inline bool val_is_field(const instr_val x) { return x == 0x02; }
 inline bool val_is_host(const instr_val x) { return x == 0x03; }
@@ -187,6 +190,7 @@ inline bool val_is_stack(const instr_val x) { return x == 0x09; }
 inline bool val_is_pcounter(const instr_val x) { return x == VAL_PCOUNTER; }
 inline bool val_is_ptr(const instr_val x) { return x == VAL_PTR; }
 
+inline bool_val pcounter_bool(const pcounter pc) { return *(utils::byte *)pc ? true : false; }
 inline int_val pcounter_int(const pcounter pc) { return *(int_val *)pc; }
 inline code_size_t pcounter_code_size(const pcounter pc) { return *(code_size_t *)pc; }
 inline float_val pcounter_float(const pcounter pc) { return *(float_val *)pc; }
@@ -202,6 +206,7 @@ inline field_num val_field_num(const pcounter x) { return *x & 0xff; }
 inline reg_num val_field_reg(const pcounter x) { return *(x + 1) & 0x1f; }
 
 inline void pcounter_move_field(pcounter *pc) { *pc = *pc + field_size; }
+inline void pcounter_move_bool(pcounter *pc) { *pc = *pc + bool_size; }
 inline void pcounter_move_int(pcounter *pc) { *pc = *pc + int_size; }
 inline void pcounter_move_float(pcounter *pc) { *pc = *pc + float_size; }
 inline void pcounter_move_match(pcounter *pc) { *pc = *pc + iter_match_size; }
@@ -412,7 +417,9 @@ static inline size_t arg_size(const instr_val v);
 template <>
 STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING>(const instr_val v)
 {
-   if(val_is_float(v))
+   if(val_is_bool(v))
+      return bool_size;
+   else if(val_is_float(v))
       return float_size;
    else if(val_is_int(v))
       return int_size;
@@ -447,7 +454,9 @@ STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING>(const instr_val v)
 template <>
 STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING_NOT_NIL>(const instr_val v)
 {
-   if(val_is_float(v))
+   if(val_is_bool(v))
+      return bool_size;
+   else if(val_is_float(v))
       return float_size;
    else if(val_is_int(v))
       return int_size;
@@ -544,7 +553,9 @@ STATIC_INLINE size_t arg_size<ARGUMENT_STRUCT>(const instr_val v)
 template <>
 STATIC_INLINE size_t arg_size<ARGUMENT_NON_LIST>(const instr_val v)
 {
-   if(val_is_float(v))
+   if(val_is_bool(v))
+      return bool_size;
+   else if(val_is_float(v))
       return float_size;
    else if(val_is_int(v))
       return int_size;
@@ -575,7 +586,9 @@ STATIC_INLINE size_t arg_size<ARGUMENT_NON_LIST>(const instr_val v)
 template <>
 STATIC_INLINE size_t arg_size<ARGUMENT_BOOL>(const instr_val v)
 {
-   if(val_is_reg(v))
+   if(val_is_bool(v))
+      return bool_size;
+   else if(val_is_reg(v))
       return reg_size;
    else if(val_is_field(v))
       return field_size;

@@ -270,6 +270,7 @@ trie_node::insert(const tuple_field& field, type *t, match_stack& mstk)
             break;
          }
 
+         case FIELD_BOOL:
          case FIELD_INT:
          case FIELD_FLOAT:
          case FIELD_NODE:

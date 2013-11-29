@@ -73,6 +73,10 @@ val_string(const instr_val v, pcounter *pm, const program *prog)
       const string ret(to_string(pcounter_int(*pm)));
       pcounter_move_int(pm);
       return string("INT ") + ret;
+   } else if(val_is_bool(v)) {
+      const bool_val v = pcounter_bool(*pm);
+      pcounter_move_bool(pm);
+      return string("BOOL ") + (v ? "true" : "false");
    } else if(val_is_float(v)) {
       const string ret(to_string(pcounter_float(*pm)));
       pcounter_move_float(pm);

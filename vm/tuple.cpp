@@ -164,9 +164,18 @@ print_node(ostream& out, const tuple_field& val)
 }
 
 static inline void
+print_bool(ostream& out, const tuple_field& val)
+{
+   out << (FIELD_BOOL(val) ? "true" : "false");
+}
+
+static inline void
 print_tuple_type(ostream& cout, const tuple_field& field, type *t, const bool in_list = false)
 {
    switch(t->get_type()) {
+      case FIELD_BOOL:
+         print_bool(cout, field);
+         break;
       case FIELD_INT:
          print_int(cout, field);
          break;
@@ -299,6 +308,7 @@ tuple::~tuple(void)
          case FIELD_LIST: cons::dec_refs(get_cons(i)); break;
          case FIELD_STRING: get_string(i)->dec_refs(); break;
          case FIELD_STRUCT: get_struct(i)->dec_refs(); break;
+         case FIELD_BOOL:
          case FIELD_INT:
          case FIELD_FLOAT:
          case FIELD_NODE: break;

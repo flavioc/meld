@@ -115,7 +115,15 @@ move_to_reg(const pcounter& m, state& state,
 static inline void
 move_to_field(pcounter m, state& state, const instr_val& from)
 {
-   if(val_is_float(from)) {
+   if(val_is_bool(from)) {
+      const bool_val b(pcounter_bool(m));
+
+      pcounter_move_bool(&m);
+
+      tuple *tuple(state.get_tuple(val_field_reg(m)));
+
+      tuple->set_bool(val_field_num(m), b);
+   } else if(val_is_float(from)) {
       const float_val flt(pcounter_float(m));
       
       pcounter_move_float(&m);

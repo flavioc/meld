@@ -24,6 +24,8 @@ size_t
 field_type_size(field_type type)
 {
    switch(type) {
+      case FIELD_BOOL:
+         return sizeof(bool_val);
       case FIELD_INT:
          return sizeof(int_val);
       case FIELD_FLOAT:
@@ -48,6 +50,7 @@ string
 field_type_string(field_type type)
 {
    switch(type) {
+      case FIELD_BOOL: return string("bool");
       case FIELD_INT: return string("int");
       case FIELD_FLOAT: return string("float");
       case FIELD_NODE: return string("node");
