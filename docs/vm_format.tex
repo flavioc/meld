@@ -353,6 +353,9 @@ VALUE & BYTE FORMAT & ARGS\\
 \val{PTR} {0&0&1&0&1&1} {ptr}
 & the next 8 bytes are a machine pointer (in the C sense) \\
 \\
+\val{BOOL} {0&0&1&1&0&0} {bool}
+& the next byte is a bool (either 1 or 0) \\
+\\
 \end{tabular}
 \vspace{0.3in}\\
 
@@ -410,6 +413,7 @@ TYPE & BYTE FORMAT\\
 \op{float\ set}{0&1&1&1}
 \op{type}{1&0&0&0}
 \op{string}{1&0&0&1}
+\op{bool}{0&1&0&1}
 \end{tabular}
 \vspace{0.3in}\\
 

@@ -272,6 +272,7 @@ trie_node::insert(const tuple_field& field, type *t, val_stack& vals, type_stack
             break;
          }
 
+         case FIELD_BOOL:
          case FIELD_INT:
          case FIELD_FLOAT:
          case FIELD_NODE:

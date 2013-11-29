@@ -31,6 +31,7 @@ read_type_from_reader(code_reader& read)
    const field_type t((field_type)f);
 
    switch(t) {
+      case FIELD_BOOL:
       case FIELD_INT:
       case FIELD_FLOAT:
       case FIELD_NODE:

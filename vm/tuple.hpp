@@ -46,10 +46,10 @@ public:
 #define define_set(NAME, TYPE, VAL) \
    inline void set_ ## NAME (const field_num& field, TYPE val) { VAL; }
 
+   define_set(bool, const bool_val&, SET_FIELD_BOOL(fields[field], val));
    define_set(int, const int_val&, SET_FIELD_INT(fields[field], val));
    define_set(float, const float_val&, SET_FIELD_FLOAT(fields[field], val));
    define_set(ptr, const ptr_val&, SET_FIELD_PTR(fields[field], val));
-   define_set(bool, const bool_val&, SET_FIELD_BOOL(fields[field], val));
    define_set(node, const node_val&, SET_FIELD_NODE(fields[field], val));
 	define_set(string, const runtime::rstring::ptr, SET_FIELD_STRING(fields[field], val); val->inc_refs());
    define_set(cons, runtime::cons*, SET_FIELD_CONS(fields[field], val); runtime::cons::inc_refs(val));

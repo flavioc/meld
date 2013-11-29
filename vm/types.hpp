@@ -15,6 +15,7 @@ enum field_type {
    FIELD_NODE = 0x2,
    FIELD_LIST = 0x3,
    FIELD_STRUCT = 0x4,
+   FIELD_BOOL = 0x5,
 	FIELD_STRING = 0x9
 };
 
