@@ -37,6 +37,7 @@ const size_t argument_size = 1;
 const size_t reg_size = 0;
 const size_t host_size = 0;
 const size_t nil_size = 0;
+const size_t non_nil_size = 0;
 const size_t tuple_size = 0;
 const size_t index_size = 1;
 const size_t jump_size = 4;
@@ -171,7 +172,9 @@ enum val_code {
    VAL_TUPLE = 0x1f,
    VAL_PCOUNTER = 0x0A,
    VAL_PTR = 0x0B,
-   VAL_BOOL = 0x0C
+   VAL_BOOL = 0x0C,
+   VAL_NIL = 0x04,
+   VAL_NON_NIL = 0x0D
 };
 
 inline bool val_is_reg(const instr_val x) { return x & 0x20; }
@@ -181,7 +184,8 @@ inline bool val_is_bool(const instr_val x) { return x == VAL_BOOL; }
 inline bool val_is_int(const instr_val x) { return x == 0x01; }
 inline bool val_is_field(const instr_val x) { return x == 0x02; }
 inline bool val_is_host(const instr_val x) { return x == 0x03; }
-inline bool val_is_nil(const instr_val x) { return x == 0x04; }
+inline bool val_is_nil(const instr_val x) { return x == VAL_NIL; }
+inline bool val_is_non_nil(const instr_val x) { return x == VAL_NON_NIL; }
 inline bool val_is_node(const instr_val x) { return x == 0x05; }
 inline bool val_is_string(const instr_val x) { return x == 0x06; }
 inline bool val_is_arg(const instr_val x) { return x == 0x07; }
@@ -427,6 +431,8 @@ STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING>(const instr_val v)
       return field_size;
    else if(val_is_nil(v))
       return nil_size;
+   else if(val_is_non_nil(v))
+      return non_nil_size;
    else if(val_is_reg(v))
       return reg_size;
    else if(val_is_host(v))

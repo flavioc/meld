@@ -1180,6 +1180,55 @@ match_begin:
       // there will be no continuation frames at this level
       mfield = f.field;
       switch(f.ty->get_type()) {
+         case FIELD_LIST:
+            if(parent->is_hashed()) {
+               assert(going_down);
+               trie_hash *hash((trie_hash*)node);
+               if(FIELD_PTR(mfield) == 1)
+                  node = hash->get_uint(1);
+               else if(FIELD_PTR(mfield) == 0)
+                  node = hash->get_uint(0);
+               else
+                  node = hash->get_uint(1);
+            }
+
+            if(FIELD_PTR(mfield) == 1) {
+               while(node) {
+                  if(FIELD_PTR(node->data) == 1) {
+                     list_type *lt((list_type*)f.ty);
+                     match_field f_head = {false, lt->get_subtype(), tuple_field()};
+                     match_field f_tail = {false, f.ty, tuple_field()};
+                     mstk.push(f_tail);
+                     mstk.push(f_head);
+                     goto match_succeeded_and_pop;
+                  }
+                  node = node->next;
+               }
+            } else if(FIELD_PTR(mfield) == 0) {
+               while(node) {
+                  if(FIELD_PTR(node->data) == 0)
+                     goto match_succeeded_and_pop;
+                  node = node->next;
+               }
+            } else {
+               while(node) {
+                  if(FIELD_PTR(node->data) == 1) {
+                     // not tested
+                     list_type *lt((list_type*)f.ty);
+                     runtime::cons *ls(FIELD_CONS(mfield));
+                     match_field f_head = {true, lt->get_subtype(), ls->get_head()};
+                     tuple_field tail;
+                     SET_FIELD_CONS(tail, ls->get_tail());
+                     match_field f_tail = {true, f.ty, tail};
+                     mstk.push(f_tail);
+                     mstk.push(f_head);
+                     goto match_succeeded_and_pop;
+                  }
+                  node = node->next;
+               }
+            }
+            goto try_again;
+
          case FIELD_INT:
             if(parent->is_hashed()) {
                assert(going_down);

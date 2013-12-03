@@ -64,6 +64,8 @@ val_string(const instr_val v, pcounter *pm, const program *prog)
       return string("host");
    else if(val_is_nil(v))
       return string("nil");
+   else if(val_is_non_nil(v))
+      return string("non nil");
    else if(val_is_field(v)) {
       const string ret(to_string((int)val_field_reg(*pm)) +
          string(".") + to_string((int)val_field_num(*pm)));
@@ -231,7 +233,8 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          break;
       case RESET_LINEAR_INSTR:
          cout << "RESET LINEAR" << endl;
-         pc = instrs_print_until_end_linear(advance(pc), tabcount + 1, prog, cout);
+         if(recurse)
+            pc = instrs_print_until_end_linear(advance(pc), tabcount + 1, prog, cout);
          break;
 	   case IF_INSTR: {
             cout << "IF (" << reg_string(if_reg(pc)) << ") THEN" << endl;

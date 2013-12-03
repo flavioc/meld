@@ -54,7 +54,6 @@ public:
    inline void match_int(const field_num& num, const int_val val) {
       assert(num < matches.size());
       matches[num].exact = true;
-      matches[num].ty = TYPE_INT;
 		SET_FIELD_INT(matches[num].field, val);
       any_exact = true;
    }
@@ -62,7 +61,6 @@ public:
    inline void match_float(const field_num& num, const float_val val) {
       assert(num < matches.size());
       matches[num].exact = true;
-      matches[num].ty = TYPE_FLOAT;
       SET_FIELD_FLOAT(matches[num].field, val);
       any_exact = true;
    }
@@ -70,8 +68,21 @@ public:
    inline void match_node(const field_num& num, const node_val val) {
       assert(num < matches.size());
       matches[num].exact = true;
-      matches[num].ty = TYPE_NODE;
       SET_FIELD_NODE(matches[num].field, val);
+      any_exact = true;
+   }
+
+   inline void match_non_nil(const field_num& num) {
+      assert(num < matches.size());
+      matches[num].exact = true;
+      SET_FIELD_PTR(matches[num].field, 1);
+      any_exact = true;
+   }
+
+   inline void match_nil(const field_num& num) {
+      assert(num < matches.size());
+      matches[num].exact = true;
+      SET_FIELD_PTR(matches[num].field, 0);
       any_exact = true;
    }
    

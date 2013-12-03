@@ -949,7 +949,7 @@ do_match(const tuple *tuple, const field_num& field, const instr_val& val,
          default: throw vm_exec_error("matching with non-primitive types in fields is unsupported");
       }
    } else if(val_is_nil(val))
-      throw vm_exec_error("match for NIL not implemented");
+      return runtime::cons::is_null(tuple->get_cons(field));
    else if(val_is_host(val))
       return tuple->get_node(field) == state.node->get_id();
    else if(val_is_int(val)) {
@@ -964,7 +964,9 @@ do_match(const tuple *tuple, const field_num& field, const instr_val& val,
       pcounter_move_float(&pc);
       
       return tuple->get_float(field) == flt;
-   } else
+   } else if(val_is_non_nil(val))
+      return !runtime::cons::is_null(tuple->get_cons(field));
+   else
       throw vm_exec_error("match value in iter is not valid");
 }
 
@@ -1020,6 +1022,15 @@ build_match_object(match& m, pcounter pc, state& state, const predicate *pred)
          case FIELD_NODE: {
             const node_val n(get_op_function<node_val>(val, pc, state));
             m.match_node(field, n);
+         }
+         break;
+         case FIELD_LIST: {
+            if(val_is_nil(val))
+               m.match_nil(field);
+            else if(val_is_non_nil(val))
+               m.match_non_nil(field);
+            else
+               throw vm_exec_error("invalid field type for ITERATE/FIELD_LIST");
          }
          break;
          default: throw vm_exec_error("invalid field type for ITERATE");
@@ -1220,7 +1231,7 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
       tuples_it != end;
       ++tuples_it)
    {
-      tuple_trie_leaf *tuple_leaf(*tuples_it);
+		tuple_trie_leaf *tuple_leaf(*tuples_it);
 
       if(pred->is_linear_pred()) {
          if(!state.linear_tuple_can_be_used(tuple_leaf))
@@ -1230,7 +1241,7 @@ execute_iter(pcounter pc, const utils::byte options, const utils::byte options_a
 
       // we get the tuple later since the previous leaf may have been deleted
       tuple *match_tuple(tuple_leaf->get_underlying_tuple());
-      assert(match_tuple != NULL);
+		assert(match_tuple != NULL);
     
 #ifdef TRIE_MATCHING_ASSERT
       assert(do_matches(pc, match_tuple, state));
