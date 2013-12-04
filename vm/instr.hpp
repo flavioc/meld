@@ -281,6 +281,7 @@ inline field_num iter_match_field(iter_match m) { return (field_num)*m; }
 
 inline bool iter_options_random(const utils::byte b) { return b & 0x01; }
 inline bool iter_options_min(const utils::byte b) { return b & 0x04; }
+inline bool iter_options_const(const utils::byte b) { return b & 0x08; }
 inline field_num iter_options_min_arg(const utils::byte b) { return (field_num)b; }
 inline bool iter_options_to_delete(const utils::byte b) { return b & 0x02; }
 
