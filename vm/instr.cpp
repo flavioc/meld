@@ -385,8 +385,8 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
             cout << endl;
 
             if(recurse) {
-               instrs_print_until(advance(pc), pc + iter_jump(pc), tabcount + 1, prog, cout);
-               return pc + iter_jump(pc);
+               instrs_print_until(advance(pc), pc + iter_outer_jump(pc), tabcount + 1, prog, cout);
+               return pc + iter_outer_jump(pc);
             }
    		}
    		break;

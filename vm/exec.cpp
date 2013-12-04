@@ -2092,14 +2092,14 @@ eval_loop:
 
                const return_type ret(execute_iter(mobj, pc + ITER_BASE,
 								iter_options(pc), iter_options_argument(pc),
-								advance(pc), state, it, pred));
+								pc + iter_inner_jump(pc), state, it, pred));
                   
                if(ret == RETURN_LINEAR)
                  return ret;
 					if(state.is_linear && ret == RETURN_DERIVED)
 						return ret;
                
-               pc += iter_jump(pc);
+               pc += iter_outer_jump(pc);
                goto eval_loop;
             }
             

@@ -48,7 +48,7 @@ const size_t pcounter_val_size = 0;
 const size_t SEND_BASE           = 3;
 const size_t OP_BASE             = 5;
 const size_t MOVE_BASE           = 3;
-const size_t ITER_BASE           = 8;
+const size_t ITER_BASE           = 12;
 const size_t ALLOC_BASE          = 3;
 const size_t CALL_BASE           = 4;
 const size_t IF_BASE             = 2 + jump_size;
@@ -272,7 +272,8 @@ typedef pcounter iter_match;
 inline predicate_id iter_predicate(pcounter pc) { return predicate_get(pc, 1); }
 inline utils::byte iter_options(pcounter pc) { return byte_get(pc, 2); }
 inline utils::byte iter_options_argument(pcounter pc) { return byte_get(pc, 3); }
-inline code_offset_t iter_jump(pcounter pc) { return jump_get(pc, 4); }
+inline code_offset_t iter_inner_jump(pcounter pc) { return jump_get(pc, 4); }
+inline code_offset_t iter_outer_jump(pcounter pc) { return jump_get(pc, 8); }
 inline bool iter_match_end(iter_match m) { return (*(m + 1) & 0xc0) == 0x40; }
 inline bool iter_match_none(iter_match m) { return (*(m + 1) & 0xc0) == 0xc0; }
 inline instr_val iter_match_val(iter_match m) { return val_get((pcounter)m, 1); }
