@@ -38,6 +38,7 @@ const size_t reg_size = 0;
 const size_t host_size = 0;
 const size_t nil_size = 0;
 const size_t non_nil_size = 0;
+const size_t any_size = 0;
 const size_t tuple_size = 0;
 const size_t index_size = 1;
 const size_t jump_size = 4;
@@ -174,7 +175,9 @@ enum val_code {
    VAL_PTR = 0x0B,
    VAL_BOOL = 0x0C,
    VAL_NIL = 0x04,
-   VAL_NON_NIL = 0x0D
+   VAL_NON_NIL = 0x0D,
+   VAL_LIST = 0xE,
+   VAL_ANY = 0x0F
 };
 
 inline bool val_is_reg(const instr_val x) { return x & 0x20; }
@@ -186,6 +189,8 @@ inline bool val_is_field(const instr_val x) { return x == 0x02; }
 inline bool val_is_host(const instr_val x) { return x == 0x03; }
 inline bool val_is_nil(const instr_val x) { return x == VAL_NIL; }
 inline bool val_is_non_nil(const instr_val x) { return x == VAL_NON_NIL; }
+inline bool val_is_any(const instr_val x) { return x == VAL_ANY; }
+inline bool val_is_list(const instr_val x) { return x == VAL_LIST; }
 inline bool val_is_node(const instr_val x) { return x == 0x05; }
 inline bool val_is_string(const instr_val x) { return x == 0x06; }
 inline bool val_is_arg(const instr_val x) { return x == 0x07; }
@@ -209,6 +214,7 @@ inline reg_num val_reg(const instr_val x) { return x & 0x1f; }
 inline field_num val_field_num(const pcounter x) { return *x & 0xff; }
 inline reg_num val_field_reg(const pcounter x) { return *(x + 1) & 0x1f; }
 
+inline void pcounter_move_byte(pcounter *pc) { *pc = *pc + 1; }
 inline void pcounter_move_field(pcounter *pc) { *pc = *pc + field_size; }
 inline void pcounter_move_bool(pcounter *pc) { *pc = *pc + bool_size; }
 inline void pcounter_move_int(pcounter *pc) { *pc = *pc + int_size; }
@@ -431,8 +437,6 @@ STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING>(const instr_val v)
       return field_size;
    else if(val_is_nil(v))
       return nil_size;
-   else if(val_is_non_nil(v))
-      return non_nil_size;
    else if(val_is_reg(v))
       return reg_size;
    else if(val_is_host(v))
@@ -625,6 +629,8 @@ STATIC_INLINE size_t arg_size<ARGUMENT_NODE>(const instr_val v)
       throw malformed_instr_error("invalid instruction node value");
 }
 
+size_t compute_list_size(instr_val, pcounter);
+
 inline size_t
 iter_matches_size(pcounter pc)
 {
@@ -633,11 +639,17 @@ iter_matches_size(pcounter pc)
    
    size_t size = 0;
    size_t match_size;
+   instr_val val;
    
    while(true) {
     
       match_size = iter_match_size;
-      match_size += arg_size<ARGUMENT_ANYTHING>(iter_match_val(pc));
+      val = iter_match_val(pc);
+      if(val_is_non_nil(val) || val_is_any(val)) {
+      } else if(val_is_list(val)) {
+         match_size += compute_list_size(val, pc + match_size);
+      } else
+         match_size += arg_size<ARGUMENT_ANYTHING>(val);
       size += match_size;
       
       if(iter_match_end(pc))
@@ -828,9 +840,6 @@ advance(pcounter pc)
          throw malformed_instr_error("unknown instruction code (advance)");
    }
 }
-
-/* instruction print functions */
-std::string val_string(const instr_val, pcounter *);
 
 }
 

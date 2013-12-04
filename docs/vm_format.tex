@@ -312,8 +312,18 @@ VALUE & BYTE FORMAT & ARGS\\
 \val{HOST\_ID}   {0&0&0&0&1&1} {---}
 & refers to the node currently being processed\\
 \\
+\val{ANY}   {0&0&1&1&1&1} {---}
+& match value for any value \\
+\\
 \val{NIL}   {0&0&0&1&0&0} {---}
 & the empty list\\
+\\
+\val{NON NIL}   {0&0&1&1&0&1} {---}
+& match value for the non-empty list\\
+\\
+\val{LIST}   {0&0&1&1&1&0} {---}
+& match value for a list: it will contain afterwards \\
+& the value of the head (may be any) and the value of the tail\\
 \\
 \val{INT}   {0&0&0&0&0&1} {int}
 & the next 4 bytes after the current instruction\\
@@ -337,6 +347,13 @@ VALUE & BYTE FORMAT & ARGS\\
 \val{STRING} {0&0&0&1&1&0} {size, content}
 & the next 4 bytes indicate the length of the string\\
 & which are followed by the string itself \\
+\\
+\end{tabular}
+\vspace{0.3in}\\
+
+\begin{tabular}{lll}
+VALUE & BYTE FORMAT & ARGS\\
+\hline
 \\
 \val{ARG} {0&0&0&1&1&1} {id}
 & the next byte indicates the argument id\\

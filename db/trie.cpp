@@ -1198,9 +1198,9 @@ match_begin:
                      list_type *lt((list_type*)f.ty);
                      match_field f_head = {false, lt->get_subtype(), tuple_field()};
                      match_field f_tail = {false, f.ty, tuple_field()};
-                     mstk.push(f_tail);
+                     mstk.top() = f_tail; // we just substitute the top frame
                      mstk.push(f_head);
-                     goto match_succeeded_and_pop;
+                     goto match_succeeded;
                   }
                   node = node->next;
                }
@@ -1213,16 +1213,10 @@ match_begin:
             } else {
                while(node) {
                   if(FIELD_PTR(node->data) == 1) {
-                     // not tested
-                     list_type *lt((list_type*)f.ty);
-                     runtime::cons *ls(FIELD_CONS(mfield));
-                     match_field f_head = {true, lt->get_subtype(), ls->get_head()};
-                     tuple_field tail;
-                     SET_FIELD_CONS(tail, ls->get_tail());
-                     match_field f_tail = {true, f.ty, tail};
-                     mstk.push(f_tail);
-                     mstk.push(f_head);
-                     goto match_succeeded_and_pop;
+                     list_match *lm(FIELD_LIST_MATCH(mfield));
+                     mstk.top() = lm->tail;
+                     mstk.push(lm->head);
+                     goto match_succeeded;
                   }
                   node = node->next;
                }
@@ -1276,7 +1270,6 @@ match_begin:
          default: assert(false);
       }
    } else {
-      
       if(parent->is_hashed()) {
          trie_hash *hash((trie_hash*)node);
          

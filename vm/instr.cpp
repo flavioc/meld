@@ -11,6 +11,37 @@ using namespace utils;
 namespace vm {
    
 namespace instr {
+
+size_t
+compute_list_size(instr_val val, pcounter pc)
+{
+   size_t total = 0;
+
+   // head
+   val = val_get(pc, 0);
+   ++pc;
+   ++total;
+
+   if(val_is_non_nil(val) || val_is_any(val)) {
+   } else if(val_is_list(val))
+      total += compute_list_size(val, pc);
+   else
+      total += arg_size<ARGUMENT_ANYTHING>(val);
+
+   pc += (total - 1);
+
+   // tail
+   val = val_get(pc, 0);
+   ++total;
+   ++pc;
+
+   if(val_is_non_nil(val) || val_is_any(val) || val_is_nil(val)) {
+   } else if(val_is_list(val))
+      total += compute_list_size(val, pc);
+   else assert(false);
+
+   return total;
+}
    
 string
 op_string(const instr_op op)
@@ -53,7 +84,23 @@ reg_string(const reg_num num)
    return string("reg ") + to_string((int)num);
 }
 
-string
+static string val_string(const instr_val, pcounter *, const program *);
+
+static string
+list_string(pcounter *pm, const program *prog)
+{
+   const instr_val head_val(val_get(*pm, 0));
+
+   pcounter_move_byte(pm);
+   const string head_string(val_string(head_val, pm, prog));
+   const instr_val tail_val(val_get(*pm, 0));
+   pcounter_move_byte(pm);
+   const string tail_string(val_string(tail_val, pm, prog));
+
+   return string("[") + head_string + " | " + tail_string + string("]");
+}
+
+static string
 val_string(const instr_val v, pcounter *pm, const program *prog)
 {
    if(val_is_tuple(v))
@@ -66,6 +113,10 @@ val_string(const instr_val v, pcounter *pm, const program *prog)
       return string("nil");
    else if(val_is_non_nil(v))
       return string("non nil");
+   else if(val_is_any(v))
+      return string("...");
+   else if(val_is_list(v))
+      return list_string(pm, prog);
    else if(val_is_field(v)) {
       const string ret(to_string((int)val_field_reg(*pm)) +
          string(".") + to_string((int)val_field_num(*pm)));
