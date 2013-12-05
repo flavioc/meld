@@ -12,6 +12,7 @@
 #include "vm/predicate.hpp"
 #include "utils/stack.hpp"
 #include "vm/types.hpp"
+#include "vm/instr.hpp"
 
 namespace vm
 {
@@ -20,6 +21,12 @@ struct match_field {
    bool exact;
    type *ty;
 	tuple_field field;
+};
+
+struct variable_match_template {
+   reg_num reg;
+   field_num field;
+   match_field *match;
 };
 
 typedef utils::stack<match_field> match_stack;
@@ -70,6 +77,8 @@ private:
    
 public:
 
+   std::vector<variable_match_template> variable_matches;
+
    MEM_METHODS(match)
    
    inline size_t size(void) const { return matches.size(); }
@@ -87,6 +96,10 @@ public:
    inline void get_match_stack(match_stack& stk) const {
 		for(int i(matches.size()-1); i >= 0; --i)
          stk.push(matches[i]);
+   }
+
+   inline void add_variable_match(const variable_match_template& vmt) {
+      variable_matches.push_back(vmt);
    }
    
    inline void match_int(match_field *m, const int_val val) {
@@ -139,6 +152,18 @@ public:
    {
       matches.resize(pred->num_fields());
       set_any_all(pred);
+   }
+
+   ~match(void)
+   {
+      for(size_t i(0); i < matches.size(); ++i) {
+         if(matches[i].ty->get_type() == FIELD_LIST && matches[i].exact) {
+            if(matches[i].field.ptr_field > 1) {
+               list_match *m(FIELD_LIST_MATCH(matches[i].field));
+               delete m;
+            }
+         }
+      }
    }
 };
    

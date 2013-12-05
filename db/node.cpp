@@ -107,7 +107,7 @@ node::match_predicate(const predicate_id id) const
 }
 
 tuple_trie::tuple_search_iterator
-node::match_predicate(const predicate_id id, const match& m) const
+node::match_predicate(const predicate_id id, const match* m) const
 {
    simple_tuple_map::const_iterator it(tuples.find(id));
    

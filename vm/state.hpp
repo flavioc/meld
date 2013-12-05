@@ -3,6 +3,7 @@
 #define VM_STATE_HPP
 
 #include <list>
+#include <unordered_map>
 
 #include "conf.hpp"
 #include "vm/tuple.hpp"
@@ -72,6 +73,10 @@ public:
 #ifdef DEBUG_MODE
 	bool print_instrs;
 #endif
+   // for storing iterate match objects
+   typedef std::unordered_map<pcounter, vm::match*, std::hash<pcounter>, std::equal_to<pcounter>, mem::allocator< std::pair< const vm::pcounter, vm::match*> > > match_store_type;
+   match_store_type match_store;
+
    bool use_local_tuples;
    db::simple_tuple_list local_tuples; // current available tuples not yet in the database
 	db::simple_tuple_list generated_tuples; // tuples generated while running the rule

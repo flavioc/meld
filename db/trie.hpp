@@ -658,7 +658,7 @@ public:
    void print(std::ostream&) const;
    void dump(std::ostream&) const;
    
-   tuple_search_iterator match_predicate(const vm::match&) const;
+   tuple_search_iterator match_predicate(const vm::match*) const;
    
    tuple_search_iterator match_predicate(void) const;
 	static inline tuple_search_iterator match_end(void) { return tuple_search_iterator(); }

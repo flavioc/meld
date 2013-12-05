@@ -1369,19 +1369,19 @@ match_succeeded:
 }
 
 tuple_trie::tuple_search_iterator
-tuple_trie::match_predicate(const match& m) const
+tuple_trie::match_predicate(const match* m) const
 {
-   if(!m.has_any_exact())
+   if(!m->has_any_exact())
       return match_predicate();
    
    if(number_of_references == 0)
       return tuple_search_iterator();
    
-   const size_t stack_size(m.size() + STACK_EXTRA_SIZE);
+   const size_t stack_size(m->size() + STACK_EXTRA_SIZE);
 	trie_continuation_frame first_frm = {match_stack(stack_size), root, root->child};
    
    // initialize stacks
-   m.get_match_stack(first_frm.mstack);
+   m->get_match_stack(first_frm.mstack);
 
    // dump(cout);
    // if it was a leaf, m would have no exact match

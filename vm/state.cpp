@@ -320,7 +320,6 @@ state::check_instruction_limit(void) const
 bool
 state::do_persistent_tuples(void)
 {
-   // we grab the stratification level here
    while(!generated_persistent_tuples.empty()) {
 #ifdef USE_SIM
       if(check_instruction_limit()) {

@@ -1014,55 +1014,59 @@ do_rec_match(match_field m, tuple_field x, type *t)
 }
 
 static inline bool
-do_matches(match& m, const tuple *tuple)
+do_matches(match* m, const tuple *tuple)
 {
-   if(!m.has_any_exact())
+   if(!m->has_any_exact())
       return true;
 
    for(size_t i(0); i < tuple->num_fields(); ++i) {
-      if(m.has_match(i)) {
+      if(m->has_match(i)) {
          type *t = tuple->get_field_type(i);
-         match_field mf(m.get_match(i));
+         match_field mf(m->get_match(i));
          if(!do_rec_match(mf, tuple->get_field(i), t))
             return false;
       }
       
    }
    return true;
-
-   return true;
 }
 
 static void
-build_match_element(instr_val val, match& m, type *t, match_field *mf, pcounter& pc, state& state)
+build_match_element(instr_val val, match* m, type *t, match_field *mf, pcounter& pc, state& state)
 {
    switch(t->get_type()) {
       case FIELD_INT:
          if(val_is_field(val)) {
-            const tuple *tuple(state.get_tuple(val_field_reg(pc)));
+            const reg_num reg(val_field_reg(pc));
+            const tuple *tuple(state.get_tuple(reg));
             const field_num field(val_field_num(pc));
 
             pcounter_move_field(&pc);
             const int_val i(tuple->get_int(field));
-            m.match_int(mf, i);
+            m->match_int(mf, i);
+            const variable_match_template vmt = {reg, field, mf};
+            m->add_variable_match(vmt);
          } else if(val_is_int(val)) {
             const int_val i(pcounter_int(pc));
-            m.match_int(mf, i);
+            m->match_int(mf, i);
             pcounter_move_int(&pc);
          } else
             throw vm_exec_error("cannot use value for matching int");
          break;
       case FIELD_FLOAT: {
          if(val_is_field(val)) {
-            const tuple *tuple(state.get_tuple(val_field_reg(pc)));
+            const reg_num reg(val_field_reg(pc));
+            const tuple *tuple(state.get_tuple(reg));
             const field_num field(val_field_num(pc));
 
             pcounter_move_field(&pc);
             const float_val f(tuple->get_float(field));
-            m.match_float(mf, f);
+            m->match_float(mf, f);
+            const variable_match_template vmt = {reg, field, mf};
+            m->add_variable_match(vmt);
          } else if(val_is_float(val)) {
             const float_val f(pcounter_float(pc));
-            m.match_float(mf, f);
+            m->match_float(mf, f);
             pcounter_move_float(&pc);
          } else
             throw vm_exec_error("cannot use value for matching float");
@@ -1070,15 +1074,18 @@ build_match_element(instr_val val, match& m, type *t, match_field *mf, pcounter&
       break;
       case FIELD_NODE:
          if(val_is_field(val)) {
-            const tuple *tuple(state.get_tuple(val_field_reg(pc)));
+            const reg_num reg(val_field_reg(pc));
+            const tuple *tuple(state.get_tuple(reg));
             const field_num field(val_field_num(pc));
 
             pcounter_move_field(&pc);
             const node_val n(tuple->get_node(field));
-            m.match_node(mf, n);
+            m->match_node(mf, n);
+            const variable_match_template vmt = {reg, field, mf};
+            m->add_variable_match(vmt);
          } else if(val_is_node(val)) {
             const node_val n(pcounter_node(pc));
-            m.match_node(mf, n);
+            m->match_node(mf, n);
             pcounter_move_node(&pc);
          } else
             throw vm_exec_error("cannot use value for matching node");
@@ -1088,9 +1095,9 @@ build_match_element(instr_val val, match& m, type *t, match_field *mf, pcounter&
             mf->exact = false;
             // do nothing
          } else if(val_is_nil(val)) {
-            m.match_nil(mf);
+            m->match_nil(mf);
          } else if(val_is_non_nil(val)) {
-            m.match_non_nil(mf);
+            m->match_non_nil(mf);
          } else if(val_is_list(val)) {
             list_type *lt((list_type*)t);
             list_match *lm(new list_match(lt));
@@ -1102,7 +1109,7 @@ build_match_element(instr_val val, match& m, type *t, match_field *mf, pcounter&
             pcounter_move_byte(&pc);
             if(!val_is_any(tail))
                build_match_element(tail, m, t, &(lm->tail), pc, state);
-            m.match_list(mf, lm, t);
+            m->match_list(mf, lm, t);
          } else
             throw vm_exec_error("invalid field type for ITERATE/FIELD_LIST");
       break;
@@ -1111,7 +1118,7 @@ build_match_element(instr_val val, match& m, type *t, match_field *mf, pcounter&
 }
 
 static inline void
-build_match_object(match& m, pcounter pc, const predicate *pred, state& state)
+build_match_object(match* m, pcounter pc, const predicate *pred, state& state)
 {
    if(iter_match_none(pc))
       return;
@@ -1128,7 +1135,7 @@ build_match_object(match& m, pcounter pc, const predicate *pred, state& state)
       pcounter_move_match(&pc);
 
       t = pred->get_field_type(field);
-      build_match_element(val, m, t, m.get_update_match(field), pc, state);
+      build_match_element(val, m, t, m->get_update_match(field), pc, state);
    } while(!iter_match_end(match));
 }
 
@@ -1186,7 +1193,7 @@ public:
 };
 
 static inline return_type
-execute_iter(match& m, pcounter pc, const utils::byte options, const utils::byte options_arguments,
+execute_iter(match* m, pcounter pc, const utils::byte options, const utils::byte options_arguments,
 		pcounter first, state& state, tuple_trie::tuple_search_iterator tuples_it, const predicate *pred)
 {
    const bool old_is_linear = state.is_linear;
@@ -2079,12 +2086,27 @@ eval_loop:
          case ITER_INSTR: {
                const predicate_id pred_id(iter_predicate(pc));
                const predicate *pred(state.all->PROGRAM->get_predicate(pred_id));
-               match mobj(pred);
+               match *mobj(NULL);
+               vm::state::match_store_type::iterator match_found(state.match_store.find(pc));
+               if(match_found == state.match_store.end()) {
+                  mobj = new match(pred);
+                  build_match_object(mobj, pc + ITER_BASE, pred, state);
+                  state.match_store[pc] = mobj;
+               } else {
+                  mobj = match_found->second;
+                  if(!iter_options_const(iter_options(pc))) {
+                     for(size_t i(0); i < mobj->variable_matches.size(); ++i) {
+                        variable_match_template& tmp(mobj->variable_matches[i]);
+                        tuple *tpl(state.get_tuple(tmp.reg));
+                        tmp.match->field = tpl->get_field(tmp.field);
+                     }
+                  }
+               }
+               assert(mobj);
                
 #ifdef CORE_STATISTICS
 					state.stat.stat_db_hits++;
 #endif
-               build_match_object(mobj, pc + ITER_BASE, pred, state);
 #ifdef CORE_STATISTICS
                   //execution_time::scope s(state.stat.db_search_time_predicate[pred_id]);
 #endif

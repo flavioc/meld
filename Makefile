@@ -19,7 +19,7 @@ endif
 WARNINGS = -Wall -Wextra -Werror
 C0X = -std=c++0x
 
-CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) $(COX)
+CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) $(C0X)
 LIBRARIES = -pthread -lm -lreadline -lboost_thread-mt -lboost_system-mt \
 				-lboost_date_time-mt -lboost_regex-mt
 

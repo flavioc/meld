@@ -98,7 +98,7 @@ public:
    void init(void);
    
    db::tuple_trie::tuple_search_iterator match_predicate(const vm::predicate_id) const;
-  	db::tuple_trie::tuple_search_iterator match_predicate(const vm::predicate_id, const vm::match&) const;
+  	db::tuple_trie::tuple_search_iterator match_predicate(const vm::predicate_id, const vm::match*) const;
    
    size_t count_total(const vm::predicate_id) const;
    
