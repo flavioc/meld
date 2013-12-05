@@ -422,11 +422,13 @@ execute_send_self(tuple *tuple, state& state)
             simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
             state.generated_persistent_tuples.push_back(stuple);
          } else {
-            simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
-            if(tuple->is_reused()) // push into persistent list, since it is a reused tuple
+            if(tuple->is_reused()) { // push into persistent list, since it is a reused tuple
+               simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
                state.generated_persistent_tuples.push_back(stuple);
-            else
+            } else {
+               simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
                state.generated_tuples.push_back(stuple);
+            }
 
             state.node->matcher.register_tuple(tuple, 1);
             state.mark_predicate_to_run(pred);
@@ -1334,106 +1336,55 @@ execute_iter(match* m, pcounter pc, const utils::byte options, const utils::byte
    {
 		tuple_trie_leaf *tuple_leaf(*tuples_it);
 
-      if(pred->is_linear_pred()) {
-         if(!state.linear_tuple_can_be_used(tuple_leaf))
-            continue;
-         state.using_new_linear_tuple(tuple_leaf);
-      }
-
-      // we get the tuple later since the previous leaf may have been deleted
-      tuple *match_tuple(tuple_leaf->get_underlying_tuple());
-		assert(match_tuple != NULL);
-    
-#ifdef TRIE_MATCHING_ASSERT
-      assert(do_matches(m, match_tuple));
-#else
-      (void)pc;
-#endif
-
-		PUSH_CURRENT_STATE(match_tuple, tuple_leaf, NULL, tuple_leaf->get_min_depth());
-
-      return_type ret;
-      
-      ret = execute(first, state);
-
-		POP_STATE();
-      
-      if(ret == RETURN_LINEAR) {
-         return ret;
-      }
-
-      if(ret == RETURN_DERIVED && state.is_linear) {
-         return RETURN_DERIVED;
-      }
-
-      if(pred->is_linear_pred()) {
-         if(ret != RETURN_LINEAR && ret != RETURN_DERIVED) {
-            state.no_longer_using_linear_tuple(tuple_leaf); // not consumed because nothing was derived
+      while(true) {
+         if(pred->is_linear_pred()) {
+            if(state.linear_tuple_can_be_used(tuple_leaf) == 0)
+               break;
+            state.using_new_linear_tuple(tuple_leaf);
          }
 
-         if(!iter_options_to_delete(options)) {
-            state.no_longer_using_linear_tuple(tuple_leaf); // cannot be consumed because it would get generated again
+         // we get the tuple later since the previous leaf may have been deleted
+         tuple *match_tuple(tuple_leaf->get_underlying_tuple());
+         assert(match_tuple != NULL);
+
+#ifdef TRIE_MATCHING_ASSERT
+         assert(do_matches(m, match_tuple));
+#else
+         (void)pc;
+#endif
+
+         PUSH_CURRENT_STATE(match_tuple, tuple_leaf, NULL, tuple_leaf->get_min_depth());
+
+         return_type ret;
+
+         ret = execute(first, state);
+
+         POP_STATE();
+
+         if(ret == RETURN_LINEAR)
+            return ret;
+
+         if(ret == RETURN_DERIVED && state.is_linear) {
+            return RETURN_DERIVED;
+         }
+
+         if(pred->is_linear_pred()) {
+            if(ret != RETURN_LINEAR && ret != RETURN_DERIVED) {
+               state.no_longer_using_linear_tuple(tuple_leaf); // not consumed because nothing was derived
+               break; // exit while loop
+            }
+
+            if(!iter_options_to_delete(options)) {
+               state.no_longer_using_linear_tuple(tuple_leaf); // cannot be consumed because it would get generated again
+            }
+         } else {
+            break;
          }
       }
    }
 
-#if 0
-	// tuples from current queue
-	if(this_is_linear) {
-      assert(!state.persistent_only);
-
-   	db::simple_tuple_vector active_tuples = state.sched->gather_active_tuples(state.node, pred->get_id());
-
-		if(iter_options_random(options))
-			utils::shuffle_vector(active_tuples, state.randgen);
-
-		for(db::simple_tuple_vector::iterator it(active_tuples.begin()), end(active_tuples.end()); it != end; ++it) {
-			simple_tuple *stpl(*it);
-			tuple *match_tuple(stpl->get_tuple());
-			
-			if(!stpl->can_be_consumed())
-				continue;
-		
-      	if(!do_matches(m, match_tuple))
-				continue;
-		
-			PUSH_CURRENT_STATE(match_tuple, NULL, stpl, stpl->get_depth());
-		
-			if(iter_options_to_delete(options) || this_is_linear) {
-				assert(this_is_linear);
-				stpl->will_delete(); // this will avoid future gathers of this tuple!
-			}
-		
-			// execute...
-			return_type ret = execute(first, state);
-		
-			POP_STATE();
-
-			if(!(ret == RETURN_LINEAR || ret == RETURN_DERIVED)) { // tuple not consumed
-				if(iter_options_to_delete(options) || this_is_linear) {
-					stpl->will_not_delete(); // oops, revert
-            }
-			}
-
-         if(!iter_options_to_delete(options) && this_is_linear) {
-            stpl->will_not_delete();
-         }
-		
-			if(ret == RETURN_LINEAR)
-				return ret;
-			if(state.is_linear && ret == RETURN_DERIVED)
-				return ret;
-		}
-	}
-#endif
-	
 	// current set of tuples
    if(!state.persistent_only) {
-		/* XXXX
-		if(iter_options_random(options))
-			utils::shuffle_vector(state.local_tuples, state.randgen);
-		*/
-		
 		for(db::simple_tuple_list::iterator it(state.local_tuples.begin()), end(state.local_tuples.end()); it != end; ++it) {
 			simple_tuple *stpl(*it);
 			tuple *match_tuple(stpl->get_tuple());

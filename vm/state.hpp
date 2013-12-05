@@ -18,6 +18,8 @@
 #include "runtime/struct.hpp"
 #include "vm/stat.hpp"
 
+//#define USE_TEMPORARY_STORE
+
 // forward declaration
 namespace sched {
 	class base;
@@ -173,11 +175,11 @@ public:
    bool check_instruction_limit(void) const;
 #endif
 	void process_others(void);
-   vm::strat_level mark_rules_using_local_tuples(db::simple_tuple_list&);
+   vm::strat_level process_local_tuples(db::simple_tuple_list&);
 	void run_node(db::node *);
    void setup(vm::tuple*, db::node*, const vm::derivation_count, const vm::depth_t);
    void cleanup(void);
-   bool linear_tuple_can_be_used(db::tuple_trie_leaf *) const;
+   size_t linear_tuple_can_be_used(db::tuple_trie_leaf *) const;
    void using_new_linear_tuple(db::tuple_trie_leaf *);
    void no_longer_using_linear_tuple(db::tuple_trie_leaf *);
    void unmark_generated_tuples(void);

@@ -25,7 +25,7 @@ bool state::UI = false;
 bool state::SIM = false;
 #endif
 
-bool
+size_t
 state::linear_tuple_can_be_used(db::tuple_trie_leaf *leaf) const
 {
    assert(leaf != NULL);
@@ -37,10 +37,10 @@ state::linear_tuple_can_be_used(db::tuple_trie_leaf *leaf) const
       const pair_linear& p(*it);
       
       if(p.first == leaf)
-         return p.second > 0;
+         return p.second;
    }
    
-   return true; // not found, first time
+   return leaf->get_count();
 }
 
 void
@@ -404,7 +404,7 @@ state::do_persistent_tuples(void)
 }
 
 vm::strat_level
-state::mark_rules_using_local_tuples(db::simple_tuple_list& ls)
+state::process_local_tuples(db::simple_tuple_list& ls)
 {
    bool has_level(false);
    vm::strat_level level = 0;
@@ -421,22 +421,38 @@ state::mark_rules_using_local_tuples(db::simple_tuple_list& ls)
       }
 
       if(!stpl->can_be_consumed()) {
+#ifdef USE_TEMPORARY_STORE
          delete tpl;
          delete stpl;
          it = ls.erase(it);
+#endif
       } else if(tpl->is_action()) {
          all->MACHINE->run_action(sched, node, tpl);
          delete stpl;
+#ifdef USE_TEMPORARY_STORE
          it = ls.erase(it);
+#endif
       } else if(tpl->is_persistent() || tpl->is_reused()) {
          generated_persistent_tuples.push_back(stpl);
+#ifdef USE_TEMPORARY_STORE
          it = ls.erase(it);
+#endif
 		} else {
 			node->matcher.register_tuple(tpl, stpl->get_count());
 			mark_predicate_to_run(tpl->get_predicate());
+#ifdef USE_TEMPORARY_STORE
 			it++;
+#else
+         add_fact_to_node(tpl, stpl->get_count(), stpl->get_depth());
+#endif
 		}
+#ifndef USE_TEMPORARY_STORE
+      it++;
+#endif
 	}
+#ifndef USE_TEMPORARY_STORE
+   ls.clear();
+#endif
 
    return level;
 }
@@ -593,7 +609,7 @@ state::run_node(db::node *no)
 		execution_time::scope s(stat.core_engine_time);
 #endif
    	start_matching();
-		current_level = mark_rules_using_local_tuples(local_tuples);
+		current_level = process_local_tuples(local_tuples);
 	}
 	
    if(do_persistent_tuples()) {
@@ -633,7 +649,9 @@ state::run_node(db::node *no)
       persistent_only = false;
 		execute_rule(rule, *this);
 
+#ifdef USE_TEMPORARY_STORE
 		process_consumed_local_tuples();
+#endif
 #ifdef USE_SIM
       if(sim_instr_use && !check_instruction_limit()) {
          // gather new tuples
@@ -644,7 +662,18 @@ state::run_node(db::node *no)
       }
 #endif
       /* move from generated tuples to local_tuples */
+#ifdef USE_TEMPORARY_STORE
       local_tuples.splice(local_tuples.end(), generated_tuples);
+#else
+      for(db::simple_tuple_list::iterator it(generated_tuples.begin());
+            it != generated_tuples.end(); ++it)
+      {
+         db::simple_tuple *stpl(*it);
+         vm::tuple *tpl(stpl->get_tuple());
+         add_fact_to_node(tpl, stpl->get_count(), stpl->get_depth());
+      }
+      generated_tuples.clear();
+#endif
       if(!do_persistent_tuples()) {
          aborted = true;
          break;
