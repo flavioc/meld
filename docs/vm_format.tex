@@ -13,7 +13,7 @@
 \begin{document}
 
 \newcommand{\inst}[3]{#1&\byte#2\\\endbyte&{\it #3}\\}
-\newcommand{\op}[2]{\ensuremath{#1}&\byte#2\\\endbyte\\}
+\newcommand{\op}[2]{\ensuremath{#1}&\byte#2\\\endbyte}
 \newcommand{\val}[3]{#1&\byte#2\\\endbyte&{\it #3}\\}
 
 
@@ -22,6 +22,7 @@ program. Next, there are several components:
 
 \begin{itemize}
 	\item An unsigned integer indicating the number $N$ of nodes to instantiate, followed by $2N$ unsigned integers corresponding to one pair of unsigned integers one for node. The first value is the node ID to use during execution and the second one the ID given by the user.
+   \item A byte indicating the number $t$ of types in the program, followed by the $t$ type specifications.
    \item An unsigned integer indicating the number of arguments needed to run the program.
    \item An unsigned integer describing the number of rules $R$ in the program. Followed by $R$ byte regions. Each region contains an unsigned integer, $N$, indicating the size of the rule and then $N$ bytes with the string for this rule.
 	\item An unsigned integer indicating the number $S$ of constant strings in the program followed by $S$ pairs containing the length of the string and the string itself.
@@ -265,38 +266,52 @@ INSTRUCTION & BYTE FORMAT & ARGS\\
 i&i&i&i&i&i&i&i} {id} \\
 & calls a Meld function \\
 \\
+\inst{STRUCT VAL}    {0&0&0&1&1&1&0&0\\\hline
+i&i&i&i&i&i&i&i \\\hline
+0&0&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$\\\hline
+0&0&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$} {i, v$_1$, v$_2$}\\
+& sets v$_2$ with the index $i$ of the struct in v$_1$\\
+\\
+\inst{MAKE STRUCT}    {0&0&0&1&1&1&0&1\\\hline
+t&t&t&t&t&t&t&t \\\hline
+0&0&v&v&v&v&v&v} {t, v}\\
+& sets $v$ as a new struct of type $t$ \\
+\\
+\inst{MVINTFIELD}    {0&0&0&1&1&0&1&0} {int, field}\\
+& moves an integer to a tuple field (followed by integer and field value) \\
+\\
 \end{tabular}
 
 \begin{tabular}{lll}
 OP & BYTE FORMAT\\
 \hline
 \\
-\op{float\neq}{0&0&0&0&0}
-\op{int\neq}{0&0&0&0&1}
-\op{float=}{0&0&0&1&0}
-\op{int=}{0&0&0&1&1}
-\op{float<}{0&0&1&0&0}
-\op{int<}{0&0&1&0&1}
-\op{float\leq}{0&0&1&1&0}
-\op{int\leq}{0&0&1&1&1}
-\op{float>}{0&1&0&0&0}
-\op{int>}{0&1&0&0&1}
-\op{float\geq}{0&1&0&1&0}
-\op{int\geq}{0&1&0&1&1}
-\op{float\%}{0&1&1&0&0}
-\op{int\%}{0&1&1&0&1}
-\op{float+}{0&1&1&1&0}
-\op{int+}{0&1&1&1&1}
-\op{float-}{1&0&0&0&0}
-\op{int-}{1&0&0&0&1}
-\op{float*}{1&0&0&1&0}
-\op{int*}{1&0&0&1&1}
-\op{float\div}{1&0&1&0&0}
-\op{int\div}{1&0&1&0&1}
-\op{addr\neq}{1&0&1&1&0}
-\op{addr=}{1&0&1&1&1}
-\op{addr>}{1&1&0&0&0}
-\op{bool\; or}{1&1&0&0&1}
+\op{float\neq}{0&0&0&0&0}\\
+\op{int\neq}{0&0&0&0&1}\\
+\op{float=}{0&0&0&1&0}\\
+\op{int=}{0&0&0&1&1}\\
+\op{float<}{0&0&1&0&0}\\
+\op{int<}{0&0&1&0&1}\\
+\op{float\leq}{0&0&1&1&0}\\
+\op{int\leq}{0&0&1&1&1}\\
+\op{float>}{0&1&0&0&0}\\
+\op{int>}{0&1&0&0&1}\\
+\op{float\geq}{0&1&0&1&0}\\
+\op{int\geq}{0&1&0&1&1}\\
+\op{float\%}{0&1&1&0&0}\\
+\op{int\%}{0&1&1&0&1}\\
+\op{float+}{0&1&1&1&0}\\
+\op{int+}{0&1&1&1&1}\\
+\op{float-}{1&0&0&0&0}\\
+\op{int-}{1&0&0&0&1}\\
+\op{float*}{1&0&0&1&0}\\
+\op{int*}{1&0&0&1&1}\\
+\op{float\div}{1&0&1&0&0}\\
+\op{int\div}{1&0&1&0&1}\\
+\op{addr\neq}{1&0&1&1&0}\\
+\op{addr=}{1&0&1&1&1}\\
+\op{addr>}{1&1&0&0&0}\\
+\op{bool\; or}{1&1&0&0&1}\\
 \end{tabular}
 \vspace{0.3in}\\
 
@@ -383,49 +398,45 @@ MATCHLIST & BYTE FORMAT\\
 AGGREGATE & BYTE FORMAT\\
 \hline
 \\
-\op{none}{0&0&0&0}
-\op{first}{0&0&0&1}
-\op{int\ max}{0&0&1&0}
-\op{int\ min}{0&0&1&1}
-\op{int\ sum}{0&1&0&0}
-\op{float\ max}{0&1&0&1}
-\op{float\ min}{0&1&1&0}
-\op{float\ sum}{0&1&1&1}
-\op{int\ set\_union}{1&0&0&0}
-\op{float\ set\_union}{1&0&0&1}
-\op{int\ list\ sum}{1&0&1&0}
-\op{float\ list\ sum}{1&0&1&1}
+\op{none}{0&0&0&0}\\
+\op{first}{0&0&0&1}\\
+\op{int\ max}{0&0&1&0}\\
+\op{int\ min}{0&0&1&1}\\
+\op{int\ sum}{0&1&0&0}\\
+\op{float\ max}{0&1&0&1}\\
+\op{float\ min}{0&1&1&0}\\
+\op{float\ sum}{0&1&1&1}\\
+\op{int\ set\_union}{1&0&0&0}\\
+\op{float\ set\_union}{1&0&0&1}\\
+\op{int\ list\ sum}{1&0&1&0}\\
+\op{float\ list\ sum}{1&0&1&1}\\
 \end{tabular}
 
 \vspace{0.3in}
 
 \begin{tabular}{lll}
-TYPE & BYTE FORMAT\\
+TYPE & BYTE FORMAT & EXTRA\\
 \hline
 \\
-\op{int}{0&0&0&0}
-\op{float}{0&0&0&1}
-\op{addr}{0&0&1&0}
-\op{int\ list}{0&0&1&1}
-\op{float\ list}{0&1&0&0}
-\op{addr\ list}{0&1&0&1}
-\op{int\ set}{0&1&1&0}
-\op{float\ set}{0&1&1&1}
-\op{type}{1&0&0&0}
-\op{string}{1&0&0&1}
-\op{bool}{0&1&0&1}
-\end{tabular}
+\op{int}{0&0&0&0} & \\
+\op{float}{0&0&0&1} & \\
+\op{addr}{0&0&1&0} & \\
+\op{list}{0&0&1&1} & the type of the elements \\
+\op{struct}{0&1&0&0} & a byte indicating the size of the structure and then the types of the fields \\
+\op{bool}{0&1&0&1} & \\
+\op{string}{1&0&0&1} & \\
+\end{tabular}\label{tbl:types}
 \vspace{0.3in}\\
 
 \begin{tabular}{lll}
 PROPERTY & BYTE POSITION\\
 \hline
 \\
-\op{aggregate}{1}
-\op{persistent}{2}
-\op{linear}{3}
-\op{delete}{4}
-\op{schedule}{5}
+\op{aggregate}{1} \\
+\op{persistent}{2} \\
+\op{linear}{3} \\
+\op{delete}{4} \\
+\op{schedule}{5} \\
 \end{tabular}
 \vspace{0.3in}\\
 
