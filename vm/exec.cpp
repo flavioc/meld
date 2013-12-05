@@ -413,26 +413,20 @@ execute_send_self(tuple *tuple, state& state)
          }
       }
 #endif
-      if(pred->get_strat_level() != state.current_level) {
+      if(tuple->is_persistent()) {
          simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
-         assert(stuple->can_be_consumed());
-         state.generated_other_level.push_back(stuple);
+         state.generated_persistent_tuples.push_back(stuple);
       } else {
-         if(tuple->is_persistent()) {
+         if(tuple->is_reused()) { // push into persistent list, since it is a reused tuple
             simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
             state.generated_persistent_tuples.push_back(stuple);
          } else {
-            if(tuple->is_reused()) { // push into persistent list, since it is a reused tuple
-               simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
-               state.generated_persistent_tuples.push_back(stuple);
-            } else {
-               simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
-               state.generated_tuples.push_back(stuple);
-            }
-
-            state.node->matcher.register_tuple(tuple, 1);
-            state.mark_predicate_to_run(pred);
+            simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
+            state.generated_tuples.push_back(stuple);
          }
+
+         state.node->matcher.register_tuple(tuple, 1);
+         state.mark_predicate_to_run(pred);
       }
    } else {
       simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
@@ -2221,7 +2215,6 @@ execution_return
 execute_bytecode(byte_code code, state& state)
 {
    const return_type ret(do_execute(code, state));
-	state.unmark_generated_tuples();
 	
 #ifdef CORE_STATISTICS
 #endif

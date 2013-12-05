@@ -100,20 +100,6 @@ state::purge_runtime_objects(void)
 }
 
 void
-state::unmark_generated_tuples(void)
-{
-   for(simple_tuple_list::iterator it(generated_tuples.begin()), end(generated_tuples.end());
-         it != end;
-         ++it)
-   {
-      simple_tuple *stpl(*it);
-      stpl->set_generated_run(false);
-   }
-
-   generated_tuples.clear();
-}
-
-void
 state::cleanup(void)
 {
    purge_runtime_objects();
@@ -383,6 +369,7 @@ state::do_persistent_tuples(void)
          add_to_aggregate(stpl);
       }
    }
+   generated_persistent_tuples.clear();
    
    while(!leaves_for_deletion.empty()) {
       pair<vm::predicate*, db::tuple_trie_leaf*> p(leaves_for_deletion.front());
@@ -406,7 +393,6 @@ state::do_persistent_tuples(void)
 vm::strat_level
 state::process_local_tuples(db::simple_tuple_list& ls)
 {
-   bool has_level(false);
    vm::strat_level level = 0;
 
 	for(db::simple_tuple_list::iterator it(ls.begin());
@@ -414,11 +400,6 @@ state::process_local_tuples(db::simple_tuple_list& ls)
 	{
 		db::simple_tuple *stpl(*it);
 		vm::tuple *tpl(stpl->get_tuple());
-
-      if(!has_level) {
-         level = stpl->get_strat_level();
-         has_level = true;
-      }
 
       if(!stpl->can_be_consumed()) {
 #ifdef USE_TEMPORARY_STORE
@@ -572,20 +553,6 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
 }
 
 void
-state::process_others(void)
-{
-	for(simple_tuple_vector::iterator it(generated_other_level.begin()), end(generated_other_level.end());
-		it != end;
-		it++)
-	{
-		/* no need to mark tuples */
-		all->MACHINE->route_self(sched, node, *it);
-	}
-
-	generated_other_level.clear();
-}
-
-void
 state::start_matching(void)
 {
 	fill_n(predicates, all->PROGRAM->num_predicates(), false);
@@ -609,7 +576,7 @@ state::run_node(db::node *no)
 		execution_time::scope s(stat.core_engine_time);
 #endif
    	start_matching();
-		current_level = process_local_tuples(local_tuples);
+		process_local_tuples(local_tuples);
 	}
 	
    if(do_persistent_tuples()) {
@@ -713,9 +680,6 @@ state::run_node(db::node *no)
 
 	local_tuples.clear();
    rule_queue.clear();
-
-   // push other level tuples
-   process_others();
 
 #ifdef USE_SIM
    // store any remaining persistent tuples

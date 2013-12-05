@@ -107,7 +107,7 @@ serial_local::gather_next_tuples(db::node *node, simple_tuple_list& ls)
 {
 	serial_node *no((serial_node*)node);
 
-   no->queue.top_list(ls);
+   ls = std::move(no->queue);
 }
 
 }

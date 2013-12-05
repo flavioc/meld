@@ -18,7 +18,7 @@
 #include "runtime/struct.hpp"
 #include "vm/stat.hpp"
 
-//#define USE_TEMPORARY_STORE
+#define USE_TEMPORARY_STORE
 
 // forward declaration
 namespace sched {
@@ -83,11 +83,9 @@ public:
    db::simple_tuple_list local_tuples; // current available tuples not yet in the database
 	db::simple_tuple_list generated_tuples; // tuples generated while running the rule
 	db::simple_tuple_list generated_persistent_tuples; // persistent tuples while running the rule
-	db::simple_tuple_vector generated_other_level; // tuples for later computation (another stratification level or time delay)
 	// leaves scheduled for deletion (for use with reused linear tuples + retraction)
 	// we cannot delete them immediately because then the tuple would be deleted
 	std::list< std::pair<vm::predicate*, db::tuple_trie_leaf*> > leaves_for_deletion;
-	vm::strat_level current_level;
    bool persistent_only; // we are running one persistent tuple (not a rule)
    vm::all *all;
 #ifdef CORE_STATISTICS
@@ -159,7 +157,7 @@ public:
                                                        free_rstring.push_back(str); }
    inline void add_struct(runtime::struct1 *s) { s->inc_refs();
                                                  free_struct1.push_back(s); }
-   inline void add_generated_tuple(db::simple_tuple *tpl) { tpl->set_generated_run(true); generated_tuples.push_back(tpl); }
+   inline void add_generated_tuple(db::simple_tuple *tpl) { generated_tuples.push_back(tpl); }
    
 	bool add_fact_to_node(vm::tuple *, const vm::derivation_count count = 1, const vm::depth_t depth = 0);
 	
@@ -174,7 +172,6 @@ public:
 #ifdef USE_SIM
    bool check_instruction_limit(void) const;
 #endif
-	void process_others(void);
    vm::strat_level process_local_tuples(db::simple_tuple_list&);
 	void run_node(db::node *);
    void setup(vm::tuple*, db::node*, const vm::derivation_count, const vm::depth_t);
@@ -182,7 +179,6 @@ public:
    size_t linear_tuple_can_be_used(db::tuple_trie_leaf *) const;
    void using_new_linear_tuple(db::tuple_trie_leaf *);
    void no_longer_using_linear_tuple(db::tuple_trie_leaf *);
-   void unmark_generated_tuples(void);
 
    explicit state(sched::base *, vm::all *);
 	explicit state(vm::all *);

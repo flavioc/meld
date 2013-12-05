@@ -19,7 +19,7 @@ public:
 	
 	DECLARE_DOUBLE_QUEUE_NODE(serial_node);
 	
-	typedef queue::unsafe_bounded_pqueue<db::simple_tuple*>::type queue_type;	
+   typedef db::simple_tuple_list queue_type;
    queue_type queue;
 
 	typedef queue_type::const_iterator queue_iterator;
@@ -29,7 +29,7 @@ public:
    
    inline void add_work(db::simple_tuple *stpl)
    {
-      queue.push(stpl, stpl->get_strat_level());
+      queue.push_back(stpl);
    }
    
    inline bool has_work(void) const { return !queue.empty(); }
@@ -48,8 +48,7 @@ public:
 
    explicit serial_node(const db::node::node_id _id, const db::node::node_id _trans, vm::all *all):
       in_queue_node(_id, _trans, all),
-      INIT_DOUBLE_QUEUE_NODE(),
-      queue(all->PROGRAM->MAX_STRAT_LEVEL)
+      INIT_DOUBLE_QUEUE_NODE()
    {}
 
    virtual ~serial_node(void) { }
