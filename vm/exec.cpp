@@ -1653,19 +1653,14 @@ execute_remove(pcounter pc, state& state)
 	const bool is_a_leaf(state.is_it_a_leaf(reg));
    vm::tuple *tpl(state.get_tuple(reg));
 
-	if(state.use_local_tuples) {
 #ifdef DEBUG_REMOVE
-      cout << "\tdelete " << *tpl << endl;
+   cout << "\tdelete " << *tpl << endl;
 #endif
-		assert(tpl != NULL);
-		
-		if(is_a_leaf) {
-			state.node->matcher.deregister_tuple(tpl, 1);
-		}
-		// the else case is done at state.cpp
-	}
-
    assert(tpl != NULL);
+		
+   if(is_a_leaf)
+      state.node->matcher.deregister_tuple(tpl, 1);
+   // the else case is done at state.cpp
 
    if(tpl->is_reused() && state.use_local_tuples) {
 		state.generated_persistent_tuples.push_back(new simple_tuple(tpl, -1, state.depth));
@@ -1673,12 +1668,8 @@ execute_remove(pcounter pc, state& state)
 			state.leaves_for_deletion.push_back(make_pair((predicate*)tpl->get_predicate(), state.get_leaf(reg)));
 	} else {
 		if(is_a_leaf) { // tuple was fetched from database
-			//cout << "Remove " << *state.get_tuple(reg) << endl;
-#ifdef CORE_STATISTICS
-         execution_time::scope s(state.stat.db_deletion_time_predicate[tpl->get_predicate_id()]);
-#endif
-   		state.node->delete_by_leaf(tpl->get_predicate(), state.get_leaf(reg), 0);
-		} else {
+			state.leaves_for_deletion.push_back(make_pair((predicate*)tpl->get_predicate(), state.get_leaf(reg)));
+		else {
 			// tuple was marked before, it will be deleted after this round
 		}
 	}

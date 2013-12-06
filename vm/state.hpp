@@ -170,6 +170,7 @@ public:
    bool check_instruction_limit(void) const;
 #endif
    vm::strat_level process_local_tuples(db::simple_tuple_list&);
+   void delete_leaves(void);
 	void run_node(db::node *);
    void setup(vm::tuple*, db::node*, const vm::derivation_count, const vm::depth_t);
    void cleanup(void);

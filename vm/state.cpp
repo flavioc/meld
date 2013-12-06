@@ -301,6 +301,26 @@ state::check_instruction_limit(void) const
 }
 #endif
 
+void
+state::delete_leaves(void)
+{
+   while(!leaves_for_deletion.empty()) {
+      pair<vm::predicate*, db::tuple_trie_leaf*> p(leaves_for_deletion.front());
+      vm::predicate* pred(p.first);
+
+#ifdef CORE_STATISTICS
+   	execution_time::scope s(stat.db_deletion_time_predicate[pred->get_id()]);
+#endif
+      db::tuple_trie_leaf *leaf(p.second);
+      
+      leaves_for_deletion.pop_front();
+      
+      node->delete_by_leaf(pred, leaf, 0);
+   }
+      
+	assert(leaves_for_deletion.empty());
+}
+
 bool
 state::do_persistent_tuples(void)
 {
@@ -368,23 +388,8 @@ state::do_persistent_tuples(void)
       }
    }
    generated_persistent_tuples.clear();
+   delete_leaves();
    
-   while(!leaves_for_deletion.empty()) {
-      pair<vm::predicate*, db::tuple_trie_leaf*> p(leaves_for_deletion.front());
-      vm::predicate* pred(p.first);
-
-#ifdef CORE_STATISTICS
-   	execution_time::scope s(stat.db_deletion_time_predicate[pred->get_id()]);
-#endif
-      db::tuple_trie_leaf *leaf(p.second);
-      
-      leaves_for_deletion.pop_front();
-      
-      node->delete_by_leaf(pred, leaf, 0);
-   }
-      
-	assert(leaves_for_deletion.empty());
-
    return true;
 }
 
@@ -617,6 +622,7 @@ state::run_node(db::node *no)
 #ifdef USE_TEMPORARY_STORE
 		process_consumed_local_tuples();
 #endif
+      delete_leaves();
 #ifdef USE_SIM
       if(sim_instr_use && !check_instruction_limit()) {
          // gather new tuples
