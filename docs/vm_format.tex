@@ -60,6 +60,7 @@ j&j&j&j&j&j&j&j} {reg, jump\_offset}
 \\
 \inst{ITER}  {1&0&1&0&0&0&0&0\\\hline
 0&i&i&i&i&i&i&i \\\hline
+0&0&0&r&r&r&r&r \\\hline
 o&o&o&o&o&o&o&o \\\hline
 a&a&a&a&a&a&a&a \\\hline
 k&k&k&k&k&k&k&k \\\hline
@@ -69,7 +70,7 @@ k&k&k&k&k&k&k&k \\\hline
 j&j&j&j&j&j&j&j \\\hline
 j&j&j&j&j&j&j&j \\\hline
 j&j&j&j&j&j&j&j \\\hline
-j&j&j&j&j&j&j&j} {id, options, options arg, inner\_jump, outer\_jump, matchlist}
+j&j&j&j&j&j&j&j} {id, reg, options, options arg, inner\_jump, outer\_jump, matchlist}
 & iterates over all the tuples of type {\it id} that match\\
 & according to the following {\it matchlist}.\\
 & after all matching facts have been processed, use \\
@@ -322,9 +323,6 @@ VALUE & BYTE FORMAT & ARGS\\
 \hline
 \\
 \val{REG}   {1&r&r&r&r&r} {reg}
-\\
-\val{TUPLE} {0&1&1&1&1&1} {---}
-& refers to the tuple currently being processed\\
 \\
 \val{HOST\_ID}   {0&0&0&0&1&1} {---}
 & refers to the node currently being processed\\

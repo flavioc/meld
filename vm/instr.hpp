@@ -23,6 +23,7 @@ const uint32_t MAGIC2 = 0x6c696620;
 
 namespace instr {
 
+const size_t instr_size = 1;
 const size_t field_size = 2;
 const size_t iter_match_size = 2;
 const size_t val_size = 1;
@@ -35,6 +36,7 @@ const size_t ptr_size = sizeof(ptr_val);
 const size_t bool_size = 1;
 const size_t argument_size = 1;
 const size_t reg_size = 0;
+const size_t reg_val_size = 1;
 const size_t host_size = 0;
 const size_t nil_size = 0;
 const size_t non_nil_size = 0;
@@ -45,44 +47,46 @@ const size_t jump_size = 4;
 const size_t stack_val_size = sizeof(offset_num);
 const size_t pcounter_val_size = 0;
 
-const size_t SEND_BASE           = 3;
-const size_t OP_BASE             = 5;
-const size_t MOVE_BASE           = 3;
-const size_t ITER_BASE           = 12;
-const size_t ALLOC_BASE          = 3;
-const size_t CALL_BASE           = 4;
-const size_t IF_BASE             = 2 + jump_size;
-const size_t MOVE_NIL_BASE       = 2;
-const size_t TEST_NIL_BASE       = 3;
-const size_t CONS_BASE           = 5;
-const size_t HEAD_BASE           = 4;
-const size_t TAIL_BASE           = 4;
-const size_t NOT_BASE            = 3;
-const size_t RETURN_BASE         = 1;
-const size_t NEXT_BASE           = 1;
-const size_t FLOAT_BASE          = 3;
-const size_t SELECT_BASE         = 9;
-const size_t RETURN_SELECT_BASE  = 5;
-const size_t COLOCATED_BASE      = 4;
-const size_t DELETE_BASE         = 3;
-const size_t REMOVE_BASE         = 2;
-const size_t RETURN_LINEAR_BASE  = 1;
-const size_t RETURN_DERIVED_BASE = 1;
-const size_t RESET_LINEAR_BASE   = 1 + jump_size;
-const size_t END_LINEAR_BASE     = 1;
-const size_t RULE_BASE           = 1 + uint_size;
-const size_t RULE_DONE_BASE      = 1;
-const size_t NEW_NODE_BASE       = 2;
-const size_t NEW_AXIOMS_BASE     = 1 + jump_size;
-const size_t SEND_DELAY_BASE     = 3 + uint_size;
-const size_t PUSH_BASE           = 1;
-const size_t POP_BASE            = 1;
-const size_t PUSH_REGS_BASE      = 1;
-const size_t POP_REGS_BASE       = 1;
-const size_t CALLF_BASE          = 2;
-const size_t CALLE_BASE          = 4;
-const size_t STRUCT_VAL_BASE     = 4;
-const size_t MAKE_STRUCT_BASE    = 3;
+const size_t SEND_BASE           = instr_size + 2;
+const size_t OP_BASE             = instr_size + 4;
+const size_t MOVE_BASE           = instr_size + 2;
+const size_t ITER_BASE           = instr_size + 12;
+const size_t ALLOC_BASE          = instr_size + 2;
+const size_t CALL_BASE           = instr_size + 3;
+const size_t IF_BASE             = instr_size + 1 + jump_size;
+const size_t MOVE_NIL_BASE       = instr_size + 1;
+const size_t TEST_NIL_BASE       = instr_size + 2;
+const size_t CONS_BASE           = instr_size + 4;
+const size_t HEAD_BASE           = instr_size + 3;
+const size_t TAIL_BASE           = instr_size + 3;
+const size_t NOT_BASE            = instr_size + 2;
+const size_t RETURN_BASE         = instr_size;
+const size_t NEXT_BASE           = instr_size;
+const size_t FLOAT_BASE          = instr_size + 2;
+const size_t SELECT_BASE         = instr_size + 8;
+const size_t RETURN_SELECT_BASE  = instr_size + 4;
+const size_t COLOCATED_BASE      = instr_size + 3;
+const size_t DELETE_BASE         = instr_size + 2;
+const size_t REMOVE_BASE         = instr_size + 1;
+const size_t RETURN_LINEAR_BASE  = instr_size;
+const size_t RETURN_DERIVED_BASE = instr_size;
+const size_t RESET_LINEAR_BASE   = instr_size + jump_size;
+const size_t END_LINEAR_BASE     = instr_size;
+const size_t RULE_BASE           = instr_size + uint_size;
+const size_t RULE_DONE_BASE      = instr_size;
+const size_t NEW_NODE_BASE       = instr_size + 1;
+const size_t NEW_AXIOMS_BASE     = instr_size + jump_size;
+const size_t SEND_DELAY_BASE     = instr_size + 2 + uint_size;
+const size_t PUSH_BASE           = instr_size;
+const size_t POP_BASE            = instr_size;
+const size_t PUSH_REGS_BASE      = instr_size;
+const size_t POP_REGS_BASE       = instr_size;
+const size_t CALLF_BASE          = instr_size + 1;
+const size_t CALLE_BASE          = instr_size + 3;
+const size_t STRUCT_VAL_BASE     = instr_size + 3;
+const size_t MAKE_STRUCT_BASE    = instr_size + 2;
+const size_t MVINTFIELD_BASE     = instr_size + int_size + field_size;
+const size_t MVINTREG_BASE       = instr_size + int_size + reg_val_size;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -181,7 +185,6 @@ enum val_code {
 };
 
 inline bool val_is_reg(const instr_val x) { return x & 0x20; }
-inline bool val_is_tuple(const instr_val x) { return x == 0x1f; }
 inline bool val_is_float(const instr_val x) { return x == 0x00; }
 inline bool val_is_bool(const instr_val x) { return x == VAL_BOOL; }
 inline bool val_is_int(const instr_val x) { return x == 0x01; }
@@ -270,10 +273,11 @@ inline pcounter move_to_ptr(pcounter pc) { return pc + 2; }
 typedef pcounter iter_match;
 
 inline predicate_id iter_predicate(pcounter pc) { return predicate_get(pc, 1); }
-inline utils::byte iter_options(pcounter pc) { return byte_get(pc, 2); }
-inline utils::byte iter_options_argument(pcounter pc) { return byte_get(pc, 3); }
-inline code_offset_t iter_inner_jump(pcounter pc) { return jump_get(pc, 4); }
-inline code_offset_t iter_outer_jump(pcounter pc) { return jump_get(pc, 8); }
+inline reg_num iter_reg(pcounter pc) { return reg_get(pc, 2); }
+inline utils::byte iter_options(pcounter pc) { return byte_get(pc, 3); }
+inline utils::byte iter_options_argument(pcounter pc) { return byte_get(pc, 4); }
+inline code_offset_t iter_inner_jump(pcounter pc) { return jump_get(pc, 5); }
+inline code_offset_t iter_outer_jump(pcounter pc) { return jump_get(pc, 9); }
 inline bool iter_match_end(iter_match m) { return (*(m + 1) & 0xc0) == 0x40; }
 inline bool iter_match_none(iter_match m) { return (*(m + 1) & 0xc0) == 0xc0; }
 inline instr_val iter_match_val(iter_match m) { return val_get((pcounter)m, 1); }
@@ -443,8 +447,6 @@ STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING>(const instr_val v)
       return reg_size;
    else if(val_is_host(v))
       return host_size;
-   else if(val_is_tuple(v))
-      return tuple_size;
    else if(val_is_node(v))
       return node_size;
 	else if(val_is_string(v))
@@ -478,8 +480,6 @@ STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING_NOT_NIL>(const instr_val v)
       return reg_size;
    else if(val_is_host(v))
       return host_size;
-   else if(val_is_tuple(v))
-      return tuple_size;
    else if(val_is_node(v))
       return node_size;
 	else if(val_is_string(v))
@@ -631,36 +631,6 @@ STATIC_INLINE size_t arg_size<ARGUMENT_NODE>(const instr_val v)
       throw malformed_instr_error("invalid instruction node value");
 }
 
-size_t compute_list_size(instr_val, pcounter);
-
-inline size_t
-iter_matches_size(pcounter pc)
-{
-   if(iter_match_none(pc))
-      return iter_match_size;
-   
-   size_t size = 0;
-   size_t match_size;
-   instr_val val;
-   
-   while(true) {
-    
-      match_size = iter_match_size;
-      val = iter_match_val(pc);
-      if(val_is_non_nil(val) || val_is_any(val)) {
-      } else if(val_is_list(val)) {
-         match_size += compute_list_size(val, pc + match_size);
-      } else
-         match_size += arg_size<ARGUMENT_ANYTHING>(val);
-      size += match_size;
-      
-      if(iter_match_end(pc))
-         return size;
-      else
-         pc += match_size;
-   }
-}
-
 inline size_t
 instr_call_args_size(pcounter arg, size_t num)
 {
@@ -715,8 +685,7 @@ advance(pcounter pc)
                    + arg_size<ARGUMENT_WRITABLE>(move_to(pc));
                    
       case ITER_INSTR:
-         return pc + ITER_BASE
-                   + iter_matches_size(pc + ITER_BASE);
+         return pc + iter_inner_jump(pc);
                    
       case ALLOC_INSTR:
          return pc + ALLOC_BASE;

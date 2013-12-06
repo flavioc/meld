@@ -123,8 +123,6 @@ void
 state::setup(vm::tuple *tpl, db::node *n, const derivation_count count, const depth_t depth)
 {
    this->use_local_tuples = false;
-   this->tuple = tpl;
-   this->tuple_leaf = NULL;
    this->node = n;
    this->count = count;
    if(tpl != NULL) {
@@ -497,7 +495,7 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
          setup(tpl, node, stpl->get_count(), stpl->get_depth());
          use_local_tuples = false;
          persistent_only = true;
-         execute_bytecode(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this);
+         execute_bytecode(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
       }
 
       node->matcher.register_tuple(tpl, stpl->get_count(), is_new);
@@ -513,7 +511,7 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
 			setup(tpl, node, stpl->get_count(), stpl->get_depth());
 			persistent_only = true;
 			use_local_tuples = false;
-			execute_bytecode(all->PROGRAM->get_predicate_bytecode(tuple->get_predicate_id()), *this);
+			execute_bytecode(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
          delete stpl;
 		} else {
       	node::delete_info deleter(node->delete_tuple(tpl, -stpl->get_count(), stpl->get_depth()));
@@ -525,7 +523,7 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
          	setup(tpl, node, stpl->get_count(), stpl->get_depth());
          	persistent_only = true;
          	use_local_tuples = false;
-         	execute_bytecode(all->PROGRAM->get_predicate_bytecode(tuple->get_predicate_id()), *this);
+         	execute_bytecode(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
          	deleter();
       	} else if(tpl->is_cycle()) {
             node->matcher.deregister_tuple(tpl, -stpl->get_count());
@@ -539,7 +537,7 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
                   setup(tpl, node, stpl->get_count(), stpl->get_depth());
                   persistent_only = true;
                   use_local_tuples = false;
-                  execute_bytecode(all->PROGRAM->get_predicate_bytecode(tuple->get_predicate_id()), *this);
+                  execute_bytecode(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
                   deleter();
                }
             }

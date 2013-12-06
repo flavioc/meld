@@ -61,9 +61,6 @@ public:
    typedef tuple_field reg;
    reg regs[NUM_REGS];
    std::vector<tuple_field> stack;
-   vm::tuple *tuple;
-   db::tuple_trie_leaf *tuple_leaf;
-	db::simple_tuple *tuple_queue;
    db::node *node;
    derivation_count count;
    vm::depth_t depth;

@@ -12,37 +12,6 @@ namespace vm {
    
 namespace instr {
 
-size_t
-compute_list_size(instr_val val, pcounter pc)
-{
-   size_t total = 0;
-
-   // head
-   val = val_get(pc, 0);
-   ++pc;
-   ++total;
-
-   if(val_is_non_nil(val) || val_is_any(val)) {
-   } else if(val_is_list(val))
-      total += compute_list_size(val, pc);
-   else
-      total += arg_size<ARGUMENT_ANYTHING>(val);
-
-   pc += (total - 1);
-
-   // tail
-   val = val_get(pc, 0);
-   ++total;
-   ++pc;
-
-   if(val_is_non_nil(val) || val_is_any(val) || val_is_nil(val)) {
-   } else if(val_is_list(val))
-      total += compute_list_size(val, pc);
-   else assert(false);
-
-   return total;
-}
-   
 string
 op_string(const instr_op op)
 {
@@ -100,12 +69,30 @@ list_string(pcounter *pm, const program *prog)
    return string("[") + head_string + " | " + tail_string + string("]");
 }
 
+static inline string
+int_string(const int_val i)
+{
+   return string("INT ") + to_string(i);
+}
+
+static inline string
+field_string(pcounter pc)
+{
+   return to_string((int)val_field_reg(pc)) + string(".") + to_string((int)val_field_num(pc));
+}
+
+static inline string
+field_string(pcounter *pm)
+{
+   const string ret(field_string(*pm));
+   pcounter_move_field(pm);
+   return ret;
+}
+
 static string
 val_string(const instr_val v, pcounter *pm, const program *prog)
 {
-   if(val_is_tuple(v))
-      return string("tuple");
-   else if(val_is_reg(v))
+   if(val_is_reg(v))
       return reg_string(val_reg(v));
    else if(val_is_host(v))
       return string("host");
@@ -117,15 +104,12 @@ val_string(const instr_val v, pcounter *pm, const program *prog)
       return string("...");
    else if(val_is_list(v))
       return list_string(pm, prog);
-   else if(val_is_field(v)) {
-      const string ret(to_string((int)val_field_reg(*pm)) +
-         string(".") + to_string((int)val_field_num(*pm)));
-      pcounter_move_field(pm);
-      return ret;
-   } else if(val_is_int(v)) {
-      const string ret(to_string(pcounter_int(*pm)));
+   else if(val_is_field(v))
+      return field_string(pm);
+   else if(val_is_int(v)) {
+      const string ret(int_string(pcounter_int(*pm)));
       pcounter_move_int(pm);
-      return string("INT ") + ret;
+      return ret;
    } else if(val_is_bool(v)) {
       const bool_val v = pcounter_bool(*pm);
       pcounter_move_bool(pm);
@@ -365,7 +349,8 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
 				if(iter_options_min(opts))
 					cout << "m" << iter_options_min_arg(iter_options_argument(pc));
 
-				cout << ") MATCHING";
+				cout << ") MATCHING TO ";
+            cout << reg_string(iter_reg(pc));
             
             if(!iter_match_none(m)) {
                while (true) {
