@@ -2372,21 +2372,21 @@ eval_loop:
            break;
 
          case PUSH_INSTR:
-           state.stack.push_back(tuple_field());
+           state.stack.push_front(tuple_field());
            break;
 
          case POP_INSTR:
-           state.stack.pop_back();
+           state.stack.pop_front();
            break;
 
          case PUSH_REGS_INSTR:
-           state.stack.insert(state.stack.end(),
+           state.stack.insert(state.stack.begin(),
                  state.regs, state.regs + NUM_REGS);
            break;
 
          case POP_REGS_INSTR:
-           copy(state.stack.end() - NUM_REGS, state.stack.end(), state.regs);
-           state.stack.resize(state.stack.size() - NUM_REGS);
+           copy(state.stack.begin(), state.stack.begin() + NUM_REGS, state.regs);
+           state.stack.erase(state.stack.begin(), state.stack.begin() + NUM_REGS);
            break;
 
          case CALLF_INSTR: {

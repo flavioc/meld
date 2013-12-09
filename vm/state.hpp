@@ -60,7 +60,7 @@ public:
 
    typedef tuple_field reg;
    reg regs[NUM_REGS];
-   std::vector<tuple_field> stack;
+   std::deque<tuple_field> stack;
    db::node *node;
    derivation_count count;
    vm::depth_t depth;
@@ -140,7 +140,7 @@ public:
 	inline db::simple_tuple* get_tuple_queue(const reg_num& num) const { return saved_stuples[num]; }
 	inline bool is_it_a_leaf(const reg_num& num) const { return is_leaf[num]; }
 
-   inline tuple_field* get_stack_at(const offset_num& off) { return &stack[stack.size() - 1 - off]; }
+   inline tuple_field* get_stack_at(const offset_num& off) { return &stack[off]; }
    
    inline void copy_reg(const reg_num& reg_from, const reg_num& reg_to) {
       regs[reg_to] = regs[reg_from];

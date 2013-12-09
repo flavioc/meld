@@ -673,6 +673,7 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          break;
       case FLOATMINUS_INSTR:
          cout << operation_string(pc, "FLOAT MINUS") << endl;
+         break;
       case FLOATMUL_INSTR:
          cout << operation_string(pc, "FLOAT MUL") << endl;
          break;
