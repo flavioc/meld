@@ -354,9 +354,8 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
                if(i != 0)
                   cout << ", ";
                
-               pcounter val_ptr(m);
-               m += val_size;
-               cout << val_string(call_val(val_ptr), &m, prog);
+               cout << reg_string(pcounter_reg(m));
+               m += reg_val_size;
             }
             cout << ")" << endl;
    		}

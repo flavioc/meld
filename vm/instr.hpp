@@ -24,6 +24,7 @@ const uint32_t MAGIC2 = 0x6c696620;
 namespace instr {
 
 const size_t type_size = sizeof(utils::byte);
+const size_t extern_id_size = sizeof(utils::byte);
 const size_t instr_size = sizeof(utils::byte);
 const size_t field_size = 2 * sizeof(utils::byte);
 const size_t iter_match_size = 2 * sizeof(utils::byte);
@@ -54,7 +55,7 @@ const size_t SEND_BASE           = instr_size + 2 * reg_val_size;
 const size_t OP_BASE             = instr_size + 4;
 const size_t ITER_BASE           = instr_size + 12;
 const size_t ALLOC_BASE          = instr_size + 2;
-const size_t CALL_BASE           = instr_size + 3;
+const size_t CALL_BASE           = instr_size + extern_id_size + sizeof(utils::byte) + reg_val_size;
 const size_t IF_BASE             = instr_size + 1 + jump_size;
 const size_t TESTNIL_BASE        = instr_size + reg_val_size + reg_val_size;
 const size_t HEAD_BASE           = instr_size + 3;
@@ -352,10 +353,10 @@ inline reg_num alloc_reg(pcounter pc) { return pcounter_reg(pc + 2); }
 
 /* CALL */
 
-inline external_function_id call_extern_id(pcounter pc) { return (external_function_id)byte_get(pc, 1); }
-inline size_t call_num_args(pcounter pc) { return (size_t)byte_get(pc, 2); }
-inline reg_num call_dest(pcounter pc) { return pcounter_reg(pc + 3); }
-inline instr_val call_val(pcounter pc) { return val_get(pc, 0); }
+inline external_function_id call_extern_id(pcounter pc) { return (external_function_id)byte_get(pc, instr_size); }
+inline size_t call_num_args(pcounter pc) { return (size_t)byte_get(pc, instr_size + extern_id_size); }
+inline reg_num call_dest(pcounter pc) { return pcounter_reg(pc + instr_size + extern_id_size + sizeof(utils::byte)); }
+inline instr_val call_val(pcounter pc) { return val_get(pc, 0); } // XXX: to remove
 
 /* CALLE (similar to CALL) */
 
@@ -681,7 +682,7 @@ advance(pcounter pc)
                    
       case CALL_INSTR:
          return pc + CALL_BASE
-                   + instr_call_args_size(pc + CALL_BASE, call_num_args(pc));
+                   + call_num_args(pc) * reg_val_size;
 
       case CALLE_INSTR:
          return pc + CALLE_BASE

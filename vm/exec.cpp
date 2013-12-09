@@ -1226,8 +1226,10 @@ execute_call(pcounter pc, state& state)
    const type* ret_type(f->get_return_type());
    argument args[num_args];
    
-   for(size_t i(0); i < num_args; ++i)
-      read_call_arg(args[i], f->get_arg_type(i)->get_type(), m, state);
+   for(size_t i(0); i < num_args; ++i) {
+      args[i] = state.get_reg(pcounter_reg(m));
+      m += reg_val_size;
+   }
    
    assert(num_args == f->get_num_args());
    
