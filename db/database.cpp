@@ -104,6 +104,7 @@ database::create_node_id(const db::node::node_id id)
    
    translation[max_node_id] = max_translated_id;
    nodes[max_node_id] = ret;
+   nodes_total++;
 
    return ret;
 }

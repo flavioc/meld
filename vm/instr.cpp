@@ -12,45 +12,17 @@ namespace vm {
    
 namespace instr {
 
-string
-op_string(const instr_op op)
-{
-   switch(op) {
-		case OP_NEQI: return string("INT NOT EQUAL");
-		case OP_EQI: return string("INT EQUAL"); 
-		case OP_LESSI: return string("INT LESSER"); 
-		case OP_LESSEQI: return string("INT LESSER EQUAL"); 
-		case OP_GREATERI: return string("INT GREATER"); 
-		case OP_GREATEREQI: return string("INT GREATER EQUAL"); 
-		case OP_MODI: return string("INT MOD"); 
-		case OP_PLUSI: return string("INT PLUS"); 
-		case OP_MINUSI: return string("INT MINUS"); 
-		case OP_TIMESI: return string("INT TIMES"); 
-		case OP_DIVI: return string("INT DIV"); 
-		case OP_NEQF: return string("FLOAT NOT EQUAL"); 
-		case OP_EQF: return string("FLOAT EQUAL"); 
-		case OP_LESSF: return string("FLOAT LESSER"); 
-		case OP_LESSEQF: return string("FLOAT LESSER EQUAL"); 
-		case OP_GREATERF: return string("FLOAT GREATER"); 
-		case OP_GREATEREQF: return string("FLOAT GREATER EQUAL"); 
-		case OP_MODF: return string("FLOAT MOD"); 
-		case OP_PLUSF: return string("FLOAT PLUS"); 
-		case OP_MINUSF: return string("FLOAT MINUS"); 
-		case OP_TIMESF: return string("FLOAT TIMES"); 
-		case OP_DIVF: return string("FLOAT DIV"); 
-		case OP_NEQA: return string("ADDR NOT EQUAL"); 
-		case OP_EQA: return string("ADDR EQUAL"); 
-      case OP_GREATERA: return string("ADDR GREATER");
-      case OP_ORB: return string("BOOL OR");
-	}
-	
-   return string("");
-}
-
 static inline string
 reg_string(const reg_num num)
 {
    return string("reg ") + to_string((int)num);
+}
+
+static inline string
+operation_string(pcounter& pc, const string& op)
+{
+   return reg_string(pcounter_reg(pc + instr_size)) + " " + op + " " + reg_string(pcounter_reg(pc + instr_size + reg_val_size)) + " TO "
+      + reg_string(pcounter_reg(pc + instr_size + 2 * reg_val_size));
 }
 
 static string val_string(const instr_val, pcounter *, const program *);
@@ -73,6 +45,36 @@ static inline string
 int_string(const int_val i)
 {
    return string("INT ") + to_string(i);
+}
+
+static inline string
+ptr_string(const ptr_val p)
+{
+   return string("PTR ") + to_string(p);
+}
+
+static inline string
+const_id_string(const const_id id)
+{
+   return string("CONST ") + to_string(id);
+}
+
+static inline string
+node_string(const node_val n)
+{
+   return string("@") + to_string(n);
+}
+
+static inline string
+stack_string(const offset_num s)
+{
+   return string("STACK ") + to_string((int)s);
+}
+
+static inline string
+float_string(const float_val f)
+{
+   return string("FLOAT ") + to_string(f);
 }
 
 static inline string
@@ -115,11 +117,11 @@ val_string(const instr_val v, pcounter *pm, const program *prog)
       pcounter_move_bool(pm);
       return string("BOOL ") + (v ? "true" : "false");
    } else if(val_is_float(v)) {
-      const string ret(to_string(pcounter_float(*pm)));
+      const string ret(float_string(pcounter_float(*pm)));
       pcounter_move_float(pm);
-      return string("FLOAT ") + ret;
+      return ret;
    } else if(val_is_node(v)) {
-      const string ret(string("@") + to_string(pcounter_node(*pm)));
+      const string ret(node_string(pcounter_node(*pm)));
       pcounter_move_node(pm);
       return ret;
 	} else if(val_is_string(v)) {
@@ -137,21 +139,21 @@ val_string(const instr_val v, pcounter *pm, const program *prog)
 
 		return ret;
    } else if(val_is_stack(v)) {
-      const offset_num offset(pcounter_offset_num(*pm));
+      const offset_num offset(pcounter_stack(*pm));
 
       pcounter_move_offset_num(pm);
 
-      return string("STACK ") + to_string((int)offset);
+      return stack_string(offset);
    } else if(val_is_pcounter(v)) {
       return string("PCOUNTER");
 	} else if(val_is_const(v)) {
-		const string ret(string("CONST ") + to_string(pcounter_const_id(*pm)));
+		const string ret(const_id_string(pcounter_const_id(*pm)));
 		
 		pcounter_move_const_id(pm);
 		
 		return ret;
    } else if(val_is_ptr(v)) {
-      const string ret(string("PTR ") + to_string(pcounter_ptr(*pm)));
+      const string ret(ptr_string(pcounter_ptr(*pm)));
 
       pcounter_move_ptr(pm);
 
@@ -282,46 +284,14 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
 				}
 			}
 			break;
-		case TEST_NIL_INSTR: {
-				pcounter m = pc + TEST_NIL_BASE;
-            const string op(val_string(test_nil_op(pc), &m, prog));
-            const string dest(val_string(test_nil_dest(pc), &m, prog));
-
-            cout << "TEST-NIL " << op << " TO " << dest << endl;
-			}
-			break;
-      case MOVE_INSTR: {
-				pcounter m = pc + MOVE_BASE;
-            const string from(val_string(move_from(pc), &m, prog));
-            const string to(val_string(move_to(pc), &m, prog));
-
-            cout << "MOVE " << from << " TO " << to << endl;
-		   }
-		   break;
-   	case MOVE_NIL_INSTR: {
-   			pcounter m = pc + MOVE_NIL_BASE;
-
-            cout << "MOVE-NIL TO "
-                 << val_string(move_nil_dest(pc), &m, prog)
-                 << endl;
-   		}
-   		break;
+		case TESTNIL_INSTR:
+         cout << "TESTNIL " << reg_string(test_nil_op(pc)) << " TO " << reg_string(test_nil_dest(pc)) << endl;
+         break;
    	case ALLOC_INSTR:
          cout << "ALLOC " << prog->get_predicate(alloc_predicate(pc))->get_name()
               << " TO " << reg_string(alloc_reg(pc))
               << endl;
-   		break;
-   	case OP_INSTR: {
-   			pcounter m = pc + OP_BASE;
-            const string arg1(val_string(op_arg1(pc), &m, prog));
-            const string arg2(val_string(op_arg2(pc), &m, prog));
-            const string dest(val_string(op_dest(pc), &m, prog));
-
-            cout << "OP " << arg1 << " " << op_string(op_op(pc))
-                 << " " << arg2 << " TO " << dest
-                 << endl;
-   		 }
-   		break;
+         break;
    	case FLOAT_INSTR: {
             pcounter m = pc + FLOAT_BASE;
             const string op(val_string(float_op(pc), &m, prog));
@@ -439,9 +409,8 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
             cout << endl; 
          }
          break;
-      case REMOVE_INSTR: {
-            cout << "REMOVE " << reg_string(remove_source(pc)) << endl;
-         }
+      case REMOVE_INSTR:
+         cout << "REMOVE " << reg_string(remove_source(pc)) << endl;
          break;
    	case CONS_INSTR: {
    			pcounter m = pc + CONS_BASE;
@@ -452,32 +421,11 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
             const string dest(val_string(cons_dest(pc), &m, prog));
    			
             cout << "CONS (" << head << "::" << tail << ") " << lt->string() << " TO " << dest << endl;
-   		}
-   		break;
-   	case HEAD_INSTR: {
-   			pcounter m = pc + HEAD_BASE;
-            const string cons(val_string(head_cons(pc), &m, prog));
-            const string dest(val_string(head_dest(pc), &m, prog));
-
-            cout << "HEAD " << cons << " TO " << dest << endl;
-   	   }
-   	   break;
-    	case TAIL_INSTR: {
-    			pcounter m = pc + TAIL_BASE;
-            const string cons(val_string(tail_cons(pc), &m, prog));
-            const string dest(val_string(tail_dest(pc), &m, prog));
-    			
-            cout << "TAIL " << cons << " TO " << dest << endl;
-    		}
-    		break;
-    	case NOT_INSTR: {
-    			pcounter m = pc + NOT_BASE;
-            const string op(val_string(not_op(pc), &m, prog));
-            const string dest(val_string(not_dest(pc), &m, prog));
-
-            cout << "NOT " << op << " TO " << dest << endl;
-    		}
-    	   break;
+         }
+         break;
+    	case NOT_INSTR:
+         cout << "NOT " << reg_string(not_op(pc)) << " TO " << reg_string(not_dest(pc)) << endl;
+         break;
     	case RETURN_SELECT_INSTR:
          cout << "RETURN SELECT " << return_select_jump(pc) << endl;
          break;
@@ -514,16 +462,14 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
             const size_t rule_id(rule_get_id(pc));
 
             cout << "RULE " << rule_id << endl;
-        }
-        break;
+         }
+         break;
       case RULE_DONE_INSTR:
          cout << "RULE DONE" << endl;
          break;
-
       case NEW_NODE_INSTR:
          cout << "NEW NODE TO " << reg_string(new_node_reg(pc)) << endl;
          break;
-
       case NEW_AXIOMS_INSTR: {
          cout << "NEW AXIOMS" << endl;
          const pcounter end(pc + new_axioms_jump(pc));
@@ -551,9 +497,8 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
             }
             cout << ")" << endl;
          }
-                             }
+         }
          break;
-
       case SEND_DELAY_INSTR:
          cout << "SEND " << reg_string(send_delay_msg(pc))
               << " TO " << reg_string(send_delay_dest(pc))
@@ -561,40 +506,33 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
               << endl;
 
          break;
-
       case PUSH_INSTR:
          cout << "PUSH" << endl;
          break;
-
       case POP_INSTR:
          cout << "POP" << endl;
          break;
-
       case PUSH_REGS_INSTR:
          cout << "PUSH REGS" << endl;
          break;
-
       case POP_REGS_INSTR:
          cout << "POP REGS" << endl;
          break;
-
       case CALLF_INSTR: {
-         const callf_id id(callf_get_id(pc));
+            const callf_id id(callf_get_id(pc));
 
-         cout << "CALLF " << to_string((int)id) << endl;
+            cout << "CALLF " << to_string((int)id) << endl;
+         }
          break;
-      }
-
       case MAKE_STRUCT_INSTR: {
-         const size_t type_id(make_struct_type(pc));
-         struct_type *st((struct_type*)prog->get_type(type_id));
-         const instr_val to(make_struct_to(pc));
-         pcounter m = pc + MAKE_STRUCT_BASE;
+            const size_t type_id(make_struct_type(pc));
+            struct_type *st((struct_type*)prog->get_type(type_id));
+            const instr_val to(make_struct_to(pc));
+            pcounter m = pc + MAKE_STRUCT_BASE;
 
-         cout << "MAKE STRUCT " << st->string() << " TO " << val_string(to, &m, prog) << endl;
-      }
-      break;
-
+            cout << "MAKE STRUCT " << st->string() << " TO " << val_string(to, &m, prog) << endl;
+         }
+         break;
       case STRUCT_VAL_INSTR: {
          const size_t idx(struct_val_idx(pc));
          const instr_val from(struct_val_from(pc));
@@ -605,8 +543,215 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
             << " TO " << val_string(to, &m, prog) << endl;
       }
       break;
+      case MVINTFIELD_INSTR: {
+         const int_val i(pcounter_int(pc + instr_size));
+         const string field(field_string(pc + instr_size + int_size));
+         cout << "MVINTFIELD " << int_string(i) << " TO " << field << endl;
+      }
+      break;
+      case MVFIELDFIELD_INSTR: {
+         const string field1(field_string(pc + instr_size));
+         const string field2(field_string(pc + instr_size + field_size));
+         cout << "MVFIELDFIELD " << field1 << " TO " << field2 << endl;
+      }
+      break;
+      case MVFIELDFIELDR_INSTR: {
+         const string field1(field_string(pc + instr_size));
+         const string field2(field_string(pc + instr_size + field_size));
+         cout << "MVFIELDFIELD " << field1 << " TO " << field2 << " (REFS)" << endl;
+      }
+      break;
+      case MVINTREG_INSTR: {
+         const int_val i(pcounter_int(pc + instr_size));
+         const reg_num reg(pcounter_reg(pc + instr_size + int_size));
 
-    	case ELSE_INSTR:
+         cout << "MVINTREG " << int_string(i) << " TO " << reg_string(reg) << endl;
+      }
+      break;
+      case MVFIELDREG_INSTR: {
+         const string field(field_string(pc + instr_size));
+         const reg_num reg(pcounter_reg(pc + instr_size + field_size));
+
+         cout << "MVFIELDREG " << field << " TO " << reg_string(reg) << endl;
+      }
+      break;
+      case MVPTRREG_INSTR: {
+         const ptr_val p(pcounter_ptr(pc + instr_size));
+         const reg_num reg(pcounter_reg(pc + instr_size + ptr_size));
+
+         cout << "MVPTRREG " << ptr_string(p) << " TO " << reg_string(reg) << endl;
+      }
+      break;
+   	case MVNILFIELD_INSTR:
+         cout << "MVNILFIELD TO " << field_string(pc + instr_size) << endl;
+      break;
+      case MVNILREG_INSTR:
+         cout << "MVNILREG TO " << reg_string(pcounter_reg(pc + instr_size)) << endl;
+      break;
+      case MVREGFIELD_INSTR:
+         cout << "MVREGFIELD " << reg_string(pcounter_reg(pc + instr_size)) << " TO " << field_string(pc + instr_size + reg_val_size) << endl;
+      break;
+      case MVREGFIELDR_INSTR:
+         cout << "MVREGFIELD " << reg_string(pcounter_reg(pc + instr_size)) << " TO " << field_string(pc + instr_size + reg_val_size) << " (REFS)" << endl;
+      break;
+      case MVHOSTFIELD_INSTR:
+         cout << "MVHOSTFIELD TO " << field_string(pc + instr_size) << endl;
+      break;
+      case MVREGCONST_INSTR:
+         cout << "MVREGCONST " << reg_string(pcounter_reg(pc + instr_size)) << " TO " << const_id_string(pcounter_const_id(pc + instr_size + reg_val_size)) << endl;
+      break;
+      case MVCONSTFIELD_INSTR:
+         cout << "MVCONSTFIELD " << const_id_string(pcounter_const_id(pc + instr_size)) << " TO " << field_string(pc + instr_size + const_id_size) << endl;
+      break;
+      case MVCONSTFIELDR_INSTR:
+         cout << "MVCONSTFIELD " << const_id_string(pcounter_const_id(pc + instr_size)) << " TO " << field_string(pc + instr_size + const_id_size) << " (REFS)" << endl;
+      break;
+      case MVADDRFIELD_INSTR:
+         cout << "MVADDRFIELD " << node_string(pcounter_node(pc + instr_size)) << " TO " << field_string(pc + instr_size + node_size) << endl;
+      break;
+      case MVFLOATFIELD_INSTR:
+         cout << "MVFLOATFIELD " << pcounter_float(pc + instr_size) << " TO " << field_string(pc + instr_size + float_size) << endl;
+      break;
+      case MVFLOATREG_INSTR:
+         cout << "MVFLOATREG " << float_string(pcounter_float(pc + instr_size)) << " TO " << reg_string(pcounter_reg(pc + instr_size + float_size)) << endl;
+      break;
+      case MVINTCONST_INSTR:
+         cout << "MVINTCONST " << int_string(pcounter_int(pc + instr_size)) << " TO " << const_id_string(pcounter_const_id(pc + instr_size + int_size)) << endl;
+         break;
+      case MVWORLDFIELD_INSTR:
+         cout << "MVWORLDFIELD TO " << field_string(pc + instr_size) << endl;
+         break;
+      case MVSTACKPCOUNTER_INSTR:
+         cout << "MVSTACKPCOUNTER TO " << stack_string(pcounter_stack(pc + instr_size)) << endl;
+         break;
+      case MVPCOUNTERSTACK_INSTR:
+         cout << "MVPCOUNTERSTACK TO " << stack_string(pcounter_stack(pc + instr_size)) << endl;
+         break;
+      case MVSTACKREG_INSTR:
+         cout << "MVSTACKREG " << stack_string(pcounter_stack(pc + instr_size)) << " TO " << reg_string(pcounter_reg(pc + instr_size + stack_val_size)) << endl;
+         break;
+      case MVREGSTACK_INSTR:
+         cout << "MVREGSTACK " << reg_string(pcounter_reg(pc + instr_size)) << " TO " << stack_string(pcounter_stack(pc + instr_size + reg_val_size)) << endl;
+         break;
+      case MVADDRREG_INSTR:
+         cout << "MVADDRREG " << node_string(pcounter_node(pc + instr_size)) << " TO " << reg_string(pcounter_reg(pc + instr_size + node_size)) << endl;
+         break;
+      case MVHOSTREG_INSTR:
+         cout << "MVHOSTREG TO " << reg_string(pcounter_reg(pc + instr_size)) << endl;
+         break;
+      case ADDRNOTEQUAL_INSTR:
+         cout << operation_string(pc, "ADDR NOT EQUAL") << endl;
+         break;
+      case ADDREQUAL_INSTR:
+         cout << operation_string(pc, "ADDR EQUAL") << endl;
+         break;
+      case INTMINUS_INSTR:
+         cout << operation_string(pc, "INT MINUS") << endl;
+         break;
+      case INTEQUAL_INSTR:
+         cout << operation_string(pc, "INT EQUAL") << endl;
+         break;
+      case INTNOTEQUAL_INSTR:
+         cout << operation_string(pc, "INT NOT EQUAL") << endl;
+         break;
+      case INTPLUS_INSTR:
+         cout << operation_string(pc, "INT EQUAL") << endl;
+         break;
+      case INTLESSER_INSTR:
+         cout << operation_string(pc, "INT LESSER") << endl;
+         break;
+      case INTGREATEREQUAL_INSTR:
+         cout << operation_string(pc, "INT GREATER EQUAL") << endl;
+         break;
+      case BOOLOR_INSTR:
+         cout << operation_string(pc, "BOOL OR") << endl;
+         break;
+      case INTLESSEREQUAL_INSTR:
+         cout << operation_string(pc, "INT LESSER EQUAL") << endl;
+         break;
+      case INTGREATER_INSTR:
+         cout << operation_string(pc, "INT GREATER") << endl;
+         break;
+      case INTMUL_INSTR:
+         cout << operation_string(pc, "INT MUL") << endl;
+         break;
+      case INTDIV_INSTR:
+         cout << operation_string(pc, "INT DIV") << endl;
+         break;
+      case FLOATPLUS_INSTR:
+         cout << operation_string(pc, "FLOAT PLUS") << endl;
+         break;
+      case FLOATMINUS_INSTR:
+         cout << operation_string(pc, "FLOAT MINUS") << endl;
+      case FLOATMUL_INSTR:
+         cout << operation_string(pc, "FLOAT MUL") << endl;
+         break;
+      case FLOATDIV_INSTR:
+         cout << operation_string(pc, "FLOAT DIV") << endl;
+         break;
+      case FLOATEQUAL_INSTR:
+         cout << operation_string(pc, "FLOAT EQUAL") << endl;
+         break;
+      case FLOATNOTEQUAL_INSTR:
+         cout << operation_string(pc, "FLOAT NOT EQUAL") << endl;
+         break;
+      case FLOATLESSER_INSTR:
+         cout << operation_string(pc, "FLOAT LESSER") << endl;
+         break;
+      case FLOATLESSEREQUAL_INSTR:
+         cout << operation_string(pc, "FLOAT LESSER EQUAL") << endl;
+         break;
+      case FLOATGREATER_INSTR:
+         cout << operation_string(pc, "FLOAT GREATER") << endl;
+         break;
+      case FLOATGREATEREQUAL_INSTR:
+         cout << operation_string(pc, "FLOAT GREATER EQUAL") << endl;
+         break;
+      case MVREGREG_INSTR:
+         cout << "MVREGREG " << reg_string(pcounter_reg(pc + instr_size)) << " TO " << reg_string(pcounter_reg(pc + instr_size + reg_val_size)) << endl;
+         break;
+      case BOOLEQUAL_INSTR:
+         cout << operation_string(pc, "BOOL EQUAL") << endl;
+         break;
+      case BOOLNOTEQUAL_INSTR:
+         cout << operation_string(pc, "BOOL NOT EQUAL") << endl;
+         break;
+      case HEADRR_INSTR:
+         cout << "HEADRR " << reg_string(pcounter_reg(pc + instr_size)) << " TO " << reg_string(pcounter_reg(pc + instr_size + reg_val_size)) << endl;
+         break;
+      case HEADFR_INSTR:
+         cout << "HEADFR " << field_string(pc + instr_size) + " TO " << reg_string(pcounter_reg(pc + instr_size + field_size)) << endl;
+         break;
+      case HEADFF_INSTR:
+         cout << "HEADFF " << field_string(pc + instr_size) << " TO " << field_string(pc + instr_size + field_size) << endl;
+         break;
+      case HEADRF_INSTR:
+         cout << "HEADRF " << reg_string(pcounter_reg(pc + instr_size)) << " TO " << field_string(pc + instr_size + reg_val_size) << endl;
+         break;
+      case HEADFFR_INSTR:
+         cout << "HEADFF " << field_string(pc + instr_size) << " TO " << field_string(pc + instr_size + field_size) << " (REFS)" << endl;
+         break;
+      case HEADRFR_INSTR:
+         cout << "HEADRF " << reg_string(pcounter_reg(pc + instr_size)) << " TO " << field_string(pc + instr_size + reg_val_size) << " (REFS)" << endl;
+         break;
+      case TAILRR_INSTR:
+         cout << "TAILRR " << reg_string(pcounter_reg(pc + instr_size)) << " TO " << reg_string(pcounter_reg(pc + instr_size + reg_val_size)) << endl;
+         break;
+      case TAILFR_INSTR:
+         cout << "TAILFR " << field_string(pc + instr_size) << " TO " << reg_string(pcounter_reg(pc + instr_size + field_size)) << endl;
+         break;
+      case TAILFF_INSTR:
+         cout << "TAILFF " << field_string(pc + instr_size) << " TO " << field_string(pc + instr_size + field_size) << endl;
+         break;
+      case TAILRF_INSTR:
+         cout << "TAILRF " << reg_string(pcounter_reg(pc + instr_size)) << " TO " << field_string(pc + instr_size + reg_val_size) << endl;
+         break;
+      case MVWORLDREG_INSTR:
+         cout << "MVWORLDREG TO " << reg_string(pcounter_reg(pc + instr_size)) << endl;
+         break;
+      case MVCONSTREG_INSTR:
+         cout << "MVCONSTREG " << const_id_string(pcounter_const_id(pc + instr_size)) << " TO " << reg_string(pcounter_reg(pc + instr_size + const_id_size)) << endl;
+         break;
 		default:
          throw malformed_instr_error("unknown instruction code");
 	}

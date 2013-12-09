@@ -1,0 +1,7 @@
+
+type linear a(node, float, int).
+type linear b(node, float).
+
+a(@0, 2.5, 1).
+
+a(A, F, I) -o b(A, F / float(I)).

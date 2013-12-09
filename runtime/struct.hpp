@@ -15,8 +15,8 @@ class struct1: public mem::base
 {
    private:
 
-      vm::tuple_field *fields;
       utils::atomic<vm::ref_count> refs;
+      vm::tuple_field *fields;
       vm::struct_type *typ;
 
    public:

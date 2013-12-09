@@ -38,7 +38,8 @@ node::add_tuple(vm::tuple *tpl, const derivation_count many, const depth_t depth
    const predicate* pred(tpl->get_predicate());
    tuple_trie *tr(get_storage(pred));
    
-   return tr->insert_tuple(tpl, many, depth);
+   bool ret = tr->insert_tuple(tpl, many, depth);
+   return ret;
 }
 
 node::delete_info

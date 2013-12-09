@@ -9,6 +9,7 @@
 #include "vm/tuple.hpp"
 #include "vm/match.hpp"
 #include "db/tuple.hpp"
+#include "runtime/ref_base.hpp"
 #include "process/machine.hpp"
 #ifdef USE_UI
 #include "ui/manager.hpp"
@@ -70,306 +71,6 @@ static inline tuple*
 get_tuple_field(state& state, const pcounter& pc)
 {
    return state.get_tuple(val_field_reg(pc));
-}
-
-static inline void
-move_to_reg(const pcounter& m, state& state,
-   const reg_num& reg, const instr_val& from)
-{
-   if(val_is_float(from))
-      state.set_float(reg, pcounter_float(m));
-   else if(val_is_int(from))
-      state.set_int(reg, pcounter_int(m));
-   else if(val_is_field(from)) {
-      const field_num field(val_field_num(m));
-      const tuple *tuple(get_tuple_field(state, m));
-
-      switch(tuple->get_field_type(field)->get_type()) {
-         case FIELD_INT: state.set_int(reg, tuple->get_int(field)); break;
-         case FIELD_FLOAT: state.set_float(reg, tuple->get_float(field)); break;
-         case FIELD_LIST: state.set_cons(reg, tuple->get_cons(field)); break;
-         case FIELD_NODE: state.set_node(reg, tuple->get_node(field)); break;
-			case FIELD_STRING: state.set_string(reg, tuple->get_string(field)); break;
-         default: throw vm_exec_error("don't know how to move this field (move_to_reg)");
-      }
-      
-   } else if(val_is_host(from))
-      state.set_node(reg, state.node->get_id());
-   else if(val_is_node(from))
-      state.set_node(reg, get_node_val(m, state));
-   else if(val_is_reg(from))
-      state.copy_reg(val_reg(from), reg);
-   else if(val_is_stack(from)) {
-      const offset_num off(pcounter_offset_num(m));
-      state.set_reg(reg, *state.get_stack_at(off));
-   } else if(val_is_ptr(from)) {
-      const ptr_val val(pcounter_ptr(m));
-      state.set_ptr(val_reg(from), val);
-   } else {
-      throw vm_exec_error("invalid move to reg");
-   }
-}
-
-static inline void
-move_to_field(pcounter m, state& state, const instr_val& from)
-{
-   if(val_is_bool(from)) {
-      const bool_val b(pcounter_bool(m));
-
-      pcounter_move_bool(&m);
-
-      tuple *tuple(get_tuple_field(state, m));
-
-      tuple->set_bool(val_field_num(m), b);
-   } else if(val_is_float(from)) {
-      const float_val flt(pcounter_float(m));
-      
-      pcounter_move_float(&m);
-      
-      tuple *tuple(get_tuple_field(state, m));
-      
-      tuple->set_float(val_field_num(m), flt);
-   } else if(val_is_int(from)) {
-      const int_val i(pcounter_int(m));
-      
-      pcounter_move_int(&m);
-      
-      tuple *tuple(get_tuple_field(state, m));
-      
-      tuple->set_int(val_field_num(m), i);
-   } else if(val_is_node(from)) {
-      const node_val val(get_node_val(m, state));
-      
-      tuple *tuple(get_tuple_field(state, m));
-      
-      tuple->set_node(val_field_num(m), val);
-	} else if(val_is_string(from)) {
-		const uint_val id(pcounter_uint(m));
-		
-		pcounter_move_uint(&m);
-		
-      tuple *tuple(get_tuple_field(state, m));
-		
-		tuple->set_string(val_field_num(m), state.all->PROGRAM->get_default_string(id));
-	} else if(val_is_arg(from)) {
-		const argument_id id(pcounter_argument_id(m));
-		
-		pcounter_move_argument_id(&m);
-		
-      tuple *tuple(get_tuple_field(state, m));
-		
-		tuple->set_string(val_field_num(m), state.all->get_argument(id));
-   } else if(val_is_stack(from)) {
-      const offset_num off(pcounter_offset_num(m));
-
-      pcounter_move_offset_num(&m);
-
-      tuple *tuple(get_tuple_field(state, m));
-
-		const field_num to_field(val_field_num(m));
-
-      tuple->set_field(to_field, *state.get_stack_at(off));
-	} else if(val_is_const(from)) {
-		const const_id cid(pcounter_const_id(m));
-		
-		pcounter_move_const_id(&m);
-		
-      tuple *tuple(get_tuple_field(state, m));
-		
-		const field_num to_field(val_field_num(m));
-		const field_type typ(tuple->get_field_type(to_field)->get_type());
-		
-		switch(typ) {
-			case FIELD_INT:	
-				tuple->set_int(to_field, state.all->get_const_int(cid));
-				break;
-			case FIELD_FLOAT:
-				tuple->set_float(to_field, state.all->get_const_float(cid));
-				break;
-         case FIELD_LIST:
-            tuple->set_cons(to_field, state.all->get_const_cons(cid));
-				break;
-         case FIELD_NODE:
-            tuple->set_node(to_field, state.all->get_const_node(cid));
-            break;
-			default: throw vm_exec_error("don't know how to move to " + field_type_string(typ) + " field (move_to_field from const)");
-		}
-   } else if(val_is_field(from)) {
-      const tuple *from_tuple(state.get_tuple(val_field_reg(m)));
-      const field_num from_field(val_field_num(m));
-      
-      pcounter_move_field(&m);
-      
-      tuple *tuple(get_tuple_field(state, m));
-      const field_num to_field(val_field_num(m));
-      
-      switch(tuple->get_field_type(to_field)->get_type()) {
-         case FIELD_INT:
-            tuple->set_int(to_field, from_tuple->get_int(from_field));
-            break;
-         case FIELD_FLOAT:
-            tuple->set_float(to_field, from_tuple->get_float(from_field));
-            break;
-         case FIELD_LIST:
-            tuple->set_cons(to_field, from_tuple->get_cons(from_field));
-            break;
-         case FIELD_NODE:
-            tuple->set_node(to_field, from_tuple->get_node(from_field));
-            break;
-         case FIELD_STRING:
-            tuple->set_string(to_field, from_tuple->get_string(from_field));
-            break;
-         default:
-            throw vm_exec_error("don't know how to move to field (move_to_field)");
-      }
-   } else {
-      tuple *tuple(get_tuple_field(state, m));
-      const field_num field(val_field_num(m));
-      
-      if(val_is_host(from))
-         tuple->set_node(field, state.node->get_id());
-      else if(val_is_reg(from)) {
-         const reg_num reg(val_reg(from));
-         
-         switch(tuple->get_field_type(field)->get_type()) {
-            case FIELD_INT:
-               tuple->set_int(field, state.get_int(reg));
-               break;
-            case FIELD_FLOAT:
-               tuple->set_float(field, state.get_float(reg));
-               break;
-            case FIELD_NODE:
-               tuple->set_node(field, state.get_node(reg));
-               break;
-            case FIELD_LIST:
-               tuple->set_cons(field, state.get_cons(reg));
-               break;
-				case FIELD_STRING:
-					tuple->set_string(field, state.get_string(reg));
-					break;
-            default: throw vm_exec_error("do not know how to move reg to this tuple field");
-         }
-      } else
-         throw vm_exec_error("invalid move to field (move_to_field)");
-   }
-}
-
-static inline void
-move_to_stack(pcounter pc, pcounter m, state& state, const instr_val& from)
-{
-   if(val_is_pcounter(from)) {
-      const int off((int)pcounter_offset_num(m));
-      SET_FIELD_PTR(*(state.get_stack_at(off)), advance(pc));
-   } else if(val_is_int(from)) {
-		const int_val it(pcounter_int(m));
-		
-		pcounter_move_int(&m);
-
-      const offset_num off(pcounter_offset_num(m));
-      SET_FIELD_INT(*(state.get_stack_at(off)), it);
-   } else if(val_is_node(from)) {
-      const node_val n(pcounter_node(m));
-
-      pcounter_move_node(&m);
-
-      const offset_num off(pcounter_offset_num(m));
-      SET_FIELD_FLOAT(*(state.get_stack_at(off)), n);
-   } else if(val_is_float(from)) {
-		const float_val flt(pcounter_float(m));
-      
-      pcounter_move_float(&m);
-
-      const offset_num off(pcounter_offset_num(m));
-      SET_FIELD_FLOAT(*(state.get_stack_at(off)), flt);
-
-   } else if(val_is_reg(from)) {
-		const reg_num reg(val_reg(from));
-      const offset_num off(pcounter_offset_num(m));
-      *(state.get_stack_at(off)) = state.get_reg(reg);
-	} else if(val_is_const(from)) {
-		const const_id cid(pcounter_const_id(m));
-		
-		pcounter_move_const_id(&m);
-
-      const offset_num off(pcounter_offset_num(m));
-      *(state.get_stack_at(off)) = state.all->get_const(cid);
-   } else
-		throw vm_exec_error("invalid move to stack (move_to_stack)");
-}
-
-static inline void
-move_to_const(pcounter m, state& state, const instr_val& from)
-{
-	if(val_is_float(from)) {
-		const float_val flt(pcounter_float(m));
-      
-      pcounter_move_float(&m);
-      
-		const const_id cid(pcounter_const_id(m));
-
-		state.all->set_const_float(cid, flt);
-	} else if(val_is_int(from)) {
-		const int_val it(pcounter_int(m));
-		
-		pcounter_move_int(&m);
-		
-		const const_id cid(pcounter_int(m));
-		
-		state.all->set_const_int(cid, it);
-	} else if(val_is_reg(from)) {
-		const reg_num reg(val_reg(from));
-		const const_id cid(pcounter_const_id(m));
-		
-		state.copy_reg2const(reg, cid);
-	} else if(val_is_node(from)) {
-		const node_val node(get_node_val(m, state));
-		
-		const const_id cid(pcounter_const_id(m));
-		state.all->set_const_node(cid, node);
-   } else if(val_is_string(from)) {
-		const uint_val id(pcounter_uint(m));
-		
-		pcounter_move_uint(&m);
-
-      rstring::ptr str(state.all->PROGRAM->get_default_string(id));
-
-		const const_id cid(pcounter_const_id(m));
-
-      state.all->set_const_string(cid, str);
-	} else
-		throw vm_exec_error("invalid move to const (move_to_const)");
-}
-
-static inline void
-move_to_pcounter(pcounter& pc, const pcounter pm, state& state, const instr_val from)
-{
-   if(val_is_stack(from)) {
-      const offset_num off(pcounter_offset_num(pm));
-      pc = (pcounter)FIELD_PCOUNTER(*(state.get_stack_at(off)));
-   } else if(val_is_ptr(from)) {
-      const ptr_val val(pcounter_ptr(pm));
-      pc = (pcounter)val;
-   } else
-      throw vm_exec_error("invalid move to pcounter (move_to_pcounter)");
-}
-
-static inline void
-execute_move(pcounter& pc, state& state)
-{
-   const instr_val to(move_to(pc));
-   
-   if(val_is_reg(to))
-      move_to_reg(pc + MOVE_BASE, state, val_reg(to), move_from(pc));
-   else if(val_is_field(to))
-      move_to_field(pc + MOVE_BASE, state, move_from(pc));
-	else if(val_is_const(to))
-		move_to_const(pc + MOVE_BASE, state, move_from(pc));
-   else if(val_is_stack(to))
-      move_to_stack(pc, pc + MOVE_BASE, state, move_from(pc));
-   else if(val_is_pcounter(to))
-      move_to_pcounter(pc, pc + MOVE_BASE, state, move_from(pc));
-   else
-      throw vm_exec_error("invalid move target");
 }
 
 static inline void
@@ -777,7 +478,7 @@ void set_op_function<int_val>(const pcounter& m, const instr_val& dest,
       
       tuple->set_int(field, val);
    } else if(val_is_stack(dest)) {
-      const offset_num off(pcounter_offset_num(m));
+      const offset_num off(pcounter_stack(m));
       SET_FIELD_INT(*(state.get_stack_at(off)), val);
    } else
       throw vm_exec_error("invalid destination for int value");
@@ -795,7 +496,7 @@ void set_op_function<float_val>(const pcounter& m, const instr_val& dest,
       
       tuple->set_float(field, val);
    } else if(val_is_stack(dest)) {
-      const offset_num off(pcounter_offset_num(m));
+      const offset_num off(pcounter_stack(m));
 
       SET_FIELD_FLOAT(*(state.get_stack_at(off)), val);
    } else
@@ -833,82 +534,12 @@ void set_op_function<cons*>(const pcounter& m, const instr_val& dest,
 }
 
 static inline void
-execute_op(const pcounter& pc, state& state)
-{
-   const instr_val arg1(op_arg1(pc));
-   const instr_val arg2(op_arg2(pc));
-   const instr_val dest(op_dest(pc));
-   const instr_op op(op_op(pc));
-   pcounter m = pc + OP_BASE;
-   
-#define implement_operation(TYPE_ARGS, TYPE_RET, OP)               { \
-   const TYPE_ARGS v1(get_op_function<TYPE_ARGS>(arg1, m, state));   \
-   const TYPE_ARGS v2(get_op_function<TYPE_ARGS>(arg2, m, state));   \
-   set_op_function<TYPE_RET>(m, dest, (TYPE_RET)(OP), state);        \
-   break;                                                            \
-}
-
-   switch(op) {
-      case OP_NEQF: implement_operation(float_val, bool_val, v1 != v2);
-      case OP_NEQI: implement_operation(int_val, bool_val, v1 != v2);
-      case OP_EQF: implement_operation(float_val, bool_val, v1 == v2);
-      case OP_EQI: implement_operation(int_val, bool_val, v1 == v2);
-      case OP_LESSF: implement_operation(float_val, bool_val, v1 < v2);
-      case OP_LESSI: implement_operation(int_val, bool_val, v1 < v2);
-      case OP_LESSEQF: implement_operation(float_val, bool_val, v1 <= v2);
-      case OP_LESSEQI: implement_operation(int_val, bool_val, v1 <= v2);
-      case OP_GREATERF: implement_operation(float_val, bool_val, v1 > v2);
-      case OP_GREATERI: implement_operation(int_val, bool_val, v1 > v2);
-      case OP_GREATEREQF: implement_operation(float_val, bool_val, v1 >= v2);
-      case OP_GREATEREQI: implement_operation(int_val, bool_val, v1 >= v2);
-      case OP_MODF: implement_operation(float_val, float_val, fmod(v1,v2));
-      case OP_MODI: implement_operation(int_val, int_val, v1 % v2);
-      case OP_PLUSF: implement_operation(float_val, float_val, v1 + v2);
-      case OP_PLUSI: implement_operation(int_val, int_val, v1 + v2);
-      case OP_MINUSF: implement_operation(float_val, float_val, v1 - v2);
-      case OP_MINUSI: implement_operation(int_val, int_val, v1 - v2);
-      case OP_TIMESF: implement_operation(float_val, float_val, v1 * v2);
-      case OP_TIMESI: implement_operation(int_val, int_val, v1 * v2);
-      case OP_DIVF: implement_operation(float_val, float_val, v1 / v2);
-      case OP_DIVI: implement_operation(int_val, int_val, v1 / v2);
-      case OP_NEQA: implement_operation(node_val, bool_val, v1 != v2);
-      case OP_EQA: implement_operation(node_val, bool_val, v1 == v2);
-      case OP_GREATERA: implement_operation(node_val, bool_val, v1 > v2);
-      case OP_ORB: implement_operation(bool_val, bool_val, v1 || v2);
-      default: throw vm_exec_error("unknown operation (execute_op)");
-   }
-#undef implement_operation
-}
-
-static inline void
 execute_not(pcounter& pc, state& state)
 {
-   const instr_val op(not_op(pc));
-   const instr_val dest(not_dest(pc));
-   pcounter m = pc + NOT_BASE;
-   bool_val val;
-   
-   if(val_is_reg(op))
-      val = state.get_bool(val_reg(op));
-   else if(val_is_field(op)) {   
-      const tuple *tuple(state.get_tuple(val_field_reg(m)));
-      val = tuple->get_bool(val_field_num(m));
-      
-      pcounter_move_field(&m);
-   } else
-      throw vm_exec_error("invalid source for not instruction");
-   
-   // invert value
-   val = !val;
-   
-   if(val_is_reg(dest))
-      state.set_bool(val_reg(dest), val);
-   else if(val_is_field(dest)) {
-      tuple *tuple(state.get_tuple(val_field_reg(m)));
-      
-      tuple->set_bool(val_field_num(m), val);
-   } else
-      throw vm_exec_error("invalid destination for not instruction");
+   const reg_num op(not_op(pc));
+   const reg_num dest(not_dest(pc));
+
+   state.set_bool(dest, !state.get_bool(op));
 }
 
 static inline bool
@@ -1419,22 +1050,6 @@ execute_iter(const reg_num reg, match* m, pcounter pc, const utils::byte options
 }
 
 static inline void
-execute_move_nil(pcounter& pc, state& state)
-{
-   const instr_val dest(move_nil_dest(pc));
-   
-   // optimized
-   if(val_is_reg(dest))
-      state.set_nil(val_reg(dest));
-   else if(val_is_field(dest)) {
-      tuple *tuple(state.get_tuple(val_field_reg(pc + MOVE_NIL_BASE)));
-      
-      tuple->set_nil(val_field_num(pc + MOVE_NIL_BASE));
-   } else
-      throw vm_exec_error("unsupported destination for move-nil");
-}
-
-static inline void
 execute_cons(pcounter pc, state& state)
 {
    pcounter m = pc + CONS_BASE;
@@ -1451,28 +1066,14 @@ execute_cons(pcounter pc, state& state)
 }
 
 static inline void
-execute_test_nil(pcounter pc, state& state)
+execute_testnil(pcounter pc, state& state)
 {
-   const instr_val op(test_nil_op(pc));
-   const instr_val dest(test_nil_dest(pc));
-   
-   pc += TEST_NIL_BASE;
-   
-   const ptr_val val(get_op_function<ptr_val>(op, pc, state));
-   
-   set_op_function(pc, dest, val == null_ptr_val, state);
-}
+   const reg_num op(test_nil_op(pc));
+   const reg_num dest(test_nil_dest(pc));
 
-static inline void
-execute_tail(pcounter& pc, state& state)
-{
-   pcounter m = pc + TAIL_BASE;
-   const instr_val cons_val(tail_cons(pc));
-   const instr_val dest(tail_dest(pc));
-   
-   cons *ls(get_op_function<cons*>(cons_val, m, state));
-   cons *tail(ls->get_tail());
-   set_op_function(m, dest, tail, state);
+   runtime::cons *x(state.get_cons(op));
+
+   state.set_bool(dest, runtime::cons::is_null(x));
 }
 
 static inline void
@@ -1501,19 +1102,6 @@ move_typed_data(const pcounter& pc, type *t, const tuple_field& data,
       default:
          throw vm_exec_error("unrecognized type (move_typed_data)");
    }
-}
-
-static inline void
-execute_head(pcounter& pc, state& state)
-{
-   pcounter m = pc + HEAD_BASE;
-   const instr_val cons_val(head_cons(pc));
-   const instr_val dest(head_dest(pc));
-
-   cons *ls(get_op_function<cons*>(cons_val, m, state));
-   const tuple_field val(ls->get_head());
-   list_type *lt(ls->get_type());
-   move_typed_data(pc, lt->get_subtype(), val, dest, state);
 }
 
 static inline void
@@ -1667,7 +1255,7 @@ execute_remove(pcounter pc, state& state)
 		if(is_a_leaf)
 			state.leaves_for_deletion.push_back(make_pair((predicate*)tpl->get_predicate(), state.get_leaf(reg)));
 	} else {
-		if(is_a_leaf) { // tuple was fetched from database
+		if(is_a_leaf) // tuple was fetched from database
 			state.leaves_for_deletion.push_back(make_pair((predicate*)tpl->get_predicate(), state.get_leaf(reg)));
 		else {
 			// tuple was marked before, it will be deleted after this round
@@ -1934,7 +1522,546 @@ execute_mvintfield(pcounter pc, state& state)
 static inline void
 execute_mvintreg(pcounter pc, state& state)
 {
-   state.set_int(val_reg(val_get(pc, instr_size + int_size)), pcounter_int(pc + instr_size));
+   state.set_int(pcounter_reg(pc + instr_size + int_size), pcounter_int(pc + instr_size));
+}
+
+static inline void
+execute_mvfieldfield(pcounter pc, state& state)
+{
+   tuple *tuple_from(get_tuple_field(state, pc + instr_size));
+   tuple *tuple_to(get_tuple_field(state, pc + instr_size + field_size));
+   const field_num from(val_field_num(pc + instr_size));
+   const field_num to(val_field_num(pc + instr_size + field_size));
+   tuple_to->set_field(to, tuple_from->get_field(from));
+   assert(!reference_type(tuple_to->get_field_type(to)->get_type()));
+}
+static inline void
+execute_mvfieldfieldr(pcounter pc, state& state)
+{
+   tuple *tuple_from(get_tuple_field(state, pc + instr_size));
+   tuple *tuple_to(get_tuple_field(state, pc + instr_size + field_size));
+   const field_num from(val_field_num(pc + instr_size));
+   const field_num to(val_field_num(pc + instr_size + field_size));
+   tuple_to->set_field(to, tuple_from->get_field(from));
+
+   assert(reference_type(tuple_to->get_field_type(to)->get_type()));
+
+   runtime::ref_base *p((runtime::ref_base*)tuple_from->get_field(from).ptr_field);
+
+   if(p)
+      p->refs++;
+}
+
+static inline void
+execute_mvfieldreg(pcounter pc, state& state)
+{
+   tuple *tuple_from(get_tuple_field(state, pc + instr_size));
+   const field_num from(val_field_num(pc + instr_size));
+
+   state.set_reg(pcounter_reg(pc + instr_size + field_size), tuple_from->get_field(from));
+}
+
+static inline void
+execute_mvptrreg(pcounter pc, state& state)
+{
+   const ptr_val p(pcounter_ptr(pc + instr_size));
+   const reg_num reg(pcounter_reg(pc + instr_size + ptr_size));
+
+   state.set_ptr(reg, p);
+}
+
+static inline void
+execute_mvnilfield(pcounter& pc, state& state)
+{
+   tuple *tuple(get_tuple_field(state, pc + instr_size));
+
+   tuple->set_nil(val_field_num(pc + instr_size));
+}
+
+static inline void
+execute_mvnilreg(pcounter& pc, state& state)
+{
+   state.set_nil(pcounter_reg(pc + instr_size));
+}
+
+static inline void
+execute_mvregfield(pcounter& pc, state& state)
+{
+   const reg_num reg(pcounter_reg(pc + instr_size));
+   tuple *tuple(get_tuple_field(state, pc + instr_size + reg_val_size));
+   const field_num field(val_field_num(pc + instr_size + reg_val_size));
+   tuple->set_field(field, state.get_reg(reg));
+   assert(!reference_type(tuple->get_field_type(field)->get_type()));
+}
+
+static inline void
+execute_mvregfieldr(pcounter& pc, state& state)
+{
+   const reg_num reg(pcounter_reg(pc + instr_size));
+   tuple *tuple(get_tuple_field(state, pc + instr_size + reg_val_size));
+   const field_num field(val_field_num(pc + instr_size + reg_val_size));
+   tuple->set_field(field, state.get_reg(reg));
+
+   assert(reference_type(tuple->get_field_type(field)->get_type()));
+
+   runtime::ref_base *p((runtime::ref_base*)tuple->get_field(field).ptr_field);
+
+   if(p)
+      p->refs++;
+}
+
+static inline void
+execute_mvhostfield(pcounter& pc, state& state)
+{
+   tuple *tuple(get_tuple_field(state, pc + instr_size));
+   const field_num field(val_field_num(pc + instr_size));
+
+   tuple->set_node(field, state.node->get_id());
+}
+
+static inline void
+execute_mvregconst(pcounter& pc, state& state)
+{
+   const const_id id(pcounter_const_id(pc + instr_size + reg_val_size));
+   state.all->set_const(id, state.get_reg(pcounter_reg(pc + instr_size)));
+   if(reference_type(state.all->PROGRAM->get_const_type(id)->get_type())) {
+      runtime::ref_base *p((runtime::ref_base*)state.all->get_const(id).ptr_field);
+
+      if(p)
+         p->refs++;
+   }
+}
+
+static inline void
+execute_mvconstfield(pcounter& pc, state& state)
+{
+   const const_id id(pcounter_const_id(pc + instr_size));
+   const field_num field(val_field_num(pc + instr_size + const_id_size));
+   tuple *tuple(get_tuple_field(state, pc + instr_size + const_id_size));
+
+   tuple->set_field(field, state.all->get_const(id));
+   assert(!reference_type(tuple->get_field_type(field)->get_type()));
+}
+
+static inline void
+execute_mvconstfieldr(pcounter& pc, state& state)
+{
+   const const_id id(pcounter_const_id(pc + instr_size));
+   const field_num field(val_field_num(pc + instr_size + const_id_size));
+   tuple *tuple(get_tuple_field(state, pc + instr_size + const_id_size));
+
+   tuple->set_field(field, state.all->get_const(id));
+   assert(reference_type(tuple->get_field_type(field)->get_type()));
+   runtime::ref_base *p((runtime::ref_base*)tuple->get_field(field).ptr_field);
+
+   if(p)
+      p->refs++;
+}
+
+static inline void
+execute_mvconstreg(pcounter& pc, state& state)
+{
+   const const_id id(pcounter_const_id(pc + instr_size));
+   const reg_num reg(pcounter_reg(pc + instr_size + const_id_size));
+
+   state.set_reg(reg, state.all->get_const(id));
+}
+
+static inline void
+execute_mvaddrfield(pcounter& pc, state& state)
+{
+   const node_val n(pcounter_node(pc + instr_size));
+   const field_num field(val_field_num(pc + instr_size + node_size));
+   tuple *tuple(get_tuple_field(state, pc + instr_size + node_size));
+
+   tuple->set_node(field, n);
+}
+
+static inline void
+execute_mvfloatfield(pcounter& pc, state& state)
+{
+   const float_val f(pcounter_float(pc + instr_size));
+   const field_num field(val_field_num(pc + instr_size + float_size));
+   tuple *tuple(get_tuple_field(state, pc + instr_size + float_size));
+
+   tuple->set_float(field, f);
+}
+
+static inline void
+execute_mvfloatreg(pcounter& pc, state& state)
+{
+   const float_val f(pcounter_float(pc + instr_size));
+   const reg_num reg(pcounter_reg(pc + instr_size + float_size));
+
+   state.set_float(reg, f);
+}
+
+static inline void
+execute_mvintconst(pcounter& pc, state& state)
+{
+   const int_val i(pcounter_int(pc + instr_size));
+   const const_id id(pcounter_const_id(pc + instr_size + int_size));
+
+   state.all->set_const_int(id, i);
+}
+
+static inline void
+execute_mvworldfield(pcounter& pc, state& state)
+{
+   const field_num field(val_field_num(pc + instr_size));
+   tuple *tuple(get_tuple_field(state, pc + instr_size));
+
+   tuple->set_int(field, state.all->DATABASE->nodes_total);
+}
+
+static inline void
+execute_mvworldreg(pcounter& pc, state& state)
+{
+   const reg_num reg(pcounter_reg(pc + instr_size));
+
+   state.set_int(reg, state.all->DATABASE->nodes_total);
+}
+
+static inline void
+execute_mvstackpcounter(pcounter& pc, state& state)
+{
+   const offset_num off(pcounter_stack(pc + instr_size));
+
+   pc = (pcounter)FIELD_PCOUNTER(*(state.get_stack_at(off)));
+}
+
+static inline void
+execute_mvpcounterstack(pcounter& pc, state& state)
+{
+   const offset_num off(pcounter_stack(pc + instr_size));
+
+   SET_FIELD_PTR(*(state.get_stack_at(off)), pc + MVPCOUNTERSTACK_BASE);
+}
+
+static inline void
+execute_mvstackreg(pcounter& pc, state& state)
+{
+   const offset_num off(pcounter_stack(pc + instr_size));
+   const reg_num reg(pcounter_reg(pc + instr_size + stack_val_size));
+
+   state.set_reg(reg, *state.get_stack_at(off));
+}
+
+static inline void
+execute_mvregstack(pcounter& pc, state& state)
+{
+   const reg_num reg(pcounter_reg(pc + instr_size));
+   const offset_num off(pcounter_stack(pc + instr_size + reg_val_size));
+
+   *(state.get_stack_at(off)) = state.get_reg(reg);
+}
+
+static inline void
+execute_mvaddrreg(pcounter& pc, state& state)
+{
+   const node_val n(pcounter_node(pc + instr_size));
+   const reg_num reg(pcounter_reg(pc + instr_size + node_size));
+
+   state.set_node(reg, n);
+}
+
+static inline void
+execute_mvhostreg(pcounter& pc, state& state)
+{
+   const reg_num reg(pcounter_reg(pc + instr_size));
+   state.set_node(reg, state.node->get_id());
+}
+
+static inline void
+execute_mvregreg(pcounter& pc, state& state)
+{
+   state.copy_reg(pcounter_reg(pc + instr_size), pcounter_reg(pc + instr_size + reg_val_size));
+}
+
+#define DO_OPERATION(SET_FUNCTION, GET_FUNCTION, OP)                    \
+   const reg_num op1(pcounter_reg(pc + instr_size));                    \
+   const reg_num op2(pcounter_reg(pc + instr_size + reg_val_size));     \
+   const reg_num dst(pcounter_reg(pc + instr_size + 2 * reg_val_size)); \
+   state.SET_FUNCTION(dst, state.GET_FUNCTION(op1) OP state.GET_FUNCTION(op2))
+#define BOOL_OPERATION(GET_FUNCTION, OP)                                \
+   DO_OPERATION(set_bool, GET_FUNCTION, OP)
+
+static inline void
+execute_addrnotequal(pcounter& pc, state& state)
+{
+   BOOL_OPERATION(get_node, !=);
+}
+
+static inline void
+execute_addrequal(pcounter& pc, state& state)
+{
+   BOOL_OPERATION(get_node, ==);
+}
+
+static inline void
+execute_intminus(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_int, get_int, -);
+}
+
+static inline void
+execute_intequal(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_int, get_int, ==);
+}
+
+static inline void
+execute_intnotequal(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_int, get_int, !=);
+}
+
+static inline void
+execute_intplus(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_int, get_int, +);
+}
+
+static inline void
+execute_intlesser(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_bool, get_int, <);
+}
+
+static inline void
+execute_intgreaterequal(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_bool, get_int, >=);
+}
+
+static inline void
+execute_boolor(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_bool, get_bool, ||);
+}
+
+static inline void
+execute_intlesserequal(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_bool, get_int, <=);
+}
+
+static inline void
+execute_intgreater(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_bool, get_int, >);
+}
+
+static inline void
+execute_intmul(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_int, get_int, *);
+}
+
+static inline void
+execute_intdiv(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_int, get_int, /);
+}
+
+static inline void
+execute_floatplus(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_float, get_float, +);
+}
+
+static inline void
+execute_floatminus(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_float, get_float, -);
+}
+
+static inline void
+execute_floatmul(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_float, get_float, *);
+}
+
+static inline void
+execute_floatdiv(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_float, get_float, /);
+}
+
+static inline void
+execute_floatequal(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_bool, get_float, ==);
+}
+
+static inline void
+execute_floatnotequal(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_bool, get_float, !=);
+}
+
+static inline void
+execute_floatlesser(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_bool, get_float, <);
+}
+
+static inline void
+execute_floatlesserequal(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_bool, get_float, <=);
+}
+
+static inline void
+execute_floatgreater(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_bool, get_float, >);
+}
+
+static inline void
+execute_floatgreaterequal(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_bool, get_float, >=);
+}
+
+static inline void
+execute_boolequal(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_bool, get_bool, ==);
+}
+
+static inline void
+execute_boolnotequal(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_bool, get_bool, !=);
+}
+
+static inline void
+execute_headrr(pcounter& pc, state& state)
+{
+   const reg_num ls(pcounter_reg(pc + instr_size));
+   const reg_num dst(pcounter_reg(pc + instr_size + reg_val_size));
+
+   runtime::cons *l(state.get_cons(ls));
+
+   state.set_reg(dst, l->get_head());
+}
+
+static inline void
+execute_headfr(pcounter& pc, state& state)
+{
+   tuple *tuple(get_tuple_field(state, pc + instr_size));
+   const field_num field(val_field_num(pc + instr_size));
+   runtime::cons *l(tuple->get_cons(field));
+   const reg_num dst(pcounter_reg(pc + instr_size + field_size));
+
+   state.set_reg(dst, l->get_head());
+}
+
+static inline void
+execute_headff(pcounter& pc, state& state)
+{
+   tuple *tsrc(get_tuple_field(state, pc + instr_size));
+   const field_num src(val_field_num(pc + instr_size));
+   tuple *tdst(get_tuple_field(state, pc + instr_size + field_size));
+   const field_num dst(val_field_num(pc + instr_size + field_size));
+
+   runtime::cons *l(tsrc->get_cons(src));
+
+   tdst->set_field(dst, l->get_head());
+   assert(!reference_type(tdst->get_field_type(dst)->get_type()));
+}
+
+static inline void
+execute_headffr(pcounter& pc, state& state)
+{
+   tuple *tsrc(get_tuple_field(state, pc + instr_size));
+   const field_num src(val_field_num(pc + instr_size));
+   tuple *tdst(get_tuple_field(state, pc + instr_size + field_size));
+   const field_num dst(val_field_num(pc + instr_size + field_size));
+
+   runtime::cons *l(tsrc->get_cons(src));
+
+   tdst->set_field(dst, l->get_head());
+   assert(reference_type(tdst->get_field_type(dst)->get_type()));
+   runtime::ref_base *p((runtime::ref_base*)tdst->get_field(dst).ptr_field);
+
+   if(p)
+      p->refs++;
+}
+
+static inline void
+execute_headrf(pcounter& pc, state& state)
+{
+   const reg_num reg(pcounter_reg(pc + instr_size));
+   tuple *tdst(get_tuple_field(state, pc + instr_size + reg_val_size));
+   const field_num dst(val_field_num(pc + instr_size + reg_val_size));
+
+   runtime::cons *l(state.get_cons(reg));
+
+   tdst->set_field(dst, l->get_head());
+   assert(!reference_type(tdst->get_field_type(dst)->get_type()));
+}
+
+static inline void
+execute_headrfr(pcounter& pc, state& state)
+{
+   const reg_num reg(pcounter_reg(pc + instr_size));
+   tuple *tdst(get_tuple_field(state, pc + instr_size + reg_val_size));
+   const field_num dst(val_field_num(pc + instr_size + reg_val_size));
+
+   runtime::cons *l(state.get_cons(reg));
+
+   tdst->set_field(dst, l->get_head());
+
+   assert(reference_type(tdst->get_field_type(dst)->get_type()));
+
+   runtime::ref_base *p((runtime::ref_base*)tdst->get_field(dst).ptr_field);
+
+   if(p)
+      p->refs++;
+}
+
+static inline void
+execute_tailrr(pcounter& pc, state& state)
+{
+   const reg_num src(pcounter_reg(pc + instr_size));
+   const reg_num dst(pcounter_reg(pc + instr_size + reg_val_size));
+
+   runtime::cons *l(state.get_cons(src));
+
+   state.set_cons(dst, l->get_tail());
+}
+
+static inline void
+execute_tailfr(pcounter& pc, state& state)
+{
+   tuple *tuple(get_tuple_field(state, pc + instr_size));
+   const field_num field(val_field_num(pc + instr_size));
+   const reg_num dst(pcounter_reg(pc + instr_size + field_size));
+
+   state.set_cons(dst, tuple->get_cons(field)->get_tail());
+}
+
+static inline void
+execute_tailff(pcounter& pc, state& state)
+{
+   tuple *tsrc(get_tuple_field(state, pc + instr_size));
+   const field_num src(val_field_num(pc + instr_size));
+   tuple *tdst(get_tuple_field(state, pc + instr_size + field_size));
+   const field_num dst(val_field_num(pc + instr_size + field_size));
+
+   tdst->set_cons(dst, tsrc->get_cons(src)->get_tail());
+}
+
+static inline void
+execute_tailrf(pcounter& pc, state& state)
+{
+   const reg_num src(pcounter_reg(pc + instr_size));
+   tuple *tuple(get_tuple_field(state, pc + instr_size + reg_val_size));
+   const field_num field(val_field_num(pc + instr_size + reg_val_size));
+
+   tuple->set_cons(field, state.get_cons(src)->get_tail());
 }
 
 static inline return_type
@@ -1993,9 +2120,6 @@ eval_loop:
                goto eval_loop;
             }
             break;
-         
-         case ELSE_INSTR:
-            throw vm_exec_error("ELSE instruction not supported");
          
 			case END_LINEAR_INSTR:
 				return RETURN_END_LINEAR;
@@ -2067,13 +2191,6 @@ eval_loop:
             execute_remove(pc, state);
             break;
             
-         case MOVE_INSTR:
-#ifdef CORE_STATISTICS
-				state.stat.stat_moves_executed++;
-#endif
-            execute_move(pc, state);
-            break;
-            
          case ALLOC_INSTR:
             execute_alloc(pc, state);
             break;
@@ -2086,35 +2203,16 @@ eval_loop:
             execute_send_delay(pc, state);
             break;
             
-         case OP_INSTR:
-#ifdef CORE_STATISTICS
-				state.stat.stat_ops_executed++;
-#endif
-            execute_op(pc, state);
-            break;
-            
          case NOT_INSTR:
             execute_not(pc, state);
-            break;
-            
-         case MOVE_NIL_INSTR:
-            execute_move_nil(pc, state);
             break;
             
          case CONS_INSTR:
             execute_cons(pc, state);
             break;
             
-         case TEST_NIL_INSTR:
-            execute_test_nil(pc, state);
-            break;
-            
-         case TAIL_INSTR:
-            execute_tail(pc, state);
-            break;
-            
-         case HEAD_INSTR:
-            execute_head(pc, state);
+         case TESTNIL_INSTR:
+            execute_testnil(pc, state);
             break;
             
          case FLOAT_INSTR:
@@ -2189,11 +2287,330 @@ eval_loop:
            break;
 
          case MVINTFIELD_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
            execute_mvintfield(pc, state);
            break;
 
          case MVINTREG_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
            execute_mvintreg(pc, state);
+           break;
+
+         case MVFIELDFIELD_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvfieldfield(pc, state);
+           break;
+
+         case MVFIELDFIELDR_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvfieldfieldr(pc, state);
+           break;
+
+         case MVFIELDREG_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvfieldreg(pc, state);
+           break;
+
+         case MVPTRREG_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvptrreg(pc, state);
+           break;
+
+         case MVNILFIELD_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvnilfield(pc, state);
+           break;
+
+         case MVNILREG_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvnilreg(pc, state);
+           break;
+
+         case MVREGFIELD_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvregfield(pc, state);
+           break;
+
+         case MVREGFIELDR_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvregfieldr(pc, state);
+           break;
+
+         case MVHOSTFIELD_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvhostfield(pc, state);
+           break;
+
+         case MVREGCONST_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvregconst(pc, state);
+           break;
+
+         case MVCONSTFIELD_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvconstfield(pc, state);
+           break;
+
+         case MVCONSTFIELDR_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvconstfieldr(pc, state);
+           break;
+
+         case MVADDRFIELD_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvaddrfield(pc, state);
+           break;
+
+         case MVFLOATFIELD_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvfloatfield(pc, state);
+           break;
+
+         case MVFLOATREG_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvfloatreg(pc, state);
+           break;
+
+         case MVINTCONST_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvintconst(pc, state);
+           break;
+
+         case MVWORLDFIELD_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvworldfield(pc, state);
+           break;
+
+         case MVSTACKPCOUNTER_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvstackpcounter(pc, state);
+           break;
+
+         case MVPCOUNTERSTACK_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvpcounterstack(pc, state);
+           break;
+
+         case MVSTACKREG_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvstackreg(pc, state);
+           break;
+
+         case MVREGSTACK_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvregstack(pc, state);
+           break;
+
+         case MVADDRREG_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvaddrreg(pc, state);
+           break;
+
+         case MVHOSTREG_INSTR:
+#ifdef CORE_STATISTICS
+           state.stat.stat_moves_executed++;
+#endif
+           execute_mvhostreg(pc, state);
+           break;
+
+         case ADDRNOTEQUAL_INSTR:
+           execute_addrnotequal(pc, state);
+           break;
+
+         case ADDREQUAL_INSTR:
+           execute_addrequal(pc, state);
+           break;
+
+         case INTMINUS_INSTR:
+           execute_intminus(pc, state);
+           break;
+
+         case INTEQUAL_INSTR:
+           execute_intequal(pc, state);
+           break;
+
+         case INTNOTEQUAL_INSTR:
+           execute_intnotequal(pc, state);
+           break;
+
+         case INTPLUS_INSTR:
+           execute_intplus(pc, state);
+           break;
+
+         case INTLESSER_INSTR:
+           execute_intlesser(pc, state);
+           break;
+
+         case INTGREATEREQUAL_INSTR:
+           execute_intgreaterequal(pc, state);
+           break;
+
+         case BOOLOR_INSTR:
+           execute_boolor(pc, state);
+           break;
+
+         case INTLESSEREQUAL_INSTR:
+           execute_intlesserequal(pc, state);
+           break;
+
+         case INTGREATER_INSTR:
+           execute_intgreater(pc, state);
+           break;
+
+         case INTMUL_INSTR:
+           execute_intmul(pc, state);
+           break;
+
+         case INTDIV_INSTR:
+           execute_intdiv(pc, state);
+           break;
+
+         case FLOATPLUS_INSTR:
+           execute_floatplus(pc, state);
+           break;
+
+         case FLOATMINUS_INSTR:
+           execute_floatminus(pc, state);
+           break;
+
+         case FLOATMUL_INSTR:
+           execute_floatmul(pc, state);
+           break;
+
+         case FLOATDIV_INSTR:
+           execute_floatdiv(pc, state);
+           break;
+
+         case FLOATEQUAL_INSTR:
+           execute_floatequal(pc, state);
+           break;
+
+         case FLOATNOTEQUAL_INSTR:
+           execute_floatnotequal(pc, state);
+           break;
+
+         case FLOATLESSER_INSTR:
+           execute_floatlesser(pc, state);
+           break;
+
+         case FLOATLESSEREQUAL_INSTR:
+           execute_floatlesserequal(pc, state);
+           break;
+
+         case FLOATGREATER_INSTR:
+           execute_floatgreater(pc, state);
+           break;
+
+         case FLOATGREATEREQUAL_INSTR:
+           execute_floatgreaterequal(pc, state);
+           break;
+
+         case MVREGREG_INSTR:
+           execute_mvregreg(pc, state);
+           break;
+
+         case BOOLEQUAL_INSTR:
+           execute_boolequal(pc, state);
+           break;
+
+         case BOOLNOTEQUAL_INSTR:
+           execute_boolnotequal(pc, state);
+           break;
+
+         case HEADRR_INSTR:
+           execute_headrr(pc, state);
+           break;
+
+         case HEADFR_INSTR:
+           execute_headfr(pc, state);
+           break;
+
+         case HEADFF_INSTR:
+           execute_headff(pc, state);
+           break;
+
+         case HEADRF_INSTR:
+           execute_headrf(pc, state);
+           break;
+
+         case HEADFFR_INSTR:
+           execute_headffr(pc, state);
+           break;
+
+         case HEADRFR_INSTR:
+           execute_headrfr(pc, state);
+           break;
+
+         case TAILRR_INSTR:
+           execute_tailrr(pc, state);
+           break;
+
+         case TAILFR_INSTR:
+           execute_tailfr(pc, state);
+           break;
+
+         case TAILFF_INSTR:
+           execute_tailff(pc, state);
+           break;
+
+         case TAILRF_INSTR:
+           execute_tailrf(pc, state);
+           break;
+
+         case MVWORLDREG_INSTR:
+           execute_mvworldreg(pc, state);
+           break;
+
+         case MVCONSTREG_INSTR:
+           execute_mvconstreg(pc, state);
            break;
 
          default: throw vm_exec_error("unsupported instruction");
@@ -2220,11 +2637,10 @@ execute_bytecode(byte_code code, state& state, tuple *tpl)
 #ifdef CORE_STATISTICS
 #endif
    
-   if(ret == RETURN_LINEAR) {
+   if(ret == RETURN_LINEAR)
       return EXECUTION_CONSUMED;
-	} else {
+	else
       return EXECUTION_OK;
-	}
 }
 
 void

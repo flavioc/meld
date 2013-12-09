@@ -19,6 +19,18 @@ enum field_type {
 	FIELD_STRING = 0x9
 };
 
+inline bool reference_type(const field_type typ)
+{
+   switch(typ) {
+      case FIELD_LIST:
+      case FIELD_STRUCT:
+      case FIELD_STRING:
+         return true;
+      default:
+         return false;
+   }
+}
+
 size_t field_type_size(field_type type);
 std::string field_type_string(field_type type);
 

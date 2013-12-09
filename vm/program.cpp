@@ -598,6 +598,9 @@ program::add_data_file(program& other)
       }
    }
 
+   return false;
+#if 0
+   XXXX
    assert(rules.size() > 0);
    assert(other.rules.size() > 0);
 
@@ -617,6 +620,7 @@ program::add_data_file(program& other)
    *((ptr_val *)(init_code + MOVE_BASE)) = (ptr_val)data_rule->get_bytecode();
 
    //instrs_print(init_rule->get_bytecode(), init_rule->get_codesize(), 0, this, cout);
+#endif
    return true;
 }
 

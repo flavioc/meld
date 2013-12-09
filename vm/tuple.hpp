@@ -56,7 +56,7 @@ public:
    define_set(struct, runtime::struct1*, SET_FIELD_STRUCT(fields[field], val); val->inc_refs());
 
    inline void set_nil(const field_num& field) { SET_FIELD_CONS(fields[field], runtime::cons::null_list()); }
-   inline void set_field(const field_num& field, tuple_field& f) { fields[field] = f; }
+   inline void set_field(const field_num& field, const tuple_field& f) { fields[field] = f; }
 #undef define_set
 
    size_t num_fields(void) const { return pred->num_fields(); }

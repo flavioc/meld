@@ -89,18 +89,6 @@ j&j&j&j&j&j&j&j} {id, reg, options, options arg, inner\_jump, outer\_jump, match
 \inst{REMOVE} {1&0&0&r&r&r&r&r} {reg}
 & delete tuple stored in reg from database\\
 \\
-\inst{OP}    {1&1&0&0&0&0&0&0\\\hline
-0&0&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$\\\hline
-0&0&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$\\\hline
-0&0&v$_3$&v$_3$&v$_3$&v$_3$&v$_3$&v$_3$\\\hline
-0&0&0&o&o&o&o&o} {val$_1$, val$_2$, val$_3$, op}
-& sets {\it val$_3$} = {\it val$_1$ op val$_2$}\\
-\\
-\inst{NOT}    {0&0&0&0&0&1&1&1\\\hline
-0&0&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$\\\hline
-0&0&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$} {val$_1$, val$_2$}
-& sets {\it val$_2$} = {\it not val$_1$}\\
-\\
 \end{tabular}
 
 \begin{tabular}{lll}
@@ -112,15 +100,14 @@ INSTRUCTION & BYTE FORMAT & ARGS\\
 0&0&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$} {val$_1$, val$_2$}
 & copies {\it val$_1$} to {\it val$_2$}\\
 \\
-\inst{MOVE-NIL}  {0&1&1&1&0&0&0&0\\\hline
-0&0&v&v&v&v&v&v} {val}
-& sets {\it val} to the nil list\\
+\inst{MVNILFIELD}  {0&1&1&1&0&0&0&0} {field} \\
+& sets {\it field} to the nil list\\
 \\
 \inst{TEST-NIL}    {0&0&0&0&0&0&1&1 \\\hline
-0&0&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$\\\hline
-0&0&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$} {val$_1$, val$_2$}
-& v$_2$ = 1 if v$_1$ is nil. \\
-& v$_2$ = 0 if v$_1$ is not nil. \\
+0&0&0&r$_1$&r$_1$&r$_1$&r$_1$&r$_1$\\\hline
+0&0&0&r$_2$&r$_2$&r$_2$&r$_2$&r$_2$} {reg$_1$, reg$_2$}
+& register r$_2$ = 1 if r$_1$ is nil. \\
+& register r$_2$ = 0 if r$_1$ is not nil. \\
 \\
 \inst{ALLOC} {0&1&0&0&0&0&0&0\\\hline
 0&i&i&i&i&i&i&i\\\hline
@@ -142,13 +129,6 @@ INSTRUCTION & BYTE FORMAT & ARGS\\
 0&0&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$\\\hline
 0&0&v$_3$&v$_3$&v$_3$&v$_3$&v$_3$&v$_3$} {val$_1$, val$_2$, val$_3$}
 & sets {\it val$_3$} = {\it val$_1$ :: val$_2$}\\
-& $t$ is the list type (00 = int, 01 = float, 02 = addr) \\
-\\
-\inst{HEAD}    {0&0&0&0&0&1&0&1\\\hline
-0&0&0&0&0&0&$t$&$t$\\\hline
-0&0&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$&v$_1$\\\hline
-0&0&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$&v$_2$} {val$_1$, val$_2$}
-& sets {\it val$_2$} = {\it head val$_1$}\\
 & $t$ is the list type (00 = int, 01 = float, 02 = addr) \\
 \\
 \inst{TAIL}    {0&0&0&0&0&1&1&0\\\hline
@@ -283,40 +263,15 @@ t&t&t&t&t&t&t&t \\\hline
 0&0&v&v&v&v&v&v} {t, v}\\
 & sets $v$ as a new struct of type $t$ \\
 \\
-\end{tabular}
-
-\begin{tabular}{lll}
-OP & BYTE FORMAT\\
-\hline
+\inst{NOT}    {0&0&0&0&0&1&1&1\\\hline
+0&0&0&r$_1$&r$_1$&r$_1$&r$_1$&r$_1$\\\hline
+0&0&0&r$_2$&r$_2$&r$_2$&r$_2$&r$_2$} {reg$_1$, reg$_2$}
+& sets register {\it r$_2$} = {\it not r$_1$}\\
 \\
-\op{float\neq}{0&0&0&0&0}\\
-\op{int\neq}{0&0&0&0&1}\\
-\op{float=}{0&0&0&1&0}\\
-\op{int=}{0&0&0&1&1}\\
-\op{float<}{0&0&1&0&0}\\
-\op{int<}{0&0&1&0&1}\\
-\op{float\leq}{0&0&1&1&0}\\
-\op{int\leq}{0&0&1&1&1}\\
-\op{float>}{0&1&0&0&0}\\
-\op{int>}{0&1&0&0&1}\\
-\op{float\geq}{0&1&0&1&0}\\
-\op{int\geq}{0&1&0&1&1}\\
-\op{float\%}{0&1&1&0&0}\\
-\op{int\%}{0&1&1&0&1}\\
-\op{float+}{0&1&1&1&0}\\
-\op{int+}{0&1&1&1&1}\\
-\op{float-}{1&0&0&0&0}\\
-\op{int-}{1&0&0&0&1}\\
-\op{float*}{1&0&0&1&0}\\
-\op{int*}{1&0&0&1&1}\\
-\op{float\div}{1&0&1&0&0}\\
-\op{int\div}{1&0&1&0&1}\\
-\op{addr\neq}{1&0&1&1&0}\\
-\op{addr=}{1&0&1&1&1}\\
-\op{addr>}{1&1&0&0&0}\\
-\op{bool\; or}{1&1&0&0&1}\\
+\inst{MVINTFIELD}    {0&0&0&1&1&1&1&0} {int, field}\\
+& moves an integer to a tuple field (followed by integer and field value) \\
+\\
 \end{tabular}
-\vspace{0.3in}\\
 
 \begin{tabular}{lll}
 VALUE & BYTE FORMAT & ARGS\\
