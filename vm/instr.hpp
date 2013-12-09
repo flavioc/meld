@@ -50,12 +50,13 @@ const size_t jump_size = 4;
 const size_t stack_val_size = sizeof(offset_num);
 const size_t pcounter_val_size = 0;
 const size_t operation_size = instr_size + 3 * reg_val_size;
+const size_t call_size = instr_size + extern_id_size + reg_val_size;
 
 const size_t SEND_BASE           = instr_size + 2 * reg_val_size;
 const size_t OP_BASE             = instr_size + 4;
 const size_t ITER_BASE           = instr_size + 12;
 const size_t ALLOC_BASE          = instr_size + 2;
-const size_t CALL_BASE           = instr_size + extern_id_size + sizeof(utils::byte) + reg_val_size;
+const size_t CALL_BASE           = call_size + sizeof(utils::byte); // plus number of args
 const size_t IF_BASE             = instr_size + 1 + jump_size;
 const size_t TESTNIL_BASE        = instr_size + reg_val_size + reg_val_size;
 const size_t HEAD_BASE           = instr_size + 3;
@@ -125,6 +126,10 @@ const size_t CONSRRF_BASE        = instr_size + 2 * reg_val_size + field_size;
 const size_t CONSRFR_BASE        = instr_size + reg_val_size + field_size + reg_val_size;
 const size_t CONSFRR_BASE        = instr_size + type_size + field_size + 2 * reg_val_size;
 const size_t CONSFFF_BASE        = instr_size + 3 * field_size;
+const size_t CALL0_BASE          = call_size;
+const size_t CALL1_BASE          = call_size + reg_val_size;
+const size_t CALL2_BASE          = call_size + 2 * reg_val_size;
+const size_t CALL3_BASE          = call_size + 3 * reg_val_size;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -225,6 +230,10 @@ enum instr_type {
    CONSRFR_INSTR        =  0x65,
    CONSFRR_INSTR        =  0x66,
    CONSFFF_INSTR        =  0x67,
+   CALL0_INSTR          =  0x68,
+   CALL1_INSTR          =  0x69,
+   CALL2_INSTR          =  0x6A,
+   CALL3_INSTR          =  0x6B,
    REMOVE_INSTR 	      =  0x80,
    ITER_INSTR		      =  0xA0,
    RETURN_LINEAR_INSTR  =  0xD0,
@@ -354,8 +363,8 @@ inline reg_num alloc_reg(pcounter pc) { return pcounter_reg(pc + 2); }
 /* CALL */
 
 inline external_function_id call_extern_id(pcounter pc) { return (external_function_id)byte_get(pc, instr_size); }
-inline size_t call_num_args(pcounter pc) { return (size_t)byte_get(pc, instr_size + extern_id_size); }
-inline reg_num call_dest(pcounter pc) { return pcounter_reg(pc + instr_size + extern_id_size + sizeof(utils::byte)); }
+inline reg_num call_dest(pcounter pc) { return pcounter_reg(pc + instr_size + extern_id_size); }
+inline size_t call_num_args(pcounter pc) { return (size_t)byte_get(pc, instr_size + extern_id_size + reg_val_size); }
 inline instr_val call_val(pcounter pc) { return val_get(pc, 0); } // XXX: to remove
 
 /* CALLE (similar to CALL) */
@@ -683,6 +692,14 @@ advance(pcounter pc)
       case CALL_INSTR:
          return pc + CALL_BASE
                    + call_num_args(pc) * reg_val_size;
+      case CALL0_INSTR:
+         return pc + CALL0_BASE;
+      case CALL1_INSTR:
+         return pc + CALL1_BASE;
+      case CALL2_INSTR:
+         return pc + CALL2_BASE;
+      case CALL3_INSTR:
+         return pc + CALL3_BASE;
 
       case CALLE_INSTR:
          return pc + CALLE_BASE

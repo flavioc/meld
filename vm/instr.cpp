@@ -25,6 +25,12 @@ operation_string(pcounter& pc, const string& op)
       + reg_string(pcounter_reg(pc + instr_size + 2 * reg_val_size));
 }
 
+static inline string
+call_string(const string& extra, pcounter& pc, const size_t args)
+{
+   return string("CALL") + extra + " func(" + to_string(call_extern_id(pc)) + "):" + to_string(args) + " TO " + reg_string(call_dest(pc)) + " = (";
+}
+
 static string val_string(const instr_val, pcounter *, const program *);
 
 static string
@@ -342,13 +348,25 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
    	case NEXT_INSTR:
          cout << "NEXT" << endl;
          break;
+      case CALL0_INSTR:
+         cout << call_string("0", pc, 0) << ")" << endl;
+         break;
+      case CALL1_INSTR:
+         cout << call_string("1", pc, 1) << reg_string(pcounter_reg(pc + call_size)) << ")" << endl;
+         break;
+      case CALL2_INSTR:
+         cout << call_string("2", pc, 2) << reg_string(pcounter_reg(pc + call_size)) << ", " <<
+            reg_string(pcounter_reg(pc + call_size + reg_val_size)) << ")" << endl;
+         break;
+      case CALL3_INSTR:
+         cout << call_string("3", pc, 3) << reg_string(pcounter_reg(pc + call_size)) << ", " <<
+            reg_string(pcounter_reg(pc + call_size + reg_val_size)) << ", " <<
+            reg_string(pcounter_reg(pc + call_size + 2 * reg_val_size)) << endl;
+         break;
    	case CALL_INSTR: {
             pcounter m = pc + CALL_BASE;
-            const external_function_id id(call_extern_id(pc));
 
-   	      cout << "CALL func(" << id << "):"
-   	           << call_num_args(pc) << " TO "
-                 << reg_string(call_dest(pc)) << " = (";
+            cout << call_string("", pc, call_num_args(pc));
             
             for(size_t i = 0; i < call_num_args(pc); ++i) {
                if(i != 0)
