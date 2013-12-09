@@ -23,10 +23,11 @@ const uint32_t MAGIC2 = 0x6c696620;
 
 namespace instr {
 
-const size_t instr_size = 1;
-const size_t field_size = 2;
-const size_t iter_match_size = 2;
-const size_t val_size = 1;
+const size_t type_size = sizeof(utils::byte);
+const size_t instr_size = sizeof(utils::byte);
+const size_t field_size = 2 * sizeof(utils::byte);
+const size_t iter_match_size = 2 * sizeof(utils::byte);
+const size_t val_size = sizeof(utils::byte);
 const size_t int_size = sizeof(int_val);
 const size_t uint_size = sizeof(int_val);
 const size_t float_size = sizeof(float_val);
@@ -34,7 +35,7 @@ const size_t node_size = sizeof(node_val);
 const size_t string_size = sizeof(int_val);
 const size_t ptr_size = sizeof(ptr_val);
 const size_t const_id_size = uint_size;
-const size_t bool_size = 1;
+const size_t bool_size = sizeof(utils::byte);
 const size_t argument_size = 1;
 const size_t reg_size = 0;
 const size_t reg_val_size = 1;
@@ -56,15 +57,13 @@ const size_t ALLOC_BASE          = instr_size + 2;
 const size_t CALL_BASE           = instr_size + 3;
 const size_t IF_BASE             = instr_size + 1 + jump_size;
 const size_t TESTNIL_BASE        = instr_size + reg_val_size + reg_val_size;
-const size_t CONS_BASE           = instr_size + 4;
 const size_t HEAD_BASE           = instr_size + 3;
 const size_t NOT_BASE            = instr_size + 2 * reg_val_size;
 const size_t RETURN_BASE         = instr_size;
 const size_t NEXT_BASE           = instr_size;
-const size_t FLOAT_BASE          = instr_size + 2;
+const size_t FLOAT_BASE          = instr_size + 2 * reg_val_size;
 const size_t SELECT_BASE         = instr_size + 8;
 const size_t RETURN_SELECT_BASE  = instr_size + 4;
-const size_t COLOCATED_BASE      = instr_size + 3;
 const size_t DELETE_BASE         = instr_size + 2;
 const size_t REMOVE_BASE         = instr_size + 1;
 const size_t RETURN_LINEAR_BASE  = instr_size;
@@ -117,18 +116,24 @@ const size_t TAILFF_BASE         = HEADFF_BASE;
 const size_t TAILRF_BASE         = HEADRF_BASE;
 const size_t MVWORLDREG_BASE     = instr_size + reg_val_size;
 const size_t MVCONSTREG_BASE     = instr_size + const_id_size + reg_val_size;
+const size_t CONSRRR_BASE        = instr_size + type_size + 3 * reg_val_size;
+const size_t CONSRFF_BASE        = instr_size + reg_val_size + 2 * field_size;
+const size_t CONSFRF_BASE        = instr_size + field_size + reg_val_size + field_size;
+const size_t CONSFFR_BASE        = instr_size + 2 * field_size + reg_val_size;
+const size_t CONSRRF_BASE        = instr_size + 2 * reg_val_size + field_size;
+const size_t CONSRFR_BASE        = instr_size + reg_val_size + field_size + reg_val_size;
+const size_t CONSFRR_BASE        = instr_size + type_size + field_size + 2 * reg_val_size;
+const size_t CONSFFF_BASE        = instr_size + 3 * field_size;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
    NEXT_INSTR		      =  0x01,
    TESTNIL_INSTR	      =  0x03,
-   CONS_INSTR		      =  0x04,
    NOT_INSTR		      =  0x07,
    SEND_INSTR 		      =  0x08,
    FLOAT_INSTR          =  0x09,
    SELECT_INSTR         =  0x0A,
    RETURN_SELECT_INSTR  =  0x0B,
-   COLOCATED_INSTR      =  0x0C,
    DELETE_INSTR         =  0x0D,
    RESET_LINEAR_INSTR   =  0x0E,
    END_LINEAR_INSTR     =  0x0F,
@@ -210,7 +215,15 @@ enum instr_type {
    TAILRF_INSTR         =  0x5C,
    MVWORLDREG_INSTR     =  0x5D,
    MVCONSTREG_INSTR     =  0x5E,
+   CONSRRR_INSTR        =  0x5F,
    IF_INSTR 		      =  0x60,
+   CONSRFF_INSTR        =  0x61,
+   CONSFRF_INSTR        =  0x62,
+   CONSFFR_INSTR        =  0x63,
+   CONSRRF_INSTR        =  0x64,
+   CONSRFR_INSTR        =  0x65,
+   CONSFRR_INSTR        =  0x66,
+   CONSFFF_INSTR        =  0x67,
    REMOVE_INSTR 	      =  0x80,
    ITER_INSTR		      =  0xA0,
    RETURN_LINEAR_INSTR  =  0xD0,
@@ -308,8 +321,8 @@ inline reg_num send_dest(pcounter pc) { return pcounter_reg(pc + instr_size + re
 
 /* FLOAT a TO b */
 
-inline instr_val float_op(pcounter pc) { return val_get(pc, 1); }
-inline instr_val float_dest(pcounter pc) { return val_get(pc, 2); }
+inline reg_num float_op(pcounter pc) { return pcounter_reg(pc + instr_size); }
+inline reg_num float_dest(pcounter pc) { return pcounter_reg(pc + instr_size + reg_val_size); }
 
 /* ITERATE pred MATCHING */
 
@@ -362,10 +375,7 @@ inline reg_num test_nil_dest(pcounter pc) { return pcounter_reg(pc + instr_size 
 
 /* CONS (a :: b) TO c */
 
-inline size_t cons_type(pcounter pc) { return (size_t)byte_get(pc, 1); }
-inline instr_val cons_head(pcounter pc) { return val_get(pc, 2); }
-inline instr_val cons_tail(pcounter pc) { return val_get(pc, 3); }
-inline instr_val cons_dest(pcounter pc) { return val_get(pc, 4); }
+inline size_t cons_type(pcounter pc) { return (size_t)byte_get(pc, instr_size); }
 
 /* NOT a TO b */
 
@@ -385,12 +395,6 @@ inline pcounter select_hash_code(pcounter hash_start, const size_t hash_size, co
 /* RETURN SELECT */
 
 inline code_size_t return_select_jump(pcounter pc) { return pcounter_code_size(pc + 1); }
-
-/* COLOCATED a b INTO c */
-
-inline instr_val colocated_first(const pcounter pc) { return val_get(pc, 1); }
-inline instr_val colocated_second(const pcounter pc) { return val_get(pc, 2); }
-inline reg_num colocated_dest(const pcounter pc) { return pcounter_reg(pc + 3); }
 
 /* DELETE predicate */
 
@@ -667,9 +671,7 @@ advance(pcounter pc)
          return pc + SEND_BASE;
                    
       case FLOAT_INSTR:
-         return pc + FLOAT_BASE
-                   + arg_size<ARGUMENT_INT>(float_op(pc))
-                   + arg_size<ARGUMENT_WRITABLE>(float_dest(pc));
+         return pc + FLOAT_BASE;
                    
       case ITER_INSTR:
          return pc + iter_inner_jump(pc);
@@ -695,12 +697,6 @@ advance(pcounter pc)
       case TESTNIL_INSTR:
          return pc + TESTNIL_BASE;
       
-      case CONS_INSTR:
-         return pc + CONS_BASE
-                   + arg_size<ARGUMENT_NON_LIST>(cons_head(pc))
-                   + arg_size<ARGUMENT_LIST>(cons_tail(pc))
-                   + arg_size<ARGUMENT_WRITABLE>(cons_dest(pc));
-                   
       case NOT_INSTR:
          return pc + NOT_BASE;
                    
@@ -722,11 +718,6 @@ advance(pcounter pc)
       case SELECT_INSTR:
          return pc + SELECT_BASE + select_hash_size(pc)*sizeof(code_size_t);
          
-      case COLOCATED_INSTR:
-         return pc + COLOCATED_BASE
-                   + arg_size<ARGUMENT_NODE>(colocated_first(pc))
-                   + arg_size<ARGUMENT_NODE>(colocated_second(pc));
-
       case REMOVE_INSTR:
          return pc + REMOVE_BASE;
          
@@ -905,6 +896,30 @@ advance(pcounter pc)
 
       case MVCONSTREG_INSTR:
          return pc + MVCONSTREG_BASE;
+
+      case CONSRRR_INSTR:
+         return pc + CONSRRR_BASE;
+
+      case CONSRFF_INSTR:
+         return pc + CONSRFF_BASE;
+         
+      case CONSFRF_INSTR:
+         return pc + CONSFRF_BASE;
+
+      case CONSFFR_INSTR:
+         return pc + CONSFFR_BASE;
+
+      case CONSRRF_INSTR:
+         return pc + CONSRRF_BASE;
+
+      case CONSRFR_INSTR:
+         return pc + CONSRFR_BASE;
+
+      case CONSFRR_INSTR:
+         return pc + CONSFRR_BASE;
+
+      case CONSFFF_INSTR:
+         return pc + CONSFFF_BASE;
 
       default:
          throw malformed_instr_error("unknown instruction code (advance)");

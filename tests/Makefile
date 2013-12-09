@@ -1,10 +1,11 @@
 
 VM = ../meld -d -f
 
-all:
-	@echo "Type 'make test' to test. Or type 'make compiled' to recompile tests."
+all: compiled
 
-test-serial:
+test-serial: test
+
+test:
 	@bash test_all.sh sl
 
 compiled:

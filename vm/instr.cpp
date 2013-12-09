@@ -292,15 +292,9 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
               << " TO " << reg_string(alloc_reg(pc))
               << endl;
          break;
-   	case FLOAT_INSTR: {
-            pcounter m = pc + FLOAT_BASE;
-            const string op(val_string(float_op(pc), &m, prog));
-            const string dest(val_string(float_dest(pc), &m, prog));
-            
-   	      cout << "FLOAT " << op
-                 << " TO " << dest << endl;
-           }
-           break;
+   	case FLOAT_INSTR:
+         cout << "FLOAT " << reg_string(pcounter_reg(pc + instr_size)) << " TO " << reg_string(pcounter_reg(pc + instr_size + reg_val_size)) << endl;
+         break;
       case SEND_INSTR:
          cout << "SEND " << reg_string(send_msg(pc))
               << " TO " << reg_string(send_dest(pc))
@@ -412,17 +406,6 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
       case REMOVE_INSTR:
          cout << "REMOVE " << reg_string(remove_source(pc)) << endl;
          break;
-   	case CONS_INSTR: {
-   			pcounter m = pc + CONS_BASE;
-            const size_t type_id(cons_type(pc));
-            list_type *lt((list_type*)prog->get_type(type_id));
-            const string head(val_string(cons_head(pc), &m, prog));
-            const string tail(val_string(cons_tail(pc), &m, prog));
-            const string dest(val_string(cons_dest(pc), &m, prog));
-   			
-            cout << "CONS (" << head << "::" << tail << ") " << lt->string() << " TO " << dest << endl;
-         }
-         break;
     	case NOT_INSTR:
          cout << "NOT " << reg_string(not_op(pc)) << " TO " << reg_string(not_dest(pc)) << endl;
          break;
@@ -446,16 +429,6 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
             }
             
             return pc + select_size(pc);
-         }
-         break;
-      case COLOCATED_INSTR: {
-            pcounter m = pc + COLOCATED_BASE;
-            const string first(val_string(colocated_first(pc), &m, prog));
-            const string second(val_string(colocated_second(pc), &m, prog));
-         
-            cout << "COLOCATED (" << first << ", " << second
-               << ") TO " << reg_string(colocated_dest(pc)) << endl;
-            
          }
          break;
       case RULE_INSTR: {
@@ -751,6 +724,37 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          break;
       case MVCONSTREG_INSTR:
          cout << "MVCONSTREG " << const_id_string(pcounter_const_id(pc + instr_size)) << " TO " << reg_string(pcounter_reg(pc + instr_size + const_id_size)) << endl;
+         break;
+      case CONSRRR_INSTR:
+         cout << "CONSRRR (" << reg_string(pcounter_reg(pc + instr_size + type_size)) << "::" << reg_string(pcounter_reg(pc + instr_size + type_size + reg_val_size)) << ") TO " << reg_string(pcounter_reg(pc + instr_size + type_size + 2 * reg_val_size)) << endl;
+         break;
+      case CONSRFF_INSTR:
+         cout << "CONSRFF (" << reg_string(pcounter_reg(pc + instr_size)) << "::" << field_string(pc + instr_size + reg_val_size) << ") TO " <<
+            field_string(pc + instr_size + reg_val_size + field_size) << endl;
+         break;
+      case CONSFRF_INSTR:
+         cout << "CONSFRF (" << field_string(pc + instr_size) << "::" << reg_string(pcounter_reg(pc + instr_size + field_size)) << ") TO " <<
+            field_string(pc + instr_size + field_size + reg_val_size) << endl;
+         break;
+      case CONSFFR_INSTR:
+         cout << "CONSFFR (" << field_string(pc + instr_size) << "::" << field_string(pc + instr_size + field_size) << ") TO " <<
+            reg_string(pcounter_reg(pc + instr_size + 2 * field_size)) << endl;
+         break;
+      case CONSRRF_INSTR:
+         cout << "CONSRRF (" << reg_string(pcounter_reg(pc + instr_size)) << "::" << reg_string(pcounter_reg(pc + instr_size + reg_val_size)) << ") TO " <<
+            field_string(pc + instr_size + 2 * reg_val_size) << endl;
+         break;
+      case CONSRFR_INSTR:
+         cout << "CONSRFR (" << reg_string(pcounter_reg(pc + instr_size)) << "::" << field_string(pc + instr_size + reg_val_size) << ") TO " <<
+            reg_string(pcounter_reg(pc + instr_size + reg_val_size + field_size)) << endl;
+         break;
+      case CONSFRR_INSTR:
+         cout << "CONSFRR (" << field_string(pc + instr_size + type_size) << "::" << reg_string(pcounter_reg(pc + instr_size + type_size + field_size)) << ") TO " <<
+            reg_string(pcounter_reg(pc + instr_size + type_size + field_size + reg_val_size)) << endl;
+         break;
+      case CONSFFF_INSTR:
+         cout << "CONSFFF (" << field_string(pc + instr_size) << "::" << field_string(pc + instr_size + field_size) << ") TO " <<
+            field_string(pc + instr_size + 2 * field_size) << endl;
          break;
 		default:
          throw malformed_instr_error("unknown instruction code");
