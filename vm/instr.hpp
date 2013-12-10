@@ -24,6 +24,7 @@ const uint32_t MAGIC2 = 0x6c696620;
 namespace instr {
 
 const size_t type_size = sizeof(utils::byte);
+const size_t predicate_size = sizeof(utils::byte);
 const size_t extern_id_size = sizeof(utils::byte);
 const size_t instr_size = sizeof(utils::byte);
 const size_t field_size = 2 * sizeof(utils::byte);
@@ -342,15 +343,15 @@ inline reg_num float_dest(pcounter pc) { return pcounter_reg(pc + instr_size + r
 
 typedef pcounter iter_match;
 
-inline predicate_id iter_predicate(pcounter pc) { return predicate_get(pc, 1); }
-inline reg_num iter_reg(pcounter pc) { return pcounter_reg(pc + 2); }
-inline utils::byte iter_options(pcounter pc) { return byte_get(pc, 3); }
-inline utils::byte iter_options_argument(pcounter pc) { return byte_get(pc, 4); }
-inline code_offset_t iter_inner_jump(pcounter pc) { return jump_get(pc, 5); }
-inline code_offset_t iter_outer_jump(pcounter pc) { return jump_get(pc, 9); }
+inline predicate_id iter_predicate(pcounter pc) { return predicate_get(pc, instr_size); }
+inline reg_num iter_reg(pcounter pc) { return pcounter_reg(pc + instr_size + predicate_size); } // XXX
+inline utils::byte iter_options(pcounter pc) { return byte_get(pc, instr_size + predicate_size + reg_val_size); }
+inline utils::byte iter_options_argument(pcounter pc) { return byte_get(pc, instr_size + predicate_size + reg_val_size + sizeof(utils::byte)); }
+inline code_offset_t iter_inner_jump(pcounter pc) { return jump_get(pc, instr_size + predicate_size + reg_val_size + 2 * sizeof(utils::byte)); }
+inline code_offset_t iter_outer_jump(pcounter pc) { return jump_get(pc, instr_size + predicate_size + reg_val_size + 2 * sizeof(utils::byte) + jump_size); }
 inline bool iter_match_end(iter_match m) { return (*(m + 1) & 0xc0) == 0x40; }
 inline bool iter_match_none(iter_match m) { return (*(m + 1) & 0xc0) == 0xc0; }
-inline instr_val iter_match_val(iter_match m) { return val_get((pcounter)m, 1); }
+inline instr_val iter_match_val(iter_match m) { return val_get((pcounter)m, sizeof(utils::byte)); }
 inline field_num iter_match_field(iter_match m) { return (field_num)*m; }
 
 inline bool iter_options_random(const utils::byte b) { return b & 0x01; }
@@ -361,8 +362,8 @@ inline bool iter_options_to_delete(const utils::byte b) { return b & 0x02; }
 
 /* ALLOC pred to reg */
 
-inline predicate_id alloc_predicate(pcounter pc) { return predicate_get(pc, 1); }
-inline reg_num alloc_reg(pcounter pc) { return pcounter_reg(pc + 2); }
+inline predicate_id alloc_predicate(pcounter pc) { return predicate_get(pc, instr_size); }
+inline reg_num alloc_reg(pcounter pc) { return pcounter_reg(pc + instr_size + predicate_size); }
 
 /* CALL */
 
@@ -377,10 +378,6 @@ inline external_function_id calle_extern_id(pcounter pc) { return (external_func
 inline size_t calle_num_args(pcounter pc) { return (size_t)byte_get(pc, 2); }
 inline reg_num calle_dest(pcounter pc) { return pcounter_reg(pc + 3); }
 inline instr_val calle_val(pcounter pc) { return val_get(pc, 0); }
-
-/* MOVE-NIL TO dst */
-
-inline instr_val move_nil_dest(pcounter pc) { return val_get(pc, 1); }
 
 /* TEST-NIL a TO b */
 
@@ -398,8 +395,8 @@ inline reg_num not_dest(pcounter pc) { return pcounter_reg(pc + instr_size + reg
 
 /* SELECT BY NODE ... */
 
-inline code_size_t select_size(pcounter pc) { return pcounter_code_size(pc + 1); }
-inline size_t select_hash_size(pcounter pc) { return (size_t)pcounter_code_size(pc + 1 + sizeof(code_size_t)); }
+inline code_size_t select_size(pcounter pc) { return pcounter_code_size(pc + instr_size); }
+inline size_t select_hash_size(pcounter pc) { return (size_t)pcounter_code_size(pc + instr_size + sizeof(code_size_t)); }
 inline pcounter select_hash_start(pcounter pc) { return pc + SELECT_BASE; }
 inline code_offset_t select_hash(pcounter hash_start, const node_val val) { return pcounter_code_size(hash_start + sizeof(code_size_t)*val); }
 inline pcounter select_hash_code(pcounter hash_start, const size_t hash_size, const code_offset_t hashed) {
@@ -419,44 +416,44 @@ inline field_num delete_index(pcounter pc) { return field_num_get(pc, 0); }
 
 /* REMOVE */
 
-inline reg_num remove_source(const pcounter pc) { return pcounter_reg(pc + 1); }
+inline reg_num remove_source(const pcounter pc) { return pcounter_reg(pc + instr_size); }
 
 /* RESET LINEAR */
 
-inline code_offset_t reset_linear_jump(const pcounter pc) { return jump_get(pc, 1); }
+inline code_offset_t reset_linear_jump(const pcounter pc) { return jump_get(pc, instr_size); }
 
 /* RULE ID */
 
-inline size_t rule_get_id(const pcounter pc) { return pcounter_uint(pc + 1); }
+inline size_t rule_get_id(const pcounter pc) { return pcounter_uint(pc + instr_size); }
 
 /* NEW NODE */
 
-inline reg_num new_node_reg(const pcounter pc) { return pcounter_reg(pc + 1); }
+inline reg_num new_node_reg(const pcounter pc) { return pcounter_reg(pc + instr_size); }
 
 /* NEW AXIOMS */
 
-inline code_offset_t new_axioms_jump(const pcounter pc) { return jump_get(pc, 1); }
+inline code_offset_t new_axioms_jump(const pcounter pc) { return jump_get(pc, instr_size); }
 
 /* SEND DELAY a TO b */
 
-inline reg_num send_delay_msg(pcounter pc) { return pcounter_reg(pc + 1); }
-inline reg_num send_delay_dest(pcounter pc) { return pcounter_reg(pc + 2); }
-inline uint_val send_delay_time(pcounter pc) { return pcounter_uint(pc + 3); }
+inline reg_num send_delay_msg(pcounter pc) { return pcounter_reg(pc + instr_size); }
+inline reg_num send_delay_dest(pcounter pc) { return pcounter_reg(pc + instr_size + reg_val_size); }
+inline uint_val send_delay_time(pcounter pc) { return pcounter_uint(pc + instr_size + 2 * reg_val_size); }
 
 /* CALLF id */
 
-inline callf_id callf_get_id(const pcounter pc) { return *(pc + 1); }
+inline callf_id callf_get_id(const pcounter pc) { return *(pc + instr_size); }
 
 /* MAKE STRUCT size to */
 
-inline size_t make_struct_type(pcounter pc) { return (size_t)byte_get(pc, 1); }
-inline instr_val make_struct_to(pcounter pc) { return val_get(pc, 2); }
+inline size_t make_struct_type(pcounter pc) { return (size_t)byte_get(pc, instr_size); }
+inline instr_val make_struct_to(pcounter pc) { return val_get(pc, instr_size + type_size); }
 
 /* STRUCT VAL idx FROM a TO b */
 
-inline size_t struct_val_idx(pcounter pc) { return (size_t)byte_get(pc, 1); }
-inline instr_val struct_val_from(pcounter pc) { return val_get(pc, 2); }
-inline instr_val struct_val_to(pcounter pc) { return val_get(pc, 3); }
+inline size_t struct_val_idx(pcounter pc) { return (size_t)byte_get(pc, instr_size); }
+inline instr_val struct_val_from(pcounter pc) { return val_get(pc, instr_size + sizeof(utils::byte)); }
+inline instr_val struct_val_to(pcounter pc) { return val_get(pc, instr_size + sizeof(utils::byte) + val_size); }
 
 /* PUSH N */
 
@@ -466,13 +463,8 @@ inline size_t push_n(pcounter pc) { return (size_t)byte_get(pc, instr_size); }
 
 enum instr_argument_type {
    ARGUMENT_ANYTHING,
-   ARGUMENT_INT,
    ARGUMENT_WRITABLE,
-   ARGUMENT_LIST,
-   ARGUMENT_NON_LIST,
-   ARGUMENT_STRUCT,
-   ARGUMENT_BOOL,
-   ARGUMENT_NODE
+   ARGUMENT_STRUCT
 };
 
 template <instr_argument_type type>
@@ -520,24 +512,6 @@ STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING>(const instr_val v)
 }
 
 template <>
-STATIC_INLINE
-size_t arg_size<ARGUMENT_INT>(const instr_val v)
-{
-   if(val_is_int(v))
-      return int_size;
-   else if(val_is_reg(v))
-      return reg_size;
-   else if(val_is_field(v))
-      return field_size;
-	else if(val_is_const(v))
-		return int_size;
-   else if(val_is_stack(v))
-      return stack_val_size;
-   else
-      throw malformed_instr_error("invalid instruction int value");
-}
-
-template <>
 STATIC_INLINE size_t arg_size<ARGUMENT_WRITABLE>(const instr_val v)
 {
    if(val_is_reg(v))
@@ -555,21 +529,6 @@ STATIC_INLINE size_t arg_size<ARGUMENT_WRITABLE>(const instr_val v)
 }
 
 template <>
-STATIC_INLINE size_t arg_size<ARGUMENT_LIST>(const instr_val v)
-{
-   if(val_is_reg(v))
-      return reg_size;
-   else if(val_is_field(v))
-      return field_size;
-   else if(val_is_nil(v))
-      return nil_size;
-   else if(val_is_stack(v))
-      return stack_val_size;
-   else
-      throw malformed_instr_error("invalid instruction list value");
-}
-
-template <>
 STATIC_INLINE size_t arg_size<ARGUMENT_STRUCT>(const instr_val v)
 {
    if(val_is_reg(v))
@@ -580,75 +539,6 @@ STATIC_INLINE size_t arg_size<ARGUMENT_STRUCT>(const instr_val v)
       return stack_val_size;
    else
       throw malformed_instr_error("invalid instruction struct value");
-}
-
-template <>
-STATIC_INLINE size_t arg_size<ARGUMENT_NON_LIST>(const instr_val v)
-{
-   if(val_is_bool(v))
-      return bool_size;
-   else if(val_is_float(v))
-      return float_size;
-   else if(val_is_int(v))
-      return int_size;
-   else if(val_is_field(v))
-      return field_size;
-   else if(val_is_reg(v))
-      return reg_size;
-   else if(val_is_host(v))
-      return host_size;
-   else if(val_is_node(v))
-      return node_size;
-	else if(val_is_string(v))
-		return string_size;
-	else if(val_is_arg(v))
-		return val_size;
-	else if(val_is_const(v))
-		return int_size;
-   else if(val_is_stack(v))
-      return stack_val_size;
-   else if(val_is_pcounter(v))
-      return pcounter_val_size;
-   else if(val_is_ptr(v))
-      return ptr_size;
-   else
-      throw malformed_instr_error("invalid instruction non-list value");
-}
-
-template <>
-STATIC_INLINE size_t arg_size<ARGUMENT_BOOL>(const instr_val v)
-{
-   if(val_is_bool(v))
-      return bool_size;
-   else if(val_is_reg(v))
-      return reg_size;
-   else if(val_is_field(v))
-      return field_size;
-	else if(val_is_const(v))
-		return int_size;
-   else if(val_is_stack(v))
-      return stack_val_size;
-   else
-      throw malformed_instr_error("invalid instruction bool value");
-}
-
-template <>
-STATIC_INLINE size_t arg_size<ARGUMENT_NODE>(const instr_val v)
-{
-   if(val_is_reg(v))
-      return reg_size;
-   else if(val_is_field(v))
-      return field_size;
-   else if(val_is_host(v))
-      return host_size;
-   else if(val_is_node(v))
-      return node_size;
-	else if(val_is_const(v))
-		return int_size;
-   else if(val_is_stack(v))
-      return stack_val_size;
-   else
-      throw malformed_instr_error("invalid instruction node value");
 }
 
 inline size_t

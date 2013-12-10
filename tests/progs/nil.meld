@@ -1,0 +1,7 @@
+
+type linear a(node, list int).
+type linear b(node, list int).
+
+a(@0, []).
+
+a(A, []) -o b(A, []).

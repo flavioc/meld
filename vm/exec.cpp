@@ -2800,6 +2800,9 @@ eval_loop:
 
          CASE(MVREGREG_INSTR)
             JUMP(mvregreg)
+#ifdef CORE_STATISTICS
+            state.stat.stat_moves_executed++;
+#endif
             execute_mvregreg(pc, state);
             ADVANCE()
 
@@ -2865,16 +2868,25 @@ eval_loop:
 
          CASE(MVWORLDREG_INSTR)
             JUMP(mvworldreg)
+#ifdef CORE_STATISTICS
+            state.stat.stat_moves_executed++;
+#endif
             execute_mvworldreg(pc, state);
             ADVANCE()
 
          CASE(MVCONSTREG_INSTR)
             JUMP(mvconstreg)
+#ifdef CORE_STATISTICS
+            state.stat.stat_moves_executed++;
+#endif
             execute_mvconstreg(pc, state);
             ADVANCE()
 
          CASE(MVINTSTACK_INSTR)
             JUMP(mvintstack)
+#ifdef CORE_STATISTICS
+            state.stat.stat_moves_executed++;
+#endif
             execute_mvintstack(pc, state);
             ADVANCE()
 
