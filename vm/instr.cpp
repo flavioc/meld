@@ -499,6 +499,9 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
       case PUSH_INSTR:
          cout << "PUSH" << endl;
          break;
+      case PUSHN_INSTR:
+         cout << "PUSHN " << push_n(pc) << endl;
+         break;
       case POP_INSTR:
          cout << "POP" << endl;
          break;
@@ -628,6 +631,9 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          break;
       case MVHOSTREG_INSTR:
          cout << "MVHOSTREG TO " << reg_string(pcounter_reg(pc + instr_size)) << endl;
+         break;
+      case MVINTSTACK_INSTR:
+         cout << "MVINTSTACK " << int_string(pcounter_int(pc + instr_size)) << " TO " << stack_string(pcounter_stack(pc + instr_size + int_size)) << endl;
          break;
       case ADDRNOTEQUAL_INSTR:
          cout << operation_string(pc, "ADDR NOT EQUAL") << endl;

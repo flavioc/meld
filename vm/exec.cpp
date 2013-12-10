@@ -1498,10 +1498,10 @@ execute_make_struct(pcounter pc, state& state)
    pc += MAKE_STRUCT_BASE;
    struct1 *s(new struct1(st));
 
-   for(size_t i(state.stack.size() - st->get_size()), j(0); i < state.stack.size(); ++i, ++j) {
-      s->set_data(j, state.stack[i]);
+   for(size_t i(0); i < st->get_size(); ++i) {
+      s->set_data(i, state.stack[0]);
+      state.stack.pop_front();
    }
-   state.stack.resize(state.stack.size() - st->get_size());
 
    set_op_function<struct1*>(pc, to, s, state);
    state.add_struct(s);
@@ -1675,6 +1675,14 @@ execute_mvconstreg(pcounter& pc, state& state)
    const reg_num reg(pcounter_reg(pc + instr_size + const_id_size));
 
    state.set_reg(reg, state.all->get_const(id));
+}
+
+static inline void
+execute_mvintstack(pcounter& pc, state& state)
+{
+   const int_val i(pcounter_int(pc + instr_size));
+   const offset_num off(pcounter_stack(pc + instr_size + int_size));
+   state.get_stack_at(off)->int_field = i;
 }
 
 static inline void
@@ -2375,6 +2383,11 @@ eval_loop:
            state.stack.push_front(tuple_field());
            break;
 
+         case PUSHN_INSTR:
+           for(size_t i(0); i < push_n(pc); ++i)
+            state.stack.push_front(tuple_field());
+           break;
+
          case POP_INSTR:
            state.stack.pop_front();
            break;
@@ -2731,6 +2744,10 @@ eval_loop:
 
          case MVCONSTREG_INSTR:
            execute_mvconstreg(pc, state);
+           break;
+
+         case MVINTSTACK_INSTR:
+           execute_mvintstack(pc, state);
            break;
 
          case CONSRRR_INSTR:

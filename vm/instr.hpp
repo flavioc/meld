@@ -84,7 +84,7 @@ const size_t POP_REGS_BASE       = instr_size;
 const size_t CALLF_BASE          = instr_size + 1;
 const size_t CALLE_BASE          = instr_size + 3;
 const size_t STRUCT_VAL_BASE     = instr_size + 3;
-const size_t MAKE_STRUCT_BASE    = instr_size + 2;
+const size_t MAKE_STRUCT_BASE    = instr_size + 2 * val_size;
 const size_t MVINTFIELD_BASE     = instr_size + int_size + field_size;
 const size_t MVINTREG_BASE       = instr_size + int_size + reg_val_size;
 const size_t MVFIELDFIELD_BASE   = instr_size + field_size + field_size;
@@ -130,6 +130,8 @@ const size_t CALL0_BASE          = call_size;
 const size_t CALL1_BASE          = call_size + reg_val_size;
 const size_t CALL2_BASE          = call_size + 2 * reg_val_size;
 const size_t CALL3_BASE          = call_size + 3 * reg_val_size;
+const size_t MVINTSTACK_BASE     = instr_size + int_size + stack_val_size;
+const size_t PUSHN_BASE          = instr_size + sizeof(utils::byte);
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -234,6 +236,8 @@ enum instr_type {
    CALL1_INSTR          =  0x69,
    CALL2_INSTR          =  0x6A,
    CALL3_INSTR          =  0x6B,
+   MVINTSTACK_INSTR     =  0x6C,
+   PUSHN_INSTR          =  0x6D,
    REMOVE_INSTR 	      =  0x80,
    ITER_INSTR		      =  0xA0,
    RETURN_LINEAR_INSTR  =  0xD0,
@@ -453,6 +457,10 @@ inline instr_val make_struct_to(pcounter pc) { return val_get(pc, 2); }
 inline size_t struct_val_idx(pcounter pc) { return (size_t)byte_get(pc, 1); }
 inline instr_val struct_val_from(pcounter pc) { return val_get(pc, 2); }
 inline instr_val struct_val_to(pcounter pc) { return val_get(pc, 3); }
+
+/* PUSH N */
+
+inline size_t push_n(pcounter pc) { return (size_t)byte_get(pc, instr_size); }
 
 /* advance function */
 
@@ -763,6 +771,9 @@ advance(pcounter pc)
       case PUSH_INSTR:
          return pc + PUSH_BASE;
 
+      case PUSHN_INSTR:
+         return pc + PUSHN_BASE;
+
       case POP_INSTR:
          return pc + POP_BASE;
 
@@ -914,6 +925,9 @@ advance(pcounter pc)
 
       case MVCONSTREG_INSTR:
          return pc + MVCONSTREG_BASE;
+
+      case MVINTSTACK_INSTR:
+         return pc + MVINTSTACK_BASE;
 
       case CONSRRR_INSTR:
          return pc + CONSRRR_BASE;
