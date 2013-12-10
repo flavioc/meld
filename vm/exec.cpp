@@ -373,7 +373,7 @@ void set_op_function<int_val>(const pcounter& m, const instr_val& dest,
       tuple->set_int(field, val);
    } else if(val_is_stack(dest)) {
       const offset_num off(pcounter_stack(m));
-      SET_FIELD_INT(*(state.get_stack_at(off)), val);
+      SET_FIELD_INT(*(state.stack.get_stack_at(off)), val);
    } else
       throw vm_exec_error("invalid destination for int value");
 }
@@ -392,7 +392,7 @@ void set_op_function<float_val>(const pcounter& m, const instr_val& dest,
    } else if(val_is_stack(dest)) {
       const offset_num off(pcounter_stack(m));
 
-      SET_FIELD_FLOAT(*(state.get_stack_at(off)), val);
+      SET_FIELD_FLOAT(*(state.stack.get_stack_at(off)), val);
    } else
       throw vm_exec_error("invalid destination for float value");
 }
@@ -1370,9 +1370,9 @@ execute_make_struct(pcounter pc, state& state)
    struct1 *s(new struct1(st));
 
    for(size_t i(0); i < st->get_size(); ++i) {
-      s->set_data(i, state.stack[0]);
-      state.stack.pop_front();
+      s->set_data(i, *state.stack.get_stack_at(i));
    }
+   state.stack.pop(st->get_size());
 
    set_op_function<struct1*>(pc, to, s, state);
    state.add_struct(s);
@@ -1553,7 +1553,7 @@ execute_mvintstack(pcounter& pc, state& state)
 {
    const int_val i(pcounter_int(pc + instr_size));
    const offset_num off(pcounter_stack(pc + instr_size + int_size));
-   state.get_stack_at(off)->int_field = i;
+   state.stack.get_stack_at(off)->int_field = i;
 }
 
 static inline void
@@ -1616,7 +1616,7 @@ execute_mvstackpcounter(pcounter& pc, state& state)
 {
    const offset_num off(pcounter_stack(pc + instr_size));
 
-   pc = (pcounter)FIELD_PCOUNTER(*(state.get_stack_at(off)));
+   pc = (pcounter)FIELD_PCOUNTER(*(state.stack.get_stack_at(off)));
 }
 
 static inline void
@@ -1624,7 +1624,7 @@ execute_mvpcounterstack(pcounter& pc, state& state)
 {
    const offset_num off(pcounter_stack(pc + instr_size));
 
-   SET_FIELD_PTR(*(state.get_stack_at(off)), pc + MVPCOUNTERSTACK_BASE);
+   SET_FIELD_PTR(*(state.stack.get_stack_at(off)), pc + MVPCOUNTERSTACK_BASE);
 }
 
 static inline void
@@ -1633,7 +1633,7 @@ execute_mvstackreg(pcounter& pc, state& state)
    const offset_num off(pcounter_stack(pc + instr_size));
    const reg_num reg(pcounter_reg(pc + instr_size + stack_val_size));
 
-   state.set_reg(reg, *state.get_stack_at(off));
+   state.set_reg(reg, *state.stack.get_stack_at(off));
 }
 
 static inline void
@@ -1642,7 +1642,7 @@ execute_mvregstack(pcounter& pc, state& state)
    const reg_num reg(pcounter_reg(pc + instr_size));
    const offset_num off(pcounter_stack(pc + instr_size + reg_val_size));
 
-   *(state.get_stack_at(off)) = state.get_reg(reg);
+   *(state.stack.get_stack_at(off)) = state.get_reg(reg);
 }
 
 static inline void
@@ -2309,30 +2309,27 @@ eval_loop:
 
          CASE(PUSH_INSTR)
             JUMP(push)
-            state.stack.push_front(tuple_field());
+            state.stack.push();
             ADVANCE()
 
          CASE(PUSHN_INSTR)
             JUMP(pushn)
-            for(size_t i(0); i < push_n(pc); ++i)
-               state.stack.push_front(tuple_field());
+            state.stack.push(push_n(pc));
             ADVANCE()
 
          CASE(POP_INSTR)
             JUMP(pop)
-            state.stack.pop_front();
+            state.stack.pop();
             ADVANCE()
 
          CASE(PUSH_REGS_INSTR)
             JUMP(push_regs)
-            state.stack.insert(state.stack.begin(),
-                 state.regs, state.regs + NUM_REGS);
+            state.stack.push_regs(state.regs);
             ADVANCE()
 
          CASE(POP_REGS_INSTR)
             JUMP(pop_regs)
-            copy(state.stack.begin(), state.stack.begin() + NUM_REGS, state.regs);
-            state.stack.erase(state.stack.begin(), state.stack.begin() + NUM_REGS);
+            state.stack.pop_regs(state.regs);
             ADVANCE()
 
          CASE(CALLF_INSTR) {

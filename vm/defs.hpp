@@ -62,6 +62,8 @@ typedef union {
 // for list matches, see vm/match.hpp
 #define SET_FIELD_LIST_MATCH(F, S) (SET_FIELD_PTR(F, S))
 
+static const size_t NUM_REGS = 32;
+
 }
 
 #endif

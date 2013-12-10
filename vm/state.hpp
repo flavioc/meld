@@ -17,6 +17,7 @@
 #include "queue/safe_simple_pqueue.hpp"
 #include "runtime/struct.hpp"
 #include "vm/stat.hpp"
+#include "vm/call_stack.hpp"
 
 #define USE_TEMPORARY_STORE
 
@@ -28,7 +29,6 @@ namespace sched {
 namespace vm {
 	
 typedef size_t deterministic_timestamp;
-static const size_t NUM_REGS = 32;
 
 class state
 {
@@ -60,7 +60,7 @@ public:
 
    typedef tuple_field reg;
    reg regs[NUM_REGS];
-   std::deque<tuple_field> stack;
+   call_stack stack;
    db::node *node;
    derivation_count count;
    vm::depth_t depth;
@@ -140,8 +140,6 @@ public:
 	inline db::simple_tuple* get_tuple_queue(const reg_num& num) const { return saved_stuples[num]; }
 	inline bool is_it_a_leaf(const reg_num& num) const { return is_leaf[num]; }
 
-   inline tuple_field* get_stack_at(const offset_num& off) { return &stack[off]; }
-   
    inline void copy_reg(const reg_num& reg_from, const reg_num& reg_to) {
       regs[reg_to] = regs[reg_from];
    }
