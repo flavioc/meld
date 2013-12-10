@@ -2188,6 +2188,20 @@ execute_consfff(pcounter& pc, state& state)
    dest->set_cons(field_dest, new_list);
 }
 
+#define COMPUTED_GOTOS
+
+#ifdef COMPUTED_GOTOS
+#define CASE(X)
+#define JUMP(label) label:
+#define JUMP_NEXT() goto *jump_table[fetch(pc)]
+#define ADVANCE() pc = advance(pc); goto *jump_table[fetch(pc)];
+#else
+#define CASE(INSTR) case INSTR:
+#define JUMP(label)
+#define JUMP_NEXT() goto eval_loop
+#define ADVANCE() break;
+#endif
+
 static inline return_type
 execute(pcounter pc, state& state, const reg_num reg, tuple *tpl)
 {
@@ -2201,9 +2215,19 @@ execute(pcounter pc, state& state, const reg_num reg, tuple *tpl)
 #endif
    }
 
+#ifdef COMPUTED_GOTOS
+#include "vm/jump_table.hpp"
+#endif
+
+#ifdef COMPUTED_GOTOS
+   goto *jump_table[fetch(pc)];
+#endif
+
+#ifndef COMPUTED_GOTOS
    for(; ; pc = advance(pc))
    {
 eval_loop:
+#endif
 
 #ifdef DEBUG_INSTRS
          instr_print_simple(pc, 0, state.all->PROGRAM, cout);
@@ -2219,20 +2243,32 @@ eval_loop:
 		state.stat.stat_instructions_executed++;
 #endif
 		
+#ifndef COMPUTED_GOTOS
       switch(fetch(pc)) {
-         case RETURN_INSTR: return RETURN_OK;
+#endif
+         CASE(RETURN_INSTR)
+            JUMP(return_instr)
+            return RETURN_OK;
          
-         case NEXT_INSTR: return RETURN_NEXT;
+         CASE(NEXT_INSTR)
+            JUMP(next_instr)
+            return RETURN_NEXT;
 
-         case RETURN_LINEAR_INSTR: return RETURN_LINEAR;
+         CASE(RETURN_LINEAR_INSTR)
+            JUMP(return_linear)
+            return RETURN_LINEAR;
          
-         case RETURN_DERIVED_INSTR: return RETURN_DERIVED;
+         CASE(RETURN_DERIVED_INSTR)
+            JUMP(return_derived)
+            return RETURN_DERIVED;
          
-         case RETURN_SELECT_INSTR:
+         CASE(RETURN_SELECT_INSTR)
+            JUMP(return_select)
             pc += return_select_jump(pc);
-            goto eval_loop;
+            JUMP_NEXT();
          
-         case IF_INSTR:
+         CASE(IF_INSTR)
+            JUMP(if_instr)
 #ifdef CORE_STATISTICS
 				state.stat.stat_if_tests++;
 #endif
@@ -2241,14 +2277,16 @@ eval_loop:
 					state.stat.stat_if_failed++;
 #endif
                pc += if_jump(pc);
-               goto eval_loop;
+               JUMP_NEXT();
             }
-            break;
+            ADVANCE();
          
-			case END_LINEAR_INSTR:
+			CASE(END_LINEAR_INSTR)
+            JUMP(end_linear)
 				return RETURN_END_LINEAR;
 			
-         case RESET_LINEAR_INSTR:
+         CASE(RESET_LINEAR_INSTR)
+            JUMP(reset_linear)
             {
                const bool old_is_linear(state.is_linear);
                
@@ -2263,11 +2301,12 @@ eval_loop:
                
                pc += reset_linear_jump(pc);
 
-               goto eval_loop;
+               JUMP_NEXT();
             }
-            break;
+            ADVANCE();
             
-         case ITER_INSTR: {
+         CASE(ITER_INSTR) {
+               JUMP(iter)
                const predicate_id pred_id(iter_predicate(pc));
                const predicate *pred(state.all->PROGRAM->get_predicate(pred_id));
                const reg_num reg(iter_reg(pc));
@@ -2308,483 +2347,587 @@ eval_loop:
 						return ret;
                
                pc += iter_outer_jump(pc);
-               goto eval_loop;
+               JUMP_NEXT();
             }
             
-         case REMOVE_INSTR:
+         CASE(REMOVE_INSTR)
+            JUMP(remove)
             execute_remove(pc, state);
-            break;
+            ADVANCE();
             
-         case ALLOC_INSTR:
+         CASE(ALLOC_INSTR)
+            JUMP(alloc)
             execute_alloc(pc, state);
-            break;
+            ADVANCE()
             
-         case SEND_INSTR:
+         CASE(SEND_INSTR)
+            JUMP(send)
             execute_send(pc, state);
-            break;
+            ADVANCE()
 
-         case SEND_DELAY_INSTR:
+         CASE(SEND_DELAY_INSTR)
+            JUMP(send_delay)
             execute_send_delay(pc, state);
-            break;
+            ADVANCE()
             
-         case NOT_INSTR:
+         CASE(NOT_INSTR)
+            JUMP(not_instr)
             execute_not(pc, state);
-            break;
+            ADVANCE()
             
-         case TESTNIL_INSTR:
+         CASE(TESTNIL_INSTR)
+            JUMP(testnil)
             execute_testnil(pc, state);
-            break;
+            ADVANCE()
             
-         case FLOAT_INSTR:
+         CASE(FLOAT_INSTR)
+            JUMP(float_instr)
             execute_float(pc, state);
-            break;
+            ADVANCE()
             
-         case SELECT_INSTR:
+         CASE(SELECT_INSTR)
+            JUMP(select)
             pc = execute_select(pc, state);
-            goto eval_loop;
+            JUMP_NEXT();
             
-         case DELETE_INSTR:
+         CASE(DELETE_INSTR)
+            JUMP(delete_instr)
             execute_delete(pc, state);
-            break;
+            ADVANCE()
             
-         case CALL_INSTR:
+         CASE(CALL_INSTR)
+            JUMP(call)
             execute_call(pc, state);
-            break;
-         case CALL0_INSTR:
+            ADVANCE()
+         CASE(CALL0_INSTR)
+            JUMP(call0)
             execute_call0(pc, state);
-            break;
-         case CALL1_INSTR:
+            ADVANCE()
+         CASE(CALL1_INSTR)
+            JUMP(call1)
             execute_call1(pc, state);
-            break;
-         case CALL2_INSTR:
+            ADVANCE()
+         CASE(CALL2_INSTR)
+            JUMP(call2)
             execute_call2(pc, state);
-            break;
-         case CALL3_INSTR:
+            ADVANCE()
+         CASE(CALL3_INSTR)
+            JUMP(call3)
             execute_call3(pc, state);
-            break;
+            ADVANCE()
 
-         case RULE_INSTR:
-           execute_rule(pc, state);
-           break;
+         CASE(RULE_INSTR)
+            JUMP(rule)
+            execute_rule(pc, state);
+            ADVANCE()
 
-         case RULE_DONE_INSTR:
-           execute_rule_done(pc, state);
-           break;
+         CASE(RULE_DONE_INSTR)
+            JUMP(rule_done)
+            execute_rule_done(pc, state);
+            ADVANCE()
 
-         case NEW_NODE_INSTR:
-           execute_new_node(pc, state);
-           break;
+         CASE(NEW_NODE_INSTR)
+            JUMP(new_node)
+            execute_new_node(pc, state);
+            ADVANCE()
 
-         case NEW_AXIOMS_INSTR:
-           execute_new_axioms(pc, state);
-           break;
+         CASE(NEW_AXIOMS_INSTR)
+            JUMP(new_axioms)
+            execute_new_axioms(pc, state);
+            ADVANCE()
 
-         case PUSH_INSTR:
-           state.stack.push_front(tuple_field());
-           break;
-
-         case PUSHN_INSTR:
-           for(size_t i(0); i < push_n(pc); ++i)
+         CASE(PUSH_INSTR)
+            JUMP(push)
             state.stack.push_front(tuple_field());
-           break;
+            ADVANCE()
 
-         case POP_INSTR:
-           state.stack.pop_front();
-           break;
+         CASE(PUSHN_INSTR)
+            JUMP(pushn)
+            for(size_t i(0); i < push_n(pc); ++i)
+               state.stack.push_front(tuple_field());
+            ADVANCE()
 
-         case PUSH_REGS_INSTR:
-           state.stack.insert(state.stack.begin(),
+         CASE(POP_INSTR)
+            JUMP(pop)
+            state.stack.pop_front();
+            ADVANCE()
+
+         CASE(PUSH_REGS_INSTR)
+            JUMP(push_regs)
+            state.stack.insert(state.stack.begin(),
                  state.regs, state.regs + NUM_REGS);
-           break;
+            ADVANCE()
 
-         case POP_REGS_INSTR:
-           copy(state.stack.begin(), state.stack.begin() + NUM_REGS, state.regs);
-           state.stack.erase(state.stack.begin(), state.stack.begin() + NUM_REGS);
-           break;
+         CASE(POP_REGS_INSTR)
+            JUMP(pop_regs)
+            copy(state.stack.begin(), state.stack.begin() + NUM_REGS, state.regs);
+            state.stack.erase(state.stack.begin(), state.stack.begin() + NUM_REGS);
+            ADVANCE()
 
-         case CALLF_INSTR: {
+         CASE(CALLF_INSTR) {
+              JUMP(callf)
               const vm::callf_id id(callf_get_id(pc));
               function *fun(state.all->PROGRAM->get_function(id));
 
               pc = fun->get_bytecode();
-              goto eval_loop;
+              JUMP_NEXT();
            }
-           break;
 
-         case MAKE_STRUCT_INSTR:
-           execute_make_struct(pc, state);
-           break;
+         CASE(MAKE_STRUCT_INSTR)
+            JUMP(make_struct)
+            execute_make_struct(pc, state);
+            ADVANCE()
 
-         case STRUCT_VAL_INSTR:
-           execute_struct_val(pc, state);
-           break;
+         CASE(STRUCT_VAL_INSTR)
+            JUMP(struct_val)
+            execute_struct_val(pc, state);
+            ADVANCE()
 
-         case MVINTFIELD_INSTR:
+         CASE(MVINTFIELD_INSTR)
+            JUMP(mvintfield)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvintfield(pc, state);
-           break;
+            execute_mvintfield(pc, state);
+            ADVANCE()
 
-         case MVINTREG_INSTR:
+         CASE(MVINTREG_INSTR)
+            JUMP(mvintreg)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvintreg(pc, state);
-           break;
+            execute_mvintreg(pc, state);
+            ADVANCE()
 
-         case MVFIELDFIELD_INSTR:
+         CASE(MVFIELDFIELD_INSTR)
+            JUMP(mvfieldfield)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvfieldfield(pc, state);
-           break;
+            execute_mvfieldfield(pc, state);
+            ADVANCE()
 
-         case MVFIELDFIELDR_INSTR:
+         CASE(MVFIELDFIELDR_INSTR)
+            JUMP(mvfieldfieldr)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvfieldfieldr(pc, state);
-           break;
+            execute_mvfieldfieldr(pc, state);
+            ADVANCE()
 
-         case MVFIELDREG_INSTR:
+         CASE(MVFIELDREG_INSTR)
+            JUMP(mvfieldreg)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvfieldreg(pc, state);
-           break;
+            execute_mvfieldreg(pc, state);
+            ADVANCE()
 
-         case MVPTRREG_INSTR:
+         CASE(MVPTRREG_INSTR)
+            JUMP(mvptrreg)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvptrreg(pc, state);
-           break;
+            execute_mvptrreg(pc, state);
+            ADVANCE()
 
-         case MVNILFIELD_INSTR:
+         CASE(MVNILFIELD_INSTR)
+            JUMP(mvnilfield)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvnilfield(pc, state);
-           break;
+            execute_mvnilfield(pc, state);
+            ADVANCE()
 
-         case MVNILREG_INSTR:
+         CASE(MVNILREG_INSTR)
+            JUMP(mvnilreg)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvnilreg(pc, state);
-           break;
+            execute_mvnilreg(pc, state);
+            ADVANCE()
 
-         case MVREGFIELD_INSTR:
+         CASE(MVREGFIELD_INSTR)
+            JUMP(mvregfield)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvregfield(pc, state);
-           break;
+            execute_mvregfield(pc, state);
+            ADVANCE()
 
-         case MVREGFIELDR_INSTR:
+         CASE(MVREGFIELDR_INSTR)
+            JUMP(mvregfieldr)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvregfieldr(pc, state);
-           break;
+            execute_mvregfieldr(pc, state);
+            ADVANCE()
 
-         case MVHOSTFIELD_INSTR:
+         CASE(MVHOSTFIELD_INSTR)
+            JUMP(mvhostfield)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvhostfield(pc, state);
-           break;
+            execute_mvhostfield(pc, state);
+            ADVANCE()
 
-         case MVREGCONST_INSTR:
+         CASE(MVREGCONST_INSTR)
+            JUMP(mvregconst)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvregconst(pc, state);
-           break;
+            execute_mvregconst(pc, state);
+            ADVANCE()
 
-         case MVCONSTFIELD_INSTR:
+         CASE(MVCONSTFIELD_INSTR)
+            JUMP(mvconstfield)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvconstfield(pc, state);
-           break;
+            execute_mvconstfield(pc, state);
+            ADVANCE()
 
-         case MVCONSTFIELDR_INSTR:
+         CASE(MVCONSTFIELDR_INSTR)
+            JUMP(mvconstfieldr)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvconstfieldr(pc, state);
-           break;
+            execute_mvconstfieldr(pc, state);
+            ADVANCE()
 
-         case MVADDRFIELD_INSTR:
+         CASE(MVADDRFIELD_INSTR)
+            JUMP(mvaddrfield)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvaddrfield(pc, state);
-           break;
+            execute_mvaddrfield(pc, state);
+            ADVANCE()
 
-         case MVFLOATFIELD_INSTR:
+         CASE(MVFLOATFIELD_INSTR)
+            JUMP(mvfloatfield)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvfloatfield(pc, state);
-           break;
+            execute_mvfloatfield(pc, state);
+            ADVANCE()
 
-         case MVFLOATREG_INSTR:
+         CASE(MVFLOATREG_INSTR)
+            JUMP(mvfloatreg)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvfloatreg(pc, state);
-           break;
+            execute_mvfloatreg(pc, state);
+            ADVANCE()
 
-         case MVINTCONST_INSTR:
+         CASE(MVINTCONST_INSTR)
+            JUMP(mvintconst)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvintconst(pc, state);
-           break;
+            execute_mvintconst(pc, state);
+            ADVANCE()
 
-         case MVWORLDFIELD_INSTR:
+         CASE(MVWORLDFIELD_INSTR)
+            JUMP(mvworldfield)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvworldfield(pc, state);
-           break;
+            execute_mvworldfield(pc, state);
+            ADVANCE()
 
-         case MVSTACKPCOUNTER_INSTR:
+         CASE(MVSTACKPCOUNTER_INSTR)
+            JUMP(mvstackpcounter)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvstackpcounter(pc, state);
-           break;
+            execute_mvstackpcounter(pc, state);
+            ADVANCE()
 
-         case MVPCOUNTERSTACK_INSTR:
+         CASE(MVPCOUNTERSTACK_INSTR)
+            JUMP(mvpcounterstack)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvpcounterstack(pc, state);
-           break;
+            execute_mvpcounterstack(pc, state);
+            ADVANCE()
 
-         case MVSTACKREG_INSTR:
+         CASE(MVSTACKREG_INSTR)
+            JUMP(mvstackreg)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvstackreg(pc, state);
-           break;
+            execute_mvstackreg(pc, state);
+            ADVANCE()
 
-         case MVREGSTACK_INSTR:
+         CASE(MVREGSTACK_INSTR)
+            JUMP(mvregstack)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvregstack(pc, state);
-           break;
+            execute_mvregstack(pc, state);
+            ADVANCE()
 
-         case MVADDRREG_INSTR:
+         CASE(MVADDRREG_INSTR)
+            JUMP(mvaddrreg)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvaddrreg(pc, state);
-           break;
+            execute_mvaddrreg(pc, state);
+            ADVANCE()
 
-         case MVHOSTREG_INSTR:
+         CASE(MVHOSTREG_INSTR)
+            JUMP(mvhostreg)
 #ifdef CORE_STATISTICS
-           state.stat.stat_moves_executed++;
+            state.stat.stat_moves_executed++;
 #endif
-           execute_mvhostreg(pc, state);
-           break;
+            execute_mvhostreg(pc, state);
+            ADVANCE()
 
-         case ADDRNOTEQUAL_INSTR:
-           execute_addrnotequal(pc, state);
-           break;
+         CASE(ADDRNOTEQUAL_INSTR)
+            JUMP(addrnotequal)
+            execute_addrnotequal(pc, state);
+            ADVANCE()
 
-         case ADDREQUAL_INSTR:
-           execute_addrequal(pc, state);
-           break;
+         CASE(ADDREQUAL_INSTR)
+            JUMP(addrequal)
+            execute_addrequal(pc, state);
+            ADVANCE()
 
-         case INTMINUS_INSTR:
-           execute_intminus(pc, state);
-           break;
+         CASE(INTMINUS_INSTR)
+            JUMP(intminus)
+            execute_intminus(pc, state);
+            ADVANCE()
 
-         case INTEQUAL_INSTR:
-           execute_intequal(pc, state);
-           break;
+         CASE(INTEQUAL_INSTR)
+            JUMP(intequal)
+            execute_intequal(pc, state);
+            ADVANCE()
 
-         case INTNOTEQUAL_INSTR:
-           execute_intnotequal(pc, state);
-           break;
+         CASE(INTNOTEQUAL_INSTR)
+            JUMP(intnotequal)
+            execute_intnotequal(pc, state);
+            ADVANCE()
 
-         case INTPLUS_INSTR:
-           execute_intplus(pc, state);
-           break;
+         CASE(INTPLUS_INSTR)
+            JUMP(intplus)
+            execute_intplus(pc, state);
+            ADVANCE()
 
-         case INTLESSER_INSTR:
-           execute_intlesser(pc, state);
-           break;
+         CASE(INTLESSER_INSTR)
+            JUMP(intlesser)
+            execute_intlesser(pc, state);
+            ADVANCE()
 
-         case INTGREATEREQUAL_INSTR:
-           execute_intgreaterequal(pc, state);
-           break;
+         CASE(INTGREATEREQUAL_INSTR)
+            JUMP(intgreaterequal)
+            execute_intgreaterequal(pc, state);
+            ADVANCE()
 
-         case BOOLOR_INSTR:
-           execute_boolor(pc, state);
-           break;
+         CASE(BOOLOR_INSTR)
+            JUMP(boolor)
+            execute_boolor(pc, state);
+            ADVANCE()
 
-         case INTLESSEREQUAL_INSTR:
-           execute_intlesserequal(pc, state);
-           break;
+         CASE(INTLESSEREQUAL_INSTR)
+            JUMP(intlesserequal)
+            execute_intlesserequal(pc, state);
+            ADVANCE()
 
-         case INTGREATER_INSTR:
-           execute_intgreater(pc, state);
-           break;
+         CASE(INTGREATER_INSTR)
+            JUMP(intgreater)
+            execute_intgreater(pc, state);
+            ADVANCE()
 
-         case INTMUL_INSTR:
-           execute_intmul(pc, state);
-           break;
+         CASE(INTMUL_INSTR)
+            JUMP(intmul)
+            execute_intmul(pc, state);
+            ADVANCE()
 
-         case INTDIV_INSTR:
-           execute_intdiv(pc, state);
-           break;
+         CASE(INTDIV_INSTR)
+            JUMP(intdiv)
+            execute_intdiv(pc, state);
+            ADVANCE()
 
-         case FLOATPLUS_INSTR:
-           execute_floatplus(pc, state);
-           break;
+         CASE(FLOATPLUS_INSTR)
+            JUMP(floatplus)
+            execute_floatplus(pc, state);
+            ADVANCE()
 
-         case FLOATMINUS_INSTR:
-           execute_floatminus(pc, state);
-           break;
+         CASE(FLOATMINUS_INSTR)
+            JUMP(floatminus)
+            execute_floatminus(pc, state);
+            ADVANCE()
 
-         case FLOATMUL_INSTR:
-           execute_floatmul(pc, state);
-           break;
+         CASE(FLOATMUL_INSTR)
+            JUMP(floatmul)
+            execute_floatmul(pc, state);
+            ADVANCE()
 
-         case FLOATDIV_INSTR:
-           execute_floatdiv(pc, state);
-           break;
+         CASE(FLOATDIV_INSTR)
+            JUMP(floatdiv)
+            execute_floatdiv(pc, state);
+            ADVANCE()
 
-         case FLOATEQUAL_INSTR:
-           execute_floatequal(pc, state);
-           break;
+         CASE(FLOATEQUAL_INSTR)
+            JUMP(floatequal)
+            execute_floatequal(pc, state);
+            ADVANCE()
 
-         case FLOATNOTEQUAL_INSTR:
-           execute_floatnotequal(pc, state);
-           break;
+         CASE(FLOATNOTEQUAL_INSTR)
+            JUMP(floatnotequal)
+            execute_floatnotequal(pc, state);
+            ADVANCE()
 
-         case FLOATLESSER_INSTR:
-           execute_floatlesser(pc, state);
-           break;
+         CASE(FLOATLESSER_INSTR)
+            JUMP(floatlesser)
+            execute_floatlesser(pc, state);
+            ADVANCE()
 
-         case FLOATLESSEREQUAL_INSTR:
-           execute_floatlesserequal(pc, state);
-           break;
+         CASE(FLOATLESSEREQUAL_INSTR)
+            JUMP(floatlesserequal)
+            execute_floatlesserequal(pc, state);
+            ADVANCE()
 
-         case FLOATGREATER_INSTR:
-           execute_floatgreater(pc, state);
-           break;
+         CASE(FLOATGREATER_INSTR)
+            JUMP(floatgreater)
+            execute_floatgreater(pc, state);
+            ADVANCE()
 
-         case FLOATGREATEREQUAL_INSTR:
-           execute_floatgreaterequal(pc, state);
-           break;
+         CASE(FLOATGREATEREQUAL_INSTR)
+            JUMP(floatgreaterequal)
+            execute_floatgreaterequal(pc, state);
+            ADVANCE()
 
-         case MVREGREG_INSTR:
-           execute_mvregreg(pc, state);
-           break;
+         CASE(MVREGREG_INSTR)
+            JUMP(mvregreg)
+            execute_mvregreg(pc, state);
+            ADVANCE()
 
-         case BOOLEQUAL_INSTR:
-           execute_boolequal(pc, state);
-           break;
+         CASE(BOOLEQUAL_INSTR)
+            JUMP(boolequal)
+            execute_boolequal(pc, state);
+            ADVANCE()
 
-         case BOOLNOTEQUAL_INSTR:
-           execute_boolnotequal(pc, state);
-           break;
+         CASE(BOOLNOTEQUAL_INSTR)
+            JUMP(boolnotequal)
+            execute_boolnotequal(pc, state);
+            ADVANCE()
 
-         case HEADRR_INSTR:
-           execute_headrr(pc, state);
-           break;
+         CASE(HEADRR_INSTR)
+            JUMP(headrr)
+            execute_headrr(pc, state);
+            ADVANCE()
 
-         case HEADFR_INSTR:
-           execute_headfr(pc, state);
-           break;
+         CASE(HEADFR_INSTR)
+            JUMP(headfr)
+            execute_headfr(pc, state);
+            ADVANCE()
 
-         case HEADFF_INSTR:
-           execute_headff(pc, state);
-           break;
+         CASE(HEADFF_INSTR)
+            JUMP(headff)
+            execute_headff(pc, state);
+            ADVANCE()
 
-         case HEADRF_INSTR:
-           execute_headrf(pc, state);
-           break;
+         CASE(HEADRF_INSTR)
+            JUMP(headrf)
+            execute_headrf(pc, state);
+            ADVANCE()
 
-         case HEADFFR_INSTR:
-           execute_headffr(pc, state);
-           break;
+         CASE(HEADFFR_INSTR)
+            JUMP(headffr)
+            execute_headffr(pc, state);
+            ADVANCE()
 
-         case HEADRFR_INSTR:
-           execute_headrfr(pc, state);
-           break;
+         CASE(HEADRFR_INSTR)
+            JUMP(headrfr)
+            execute_headrfr(pc, state);
+            ADVANCE()
 
-         case TAILRR_INSTR:
-           execute_tailrr(pc, state);
-           break;
+         CASE(TAILRR_INSTR)
+            JUMP(tailrr)
+            execute_tailrr(pc, state);
+            ADVANCE()
 
-         case TAILFR_INSTR:
-           execute_tailfr(pc, state);
-           break;
+         CASE(TAILFR_INSTR)
+            JUMP(tailfr)
+            execute_tailfr(pc, state);
+            ADVANCE()
 
-         case TAILFF_INSTR:
-           execute_tailff(pc, state);
-           break;
+         CASE(TAILFF_INSTR)
+            JUMP(tailff)
+            execute_tailff(pc, state);
+            ADVANCE()
 
-         case TAILRF_INSTR:
-           execute_tailrf(pc, state);
-           break;
+         CASE(TAILRF_INSTR)
+            JUMP(tailrf)
+            execute_tailrf(pc, state);
+            ADVANCE()
 
-         case MVWORLDREG_INSTR:
-           execute_mvworldreg(pc, state);
-           break;
+         CASE(MVWORLDREG_INSTR)
+            JUMP(mvworldreg)
+            execute_mvworldreg(pc, state);
+            ADVANCE()
 
-         case MVCONSTREG_INSTR:
-           execute_mvconstreg(pc, state);
-           break;
+         CASE(MVCONSTREG_INSTR)
+            JUMP(mvconstreg)
+            execute_mvconstreg(pc, state);
+            ADVANCE()
 
-         case MVINTSTACK_INSTR:
-           execute_mvintstack(pc, state);
-           break;
+         CASE(MVINTSTACK_INSTR)
+            JUMP(mvintstack)
+            execute_mvintstack(pc, state);
+            ADVANCE()
 
-         case CONSRRR_INSTR:
-           execute_consrrr(pc, state);
-           break;
+         CASE(CONSRRR_INSTR)
+            JUMP(consrrr)
+            execute_consrrr(pc, state);
+            ADVANCE()
 
-         case CONSRFF_INSTR:
-           execute_consrff(pc, state);
-           break;
+         CASE(CONSRFF_INSTR)
+            JUMP(consrff)
+            execute_consrff(pc, state);
+            ADVANCE()
 
-         case CONSFRF_INSTR:
-           execute_consfrf(pc, state);
-           break;
+         CASE(CONSFRF_INSTR)
+            JUMP(consfrf)
+            execute_consfrf(pc, state);
+            ADVANCE()
 
-         case CONSFFR_INSTR:
-           execute_consffr(pc, state);
-           break;
+         CASE(CONSFFR_INSTR)
+            JUMP(consffr)
+            execute_consffr(pc, state);
+            ADVANCE()
 
-         case CONSRRF_INSTR:
-           execute_consrrf(pc, state);
-           break;
+         CASE(CONSRRF_INSTR)
+            JUMP(consrrf)
+            execute_consrrf(pc, state);
+            ADVANCE()
 
-         case CONSRFR_INSTR:
-           execute_consrfr(pc, state);
-           break;
+         CASE(CONSRFR_INSTR)
+            JUMP(consrfr)
+            execute_consrfr(pc, state);
+            ADVANCE()
 
-         case CONSFRR_INSTR:
-           execute_consfrr(pc, state);
-           break;
+         CASE(CONSFRR_INSTR)
+            JUMP(consfrr)
+            execute_consfrr(pc, state);
+            ADVANCE()
 
-         case CONSFFF_INSTR:
-           execute_consfff(pc, state);
-           break;
+         CASE(CONSFFF_INSTR)
+            JUMP(consfff)
+            execute_consfff(pc, state);
+            ADVANCE()
 
-         default: throw vm_exec_error("unsupported instruction");
+         CASE(CALLE_INSTR)
+            JUMP(calle)
+#ifndef COMPUTED_GOTOS
+         default:
+#endif
+            throw vm_exec_error("unsupported instruction");
+#ifndef COMPUTED_GOTOS
       }
    }
+#endif
 }
 
 static inline return_type
