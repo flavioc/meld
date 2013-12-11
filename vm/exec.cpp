@@ -754,6 +754,8 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
 				}
 			}
 		}
+
+#define TO_FINISH(ret) ((ret) == RETURN_LINEAR || (ret) == RETURN_DERIVED)
 		
 		for(tuple_trie::tuple_search_iterator end(tuple_trie::match_end());
 			tuples_it != end; ++tuples_it)
@@ -779,69 +781,96 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
 			iter_object p(*it);
 			return_type ret;
 
-			switch(p.first) {
-				case ITER_DB: {
-					tuple_trie_leaf *tuple_leaf((tuple_trie_leaf*)p.second);
+         while(true) {
 
-               if(pred_linear) {
-                  if(!tuple_leaf->new_ref_use())
-                     continue;
-               }
+            switch(p.first) {
+               case ITER_DB: {
+                                tuple_trie_leaf *tuple_leaf((tuple_trie_leaf*)p.second);
 
-			      tuple *match_tuple(tuple_leaf->get_underlying_tuple());
-               assert(match_tuple != NULL);
+                                if(pred_linear) {
+                                   if(!tuple_leaf->new_ref_use())
+                                      goto next_every_tuple;
+                                }
 
-					PUSH_CURRENT_STATE(match_tuple, tuple_leaf, NULL, tuple_leaf->get_min_depth());
+                                tuple *match_tuple(tuple_leaf->get_underlying_tuple());
+                                assert(match_tuple != NULL);
 
-			      ret = execute(first, state, reg, match_tuple);
+                                PUSH_CURRENT_STATE(match_tuple, tuple_leaf, NULL, tuple_leaf->get_min_depth());
 
-					POP_STATE();
+                                ret = execute(first, state, reg, match_tuple);
 
-               if(pred_linear) {
-                  if((ret != RETURN_LINEAR && ret != RETURN_DERIVED) || !to_delete)
-                     tuple_leaf->delete_ref_use();
-               }
-				}
-				break;
-				case ITER_LOCAL: {
-					simple_tuple *stpl((simple_tuple*)p.second);
-					tuple *match_tuple(stpl->get_tuple());
-					
-					if(!stpl->can_be_consumed())
-						continue;
-					
-					PUSH_CURRENT_STATE(match_tuple, NULL, stpl, stpl->get_depth());
-					
-					if(pred_linear)
-						stpl->will_delete();
-					
-					ret = execute(first, state, reg, match_tuple);
-					
-					POP_STATE();
-					
-               if(pred_linear) {
-                  if((ret != RETURN_LINEAR && ret != RETURN_DERIVED) || !to_delete)
-                     stpl->will_not_delete();
-               }
-				}
-				break;
-				default: ret = RETURN_NO_RETURN; assert(false);
-			}
-		
-			if(ret == RETURN_LINEAR)
-	         return ret;
-	      if(ret == RETURN_DERIVED && state.is_linear)
-	         return RETURN_DERIVED;
-		}
-		
-		return RETURN_NO_RETURN;
-	}
+                                POP_STATE();
+
+                                if(pred_linear) {
+                                   if(to_delete) {
+                                      if(!TO_FINISH(ret)) {
+                                         tuple_leaf->delete_ref_use();
+                                         goto next_every_tuple;
+                                      }
+                                   } else {
+                                      tuple_leaf->delete_ref_use();
+                                      if(!TO_FINISH(ret)) {
+                                         goto next_every_tuple;
+                                      }
+                                   }
+                                } else {
+                                   if(!TO_FINISH(ret))
+                                      goto next_every_tuple;
+                                }
+                             }
+                             break;
+               case ITER_LOCAL: {
+                                   simple_tuple *stpl((simple_tuple*)p.second);
+                                   tuple *match_tuple(stpl->get_tuple());
+
+                                   if(!stpl->can_be_consumed())
+                                      goto next_every_tuple;
+
+                                   PUSH_CURRENT_STATE(match_tuple, NULL, stpl, stpl->get_depth());
+
+                                   if(pred_linear)
+                                      stpl->will_delete();
+
+                                   ret = execute(first, state, reg, match_tuple);
+
+                                   POP_STATE();
+
+                                   if(pred_linear) {
+                                      if(to_delete) {
+                                         if(!TO_FINISH(ret)) {
+                                            stpl->will_not_delete();
+                                            goto next_every_tuple;
+                                         }
+                                      } else {
+                                         stpl->will_not_delete();
+                                         if(!TO_FINISH(ret))
+                                            goto next_every_tuple;
+                                      }
+                                   } else {
+                                      goto next_every_tuple;
+                                   }
+                                }
+                                break;
+               default: ret = RETURN_NO_RETURN; assert(false);
+            }
+
+            if(ret == RETURN_LINEAR)
+               return ret;
+            if(ret == RETURN_DERIVED && state.is_linear)
+               return RETURN_DERIVED;
+         }
+next_every_tuple:
+         (void)ret;
+      }
+
+      return RETURN_NO_RETURN;
+   }
 
    for(tuple_trie::tuple_search_iterator end(tuple_trie::match_end());
-      tuples_it != end;
-      ++tuples_it)
+         tuples_it != end;
+         ++tuples_it)
    {
-		tuple_trie_leaf *tuple_leaf(*tuples_it);
+      tuple_trie_leaf *tuple_leaf(*tuples_it);
 
       while(true) {
          if(pred_linear) {
@@ -874,7 +903,7 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
 
          if(pred_linear) {
             if(to_delete) {
-               if(ret != RETURN_LINEAR && ret != RETURN_DERIVED) {
+               if(!TO_FINISH(ret)) {
                   tuple_leaf->delete_ref_use(); // not consumed because nothing was derived
                   break; // exit while loop
                }
@@ -908,9 +937,10 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
 		
 			PUSH_CURRENT_STATE(match_tuple, NULL, stpl, stpl->get_depth());
 		
-			if(to_delete || pred_linear) {
-				stpl->will_delete(); // this will avoid future uses of this tuple!
-			}
+         if(pred_linear) {
+            if(to_delete)
+               stpl->will_delete(); // this will avoid future uses of this tuple!
+         }
 		
 			// execute...
 			return_type ret = execute(first, state, reg, match_tuple);
@@ -918,7 +948,7 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
 			POP_STATE();
 
          if(pred_linear) {
-            if((ret != RETURN_LINEAR && ret != RETURN_DERIVED) || !to_delete) { // tuple not consumed
+            if(!TO_FINISH(ret) || !to_delete) { // tuple not consumed
                stpl->will_not_delete(); // oops, revert
             }
          }
