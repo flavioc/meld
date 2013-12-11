@@ -25,62 +25,6 @@ bool state::UI = false;
 bool state::SIM = false;
 #endif
 
-size_t
-state::linear_tuple_can_be_used(db::tuple_trie_leaf *leaf) const
-{
-   assert(leaf != NULL);
-
-   for(list_linear::const_iterator it(used_linear_tuples.begin()), end(used_linear_tuples.end());
-      it != end;
-      it++)
-   {
-      const pair_linear& p(*it);
-      
-      if(p.first == leaf)
-         return p.second;
-   }
-   
-   return leaf->get_count();
-}
-
-void
-state::using_new_linear_tuple(db::tuple_trie_leaf *leaf)
-{
-   for(list_linear::iterator it(used_linear_tuples.begin()), end(used_linear_tuples.end());
-      it != end;
-      it++)
-   {
-      pair_linear& p(*it);
-      
-      if(p.first == leaf) {
-         assert(p.second > 0);
-         p.second--;
-         return;
-      }
-   }
-   
-   // first time, get the count
-   used_linear_tuples.push_front(pair_linear(leaf, leaf->get_count() - 1));
-}
-
-void
-state::no_longer_using_linear_tuple(db::tuple_trie_leaf *leaf)
-{
-   for(list_linear::iterator it(used_linear_tuples.begin()), end(used_linear_tuples.end());
-      it != end;
-      it++)
-   {
-      pair_linear &p(*it);
-      
-      if(p.first == leaf) {
-         p.second++; // a free count
-         return;
-      }
-   }
-   
-   assert(false);
-}
-
 void
 state::purge_runtime_objects(void)
 {
@@ -103,7 +47,6 @@ void
 state::cleanup(void)
 {
    purge_runtime_objects();
-   used_linear_tuples.clear();
 }
 
 void
@@ -137,8 +80,6 @@ state::setup(vm::tuple *tpl, db::node *n, const derivation_count count, const de
    	this->is_linear = tpl->is_linear();
 	else
 		this->is_linear = false;
-   assert(used_linear_tuples.empty());
-   this->used_linear_tuples.clear();
 	for(size_t i(0); i < NUM_REGS; ++i) {
 		this->is_leaf[i] = false;
 		this->saved_leafs[i] = NULL;
@@ -315,6 +256,7 @@ state::delete_leaves(void)
       
       leaves_for_deletion.pop_front();
       
+      leaf->reset_ref_use();
       node->delete_by_leaf(pred, leaf, 0);
    }
       
@@ -623,6 +565,7 @@ state::run_node(db::node *no)
 		process_consumed_local_tuples();
 #endif
       delete_leaves();
+      //node->assert_tries();
 #ifdef USE_SIM
       if(sim_instr_use && !check_instruction_limit()) {
          // gather new tuples

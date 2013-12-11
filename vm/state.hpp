@@ -66,7 +66,6 @@ public:
    vm::depth_t depth;
    sched::base *sched;
    bool is_linear;
-   list_linear used_linear_tuples;
 	utils::randgen randgen;
    size_t current_rule;
 #ifdef DEBUG_MODE
@@ -172,9 +171,6 @@ public:
 	void run_node(db::node *);
    void setup(vm::tuple*, db::node*, const vm::derivation_count, const vm::depth_t);
    void cleanup(void);
-   size_t linear_tuple_can_be_used(db::tuple_trie_leaf *) const;
-   void using_new_linear_tuple(db::tuple_trie_leaf *);
-   void no_longer_using_linear_tuple(db::tuple_trie_leaf *);
 
    explicit state(sched::base *, vm::all *);
 	explicit state(vm::all *);

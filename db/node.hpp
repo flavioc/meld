@@ -75,6 +75,8 @@ private:
    sched::base *owner;
    
 public:
+
+   void assert_tries(void);
    
    inline node_id get_id(void) const { return id; }
    inline node_id get_translated_id(void) const { return translation; }

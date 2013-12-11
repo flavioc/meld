@@ -135,6 +135,15 @@ node::delete_by_leaf(const predicate *pred, tuple_trie_leaf *leaf, const depth_t
 }
 
 void
+node::assert_tries(void)
+{
+   for(simple_tuple_map::iterator it(tuples.begin()), end(tuples.end()); it != end; ++it) {
+      tuple_trie *tr(it->second);
+      tr->assert_used();
+   }
+}
+
+void
 node::delete_by_index(const predicate *pred, const match& m)
 {
    tuple_trie *tr(get_storage(pred));

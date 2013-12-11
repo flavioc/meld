@@ -706,11 +706,13 @@ public:
 };
 
 static inline return_type
-execute_iter(const reg_num reg, match* m, pcounter pc, const utils::byte options, const utils::byte options_arguments,
+execute_iter(const reg_num reg, match* m, const utils::byte options, const utils::byte options_arguments,
 		pcounter first, state& state, tuple_trie::tuple_search_iterator tuples_it, const predicate *pred)
 {
    const bool old_is_linear = state.is_linear;
-	const bool this_is_linear = (pred->is_linear_pred() && !state.persistent_only && iter_options_to_delete(options));
+   const bool to_delete(iter_options_to_delete(options));
+   const bool pred_linear = pred->is_linear_pred();
+	const bool this_is_linear = (pred_linear && !state.persistent_only && to_delete);
 
 #ifndef NDEBUG
    if(pred->is_linear_pred() && state.persistent_only) {
@@ -776,16 +778,15 @@ execute_iter(const reg_num reg, match* m, pcounter pc, const utils::byte options
 		{
 			iter_object p(*it);
 			return_type ret;
-			
+
 			switch(p.first) {
 				case ITER_DB: {
 					tuple_trie_leaf *tuple_leaf((tuple_trie_leaf*)p.second);
 
-			      if(this_is_linear) {
-			         if(!state.linear_tuple_can_be_used(tuple_leaf))
-			            continue;
-			         state.using_new_linear_tuple(tuple_leaf);
-			      }
+               if(pred_linear) {
+                  if(!tuple_leaf->new_ref_use())
+                     continue;
+               }
 
 			      tuple *match_tuple(tuple_leaf->get_underlying_tuple());
                assert(match_tuple != NULL);
@@ -796,8 +797,10 @@ execute_iter(const reg_num reg, match* m, pcounter pc, const utils::byte options
 
 					POP_STATE();
 
-			      if(ret != RETURN_LINEAR && ret != RETURN_DERIVED && this_is_linear)
-			         state.no_longer_using_linear_tuple(tuple_leaf); // not used during derivation
+               if(pred_linear) {
+                  if((ret != RETURN_LINEAR && ret != RETURN_DERIVED) || !to_delete)
+                     tuple_leaf->delete_ref_use();
+               }
 				}
 				break;
 				case ITER_LOCAL: {
@@ -809,17 +812,17 @@ execute_iter(const reg_num reg, match* m, pcounter pc, const utils::byte options
 					
 					PUSH_CURRENT_STATE(match_tuple, NULL, stpl, stpl->get_depth());
 					
-					if(iter_options_to_delete(options)) {
+					if(pred_linear)
 						stpl->will_delete();
-					}
 					
 					ret = execute(first, state, reg, match_tuple);
 					
 					POP_STATE();
 					
-					if(!(ret == RETURN_LINEAR || ret == RETURN_DERIVED)) {
-						stpl->will_not_delete();
-					}
+               if(pred_linear) {
+                  if((ret != RETURN_LINEAR && ret != RETURN_DERIVED) || !to_delete)
+                     stpl->will_not_delete();
+               }
 				}
 				break;
 				default: ret = RETURN_NO_RETURN; assert(false);
@@ -841,10 +844,9 @@ execute_iter(const reg_num reg, match* m, pcounter pc, const utils::byte options
 		tuple_trie_leaf *tuple_leaf(*tuples_it);
 
       while(true) {
-         if(pred->is_linear_pred()) {
-            if(state.linear_tuple_can_be_used(tuple_leaf) == 0)
+         if(pred_linear) {
+            if(!tuple_leaf->new_ref_use())
                break;
-            state.using_new_linear_tuple(tuple_leaf);
          }
 
          // we get the tuple later since the previous leaf may have been deleted
@@ -853,36 +855,33 @@ execute_iter(const reg_num reg, match* m, pcounter pc, const utils::byte options
 
 #ifdef TRIE_MATCHING_ASSERT
          assert(do_matches(m, match_tuple));
-#else
-         (void)pc;
 #endif
 
          PUSH_CURRENT_STATE(match_tuple, tuple_leaf, NULL, tuple_leaf->get_min_depth());
 
-         return_type ret;
-
-         ret = execute(first, state, reg, match_tuple);
+         return_type ret = execute(first, state, reg, match_tuple);
 
          POP_STATE();
+
+         if(pred_linear && !to_delete)
+            tuple_leaf->delete_ref_use();
 
          if(ret == RETURN_LINEAR)
             return ret;
 
-         if(ret == RETURN_DERIVED && state.is_linear) {
+         if(ret == RETURN_DERIVED && state.is_linear)
             return RETURN_DERIVED;
-         }
 
-         if(pred->is_linear_pred()) {
-            if(ret != RETURN_LINEAR && ret != RETURN_DERIVED) {
-               state.no_longer_using_linear_tuple(tuple_leaf); // not consumed because nothing was derived
-               break; // exit while loop
-            }
-
-            if(!iter_options_to_delete(options)) {
-               state.no_longer_using_linear_tuple(tuple_leaf); // cannot be consumed because it would get generated again
-            }
+         if(pred_linear) {
+            if(to_delete) {
+               if(ret != RETURN_LINEAR && ret != RETURN_DERIVED) {
+                  tuple_leaf->delete_ref_use(); // not consumed because nothing was derived
+                  break; // exit while loop
+               }
+            } else
+               break;
          } else {
-            break;
+            break; // because the fact is persistent no need to try different versions of it
          }
       }
    }
@@ -893,9 +892,8 @@ execute_iter(const reg_num reg, match* m, pcounter pc, const utils::byte options
 			simple_tuple *stpl(*it);
 			tuple *match_tuple(stpl->get_tuple());
 
-			if(!stpl->can_be_consumed()) {
+			if(!stpl->can_be_consumed())
 				continue;
-         }
 				
 			if(match_tuple->get_predicate() != pred)
 				continue;
@@ -910,7 +908,7 @@ execute_iter(const reg_num reg, match* m, pcounter pc, const utils::byte options
 		
 			PUSH_CURRENT_STATE(match_tuple, NULL, stpl, stpl->get_depth());
 		
-			if(iter_options_to_delete(options) || pred->is_linear_pred()) {
+			if(to_delete || pred_linear) {
 				stpl->will_delete(); // this will avoid future uses of this tuple!
 			}
 		
@@ -919,24 +917,16 @@ execute_iter(const reg_num reg, match* m, pcounter pc, const utils::byte options
 		
 			POP_STATE();
 
-         if(pred->is_linear_pred()) {
-            if(!(ret == RETURN_LINEAR || ret == RETURN_DERIVED)) { // tuple not consumed
+         if(pred_linear) {
+            if((ret != RETURN_LINEAR && ret != RETURN_DERIVED) || !to_delete) { // tuple not consumed
                stpl->will_not_delete(); // oops, revert
             }
-
-            if(!iter_options_to_delete(options)) {
-               // the tuple cannot be deleted
-               // we have just marked it for deletion in order to lock it
-               stpl->will_not_delete();
-            }
          }
 
-			if(ret == RETURN_LINEAR) { 
+			if(ret == RETURN_LINEAR)
 				return ret;
-         }
-			if(state.is_linear && ret == RETURN_DERIVED) {
+			if(state.is_linear && ret == RETURN_DERIVED)
 				return ret;
-         }
 		}
 	}
    
@@ -2216,7 +2206,7 @@ eval_loop:
 #endif
                tuple_trie::tuple_search_iterator it = state.node->match_predicate(pred_id, mobj);
 
-               const return_type ret(execute_iter(reg, mobj, pc + ITER_BASE,
+               const return_type ret(execute_iter(reg, mobj,
 								iter_options(pc), iter_options_argument(pc),
 								pc + iter_inner_jump(pc), state, it, pred));
                   
@@ -2951,6 +2941,7 @@ void
 execute_rule(const rule_id rule_id, state& state)
 {
 #ifdef DEBUG_RULES
+   cout << "================> NODE " << state.node->get_id() << " ===============\n";
 	cout << "Running rule " << state.all->PROGRAM->get_rule(rule_id)->get_string() << endl;
 #endif
 #ifdef CORE_STATISTICS

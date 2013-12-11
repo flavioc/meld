@@ -288,6 +288,7 @@ private:
    
    vm::tuple *tpl;
    vm::ref_count count;
+   vm::ref_count used; // this is utilized by the VM core to manage leaves
    depth_counter *depths; // depth counter -- usually NULL
    
 public:
@@ -301,6 +302,22 @@ public:
    inline bool has_depth_counter(void) const { return depths != NULL; }
 
    inline depth_counter *get_depth_counter(void) const { return depths; }
+
+   inline bool new_ref_use(void) {
+      if(used == count)
+         return false;
+      used++;
+      return true;
+   }
+
+   inline void delete_ref_use(void) {
+      assert(used > 0);
+      used--;
+   }
+
+   inline void reset_ref_use(void) {
+      used = 0;
+   }
 
    inline vm::depth_t get_max_depth(void) const {
       if(depths == NULL)
@@ -338,6 +355,14 @@ public:
       }
    }
 
+   inline void checked_sub(const vm::derivation_count many)
+   {
+      assert(many < 0);
+      assert(count >= (vm::ref_count)-many);
+      assert(depths == NULL);
+      count += many;
+   }
+
    virtual inline void sub(const vm::depth_t depth,
          const vm::derivation_count many)
    {
@@ -356,7 +381,8 @@ public:
    explicit tuple_trie_leaf(simple_tuple *_tpl):
       trie_leaf(),
       tpl(_tpl->get_tuple()),
-      count(0)
+      count(0),
+      used(0)
    {
       if(tpl->is_cycle())
          depths = new depth_counter();
@@ -556,6 +582,15 @@ private:
    void do_visit(trie_node *, const int, std::stack<vm::type*>&) const;
    
 public:
+
+   void assert_used(void) {
+      tuple_trie_leaf *leaf((tuple_trie_leaf*)first_leaf);
+
+      while(leaf) {
+         assert(leaf->used == 0);
+         leaf = (tuple_trie_leaf*)leaf->next;
+      }
+   }
 
    MEM_METHODS(tuple_trie)
    
