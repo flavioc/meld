@@ -937,10 +937,8 @@ next_every_tuple:
 		
 			PUSH_CURRENT_STATE(match_tuple, NULL, stpl, stpl->get_depth());
 		
-         if(pred_linear) {
-            if(to_delete)
-               stpl->will_delete(); // this will avoid future uses of this tuple!
-         }
+         if(pred_linear)
+            stpl->will_delete(); // this will avoid future uses of this tuple!
 		
 			// execute...
 			return_type ret = execute(first, state, reg, match_tuple);
