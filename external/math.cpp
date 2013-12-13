@@ -4,7 +4,7 @@
 #include <boost/random/uniform_real.hpp>
 #include <boost/random/variate_generator.hpp>
 
-#include "runtime/list.hpp"
+#include "runtime/objs.hpp"
 #include "external/math.hpp"
 
 using namespace std;

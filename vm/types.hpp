@@ -39,9 +39,11 @@ class type
    private:
 
       field_type ftype;
+      bool ref;
 
    public:
 
+      inline bool is_ref(void) const { return ref; }
       inline field_type get_type(void) const { return ftype; }
 
       inline size_t size(void) const
@@ -59,7 +61,10 @@ class type
          return ftype == other->ftype;
       }
 
-      explicit type(const field_type _ftype): ftype(_ftype) {}
+      explicit type(const field_type _ftype): ftype(_ftype)
+      {
+         ref = reference_type(ftype);
+      }
 
       virtual ~type(void) { }
 };

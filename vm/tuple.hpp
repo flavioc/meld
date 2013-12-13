@@ -16,9 +16,7 @@
 
 #include "vm/defs.hpp"
 #include "vm/predicate.hpp"
-#include "runtime/list.hpp"
-#include "runtime/string.hpp"
-#include "runtime/struct.hpp"
+#include "runtime/objs.hpp"
 #include "mem/allocator.hpp"
 #include "mem/base.hpp"
 #include "utils/types.hpp"

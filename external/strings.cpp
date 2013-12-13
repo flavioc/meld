@@ -2,7 +2,7 @@
 #include <string>
 
 #include "external/strings.hpp"
-#include "runtime/string.hpp"
+#include "runtime/objs.hpp"
 
 namespace vm
 {

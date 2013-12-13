@@ -17,7 +17,6 @@
 #include "stat/slice.hpp"
 #include "process/work.hpp"
 #include "stat/stat.hpp"
-#include "runtime/string.hpp"
 #include "vm/state.hpp"
 
 namespace process {

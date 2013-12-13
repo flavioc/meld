@@ -90,8 +90,7 @@ SRCS = utils/utils.cpp \
 			 ui/manager.cpp \
 			 ui/client.cpp \
 			 interface.cpp \
-			 sched/sim.cpp \
-			 runtime/common.cpp
+			 sched/sim.cpp
 
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 

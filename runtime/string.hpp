@@ -1,23 +1,7 @@
 
-#ifndef RUNTIME_STRING_HPP
-#define RUNTIME_STRING_HPP
-
-#include "conf.hpp"
-
-#include <iostream>
-#include <string>
-#include <stack>
-#ifdef COMPILE_MPI
-#include <boost/mpi.hpp>
+#ifndef RUNTIME_OBJS_HPP
+#error "Please include runtime/objs.hpp instead"
 #endif
-#include "utils/types.hpp"
-#include "utils/atomic.hpp"
-#include "mem/base.hpp"
-
-#include "vm/defs.hpp"
-
-namespace runtime
-{
 
 class rstring: public mem::base
 {
@@ -92,6 +76,3 @@ public:
 	}
 };
 
-}
-
-#endif

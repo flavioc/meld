@@ -1,15 +1,9 @@
 
-#ifndef RUNTIME_STRUCT_HPP
-#define RUNTIME_STRUCT_HPP
+// do NOT include this file directly, please include runtime/objs.hpp
 
-#include "conf.hpp"
-#include "utils/types.hpp"
-#include "utils/atomic.hpp"
-#include "vm/types.hpp"
-#include "mem/base.hpp"
-
-namespace runtime
-{
+#ifndef RUNTIME_OBJS_HPP
+#error "Please include runtime/objs.hpp instead"
+#endif
 
 class struct1: public mem::base
 {
@@ -67,7 +61,3 @@ class struct1: public mem::base
          mem::allocator<vm::tuple_field>().deallocate(fields, typ->get_size());
       }
 };
-
-}
-
-#endif

@@ -14,8 +14,8 @@
 #include "vm/all.hpp"
 #include "utils/random.hpp"
 #include "utils/time.hpp"
+#include "runtime/objs.hpp"
 #include "queue/safe_simple_pqueue.hpp"
-#include "runtime/struct.hpp"
 #include "vm/stat.hpp"
 #include "vm/call_stack.hpp"
 

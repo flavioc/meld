@@ -9,7 +9,6 @@
 #include "vm/tuple.hpp"
 #include "vm/match.hpp"
 #include "db/tuple.hpp"
-#include "runtime/ref_base.hpp"
 #include "process/machine.hpp"
 #ifdef USE_UI
 #include "ui/manager.hpp"
@@ -1300,10 +1299,7 @@ execute_struct_valrfr(pcounter& pc, state& state)
    struct1 *s(state.get_struct(src));
    tuple->set_field(field, s->get_data(idx));
    assert(reference_type(tuple->get_field_type(field)->get_type()));
-   runtime::ref_base *p((runtime::ref_base*)tuple->get_field(field).ptr_field);
-
-   if(p)
-      p->refs++;
+   do_increment_runtime(tuple->get_field(field));
 }
 
 static inline void
@@ -1327,10 +1323,7 @@ execute_struct_valffr(pcounter& pc, state& state)
 
    dst->set_field(field_dst, src->get_field(field_src));
 
-   runtime::ref_base *p((runtime::ref_base*)dst->get_field(field_dst).ptr_field);
-
-   if(p)
-      p->refs++;
+   do_increment_runtime(dst->get_field(field_dst));
 }
 
 static inline void
@@ -1369,10 +1362,7 @@ execute_mvfieldfieldr(pcounter pc, state& state)
 
    assert(reference_type(tuple_to->get_field_type(to)->get_type()));
 
-   runtime::ref_base *p((runtime::ref_base*)tuple_from->get_field(from).ptr_field);
-
-   if(p)
-      p->refs++;
+   do_increment_runtime(tuple_from->get_field(from));
 }
 
 static inline void
@@ -1427,10 +1417,7 @@ execute_mvregfieldr(pcounter& pc, state& state)
 
    assert(reference_type(tuple->get_field_type(field)->get_type()));
 
-   runtime::ref_base *p((runtime::ref_base*)tuple->get_field(field).ptr_field);
-
-   if(p)
-      p->refs++;
+   do_increment_runtime(tuple->get_field(field));
 }
 
 static inline void
@@ -1447,12 +1434,8 @@ execute_mvregconst(pcounter& pc, state& state)
 {
    const const_id id(pcounter_const_id(pc + instr_size + reg_val_size));
    state.all->set_const(id, state.get_reg(pcounter_reg(pc + instr_size)));
-   if(reference_type(state.all->PROGRAM->get_const_type(id)->get_type())) {
-      runtime::ref_base *p((runtime::ref_base*)state.all->get_const(id).ptr_field);
-
-      if(p)
-         p->refs++;
-   }
+   if(reference_type(state.all->PROGRAM->get_const_type(id)->get_type()))
+      do_increment_runtime(state.all->get_const(id));
 }
 
 static inline void
@@ -1475,10 +1458,7 @@ execute_mvconstfieldr(pcounter& pc, state& state)
 
    tuple->set_field(field, state.all->get_const(id));
    assert(reference_type(tuple->get_field_type(field)->get_type()));
-   runtime::ref_base *p((runtime::ref_base*)tuple->get_field(field).ptr_field);
-
-   if(p)
-      p->refs++;
+   do_increment_runtime(tuple->get_field(field));
 }
 
 static inline void
@@ -1815,10 +1795,7 @@ execute_headffr(pcounter& pc, state& state)
 
    tdst->set_field(dst, l->get_head());
    assert(reference_type(tdst->get_field_type(dst)->get_type()));
-   runtime::ref_base *p((runtime::ref_base*)tdst->get_field(dst).ptr_field);
-
-   if(p)
-      p->refs++;
+   do_increment_runtime(tdst->get_field(dst));
 }
 
 static inline void
@@ -1847,10 +1824,7 @@ execute_headrfr(pcounter& pc, state& state)
 
    assert(reference_type(tdst->get_field_type(dst)->get_type()));
 
-   runtime::ref_base *p((runtime::ref_base*)tdst->get_field(dst).ptr_field);
-
-   if(p)
-      p->refs++;
+  do_increment_runtime(tdst->get_field(dst));
 }
 
 static inline void

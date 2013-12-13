@@ -6,7 +6,7 @@
 #include <sys/types.h>
 
 #include "external/others.hpp"
-#include "runtime/string.hpp"
+#include "runtime/objs.hpp"
 
 using namespace runtime;
 using namespace std;

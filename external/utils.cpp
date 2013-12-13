@@ -1,6 +1,6 @@
 
 #include "external/utils.hpp"
-#include "runtime/string.hpp"
+#include "runtime/objs.hpp"
 #include "utils/utils.hpp"
 
 namespace vm

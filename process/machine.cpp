@@ -6,7 +6,6 @@
 #include "vm/program.hpp"
 #include "vm/state.hpp"
 #include "vm/exec.hpp"
-#include "runtime/list.hpp"
 #include "mem/thread.hpp"
 #include "mem/stat.hpp"
 #include "stat/stat.hpp"
@@ -16,6 +15,7 @@
 #include "sched/serial_ui.hpp"
 #include "sched/sim.hpp"
 #include "thread/threads.hpp"
+#include "runtime/objs.hpp"
 #include "thread/prio.hpp"
 
 using namespace process;
