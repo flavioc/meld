@@ -72,3 +72,4 @@ send-down(A, Nodes, Coords),
 !down(A, B),
 A <> B
    -o receive-down(B, Nodes, Coords).
+

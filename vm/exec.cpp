@@ -331,21 +331,6 @@ static inline void set_op_function(const pcounter& m,
    const instr_val& dest, T val, state& state);
 
 template <>
-void set_op_function<struct1*>(const pcounter& m, const instr_val& dest,
-      struct1 *s, state& state)
-{
-   if(val_is_reg(dest))
-      state.set_struct(val_reg(dest), s);
-   else if(val_is_field(dest)) {
-      tuple *tuple(state.get_tuple(val_field_reg(m)));
-      const field_num field(val_field_num(m));
-      
-      tuple->set_struct(field, s);
-   } else
-      throw vm_exec_error("invalid destination for a struct value");
-}
-
-template <>
 void set_op_function<rstring*>(const pcounter& m, const instr_val& dest,
       rstring *s, state& state)
 {
@@ -973,34 +958,6 @@ execute_testnil(pcounter pc, state& state)
 }
 
 static inline void
-move_typed_data(const pcounter& pc, type *t, const tuple_field& data,
-      const instr_val to, state& state)
-{
-   switch(t->get_type()) {
-      case FIELD_INT:
-         set_op_function<int_val>(pc, to, FIELD_INT(data), state);
-         break;
-      case FIELD_FLOAT:
-         set_op_function<float_val>(pc, to, FIELD_FLOAT(data), state);
-         break;
-      case FIELD_NODE:
-         set_op_function<node_val>(pc, to, FIELD_NODE(data), state);
-         break;
-      case FIELD_STRING:
-         set_op_function<rstring*>(pc, to, FIELD_STRING(data), state);
-         break;
-      case FIELD_LIST:
-         set_op_function<cons*>(pc, to, FIELD_CONS(data), state);
-         break;
-      case FIELD_STRUCT:
-         set_op_function<struct1*>(pc, to, FIELD_STRUCT(data), state);
-         break;
-      default:
-         throw vm_exec_error("unrecognized type (move_typed_data)");
-   }
-}
-
-static inline void
 execute_float(pcounter& pc, state& state)
 {
    const reg_num src(pcounter_reg(pc + instr_size));
@@ -1379,35 +1336,109 @@ execute_new_axioms(pcounter pc, state& state)
 }
 
 static inline void
-execute_make_struct(pcounter pc, state& state)
+execute_make_structr(pcounter& pc, state& state)
 {
-   const instr_val to(make_struct_to(pc));
-   struct_type *st((struct_type*)state.all->PROGRAM->get_type(make_struct_type(pc)));
+   struct_type *st((struct_type*)state.all->PROGRAM->get_type(make_structr_type(pc)));
+   const reg_num to(pcounter_reg(pc + instr_size + type_size));
 
-   pc += MAKE_STRUCT_BASE;
    struct1 *s(new struct1(st));
 
-   for(size_t i(0); i < st->get_size(); ++i) {
+   for(size_t i(0); i < st->get_size(); ++i)
       s->set_data(i, *state.stack.get_stack_at(i));
-   }
    state.stack.pop(st->get_size());
 
-   set_op_function<struct1*>(pc, to, s, state);
+   state.set_struct(to, s);
    state.add_struct(s);
 }
 
 static inline void
-execute_struct_val(pcounter pc, state& state)
+execute_make_structf(pcounter& pc, state& state)
+{
+   tuple *tuple(get_tuple_field(state, pc + instr_size));
+   const field_num field(val_field_num(pc + instr_size));
+   struct_type *st((struct_type*)tuple->get_field_type(field));
+
+   struct1 *s(new struct1(st));
+
+   for(size_t i(0); i < st->get_size(); ++i)
+      s->set_data(i, *state.stack.get_stack_at(i));
+   state.stack.pop(st->get_size());
+
+   tuple->set_struct(field, s);
+}
+
+static inline void
+execute_struct_valrr(pcounter& pc, state& state)
 {
    const size_t idx(struct_val_idx(pc));
-   const instr_val from(struct_val_from(pc));
-   const instr_val to(struct_val_to(pc));
-   pcounter m = pc + STRUCT_VAL_BASE;
-   struct1 *s(get_op_function<struct1*>(from, m, state));
-   struct_type *st(s->get_type());
-   type *t(st->get_type(idx));
+   const reg_num src(pcounter_reg(pc + instr_size + count_size));
+   const reg_num dst(pcounter_reg(pc + instr_size + count_size + reg_val_size));
+   state.set_reg(dst, state.get_struct(src)->get_data(idx));
+}
 
-   move_typed_data(pc, t, s->get_data(idx), to, state);
+static inline void
+execute_struct_valfr(pcounter& pc, state& state)
+{
+   const size_t idx(struct_val_idx(pc));
+   tuple *tuple(get_tuple_field(state, pc + instr_size + count_size));
+   const field_num field(val_field_num(pc + instr_size + count_size));
+   const reg_num dst(pcounter_reg(pc + instr_size + count_size + field_size));
+   struct1 *s(tuple->get_struct(field));
+   state.set_reg(dst, s->get_data(idx));
+}
+
+static inline void
+execute_struct_valrf(pcounter& pc, state& state)
+{
+   const size_t idx(struct_val_idx(pc));
+   const reg_num src(pcounter_reg(pc + instr_size + count_size));
+   tuple *tuple(get_tuple_field(state, pc + instr_size + count_size + reg_val_size));
+   const field_num field(val_field_num(pc + instr_size + count_size + reg_val_size));
+   struct1 *s(state.get_struct(src));
+   tuple->set_field(field, s->get_data(idx));
+}
+
+static inline void
+execute_struct_valrfr(pcounter& pc, state& state)
+{
+   const size_t idx(struct_val_idx(pc));
+   const reg_num src(pcounter_reg(pc + instr_size + count_size));
+   tuple *tuple(get_tuple_field(state, pc + instr_size + count_size + reg_val_size));
+   const field_num field(val_field_num(pc + instr_size + count_size + reg_val_size));
+   struct1 *s(state.get_struct(src));
+   tuple->set_field(field, s->get_data(idx));
+   assert(reference_type(tuple->get_field_type(field)->get_type()));
+   runtime::ref_base *p((runtime::ref_base*)tuple->get_field(field).ptr_field);
+
+   if(p)
+      p->refs++;
+}
+
+static inline void
+execute_struct_valff(pcounter& pc, state& state)
+{
+   tuple *src(get_tuple_field(state, pc + instr_size + count_size));
+   const field_num field_src(val_field_num(pc + instr_size + count_size));
+   tuple *dst(get_tuple_field(state, pc + instr_size + count_size + field_size));
+   const field_num field_dst(val_field_num(pc + instr_size + count_size + field_size));
+
+   dst->set_field(field_dst, src->get_field(field_src));
+}
+
+static inline void
+execute_struct_valffr(pcounter& pc, state& state)
+{
+   tuple *src(get_tuple_field(state, pc + instr_size + count_size));
+   const field_num field_src(val_field_num(pc + instr_size + count_size));
+   tuple *dst(get_tuple_field(state, pc + instr_size + count_size + field_size));
+   const field_num field_dst(val_field_num(pc + instr_size + count_size + field_size));
+
+   dst->set_field(field_dst, src->get_field(field_src));
+
+   runtime::ref_base *p((runtime::ref_base*)dst->get_field(field_dst).ptr_field);
+
+   if(p)
+      p->refs++;
 }
 
 static inline void
@@ -1434,6 +1465,7 @@ execute_mvfieldfield(pcounter pc, state& state)
    tuple_to->set_field(to, tuple_from->get_field(from));
    assert(!reference_type(tuple_to->get_field_type(to)->get_type()));
 }
+
 static inline void
 execute_mvfieldfieldr(pcounter pc, state& state)
 {
@@ -2393,15 +2425,46 @@ eval_loop:
             }
          ENDOP()
 
-         CASE(MAKE_STRUCT_INSTR)
-            JUMP(make_struct)
-            execute_make_struct(pc, state);
+         CASE(MAKE_STRUCTR_INSTR)
+            JUMP(make_structr)
+            execute_make_structr(pc, state);
             ADVANCE()
          ENDOP()
 
-         CASE(STRUCT_VAL_INSTR)
-            JUMP(struct_val)
-            execute_struct_val(pc, state);
+         CASE(MAKE_STRUCTF_INSTR)
+            JUMP(make_structf)
+            execute_make_structf(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(STRUCT_VALRR_INSTR)
+            JUMP(struct_valrr)
+            execute_struct_valrr(pc, state);
+            ADVANCE()
+         ENDOP()
+         CASE(STRUCT_VALFR_INSTR)
+            JUMP(struct_valfr)
+            execute_struct_valfr(pc, state);
+            ADVANCE()
+         ENDOP()
+         CASE(STRUCT_VALRF_INSTR)
+            JUMP(struct_valrf)
+            execute_struct_valrf(pc, state);
+            ADVANCE()
+         ENDOP()
+         CASE(STRUCT_VALRFR_INSTR)
+            JUMP(struct_valrfr)
+            execute_struct_valrfr(pc, state);
+            ADVANCE()
+         ENDOP()
+         CASE(STRUCT_VALFF_INSTR)
+            JUMP(struct_valff)
+            execute_struct_valff(pc, state);
+            ADVANCE()
+         ENDOP()
+         CASE(STRUCT_VALFFR_INSTR)
+            JUMP(struct_valffr)
+            execute_struct_valffr(pc, state);
             ADVANCE()
          ENDOP()
 

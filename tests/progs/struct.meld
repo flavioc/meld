@@ -1,4 +1,7 @@
 
 type linear a(node, :(int, int)).
+type linear b(node, int, int).
 
 a(@0, :(1, 2)).
+
+a(A, :(B, C)) -o b(A, C + B, C).

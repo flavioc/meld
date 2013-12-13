@@ -517,25 +517,35 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
             cout << "CALLF " << to_string((int)id) << endl;
          }
          break;
-      case MAKE_STRUCT_INSTR: {
-            const size_t type_id(make_struct_type(pc));
-            struct_type *st((struct_type*)prog->get_type(type_id));
-            const instr_val to(make_struct_to(pc));
-            pcounter m = pc + MAKE_STRUCT_BASE;
-
-            cout << "MAKE STRUCT " << st->string() << " TO " << val_string(to, &m, prog) << endl;
-         }
+      case MAKE_STRUCTR_INSTR:
+         cout << "MAKE STRUCTR TO " << reg_string(pcounter_reg(pc + instr_size + type_size)) << endl;
          break;
-      case STRUCT_VAL_INSTR: {
-         const size_t idx(struct_val_idx(pc));
-         const instr_val from(struct_val_from(pc));
-         const instr_val to(struct_val_to(pc));
-         pcounter m = pc + STRUCT_VAL_BASE;
-
-         cout << "STRUCT VAL " << idx << " FROM " << val_string(from, &m, prog)
-            << " TO " << val_string(to, &m, prog) << endl;
-      }
-      break;
+      case MAKE_STRUCTF_INSTR:
+         cout << "MAKE STRUCTF TO " << field_string(pc + instr_size) << endl;
+         break;
+      case STRUCT_VALRR_INSTR:
+         cout << "STRUCT VALRR " << struct_val_idx(pc) << " FROM " << reg_string(pcounter_reg(pc + instr_size + count_size)) <<
+            " TO " << reg_string(pcounter_reg(pc + instr_size + count_size + reg_val_size)) << endl;
+         break;
+      case STRUCT_VALFR_INSTR:
+         cout << "STRUCT VALFR " << struct_val_idx(pc) << " FROM " << field_string(pc + instr_size + count_size) <<
+            " TO " << reg_string(pcounter_reg(pc + instr_size + count_size + field_size)) << endl;
+         break;
+      case STRUCT_VALRF_INSTR:
+         cout << "STRUCT VALRF " << struct_val_idx(pc) << " FROM " << reg_string(pcounter_reg(pc + instr_size + count_size)) <<
+            " TO " << field_string(pc + instr_size + count_size + reg_val_size) << endl;
+         break;
+      case STRUCT_VALRFR_INSTR:
+         cout << "STRUCT VALRF " << struct_val_idx(pc) << " FROM " << reg_string(pcounter_reg(pc + instr_size + count_size)) << " (REFS)" << endl;
+         break;
+      case STRUCT_VALFF_INSTR:
+         cout << "STRUCT VALFF " << struct_val_idx(pc) << " FROM " << field_string(pc + instr_size + count_size) <<
+            " TO " << field_string(pc + instr_size + count_size + field_size) << endl;
+         break;
+      case STRUCT_VALFFR_INSTR:
+         cout << "STRUCT VALFF " << struct_val_idx(pc) << " FROM " << field_string(pc + instr_size + count_size) <<
+            " TO " << field_string(pc + instr_size + count_size + field_size) << " (REFS)" << endl;
+         break;
       case MVINTFIELD_INSTR: {
          const int_val i(pcounter_int(pc + instr_size));
          const string field(field_string(pc + instr_size + int_size));

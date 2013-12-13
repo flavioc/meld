@@ -48,6 +48,7 @@ const size_t any_size = 0;
 const size_t tuple_size = 0;
 const size_t index_size = 1;
 const size_t jump_size = 4;
+const size_t count_size = sizeof(utils::byte);
 const size_t stack_val_size = sizeof(offset_num);
 const size_t pcounter_val_size = 0;
 const size_t operation_size = instr_size + 3 * reg_val_size;
@@ -57,7 +58,7 @@ const size_t SEND_BASE           = instr_size + 2 * reg_val_size;
 const size_t OP_BASE             = instr_size + 4;
 const size_t ITER_BASE           = instr_size + 12;
 const size_t ALLOC_BASE          = instr_size + 2;
-const size_t CALL_BASE           = call_size + sizeof(utils::byte); // plus number of args
+const size_t CALL_BASE           = call_size + count_size;
 const size_t IF_BASE             = instr_size + 1 + jump_size;
 const size_t TESTNIL_BASE        = instr_size + reg_val_size + reg_val_size;
 const size_t HEAD_BASE           = instr_size + 3;
@@ -84,8 +85,7 @@ const size_t PUSH_REGS_BASE      = instr_size;
 const size_t POP_REGS_BASE       = instr_size;
 const size_t CALLF_BASE          = instr_size + 1;
 const size_t CALLE_BASE          = instr_size + 3;
-const size_t STRUCT_VAL_BASE     = instr_size + 3;
-const size_t MAKE_STRUCT_BASE    = instr_size + 2 * val_size;
+const size_t MAKE_STRUCTR_BASE   = instr_size + type_size + reg_val_size;
 const size_t MVINTFIELD_BASE     = instr_size + int_size + field_size;
 const size_t MVINTREG_BASE       = instr_size + int_size + reg_val_size;
 const size_t MVFIELDFIELD_BASE   = instr_size + field_size + field_size;
@@ -132,7 +132,14 @@ const size_t CALL1_BASE          = call_size + reg_val_size;
 const size_t CALL2_BASE          = call_size + 2 * reg_val_size;
 const size_t CALL3_BASE          = call_size + 3 * reg_val_size;
 const size_t MVINTSTACK_BASE     = instr_size + int_size + stack_val_size;
-const size_t PUSHN_BASE          = instr_size + sizeof(utils::byte);
+const size_t PUSHN_BASE          = instr_size + count_size;
+const size_t MAKE_STRUCTF_BASE   = instr_size + field_size;
+const size_t STRUCT_VALRR_BASE   = instr_size + count_size + 2 * reg_val_size;
+const size_t STRUCT_VALFR_BASE   = instr_size + count_size + field_size + reg_val_size;
+const size_t STRUCT_VALRF_BASE   = STRUCT_VALFR_BASE;
+const size_t STRUCT_VALRFR_BASE  = STRUCT_VALRF_BASE;
+const size_t STRUCT_VALFF_BASE   = instr_size + count_size + 2 * field_size;
+const size_t STRUCT_VALFFR_BASE  = STRUCT_VALFF_BASE;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -157,8 +164,7 @@ enum instr_type {
    POP_REGS_INSTR       =  0x19,
    CALLF_INSTR          =  0x1A,
    CALLE_INSTR          =  0x1B,
-   STRUCT_VAL_INSTR     =  0x1C,
-   MAKE_STRUCT_INSTR    =  0x1D,
+   MAKE_STRUCTR_INSTR   =  0x1D,
    MVNILFIELD_INSTR	   =  0x70,
    MVINTFIELD_INSTR     =  0x1E,
    MVINTREG_INSTR       =  0x1F,
@@ -239,6 +245,13 @@ enum instr_type {
    CALL3_INSTR          =  0x6B,
    MVINTSTACK_INSTR     =  0x6C,
    PUSHN_INSTR          =  0x6D,
+   MAKE_STRUCTF_INSTR   =  0x6E,
+   STRUCT_VALRR_INSTR   =  0x6F,
+   STRUCT_VALFR_INSTR   =  0x71,
+   STRUCT_VALRF_INSTR   =  0x72,
+   STRUCT_VALRFR_INSTR  =  0x73,
+   STRUCT_VALFF_INSTR   =  0x74,
+   STRUCT_VALFFR_INSTR  =  0x75,
    REMOVE_INSTR 	      =  0x80,
    ITER_INSTR		      =  0xA0,
    RETURN_LINEAR_INSTR  =  0xD0,
@@ -446,8 +459,7 @@ inline callf_id callf_get_id(const pcounter pc) { return *(pc + instr_size); }
 
 /* MAKE STRUCT size to */
 
-inline size_t make_struct_type(pcounter pc) { return (size_t)byte_get(pc, instr_size); }
-inline instr_val make_struct_to(pcounter pc) { return val_get(pc, instr_size + type_size); }
+inline size_t make_structr_type(pcounter pc) { return (size_t)byte_get(pc, instr_size); }
 
 /* STRUCT VAL idx FROM a TO b */
 
@@ -462,9 +474,7 @@ inline size_t push_n(pcounter pc) { return (size_t)byte_get(pc, instr_size); }
 /* advance function */
 
 enum instr_argument_type {
-   ARGUMENT_ANYTHING,
-   ARGUMENT_WRITABLE,
-   ARGUMENT_STRUCT
+   ARGUMENT_ANYTHING
 };
 
 template <instr_argument_type type>
@@ -509,36 +519,6 @@ STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING>(const instr_val v)
       return ptr_size;
 	else
       throw malformed_instr_error("invalid instruction argument value");
-}
-
-template <>
-STATIC_INLINE size_t arg_size<ARGUMENT_WRITABLE>(const instr_val v)
-{
-   if(val_is_reg(v))
-      return reg_size;
-   else if(val_is_field(v))
-      return field_size;
-	else if(val_is_const(v))
-		return int_size;
-   else if(val_is_stack(v))
-      return stack_val_size;
-   else if(val_is_pcounter(v))
-      return pcounter_val_size;
-   else
-      throw malformed_instr_error("invalid instruction writable value");
-}
-
-template <>
-STATIC_INLINE size_t arg_size<ARGUMENT_STRUCT>(const instr_val v)
-{
-   if(val_is_reg(v))
-      return reg_size;
-   else if(val_is_field(v))
-      return field_size;
-   else if(val_is_stack(v))
-      return stack_val_size;
-   else
-      throw malformed_instr_error("invalid instruction struct value");
 }
 
 inline size_t
@@ -676,14 +656,23 @@ advance(pcounter pc)
       case CALLF_INSTR:
          return pc + CALLF_BASE;
 
-      case MAKE_STRUCT_INSTR:
-         return pc + MAKE_STRUCT_BASE
-                   + arg_size<ARGUMENT_WRITABLE>(make_struct_to(pc));
+      case MAKE_STRUCTR_INSTR:
+         return pc + MAKE_STRUCTR_BASE;
+      case MAKE_STRUCTF_INSTR:
+         return pc + MAKE_STRUCTF_BASE;
 
-      case STRUCT_VAL_INSTR:
-         return pc + STRUCT_VAL_BASE
-                  + arg_size<ARGUMENT_STRUCT>(struct_val_from(pc))
-                  + arg_size<ARGUMENT_WRITABLE>(struct_val_to(pc));
+      case STRUCT_VALRR_INSTR:
+         return pc + STRUCT_VALRR_BASE;
+      case STRUCT_VALFR_INSTR:
+         return pc + STRUCT_VALFR_BASE;
+      case STRUCT_VALRF_INSTR:
+         return pc + STRUCT_VALRF_BASE;
+      case STRUCT_VALRFR_INSTR:
+         return pc + STRUCT_VALRFR_BASE;
+      case STRUCT_VALFF_INSTR:
+         return pc + STRUCT_VALFF_BASE;
+      case STRUCT_VALFFR_INSTR:
+         return pc + STRUCT_VALFFR_BASE;
 
       case MVINTFIELD_INSTR:
          return pc + MVINTFIELD_BASE;
