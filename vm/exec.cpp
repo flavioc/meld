@@ -1553,12 +1553,12 @@ execute_mvworldreg(pcounter& pc, state& state)
    state.set_int(reg, state.all->DATABASE->nodes_total);
 }
 
-static inline void
+static inline pcounter
 execute_mvstackpcounter(pcounter& pc, state& state)
 {
    const offset_num off(pcounter_stack(pc + instr_size));
 
-   pc = (pcounter)FIELD_PCOUNTER(*(state.stack.get_stack_at(off)));
+   return (pcounter)FIELD_PCOUNTER(*(state.stack.get_stack_at(off))) + CALLF_BASE;
 }
 
 static inline void
@@ -2001,22 +2001,22 @@ execute_consfff(pcounter& pc, state& state)
    dest->set_cons(field_dest, new_list);
 }
 
-//#define COMPUTED_GOTOS
+#define COMPUTED_GOTOS
 
 #ifdef COMPUTED_GOTOS
 #define CASE(X)
-#define JUMP(label) label: { pcounter npc = advance(pc); register void *to_go = (void*)jump_table[fetch(npc)];
-#define COMPLEX_JUMP(label) label: {
 #define JUMP_NEXT() goto *jump_table[fetch(pc)]
+#define JUMP(label, jump_offset) label: { const pcounter npc = pc + jump_offset; register void *to_go = (void*)jump_table[fetch(npc)];
+#define COMPLEX_JUMP(label) label: {
 #define ADVANCE() pc = npc; goto *to_go;
 #define ENDOP() }
 #else
-#define CASE(INSTR) case INSTR:
-#define JUMP(label) {
 #define JUMP_NEXT() goto eval_loop
-#define ADVANCE() break;
-#define ENDOP() }
+#define CASE(INSTR) case INSTR:
+#define JUMP(label, jump_offset) { const pcounter npc = pc + jump_offset; assert(npc == advance(pc));
 #define COMPLEX_JUMP(label) {
+#define ADVANCE() pc = npc; JUMP_NEXT();
+#define ENDOP() }
 #endif
 
 static inline return_type
@@ -2039,7 +2039,7 @@ execute(pcounter pc, state& state, const reg_num reg, tuple *tpl)
 #ifdef COMPUTED_GOTOS
    JUMP_NEXT();
 #else
-   for(; ; pc = advance(pc))
+   while(true)
    {
 eval_loop:
 
@@ -2085,7 +2085,7 @@ eval_loop:
          ENDOP()
          
          CASE(IF_INSTR)
-            JUMP(if_instr)
+            JUMP(if_instr, IF_BASE)
 #ifdef CORE_STATISTICS
 				state.stat.stat_if_tests++;
 #endif
@@ -2105,7 +2105,7 @@ eval_loop:
          ENDOP()
 			
          CASE(RESET_LINEAR_INSTR)
-            JUMP(reset_linear)
+            JUMP(reset_linear, RESET_LINEAR_BASE)
             {
                const bool old_is_linear(state.is_linear);
                
@@ -2173,43 +2173,43 @@ eval_loop:
          ENDOP()
             
          CASE(REMOVE_INSTR)
-            JUMP(remove)
+            JUMP(remove, REMOVE_BASE)
             execute_remove(pc, state);
-            ADVANCE();
+            ADVANCE()
          ENDOP()
             
          CASE(ALLOC_INSTR)
-            JUMP(alloc)
+            JUMP(alloc, ALLOC_BASE)
             execute_alloc(pc, state);
             ADVANCE()
          ENDOP()
             
          CASE(SEND_INSTR)
-            JUMP(send)
+            JUMP(send, SEND_BASE)
             execute_send(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(SEND_DELAY_INSTR)
-            JUMP(send_delay)
+            JUMP(send_delay, SEND_DELAY_BASE)
             execute_send_delay(pc, state);
             ADVANCE()
          ENDOP()
             
          CASE(NOT_INSTR)
-            JUMP(not_instr)
+            JUMP(not_instr, NOT_BASE)
             execute_not(pc, state);
             ADVANCE()
          ENDOP()
             
          CASE(TESTNIL_INSTR)
-            JUMP(testnil)
+            JUMP(testnil, TESTNIL_BASE)
             execute_testnil(pc, state);
             ADVANCE()
          ENDOP()
             
          CASE(FLOAT_INSTR)
-            JUMP(float_instr)
+            JUMP(float_instr, FLOAT_BASE)
             execute_float(pc, state);
             ADVANCE()
          ENDOP()
@@ -2221,87 +2221,87 @@ eval_loop:
          ENDOP()
             
          CASE(DELETE_INSTR)
-            JUMP(delete_instr)
+            JUMP(delete_instr, DELETE_BASE + instr_delete_args_size(pc + DELETE_BASE, delete_num_args(pc)))
             execute_delete(pc, state);
             ADVANCE()
          ENDOP()
             
          CASE(CALL_INSTR)
-            JUMP(call)
+            JUMP(call, CALL_BASE + call_num_args(pc) * reg_val_size)
             execute_call(pc, state);
             ADVANCE()
          ENDOP()
          CASE(CALL0_INSTR)
-            JUMP(call0)
+            JUMP(call0, CALL0_BASE)
             execute_call0(pc, state);
             ADVANCE()
          ENDOP()
          CASE(CALL1_INSTR)
-            JUMP(call1)
+            JUMP(call1, CALL1_BASE)
             execute_call1(pc, state);
             ADVANCE()
          ENDOP()
          CASE(CALL2_INSTR)
-            JUMP(call2)
+            JUMP(call2, CALL2_BASE)
             execute_call2(pc, state);
             ADVANCE()
          ENDOP()
          CASE(CALL3_INSTR)
-            JUMP(call3)
+            JUMP(call3, CALL3_BASE)
             execute_call3(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(RULE_INSTR)
-            JUMP(rule)
+            JUMP(rule, RULE_BASE)
             execute_rule(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(RULE_DONE_INSTR)
-            JUMP(rule_done)
+            JUMP(rule_done, RULE_DONE_BASE)
             execute_rule_done(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(NEW_NODE_INSTR)
-            JUMP(new_node)
+            JUMP(new_node, NEW_NODE_BASE)
             execute_new_node(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(NEW_AXIOMS_INSTR)
-            JUMP(new_axioms)
+            JUMP(new_axioms, new_axioms_jump(pc))
             execute_new_axioms(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(PUSH_INSTR)
-            JUMP(push)
+            JUMP(push, PUSH_BASE)
             state.stack.push();
             ADVANCE()
          ENDOP()
 
          CASE(PUSHN_INSTR)
-            JUMP(pushn)
+            JUMP(pushn, PUSHN_BASE)
             state.stack.push(push_n(pc));
             ADVANCE()
          ENDOP()
 
          CASE(POP_INSTR)
-            JUMP(pop)
+            JUMP(pop, POP_BASE)
             state.stack.pop();
             ADVANCE()
          ENDOP()
 
          CASE(PUSH_REGS_INSTR)
-            JUMP(push_regs)
+            JUMP(push_regs, PUSH_REGS_BASE)
             state.stack.push_regs(state.regs);
             ADVANCE()
          ENDOP()
 
          CASE(POP_REGS_INSTR)
-            JUMP(pop_regs)
+            JUMP(pop_regs, POP_REGS_BASE)
             state.stack.pop_regs(state.regs);
             ADVANCE()
          ENDOP()
@@ -2318,50 +2318,50 @@ eval_loop:
          ENDOP()
 
          CASE(MAKE_STRUCTR_INSTR)
-            JUMP(make_structr)
+            JUMP(make_structr, MAKE_STRUCTR_BASE)
             execute_make_structr(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(MAKE_STRUCTF_INSTR)
-            JUMP(make_structf)
+            JUMP(make_structf, MAKE_STRUCTF_BASE)
             execute_make_structf(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(STRUCT_VALRR_INSTR)
-            JUMP(struct_valrr)
+            JUMP(struct_valrr, STRUCT_VALRR_BASE)
             execute_struct_valrr(pc, state);
             ADVANCE()
          ENDOP()
          CASE(STRUCT_VALFR_INSTR)
-            JUMP(struct_valfr)
+            JUMP(struct_valfr, STRUCT_VALFR_BASE)
             execute_struct_valfr(pc, state);
             ADVANCE()
          ENDOP()
          CASE(STRUCT_VALRF_INSTR)
-            JUMP(struct_valrf)
+            JUMP(struct_valrf, STRUCT_VALRF_BASE)
             execute_struct_valrf(pc, state);
             ADVANCE()
          ENDOP()
          CASE(STRUCT_VALRFR_INSTR)
-            JUMP(struct_valrfr)
+            JUMP(struct_valrfr, STRUCT_VALRFR_BASE)
             execute_struct_valrfr(pc, state);
             ADVANCE()
          ENDOP()
          CASE(STRUCT_VALFF_INSTR)
-            JUMP(struct_valff)
+            JUMP(struct_valff, STRUCT_VALFF_BASE)
             execute_struct_valff(pc, state);
             ADVANCE()
          ENDOP()
          CASE(STRUCT_VALFFR_INSTR)
-            JUMP(struct_valffr)
+            JUMP(struct_valffr, STRUCT_VALFFR_BASE)
             execute_struct_valffr(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(MVINTFIELD_INSTR)
-            JUMP(mvintfield)
+            JUMP(mvintfield, MVINTFIELD_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2370,7 +2370,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVINTREG_INSTR)
-            JUMP(mvintreg)
+            JUMP(mvintreg, MVINTREG_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2379,7 +2379,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVFIELDFIELD_INSTR)
-            JUMP(mvfieldfield)
+            JUMP(mvfieldfield, MVFIELDFIELD_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2388,7 +2388,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVFIELDFIELDR_INSTR)
-            JUMP(mvfieldfieldr)
+            JUMP(mvfieldfieldr, MVFIELDFIELD_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2397,7 +2397,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVFIELDREG_INSTR)
-            JUMP(mvfieldreg)
+            JUMP(mvfieldreg, MVFIELDREG_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2406,7 +2406,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVPTRREG_INSTR)
-            JUMP(mvptrreg)
+            JUMP(mvptrreg, MVPTRREG_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2415,7 +2415,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVNILFIELD_INSTR)
-            JUMP(mvnilfield)
+            JUMP(mvnilfield, MVNILFIELD_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2424,7 +2424,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVNILREG_INSTR)
-            JUMP(mvnilreg)
+            JUMP(mvnilreg, MVNILREG_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2433,7 +2433,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVREGFIELD_INSTR)
-            JUMP(mvregfield)
+            JUMP(mvregfield, MVREGFIELD_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2442,7 +2442,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVREGFIELDR_INSTR)
-            JUMP(mvregfieldr)
+            JUMP(mvregfieldr, MVREGFIELD_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2451,7 +2451,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVHOSTFIELD_INSTR)
-            JUMP(mvhostfield)
+            JUMP(mvhostfield, MVHOSTFIELD_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2460,7 +2460,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVREGCONST_INSTR)
-            JUMP(mvregconst)
+            JUMP(mvregconst, MVREGCONST_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2469,7 +2469,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVCONSTFIELD_INSTR)
-            JUMP(mvconstfield)
+            JUMP(mvconstfield, MVCONSTFIELD_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2478,7 +2478,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVCONSTFIELDR_INSTR)
-            JUMP(mvconstfieldr)
+            JUMP(mvconstfieldr, MVCONSTFIELD_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2487,7 +2487,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVADDRFIELD_INSTR)
-            JUMP(mvaddrfield)
+            JUMP(mvaddrfield, MVADDRFIELD_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2496,7 +2496,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVFLOATFIELD_INSTR)
-            JUMP(mvfloatfield)
+            JUMP(mvfloatfield, MVFLOATFIELD_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2505,7 +2505,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVFLOATREG_INSTR)
-            JUMP(mvfloatreg)
+            JUMP(mvfloatreg, MVFLOATREG_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2514,7 +2514,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVINTCONST_INSTR)
-            JUMP(mvintconst)
+            JUMP(mvintconst, MVINTCONST_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2523,7 +2523,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVWORLDFIELD_INSTR)
-            JUMP(mvworldfield)
+            JUMP(mvworldfield, MVWORLDFIELD_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2532,16 +2532,16 @@ eval_loop:
          ENDOP()
 
          CASE(MVSTACKPCOUNTER_INSTR)
-            JUMP(mvstackpcounter)
+            COMPLEX_JUMP(mvstackpcounter)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
-            execute_mvstackpcounter(pc, state);
-            ADVANCE()
+            pc = execute_mvstackpcounter(pc, state);
+            JUMP_NEXT();
          ENDOP()
 
          CASE(MVPCOUNTERSTACK_INSTR)
-            JUMP(mvpcounterstack)
+            JUMP(mvpcounterstack, MVPCOUNTERSTACK_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2550,7 +2550,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVSTACKREG_INSTR)
-            JUMP(mvstackreg)
+            JUMP(mvstackreg, MVSTACKREG_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2559,7 +2559,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVREGSTACK_INSTR)
-            JUMP(mvregstack)
+            JUMP(mvregstack, MVREGSTACK_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2568,7 +2568,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVADDRREG_INSTR)
-            JUMP(mvaddrreg)
+            JUMP(mvaddrreg, MVADDRREG_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2577,7 +2577,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVHOSTREG_INSTR)
-            JUMP(mvhostreg)
+            JUMP(mvhostreg, MVHOSTREG_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2586,145 +2586,145 @@ eval_loop:
          ENDOP()
 
          CASE(ADDRNOTEQUAL_INSTR)
-            JUMP(addrnotequal)
+            JUMP(addrnotequal, operation_size)
             execute_addrnotequal(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(ADDREQUAL_INSTR)
-            JUMP(addrequal)
+            JUMP(addrequal, operation_size)
             execute_addrequal(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(INTMINUS_INSTR)
-            JUMP(intminus)
+            JUMP(intminus, operation_size)
             execute_intminus(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(INTEQUAL_INSTR)
-            JUMP(intequal)
+            JUMP(intequal, operation_size)
             execute_intequal(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(INTNOTEQUAL_INSTR)
-            JUMP(intnotequal)
+            JUMP(intnotequal, operation_size)
             execute_intnotequal(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(INTPLUS_INSTR)
-            JUMP(intplus)
+            JUMP(intplus, operation_size)
             execute_intplus(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(INTLESSER_INSTR)
-            JUMP(intlesser)
+            JUMP(intlesser, operation_size)
             execute_intlesser(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(INTGREATEREQUAL_INSTR)
-            JUMP(intgreaterequal)
+            JUMP(intgreaterequal, operation_size)
             execute_intgreaterequal(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(BOOLOR_INSTR)
-            JUMP(boolor)
+            JUMP(boolor, operation_size)
             execute_boolor(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(INTLESSEREQUAL_INSTR)
-            JUMP(intlesserequal)
+            JUMP(intlesserequal, operation_size)
             execute_intlesserequal(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(INTGREATER_INSTR)
-            JUMP(intgreater)
+            JUMP(intgreater, operation_size)
             execute_intgreater(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(INTMUL_INSTR)
-            JUMP(intmul)
+            JUMP(intmul, operation_size)
             execute_intmul(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(INTDIV_INSTR)
-            JUMP(intdiv)
+            JUMP(intdiv, operation_size)
             execute_intdiv(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(FLOATPLUS_INSTR)
-            JUMP(floatplus)
+            JUMP(floatplus, operation_size)
             execute_floatplus(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(FLOATMINUS_INSTR)
-            JUMP(floatminus)
+            JUMP(floatminus, operation_size)
             execute_floatminus(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(FLOATMUL_INSTR)
-            JUMP(floatmul)
+            JUMP(floatmul, operation_size)
             execute_floatmul(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(FLOATDIV_INSTR)
-            JUMP(floatdiv)
+            JUMP(floatdiv, operation_size)
             execute_floatdiv(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(FLOATEQUAL_INSTR)
-            JUMP(floatequal)
+            JUMP(floatequal, operation_size)
             execute_floatequal(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(FLOATNOTEQUAL_INSTR)
-            JUMP(floatnotequal)
+            JUMP(floatnotequal, operation_size)
             execute_floatnotequal(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(FLOATLESSER_INSTR)
-            JUMP(floatlesser)
+            JUMP(floatlesser, operation_size)
             execute_floatlesser(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(FLOATLESSEREQUAL_INSTR)
-            JUMP(floatlesserequal)
+            JUMP(floatlesserequal, operation_size)
             execute_floatlesserequal(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(FLOATGREATER_INSTR)
-            JUMP(floatgreater)
+            JUMP(floatgreater, operation_size)
             execute_floatgreater(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(FLOATGREATEREQUAL_INSTR)
-            JUMP(floatgreaterequal)
+            JUMP(floatgreaterequal, operation_size)
             execute_floatgreaterequal(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(MVREGREG_INSTR)
-            JUMP(mvregreg)
+            JUMP(mvregreg, MVREGREG_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2733,79 +2733,79 @@ eval_loop:
          ENDOP()
 
          CASE(BOOLEQUAL_INSTR)
-            JUMP(boolequal)
+            JUMP(boolequal, operation_size)
             execute_boolequal(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(BOOLNOTEQUAL_INSTR)
-            JUMP(boolnotequal)
+            JUMP(boolnotequal, operation_size)
             execute_boolnotequal(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(HEADRR_INSTR)
-            JUMP(headrr)
+            JUMP(headrr, HEADRR_BASE)
             execute_headrr(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(HEADFR_INSTR)
-            JUMP(headfr)
+            JUMP(headfr, HEADFR_BASE)
             execute_headfr(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(HEADFF_INSTR)
-            JUMP(headff)
+            JUMP(headff, HEADFF_BASE)
             execute_headff(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(HEADRF_INSTR)
-            JUMP(headrf)
+            JUMP(headrf, HEADRF_BASE)
             execute_headrf(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(HEADFFR_INSTR)
-            JUMP(headffr)
+            JUMP(headffr, HEADFF_BASE)
             execute_headffr(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(HEADRFR_INSTR)
-            JUMP(headrfr)
+            JUMP(headrfr, HEADRF_BASE)
             execute_headrfr(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(TAILRR_INSTR)
-            JUMP(tailrr)
+            JUMP(tailrr, TAILRR_BASE)
             execute_tailrr(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(TAILFR_INSTR)
-            JUMP(tailfr)
+            JUMP(tailfr, TAILFR_BASE)
             execute_tailfr(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(TAILFF_INSTR)
-            JUMP(tailff)
+            JUMP(tailff, TAILFF_BASE)
             execute_tailff(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(TAILRF_INSTR)
-            JUMP(tailrf)
+            JUMP(tailrf, TAILRF_BASE)
             execute_tailrf(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(MVWORLDREG_INSTR)
-            JUMP(mvworldreg)
+            JUMP(mvworldreg, MVWORLDREG_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2814,7 +2814,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVCONSTREG_INSTR)
-            JUMP(mvconstreg)
+            JUMP(mvconstreg, MVCONSTREG_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2823,7 +2823,7 @@ eval_loop:
          ENDOP()
 
          CASE(MVINTSTACK_INSTR)
-            JUMP(mvintstack)
+            JUMP(mvintstack, MVINTSTACK_BASE)
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
@@ -2832,49 +2832,49 @@ eval_loop:
          ENDOP()
 
          CASE(CONSRRR_INSTR)
-            JUMP(consrrr)
+            JUMP(consrrr, CONSRRR_BASE)
             execute_consrrr(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(CONSRFF_INSTR)
-            JUMP(consrff)
+            JUMP(consrff, CONSRFF_BASE)
             execute_consrff(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(CONSFRF_INSTR)
-            JUMP(consfrf)
+            JUMP(consfrf, CONSFRF_BASE)
             execute_consfrf(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(CONSFFR_INSTR)
-            JUMP(consffr)
+            JUMP(consffr, CONSFFR_BASE)
             execute_consffr(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(CONSRRF_INSTR)
-            JUMP(consrrf)
+            JUMP(consrrf, CONSRRF_BASE)
             execute_consrrf(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(CONSRFR_INSTR)
-            JUMP(consrfr)
+            JUMP(consrfr, CONSRFR_BASE)
             execute_consrfr(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(CONSFRR_INSTR)
-            JUMP(consfrr)
+            JUMP(consfrr, CONSFRR_BASE)
             execute_consfrr(pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(CONSFFF_INSTR)
-            JUMP(consfff)
+            JUMP(consfff, CONSFFF_BASE)
             execute_consfff(pc, state);
             ADVANCE()
          ENDOP()
