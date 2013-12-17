@@ -140,6 +140,7 @@ const size_t STRUCT_VALRF_BASE   = STRUCT_VALFR_BASE;
 const size_t STRUCT_VALRFR_BASE  = STRUCT_VALRF_BASE;
 const size_t STRUCT_VALFF_BASE   = instr_size + count_size + 2 * field_size;
 const size_t STRUCT_VALFFR_BASE  = STRUCT_VALFF_BASE;
+const size_t MVFLOATSTACK_BASE   = instr_size + float_size + stack_val_size;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -252,6 +253,7 @@ enum instr_type {
    STRUCT_VALRFR_INSTR  =  0x73,
    STRUCT_VALFF_INSTR   =  0x74,
    STRUCT_VALFFR_INSTR  =  0x75,
+   MVFLOATSTACK_INSTR   =  0x76,
    REMOVE_INSTR 	      =  0x80,
    ITER_INSTR		      =  0xA0,
    RETURN_LINEAR_INSTR  =  0xD0,
@@ -742,6 +744,9 @@ advance(pcounter pc)
 
       case MVHOSTREG_INSTR:
          return pc + MVHOSTREG_BASE;
+
+      case MVFLOATSTACK_INSTR:
+         return pc + MVFLOATSTACK_BASE;
 
       case ADDRNOTEQUAL_INSTR:
       case ADDREQUAL_INSTR:

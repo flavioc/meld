@@ -790,6 +790,9 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          cout << "CONSFFF (" << field_string(pc + instr_size) << "::" << field_string(pc + instr_size + field_size) << ") TO " <<
             field_string(pc + instr_size + 2 * field_size) << endl;
          break;
+      case MVFLOATSTACK_INSTR:
+         cout << "MVFLOATSTACK " << float_string(pcounter_float(pc + instr_size)) << " TO " << stack_string(pcounter_stack(pc + instr_size + float_size)) << endl;
+         break;
 		default:
          throw malformed_instr_error("unknown instruction code");
 	}

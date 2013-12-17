@@ -1479,6 +1479,14 @@ execute_mvintstack(pcounter& pc, state& state)
 }
 
 static inline void
+execute_mvfloatstack(pcounter& pc, state& state)
+{
+   const float_val f(pcounter_float(pc + instr_size));
+   const offset_num off(pcounter_stack(pc + instr_size + float_size));
+   state.stack.get_stack_at(off)->float_field = f;
+}
+
+static inline void
 execute_mvaddrfield(pcounter& pc, state& state)
 {
    const node_val n(pcounter_node(pc + instr_size));
@@ -2805,6 +2813,15 @@ eval_loop:
             ADVANCE()
          ENDOP()
 
+         CASE(MVFLOATSTACK_INSTR)
+            JUMP(mvfloatstack, MVFLOATSTACK_BASE)
+#ifdef CORE_STATISTICS
+            state.stat.stat_moves_executed++;
+#endif
+            execute_mvfloatstack(pc, state);
+            ADVANCE()
+         ENDOP()
+            
          CASE(CONSRRR_INSTR)
             JUMP(consrrr, CONSRRR_BASE)
             execute_consrrr(pc, state);
