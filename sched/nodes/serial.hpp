@@ -4,11 +4,11 @@
 
 #include "mem/base.hpp"
 #include "sched/nodes/in_queue.hpp"
-#include "queue/bounded_pqueue.hpp"
 #include "db/tuple.hpp"
 #include "utils/spinlock.hpp"
 #include "sched/base.hpp"
 #include "queue/intrusive.hpp"
+#include "vm/temporary.hpp"
 
 namespace sched
 { 
@@ -18,21 +18,22 @@ class serial_node: public in_queue_node
 public:
 	
 	DECLARE_DOUBLE_QUEUE_NODE(serial_node);
-	
-   typedef db::simple_tuple_list queue_type;
-   queue_type queue;
 
-	typedef queue_type::const_iterator queue_iterator;
-	
-	inline queue_iterator begin(void) const { return queue.begin(); }
-	inline queue_iterator end(void) const { return queue.end(); }
-   
+   vm::temporary_store store;
+
    inline void add_work(db::simple_tuple *stpl)
    {
-      queue.push_back(stpl);
+      vm::tuple *tpl(stpl->get_tuple());
+
+      if(tpl->is_action())
+         store.add_action_fact(stpl);
+      else if(tpl->is_persistent() || tpl->is_reused())
+         store.add_persistent_fact(stpl);
+      else
+         store.add_fact(stpl);
    }
    
-   inline bool has_work(void) const { return !queue.empty(); }
+   inline bool has_work(void) const { return store.has_data(); }
 
    virtual void assert_end(void) const
    {
@@ -48,7 +49,8 @@ public:
 
    explicit serial_node(const db::node::node_id _id, const db::node::node_id _trans, vm::all *all):
       in_queue_node(_id, _trans, all),
-      INIT_DOUBLE_QUEUE_NODE()
+      INIT_DOUBLE_QUEUE_NODE(),
+      store(all->PROGRAM)
    {}
 
    virtual ~serial_node(void) { }

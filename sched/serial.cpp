@@ -105,9 +105,20 @@ serial_local::init(const size_t)
 void
 serial_local::gather_next_tuples(db::node *node, simple_tuple_list& ls)
 {
-	serial_node *no((serial_node*)node);
+   (void)node;
+   (void)ls;
+}
 
-   ls = std::move(no->queue);
+void
+serial_local::fill_temporary_store(db::node *node, temporary_store& ts)
+{
+   serial_node *no((serial_node*)node);
+
+   swap(ts.lists, no->store.lists);
+   swap(ts.size, no->store.size);
+   swap(ts.persistent_tuples, no->store.persistent_tuples);
+   swap(ts.action_tuples, no->store.action_tuples);
+   assert(no->store.size == 0);
 }
 
 }

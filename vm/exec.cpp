@@ -114,14 +114,14 @@ execute_send_self(tuple *tuple, state& state)
 #endif
    if(tuple->is_persistent()) {
       simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
-      state.generated_persistent_tuples.push_back(stuple);
+      state.store.persistent_tuples->push_back(stuple);
    } else {
       if(tuple->is_reused()) { // push into persistent list, since it is a reused tuple
          simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
-         state.generated_persistent_tuples.push_back(stuple);
+         state.store.persistent_tuples->push_back(stuple);
       } else {
          simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
-         state.generated_tuples.push_back(stuple);
+         state.store.add_generated(stuple);
       }
 
       state.node->matcher.register_tuple(tuple, 1);
@@ -620,10 +620,9 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
 #ifdef CORE_STATISTICS
          execution_time::scope s(state.stat.ts_search_time_predicate[pred->get_id()]);
 #endif
-
-			for(db::simple_tuple_list::iterator it(state.local_tuples.begin()), end(state.local_tuples.end());
-				it != end;
-				++it)
+         db::simple_tuple_list *local_tuples(state.store.get_list(pred->get_id()));
+			for(db::simple_tuple_list::iterator it(local_tuples->begin()), end(local_tuples->end());
+				it != end; ++it)
 			{
 				simple_tuple *stpl(*it);
 				if(stpl->get_predicate() == pred && stpl->can_be_consumed()) {
@@ -795,7 +794,8 @@ next_every_tuple:
 
 	// current set of tuples
    if(!state.persistent_only) {
-		for(db::simple_tuple_list::iterator it(state.local_tuples.begin()), end(state.local_tuples.end()); it != end; ++it) {
+      db::simple_tuple_list *local_tuples(state.store.get_list(pred->get_id()));
+		for(db::simple_tuple_list::iterator it(local_tuples->begin()), end(local_tuples->end()); it != end; ++it) {
 			simple_tuple *stpl(*it);
 			tuple *match_tuple(stpl->get_tuple());
 
@@ -942,7 +942,7 @@ execute_remove(pcounter pc, state& state)
    // the else case is done at state.cpp
 
    if(tpl->is_reused() && state.use_local_tuples) {
-		state.generated_persistent_tuples.push_back(new simple_tuple(tpl, -1, state.depth));
+		state.store.persistent_tuples->push_back(new simple_tuple(tpl, -1, state.depth));
 		if(is_a_leaf)
 			state.leaves_for_deletion.push_back(make_pair((predicate*)tpl->get_predicate(), state.get_leaf(reg)));
 	} else {
