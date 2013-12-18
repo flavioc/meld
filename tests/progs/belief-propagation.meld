@@ -1,9 +1,9 @@
 
 include #data/bp-data20.meld
 
-type route edge(node, node, int).
+type route edge(node, node).
 type potential(node, list float).
-type pixel(node, int, int).
+type coord(node, int).
 
 type linear belief(node, list float).
 type linear new-neighbor-belief(node, node, list float). // neighbor sent an update
@@ -21,19 +21,16 @@ type linear check-residual(node, node, float, list float).
 
 const global-potential =  [-0.0, -2.0, -4, -6, -8, -2, -0, -2, -4, -6, -4, -2, -0, -2, -4, -6, -4, -2, -0, -2, -8, -6, -4, -2, -0].
 const initial-message = [-1.60944, -1.60944, -1.60944, -1.60944, -1.60944].
+const initial-belief = [-1.609438, -1.609438, -1.609438, -1.609438, -1.609438].
 const damping = 0.1.
 const bound = 0.1.
 //const bound = str2float(@arg1).
-const top = 0.
-const bottom = 1.
-const left = 2.
-const right = 3.
 
 start(A).
 
 // setups initial node belief and some other things
-start(A) -o belief(A, [-1.60944, -1.60944, -1.60944, -1.60944, -1.60944]),
-            {B, Side | !edge(A, B, Side) | neighbor-belief(A, B, initial-message),
+start(A) -o belief(A, initial-belief),
+            {B | !edge(A, B) | neighbor-belief(A, B, initial-message),
                                sent-neighbor-belief(A, B, initial-message)},
             update(A).
 
@@ -64,14 +61,14 @@ Normalized = normalize(NewBelief)
 
 // checks residual for setting priorities
 check-residual(A, B, Delta, OutMessage),
-!edge(A, B, _),
+!edge(A, B),
 Delta > bound
    -o update(B), new-neighbor-belief(B, A, OutMessage).
-check-residual(A, B, Delta, OutMessage), !edge(A, B, _) -o new-neighbor-belief(B, A, OutMessage).
+check-residual(A, B, Delta, OutMessage), !edge(A, B) -o new-neighbor-belief(B, A, OutMessage).
 
 // update belief to be sent to one neighbor
 update-messages(A, NewBelief),
-!edge(A, B, _),
+!edge(A, B),
 neighbor-belief-old(A, B, OldIn),
 sent-neighbor-belief(A, B, OldOut),
 Cavity = normalize(divide(NewBelief, OldIn)),
