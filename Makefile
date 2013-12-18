@@ -84,6 +84,7 @@ SRCS = utils/utils.cpp \
 			 external/strings.cpp \
 			 external/others.cpp \
 			 external/core.cpp \
+			 external/structs.cpp \
 			 stat/stat.cpp \
 			 stat/slice.cpp \
 			 stat/slice_set.cpp \

@@ -16,6 +16,8 @@ type *TYPE_INT(new type(FIELD_INT));
 type *TYPE_FLOAT(new type(FIELD_FLOAT));
 type *TYPE_NODE(new type(FIELD_NODE));
 type *TYPE_STRING(new type(FIELD_STRING));
+type *TYPE_ANY(new type(FIELD_ANY));
+type *TYPE_STRUCT(new type(FIELD_STRUCT));
 list_type *TYPE_LIST_INT(new list_type(new type(FIELD_INT)));
 list_type *TYPE_LIST_FLOAT(new list_type(new type(FIELD_FLOAT)));
 list_type *TYPE_LIST_NODE(new list_type(new type(FIELD_NODE)));

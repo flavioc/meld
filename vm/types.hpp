@@ -16,7 +16,8 @@ enum field_type {
    FIELD_LIST = 0x3,
    FIELD_STRUCT = 0x4,
    FIELD_BOOL = 0x5,
-	FIELD_STRING = 0x9
+	FIELD_STRING = 0x9,
+   FIELD_ANY = 0x6
 };
 
 inline bool reference_type(const field_type typ)
@@ -156,7 +157,7 @@ class struct_type: public type
       }
 };
 
-extern type *TYPE_INT, *TYPE_FLOAT, *TYPE_NODE, *TYPE_STRING;
+extern type *TYPE_INT, *TYPE_FLOAT, *TYPE_NODE, *TYPE_STRING, *TYPE_ANY, *TYPE_STRUCT;
 extern list_type *TYPE_LIST_FLOAT, *TYPE_LIST_INT, *TYPE_LIST_NODE;
 
 enum aggregate_type {

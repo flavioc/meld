@@ -361,7 +361,7 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
       case CALL3_INSTR:
          cout << call_string("3", pc, 3) << reg_string(pcounter_reg(pc + call_size)) << ", " <<
             reg_string(pcounter_reg(pc + call_size + reg_val_size)) << ", " <<
-            reg_string(pcounter_reg(pc + call_size + 2 * reg_val_size)) << endl;
+            reg_string(pcounter_reg(pc + call_size + 2 * reg_val_size)) << ")" << endl;
          break;
    	case CALL_INSTR: {
             pcounter m = pc + CALL_BASE;

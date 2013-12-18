@@ -26,12 +26,14 @@ typedef external_function_ptr0 external_function_ptr;
 #define DECLARE_FLOAT(NAME) const float_val NAME(FIELD_FLOAT(__ ## NAME))
 #define DECLARE_LIST(NAME) const runtime::cons *NAME(FIELD_CONS(__ ## NAME))
 #define DECLARE_STRING(NAME) const rstring::ptr NAME(FIELD_STRING(__ ## NAME))
+#define DECLARE_STRUCT(NAME) const runtime::struct1 *NAME(FIELD_STRUCT(__ ## NAME))
 #define RETURN_PTR(X) { argument _ret; SET_FIELD_PTR(_ret, X); return _ret; }
 #define RETURN_INT(X) { argument _ret; SET_FIELD_INT(_ret, X); return _ret; }
 #define RETURN_FLOAT(X) { argument _ret; SET_FIELD_FLOAT(_ret, X); return _ret; }
 #define RETURN_NODE(X) { argument _ret; SET_FIELD_NODE(_ret, X); return _ret; }
 #define RETURN_LIST(X) RETURN_PTR(X)
 #define RETURN_STRING(X) RETURN_PTR(X)
+#define RETURN_STRUCT(X) RETURN_PTR(X)
 
 class external_function
 {

@@ -26,6 +26,35 @@ sigmoid(EXTERNAL_ARG(x))
 }
 
 argument
+normalizestruct(EXTERNAL_ARG(x))
+{
+   DECLARE_STRUCT(x);
+
+   assert(x->get_size() > 0);
+
+   float_val max_value(x->get_data(0).float_field);
+   for(size_t i(1), size(x->get_size()); i < size; ++i) {
+      if(x->get_data(i).float_field > max_value)
+         max_value = x->get_data(i).float_field;
+   }
+
+   float_val Z(0.0);
+   
+   for(size_t i(0), size(x->get_size()); i < size; ++i) {
+      const float_val val(x->get_data(i).float_field);
+      Z += std::exp(val - max_value);
+   }
+
+   const float_val logZ(std::log(Z));
+   struct1 *ret(new struct1(x->get_type()));
+
+   for(size_t i(0), size(x->get_size()); i < size; ++i)
+      ret->get_ptr(i)->float_field = x->get_data(i).float_field - max_value - logZ;
+
+   RETURN_STRUCT(ret);
+}
+
+argument
 normalize(EXTERNAL_ARG(x))
 {
 	DECLARE_LIST(x);
@@ -73,6 +102,27 @@ normalize(EXTERNAL_ARG(x))
 }
 
 argument
+dampstruct(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2), EXTERNAL_ARG(fact))
+{
+   DECLARE_STRUCT(s1);
+   DECLARE_STRUCT(s2);
+   DECLARE_FLOAT(fact);
+
+   assert(s1->get_size() == s2->get_size());
+   struct1 *ret(new struct1(s1->get_type()));
+   for(size_t i(0), size(s1->get_size()); i < size; ++i) {
+      const float_val h1(s1->get_data(i).float_field);
+      const float_val h2(s2->get_data(i).float_field);
+      const float_val c(std::log(fact * std::exp(h2) +
+         (1.0 - fact) * std::exp(h1)));
+      
+      ret->get_ptr(i)->float_field = c;
+   }
+
+   RETURN_STRUCT(ret);
+}
+
+argument
 damp(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2), EXTERNAL_ARG(fact))
 {
    DECLARE_LIST(ls1);
@@ -107,6 +157,20 @@ damp(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2), EXTERNAL_ARG(fact))
 }
 
 argument
+dividestruct(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2))
+{
+   DECLARE_STRUCT(s1);
+   DECLARE_STRUCT(s2);
+
+   assert(s1->get_size() == s2->get_size());
+   struct1 *ret(new struct1(s1->get_type()));
+   for(size_t i(0), size(s1->get_size()); i < size; ++i)
+      ret->get_ptr(i)->float_field = s1->get_data(i).float_field - s2->get_data(i).float_field;
+
+   RETURN_STRUCT(ret);
+}
+
+argument
 divide(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
 {
    DECLARE_LIST(ls1);
@@ -129,6 +193,35 @@ divide(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
    runtime::cons *ptr(from_float_stack_to_list(vals));
       
 	RETURN_LIST(ptr);
+}
+
+argument
+convolvestruct(EXTERNAL_ARG(bin_fact), EXTERNAL_ARG(s))
+{
+   DECLARE_STRUCT(bin_fact);
+   DECLARE_STRUCT(s);
+   const size_t length(s->get_size());
+
+   assert(bin_fact->get_size() == length * length);
+
+   struct1 *ret(new struct1(s->get_type()));
+   for(size_t x(0); x < length; ++x) {
+      float_val sum(0.0);
+      for(size_t y(0); y < length; ++y) {
+         const float_val other(s->get_data(y).float_field);
+         const float_val val_bin(bin_fact->get_data(x + y * length).float_field);
+
+         assert(!isnan(other));
+         assert(!isnan(val_bin));
+         sum += std::exp(val_bin + other);
+      }
+
+      if(sum == 0) sum = std::numeric_limits<float_val>::min();
+      sum = std::log(sum);
+      ret->get_ptr(x)->float_field = sum;
+   }
+
+   RETURN_STRUCT(ret);
 }
 
 argument
@@ -172,6 +265,22 @@ convolve(EXTERNAL_ARG(bin_fact), EXTERNAL_ARG(ls))
 }
 
 argument
+addfloatstructs(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2))
+{
+   DECLARE_STRUCT(s1);
+   DECLARE_STRUCT(s2);
+
+   assert(s1->get_size() == s2->get_size());
+
+   struct1 *ret(new struct1(s1->get_type()));
+
+   for(size_t i(0), size(s1->get_size()); i < size; ++i)
+      ret->get_ptr(i)->float_field = s1->get_data(i).float_field + s2->get_data(i).float_field;
+
+   RETURN_STRUCT(ret);
+}
+
+argument
 addfloatlists(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
 {
    DECLARE_LIST(ls1);
@@ -194,6 +303,24 @@ addfloatlists(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
    runtime::cons *ptr(from_float_stack_to_list(vals));
       
    RETURN_LIST(ptr);
+}
+
+argument
+residualstruct(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2))
+{
+   DECLARE_STRUCT(s1);
+   DECLARE_STRUCT(s2);
+
+   assert(s1->get_size() == s2->get_size());
+
+   float_val residual(0.0);
+   const size_t size(s1->get_size());
+   for(size_t i(0); i < size; ++i)
+      residual += std::abs(std::exp(s1->get_data(i).float_field) - std::exp(s2->get_data(i).float_field));
+
+   residual /= (double)size;
+
+   RETURN_FLOAT(residual);
 }
 
 argument

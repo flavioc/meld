@@ -7,6 +7,7 @@
 #include "external/math.hpp"
 #include "external/utils.hpp"
 #include "external/lists.hpp"
+#include "external/structs.hpp"
 #include "external/strings.hpp"
 #include "external/others.hpp"
 #include "external/core.hpp"
@@ -124,6 +125,8 @@ init_external_functions(void)
    static type *f(TYPE_FLOAT);
    static type *n(TYPE_NODE);
    static type *s(TYPE_STRING);
+   //static type *a(TYPE_ANY);
+   static type *st(TYPE_STRUCT);
    static list_type *li(TYPE_LIST_INT);
    static list_type *lf(TYPE_LIST_FLOAT);
    static list_type *ln(TYPE_LIST_NODE);
@@ -166,6 +169,12 @@ init_external_functions(void)
    register_external_function(EXTERNAL2(degeneratevector, li, i, i));
    register_external_function(EXTERNAL2(demergemessages, li, li, li));
    register_external_function(EXTERNAL2(intlistequal, i, i, i));
+   register_external_function(EXTERNAL2(addfloatstructs, st, st, st));
+   register_external_function(EXTERNAL1(normalizestruct, st, st));
+   register_external_function(EXTERNAL3(dampstruct, st, st, st, f));
+   register_external_function(EXTERNAL2(residualstruct, f, st, st));
+   register_external_function(EXTERNAL2(dividestruct, st, st, st));
+   register_external_function(EXTERNAL2(convolvestruct, st, st, st));
 
    atexit(cleanup_externals);
    
