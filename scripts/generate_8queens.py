@@ -71,10 +71,25 @@ for x in range(0, side):
 	for y in range(0, side):
 		id = x * side + y
 		print "!coord(@" + str(map_node(id)) + ", " + str(x) + ", " + str(y) + ")."
-		if x != side - 1:
-			print "!down(@" + str(map_node(id)) + ", @" + str(map_node(id + side)) + ")."
+
+		# generate down right
+		if y >= side - 2:
+			print "!down-right(@" + str(map_node(id)) + ", @" + str(map_node(id)) + ")."
 		else:
-			print "!down(@" + str(map_node(id)) + ", @" + str(map_node(id)) + ")."
+			if x == side - 1:
+				print "!down-right(@" + str(map_node(id)) + ", @" + str(map_node(id)) + ")."
+			else:
+				print "!down-right(@" + str(map_node(id)) + ", @" + str(map_node(id + side + 2)) + ")."
+
+		# generate down left
+		if y <= 1:
+			print "!down-left(@" + str(map_node(id)) + ", @" + str(map_node(id)) + ")."
+		else:
+			if x == side - 1:
+				print "!down-left(@" + str(map_node(id)) + ", @" + str(map_node(id)) + ")."
+			else:
+				print "!down-left(@" + str(map_node(id)) + ", @" + str(map_node(id + side - 2)) + ")."
+
 		if y != 0:
 			print "!left(@" + str(map_node(id)) + ", @" + str(map_node(id - 1)) + ")."
 		else:
