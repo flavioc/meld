@@ -337,9 +337,8 @@ state::do_persistent_tuples(void)
 }
 
 void
-state::process_local_tuples(void)
+state::process_action_tuples(void)
 {
-   // process action facts
    for(db::simple_tuple_list::iterator it(store.action_tuples->begin()), end(store.action_tuples->end());
          it != end;
          ++it)
@@ -350,7 +349,11 @@ state::process_local_tuples(void)
       delete stpl;
    }
    store.action_tuples->clear();
+}
 
+void
+state::process_local_tuples(void)
+{
    for(size_t i(0); i < store.num_lists; ++i) {
       db::simple_tuple_list *ls(store.get_list(i));
       for(db::simple_tuple_list::iterator it(ls->begin()), end(ls->end());
@@ -485,6 +488,7 @@ state::run_node(db::node *no)
 		execution_time::scope s(stat.core_engine_time);
 #endif
    	start_matching();
+      process_action_tuples();
 		process_local_tuples();
 	}
 	

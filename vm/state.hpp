@@ -168,6 +168,7 @@ public:
 #ifdef USE_SIM
    bool check_instruction_limit(void) const;
 #endif
+   void process_action_tuples(void);
    void process_local_tuples(void);
    void delete_leaves(void);
 	void run_node(db::node *);
