@@ -3,7 +3,7 @@
 #define VM_RULE_MATCHER_HPP
 
 #include <vector>
-#include <set>
+#include <unordered_set>
 
 #include "vm/predicate.hpp"
 #include "vm/tuple.hpp"
@@ -28,7 +28,7 @@ private:
    rule_vector rules; /* availability statistics per rule */
    std::vector<ref_count> predicate_count; /* number of tuples per predicate */
 
-	typedef std::set<rule_id, std::less<rule_id>, mem::allocator<rule_id> > set_rules;
+   typedef std::unordered_set<rule_id, std::hash<rule_id>, std::equal_to<rule_id>, mem::allocator<rule_id> > set_rules;
 	set_rules active_rules; /* rules that *may* be derivable */
 	set_rules dropped_rules; /* any dropped rule */
 	

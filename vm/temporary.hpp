@@ -4,6 +4,7 @@
 
 #include "mem/base.hpp"
 #include "vm/program.hpp"
+#include "vm/predicate.hpp"
 #include "db/tuple.hpp"
 
 namespace vm
@@ -18,6 +19,11 @@ class temporary_store: public mem::base
       db::simple_tuple_list *persistent_tuples;
       size_t num_lists;
       size_t size;
+
+      bool *rules;
+      size_t size_rules;
+      bool *predicates;
+      size_t size_predicates;
 
       inline db::simple_tuple_list* get_generated(const vm::predicate_id p)
       {
@@ -59,6 +65,16 @@ class temporary_store: public mem::base
          persistent_tuples->push_back(stpl);
       }
 
+      inline void clear_predicates(void)
+      {
+         std::fill_n(predicates, size_predicates, false);
+      }
+
+      inline void mark(const vm::predicate *pred)
+      {
+         predicates[pred->get_id()] = true;
+      }
+
       explicit temporary_store(vm::program *prog):
          num_lists(prog->num_predicates()),
          size(0)
@@ -73,6 +89,12 @@ class temporary_store: public mem::base
          }
          mem::allocator<db::simple_tuple_list>().construct(action_tuples);
          mem::allocator<db::simple_tuple_list>().construct(persistent_tuples);
+         size_rules = prog->num_rules();
+         rules = mem::allocator<bool>().allocate(size_rules);
+         size_predicates = prog->num_predicates();
+         predicates = mem::allocator<bool>().allocate(size_predicates);
+         std::fill_n(predicates, size_predicates, false);
+         std::fill_n(rules, size_rules, false);
       }
 
       ~temporary_store(void)
@@ -87,6 +109,8 @@ class temporary_store: public mem::base
          mem::allocator<db::simple_tuple_list>().deallocate(generated, num_lists);
          mem::allocator<db::simple_tuple_list>().deallocate(action_tuples, 1);
          mem::allocator<db::simple_tuple_list>().deallocate(persistent_tuples, 1);
+         mem::allocator<bool>().deallocate(rules, size_rules);
+         mem::allocator<bool>().deallocate(predicates, size_predicates);
       }
 };
 

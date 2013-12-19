@@ -48,12 +48,9 @@ private:
    typedef std::list<pair_linear> list_linear;
 
 	/* execution data for when using rules */
-	bool *rules;
-	bool *predicates;
 	queue::heap_queue<vm::rule_id> rule_queue;
 	
    void purge_runtime_objects(void);
-   void start_matching(void);
    db::simple_tuple* search_for_negative_tuple_partial_agg(db::simple_tuple *);
    db::simple_tuple* search_for_negative_tuple_full_agg(db::simple_tuple *);
    db::simple_tuple* search_for_negative_tuple_normal(db::simple_tuple *);
@@ -157,9 +154,6 @@ public:
    
 	bool add_fact_to_node(vm::tuple *, const vm::derivation_count count = 1, const vm::depth_t depth = 0);
 	
-	bool check_if_rule_predicate_activated(vm::rule *);
-	
-	void mark_predicate_to_run(const vm::predicate *);
 	void mark_active_rules(void);
    void add_to_aggregate(db::simple_tuple *);
    bool do_persistent_tuples(void);

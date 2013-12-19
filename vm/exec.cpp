@@ -125,7 +125,7 @@ execute_send_self(tuple *tuple, state& state)
       }
 
       state.node->matcher.register_tuple(tuple, 1);
-      state.mark_predicate_to_run(pred);
+      state.store.mark(pred);
    }
 }
 

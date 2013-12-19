@@ -92,28 +92,6 @@ state::setup(vm::tuple *tpl, db::node *n, const derivation_count count, const de
 }
 
 void
-state::mark_predicate_to_run(const predicate *pred)
-{
-	if(!predicates[pred->get_id()])
-		predicates[pred->get_id()] = true;
-}
-
-bool
-state::check_if_rule_predicate_activated(vm::rule *rule)
-{
-	for(rule::predicate_iterator jt(rule->begin_predicates()), endj(rule->end_predicates());
-		jt != endj;
-		jt++)
-	{
-		const predicate *pred(*jt);
-		if(predicates[pred->get_id()])
-			return true;
-	}
-	
-	return false;
-}
-
-void
 state::mark_active_rules(void)
 {
 	for(rule_matcher::rule_iterator it(node->matcher.begin_active_rules()),
@@ -122,11 +100,22 @@ state::mark_active_rules(void)
 		it++)
 	{
 		rule_id rid(*it);
-		if(!rules[rid]) {
+		if(!store.rules[rid]) {
 			// we need check if at least one predicate was activated in this loop
 			vm::rule *rule(all->PROGRAM->get_rule(rid));
-			if(check_if_rule_predicate_activated(rule)) {
-				rules[rid] = true;
+         bool flag = false;
+         for(rule::predicate_iterator jt(rule->begin_predicates()), endj(rule->end_predicates());
+               jt != endj;
+               jt++)
+         {
+            const predicate *pred(*jt);
+            if(store.predicates[pred->get_id()]) {
+               flag = true;
+               break;
+            }
+         }
+			if(flag) {
+				store.rules[rid] = true;
 				heap_priority pr;
 				pr.int_priority = (int)rid;
 				rule_queue.insert(rid, pr);
@@ -140,13 +129,15 @@ state::mark_active_rules(void)
 		it++)
 	{
 		rule_id rid(*it);
-		if(rules[rid]) {
-			rules[rid] = false;
+		if(store.rules[rid]) {
+			store.rules[rid] = false;
          heap_priority pr;
          pr.int_priority = (int)rid;
 			rule_queue.remove(rid, pr);
 		}
 	}
+
+   node->matcher.clear_dropped_rules();
 }
 
 bool
@@ -363,7 +354,7 @@ state::process_local_tuples(void)
          vm::tuple *tpl(stpl->get_tuple());
 
          node->matcher.register_tuple(tpl, stpl->get_count());
-         mark_predicate_to_run(tpl->get_predicate());
+         store.mark(tpl->get_predicate());
 #ifndef USE_TEMPORARY_STORE
          add_fact_to_node(tpl, stpl->get_count(), stpl->get_depth());
 #endif
@@ -415,7 +406,7 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
       node->matcher.register_tuple(tpl, stpl->get_count(), is_new);
 
       if(is_new) {
-        	mark_predicate_to_run(tpl->get_predicate());
+         store.mark(tpl->get_predicate());
       } else {
         	delete tpl;
       }
@@ -465,12 +456,6 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
 }
 
 void
-state::start_matching(void)
-{
-	fill_n(predicates, all->PROGRAM->num_predicates(), false);
-}
-
-void
 state::run_node(db::node *no)
 {
    bool aborted(false);
@@ -487,7 +472,7 @@ state::run_node(db::node *no)
 #ifdef CORE_STATISTICS
 		execution_time::scope s(stat.core_engine_time);
 #endif
-   	start_matching();
+      store.clear_predicates();
       process_action_tuples();
 		process_local_tuples();
 	}
@@ -511,7 +496,7 @@ state::run_node(db::node *no)
 		rule_id rule(rule_queue.pop());
 		
 #ifdef DEBUG_RULES
-		cout << "Run rule " << all->PROGRAM->get_rule(rule)->get_string() << endl;
+      cout << "Run rule " << all->PROGRAM->get_rule(rule)->get_string() << endl;
 #endif
 
 		/* delete rule and every check */
@@ -519,9 +504,8 @@ state::run_node(db::node *no)
 #ifdef CORE_STATISTICS
 			execution_time::scope s(stat.core_engine_time);
 #endif
-			rules[rule] = false;
-			node->matcher.clear_dropped_rules();
-      	start_matching();
+			store.rules[rule] = false;
+         store.clear_predicates();
 		}
 		
 		setup(NULL, node, 1, 0);
@@ -633,10 +617,6 @@ state::state(sched::base *_sched, vm::all *_all):
    , stat(_all)
 #endif
 {
-	rules = new bool[all->PROGRAM->num_rules()];
-	fill_n(rules, all->PROGRAM->num_rules(), false);
-	predicates = new bool[all->PROGRAM->num_predicates()];
-	fill_n(predicates, all->PROGRAM->num_predicates(), false);
 	rule_queue.set_type(HEAP_INT_ASC);
 #ifdef USE_SIM
    sim_instr_use = false;
@@ -644,7 +624,7 @@ state::state(sched::base *_sched, vm::all *_all):
 }
 
 state::state(vm::all *_all):
-   rules(NULL), predicates(NULL), sched(NULL)
+   sched(NULL)
 #ifdef DEBUG_MODE
    , print_instrs(false)
 #endif
@@ -667,8 +647,6 @@ state::~state(void)
       stat.print(cout, all);
 	}
 #endif
-	delete []rules;
-	delete []predicates;
 	assert(rule_queue.empty());
 }
 
