@@ -4,6 +4,7 @@
 
 #include <list>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "conf.hpp"
 #include "vm/tuple.hpp"
@@ -76,6 +77,9 @@ public:
    typedef std::unordered_map<pcounter, vm::match*, std::hash<pcounter>, std::equal_to<pcounter>, mem::allocator< std::pair< const vm::pcounter, vm::match*> > > match_store_type;
    match_store_type match_store;
 
+   bool hash_removes;
+   typedef std::unordered_set<db::simple_tuple*, std::hash<db::simple_tuple*>, std::equal_to<db::simple_tuple*>, mem::allocator<db::simple_tuple*> > removed_hash;
+   removed_hash removed;
    bool use_local_tuples;
    temporary_store store;
 	// leaves scheduled for deletion (for use with reused linear tuples + retraction)

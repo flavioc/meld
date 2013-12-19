@@ -535,7 +535,14 @@ typedef enum {
 	ITER_LOCAL
 } iter_type_t;
 
-typedef pair<iter_type_t, void*> iter_object;
+typedef struct {
+   iter_type_t type;
+   union {
+      simple_tuple *tuple;
+      tuple_trie_leaf *leaf;
+   };
+   db::simple_tuple_list::iterator iterator;
+} iter_object;
 
 class tuple_sorter
 {
@@ -545,11 +552,11 @@ private:
 	
 	static inline tuple *get_tuple(const iter_object& l)
 	{
-		switch(l.first) {
+		switch(l.type) {
 			case ITER_LOCAL:
-				return ((simple_tuple*)l.second)->get_tuple();
+				return l.tuple->get_tuple();
 			case ITER_DB:
-				return ((tuple_trie_leaf*)l.second)->get_underlying_tuple();
+				return l.leaf->get_underlying_tuple();
 			default: assert(false); return NULL;
 		}
 	}
@@ -615,19 +622,28 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
    } else if(iter_options_min(options) || iter_options_random(options)) {
 		typedef vector<iter_object, mem::allocator<iter_object> > vector_of_everything;
       vector_of_everything everything;
+
+      // for each remove we put the address of the simple tuples in the hash 'removed'
+      // therefore if we attempt to use such tuples, we know they have been removed already and cannot be used
+      state.hash_removes = true;
 		
+      db::simple_tuple_list *local_tuples(state.store.get_list(pred->get_id()));
 		if(state.use_local_tuples) {
 #ifdef CORE_STATISTICS
          execution_time::scope s(state.stat.ts_search_time_predicate[pred->get_id()]);
 #endif
-         db::simple_tuple_list *local_tuples(state.store.get_list(pred->get_id()));
 			for(db::simple_tuple_list::iterator it(local_tuples->begin()), end(local_tuples->end());
 				it != end; ++it)
 			{
 				simple_tuple *stpl(*it);
 				if(stpl->get_predicate() == pred && stpl->can_be_consumed()) {
-					if(do_matches(m, stpl->get_tuple()))
-						everything.push_back(iter_object(ITER_LOCAL, (void*)stpl));
+					if(do_matches(m, stpl->get_tuple())) {
+                  iter_object obj;
+                  obj.type = ITER_LOCAL;
+                  obj.tuple = stpl;
+                  obj.iterator = it;
+						everything.push_back(obj);
+               }
 				}
 			}
 		}
@@ -641,7 +657,10 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
 #ifdef TRIE_MATCHING_ASSERT
 	      assert(do_matches(m, tuple_leaf->get_underlying_tuple()));
 #endif
-			everything.push_back(iter_object(ITER_DB, (void*)tuple_leaf));
+         iter_object obj;
+         obj.type = ITER_DB;
+         obj.leaf = tuple_leaf;
+			everything.push_back(obj);
 		}
 		
 		if(iter_options_random(options))
@@ -652,17 +671,17 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
 			sort(everything.begin(), everything.end(), tuple_sorter(field, pred));
 		} else throw vm_exec_error("do not know how to use this selector");
 
-		for(vector_of_everything::iterator it(everything.begin()), end(everything.end());
-			it != end; ++it)
+		for(vector_of_everything::iterator it(everything.begin());
+			it != everything.end(); )
 		{
 			iter_object p(*it);
 			return_type ret;
 
          while(true) {
 
-            switch(p.first) {
+            switch(p.type) {
                case ITER_DB: {
-                                tuple_trie_leaf *tuple_leaf((tuple_trie_leaf*)p.second);
+                                tuple_trie_leaf *tuple_leaf(p.leaf);
 
                                 if(pred_linear) {
                                    if(!tuple_leaf->new_ref_use())
@@ -697,10 +716,19 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
                              }
                              break;
                case ITER_LOCAL: {
-                                   simple_tuple *stpl((simple_tuple*)p.second);
+                                   simple_tuple *stpl(p.tuple);
+
+                                   if(pred_linear) {
+                                      state::removed_hash::const_iterator found(state.removed.find(stpl));
+                                      if(found != state.removed.end()) {
+                                         // tuple already removed
+                                         goto next_every_tuple;
+                                      }
+                                   }
+
                                    tuple *match_tuple(stpl->get_tuple());
 
-                                   if(!stpl->can_be_consumed())
+                                   if(pred_linear && !stpl->can_be_consumed())
                                       goto next_every_tuple;
 
                                    PUSH_CURRENT_STATE(match_tuple, NULL, stpl, stpl->get_depth());
@@ -714,7 +742,12 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
 
                                    if(pred_linear) {
                                       if(to_delete) {
-                                         if(!TO_FINISH(ret)) {
+                                         if(TO_FINISH(ret)) {
+                                            db::simple_tuple_list::iterator it(p.iterator);
+                                            state.node->matcher.deregister_tuple(match_tuple, stpl->get_count());
+                                            simple_tuple::wipeout(stpl);
+                                            local_tuples->erase(it);
+                                         } else {
                                             stpl->will_not_delete();
                                             goto next_every_tuple;
                                          }
@@ -731,15 +764,21 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
                default: ret = RETURN_NO_RETURN; assert(false);
             }
 
-            if(ret == RETURN_LINEAR)
+            if(ret == RETURN_LINEAR) {
+               state.hash_removes = false;
                return ret;
-            if(ret == RETURN_DERIVED && state.is_linear)
+            }
+            if(ret == RETURN_DERIVED && state.is_linear) {
+               state.hash_removes = false;
                return RETURN_DERIVED;
+            }
          }
 next_every_tuple:
-         (void)ret;
+         // removed item from the list because it is no longer needed
+         it = everything.erase(it);
       }
 
+      state.hash_removes = false;
       return RETURN_NO_RETURN;
    }
 
@@ -795,22 +834,26 @@ next_every_tuple:
 	// current set of tuples
    if(!state.persistent_only) {
       db::simple_tuple_list *local_tuples(state.store.get_list(pred->get_id()));
-		for(db::simple_tuple_list::iterator it(local_tuples->begin()), end(local_tuples->end()); it != end; ++it) {
+      bool next_iter;
+		for(db::simple_tuple_list::iterator it(local_tuples->begin()); it != local_tuples->end(); ) {
 			simple_tuple *stpl(*it);
 			tuple *match_tuple(stpl->get_tuple());
 
-			if(!stpl->can_be_consumed())
+			if(pred_linear && !stpl->can_be_consumed()) {
+            it++;
 				continue;
+         }
 				
-			if(match_tuple->get_predicate() != pred)
-				continue;
+         assert(match_tuple->get_predicate() == pred);
 				
          {
 #ifdef CORE_STATISTICS
 				execution_time::scope s2(state.stat.ts_search_time_predicate[pred->get_id()]);
 #endif
-            if(!do_matches(m, match_tuple))
+            if(!do_matches(m, match_tuple)) {
+               it++;
                continue;
+            }
          }
 		
 			PUSH_CURRENT_STATE(match_tuple, NULL, stpl, stpl->get_depth());
@@ -823,16 +866,27 @@ next_every_tuple:
 		
 			POP_STATE();
 
+         next_iter = true;
+
          if(pred_linear) {
             if(!TO_FINISH(ret) || !to_delete) { // tuple not consumed
                stpl->will_not_delete(); // oops, revert
+            } else if(to_delete && TO_FINISH(ret)) {
+               state.node->matcher.deregister_tuple(match_tuple, stpl->get_count());
+               simple_tuple::wipeout(stpl);
+               it = local_tuples->erase(it);
+               next_iter = false;
             }
          }
 
-			if(ret == RETURN_LINEAR)
+			if(ret == RETURN_LINEAR) {
 				return ret;
-			if(state.is_linear && ret == RETURN_DERIVED)
+         }
+			if(state.is_linear && ret == RETURN_DERIVED) {
 				return ret;
+         }
+         if(next_iter)
+            it++;
 		}
 	}
    
@@ -939,7 +993,12 @@ execute_remove(pcounter pc, state& state)
 		
    if(is_a_leaf)
       state.node->matcher.deregister_tuple(tpl, 1);
-   // the else case is done at state.cpp
+   else {
+      // the else case for deregistering the tuple is done in execute_iter
+      if(state.hash_removes) {
+         state.removed.insert(state.get_tuple_queue(reg));
+      }
+   }
 
    if(tpl->is_reused() && state.use_local_tuples) {
 		state.store.persistent_tuples->push_back(new simple_tuple(tpl, -1, state.depth));
@@ -2897,9 +2956,13 @@ static inline return_type
 do_execute(byte_code code, state& state, const reg_num reg, vm::tuple *tpl)
 {
    assert(state.stack.empty());
+   assert(state.removed.empty());
+   state.hash_removes = false;
+
    const return_type ret(execute((pcounter)code, state, reg, tpl));
 
    state.cleanup();
+   assert(state.removed.empty());
    assert(state.stack.empty());
    return ret;
 }

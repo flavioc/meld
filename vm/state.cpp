@@ -47,6 +47,7 @@ void
 state::cleanup(void)
 {
    purge_runtime_objects();
+   removed.clear();
 }
 
 void
@@ -371,32 +372,6 @@ state::process_local_tuples(void)
 }
 
 void
-state::process_consumed_local_tuples(void)
-{
-#ifdef CORE_STATISTICS
-	execution_time::scope s(stat.clean_temporary_store_time);
-#endif
-
-   for(size_t i(0); i < store.num_lists; ++i) {
-      // process current set of tuples
-      db::simple_tuple_list *list(store.get_list(i));
-      for(db::simple_tuple_list::iterator it(list->begin()), end(list->end());
-         it != end; )
-      {
-         simple_tuple *stpl(*it);
-         if(!stpl->can_be_consumed()) {
-            vm::tuple *tpl(stpl->get_tuple());
-            node->matcher.deregister_tuple(tpl, stpl->get_count());
-            delete tpl;
-            delete stpl;
-            it = list->erase(it);
-         } else
-            it++;
-      }
-   }
-}
-
-void
 state::add_to_aggregate(db::simple_tuple *stpl)
 {
    vm::tuple *tpl(stpl->get_tuple());
@@ -550,9 +525,6 @@ state::run_node(db::node *no)
       persistent_only = false;
 		execute_rule(rule, *this);
 
-#ifdef USE_TEMPORARY_STORE
-		process_consumed_local_tuples();
-#endif
       delete_leaves();
       //node->assert_tries();
 #ifdef USE_SIM
