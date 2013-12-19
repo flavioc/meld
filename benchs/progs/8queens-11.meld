@@ -15,7 +15,7 @@ type linear test-diag-right(node, int, int, list int, list node, list int).
 type linear send-down(node, list node, list int).
 type linear final-state(node, list node, list int).
 
-const size = 10.
+const size = 11.
 
 propagate-right(@0, [], []).
 
