@@ -50,8 +50,6 @@ public:
       return dynamic_cast<db::node*>(new sched::serial_node(id, trans, all));
    }
    
-   serial_local *find_scheduler(const db::node *) { return this; }
-   
    explicit serial_local(vm::all *all):
       sched::base(0, all),
       current_node(NULL)

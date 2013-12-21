@@ -141,8 +141,6 @@ public:
       return terminate_iteration();
    }
    
-   virtual base* find_scheduler(const db::node*) { return NULL; }
-   
    inline vm::process_id get_id(void) const { return id; }
    
    inline size_t num_iterations(void) const { return iteration; }
