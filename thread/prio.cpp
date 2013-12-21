@@ -152,7 +152,7 @@ threads_prio::check_if_current_useless(void)
 {
 	assert(current_node->in_queue());
 	
-	if(!prio_queue.empty() && !current_node->has_work())
+	if(!prio_queue.empty() && !current_node->unprocessed_facts)
    {
       current_node->lock();
       current_node->set_in_queue(false);
@@ -174,7 +174,7 @@ threads_prio::check_if_current_useless(void)
       //cout << "Prio: " << current_node->get_float_priority_level() << endl;
       taken_from_priority_queue = true;
       return false;
-	} else if(!current_node->has_work()) {
+	} else if(!current_node->unprocessed_facts) {
       
       current_node->lock();
       current_node->set_in_queue(false);
@@ -544,5 +544,5 @@ threads_prio::threads_prio(const vm::process_id _id, vm::all *all):
 threads_prio::~threads_prio(void)
 {
 }
-   
+
 }

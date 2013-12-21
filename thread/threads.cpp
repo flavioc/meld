@@ -46,7 +46,7 @@ threads_sched::new_agg(work& new_work)
    
    assert_thread_push_work();
    
-   to->add_work(new_work.get_tuple());
+   to->add_work_myself(new_work.get_tuple());
    
    if(!to->in_queue()) {
       to->set_in_queue(true);
@@ -57,22 +57,7 @@ threads_sched::new_agg(work& new_work)
 void
 threads_sched::new_work(const node *, work& new_work)
 {
-   thread_intrusive_node *to(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
-   
-   assert_thread_push_work();
-
-   to->lock();
-   
-   to->add_work(new_work.get_tuple());
-   //cout << id << " Add to queue node " << to->get_id() << endl;
-   
-   if(!to->in_queue()) {
-      to->set_in_queue(true);
-      add_to_queue(to);
-   }
-
-   assert(to->in_queue());
-   to->unlock();
+   new_work_other(this, new_work);
 }
 
 void
@@ -86,14 +71,14 @@ threads_sched::new_work_other(sched::base *, work& new_work)
    
    threads_sched *owner(dynamic_cast<threads_sched*>(tnode->get_owner()));
 
-   tnode->add_work(new_work.get_tuple());
-
    if(owner == this) {
+      tnode->add_work_myself(new_work.get_tuple());
       if(!tnode->in_queue()) {
          tnode->set_in_queue(true);
          add_to_queue((thread_intrusive_node*)tnode);
       }
    } else {
+      tnode->add_work_others(new_work.get_tuple());
       if(!tnode->in_queue()) {
          tnode->set_in_queue(true);
          owner->add_to_queue((thread_intrusive_node*)tnode);
@@ -243,10 +228,10 @@ threads_sched::finish_work(db::node *no)
 bool
 threads_sched::check_if_current_useless(void)
 {
-   if(!current_node->has_work()) {
-      spinlock::scoped_lock lock(current_node->spin);
+   if(!current_node->unprocessed_facts) {
+      spinlock::scoped_lock lock(current_node->store.spin);
       
-      if(!current_node->has_work()) {
+      if(!current_node->unprocessed_facts) {
          current_node->set_in_queue(false);
          assert(!current_node->in_queue());
          current_node = NULL;
@@ -325,13 +310,6 @@ threads_sched::init(const size_t)
    }
    
    threads_synchronize();
-}
-
-void
-threads_sched::gather_next_tuples(db::node *node, simple_tuple_list& ls)
-{
-	thread_intrusive_node *no((thread_intrusive_node*)node);
-   no->queue.top_list(ls);
 }
 
 threads_sched*

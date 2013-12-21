@@ -14,7 +14,7 @@
 #include "queue/safe_double_queue.hpp"
 #include "utils/random.hpp"
 
-#define TASK_STEALING 1
+//#define TASK_STEALING 1
 #define STEALING_ROUND_MAX 1000000
 
 namespace sched
@@ -79,7 +79,6 @@ public:
    virtual bool terminate_iteration(void);
    
    threads_sched *find_scheduler(const db::node *);
-   virtual void gather_next_tuples(db::node *, db::simple_tuple_list&);
 	
    static db::node *create_node(const db::node::node_id id, const db::node::node_id trans, vm::all *all)
    {

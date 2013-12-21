@@ -464,7 +464,6 @@ state::run_node(db::node *no)
    cout << "Node " << node->get_id() << " (is " << node->get_translated_id() << ")" << endl;
 #endif
 
-   no->unprocessed_facts = false;
    store = &(no->store);
    lists = &(no->db);
 
@@ -472,8 +471,11 @@ state::run_node(db::node *no)
 #ifdef CORE_STATISTICS
 		execution_time::scope s(stat.core_engine_time);
 #endif
+      no->lock();
       process_action_tuples();
 		process_incoming_tuples();
+      no->unprocessed_facts = false;
+      no->unlock();
 	}
 	
    if(do_persistent_tuples()) {

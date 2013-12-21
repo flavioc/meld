@@ -18,25 +18,6 @@ public:
 	
 	DECLARE_DOUBLE_QUEUE_NODE(serial_node);
 
-   inline void add_work(db::simple_tuple *stpl)
-   {
-      vm::tuple *tpl(stpl->get_tuple());
-
-      unprocessed_facts = true;
-
-      if(tpl->is_action())
-         store.add_action_fact(stpl);
-      else if(tpl->is_persistent() || tpl->is_reused()) {
-         store.add_persistent_fact(stpl);
-         store.register_fact(stpl);
-      } else {
-         vm::tuple *tpl(stpl->get_tuple());
-         db.add_fact(tpl);
-         store.register_tuple_fact(tpl, 1);
-         delete stpl;
-      }
-   }
-
    virtual void assert_end(void) const
    {
       in_queue_node::assert_end();

@@ -115,6 +115,43 @@ public:
    db::lists db;
    vm::temporary_store store;
    bool unprocessed_facts;
+
+   inline void lock(void) { store.spin.lock(); }
+   inline void unlock(void) { store.spin.unlock(); }
+   inline void add_work_myself(db::simple_tuple *stpl)
+   {
+      vm::tuple *tpl(stpl->get_tuple());
+
+      unprocessed_facts = true;
+
+      if(tpl->is_action())
+         store.add_action_fact(stpl);
+      else if(tpl->is_persistent() || tpl->is_reused()) {
+         store.add_persistent_fact(stpl);
+         store.register_fact(stpl);
+      } else {
+         vm::tuple *tpl(stpl->get_tuple());
+         db.add_fact(tpl);
+         store.register_tuple_fact(tpl, 1);
+         delete stpl;
+      }
+   }
+
+   inline void add_work_others(db::simple_tuple *stpl)
+   {
+      vm::tuple *tpl(stpl->get_tuple());
+
+      unprocessed_facts = true;
+
+      if(tpl->is_action())
+         store.incoming_action_tuples.push_back(stpl);
+      else if(tpl->is_persistent() || tpl->is_reused())
+         store.incoming_persistent_tuples.push_back(stpl);
+      else {
+         store.add_incoming(tpl);
+         delete stpl;
+      }
+   }
    
    explicit node(const node_id, const node_id, vm::all *);
    

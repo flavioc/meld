@@ -7,6 +7,8 @@
 #include "vm/predicate.hpp"
 #include "db/tuple.hpp"
 #include "vm/rule_matcher.hpp"
+#include "utils/spinlock.hpp"
+#include "utils/atomic.hpp"
 
 namespace vm
 {
@@ -17,6 +19,7 @@ class temporary_store: public mem::base
       vm::tuple_list *incoming;
       db::simple_tuple_list incoming_persistent_tuples;
       db::simple_tuple_list incoming_action_tuples;
+      utils::spinlock spin;
 
       vm::tuple_list *generated;
       db::simple_tuple_list action_tuples;
