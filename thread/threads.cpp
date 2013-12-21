@@ -312,12 +312,6 @@ threads_sched::init(const size_t)
    threads_synchronize();
 }
 
-threads_sched*
-threads_sched::find_scheduler(const node *n)
-{
-   return (threads_sched*)((thread_intrusive_node*)n)->get_owner();
-}
-
 void
 threads_sched::write_slice(statistics::slice& sl) const
 {

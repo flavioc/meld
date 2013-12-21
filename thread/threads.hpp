@@ -78,8 +78,6 @@ public:
    virtual void end(void);
    virtual bool terminate_iteration(void);
    
-   threads_sched *find_scheduler(const db::node *);
-	
    static db::node *create_node(const db::node::node_id id, const db::node::node_id trans, vm::all *all)
    {
       return new thread_intrusive_node(id, trans, all);

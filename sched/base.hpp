@@ -154,7 +154,7 @@ public:
       return terminate_iteration();
    }
    
-   virtual base* find_scheduler(const db::node*) = 0;
+   virtual base* find_scheduler(const db::node*) { return NULL; }
    
    inline vm::process_id get_id(void) const { return id; }
    
