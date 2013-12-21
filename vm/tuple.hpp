@@ -28,9 +28,9 @@ class tuple: public mem::base
 {
 private:
 
+	bool to_delete;
 	predicate* pred;
    tuple_field *fields;
-	bool to_delete;
 
    void copy_field(tuple *, const field_num) const;
 
@@ -114,7 +114,6 @@ public:
    inline void will_not_delete(void) { to_delete = false; }
    inline bool can_be_consumed(void) const { return !to_delete; }
    
-   explicit tuple(void); // only used for serialization!
 	explicit tuple(const predicate* pred);
 	
    ~tuple(void);

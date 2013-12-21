@@ -20,16 +20,11 @@ namespace vm
 {
    
 tuple::tuple(const predicate* _pred):
-   pred((predicate*)_pred), fields(allocator<tuple_field>().allocate(pred->num_fields())),
-   to_delete(false)
+   to_delete(false), pred((predicate*)_pred),
+   fields(allocator<tuple_field>().allocate(pred->num_fields()))
 {
    assert(pred != NULL);
    memset(fields, 0, sizeof(tuple_field) * pred->num_fields());
-}
-
-tuple::tuple(void):
-   pred(NULL), fields(NULL)
-{
 }
 
 static inline bool

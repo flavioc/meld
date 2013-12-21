@@ -162,8 +162,6 @@ public:
 		return default_strings[i];
 	}
    
-   tuple* new_tuple(const predicate_id&) const;
-   
    inline bool is_safe(void) const { return safe; }
    inline bool is_data(void) const { return is_data_file; }
 

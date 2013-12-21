@@ -77,7 +77,7 @@ get_tuple_field(state& state, const pcounter& pc)
 static inline void
 execute_alloc(const pcounter& pc, state& state)
 {
-   tuple *tuple(state.all->PROGRAM->new_tuple(alloc_predicate(pc)));
+   tuple *tuple(new vm::tuple(state.all->PROGRAM->get_predicate(alloc_predicate(pc))));
 
    state.set_tuple(alloc_reg(pc), tuple);
 }

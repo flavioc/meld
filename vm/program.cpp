@@ -587,12 +587,6 @@ program::get_edge_predicate(void) const
    return get_predicate_by_name("edge");
 }
 
-tuple*
-program::new_tuple(const predicate_id& id) const
-{
-   return new tuple(get_predicate(id));
-}
-
 bool
 program::add_data_file(program& other)
 {
