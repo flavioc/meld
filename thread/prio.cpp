@@ -195,7 +195,7 @@ threads_prio::check_if_current_useless(void)
       return true;
    }
    
-   assert(current_node->has_work());
+   assert(current_node->unprocessed_facts);
    return false;
 }
 
@@ -253,7 +253,7 @@ threads_prio::get_work(void)
    set_active_if_inactive();
    assert(current_node != NULL);
    assert(current_node->in_queue());
-   assert(current_node->has_work());
+   assert(current_node->unprocessed_facts);
    
    return current_node;
 }
@@ -521,7 +521,7 @@ threads_prio::init(const size_t)
 
       assert(cur_node->get_owner() == this);
       assert(cur_node->in_queue());
-      assert(cur_node->has_work());
+      assert(cur_node->unprocessed_facts);
    }
    
    threads_synchronize();

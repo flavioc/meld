@@ -226,7 +226,7 @@ threads_sched::check_if_current_useless(void)
       }
    }
    
-   assert(current_node->has_work());
+   assert(current_node->unprocessed_facts);
    return false;
 }
 
@@ -267,7 +267,7 @@ threads_sched::get_work(void)
    set_active_if_inactive();
    assert(current_node != NULL);
    assert(current_node->in_queue());
-   assert(current_node->has_work());
+   assert(current_node->unprocessed_facts);
    
    return current_node;
 }
@@ -295,7 +295,7 @@ threads_sched::init(const size_t)
       add_to_queue(cur_node);
       
       assert(cur_node->in_queue());
-      assert(cur_node->has_work());
+      assert(cur_node->unprocessed_facts);
    }
    
    threads_synchronize();
