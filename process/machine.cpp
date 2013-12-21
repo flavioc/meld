@@ -126,7 +126,7 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, const bool f
       break;
    }
 
-	delete tpl;
+   vm::tuple::destroy(tpl);
 }
 
 void

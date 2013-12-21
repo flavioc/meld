@@ -24,7 +24,7 @@ agg_configuration::add_to_set(vm::tuple *tpl, const derivation_count many, const
       
       if(!vals.insert_tuple(tpl, many, depth)) {
          // repeated tuple
-         delete tpl;
+         vm::tuple::destroy(tpl);
       }
 
       assert(vals.size() == start_size + many);
@@ -52,7 +52,7 @@ agg_configuration::add_to_set(vm::tuple *tpl, const derivation_count many, const
          }
       }
       
-      delete tpl;
+      vm::tuple::destroy(tpl);
    }
 }
 

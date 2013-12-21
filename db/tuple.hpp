@@ -69,7 +69,7 @@ public:
 
    static simple_tuple* remove_new(vm::tuple *tuple, const vm::depth_t depth) { return new simple_tuple(tuple, -1, depth); }
    
-   static void wipeout(simple_tuple *stpl) { delete stpl->get_tuple(); delete stpl; }
+   static void wipeout(simple_tuple *stpl) { vm::tuple::destroy(stpl->get_tuple()); delete stpl; }
 
    explicit simple_tuple(vm::tuple *_tuple, const vm::derivation_count _count, const vm::depth_t _depth = 0):
       data(_tuple), count(_count), depth(_depth),
