@@ -348,7 +348,7 @@ state::process_action_tuples(void)
 }
 
 void
-state::process_local_tuples(void)
+state::process_incoming_tuples(void)
 {
    for(size_t i(0); i < store->num_lists; ++i) {
       db::simple_tuple_list *ls(store->get_incoming(i));
@@ -475,7 +475,7 @@ state::run_node(db::node *no)
 		execution_time::scope s(stat.core_engine_time);
 #endif
       process_action_tuples();
-		process_local_tuples();
+		process_incoming_tuples();
 	}
 	
    if(do_persistent_tuples()) {

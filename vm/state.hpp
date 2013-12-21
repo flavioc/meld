@@ -165,7 +165,7 @@ public:
    bool check_instruction_limit(void) const;
 #endif
    void process_action_tuples(void);
-   void process_local_tuples(void);
+   void process_incoming_tuples(void);
    void delete_leaves(void);
 	void run_node(db::node *);
    void setup(vm::tuple*, db::node*, const vm::derivation_count, const vm::depth_t);
