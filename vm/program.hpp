@@ -63,6 +63,7 @@ private:
    std::vector<function*> functions;
    
    std::vector<predicate*> predicates;
+   std::vector<predicate*> sorted_predicates;
   
    std::vector<byte_code> code;
    std::vector<code_size_t> code_size;
@@ -139,6 +140,10 @@ public:
 #endif
    
    predicate* get_predicate(const predicate_id&) const;
+   predicate* get_sorted_predicate(const size_t i) const {
+      assert(i < num_predicates());
+      return sorted_predicates[i];
+   }
    predicate* get_route_predicate(const size_t&) const;
    
    byte_code get_predicate_bytecode(const predicate_id id) const {

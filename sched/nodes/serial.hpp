@@ -8,7 +8,6 @@
 #include "utils/spinlock.hpp"
 #include "sched/base.hpp"
 #include "queue/intrusive.hpp"
-#include "vm/temporary.hpp"
 
 namespace sched
 { 
@@ -19,38 +18,38 @@ public:
 	
 	DECLARE_DOUBLE_QUEUE_NODE(serial_node);
 
-   vm::temporary_store store;
-
    inline void add_work(db::simple_tuple *stpl)
    {
       vm::tuple *tpl(stpl->get_tuple());
 
+      unprocessed_facts = true;
+
       if(tpl->is_action())
          store.add_action_fact(stpl);
-      else if(tpl->is_persistent() || tpl->is_reused())
+      else if(tpl->is_persistent() || tpl->is_reused()) {
          store.add_persistent_fact(stpl);
-      else
-         store.add_fact(stpl);
+         store.register_fact(stpl);
+      } else {
+         db.add_fact(stpl);
+         store.register_fact(stpl);
+      }
    }
-   
-   inline bool has_work(void) const { return store.has_data(); }
 
    virtual void assert_end(void) const
    {
       in_queue_node::assert_end();
-      assert(!has_work());
+      assert(!unprocessed_facts);
    }
 
    virtual void assert_end_iteration(void) const
    {
       in_queue_node::assert_end_iteration();
-      assert(!has_work());
+      assert(!unprocessed_facts);
    }
 
    explicit serial_node(const db::node::node_id _id, const db::node::node_id _trans, vm::all *all):
       in_queue_node(_id, _trans, all),
-      INIT_DOUBLE_QUEUE_NODE(),
-      store(all->PROGRAM)
+      INIT_DOUBLE_QUEUE_NODE()
    {}
 
    virtual ~serial_node(void) { }

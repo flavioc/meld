@@ -51,7 +51,7 @@ private:
    
 public:
 
-   BOOST_STATIC_ASSERT(sizeof(node::node_id) == 4);
+   BOOST_STATIC_ASSERT(sizeof(node::node_id) == sizeof(vm::node_val));
 
    static const size_t node_size = sizeof(node::node_id) * 2;
    size_t nodes_total;

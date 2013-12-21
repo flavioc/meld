@@ -993,66 +993,33 @@ tuple_trie::delete_tuple(vm::tuple *tpl, const derivation_count many, const dept
    }
 }
 
-void
-tuple_trie::print(ostream& cout) const
-{ 
-	static const size_t FACTS_PER_LINE(3);
-
-   assert(!empty());
-   
-   cout << " ";
-  
-	pred->print_simple(cout);
-  	cout << endl;
-
-	size_t left_to_write(FACTS_PER_LINE);
-   
+vector<string>
+tuple_trie::get_print_strings(void) const
+{
+   vector<string> vec;
    for(const_iterator it(begin());
       it != end();
       it++)
    {
       tuple_trie_leaf *leaf(*it);
-		if(left_to_write == FACTS_PER_LINE)
-			cout << "\t";
-      cout << *(leaf->get_underlying_tuple());
-      if(leaf->get_count() > 1)
-         cout << "@" << leaf->get_count();
-		--left_to_write;
-		if(left_to_write == 0) {
-			left_to_write = FACTS_PER_LINE;
-			cout << endl;
-		} else
-			cout << " ";
+      if(leaf->to_delete())
+         continue;
+      string str = utils::to_string(*(leaf->get_underlying_tuple()));
+      vec.push_back(str);
+      if(leaf->get_count() > 1) {
+         for(size_t i(1); i < leaf->get_count(); ++i) {
+            vec.push_back(str);
+         }
+      }
    }
-
-	if(left_to_write > 0 && left_to_write != FACTS_PER_LINE)
-		cout << endl;
+   return vec;
 }
 
 void
-tuple_trie::dump(ostream& cout) const
-{
-   std::list<string> ls;
-   
-   for(const_iterator it(begin());
-      it != end();
-      it++)
-   {
-      tuple_trie_leaf *stuple(*it);
-      string tuple_str(utils::to_string(*(stuple->get_underlying_tuple())));
-      if(stuple->get_count() > 1)
-         tuple_str += string("@") + utils::to_string(stuple->get_count());
-      ls.push_back(tuple_str);
-   }
-   
-   ls.sort();
-   
-   for(std::list<string>::const_iterator it(ls.begin());
-      it != ls.end();
-      ++it)
-   {
-      cout << *it << endl;
-   }
+tuple_trie::print(ostream& cout) const
+{ 
+   assert(!empty());
+   utils::write_strings(get_print_strings(), cout, 1);
 }
 
 tuple_trie::tuple_search_iterator

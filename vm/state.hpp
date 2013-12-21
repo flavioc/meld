@@ -20,6 +20,7 @@
 #include "vm/stat.hpp"
 #include "vm/call_stack.hpp"
 #include "vm/temporary.hpp"
+#include "db/lists.hpp"
 
 #define USE_TEMPORARY_STORE
 
@@ -78,7 +79,8 @@ public:
    typedef std::unordered_set<db::simple_tuple*, std::hash<db::simple_tuple*>, std::equal_to<db::simple_tuple*>, mem::allocator<db::simple_tuple*> > removed_hash;
    removed_hash removed;
    bool use_local_tuples;
-   temporary_store store;
+   temporary_store *store;
+   db::lists *lists;
 	// leaves scheduled for deletion (for use with reused linear tuples + retraction)
 	// we cannot delete them immediately because then the tuple would be deleted
 	std::list< std::pair<vm::predicate*, db::tuple_trie_leaf*> > leaves_for_deletion;

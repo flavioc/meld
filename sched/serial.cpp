@@ -48,7 +48,7 @@ node*
 serial_local::get_work(void)
 {
    if(current_node != NULL) {
-      if(!current_node->has_work()) {
+      if(!current_node->unprocessed_facts) {
          current_node->set_in_queue(false);
          current_node = NULL;
          if(!has_work())
@@ -65,7 +65,7 @@ serial_local::get_work(void)
    }
    
    assert(current_node != NULL);
-   assert(current_node->has_work());
+   assert(current_node->unprocessed_facts);
    assert(current_node->in_queue());
    
    return current_node;
@@ -107,18 +107,6 @@ serial_local::gather_next_tuples(db::node *node, simple_tuple_list& ls)
 {
    (void)node;
    (void)ls;
-}
-
-void
-serial_local::fill_temporary_store(db::node *node, temporary_store& ts)
-{
-   serial_node *no((serial_node*)node);
-
-   swap(ts.lists, no->store.lists);
-   swap(ts.size, no->store.size);
-   swap(ts.persistent_tuples, no->store.persistent_tuples);
-   swap(ts.action_tuples, no->store.action_tuples);
-   assert(no->store.size == 0);
 }
 
 }

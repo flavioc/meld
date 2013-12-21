@@ -28,6 +28,12 @@ namespace vm {
 // most integers in the byte-code have 4 bytes
 BOOST_STATIC_ASSERT(sizeof(uint_val) == 4);
 
+static inline bool
+predicate_sorter(const predicate* p1, const predicate* p2)
+{
+	return p1->get_name() < p2->get_name();
+}
+
 program::program(const string& _filename):
    filename(_filename),
    init(NULL)
@@ -57,6 +63,7 @@ program::program(const string& _filename):
    const size_t num_predicates = (size_t)num_preds;
    
    predicates.resize(num_predicates);
+   sorted_predicates.resize(num_predicates);
    code_size.resize(num_predicates);
    code.resize(num_predicates);
 
@@ -244,7 +251,8 @@ program::program(const string& _filename):
    for(size_t i(0); i < num_predicates; ++i) {
       code_size_t size;
 
-      predicates[i] = predicate::make_predicate_from_reader(read, &size, (predicate_id)i, major_version, minor_version, types);
+      sorted_predicates[i] = predicates[i] =
+         predicate::make_predicate_from_reader(read, &size, (predicate_id)i, major_version, minor_version, types);
       code_size[i] = size;
 
       MAX_STRAT_LEVEL = max(predicates[i]->get_strat_level() + 1, MAX_STRAT_LEVEL);
@@ -252,6 +260,9 @@ program::program(const string& _filename):
       if(predicates[i]->is_route_pred())
          route_predicates.push_back(predicates[i]);
    }
+
+   // create 'sorted_predicates' from 'predicates'
+   sort(sorted_predicates.begin(), sorted_predicates.end(), predicate_sorter);
 
    safe = true;
    for(size_t i(0); i < num_predicates; ++i) {

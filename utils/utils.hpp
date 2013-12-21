@@ -3,6 +3,8 @@
 #define UTILS_UTILS_HPP
 
 #include <sstream>
+#include <vector>
+#include <string>
 
 namespace utils
 {
@@ -73,6 +75,8 @@ T power(const T base, const T exp)
 }
 
 size_t random_unsigned(const size_t);
+
+void write_strings(const std::vector<std::string>&, std::ostream&, const size_t);
 
 }
 

@@ -22,6 +22,8 @@
 #include "utils/atomic.hpp"
 #include "vm/rule_matcher.hpp"
 #include "vm/all.hpp"
+#include "db/lists.hpp"
+#include "vm/temporary.hpp"
 
 #ifdef USE_UI
 #include <json_spirit.h>
@@ -110,7 +112,9 @@ public:
 	json_spirit::Value dump_json(void) const;
 #endif
 
-	vm::rule_matcher matcher;
+   db::lists db;
+   vm::temporary_store store;
+   bool unprocessed_facts;
    
    explicit node(const node_id, const node_id, vm::all *);
    

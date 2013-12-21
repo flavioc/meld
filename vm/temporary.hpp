@@ -6,6 +6,7 @@
 #include "vm/program.hpp"
 #include "vm/predicate.hpp"
 #include "db/tuple.hpp"
+#include "vm/rule_matcher.hpp"
 
 namespace vm
 {
@@ -13,17 +14,21 @@ namespace vm
 class temporary_store: public mem::base
 {
    public:
-      db::simple_tuple_list *lists;
+      db::simple_tuple_list *incoming;
+      db::simple_tuple_list incoming_persistent_tuples;
+      db::simple_tuple_list incoming_action_tuples;
+
       db::simple_tuple_list *generated;
-      db::simple_tuple_list *action_tuples;
-      db::simple_tuple_list *persistent_tuples;
+      db::simple_tuple_list action_tuples;
+      db::simple_tuple_list persistent_tuples;
       size_t num_lists;
-      size_t size;
 
       bool *rules;
       size_t size_rules;
       bool *predicates;
       size_t size_predicates;
+
+      vm::rule_matcher matcher;
 
       inline db::simple_tuple_list* get_generated(const vm::predicate_id p)
       {
@@ -31,21 +36,36 @@ class temporary_store: public mem::base
          return generated + p;
       }
 
-      inline db::simple_tuple_list* get_list(const vm::predicate_id p)
+      inline db::simple_tuple_list* get_incoming(const vm::predicate_id p)
       {
          assert(p < num_lists);
-         return lists + p;
+         return incoming + p;
       }
 
-      inline bool has_data(void) const
+      inline void add_incoming(db::simple_tuple *stpl)
       {
-         return size > 0;
+         get_incoming(stpl->get_predicate_id())->push_back(stpl);
       }
 
-      inline void add_fact(db::simple_tuple *stpl)
+      inline void register_fact(db::simple_tuple *stpl)
       {
-         size++;
-         get_list(stpl->get_predicate_id())->push_back(stpl);
+         register_tuple_fact(stpl->get_tuple(), stpl->get_count());
+      }
+
+      inline void register_tuple_fact(vm::tuple *tpl, const vm::ref_count count)
+      {
+         matcher.register_tuple(tpl, count);
+         mark(tpl->get_predicate());
+      }
+
+      inline void deregister_fact(db::simple_tuple *stpl)
+      {
+         deregister_tuple_fact(stpl->get_tuple(), stpl->get_count());
+      }
+
+      inline void deregister_tuple_fact(vm::tuple *tpl, const vm::ref_count count)
+      {
+         matcher.deregister_tuple(tpl, count);
       }
 
       inline void add_generated(db::simple_tuple *stpl)
@@ -55,14 +75,12 @@ class temporary_store: public mem::base
 
       inline void add_action_fact(db::simple_tuple *stpl)
       {
-         size++;
-         action_tuples->push_back(stpl);
+         action_tuples.push_back(stpl);
       }
 
       inline void add_persistent_fact(db::simple_tuple *stpl)
       {
-         size++;
-         persistent_tuples->push_back(stpl);
+         persistent_tuples.push_back(stpl);
       }
 
       inline void clear_predicates(void)
@@ -77,18 +95,14 @@ class temporary_store: public mem::base
 
       explicit temporary_store(vm::program *prog):
          num_lists(prog->num_predicates()),
-         size(0)
+         matcher(prog)
       {
-         lists = mem::allocator<db::simple_tuple_list>().allocate(num_lists);
+         incoming = mem::allocator<db::simple_tuple_list>().allocate(num_lists);
          generated = mem::allocator<db::simple_tuple_list>().allocate(num_lists);
-         action_tuples = mem::allocator<db::simple_tuple_list>().allocate(1);
-         persistent_tuples = mem::allocator<db::simple_tuple_list>().allocate(1);
          for(size_t i(0); i < num_lists; ++i) {
-            mem::allocator<db::simple_tuple_list>().construct(get_list(i));
+            mem::allocator<db::simple_tuple_list>().construct(get_incoming(i));
             mem::allocator<db::simple_tuple_list>().construct(get_generated(i));
          }
-         mem::allocator<db::simple_tuple_list>().construct(action_tuples);
-         mem::allocator<db::simple_tuple_list>().construct(persistent_tuples);
          size_rules = prog->num_rules();
          rules = mem::allocator<bool>().allocate(size_rules);
          size_predicates = prog->num_predicates();
@@ -100,15 +114,11 @@ class temporary_store: public mem::base
       ~temporary_store(void)
       {
          for(size_t i(0); i < num_lists; ++i) {
-            mem::allocator<db::simple_tuple_list>().destroy(get_list(i));
+            mem::allocator<db::simple_tuple_list>().destroy(get_incoming(i));
             mem::allocator<db::simple_tuple_list>().destroy(get_generated(i));
          }
-         mem::allocator<db::simple_tuple_list>().destroy(action_tuples);
-         mem::allocator<db::simple_tuple_list>().destroy(persistent_tuples);
-         mem::allocator<db::simple_tuple_list>().deallocate(lists, num_lists);
+         mem::allocator<db::simple_tuple_list>().deallocate(incoming, num_lists);
          mem::allocator<db::simple_tuple_list>().deallocate(generated, num_lists);
-         mem::allocator<db::simple_tuple_list>().deallocate(action_tuples, 1);
-         mem::allocator<db::simple_tuple_list>().deallocate(persistent_tuples, 1);
          mem::allocator<bool>().deallocate(rules, size_rules);
          mem::allocator<bool>().deallocate(predicates, size_predicates);
       }

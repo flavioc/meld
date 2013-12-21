@@ -101,8 +101,6 @@ execute_send_self(tuple *tuple, state& state)
       return;
    }
 
-   const predicate *pred(tuple->get_predicate());
-
 #ifdef USE_UI
    if(state::UI) {
       if(tuple->is_persistent()) {
@@ -114,18 +112,17 @@ execute_send_self(tuple *tuple, state& state)
 #endif
    if(tuple->is_persistent()) {
       simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
-      state.store.persistent_tuples->push_back(stuple);
+      state.node->store.persistent_tuples.push_back(stuple);
    } else {
       if(tuple->is_reused()) { // push into persistent list, since it is a reused tuple
          simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
-         state.store.persistent_tuples->push_back(stuple);
+         state.node->store.persistent_tuples.push_back(stuple);
       } else {
          simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
-         state.store.add_generated(stuple);
+         state.node->store.add_generated(stuple);
       }
 
-      state.node->matcher.register_tuple(tuple, 1);
-      state.store.mark(pred);
+      state.node->store.register_tuple_fact(tuple, 1);
    }
 }
 
@@ -627,7 +624,7 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
       // therefore if we attempt to use such tuples, we know they have been removed already and cannot be used
       state.hash_removes = true;
 		
-      db::simple_tuple_list *local_tuples(state.store.get_list(pred->get_id()));
+      db::simple_tuple_list *local_tuples(state.node->db.get_list(pred->get_id()));
 		if(state.use_local_tuples) {
 #ifdef CORE_STATISTICS
          execution_time::scope s(state.stat.ts_search_time_predicate[pred->get_id()]);
@@ -744,7 +741,7 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
                                       if(to_delete) {
                                          if(TO_FINISH(ret)) {
                                             db::simple_tuple_list::iterator it(p.iterator);
-                                            state.node->matcher.deregister_tuple(match_tuple, stpl->get_count());
+                                            state.node->store.deregister_fact(stpl);
                                             simple_tuple::wipeout(stpl);
                                             local_tuples->erase(it);
                                          } else {
@@ -833,7 +830,7 @@ next_every_tuple:
 
 	// current set of tuples
    if(!state.persistent_only) {
-      db::simple_tuple_list *local_tuples(state.store.get_list(pred->get_id()));
+      db::simple_tuple_list *local_tuples(state.node->db.get_list(pred->get_id()));
       bool next_iter;
 		for(db::simple_tuple_list::iterator it(local_tuples->begin()); it != local_tuples->end(); ) {
 			simple_tuple *stpl(*it);
@@ -872,7 +869,7 @@ next_every_tuple:
             if(!TO_FINISH(ret) || !to_delete) { // tuple not consumed
                stpl->will_not_delete(); // oops, revert
             } else if(to_delete && TO_FINISH(ret)) {
-               state.node->matcher.deregister_tuple(match_tuple, stpl->get_count());
+               state.node->store.deregister_fact(stpl);
                simple_tuple::wipeout(stpl);
                it = local_tuples->erase(it);
                next_iter = false;
@@ -991,9 +988,9 @@ execute_remove(pcounter pc, state& state)
 #endif
    assert(tpl != NULL);
 		
-   if(is_a_leaf)
-      state.node->matcher.deregister_tuple(tpl, 1);
-   else {
+   if(is_a_leaf) {
+      state.node->store.deregister_tuple_fact(tpl, 1);
+   } else {
       // the else case for deregistering the tuple is done in execute_iter
       if(state.hash_removes) {
          state.removed.insert(state.get_tuple_queue(reg));
@@ -1001,7 +998,7 @@ execute_remove(pcounter pc, state& state)
    }
 
    if(tpl->is_reused() && state.use_local_tuples) {
-		state.store.persistent_tuples->push_back(new simple_tuple(tpl, -1, state.depth));
+		state.node->store.persistent_tuples.push_back(new simple_tuple(tpl, -1, state.depth));
 		if(is_a_leaf)
 			state.leaves_for_deletion.push_back(make_pair((predicate*)tpl->get_predicate(), state.get_leaf(reg)));
 	} else {

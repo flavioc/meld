@@ -1,23 +1,23 @@
 0
-!final()
 !___egde(@1, 1)
 !___egde(@2, 2)
+!final()
 1
+!___egde(@2, 1)
 !edge(@0, 1)
 !path(1, [@1])
-!___egde(@2, 1)
 2
+!___egde(@3, 1)
+!___egde(@4, 3)
 !edge(@0, 2)
 !edge(@1, 1)
 !path(2, [@2])
-!___egde(@3, 1)
-!___egde(@4, 3)
 3
+!___egde(@4, 1)
 !edge(@2, 1)
 !path(3, [@3,@2])
-!___egde(@4, 1)
 4
 !edge(@2, 3)
 !edge(@3, 1)
-!start()
 !path(4, [@4,@3,@2])
+!start()

@@ -690,8 +690,8 @@ public:
    inline iterator begin(void) { return iterator((tuple_trie_leaf*)first_leaf); }
    inline iterator end(void) { return iterator(); }
    
+   std::vector<std::string> get_print_strings(void) const;
    void print(std::ostream&) const;
-   void dump(std::ostream&) const;
    
    tuple_search_iterator match_predicate(const vm::match*) const;
    

@@ -21,7 +21,7 @@ class remote
 {
 public:
    
-   typedef int remote_id;
+   typedef uint64_t remote_id;
    
    static const remote_id LEADER_RANK = 0;
    static remote *self;
@@ -77,7 +77,7 @@ public:
       assert(get_nodes_per_proc() != 0);
       
       const db::node::node_id remote_node_id(id - get_nodes_base());
-      return std::min(remote_node_id / get_nodes_per_proc(), get_num_threads()-1);
+      return std::min(remote_node_id / get_nodes_per_proc(), (uint64_t)get_num_threads()-1);
    }
    
    inline db::node::node_id find_first_node(const vm::process_id id) const

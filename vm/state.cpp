@@ -94,13 +94,13 @@ state::setup(vm::tuple *tpl, db::node *n, const derivation_count count, const de
 void
 state::mark_active_rules(void)
 {
-	for(rule_matcher::rule_iterator it(node->matcher.begin_active_rules()),
-		end(node->matcher.end_active_rules());
+	for(rule_matcher::rule_iterator it(store->matcher.begin_active_rules()),
+		end(store->matcher.end_active_rules());
 		it != end;
 		it++)
 	{
 		rule_id rid(*it);
-		if(!store.rules[rid]) {
+		if(!store->rules[rid]) {
 			// we need check if at least one predicate was activated in this loop
 			vm::rule *rule(all->PROGRAM->get_rule(rid));
          bool flag = false;
@@ -109,13 +109,13 @@ state::mark_active_rules(void)
                jt++)
          {
             const predicate *pred(*jt);
-            if(store.predicates[pred->get_id()]) {
+            if(store->predicates[pred->get_id()]) {
                flag = true;
                break;
             }
          }
 			if(flag) {
-				store.rules[rid] = true;
+				store->rules[rid] = true;
 				heap_priority pr;
 				pr.int_priority = (int)rid;
 				rule_queue.insert(rid, pr);
@@ -123,21 +123,21 @@ state::mark_active_rules(void)
 		}
 	}
 	
-	for(rule_matcher::rule_iterator it(node->matcher.begin_dropped_rules()),
-		end(node->matcher.end_dropped_rules());
+	for(rule_matcher::rule_iterator it(store->matcher.begin_dropped_rules()),
+		end(store->matcher.end_dropped_rules());
 		it != end;
 		it++)
 	{
 		rule_id rid(*it);
-		if(store.rules[rid]) {
-			store.rules[rid] = false;
+		if(store->rules[rid]) {
+			store->rules[rid] = false;
          heap_priority pr;
          pr.int_priority = (int)rid;
 			rule_queue.remove(rid, pr);
 		}
 	}
 
-   node->matcher.clear_dropped_rules();
+   store->matcher.clear_dropped_rules();
 }
 
 bool
@@ -164,7 +164,8 @@ state::search_for_negative_tuple_partial_agg(db::simple_tuple *stpl)
 
    assert(!stpl->is_aggregate());
 
-   for(db::simple_tuple_list::iterator it(store.persistent_tuples->begin()), end(store.persistent_tuples->end());
+   for(db::simple_tuple_list::iterator it(store->persistent_tuples.begin()),
+         end(store->persistent_tuples.end());
          it != end; ++it)
    {
       db::simple_tuple *stpl2(*it);
@@ -173,7 +174,7 @@ state::search_for_negative_tuple_partial_agg(db::simple_tuple *stpl)
       if(tpl2->is_aggregate() && !stpl2->is_aggregate() &&
             stpl2->get_count() == -1 && *tpl2 == *tpl)
       {
-         store.persistent_tuples->erase(it);
+         store->persistent_tuples.erase(it);
          return stpl2;
       }
    }
@@ -189,7 +190,8 @@ state::search_for_negative_tuple_normal(db::simple_tuple *stpl)
    assert(!tpl->is_aggregate());
    assert(!stpl->is_aggregate());
 
-   for(db::simple_tuple_list::iterator it(store.persistent_tuples->begin()), end(store.persistent_tuples->end());
+   for(db::simple_tuple_list::iterator it(store->persistent_tuples.begin()),
+         end(store->persistent_tuples.end());
          it != end; ++it)
    {
       db::simple_tuple *stpl2(*it);
@@ -197,7 +199,7 @@ state::search_for_negative_tuple_normal(db::simple_tuple *stpl)
 
       if(!tpl2->is_aggregate() && stpl2->get_count() == -1 && *tpl2 == *tpl)
       {
-         store.persistent_tuples->erase(it);
+         store->persistent_tuples.erase(it);
          return stpl2;
       }
    }
@@ -210,7 +212,8 @@ state::search_for_negative_tuple_full_agg(db::simple_tuple *stpl)
 {
    vm::tuple *tpl(stpl->get_tuple());
 
-   for(db::simple_tuple_list::iterator it(store.persistent_tuples->begin()), end(store.persistent_tuples->end());
+   for(db::simple_tuple_list::iterator it(store->persistent_tuples.begin()),
+         end(store->persistent_tuples.end());
          it != end; ++it)
    {
       db::simple_tuple *stpl2(*it);
@@ -218,7 +221,7 @@ state::search_for_negative_tuple_full_agg(db::simple_tuple *stpl)
 
       if(tpl2->is_aggregate() && stpl2->is_aggregate() && stpl2->get_count() == -1 && *tpl2 == *tpl)
       {
-         store.persistent_tuples->erase(it);
+         store->persistent_tuples.erase(it);
          return stpl2;
       }
    }
@@ -258,16 +261,16 @@ state::delete_leaves(void)
 bool
 state::do_persistent_tuples(void)
 {
-   while(!store.persistent_tuples->empty()) {
+   while(!store->persistent_tuples.empty()) {
 #ifdef USE_SIM
       if(check_instruction_limit()) {
          return false;
       }
 #endif
-      db::simple_tuple *stpl(store.persistent_tuples->front());
+      db::simple_tuple *stpl(store->persistent_tuples.front());
       vm::tuple *tpl(stpl->get_tuple());
 
-      store.persistent_tuples->pop_front();
+      store->persistent_tuples.pop_front();
 
       if(tpl->is_persistent()) {
          // XXX crashes when calling wipeout below
@@ -321,7 +324,7 @@ state::do_persistent_tuples(void)
          add_to_aggregate(stpl);
       }
    }
-   store.persistent_tuples->clear();
+   store->persistent_tuples.clear();
    delete_leaves();
    
    return true;
@@ -330,7 +333,9 @@ state::do_persistent_tuples(void)
 void
 state::process_action_tuples(void)
 {
-   for(db::simple_tuple_list::iterator it(store.action_tuples->begin()), end(store.action_tuples->end());
+   store->action_tuples.splice(store->action_tuples.end(), store->incoming_action_tuples);
+   for(db::simple_tuple_list::iterator it(store->action_tuples.begin()),
+         end(store->action_tuples.end());
          it != end;
          ++it)
    {
@@ -339,30 +344,24 @@ state::process_action_tuples(void)
       all->MACHINE->run_action(sched, node, tpl);
       delete stpl;
    }
-   store.action_tuples->clear();
+   store->action_tuples.clear();
 }
 
 void
 state::process_local_tuples(void)
 {
-   for(size_t i(0); i < store.num_lists; ++i) {
-      db::simple_tuple_list *ls(store.get_list(i));
+   for(size_t i(0); i < store->num_lists; ++i) {
+      db::simple_tuple_list *ls(store->get_incoming(i));
       for(db::simple_tuple_list::iterator it(ls->begin()), end(ls->end());
          it != end; ++it)
       {
          db::simple_tuple *stpl(*it);
-         vm::tuple *tpl(stpl->get_tuple());
-
-         node->matcher.register_tuple(tpl, stpl->get_count());
-         store.mark(tpl->get_predicate());
-#ifndef USE_TEMPORARY_STORE
-         add_fact_to_node(tpl, stpl->get_count(), stpl->get_depth());
-#endif
+         store->register_fact(stpl);
       }
-#ifndef USE_TEMPORARY_STORE
-      ls->clear();
-#endif
+      db::simple_tuple_list *inc(node->db.get_list(i));
+      inc->splice(inc->end(), *ls);
    }
+   store->persistent_tuples.splice(store->persistent_tuples.end(), store->incoming_persistent_tuples);
 }
 
 void
@@ -386,13 +385,14 @@ state::add_to_aggregate(db::simple_tuple *stpl)
    for(simple_tuple_list::iterator it(list.begin()); it != list.end(); ++it) {
       simple_tuple *stpl(*it);
       stpl->set_as_aggregate();
-      store.persistent_tuples->push_back(stpl);
+      store->persistent_tuples.push_back(stpl);
    }
 }
 
 void
 state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
 {
+   // persistent tuples are marked inside this loop
    if(stpl->get_count() > 0) {
 		const bool is_new(add_fact_to_node(tpl, stpl->get_count(), stpl->get_depth()));
 
@@ -403,10 +403,10 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
          execute_bytecode(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
       }
 
-      node->matcher.register_tuple(tpl, stpl->get_count(), is_new);
+      store->matcher.register_tuple(tpl, stpl->get_count(), is_new);
 
       if(is_new) {
-         store.mark(tpl->get_predicate());
+         store->mark(tpl->get_predicate());
       } else {
         	delete tpl;
       }
@@ -424,14 +424,14 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
          if(!deleter.is_valid()) {
             // do nothing... it does not exist
          } else if(deleter.to_delete()) { // to be removed
-            node->matcher.deregister_tuple(tpl, -stpl->get_count());
+            store->matcher.deregister_tuple(tpl, -stpl->get_count());
          	setup(tpl, node, stpl->get_count(), stpl->get_depth());
          	persistent_only = true;
          	use_local_tuples = false;
          	execute_bytecode(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
          	deleter();
       	} else if(tpl->is_cycle()) {
-            node->matcher.deregister_tuple(tpl, -stpl->get_count());
+            store->matcher.deregister_tuple(tpl, -stpl->get_count());
             depth_counter *dc(deleter.get_depth_counter());
             assert(dc != NULL);
 
@@ -447,7 +447,7 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
                }
             }
          } else {
-            node->matcher.deregister_tuple(tpl, -stpl->get_count());
+            store->matcher.deregister_tuple(tpl, -stpl->get_count());
             delete tpl;
          }
          delete stpl;
@@ -466,13 +466,14 @@ state::run_node(db::node *no)
    cout << "Node " << node->get_id() << " (is " << node->get_translated_id() << ")" << endl;
 #endif
 
-   assert(store.size == 0);
-   sched->fill_temporary_store(node, store);
+   no->unprocessed_facts = false;
+   store = &(no->store);
+   lists = &(no->db);
+
 	{
 #ifdef CORE_STATISTICS
 		execution_time::scope s(stat.core_engine_time);
 #endif
-      store.clear_predicates();
       process_action_tuples();
 		process_local_tuples();
 	}
@@ -504,8 +505,8 @@ state::run_node(db::node *no)
 #ifdef CORE_STATISTICS
 			execution_time::scope s(stat.core_engine_time);
 #endif
-			store.rules[rule] = false;
-         store.clear_predicates();
+			store->rules[rule] = false;
+         store->clear_predicates();
 		}
 		
 		setup(NULL, node, 1, 0);
@@ -525,25 +526,12 @@ state::run_node(db::node *no)
       }
 #endif
       /* move from generated tuples to local_tuples */
-#ifdef USE_TEMPORARY_STORE
-      for(size_t i(0); i < store.num_lists; ++i) {
-         db::simple_tuple_list *gen(store.get_generated(i));
-         db::simple_tuple_list *ls(store.get_list(i));
-         ls->splice(ls->end(), *gen);
+      for(size_t i(0); i < store->num_lists; ++i) {
+         db::simple_tuple_list *gen(store->get_generated(i));
+         db::simple_tuple_list *ls(node->db.get_list(i));
+         if(!gen->empty())
+            ls->splice(ls->end(), *gen);
       }
-#else
-      for(size_t i(0); i < store.num_lists; ++i) {
-         db::simple_tuple_list *gen(store.get_generated(i));
-         for(db::simple_tuple_list::iterator it(gen->begin()), end(gen->end());
-               it != end; ++it)
-         {
-            db::simple_tuple *stpl(*it);
-            vm::tuple *tpl(stpl->get_tuple());
-            add_fact_to_node(tpl, stpl->get_count(), stpl->get_depth());
-         }
-         gen->clear();
-      }
-#endif
       if(!do_persistent_tuples()) {
          aborted = true;
          break;
@@ -556,9 +544,10 @@ state::run_node(db::node *no)
 		}
 	}
 
+#if 0
    // push remaining tuples into node
-   for(size_t i(0); i < store.num_lists; ++i) {
-      db::simple_tuple_list *ls(store.get_list(i));
+   for(size_t i(0); i < store->num_lists; ++i) {
+      db::simple_tuple_list *ls(store->get_list(i));
       for(db::simple_tuple_list::iterator it(ls->begin()), end(ls->end());
          it != end; ++it)
       {
@@ -583,14 +572,14 @@ state::run_node(db::node *no)
       }
       ls->clear();
 	}
-   store.size = 0;
+#endif
 
    rule_queue.clear();
 
 #ifdef USE_SIM
    // store any remaining persistent tuples
    sched::sim_node *snode(dynamic_cast<sched::sim_node*>(node));
-   for(simple_tuple_list::iterator it(store.persistent_tuples->begin()), end(store.persistent_tuples->end());
+   for(simple_tuple_list::iterator it(store->persistent_tuples->begin()), end(store->persistent_tuples->end());
          it != end; ++it)
    {
       assert(aborted);
@@ -599,7 +588,7 @@ state::run_node(db::node *no)
    }
 #endif
 	
-   store.persistent_tuples->clear();
+   store->persistent_tuples.clear();
 #ifdef USE_SIM
    if(sim_instr_use && sim_instr_counter < sim_instr_limit)
       ++sim_instr_counter;
@@ -611,7 +600,6 @@ state::state(sched::base *_sched, vm::all *_all):
 #ifdef DEBUG_MODE
    , print_instrs(false)
 #endif
-   , store(_all->PROGRAM)
    , all(_all)
 #ifdef CORE_STATISTICS
    , stat(_all)
@@ -628,7 +616,6 @@ state::state(vm::all *_all):
 #ifdef DEBUG_MODE
    , print_instrs(false)
 #endif
-   , store(_all->PROGRAM)
    , persistent_only(false)
    , all(_all)
 #ifdef CORE_STATISTICS

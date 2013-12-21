@@ -24,7 +24,7 @@ serial_ui_local::get_work(void)
    serial_node* n = (serial_node*)serial_local::get_work();
 
    while(n != NULL) {
-      if(!n->has_work()) {
+      if(!n->unprocessed_facts) {
          n = (serial_node*)serial_local::get_work();
          if(n == NULL)
             continue;
@@ -114,11 +114,11 @@ serial_ui_local::dump_node(const db::node::node_id id)
 void
 serial_ui_local::change_to_node(serial_node *n)
 {
-	if(!n->has_work())
+	if(!n->unprocessed_facts)
 		return;
 		
 	if(current_node) {
-		if(current_node->has_work())
+		if(current_node->unprocessed_facts)
 			queue_nodes.push(current_node);
 		else {
 			current_node->set_in_queue(false);
