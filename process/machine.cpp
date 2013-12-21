@@ -138,7 +138,8 @@ machine::route_delay(sched::base *sched, node *node, vm::tuple *tpl, const ref_c
 }
 
 void
-machine::route(const node* from, sched::base *sched_caller, const node::node_id id, simple_tuple* stpl, const uint_val delay)
+machine::route(const node* from, sched::base *sched_caller, const node::node_id id, vm::tuple* tpl,
+      const ref_count count, const depth_t depth, const uint_val delay)
 {  
    remote* rem(rout.find_remote(id));
    
@@ -151,19 +152,21 @@ machine::route(const node* from, sched::base *sched_caller, const node::node_id 
       node *node(this->all->DATABASE->find_node(id));
       
       sched::base *sched_other(sched_caller->find_scheduler(node));
-		const predicate *pred(stpl->get_predicate());
+		const predicate *pred(tpl->get_predicate());
 
       if(delay > 0) {
+         simple_tuple *stpl(new simple_tuple(tpl, count, depth));
 			work new_work(node, stpl);
          sched_caller->new_work_delay(sched_caller, from, stpl->get_tuple(), stpl->get_count(), stpl->get_depth(), delay);
       } else if(pred->is_action_pred()) {
-			run_action(sched_other, node, stpl->get_tuple(), sched_caller != sched_other);
-			delete stpl;
+			run_action(sched_other, node, tpl, sched_caller != sched_other);
 		} else if(sched_other == sched_caller) {
+         simple_tuple *stpl(new simple_tuple(tpl, count, depth));
 			work new_work(node, stpl);
       
          sched_caller->new_work(from, new_work);
       } else {
+         simple_tuple *stpl(new simple_tuple(tpl, count, depth));
          work new_work(node, stpl);
 
          sched_caller->new_work_other(sched_other, new_work);
@@ -176,6 +179,7 @@ machine::route(const node* from, sched::base *sched_caller, const node::node_id 
       assert(rout.use_mpi());
       assert(delay == 0);
       
+      simple_tuple *stpl(new simple_tuple(tpl, count, depth));
       message *msg(new message(id, stpl));
       
       sched_caller->new_work_remote(rem, id, msg);

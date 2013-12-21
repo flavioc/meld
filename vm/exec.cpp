@@ -156,8 +156,7 @@ execute_send(const pcounter& pc, state& state)
          LOG_TUPLE_SEND(state.node, state.all->DATABASE->find_node((node::node_id)dest_val), tuple);
       }
 #endif
-      simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
-      state.all->MACHINE->route(state.node, state.sched, (node::node_id)dest_val, stuple);
+      state.all->MACHINE->route(state.node, state.sched, (node::node_id)dest_val, tuple, state.count, state.depth);
    }
 }
 
@@ -182,14 +181,12 @@ execute_send_delay(const pcounter& pc, state& state)
 #ifdef DEBUG_SENDS
       cout << "\t" << *tuple << " -> " << dest_val << endl;
 #endif
-      simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
-
 #ifdef USE_UI
       if(state::UI) {
          LOG_TUPLE_SEND(state.node, state.all->DATABASE->find_node((node::node_id)dest_val), tuple);
       }
 #endif
-      state.all->MACHINE->route(state.node, state.sched, (node::node_id)dest_val, stuple, send_delay_time(pc));
+      state.all->MACHINE->route(state.node, state.sched, (node::node_id)dest_val, tuple, state.count, state.depth, send_delay_time(pc));
    }
 }
 
