@@ -79,6 +79,8 @@ protected:
    
    virtual bool has_work(void) const { return threads_sched::has_work() || !prio_queue.empty(); }
    void do_set_node_priority(db::node *, const double);
+   void add_node_priority_other(db::node *, const double);
+   void set_node_priority_other(db::node *, const double);
 
 public:
    
@@ -89,8 +91,6 @@ public:
    
    virtual void set_node_priority(db::node *, const double);
 	virtual void add_node_priority(db::node *, const double);
-   virtual void add_node_priority_other(db::node *, const double);
-   virtual void set_node_priority_other(db::node *, const double);
    virtual void schedule_next(db::node *);
    
    static db::node *create_node(const db::node::node_id id, const db::node::node_id trans, vm::all *all)

@@ -53,10 +53,9 @@ public:
    
    bool same_place(const db::node::node_id, const db::node::node_id) const;
    
-   void run_action(sched::base *, db::node *, vm::tuple *, const bool from_other = false);
-   void route_delay(sched::base *, db::node *, vm::tuple *, const vm::ref_count, const vm::depth_t, const vm::uint_val delay);
+   void run_action(sched::base *, db::node *, vm::tuple *);
    
-   void route(const db::node *, sched::base *, const db::node::node_id, vm::tuple*, const vm::ref_count,
+   void route(db::node *, sched::base *, const db::node::node_id, vm::tuple*, const vm::ref_count,
          const vm::depth_t, const vm::uint_val delay = 0);
    
 	void init_thread(sched::base *);

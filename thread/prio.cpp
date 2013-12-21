@@ -516,6 +516,8 @@ threads_prio::init(const size_t)
       cur_node->set_priority_level(initial);
 
       init_node(cur_node);
+      cur_node->set_in_queue(true);
+      add_to_queue(cur_node);
 
       assert(cur_node->get_owner() == this);
       assert(cur_node->in_queue());

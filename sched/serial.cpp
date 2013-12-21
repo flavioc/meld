@@ -14,15 +14,18 @@ namespace sched
 void
 serial_local::new_agg(work& w)
 {
-   new_work(w.get_node(), w);
+   db::simple_tuple *stpl(w.get_tuple());
+   new_work(w.get_node(), w.get_node(), stpl->get_tuple(), stpl->get_count(), stpl->get_depth());
+   delete stpl;
 }
 
 void
-serial_local::new_work(const node *, work& new_work)
+serial_local::new_work(node *from, node *target, vm::tuple *tpl, const ref_count count, const depth_t depth)
 {
-   serial_node *to(dynamic_cast<serial_node*>(new_work.get_node()));
+   (void)from;
+   serial_node *to(dynamic_cast<serial_node*>(target));
    
-   to->add_work_myself(new_work.get_tuple());
+   to->add_work_myself(tpl, count, depth);
    
    if(!to->in_queue()) {
       to->set_in_queue(true);
@@ -96,6 +99,8 @@ serial_local::init(const size_t)
       serial_node *cur_node(dynamic_cast<serial_node*>(it->second));
       
       init_node(cur_node);
+      cur_node->set_in_queue(true);
+      queue_nodes.push(cur_node);
       
       assert(cur_node->in_queue());
       assert(cur_node->unprocessed_facts);

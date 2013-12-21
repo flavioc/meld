@@ -296,11 +296,6 @@ node::dump_json(void) const
 }
 #endif
 
-void
-node::init(void)
-{
-}
-
 ostream&
 operator<<(ostream& cout, const node& node)
 {

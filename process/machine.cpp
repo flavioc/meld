@@ -47,7 +47,7 @@ machine::same_place(const node::node_id id1, const node::node_id id2) const
 }
 
 void
-machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, const bool from_other)
+machine::run_action(sched::base *sched, node* node, vm::tuple *tpl)
 {
 	const predicate_id pid(tpl->get_predicate_id());
 	
@@ -95,17 +95,10 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, const bool f
 #endif
       break;
       case SET_PRIORITY_PREDICATE_ID:
-      assert(sched);
-      if(from_other)
-         sched->set_node_priority_other(node, tpl->get_float(0));
-      else {
+         assert(sched);
          sched->set_node_priority(node, tpl->get_float(0));
-      }
       break;
       case ADD_PRIORITY_PREDICATE_ID:
-      if(from_other)
-         sched->add_node_priority_other(node, tpl->get_float(0));
-      else
          sched->add_node_priority(node, tpl->get_float(0));
       break;
       case WRITE_STRING_PREDICATE_ID: {
@@ -115,11 +108,7 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, const bool f
         }
       break;
       case SCHEDULE_NEXT_PREDICATE_ID:
-      if(!from_other) {
          sched->schedule_next(node);
-      } else {
-         assert(false);
-      }
       break;
       default:
 		assert(false);
@@ -130,15 +119,7 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, const bool f
 }
 
 void
-machine::route_delay(sched::base *sched, node *node, vm::tuple *tpl, const ref_count count, const depth_t depth, const uint_val delay)
-{
-   assert(delay > 0);
-
-   sched->new_work_delay(sched, node, tpl, count, depth, delay);
-}
-
-void
-machine::route(const node* from, sched::base *sched_caller, const node::node_id id, vm::tuple* tpl,
+machine::route(node* from, sched::base *sched_caller, const node::node_id id, vm::tuple* tpl,
       const ref_count count, const depth_t depth, const uint_val delay)
 {  
    remote* rem(rout.find_remote(id));
@@ -151,26 +132,14 @@ machine::route(const node* from, sched::base *sched_caller, const node::node_id 
       
       node *node(this->all->DATABASE->find_node(id));
       
-      sched::base *sched_other(sched_caller->find_scheduler(node));
 		const predicate *pred(tpl->get_predicate());
 
-      if(delay > 0) {
-         simple_tuple *stpl(new simple_tuple(tpl, count, depth));
-			work new_work(node, stpl);
-         sched_caller->new_work_delay(sched_caller, from, stpl->get_tuple(), stpl->get_count(), stpl->get_depth(), delay);
-      } else if(pred->is_action_pred()) {
-			run_action(sched_other, node, tpl, sched_caller != sched_other);
-		} else if(sched_other == sched_caller) {
-         simple_tuple *stpl(new simple_tuple(tpl, count, depth));
-			work new_work(node, stpl);
-      
-         sched_caller->new_work(from, new_work);
-      } else {
-         simple_tuple *stpl(new simple_tuple(tpl, count, depth));
-         work new_work(node, stpl);
-
-         sched_caller->new_work_other(sched_other, new_work);
-      }
+      if(delay > 0)
+         sched_caller->new_work_delay(from, node, tpl, count, depth, delay);
+      else if(pred->is_action_pred())
+			run_action(sched_caller, node, tpl);
+      else
+         sched_caller->new_work(from, node, tpl, count, depth);
    }
 #ifdef COMPILE_MPI
    else {

@@ -40,45 +40,32 @@ threads_sched::assert_end_iteration(void) const
 }
 
 void
-threads_sched::new_agg(work& new_work)
+threads_sched::new_agg(work&)
 {
-   thread_intrusive_node *to(dynamic_cast<thread_intrusive_node*>(new_work.get_node()));
-   
-   assert_thread_push_work();
-   
-   to->add_work_myself(new_work.get_tuple());
-   
-   if(!to->in_queue()) {
-      to->set_in_queue(true);
-      add_to_queue(to);
-   }
+   assert(false);
 }
 
 void
-threads_sched::new_work(const node *, work& new_work)
-{
-   new_work_other(this, new_work);
-}
-
-void
-threads_sched::new_work_other(sched::base *, work& new_work)
+threads_sched::new_work(node *from, node *to, vm::tuple *tpl, const ref_count count, const depth_t depth)
 {
    assert(is_active());
+   (void)from;
    
-   thread_node *tnode(dynamic_cast<thread_node*>(new_work.get_node()));
+   thread_node *tnode(dynamic_cast<thread_node*>(to));
 
    tnode->lock();
    
    threads_sched *owner(dynamic_cast<threads_sched*>(tnode->get_owner()));
 
    if(owner == this) {
-      tnode->add_work_myself(new_work.get_tuple());
+      tnode->add_work_myself(tpl, count, depth);
       if(!tnode->in_queue()) {
          tnode->set_in_queue(true);
          add_to_queue((thread_intrusive_node*)tnode);
       }
    } else {
-      tnode->add_work_others(new_work.get_tuple());
+      simple_tuple *stpl(new simple_tuple(tpl, count, depth));
+      tnode->add_work_others(stpl);
       if(!tnode->in_queue()) {
          tnode->set_in_queue(true);
          owner->add_to_queue((thread_intrusive_node*)tnode);
@@ -301,9 +288,11 @@ threads_sched::init(const size_t)
    
    for(; it != end; ++it)
    {
-      thread_node *cur_node((thread_node*)it->second);
+      thread_intrusive_node *cur_node((thread_intrusive_node*)it->second);
       
       init_node(cur_node);
+      cur_node->set_in_queue(true);
+      add_to_queue(cur_node);
       
       assert(cur_node->in_queue());
       assert(cur_node->has_work());

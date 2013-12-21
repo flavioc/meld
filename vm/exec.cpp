@@ -176,7 +176,7 @@ execute_send_delay(const pcounter& pc, state& state)
 #ifdef DEBUG_SENDS
       cout << "\t" << *tuple << " -> self " << state.node->get_id() << endl;
 #endif
-      state.all->MACHINE->route_delay(state.sched, state.node, tuple, state.count, state.depth, send_delay_time(pc));
+      state.sched->new_work_delay(state.node, state.node, tuple, state.count, state.depth, send_delay_time(pc));
    } else {
 #ifdef DEBUG_SENDS
       cout << "\t" << *tuple << " -> " << dest_val << endl;

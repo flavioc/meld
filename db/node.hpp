@@ -99,7 +99,6 @@ public:
    
    virtual void assert_end(void) const;
    virtual void assert_end_iteration(void) const {}
-   void init(void);
    
    db::tuple_trie::tuple_search_iterator match_predicate(const vm::predicate_id) const;
   	db::tuple_trie::tuple_search_iterator match_predicate(const vm::predicate_id, const vm::match*) const;
@@ -118,23 +117,23 @@ public:
 
    inline void lock(void) { store.spin.lock(); }
    inline void unlock(void) { store.spin.unlock(); }
-   inline void add_work_myself(db::simple_tuple *stpl)
+   inline void add_linear_fact(vm::tuple *tpl)
    {
-      vm::tuple *tpl(stpl->get_tuple());
-
+      db.add_fact(tpl);
+      store.register_tuple_fact(tpl, 1);
+   }
+   inline void add_work_myself(vm::tuple *tpl, const vm::ref_count count, const vm::depth_t depth)
+   {
       unprocessed_facts = true;
 
       if(tpl->is_action())
-         store.add_action_fact(stpl);
+         store.add_action_fact(new simple_tuple(tpl, count, depth));
       else if(tpl->is_persistent() || tpl->is_reused()) {
+         simple_tuple *stpl(new simple_tuple(tpl, count, depth));
          store.add_persistent_fact(stpl);
          store.register_fact(stpl);
-      } else {
-         vm::tuple *tpl(stpl->get_tuple());
-         db.add_fact(tpl);
-         store.register_tuple_fact(tpl, 1);
-         delete stpl;
-      }
+      } else
+         add_linear_fact(tpl);
    }
 
    inline void add_work_others(db::simple_tuple *stpl)
