@@ -27,7 +27,6 @@ protected:
    
    typedef queue::intrusive_safe_double_queue<thread_intrusive_node> node_queue;
    node_queue queue_nodes;
-   queue::push_safe_linear_queue<process::work> buffer;
    
    thread_intrusive_node *current_node;
    mutable utils::randgen rand;
@@ -61,7 +60,7 @@ protected:
       queue_nodes.push_tail(node);
    }
    
-   virtual bool has_work(void) const { return !queue_nodes.empty() || !buffer.empty() || !stolen_nodes_buffer.empty(); }
+   virtual bool has_work(void) const { return !queue_nodes.empty() || !stolen_nodes_buffer.empty(); }
    
 public:
    
