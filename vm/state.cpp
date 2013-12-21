@@ -392,7 +392,13 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
 {
    // persistent tuples are marked inside this loop
    if(stpl->get_count() > 0) {
-		const bool is_new(add_fact_to_node(tpl, stpl->get_count(), stpl->get_depth()));
+      bool is_new;
+
+      if(tpl->is_reused()) {
+         is_new = true;
+      } else {
+         is_new = add_fact_to_node(tpl, stpl->get_count(), stpl->get_depth());
+      }
 
       if(is_new) {
          setup(tpl, node, stpl->get_count(), stpl->get_depth());
@@ -401,13 +407,18 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
          execute_bytecode(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
       }
 
-      store->matcher.register_tuple(tpl, stpl->get_count(), is_new);
-
-      if(is_new) {
-         store->mark(tpl->get_predicate());
+      if(tpl->is_reused()) {
+         node->add_linear_fact(tpl);
       } else {
-         vm::tuple::destroy(tpl);
+         store->matcher.register_tuple(tpl, stpl->get_count(), is_new);
+
+         if(is_new) {
+            store->mark(tpl->get_predicate());
+         } else {
+            vm::tuple::destroy(tpl);
+         }
       }
+
       delete stpl;
    } else {
 		if(tpl->is_reused()) {
