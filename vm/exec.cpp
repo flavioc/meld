@@ -173,17 +173,17 @@ execute_send_delay(const pcounter& pc, state& state)
    state.stat.stat_predicate_proven[tuple->get_predicate_id()]++;
 #endif
 
-   simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
-
    if(msg == dest) {
 #ifdef DEBUG_SENDS
       cout << "\t" << *tuple << " -> self " << state.node->get_id() << endl;
 #endif
-      state.all->MACHINE->route_self(state.sched, state.node, stuple, send_delay_time(pc));
+      state.all->MACHINE->route_delay(state.sched, state.node, tuple, state.count, state.depth, send_delay_time(pc));
    } else {
 #ifdef DEBUG_SENDS
       cout << "\t" << *tuple << " -> " << dest_val << endl;
 #endif
+      simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
+
 #ifdef USE_UI
       if(state::UI) {
          LOG_TUPLE_SEND(state.node, state.all->DATABASE->find_node((node::node_id)dest_val), tuple);

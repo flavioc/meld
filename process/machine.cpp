@@ -130,15 +130,11 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, const bool f
 }
 
 void
-machine::route_self(sched::base *sched, node *node, simple_tuple *stpl, const uint_val delay)
+machine::route_delay(sched::base *sched, node *node, vm::tuple *tpl, const ref_count count, const depth_t depth, const uint_val delay)
 {
-   if(delay > 0) {
-      work new_work(node, stpl);
-      sched->new_work_delay(sched, node, new_work, delay);
-   } else {
-      assert(!stpl->get_tuple()->is_action());
-      sched->new_work_self(node, stpl);
-   }
+   assert(delay > 0);
+
+   sched->new_work_delay(sched, node, tpl, count, depth, delay);
 }
 
 void
@@ -159,7 +155,7 @@ machine::route(const node* from, sched::base *sched_caller, const node::node_id 
 
       if(delay > 0) {
 			work new_work(node, stpl);
-         sched_caller->new_work_delay(sched_caller, from, new_work, delay);
+         sched_caller->new_work_delay(sched_caller, from, stpl->get_tuple(), stpl->get_count(), stpl->get_depth(), delay);
       } else if(pred->is_action_pred()) {
 			run_action(sched_other, node, stpl->get_tuple(), sched_caller != sched_other);
 			delete stpl;
