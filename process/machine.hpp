@@ -55,8 +55,36 @@ public:
    
    void run_action(sched::base *, db::node *, vm::tuple *);
    
-   void route(db::node *, sched::base *, const db::node::node_id, vm::tuple*, const vm::ref_count,
-         const vm::depth_t, const vm::uint_val delay = 0);
+   inline void route(db::node *from, sched::base *sched_caller, const db::node::node_id id, vm::tuple* tpl,
+         const vm::ref_count count, const vm::depth_t depth, const vm::uint_val delay = 0)
+   {
+      assert(sched_caller != NULL);
+      assert(id <= all->DATABASE->max_id());
+      
+      db::node *node(this->all->DATABASE->find_node(id));
+         
+      const vm::predicate *pred(tpl->get_predicate());
+
+      if(delay > 0)
+         sched_caller->new_work_delay(from, node, tpl, count, depth, delay);
+      else if(pred->is_action_pred())
+         run_action(sched_caller, node, tpl);
+      else
+         sched_caller->new_work(from, node, tpl, count, depth);
+#if 0 //COMPILE_MPI
+      {
+         // remote, mpi machine
+         
+         assert(rout.use_mpi());
+         assert(delay == 0);
+         
+         simple_tuple *stpl(new simple_tuple(tpl, count, depth));
+         message *msg(new message(id, stpl));
+         
+         sched_caller->new_work_remote(rem, id, msg);
+      }
+#endif
+   }
    
 	void init_thread(sched::base *);
    void start(void);

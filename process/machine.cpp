@@ -118,44 +118,6 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl)
    vm::tuple::destroy(tpl);
 }
 
-void
-machine::route(node* from, sched::base *sched_caller, const node::node_id id, vm::tuple* tpl,
-      const ref_count count, const depth_t depth, const uint_val delay)
-{  
-   remote* rem(rout.find_remote(id));
-   
-   assert(sched_caller != NULL);
-   assert(id <= this->all->DATABASE->max_id());
-   
-   if(rem == remote::self) {
-      // on this machine
-      
-      node *node(this->all->DATABASE->find_node(id));
-      
-		const predicate *pred(tpl->get_predicate());
-
-      if(delay > 0)
-         sched_caller->new_work_delay(from, node, tpl, count, depth, delay);
-      else if(pred->is_action_pred())
-			run_action(sched_caller, node, tpl);
-      else
-         sched_caller->new_work(from, node, tpl, count, depth);
-   }
-#ifdef COMPILE_MPI
-   else {
-      // remote, mpi machine
-      
-      assert(rout.use_mpi());
-      assert(delay == 0);
-      
-      simple_tuple *stpl(new simple_tuple(tpl, count, depth));
-      message *msg(new message(id, stpl));
-      
-      sched_caller->new_work_remote(rem, id, msg);
-   }
-#endif
-}
-
 static inline string
 get_output_filename(const string other, const remote::remote_id id)
 {
