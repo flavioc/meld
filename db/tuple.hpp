@@ -28,8 +28,6 @@ private:
    vm::tuple *data;
    vm::derivation_count count;
    vm::depth_t depth;
-   // tuple is dead and must be deleted at the end of rule execution
-	bool to_delete;
    // if tuple is a final aggregate
    bool is_final_aggregate;
 
@@ -44,11 +42,6 @@ public:
 	inline const vm::predicate* get_predicate(void) const { return get_tuple()->get_predicate(); }
    
    inline vm::predicate_id get_predicate_id(void) const { return get_tuple()->get_predicate_id(); }
-
-   inline bool must_be_deleted(void) const { return to_delete; }
-   inline void will_delete(void) { to_delete = true; } 
-   inline void will_not_delete(void) { to_delete = false; }
-   inline bool can_be_consumed(void) const { return !to_delete; }
 
    inline bool is_aggregate(void) const { return is_final_aggregate; }
    inline void set_as_aggregate(void) { is_final_aggregate = true; }
@@ -80,12 +73,10 @@ public:
 
    explicit simple_tuple(vm::tuple *_tuple, const vm::derivation_count _count, const vm::depth_t _depth = 0):
       data(_tuple), count(_count), depth(_depth),
-      to_delete(false),
       is_final_aggregate(false)
    {}
 
    explicit simple_tuple(void): // for serialization purposes
-      to_delete(false),
       is_final_aggregate(false)
    {
    }
