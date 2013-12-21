@@ -20,7 +20,8 @@ namespace vm
 {
    
 tuple::tuple(const predicate* _pred):
-   pred((predicate*)_pred), fields(allocator<tuple_field>().allocate(pred->num_fields())) 
+   pred((predicate*)_pred), fields(allocator<tuple_field>().allocate(pred->num_fields())),
+   to_delete(false)
 {
    assert(pred != NULL);
    memset(fields, 0, sizeof(tuple_field) * pred->num_fields());

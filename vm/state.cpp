@@ -81,11 +81,10 @@ state::setup(vm::tuple *tpl, db::node *n, const derivation_count count, const de
    	this->is_linear = tpl->is_linear();
 	else
 		this->is_linear = false;
-	for(size_t i(0); i < NUM_REGS; ++i) {
-		this->is_leaf[i] = false;
-		this->saved_leafs[i] = NULL;
-		this->saved_stuples[i] = NULL;
-	}
+   for(size_t i(0); i < NUM_REGS; ++i) {
+      this->saved_leaves[i] = NULL;
+      this->is_leaf[i] = false;
+   }
 #ifdef CORE_STATISTICS
    this->stat.start_matching();
 #endif
@@ -351,14 +350,13 @@ void
 state::process_incoming_tuples(void)
 {
    for(size_t i(0); i < store->num_lists; ++i) {
-      db::simple_tuple_list *ls(store->get_incoming(i));
-      for(db::simple_tuple_list::iterator it(ls->begin()), end(ls->end());
+      vm::tuple_list *ls(store->get_incoming(i));
+      for(vm::tuple_list::iterator it(ls->begin()), end(ls->end());
          it != end; ++it)
       {
-         db::simple_tuple *stpl(*it);
-         store->register_fact(stpl);
+         store->register_tuple_fact(*it, 1);
       }
-      db::simple_tuple_list *inc(node->db.get_list(i));
+      vm::tuple_list *inc(node->db.get_list(i));
       inc->splice(inc->end(), *ls);
    }
    store->persistent_tuples.splice(store->persistent_tuples.end(), store->incoming_persistent_tuples);
@@ -527,8 +525,8 @@ state::run_node(db::node *no)
 #endif
       /* move from generated tuples to local_tuples */
       for(size_t i(0); i < store->num_lists; ++i) {
-         db::simple_tuple_list *gen(store->get_generated(i));
-         db::simple_tuple_list *ls(node->db.get_list(i));
+         vm::tuple_list *gen(store->get_generated(i));
+         vm::tuple_list *ls(node->db.get_list(i));
          if(!gen->empty())
             ls->splice(ls->end(), *gen);
       }

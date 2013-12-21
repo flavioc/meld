@@ -39,61 +39,26 @@ public:
 
    inline vm::tuple* get_tuple(void) const { return data; }
    
-   inline vm::strat_level get_strat_level(void) const
-   {
-      return get_tuple()->get_predicate()->get_strat_level();
-   }
+   inline vm::strat_level get_strat_level(void) const { return get_tuple()->get_predicate()->get_strat_level(); }
 
-	inline const vm::predicate* get_predicate(void) const
-	{
-		return get_tuple()->get_predicate();
-	}
+	inline const vm::predicate* get_predicate(void) const { return get_tuple()->get_predicate(); }
    
-   inline vm::predicate_id get_predicate_id(void) const
-   {
-      return get_tuple()->get_predicate_id();
-   }
+   inline vm::predicate_id get_predicate_id(void) const { return get_tuple()->get_predicate_id(); }
 
-   inline bool must_be_deleted(void) const
-   {
-      return to_delete;
-   }
-   
-   inline void will_delete(void)
-   {
-	   to_delete = true;
-   }
-   
-   inline void will_not_delete(void)
-   {
-	   to_delete = false;
-   }
+   inline bool must_be_deleted(void) const { return to_delete; }
+   inline void will_delete(void) { to_delete = true; } 
+   inline void will_not_delete(void) { to_delete = false; }
+   inline bool can_be_consumed(void) const { return !to_delete; }
 
-   inline bool can_be_consumed(void) const
-   {
-      return !to_delete;
-   }
-
-   inline bool is_aggregate(void) const
-   {
-      return is_final_aggregate;
-   }
-
-   inline void set_as_aggregate(void)
-   {
-      is_final_aggregate = true;
-   }
+   inline bool is_aggregate(void) const { return is_final_aggregate; }
+   inline void set_as_aggregate(void) { is_final_aggregate = true; }
 
    void print(std::ostream&) const;
 
    inline vm::derivation_count get_count(void) const { return count; }
-   
    inline bool reached_zero(void) const { return get_count() == 0; }
-
    inline void inc_count(const vm::derivation_count& inc) { assert(inc > 0); count += inc; }
-
    inline void dec_count(const vm::derivation_count& inc) { assert(inc > 0); count -= inc; }
-   
    inline void add_count(const vm::derivation_count& inc) { count += inc; }
 
    inline vm::depth_t get_depth(void) const { return depth; }

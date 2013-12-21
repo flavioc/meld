@@ -37,8 +37,7 @@ class state
 {
 private:
    
-   db::tuple_trie_leaf *saved_leafs[NUM_REGS];
-	db::simple_tuple *saved_stuples[NUM_REGS];
+   db::tuple_trie_leaf *saved_leaves[NUM_REGS];
 	bool is_leaf[NUM_REGS];
 	
 	std::list<runtime::cons*, mem::allocator<runtime::cons*> > free_cons;
@@ -76,7 +75,7 @@ public:
    match_store_type match_store;
 
    bool hash_removes;
-   typedef std::unordered_set<db::simple_tuple*, std::hash<db::simple_tuple*>, std::equal_to<db::simple_tuple*>, mem::allocator<db::simple_tuple*> > removed_hash;
+   typedef std::unordered_set<vm::tuple*, std::hash<vm::tuple*>, std::equal_to<vm::tuple*>, mem::allocator<vm::tuple*> > removed_hash;
    removed_hash removed;
    bool use_local_tuples;
    temporary_store *store;
@@ -135,10 +134,9 @@ public:
    inline void set_nil(const reg_num& num) { set_ptr(num, null_ptr_val); }
    inline reg get_reg(const reg_num& num) { return regs[num]; }
    
-   inline void set_leaf(const reg_num& num, db::tuple_trie_leaf* leaf) { is_leaf[num] = true; saved_leafs[num] = leaf; }
-   inline db::tuple_trie_leaf* get_leaf(const reg_num& num) const { return saved_leafs[num]; }
-	inline void set_tuple_queue(const reg_num& num, db::simple_tuple *stpl) { is_leaf[num] = false; saved_stuples[num] = stpl; }
-	inline db::simple_tuple* get_tuple_queue(const reg_num& num) const { return saved_stuples[num]; }
+   inline void set_leaf(const reg_num& num, db::tuple_trie_leaf* leaf) { is_leaf[num] = true; saved_leaves[num] = leaf; }
+   inline db::tuple_trie_leaf* get_leaf(const reg_num& num) const { return saved_leaves[num]; }
+	inline void set_tuple_queue(const reg_num& num, vm::tuple *) { is_leaf[num] = false; }
 	inline bool is_it_a_leaf(const reg_num& num) const { return is_leaf[num]; }
 
    inline void copy_reg(const reg_num& reg_from, const reg_num& reg_to) {

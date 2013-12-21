@@ -118,11 +118,9 @@ execute_send_self(tuple *tuple, state& state)
          simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
          state.store->persistent_tuples.push_back(stuple);
       } else {
-         simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
-         state.store->add_generated(stuple);
+         state.store->add_generated(tuple);
+         state.store->register_tuple_fact(tuple, 1);
       }
-
-      state.store->register_tuple_fact(tuple, 1);
    }
 }
 
@@ -535,10 +533,10 @@ typedef enum {
 typedef struct {
    iter_type_t type;
    union {
-      simple_tuple *tuple;
+      tuple *tpl;
       tuple_trie_leaf *leaf;
    };
-   db::simple_tuple_list::iterator iterator;
+   tuple_list::iterator iterator;
 } iter_object;
 
 class tuple_sorter
@@ -551,7 +549,7 @@ private:
 	{
 		switch(l.type) {
 			case ITER_LOCAL:
-				return l.tuple->get_tuple();
+				return l.tpl;
 			case ITER_DB:
 				return l.leaf->get_underlying_tuple();
 			default: assert(false); return NULL;
@@ -608,7 +606,7 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
 	state.is_linear = this_is_linear || state.is_linear;                    \
    state.depth = !pred->is_cycle_pred() ? state.depth : max((NEW_DEPTH)+1, state.depth); \
    if((TUPLE_LEAF) != NULL) state.set_leaf(reg, (TUPLE_LEAF));  \
-   if((TUPLE_QUEUE) != NULL) state.set_tuple_queue(reg, (TUPLE_QUEUE))
+   if((TUPLE_QUEUE) != NULL) state.set_tuple_queue(reg, (TUPLE))
 	
 #define POP_STATE()								\
    state.is_linear = old_is_linear;       \
@@ -624,20 +622,20 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
       // therefore if we attempt to use such tuples, we know they have been removed already and cannot be used
       state.hash_removes = true;
 		
-      db::simple_tuple_list *local_tuples(state.db->get_list(pred->get_id()));
+      tuple_list *local_tuples(state.lists->get_list(pred->get_id()));
 		if(state.use_local_tuples) {
 #ifdef CORE_STATISTICS
          execution_time::scope s(state.stat.ts_search_time_predicate[pred->get_id()]);
 #endif
-			for(db::simple_tuple_list::iterator it(local_tuples->begin()), end(local_tuples->end());
+			for(tuple_list::iterator it(local_tuples->begin()), end(local_tuples->end());
 				it != end; ++it)
 			{
-				simple_tuple *stpl(*it);
-				if(stpl->get_predicate() == pred && stpl->can_be_consumed()) {
-					if(do_matches(m, stpl->get_tuple())) {
+				tuple *tpl(*it);
+				if(tpl->get_predicate() == pred && tpl->can_be_consumed()) {
+					if(do_matches(m, tpl)) {
                   iter_object obj;
                   obj.type = ITER_LOCAL;
-                  obj.tuple = stpl;
+                  obj.tpl = tpl;
                   obj.iterator = it;
 						everything.push_back(obj);
                }
@@ -713,25 +711,23 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
                              }
                              break;
                case ITER_LOCAL: {
-                                   simple_tuple *stpl(p.tuple);
+                                   tuple *match_tuple(p.tpl);
 
                                    if(pred_linear) {
-                                      state::removed_hash::const_iterator found(state.removed.find(stpl));
+                                      state::removed_hash::const_iterator found(state.removed.find(match_tuple));
                                       if(found != state.removed.end()) {
                                          // tuple already removed
                                          goto next_every_tuple;
                                       }
                                    }
 
-                                   tuple *match_tuple(stpl->get_tuple());
-
-                                   if(pred_linear && !stpl->can_be_consumed())
+                                   if(pred_linear && !match_tuple->can_be_consumed())
                                       goto next_every_tuple;
 
-                                   PUSH_CURRENT_STATE(match_tuple, NULL, stpl, stpl->get_depth());
+                                   PUSH_CURRENT_STATE(match_tuple, NULL, match_tuple, (vm::depth_t)0);
 
                                    if(pred_linear)
-                                      stpl->will_delete();
+                                      match_tuple->will_delete();
 
                                    ret = execute(first, state, reg, match_tuple);
 
@@ -740,16 +736,16 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
                                    if(pred_linear) {
                                       if(to_delete) {
                                          if(TO_FINISH(ret)) {
-                                            db::simple_tuple_list::iterator it(p.iterator);
-                                            state.store->deregister_fact(stpl);
-                                            simple_tuple::wipeout(stpl);
+                                            tuple_list::iterator it(p.iterator);
+                                            state.store->deregister_tuple_fact(match_tuple, state.count);
+                                            delete match_tuple;
                                             local_tuples->erase(it);
                                          } else {
-                                            stpl->will_not_delete();
+                                            match_tuple->will_not_delete();
                                             goto next_every_tuple;
                                          }
                                       } else {
-                                         stpl->will_not_delete();
+                                         match_tuple->will_not_delete();
                                          if(!TO_FINISH(ret))
                                             goto next_every_tuple;
                                       }
@@ -830,13 +826,12 @@ next_every_tuple:
 
 	// current set of tuples
    if(!state.persistent_only) {
-      db::simple_tuple_list *local_tuples(state.db->get_list(pred->get_id()));
+      vm::tuple_list *local_tuples(state.lists->get_list(pred->get_id()));
       bool next_iter;
-		for(db::simple_tuple_list::iterator it(local_tuples->begin()); it != local_tuples->end(); ) {
-			simple_tuple *stpl(*it);
-			tuple *match_tuple(stpl->get_tuple());
+		for(vm::tuple_list::iterator it(local_tuples->begin()); it != local_tuples->end(); ) {
+			tuple *match_tuple(*it);
 
-			if(pred_linear && !stpl->can_be_consumed()) {
+			if(pred_linear && !match_tuple->can_be_consumed()) {
             it++;
 				continue;
          }
@@ -853,10 +848,10 @@ next_every_tuple:
             }
          }
 		
-			PUSH_CURRENT_STATE(match_tuple, NULL, stpl, stpl->get_depth());
+			PUSH_CURRENT_STATE(match_tuple, NULL, match_tuple, (vm::depth_t)0);
 		
          if(pred_linear)
-            stpl->will_delete(); // this will avoid future uses of this tuple!
+            match_tuple->will_delete(); // this will avoid future uses of this tuple!
 		
 			// execute...
 			return_type ret = execute(first, state, reg, match_tuple);
@@ -867,10 +862,10 @@ next_every_tuple:
 
          if(pred_linear) {
             if(!TO_FINISH(ret) || !to_delete) { // tuple not consumed
-               stpl->will_not_delete(); // oops, revert
+               match_tuple->will_not_delete(); // oops, revert
             } else if(to_delete && TO_FINISH(ret)) {
-               state.store->deregister_fact(stpl);
-               simple_tuple::wipeout(stpl);
+               state.store->deregister_tuple_fact(match_tuple, state.count);
+               delete match_tuple;
                it = local_tuples->erase(it);
                next_iter = false;
             }
@@ -993,7 +988,7 @@ execute_remove(pcounter pc, state& state)
    } else {
       // the else case for deregistering the tuple is done in execute_iter
       if(state.hash_removes) {
-         state.removed.insert(state.get_tuple_queue(reg));
+         state.removed.insert(state.get_tuple(reg));
       }
    }
 

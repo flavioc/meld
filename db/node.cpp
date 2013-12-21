@@ -203,7 +203,7 @@ node::dump(ostream& cout) const
    
    for(size_t i(0); i < all->PROGRAM->num_predicates(); ++i) {
       predicate *pred(all->PROGRAM->get_sorted_predicate(i));
-      const simple_tuple_list *ls(db.get_list(pred->get_id()));
+      const tuple_list *ls(db.get_list(pred->get_id()));
       simple_tuple_map::const_iterator it(tuples.find(pred->get_id()));
       tuple_trie *tr = NULL;
       if(it != tuples.end())
@@ -215,7 +215,7 @@ node::dump(ostream& cout) const
          vec = tr->get_print_strings();
 
       if(!ls->empty()) {
-         for(simple_tuple_list::const_iterator it(ls->begin()), end(ls->end()); it != end; ++it) {
+         for(tuple_list::const_iterator it(ls->begin()), end(ls->end()); it != end; ++it) {
             vec.push_back(to_string(*(*it)));
          }
       }
@@ -234,7 +234,7 @@ node::print(ostream& cout) const
    
    for(size_t i(0); i < all->PROGRAM->num_predicates(); ++i) {
       predicate *pred(all->PROGRAM->get_sorted_predicate(i));
-      const simple_tuple_list *ls(db.get_list(pred->get_id()));
+      const tuple_list *ls(db.get_list(pred->get_id()));
       simple_tuple_map::const_iterator it(tuples.find(pred->get_id()));
       tuple_trie *tr = NULL;
       bool empty = true;
@@ -257,7 +257,7 @@ node::print(ostream& cout) const
          vec = tr->get_print_strings();
 
       if(!ls->empty()) {
-         for(simple_tuple_list::const_iterator it(ls->begin()), end(ls->end()); it != end; ++it) {
+         for(tuple_list::const_iterator it(ls->begin()), end(ls->end()); it != end; ++it) {
             vec.push_back(to_string(*(*it)));
          }
       }

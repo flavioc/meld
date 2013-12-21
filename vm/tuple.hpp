@@ -30,6 +30,7 @@ private:
 
 	predicate* pred;
    tuple_field *fields;
+	bool to_delete;
 
    void copy_field(tuple *, const field_num) const;
 
@@ -98,6 +99,7 @@ public:
    inline bool is_action(void) const { return pred->is_action_pred(); }
    inline bool is_reused(void) const { return pred->is_reused_pred(); }
    inline bool is_cycle(void) const { return pred->is_cycle_pred(); }
+   inline bool is_reused_or_pred(void) const { return is_reused() || is_persistent(); }
    
    void print(std::ostream&) const;
 #ifdef USE_UI
@@ -106,6 +108,11 @@ public:
    
    tuple *copy_except(const field_num) const;
    tuple *copy(void) const;
+
+   inline bool must_be_deleted(void) const { return to_delete; }
+   inline void will_delete(void) { to_delete = true; }
+   inline void will_not_delete(void) { to_delete = false; }
+   inline bool can_be_consumed(void) const { return !to_delete; }
    
    explicit tuple(void); // only used for serialization!
 	explicit tuple(const predicate* pred);

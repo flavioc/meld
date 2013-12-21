@@ -30,8 +30,10 @@ public:
          store.add_persistent_fact(stpl);
          store.register_fact(stpl);
       } else {
-         db.add_fact(stpl);
-         store.register_fact(stpl);
+         vm::tuple *tpl(stpl->get_tuple());
+         db.add_fact(tpl);
+         store.register_tuple_fact(tpl, 1);
+         delete stpl;
       }
    }
 
