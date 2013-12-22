@@ -84,7 +84,7 @@ const size_t POP_BASE            = instr_size;
 const size_t PUSH_REGS_BASE      = instr_size;
 const size_t POP_REGS_BASE       = instr_size;
 const size_t CALLF_BASE          = instr_size + 1;
-const size_t CALLE_BASE          = instr_size + 3;
+const size_t CALLE_BASE          = call_size + count_size;
 const size_t MAKE_STRUCTR_BASE   = instr_size + type_size + reg_val_size;
 const size_t MVINTFIELD_BASE     = instr_size + int_size + field_size;
 const size_t MVINTREG_BASE       = instr_size + int_size + reg_val_size;
@@ -390,9 +390,8 @@ inline instr_val call_val(pcounter pc) { return val_get(pc, 0); } // XXX: to rem
 /* CALLE (similar to CALL) */
 
 inline external_function_id calle_extern_id(pcounter pc) { return (external_function_id)byte_get(pc, 1); }
-inline size_t calle_num_args(pcounter pc) { return (size_t)byte_get(pc, 2); }
-inline reg_num calle_dest(pcounter pc) { return pcounter_reg(pc + 3); }
-inline instr_val calle_val(pcounter pc) { return val_get(pc, 0); }
+inline reg_num calle_dest(pcounter pc) { return pcounter_reg(pc + instr_size + extern_id_size); }
+inline size_t calle_num_args(pcounter pc) { return (size_t)byte_get(pc, instr_size + extern_id_size + reg_val_size); }
 
 /* TEST-NIL a TO b */
 
@@ -524,21 +523,6 @@ STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING>(const instr_val v)
 }
 
 inline size_t
-instr_call_args_size(pcounter arg, size_t num)
-{
-   size_t size;
-   size_t total = 0;
-   
-   for(size_t i(0); i < num; ++i) {
-      size = val_size + arg_size<ARGUMENT_ANYTHING>(call_val(arg));
-      arg += size;
-      total += size;
-   }
-   
-   return total;
-}
-
-inline size_t
 instr_delete_args_size(pcounter arg, size_t num)
 {
    size_t size;
@@ -583,7 +567,7 @@ advance(pcounter pc)
 
       case CALLE_INSTR:
          return pc + CALLE_BASE
-                   + instr_call_args_size(pc + CALLE_BASE, calle_num_args(pc));
+                   + calle_num_args(pc) * reg_val_size;
                    
       case DELETE_INSTR:
          return pc + DELETE_BASE

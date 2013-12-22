@@ -23,7 +23,8 @@ using namespace external;
 typedef unordered_map<external_function_id, external_function*> hash_external_type;
 
 static bool init_external_functions(void);
-static external_function_id external_counter(0);   
+static external_function_id external_counter(0);
+static external_function_id first_custom(0);
 static hash_external_type hash_external;
 static bool dummy(init_external_functions());
 
@@ -177,8 +178,16 @@ init_external_functions(void)
    register_external_function(EXTERNAL2(convolvestruct, st, st, st));
 
    atexit(cleanup_externals);
+
+   first_custom = external_counter;
    
    return true;
 }
+
+external_function_id first_custom_external_function(void)
+{
+   return first_custom;
+}
+
 
 }

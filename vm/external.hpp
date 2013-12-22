@@ -60,6 +60,7 @@ public:
    ~external_function(void);
 };
    
+external_function_id first_custom_external_function(void);
 external_function_id register_external_function(external_function *);
 external_function* lookup_external_function(const external_function_id);
 
