@@ -120,6 +120,7 @@ execute_send_self(tuple *tuple, state& state)
       } else {
          state.store->add_generated(tuple);
          state.store->register_tuple_fact(tuple, 1);
+         state.generated_facts = true;
       }
    }
 }
@@ -2194,6 +2195,7 @@ eval_loop:
                if(mobj == NULL) {
                   mobj = new match(pred);
                   build_match_object(mobj, pc + ITER_BASE, pred, state);
+                  state.matches_created.push_back(mobj);
                   iter_match_object_set(pc, (ptr_val)mobj);
                } else {
                   if(!iter_options_const(iter_options(pc))) {
@@ -2968,6 +2970,7 @@ do_execute(byte_code code, state& state, const reg_num reg, vm::tuple *tpl)
    assert(state.stack.empty());
    assert(state.removed.empty());
    state.hash_removes = false;
+   state.generated_facts = false;
 
    const return_type ret(execute((pcounter)code, state, reg, tpl));
 

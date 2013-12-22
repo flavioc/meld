@@ -539,11 +539,13 @@ state::run_node(db::node *no)
       }
 #endif
       /* move from generated tuples to local_tuples */
-      for(size_t i(0); i < store->num_lists; ++i) {
-         db::intrusive_list<vm::tuple> *gen(store->get_generated(i));
-         db::intrusive_list<vm::tuple> *ls(node->db.get_list(i));
-         if(!gen->empty())
-            ls->splice(*gen);
+      if(generated_facts) {
+         for(size_t i(0); i < store->num_lists; ++i) {
+            db::intrusive_list<vm::tuple> *gen(store->get_generated(i));
+            db::intrusive_list<vm::tuple> *ls(node->db.get_list(i));
+            if(!gen->empty())
+               ls->splice(*gen);
+         }
       }
       if(!do_persistent_tuples()) {
          aborted = true;
@@ -648,6 +650,8 @@ state::~state(void)
 	}
 #endif
 	assert(rule_queue.empty());
+   for(match_list::iterator it(matches_created.begin()), end(matches_created.end()); it != end; ++it)
+      delete *it;
 }
 
 }
