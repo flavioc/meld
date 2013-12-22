@@ -83,46 +83,78 @@ execute_alloc(const pcounter& pc, state& state)
 }
 
 static inline void
-execute_send_self(tuple *tuple, state& state)
+execute_add_linear(pcounter& pc, state& state)
 {
-#ifdef DEBUG_SENDS
-   print_mtx.lock();
-   ostringstream ss;
-   ss << "\t" << *tuple << " " << state.count << " -> self " << state.node->get_id() << " (" << state.depth << ")" << endl;
-   cout << ss.str();
-   print_mtx.unlock();
-#endif
-   if(tuple->is_action()) {
-      if(state.count > 0)
-         state.all->MACHINE->run_action(state.sched,
-               state.node, tuple);
-      else
-         vm::tuple::destroy(tuple);
-      return;
-   }
+   const reg_num r(pcounter_reg(pc + instr_size));
+   tuple *tuple(state.get_tuple(r));
+   assert(!tuple->is_reused());
+   assert(!tuple->is_action());
+   assert(tuple->is_linear());
 
 #ifdef USE_UI
    if(state::UI) {
-      if(tuple->is_persistent()) {
-         LOG_PERSISTENT_DERIVATION(state.node, tuple);
-      } else if(tuple->is_linear() && !tuple->is_action()) {
-         LOG_LINEAR_DERIVATION(state.node, tuple);
+      LOG_LINEAR_DERIVATION(state.node, tuple);
+   }
+#endif
+
+   state.node->add_linear_fact(tuple);
+}
+
+static inline void
+execute_add_persistent0(tuple *tpl, state& state)
+{
+#ifdef USE_UI
+   if(state::UI) {
+      if(tpl->is_linear()) {
+         LOG_LINEAR_DERIVATION(state.node, tpl);
+      } else {
+         LOG_PERSISTENT_DERIVATION(state.node, tpl);
       }
    }
 #endif
-   if(tuple->is_persistent()) {
-      simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
-      state.store->persistent_tuples.push_back(stuple);
-   } else {
-      if(tuple->is_reused()) { // push into persistent list, since it is a reused tuple
-         simple_tuple *stuple(new simple_tuple(tuple, state.count, state.depth));
-         state.store->persistent_tuples.push_back(stuple);
-      } else {
-         state.store->add_generated(tuple);
-         state.store->register_tuple_fact(tuple, 1);
-         state.generated_facts = true;
-      }
-   }
+
+   assert(tpl->is_persistent() || tpl->is_reused());
+   simple_tuple *stuple(new simple_tuple(tpl, state.count, state.depth));
+   state.store->persistent_tuples.push_back(stuple);
+}
+
+static inline void
+execute_add_persistent(pcounter& pc, state& state)
+{
+   const reg_num r(pcounter_reg(pc + instr_size));
+
+   // tuple is either persistent or linear reused
+   execute_add_persistent0(state.get_tuple(r), state);
+}
+
+static inline void
+execute_run_action0(tuple *tpl, state& state)
+{
+   assert(tpl->is_action());
+   if(state.count > 0)
+      state.all->MACHINE->run_action(state.sched, state.node, tpl);
+   else
+      vm::tuple::destroy(tpl);
+}
+
+static inline void
+execute_run_action(pcounter& pc, state& state)
+{
+   const reg_num r(pcounter_reg(pc + instr_size));
+   execute_run_action0(state.get_tuple(r), state);
+}
+
+static inline void
+execute_enqueue_linear(pcounter& pc, state& state)
+{
+   const reg_num r(pcounter_reg(pc + instr_size));
+   tuple *tuple(state.get_tuple(r));
+
+   assert(tuple->is_linear());
+
+   state.store->add_generated(tuple);
+   state.store->register_tuple_fact(tuple, 1);
+   state.generated_facts = true;
 }
 
 static inline void
@@ -142,23 +174,20 @@ execute_send(const pcounter& pc, state& state)
    state.stat.stat_predicate_proven[tuple->get_predicate_id()]++;
 #endif
 
-   if(msg == dest) {
-      execute_send_self(tuple, state);
-   } else {
+   assert(msg != dest);
 #ifdef DEBUG_SENDS
-      print_mtx.lock();
-      ostringstream ss;
-      ss << "\t" << *tuple << " " << state.count << " -> " << dest_val << " (" << state.depth << ")" << endl;
-      cout << ss.str();
-      print_mtx.unlock();
+   print_mtx.lock();
+   ostringstream ss;
+   ss << "\t" << *tuple << " " << state.count << " -> " << dest_val << " (" << state.depth << ")" << endl;
+   cout << ss.str();
+   print_mtx.unlock();
 #endif
 #ifdef USE_UI
-      if(state::UI) {
-         LOG_TUPLE_SEND(state.node, state.all->DATABASE->find_node((node::node_id)dest_val), tuple);
-      }
-#endif
-      state.all->MACHINE->route(state.node, state.sched, (node::node_id)dest_val, tuple, state.count, state.depth);
+   if(state::UI) {
+      LOG_TUPLE_SEND(state.node, state.all->DATABASE->find_node((node::node_id)dest_val), tuple);
    }
+#endif
+   state.all->MACHINE->route(state.node, state.sched, (node::node_id)dest_val, tuple, state.count, state.depth);
 }
 
 static inline void
@@ -1300,7 +1329,13 @@ execute_new_axioms(pcounter pc, state& state)
                throw vm_exec_error("don't know how to handle this type (execute_new_axioms)");
          }
       }
-      execute_send_self(tpl, state);
+
+      if(tpl->is_action())
+         execute_run_action0(tpl, state);
+      else if(tpl->is_reused() || tpl->is_persistent())
+         execute_add_persistent0(tpl, state);
+      else
+         state.node->add_linear_fact(tpl);
    }
 }
 
@@ -2245,6 +2280,30 @@ eval_loop:
          CASE(SEND_INSTR)
             JUMP(send, SEND_BASE)
             execute_send(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(ADDLINEAR_INSTR)
+            JUMP(addlinear, ADDLINEAR_BASE)
+            execute_add_linear(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(ADDPERS_INSTR)
+            JUMP(addpers, ADDPERS_BASE)
+            execute_add_persistent(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(RUNACTION_INSTR)
+            JUMP(runaction, RUNACTION_BASE)
+            execute_run_action(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(ENQUEUE_LINEAR_INSTR)
+            JUMP(enqueue_linear, ENQUEUE_LINEAR_BASE)
+            execute_enqueue_linear(pc, state);
             ADVANCE()
          ENDOP()
 

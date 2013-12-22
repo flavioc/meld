@@ -141,6 +141,10 @@ const size_t STRUCT_VALRFR_BASE  = STRUCT_VALRF_BASE;
 const size_t STRUCT_VALFF_BASE   = instr_size + count_size + 2 * field_size;
 const size_t STRUCT_VALFFR_BASE  = STRUCT_VALFF_BASE;
 const size_t MVFLOATSTACK_BASE   = instr_size + float_size + stack_val_size;
+const size_t ADDLINEAR_BASE      = instr_size + reg_val_size;
+const size_t ADDPERS_BASE        = ADDLINEAR_BASE;
+const size_t RUNACTION_BASE      = ADDLINEAR_BASE;
+const size_t ENQUEUE_LINEAR_BASE = ADDLINEAR_BASE;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -254,6 +258,10 @@ enum instr_type {
    STRUCT_VALFF_INSTR   =  0x74,
    STRUCT_VALFFR_INSTR  =  0x75,
    MVFLOATSTACK_INSTR   =  0x76,
+   ADDLINEAR_INSTR      =  0x77,
+   ADDPERS_INSTR        =  0x78,
+   RUNACTION_INSTR      =  0x79,
+   ENQUEUE_LINEAR_INSTR =  0x7A,
    REMOVE_INSTR 	      =  0x80,
    ITER_INSTR		      =  0xA0,
    RETURN_LINEAR_INSTR  =  0xD0,
@@ -545,6 +553,14 @@ advance(pcounter pc)
 	switch(fetch(pc)) {
 		case SEND_INSTR:
          return pc + SEND_BASE;
+      case ADDLINEAR_INSTR:
+         return pc + ADDLINEAR_BASE;
+      case ADDPERS_INSTR:
+         return pc + ADDPERS_BASE;
+      case RUNACTION_INSTR:
+         return pc + RUNACTION_BASE;
+      case ENQUEUE_LINEAR_INSTR:
+         return pc + ENQUEUE_LINEAR_BASE;
                    
       case FLOAT_INSTR:
          return pc + FLOAT_BASE;

@@ -306,6 +306,18 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
               << " TO " << reg_string(send_dest(pc))
               << endl;
    		break;
+      case ADDLINEAR_INSTR:
+         cout << "ADDLINEAR " << reg_string(pcounter_reg(pc + instr_size)) << endl;
+         break;
+      case ADDPERS_INSTR:
+         cout << "ADDPERS " << reg_string(pcounter_reg(pc + instr_size)) << endl;
+         break;
+      case RUNACTION_INSTR:
+         cout << "RUNACTION " << reg_string(pcounter_reg(pc + instr_size)) << endl;
+         break;
+      case ENQUEUE_LINEAR_INSTR:
+         cout << "ENQUEUE LINEAR " << reg_string(pcounter_reg(pc + instr_size)) << endl;
+         break;
    	case ITER_INSTR: {
             pcounter m = pc + ITER_BASE;
 				const byte opts(iter_options(pc));
