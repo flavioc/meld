@@ -5,7 +5,7 @@ all: compiled
 
 test-serial: test
 
-test:
+test: compiled
 	@bash test_all.sh sl
 
 compiled:

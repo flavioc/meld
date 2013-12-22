@@ -7,8 +7,6 @@ type allhiddengrad(node, int, sum float).
 type outgrad(node, int, float).
 type delta(node, int, node, float).
 
-extern float sigmoid(float).
-
 const lrate = 0.01.
 
 !receive(A, I, W * V) :-
