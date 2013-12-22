@@ -114,6 +114,18 @@ cleanup_externals(void)
       delete it->second;
 }
 
+void
+register_custom_external_function(external_function_ptr ptr, const size_t num_args, type *ret, type **args)
+{
+   switch(num_args) {
+      case 0: register_external_function(external0(ptr, ret)); break;
+      case 1: register_external_function(external1(ptr, ret, args[0])); break;
+      case 2: register_external_function(external2(ptr, ret, args[0], args[1])); break;
+      case 3: register_external_function(external3(ptr, ret, args[0], args[1], args[2])); break;
+      default: assert(false);
+   }
+}
+
 static bool
 init_external_functions(void)
 {
@@ -122,6 +134,7 @@ init_external_functions(void)
 #define EXTERNAL1(NAME, RET, ARG1) external1(EXTERN(NAME), RET, ARG1)
 #define EXTERNAL2(NAME, RET, ARG1, ARG2) external2(EXTERN(NAME), RET, ARG1, ARG2)
 #define EXTERNAL3(NAME, RET, ARG1, ARG2, ARG3) external3(EXTERN(NAME), RET, ARG1, ARG2, ARG3)
+
    static type *i(TYPE_INT);
    static type *f(TYPE_FLOAT);
    static type *n(TYPE_NODE);

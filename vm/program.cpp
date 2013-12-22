@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <iostream>
 #include <boost/static_assert.hpp>
+#include <dlfcn.h>
 
 #include "vm/program.hpp"
 #include "db/tuple.hpp"
@@ -11,6 +12,7 @@
 #include "utils/types.hpp"
 #include "vm/state.hpp"
 #include "vm/reader.hpp"
+#include "vm/external.hpp"
 #include "version.hpp"
 #ifdef USE_UI
 #include "ui/macros.hpp"
@@ -32,6 +34,32 @@ static inline bool
 predicate_sorter(const predicate* p1, const predicate* p2)
 {
 	return p1->get_name() < p2->get_name();
+}
+
+static inline ptr_val 
+get_function_pointer(char *lib_path, char* func_name)
+{
+   void *handle = dlopen(lib_path, RTLD_LAZY);
+
+   if(!handle) {
+      cerr<<"Cannot Open Library : "<<dlerror()<<endl;
+      return 0;
+   }
+
+   typedef void (*func_t)();
+
+   //reset errors
+   dlerror();
+
+   func_t func = (func_t)dlsym(handle, func_name);
+   const char *dlsym_error = dlerror();
+
+   if(dlsym_error) {
+      dlclose(handle);
+      return 0;
+   }
+
+   return (ptr_val)func;
 }
 
 program::program(const string& _filename):
@@ -230,20 +258,22 @@ program::program(const string& _filename):
 
       read.read_type<ptr_val>(&skip_ptr);
 
+      skip_ptr = get_function_pointer(skip_filename,extern_name);
       uint32_t num_args;
 
       read.read_type<uint32_t>(&num_args);
 
-      //cout << "Id " << extern_id << " " << extern_name << " ";
-      //type *ret(read_type_from_reader(read));
-      //delete ret;
+      type *ret_type = read_type_id_from_reader(read, types);
 
-      for(uint32_t j(0); j != num_args + 1; ++j) {
-         type *t = read_type_id_from_reader(read, types);
-         (void)t;
-         //delete t;
-      }
-      //cout << endl;
+      if(num_args) {
+         type *arg_type[num_args];
+         for(uint32_t j(0); j != num_args; ++j) {
+            arg_type[j] = read_type_id_from_reader(read, types);
+         }
+
+         register_custom_external_function((external_function_ptr)skip_ptr,num_args,ret_type,arg_type);             
+      } else
+         register_custom_external_function((external_function_ptr)skip_ptr,0,ret_type,NULL);
    }
 
    // read predicate information
