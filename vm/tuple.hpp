@@ -34,8 +34,8 @@ private:
 
    void copy_field(tuple *, const field_num) const;
 
-   inline tuple_field *getfp(void) { return fields; }
-   inline const tuple_field *getfp(void) const { return fields; }
+   inline tuple_field *getfp(void) { return (tuple_field*)(this + 1); }
+   inline const tuple_field *getfp(void) const { return (tuple_field*)(this + 1); }
 
 public:
 
@@ -118,13 +118,15 @@ public:
    inline bool can_be_consumed(void) const { return !to_delete; }
 
    static tuple* create(const predicate* pred) {
-      vm::tuple *ptr((vm::tuple*)mem::center::allocate(sizeof(vm::tuple), 1));
+      const size_t size(sizeof(vm::tuple) + sizeof(tuple_field) * pred->num_fields());
+      vm::tuple *ptr((vm::tuple*)mem::center::allocate(size, 1));
       new (ptr) vm::tuple(pred);
       return ptr;
    }
 
    static void destroy(tuple *tpl) {
-      mem::center::deallocate(tpl, sizeof(vm::tuple), 1);
+      const size_t size(sizeof(vm::tuple) + sizeof(tuple_field) * tpl->num_fields());
+      mem::center::deallocate(tpl, size, 1);
       tpl->~tuple();
    }
    
