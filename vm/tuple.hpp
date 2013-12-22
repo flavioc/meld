@@ -24,7 +24,7 @@
 namespace vm
 {
 
-class tuple//: public mem::base
+class tuple
 {
 private:
 
@@ -33,6 +33,9 @@ private:
    tuple_field *fields;
 
    void copy_field(tuple *, const field_num) const;
+
+   inline tuple_field *getfp(void) { return fields; }
+   inline const tuple_field *getfp(void) const { return fields; }
 
 public:
 
@@ -45,17 +48,17 @@ public:
 #define define_set(NAME, TYPE, VAL) \
    inline void set_ ## NAME (const field_num& field, TYPE val) { VAL; }
 
-   define_set(bool, const bool_val&, SET_FIELD_BOOL(fields[field], val));
-   define_set(int, const int_val&, SET_FIELD_INT(fields[field], val));
-   define_set(float, const float_val&, SET_FIELD_FLOAT(fields[field], val));
-   define_set(ptr, const ptr_val&, SET_FIELD_PTR(fields[field], val));
-   define_set(node, const node_val&, SET_FIELD_NODE(fields[field], val));
-	define_set(string, const runtime::rstring::ptr, SET_FIELD_STRING(fields[field], val); val->inc_refs());
-   define_set(cons, runtime::cons*, SET_FIELD_CONS(fields[field], val); runtime::cons::inc_refs(val));
-   define_set(struct, runtime::struct1*, SET_FIELD_STRUCT(fields[field], val); val->inc_refs());
+   define_set(bool, const bool_val&, SET_FIELD_BOOL(getfp()[field], val));
+   define_set(int, const int_val&, SET_FIELD_INT(getfp()[field], val));
+   define_set(float, const float_val&, SET_FIELD_FLOAT(getfp()[field], val));
+   define_set(ptr, const ptr_val&, SET_FIELD_PTR(getfp()[field], val));
+   define_set(node, const node_val&, SET_FIELD_NODE(getfp()[field], val));
+	define_set(string, const runtime::rstring::ptr, SET_FIELD_STRING(getfp()[field], val); val->inc_refs());
+   define_set(cons, runtime::cons*, SET_FIELD_CONS(getfp()[field], val); runtime::cons::inc_refs(val));
+   define_set(struct, runtime::struct1*, SET_FIELD_STRUCT(getfp()[field], val); val->inc_refs());
 
-   inline void set_nil(const field_num& field) { SET_FIELD_CONS(fields[field], runtime::cons::null_list()); }
-   inline void set_field(const field_num& field, const tuple_field& f) { fields[field] = f; }
+   inline void set_nil(const field_num& field) { SET_FIELD_CONS(getfp()[field], runtime::cons::null_list()); }
+   inline void set_field(const field_num& field, const tuple_field& f) { getfp()[field] = f; }
 #undef define_set
 
    size_t num_fields(void) const { return pred->num_fields(); }
@@ -77,19 +80,19 @@ public:
 
    type* get_field_type(const field_num& field) const { return pred->get_field_type(field); }
 
-   tuple_field get_field(const field_num& field) const { return fields[field]; }
+   tuple_field get_field(const field_num& field) const { return getfp()[field]; }
    
 #define define_get(RET, NAME, VAL) \
    inline RET get_ ## NAME (const field_num& field) const { return VAL; }
 
-   define_get(int_val, int, FIELD_INT(fields[field]));
-   define_get(float_val, float, FIELD_FLOAT(fields[field]));
-   define_get(ptr_val, ptr, FIELD_PTR(fields[field]));
-   define_get(bool_val, bool, FIELD_BOOL(fields[field]));
-   define_get(node_val, node, FIELD_NODE(fields[field]));
-	define_get(runtime::rstring::ptr, string, FIELD_STRING(fields[field]));
-   define_get(runtime::cons*, cons, FIELD_CONS(fields[field]));
-   define_get(runtime::struct1*, struct, FIELD_STRUCT(fields[field]));
+   define_get(int_val, int, FIELD_INT(getfp()[field]));
+   define_get(float_val, float, FIELD_FLOAT(getfp()[field]));
+   define_get(ptr_val, ptr, FIELD_PTR(getfp()[field]));
+   define_get(bool_val, bool, FIELD_BOOL(getfp()[field]));
+   define_get(node_val, node, FIELD_NODE(getfp()[field]));
+	define_get(runtime::rstring::ptr, string, FIELD_STRING(getfp()[field]));
+   define_get(runtime::cons*, cons, FIELD_CONS(getfp()[field]));
+   define_get(runtime::struct1*, struct, FIELD_STRUCT(getfp()[field]));
 
 #undef define_get
 
