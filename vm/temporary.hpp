@@ -9,6 +9,7 @@
 #include "vm/rule_matcher.hpp"
 #include "utils/spinlock.hpp"
 #include "utils/atomic.hpp"
+#include "db/intrusive_list.hpp"
 
 namespace vm
 {
@@ -16,12 +17,12 @@ namespace vm
 class temporary_store: public mem::base
 {
    public:
-      vm::tuple_list *incoming;
+      db::intrusive_list<vm::tuple> *incoming;
       db::simple_tuple_list incoming_persistent_tuples;
       db::simple_tuple_list incoming_action_tuples;
       utils::spinlock spin;
 
-      vm::tuple_list *generated;
+      db::intrusive_list<vm::tuple> *generated;
       db::simple_tuple_list action_tuples;
       db::simple_tuple_list persistent_tuples;
       size_t num_lists;
@@ -33,13 +34,13 @@ class temporary_store: public mem::base
 
       vm::rule_matcher matcher;
 
-      inline vm::tuple_list* get_generated(const vm::predicate_id p)
+      inline db::intrusive_list<vm::tuple>* get_generated(const vm::predicate_id p)
       {
          assert(p < num_lists);
          return generated + p;
       }
 
-      inline vm::tuple_list* get_incoming(const vm::predicate_id p)
+      inline db::intrusive_list<vm::tuple>* get_incoming(const vm::predicate_id p)
       {
          assert(p < num_lists);
          return incoming + p;
@@ -100,11 +101,11 @@ class temporary_store: public mem::base
          num_lists(prog->num_predicates()),
          matcher(prog)
       {
-         incoming = mem::allocator<vm::tuple_list>().allocate(num_lists);
-         generated = mem::allocator<vm::tuple_list>().allocate(num_lists);
+         incoming = mem::allocator<db::intrusive_list<vm::tuple> >().allocate(num_lists);
+         generated = mem::allocator<db::intrusive_list<vm::tuple> >().allocate(num_lists);
          for(size_t i(0); i < num_lists; ++i) {
-            mem::allocator<vm::tuple_list>().construct(get_incoming(i));
-            mem::allocator<vm::tuple_list>().construct(get_generated(i));
+            mem::allocator<db::intrusive_list<vm::tuple> >().construct(get_incoming(i));
+            mem::allocator<db::intrusive_list<vm::tuple> >().construct(get_generated(i));
          }
          size_rules = prog->num_rules();
          rules = mem::allocator<bool>().allocate(size_rules);
@@ -117,11 +118,11 @@ class temporary_store: public mem::base
       ~temporary_store(void)
       {
          for(size_t i(0); i < num_lists; ++i) {
-            mem::allocator<vm::tuple_list>().destroy(get_incoming(i));
-            mem::allocator<vm::tuple_list>().destroy(get_generated(i));
+            mem::allocator<db::intrusive_list<vm::tuple> >().destroy(get_incoming(i));
+            mem::allocator<db::intrusive_list<vm::tuple> >().destroy(get_generated(i));
          }
-         mem::allocator<vm::tuple_list>().deallocate(incoming, num_lists);
-         mem::allocator<vm::tuple_list>().deallocate(generated, num_lists);
+         mem::allocator<db::intrusive_list<vm::tuple> >().deallocate(incoming, num_lists);
+         mem::allocator<db::intrusive_list<vm::tuple> >().deallocate(generated, num_lists);
          mem::allocator<bool>().deallocate(rules, size_rules);
          mem::allocator<bool>().deallocate(predicates, size_predicates);
       }

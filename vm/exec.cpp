@@ -533,7 +533,7 @@ typedef struct {
       tuple *tpl;
       tuple_trie_leaf *leaf;
    };
-   tuple_list::iterator iterator;
+   db::intrusive_list<vm::tuple>::iterator iterator;
 } iter_object;
 
 class tuple_sorter
@@ -619,12 +619,12 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
       // therefore if we attempt to use such tuples, we know they have been removed already and cannot be used
       state.hash_removes = true;
 		
-      tuple_list *local_tuples(state.lists->get_list(pred->get_id()));
+      db::intrusive_list<vm::tuple> *local_tuples(state.lists->get_list(pred->get_id()));
 		if(state.use_local_tuples) {
 #ifdef CORE_STATISTICS
          execution_time::scope s(state.stat.ts_search_time_predicate[pred->get_id()]);
 #endif
-			for(tuple_list::iterator it(local_tuples->begin()), end(local_tuples->end());
+			for(db::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()), end(local_tuples->end());
 				it != end; ++it)
 			{
 				tuple *tpl(*it);
@@ -733,10 +733,10 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
                                    if(pred_linear) {
                                       if(to_delete) {
                                          if(TO_FINISH(ret)) {
-                                            tuple_list::iterator it(p.iterator);
+                                            db::intrusive_list<vm::tuple>::iterator it(p.iterator);
                                             state.store->deregister_tuple_fact(match_tuple, state.count);
-                                            vm::tuple::destroy(match_tuple);
                                             local_tuples->erase(it);
+                                            vm::tuple::destroy(match_tuple);
                                          } else {
                                             match_tuple->will_not_delete();
                                             goto next_every_tuple;
@@ -823,9 +823,9 @@ next_every_tuple:
 
 	// current set of tuples
    if(!state.persistent_only) {
-      vm::tuple_list *local_tuples(state.lists->get_list(pred->get_id()));
+      db::intrusive_list<vm::tuple> *local_tuples(state.lists->get_list(pred->get_id()));
       bool next_iter;
-		for(vm::tuple_list::iterator it(local_tuples->begin()); it != local_tuples->end(); ) {
+		for(db::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()); it != local_tuples->end(); ) {
 			tuple *match_tuple(*it);
 
 			if(pred_linear && !match_tuple->can_be_consumed()) {
@@ -862,8 +862,8 @@ next_every_tuple:
                match_tuple->will_not_delete(); // oops, revert
             } else if(to_delete && TO_FINISH(ret)) {
                state.store->deregister_tuple_fact(match_tuple, state.count);
-               vm::tuple::destroy(match_tuple);
                it = local_tuples->erase(it);
+               vm::tuple::destroy(match_tuple);
                next_iter = false;
             }
          }

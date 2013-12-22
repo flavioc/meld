@@ -350,16 +350,18 @@ void
 state::process_incoming_tuples(void)
 {
    for(size_t i(0); i < store->num_lists; ++i) {
-      vm::tuple_list *ls(store->get_incoming(i));
-      for(vm::tuple_list::iterator it(ls->begin()), end(ls->end());
+      db::intrusive_list<vm::tuple> *ls(store->get_incoming(i));
+      for(db::intrusive_list<vm::tuple>::iterator it(ls->begin()), end(ls->end());
          it != end; ++it)
       {
          store->register_tuple_fact(*it, 1);
       }
-      vm::tuple_list *inc(node->db.get_list(i));
-      inc->splice(inc->end(), *ls);
+      db::intrusive_list<vm::tuple> *inc(node->db.get_list(i));
+      if(!ls->empty())
+         inc->splice(*ls);
    }
-   store->persistent_tuples.splice(store->persistent_tuples.end(), store->incoming_persistent_tuples);
+   if(!store->incoming_persistent_tuples.empty())
+      store->persistent_tuples.splice(store->persistent_tuples.end(), store->incoming_persistent_tuples);
 }
 
 void
@@ -538,10 +540,10 @@ state::run_node(db::node *no)
 #endif
       /* move from generated tuples to local_tuples */
       for(size_t i(0); i < store->num_lists; ++i) {
-         vm::tuple_list *gen(store->get_generated(i));
-         vm::tuple_list *ls(node->db.get_list(i));
+         db::intrusive_list<vm::tuple> *gen(store->get_generated(i));
+         db::intrusive_list<vm::tuple> *ls(node->db.get_list(i));
          if(!gen->empty())
-            ls->splice(ls->end(), *gen);
+            ls->splice(*gen);
       }
       if(!do_persistent_tuples()) {
          aborted = true;

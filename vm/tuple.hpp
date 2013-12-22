@@ -18,19 +18,20 @@
 #include "vm/predicate.hpp"
 #include "runtime/objs.hpp"
 #include "mem/allocator.hpp"
-#include "mem/base.hpp"
 #include "utils/types.hpp"
+#include "db/intrusive_list.hpp"
 
 namespace vm
 {
 
 class tuple
 {
-private:
+public:
+   DECLARE_LIST_INTRUSIVE(tuple);
 
+private:
 	bool to_delete;
 	predicate* pred;
-   tuple_field *fields;
 
    void copy_field(tuple *, const field_num) const;
 
