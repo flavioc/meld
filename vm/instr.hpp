@@ -56,7 +56,7 @@ const size_t call_size = instr_size + extern_id_size + reg_val_size;
 
 const size_t SEND_BASE           = instr_size + 2 * reg_val_size;
 const size_t OP_BASE             = instr_size + 4;
-const size_t ITER_BASE           = instr_size + 12;
+const size_t ITER_BASE           = instr_size + ptr_size + reg_val_size + 2 * jump_size + 3;
 const size_t ALLOC_BASE          = instr_size + 2;
 const size_t CALL_BASE           = call_size + count_size;
 const size_t IF_BASE             = instr_size + 1 + jump_size;
@@ -358,12 +358,14 @@ inline reg_num float_dest(pcounter pc) { return pcounter_reg(pc + instr_size + r
 
 typedef pcounter iter_match;
 
-inline predicate_id iter_predicate(pcounter pc) { return predicate_get(pc, instr_size); }
-inline reg_num iter_reg(pcounter pc) { return pcounter_reg(pc + instr_size + predicate_size); } // XXX
-inline utils::byte iter_options(pcounter pc) { return byte_get(pc, instr_size + predicate_size + reg_val_size); }
-inline utils::byte iter_options_argument(pcounter pc) { return byte_get(pc, instr_size + predicate_size + reg_val_size + sizeof(utils::byte)); }
-inline code_offset_t iter_inner_jump(pcounter pc) { return jump_get(pc, instr_size + predicate_size + reg_val_size + 2 * sizeof(utils::byte)); }
-inline code_offset_t iter_outer_jump(pcounter pc) { return jump_get(pc, instr_size + predicate_size + reg_val_size + 2 * sizeof(utils::byte) + jump_size); }
+inline ptr_val iter_match_object(pcounter pc) { return pcounter_ptr(pc + instr_size); }
+inline void iter_match_object_set(pcounter pc, ptr_val v) { *(ptr_val*)(pc + instr_size) = v; }
+inline predicate_id iter_predicate(pcounter pc) { return predicate_get(pc, instr_size + ptr_size); }
+inline reg_num iter_reg(pcounter pc) { return pcounter_reg(pc + instr_size + ptr_size + predicate_size); } // XXX
+inline utils::byte iter_options(pcounter pc) { return byte_get(pc, instr_size + ptr_size + predicate_size + reg_val_size); }
+inline utils::byte iter_options_argument(pcounter pc) { return byte_get(pc, instr_size + ptr_size + predicate_size + reg_val_size + sizeof(utils::byte)); }
+inline code_offset_t iter_inner_jump(pcounter pc) { return jump_get(pc, instr_size + ptr_size + predicate_size + reg_val_size + 2 * sizeof(utils::byte)); }
+inline code_offset_t iter_outer_jump(pcounter pc) { return jump_get(pc, instr_size + ptr_size + predicate_size + reg_val_size + 2 * sizeof(utils::byte) + jump_size); }
 inline bool iter_match_end(iter_match m) { return (*(m + 1) & 0xc0) == 0x40; }
 inline bool iter_match_none(iter_match m) { return (*(m + 1) & 0xc0) == 0xc0; }
 inline instr_val iter_match_val(iter_match m) { return val_get((pcounter)m, sizeof(utils::byte)); }

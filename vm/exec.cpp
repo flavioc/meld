@@ -2189,14 +2189,13 @@ eval_loop:
                const predicate *pred(state.all->PROGRAM->get_predicate(pred_id));
                const reg_num reg(iter_reg(pc));
 
-               match *mobj(NULL);
-               vm::state::match_store_type::iterator match_found(state.match_store.find(pc));
-               if(match_found == state.match_store.end()) {
+               match *mobj((match*)iter_match_object(pc));
+
+               if(mobj == NULL) {
                   mobj = new match(pred);
                   build_match_object(mobj, pc + ITER_BASE, pred, state);
-                  state.match_store[pc] = mobj;
+                  iter_match_object_set(pc, (ptr_val)mobj);
                } else {
-                  mobj = match_found->second;
                   if(!iter_options_const(iter_options(pc))) {
                      for(size_t i(0); i < mobj->variable_matches.size(); ++i) {
                         variable_match_template& tmp(mobj->variable_matches[i]);

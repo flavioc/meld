@@ -3,7 +3,6 @@
 #define VM_STATE_HPP
 
 #include <list>
-#include <unordered_map>
 #include <unordered_set>
 
 #include "conf.hpp"
@@ -70,9 +69,6 @@ public:
 #ifdef DEBUG_MODE
 	bool print_instrs;
 #endif
-   // for storing iterate match objects
-   typedef std::unordered_map<pcounter, vm::match*, std::hash<pcounter>, std::equal_to<pcounter>, mem::allocator< std::pair< const vm::pcounter, vm::match*> > > match_store_type;
-   match_store_type match_store;
 
    bool hash_removes;
    typedef std::unordered_set<vm::tuple*, std::hash<vm::tuple*>, std::equal_to<vm::tuple*>, mem::allocator<vm::tuple*> > removed_hash;
