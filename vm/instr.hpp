@@ -53,10 +53,11 @@ const size_t stack_val_size = sizeof(offset_num);
 const size_t pcounter_val_size = 0;
 const size_t operation_size = instr_size + 3 * reg_val_size;
 const size_t call_size = instr_size + extern_id_size + reg_val_size;
+const size_t iter_options_size = 2 * sizeof(utils::byte);
 
 const size_t SEND_BASE           = instr_size + 2 * reg_val_size;
 const size_t OP_BASE             = instr_size + 4;
-const size_t ITER_BASE           = instr_size + ptr_size + reg_val_size + 2 * jump_size + 3;
+const size_t ITER_BASE           = instr_size + ptr_size + predicate_size + reg_val_size + 2 * jump_size + iter_options_size + count_size;
 const size_t ALLOC_BASE          = instr_size + 2;
 const size_t CALL_BASE           = call_size + count_size;
 const size_t IF_BASE             = instr_size + 1 + jump_size;
@@ -369,13 +370,12 @@ typedef pcounter iter_match;
 inline ptr_val iter_match_object(pcounter pc) { return pcounter_ptr(pc + instr_size); }
 inline void iter_match_object_set(pcounter pc, ptr_val v) { *(ptr_val*)(pc + instr_size) = v; }
 inline predicate_id iter_predicate(pcounter pc) { return predicate_get(pc, instr_size + ptr_size); }
-inline reg_num iter_reg(pcounter pc) { return pcounter_reg(pc + instr_size + ptr_size + predicate_size); } // XXX
+inline reg_num iter_reg(pcounter pc) { return pcounter_reg(pc + instr_size + ptr_size + predicate_size); }
 inline utils::byte iter_options(pcounter pc) { return byte_get(pc, instr_size + ptr_size + predicate_size + reg_val_size); }
 inline utils::byte iter_options_argument(pcounter pc) { return byte_get(pc, instr_size + ptr_size + predicate_size + reg_val_size + sizeof(utils::byte)); }
-inline code_offset_t iter_inner_jump(pcounter pc) { return jump_get(pc, instr_size + ptr_size + predicate_size + reg_val_size + 2 * sizeof(utils::byte)); }
-inline code_offset_t iter_outer_jump(pcounter pc) { return jump_get(pc, instr_size + ptr_size + predicate_size + reg_val_size + 2 * sizeof(utils::byte) + jump_size); }
-inline bool iter_match_end(iter_match m) { return (*(m + 1) & 0xc0) == 0x40; }
-inline bool iter_match_none(iter_match m) { return (*(m + 1) & 0xc0) == 0xc0; }
+inline code_offset_t iter_inner_jump(pcounter pc) { return jump_get(pc, instr_size + ptr_size + predicate_size + reg_val_size + iter_options_size); }
+inline code_offset_t iter_outer_jump(pcounter pc) { return jump_get(pc, instr_size + ptr_size + predicate_size + reg_val_size + iter_options_size + jump_size); }
+inline size_t iter_matches_size(pcounter pc) { return (size_t)byte_get(pc, instr_size + ptr_size + predicate_size + reg_val_size + iter_options_size + 2 * jump_size); }
 inline instr_val iter_match_val(iter_match m) { return val_get((pcounter)m, sizeof(utils::byte)); }
 inline field_num iter_match_field(iter_match m) { return (field_num)*m; }
 

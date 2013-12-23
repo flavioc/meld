@@ -507,26 +507,20 @@ build_match_element(instr_val val, match* m, type *t, match_field *mf, pcounter&
 }
 
 static inline void
-build_match_object(match* m, pcounter pc, const predicate *pred, state& state)
+build_match_object(match* m, pcounter pc, const predicate *pred, state& state, size_t matches)
 {
-   if(iter_match_none(pc))
-      return;
-      
-   iter_match match;
    type *t;
    size_t count(0);
-   
-   do {
-      match = pc;
-      
-      const field_num field(iter_match_field(match));
-      const instr_val val(iter_match_val(match));
+
+   for(size_t i(0); i < matches; ++i) {
+      const field_num field(iter_match_field(pc));
+      const instr_val val(iter_match_val(pc));
       
       pcounter_move_match(&pc);
 
       t = pred->get_field_type(field);
       build_match_element(val, m, t, m->get_update_match(field), pc, state, count);
-   } while(!iter_match_end(match));
+   }
 }
 
 static size_t
@@ -586,26 +580,20 @@ count_var_match_element(instr_val val, type *t, pcounter& pc)
 }
 
 static inline size_t
-count_variable_match_elements(pcounter pc, const predicate *pred)
+count_variable_match_elements(pcounter pc, const predicate *pred, const size_t matches)
 {
-   if(iter_match_none(pc))
-      return 0;
-      
-   iter_match match;
    type *t;
    size_t ret(0);
    
-   do {
-      match = pc;
-      
-      const field_num field(iter_match_field(match));
-      const instr_val val(iter_match_val(match));
+   for(size_t i(0); i < matches; ++i) {
+      const field_num field(iter_match_field(pc));
+      const instr_val val(iter_match_val(pc));
       
       pcounter_move_match(&pc);
 
       t = pred->get_field_type(field);
       ret += count_var_match_element(val, t, pc);
-   } while(!iter_match_end(match));
+   }
    return ret;
 }
 
@@ -2289,13 +2277,14 @@ eval_loop:
 
                if(mdata == NULL) {
                   const size_t size = state.all->NUM_THREADS;
-                  const size_t var_size = count_variable_match_elements(pc + ITER_BASE, pred);
+                  const size_t matches = iter_matches_size(pc);
+                  const size_t var_size = count_variable_match_elements(pc + ITER_BASE, pred, matches);
                   const size_t mem = match::mem_size(pred, var_size);
                   mdata = mem::allocator<utils::byte>().allocate(size * mem);
                   for(size_t i(0); i < size; ++i) {
                      match *m((match*)(mdata + mem * i));
                      m->init(pred, var_size);
-                     build_match_object(m, pc + ITER_BASE, pred, state);
+                     build_match_object(m, pc + ITER_BASE, pred, state, matches);
                   }
                   state.matches_created.push_back((match*)mdata);
                   iter_match_object_set(pc, (ptr_val)mdata);

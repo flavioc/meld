@@ -333,20 +333,15 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
 
 				cout << ") MATCHING TO ";
             cout << reg_string(iter_reg(pc));
-            
-            if(!iter_match_none(m)) {
-               while (true) {
-                  iter_match match = m;
-                  
-                  m += iter_match_size;
-                  
-                  cout << endl;
-                  print_tab(tabcount+1);
-                  cout << "  (match)." << iter_match_field(match)
-                       << "=" << val_string(iter_match_val(match), &m, prog);
-                  if(iter_match_end(match))
-                     break;
-               }
+
+            const size_t iter_matches(iter_matches_size(pc));
+
+            for(size_t i(0); i < iter_matches; ++i) {
+               cout << endl;
+               print_tab(tabcount+1);
+               cout << "  (match)." << iter_match_field(m)
+                    << "=" << val_string(iter_match_val(m), &m, prog);
+               m += iter_match_size;
             }
             
             cout << endl;
