@@ -2,7 +2,6 @@
 #ifndef VM_MATCH_HPP
 #define VM_MATCH_HPP
 
-#include <vector>
 #include <stack>
 #include <ostream>
 
@@ -31,19 +30,38 @@ struct variable_match_template {
 
 typedef utils::stack<match_field> match_stack;
 
-class list_match: public mem::base
-{
-   public:
+struct list_match {
+   match_field head;
+   match_field tail;
 
-      match_field head;
-      match_field tail;
+   inline void init(list_type *lt) {
+      head.exact = false;
+      head.ty = lt->get_subtype();
+      tail.exact = false;
+      tail.ty = lt;
+   }
 
-      explicit list_match(list_type *lt) {
-         head.exact = false;
-         head.ty = lt->get_subtype();
-         tail.exact = false;
-         tail.ty = lt;
+   inline void destroy(void) {
+      if(head.exact) {
+         if(head.ty->get_type() == FIELD_LIST) {
+            if(head.field.ptr_field > 1) {
+               list_match *m(FIELD_LIST_MATCH(head.field));
+               m->destroy();
+               mem::allocator<list_match>().deallocate(m, 1);
+            }
+         }
       }
+
+      if(tail.exact) {
+         if(tail.ty->get_type() == FIELD_LIST) {
+            if(tail.field.ptr_field > 1) {
+               list_match *m(FIELD_LIST_MATCH(tail.field));
+               m->destroy();
+               mem::allocator<list_match>().deallocate(m, 1);
+            }
+         }
+      }
+   }
 };
 
 inline void
@@ -61,45 +79,54 @@ print_match_field(const match_field& m, std::ostream& cout)
    }
 }
 
-class match: public mem::base
+typedef struct _match
 {
-private:
-   
    bool any_exact;
-   std::vector<match_field, mem::allocator<match_field> > matches;
+   size_t matches_size;
+   size_t var_size;
+
+   inline size_t size(void) const { return matches_size; }
+
+   static inline size_t mem_size(const predicate *pred, const size_t var_size)
+   {
+      return sizeof(struct _match) + pred->num_fields() * sizeof(match_field) +
+         var_size * sizeof(variable_match_template);
+   }
+
+   inline size_t mem_size(void) const { return sizeof(struct _match) + matches_size * sizeof(match_field) + var_size * sizeof(variable_match_template); }
+
+   inline const match_field* get_matches(void) const { return (match_field*)(this + 1); }
+   inline match_field* get_matches(void) { return (match_field*)(this + 1); }
+   inline const variable_match_template* get_vmt(void) const { return (variable_match_template*)((utils::byte*)(this + 1) + sizeof(match_field) * matches_size); }
+   inline variable_match_template* get_vmt(void) { return (variable_match_template*)((utils::byte*)(this + 1) + sizeof(match_field) * matches_size); }
    
    inline void set_any_all(const predicate *pred) {
-      for(size_t i(0); i < matches.size(); ++i) {
-         matches[i].exact = false;
-         matches[i].ty = pred->get_field_type(i);
+      for(size_t i(0); i < matches_size; ++i) {
+         get_matches()[i].exact = false;
+         get_matches()[i].ty = pred->get_field_type(i);
       }
    }
    
-public:
-
-   std::vector<variable_match_template> variable_matches;
-
-   MEM_METHODS(match)
-   
-   inline size_t size(void) const { return matches.size(); }
-   
-   inline bool has_any_exact(void) const { return any_exact; }
-
    inline bool has_match(const field_num& num) const
    {
-      return matches[num].exact;
+      return get_matches()[num].exact;
    }
 
-   inline match_field get_match(const field_num& num) const { return matches[num]; }
-   inline match_field *get_update_match(const field_num& num) { return &matches[num]; }
+   inline match_field get_match(const field_num& num) const { return get_matches()[num]; }
+   inline match_field *get_update_match(const field_num& num) { return get_matches() + num; }
    
    inline void get_match_stack(match_stack& stk) const {
-		for(int i(matches.size()-1); i >= 0; --i)
-         stk.push(matches[i]);
+		for(int i(matches_size-1); i >= 0; --i)
+         stk.push(get_match(i));
    }
 
-   inline void add_variable_match(const variable_match_template& vmt) {
-      variable_matches.push_back(vmt);
+   inline void add_variable_match(const variable_match_template& vmt, const size_t i) {
+      assert(i < var_size);
+      get_vmt()[i] = vmt;
+   }
+
+   inline variable_match_template& get_variable_match(const size_t i) {
+      return get_vmt()[i];
    }
    
    inline void match_int(match_field *m, const int_val val) {
@@ -140,32 +167,35 @@ public:
    }
    
    inline void print(std::ostream& cout) const {
-      for(size_t i(0); i < matches.size(); ++i) {
+      for(size_t i(0); i < matches_size; ++i) {
          cout << (int)i << " ";
-         print_match_field(matches[i], cout);
+         print_match_field(get_match(i), cout);
          cout << std::endl;
       }
    }
-   
-   explicit match(const predicate *pred):
-      any_exact(false)
+
+   inline void init(const predicate *pred, const size_t _var_size)
    {
-      matches.resize(pred->num_fields());
+      any_exact = false;
+      var_size = _var_size;
+      matches_size = pred->num_fields();
       set_any_all(pred);
    }
 
-   ~match(void)
+   inline void destroy(void)
    {
-      for(size_t i(0); i < matches.size(); ++i) {
-         if(matches[i].ty->get_type() == FIELD_LIST && matches[i].exact) {
-            if(matches[i].field.ptr_field > 1) {
-               list_match *m(FIELD_LIST_MATCH(matches[i].field));
-               delete m;
+      for(size_t i(0); i < matches_size; ++i) {
+         match_field m(get_match(i));
+         if(m.ty->get_type() == FIELD_LIST && m.exact) {
+            if(m.field.ptr_field > 1) {
+               list_match *lm(FIELD_LIST_MATCH(m.field));
+               lm->destroy();
+               mem::allocator<list_match>().deallocate(lm, 1);
             }
          }
       }
    }
-};
+} match;
    
 }
 

@@ -23,7 +23,7 @@ public:
    {
       mem::center::deallocate(ptr, sz, 1);
    }
-   
+
    virtual ~base(void) {}
 };
 
