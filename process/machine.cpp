@@ -332,6 +332,9 @@ machine::machine(const string& file, router& _rout, const size_t th,
    this->all->DATABASE = new database(added_data_file ? data_file : filename, get_creation_function(_sched_type), this->all);
    this->all->NUM_THREADS = th;
    this->all->MACHINE = this;
+#ifdef USE_REAL_NODES
+   this->all->PROGRAM->fix_node_addresses(this->all->DATABASE);
+#endif
    
    switch(sched_type) {
       case SCHED_THREADS:

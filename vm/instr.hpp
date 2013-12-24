@@ -335,6 +335,8 @@ inline ptr_val pcounter_ptr(const pcounter pc) { return *(ptr_val *)pc; }
 inline reg_num pcounter_reg(const pcounter x) { return *x; }
 inline offset_num pcounter_stack(const pcounter pc) { return pcounter_offset_num(pc); }
 
+inline void pcounter_set_node(pcounter pc, const node_val n) { *(node_val*)pc = n; }
+
 inline void pcounter_move_byte(pcounter *pc) { *pc = *pc + 1; }
 inline void pcounter_move_field(pcounter *pc) { *pc = *pc + field_size; }
 inline void pcounter_move_bool(pcounter *pc) { *pc = *pc + bool_size; }

@@ -339,9 +339,11 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
             for(size_t i(0); i < iter_matches; ++i) {
                cout << endl;
                print_tab(tabcount+1);
-               cout << "  (match)." << iter_match_field(m)
-                    << "=" << val_string(iter_match_val(m), &m, prog);
+               const instr_val mval(iter_match_val(m));
+               const field_num field(iter_match_field(m));
                m += iter_match_size;
+               cout << "  (match)." << field
+                    << "=" << val_string(mval, &m, prog);
             }
             
             cout << endl;

@@ -25,6 +25,10 @@ namespace process {
    class router;
 }
 
+namespace db {
+   class database;
+}
+
 namespace vm {
 
 typedef enum {
@@ -91,7 +95,13 @@ private:
    bool priority_static;
    heap_priority initial_priority;
 
+#ifdef USE_REAL_NODES
+   // node references in the byte code
+   std::vector<byte_code> node_references;
+#endif
+
    void print_predicate_code(std::ostream&, predicate*) const;
+   void read_node_references(byte_code, code_reader&);
    
 public:
 
@@ -166,6 +176,9 @@ public:
    inline bool is_data(void) const { return is_data_file; }
 
    bool add_data_file(vm::program&);
+#ifdef USE_REAL_NODES
+   void fix_node_addresses(db::database*);
+#endif
    
    explicit program(const std::string&);
    

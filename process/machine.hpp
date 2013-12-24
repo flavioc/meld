@@ -59,9 +59,12 @@ public:
          const vm::ref_count count, const vm::depth_t depth, const vm::uint_val delay = 0)
    {
       assert(sched_caller != NULL);
+#ifdef USE_REAL_NODES
+      db::node *node((db::node*)id);
+#else
       assert(id <= all->DATABASE->max_id());
-      
       db::node *node(this->all->DATABASE->find_node(id));
+#endif
          
       const vm::predicate *pred(tpl->get_predicate());
 

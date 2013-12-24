@@ -4,6 +4,7 @@
 
 #include <cstring>
 #include <stdint.h>
+#include <boost/static_assert.hpp>
 
 namespace vm {
 
@@ -30,6 +31,9 @@ typedef uint32_t rule_id;
 typedef uint32_t depth_t;
 
 static const ptr_val null_ptr_val = 0;
+
+BOOST_STATIC_ASSERT(sizeof(ptr_val) == sizeof(vm::node_val));
+BOOST_STATIC_ASSERT(sizeof(ptr_val) == sizeof(void*));
 
 typedef union {
    bool_val bool_field;

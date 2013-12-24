@@ -1586,7 +1586,11 @@ execute_mvhostfield(pcounter& pc, state& state)
    tuple *tuple(get_tuple_field(state, pc + instr_size));
    const field_num field(val_field_num(pc + instr_size));
 
+#ifdef USE_REAL_NODES
+   tuple->set_node(field, (node_val)state.node);
+#else
    tuple->set_node(field, state.node->get_id());
+#endif
 }
 
 static inline void
@@ -1748,7 +1752,11 @@ static inline void
 execute_mvhostreg(pcounter& pc, state& state)
 {
    const reg_num reg(pcounter_reg(pc + instr_size));
+#ifdef USE_REAL_NODES
+   state.set_node(reg, (node_val)state.node);
+#else
    state.set_node(reg, state.node->get_id());
+#endif
 }
 
 static inline void

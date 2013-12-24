@@ -9,6 +9,7 @@
 #ifdef USE_UI
 #include "ui/macros.hpp"
 #endif
+#include "db/node.hpp"
 
 using namespace vm;
 using namespace std;
@@ -155,7 +156,12 @@ print_float(ostream& out, const tuple_field& val)
 static inline void
 print_node(ostream& out, const tuple_field& val)
 {
-   out << "@" << FIELD_NODE(val);
+   out << "@";
+#ifdef USE_REAL_NODES
+   out << ((db::node*)FIELD_NODE(val))->get_id();
+#else
+   out << FIELD_NODE(val);
+#endif
 }
 
 static inline void

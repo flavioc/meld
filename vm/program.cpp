@@ -215,8 +215,8 @@ program::program(const string& _filename):
 	read.read_type<code_size_t>(&const_code_size);
 	
 	const_code = new byte_code_el[const_code_size];
-	
 	read.read_any(const_code, const_code_size);
+   read_node_references(const_code, read);
 
    MAX_STRAT_LEVEL = 0;
 
@@ -235,6 +235,7 @@ program::program(const string& _filename):
       read.read_any(fun_code, fun_size);
 
       functions[i] = new vm::function(fun_code, fun_size);
+      read_node_references(fun_code, read);
    }
 
    // get external functions definitions
@@ -353,6 +354,7 @@ program::program(const string& _filename):
       code[i] = new byte_code_el[size];
       
 		read.read_any(code[i], size);
+      read_node_references(code[i], read);
    }
 
    // read rules code
@@ -364,14 +366,14 @@ program::program(const string& _filename):
    for(size_t i(0); i < num_rules_code; ++i) {
       code_size_t code_size;
       byte_code code;
-
       read.read_type<code_size_t>(&code_size);
 
       code = new byte_code_el[code_size];
-
       read.read_any(code, code_size);
 
       rules[i]->set_bytecode(code_size, code);
+
+      read_node_references(code, read);
 
       byte is_persistent(0x0);
 
@@ -422,6 +424,38 @@ program::~program(void)
    }
    MAX_STRAT_LEVEL = 0;
 }
+
+void
+program::read_node_references(byte_code code, code_reader& read)
+{
+   uint_val size_nodes;
+   read.read_type<uint_val>(&size_nodes);
+   uint_val pos[size_nodes];
+   read.read_type<uint_val>(pos, size_nodes);
+#ifdef USE_REAL_NODES
+   const size_t start(node_references.size());
+   node_references.resize(start + size_nodes);
+   for(size_t i(0); i < size_nodes; ++i)
+      node_references[start + i] = code + pos[i];
+#else
+   (void)code;
+#endif
+}
+
+#ifdef USE_REAL_NODES
+void
+program::fix_node_addresses(db::database *data)
+{
+   for(size_t i(0); i < node_references.size(); ++i) {
+      byte_code p(node_references[i]);
+      const node_val n = pcounter_node(p);
+      node *ptr(data->find_node(n));
+      assert(ptr != NULL);
+      pcounter_set_node(p, (node_val)ptr);
+   }
+   node_references.clear();
+}
+#endif
 
 predicate*
 program::get_predicate(const predicate_id& id) const
