@@ -440,9 +440,8 @@ program::read_node_references(byte_code code, code_reader& read)
 #ifdef USE_REAL_NODES
    for(uint_val i(0); i < size_nodes; ++i) {
       byte_code p(code + pos[i]);
-      const node_val n(pcounter_reg(p));
-      vector<byte_code>& vec(node_references[n]);
-      vec.push_back(p);
+      const node_val n(pcounter_node(p));
+      node_references[n].push_back(p);
    }
 #else
    (void)code;
