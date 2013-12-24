@@ -99,6 +99,8 @@ program::program(const string& _filename):
    uint_val num_nodes;
 	read.read_type<uint_val>(&num_nodes);
 
+   node_references = new vector<byte_code>[num_nodes];
+
 	read.seek(num_nodes * database::node_size);
 
    // read number of types
@@ -423,6 +425,9 @@ program::~program(void)
       delete imported_predicates[i];
    }
    MAX_STRAT_LEVEL = 0;
+#ifdef USE_REAL_NODES
+   delete []node_references;
+#endif
 }
 
 void
@@ -433,10 +438,12 @@ program::read_node_references(byte_code code, code_reader& read)
    uint_val pos[size_nodes];
    read.read_type<uint_val>(pos, size_nodes);
 #ifdef USE_REAL_NODES
-   const size_t start(node_references.size());
-   node_references.resize(start + size_nodes);
-   for(size_t i(0); i < size_nodes; ++i)
-      node_references[start + i] = code + pos[i];
+   for(uint_val i(0); i < size_nodes; ++i) {
+      byte_code p(code + pos[i]);
+      const node_val n(pcounter_reg(p));
+      vector<byte_code>& vec(node_references[n]);
+      vec.push_back(p);
+   }
 #else
    (void)code;
 #endif
@@ -446,14 +453,17 @@ program::read_node_references(byte_code code, code_reader& read)
 void
 program::fix_node_addresses(db::database *data)
 {
-   for(size_t i(0); i < node_references.size(); ++i) {
-      byte_code p(node_references[i]);
-      const node_val n = pcounter_node(p);
-      node *ptr(data->find_node(n));
-      assert(ptr != NULL);
-      pcounter_set_node(p, (node_val)ptr);
+   const size_t total(data->num_nodes());
+   for(node_val n(0); n < total; ++n) {
+      vector<byte_code>& vec(node_references[n]);
+      if(!vec.empty()) {
+         node *ptr(data->find_node(n));
+         assert(ptr != NULL);
+         for(vector<byte_code>::iterator jt(vec.begin()), jend(vec.end()); jt != jend; ++jt) {
+            pcounter_set_node(*jt, (node_val)ptr);
+         }
+      }
    }
-   node_references.clear();
 }
 #endif
 
