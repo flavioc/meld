@@ -99,7 +99,9 @@ program::program(const string& _filename):
    uint_val num_nodes;
 	read.read_type<uint_val>(&num_nodes);
 
+#ifdef USE_REAL_NODES
    node_references = new vector<byte_code>[num_nodes];
+#endif
 
 	read.seek(num_nodes * database::node_size);
 
@@ -455,13 +457,11 @@ program::fix_node_addresses(db::database *data)
    const size_t total(data->num_nodes());
    for(node_val n(0); n < total; ++n) {
       vector<byte_code>& vec(node_references[n]);
-      if(!vec.empty()) {
          node *ptr(data->find_node(n));
          assert(ptr != NULL);
          for(vector<byte_code>::iterator jt(vec.begin()), jend(vec.end()); jt != jend; ++jt) {
             pcounter_set_node(*jt, (node_val)ptr);
          }
-      }
    }
 }
 #endif

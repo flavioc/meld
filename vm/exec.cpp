@@ -96,6 +96,9 @@ execute_add_linear(pcounter& pc, state& state)
       LOG_LINEAR_DERIVATION(state.node, tuple);
    }
 #endif
+#ifdef DEBUG_SENDS
+   cout << "add linear " << *tuple << endl;
+#endif
 
    state.node->add_linear_fact(tuple);
 }
@@ -111,6 +114,9 @@ execute_add_persistent0(tuple *tpl, state& state)
          LOG_PERSISTENT_DERIVATION(state.node, tpl);
       }
    }
+#endif
+#ifdef DEBUG_SENDS
+   cout << "add persistent " << *tpl << endl;
 #endif
 
    assert(tpl->is_persistent() || tpl->is_reused());
@@ -151,6 +157,9 @@ execute_enqueue_linear(pcounter& pc, state& state)
    tuple *tuple(state.get_tuple(r));
 
    assert(tuple->is_linear());
+#ifdef DEBUG_SENDS
+   cout << "enqueue " << *tuple << endl;
+#endif
 
    state.store->add_generated(tuple);
    state.store->register_tuple_fact(tuple, 1);
@@ -178,7 +187,11 @@ execute_send(const pcounter& pc, state& state)
 #ifdef DEBUG_SENDS
    print_mtx.lock();
    ostringstream ss;
-   ss << "\t" << *tuple << " " << state.count << " -> " << dest_val << " (" << state.depth << ")" << endl;
+   node_val print_val(dest_val);
+#ifdef USE_REAL_NODES
+   print_val = ((db::node*)print_val)->get_id();
+#endif
+   ss << "\t" << *tuple << " " << state.count << " -> " << print_val << " (" << state.depth << ")" << endl;
    cout << ss.str();
    print_mtx.unlock();
 #endif
@@ -218,85 +231,6 @@ execute_send_delay(const pcounter& pc, state& state)
 #endif
       state.all->MACHINE->route(state.node, state.sched, (node::node_id)dest_val, tuple, state.count, state.depth, send_delay_time(pc));
    }
-}
-
-template <typename T>
-static inline T get_op_function(const instr_val& val, pcounter& m, state& state);
-
-template <>
-float_val get_op_function<float_val>(const instr_val& val, pcounter& m, state& state)
-{
-   if(val_is_float(val)) {
-      const float_val flt(pcounter_float(m));
-      pcounter_move_float(&m);
-      return flt;
-   } else if(val_is_reg(val)) {
-      return state.get_float(val_reg(val));
-   } else if(val_is_field(val)) {
-      const tuple *tuple(state.get_tuple(val_field_reg(m)));
-      const field_num field(val_field_num(m));
-      pcounter_move_field(&m);
-      
-      return tuple->get_float(field);
-	} else if(val_is_const(val)) {
-		const const_id cid(pcounter_const_id(m));
-		pcounter_move_const_id(&m);
-		float_val val(state.all->get_const_float(cid));
-		
-		return val;
-   } else
-      throw vm_exec_error("invalid float for float op");
-}
-
-template <>
-int_val get_op_function<int_val>(const instr_val& val, pcounter& m, state& state)
-{
-   if(val_is_int(val)) {
-      const int_val i(pcounter_int(m));
-      pcounter_move_int(&m);
-      return i;
-   } else if(val_is_reg(val))
-      return state.get_int(val_reg(val));
-   else if(val_is_field(val)) {
-      const tuple *tuple(state.get_tuple(val_field_reg(m)));
-      const field_num field(val_field_num(m));
-      
-      pcounter_move_field(&m);
-      
-      return tuple->get_int(field);
-	} else if(val_is_const(val)) {
-		const const_id cid(pcounter_const_id(m));
-		
-		pcounter_move_const_id(&m);
-		
-		return state.all->get_const_int(cid);
-   } else
-      throw vm_exec_error("invalid int for int op");
-}
-
-template <>
-node_val get_op_function<node_val>(const instr_val& val, pcounter& m, state& state)
-{
-   if(val_is_host(val))
-      return state.node->get_id();
-   else if(val_is_node(val))
-      return get_node_val(m, state);
-   else if(val_is_reg(val))
-      return state.get_node(val_reg(val));
-   else if(val_is_field(val)) {
-      const tuple *tuple(state.get_tuple(val_field_reg(m)));
-      const field_num field(val_field_num(m));
-      
-      pcounter_move_field(&m);
-      
-      return tuple->get_node(field);
-	} else if(val_is_const(val)) {
-		const const_id cid(pcounter_const_id(m));
-		pcounter_move_const_id(&m);
-		
-		return state.all->get_const_node(cid);
-   } else
-      throw vm_exec_error("invalid node for node op (get_op_function<node_val>)");
 }
 
 static inline void
