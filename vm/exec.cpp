@@ -610,9 +610,7 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
    const depth_t old_depth = state.depth;                                  \
 																					            \
 	state.is_linear = this_is_linear || state.is_linear;                    \
-   state.depth = !pred->is_cycle_pred() ? state.depth : max((NEW_DEPTH)+1, state.depth); \
-   if((TUPLE_LEAF) != NULL) state.set_leaf(reg, (TUPLE_LEAF));  \
-   if((TUPLE_QUEUE) != NULL) state.set_tuple_queue(reg, (TUPLE))
+   state.depth = !pred->is_cycle_pred() ? state.depth : max((NEW_DEPTH)+1, state.depth)
 	
 #define POP_STATE()								\
    state.is_linear = old_is_linear;       \
@@ -637,7 +635,7 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
 				it != end; ++it)
 			{
 				tuple *tpl(*it);
-				if(tpl->get_predicate() == pred && tpl->can_be_consumed()) {
+				if(tpl->get_predicate() == pred && !tpl->must_be_deleted()) {
 					if(do_matches(m, tpl)) {
                   iter_object obj;
                   obj.type = ITER_LOCAL;
@@ -727,7 +725,7 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
                                       }
                                    }
 
-                                   if(pred_linear && !match_tuple->can_be_consumed())
+                                   if(pred_linear && match_tuple->must_be_deleted())
                                       goto next_every_tuple;
 
                                    PUSH_CURRENT_STATE(match_tuple, NULL, match_tuple, (vm::depth_t)0);
@@ -743,7 +741,6 @@ execute_iter(const reg_num reg, match* m, const utils::byte options, const utils
                                       if(to_delete) {
                                          if(TO_FINISH(ret)) {
                                             db::intrusive_list<vm::tuple>::iterator it(p.iterator);
-                                            state.store->deregister_tuple_fact(match_tuple, state.count);
                                             local_tuples->erase(it);
                                             vm::tuple::destroy(match_tuple);
                                          } else {
@@ -781,63 +778,67 @@ next_every_tuple:
       return RETURN_NO_RETURN;
    }
 
-   for(tuple_trie::tuple_search_iterator end(tuple_trie::match_end());
-         tuples_it != end;
-         ++tuples_it)
-   {
-      tuple_trie_leaf *tuple_leaf(*tuples_it);
+   if(!pred_linear) {
+      assert(!pred_linear);
+      for(tuple_trie::tuple_search_iterator end(tuple_trie::match_end());
+            tuples_it != end;
+            ++tuples_it)
+      {
+         tuple_trie_leaf *tuple_leaf(*tuples_it);
 
-      while(true) {
-         if(pred_linear) {
-            if(!tuple_leaf->new_ref_use())
-               break;
-         }
+         while(true) {
+            if(pred_linear) {
+               if(!tuple_leaf->new_ref_use())
+                  break;
+            }
 
-         // we get the tuple later since the previous leaf may have been deleted
-         tuple *match_tuple(tuple_leaf->get_underlying_tuple());
-         assert(match_tuple != NULL);
+            // we get the tuple later since the previous leaf may have been deleted
+            tuple *match_tuple(tuple_leaf->get_underlying_tuple());
+            assert(match_tuple != NULL);
 
 #ifdef TRIE_MATCHING_ASSERT
-         assert(do_matches(m, match_tuple));
+            assert(do_matches(m, match_tuple));
 #endif
 
-         PUSH_CURRENT_STATE(match_tuple, tuple_leaf, NULL, tuple_leaf->get_min_depth());
+            PUSH_CURRENT_STATE(match_tuple, tuple_leaf, NULL, tuple_leaf->get_min_depth());
 
-         return_type ret = execute(first, state, reg, match_tuple);
+            return_type ret = execute(first, state, reg, match_tuple);
 
-         POP_STATE();
+            POP_STATE();
 
-         if(pred_linear && !to_delete)
-            tuple_leaf->delete_ref_use();
+            if(pred_linear && !to_delete)
+               tuple_leaf->delete_ref_use();
 
-         if(ret == RETURN_LINEAR)
-            return ret;
+            if(ret == RETURN_LINEAR)
+               return ret;
 
-         if(ret == RETURN_DERIVED && state.is_linear)
-            return RETURN_DERIVED;
+            if(ret == RETURN_DERIVED && state.is_linear)
+               return RETURN_DERIVED;
 
-         if(pred_linear) {
-            if(to_delete) {
-               if(!TO_FINISH(ret)) {
-                  tuple_leaf->delete_ref_use(); // not consumed because nothing was derived
-                  break; // exit while loop
-               }
-            } else
-               break;
-         } else {
-            break; // because the fact is persistent no need to try different versions of it
+            if(pred_linear) {
+               if(to_delete) {
+                  if(!TO_FINISH(ret)) {
+                     tuple_leaf->delete_ref_use(); // not consumed because nothing was derived
+                     break; // exit while loop
+                  }
+               } else
+                  break;
+            } else {
+               break; // because the fact is persistent no need to try different versions of it
+            }
          }
       }
    }
 
 	// current set of tuples
-   if(!state.persistent_only) {
+   if(!state.persistent_only && pred_linear) {
       db::intrusive_list<vm::tuple> *local_tuples(state.lists->get_list(pred->get_id()));
       bool next_iter;
+      assert(pred_linear);
 		for(db::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()); it != local_tuples->end(); ) {
 			tuple *match_tuple(*it);
 
-			if(pred_linear && !match_tuple->can_be_consumed()) {
+			if(match_tuple->must_be_deleted()) {
             it++;
 				continue;
          }
@@ -856,8 +857,7 @@ next_every_tuple:
 		
 			PUSH_CURRENT_STATE(match_tuple, NULL, match_tuple, (vm::depth_t)0);
 		
-         if(pred_linear)
-            match_tuple->will_delete(); // this will avoid future uses of this tuple!
+         match_tuple->will_delete(); // this will avoid future uses of this tuple!
 		
 			// execute...
 			return_type ret = execute(first, state, reg, match_tuple);
@@ -866,11 +866,18 @@ next_every_tuple:
 
          next_iter = true;
 
-         if(pred_linear) {
-            if(!TO_FINISH(ret) || !to_delete) { // tuple not consumed
-               match_tuple->will_not_delete(); // oops, revert
-            } else if(to_delete && TO_FINISH(ret)) {
-               state.store->deregister_tuple_fact(match_tuple, state.count);
+         if(!TO_FINISH(ret) || !to_delete) { // tuple not consumed
+            match_tuple->will_not_delete(); // oops, revert
+         } else {
+            assert(to_delete);
+            assert(TO_FINISH(ret));
+            if(match_tuple->is_updated()) {
+               it = local_tuples->erase(it);
+               match_tuple->will_not_delete();
+               match_tuple->set_not_updated();
+               state.store->add_generated(match_tuple);
+               next_iter = false;
+            } else {
                it = local_tuples->erase(it);
                vm::tuple::destroy(match_tuple);
                next_iter = false;
@@ -972,7 +979,7 @@ execute_delete(const pcounter pc, state& state)
 static inline void
 execute_remove(pcounter pc, state& state)
 {
-   const reg_num reg(remove_source(pc));
+   const reg_num reg(pcounter_reg(pc + instr_size));
 
 #ifdef USE_UI
    if(state::UI) {
@@ -983,7 +990,6 @@ execute_remove(pcounter pc, state& state)
    state.stat.stat_predicate_success[state.get_tuple(reg)->get_predicate_id()]++;
 #endif
 
-	const bool is_a_leaf(state.is_it_a_leaf(reg));
    vm::tuple *tpl(state.get_tuple(reg));
 
 #ifdef DEBUG_REMOVE
@@ -991,26 +997,25 @@ execute_remove(pcounter pc, state& state)
 #endif
    assert(tpl != NULL);
 		
-   if(is_a_leaf) {
-      state.store->deregister_tuple_fact(tpl, 1);
-   } else {
-      // the else case for deregistering the tuple is done in execute_iter
-      if(state.hash_removes) {
-         state.removed.insert(state.get_tuple(reg));
-      }
-   }
+   // the else case for deregistering the tuple is done in execute_iter
+   if(state.hash_removes)
+      state.removed.insert(state.get_tuple(reg));
 
-   if(tpl->is_reused() && state.use_local_tuples) {
-		state.store->persistent_tuples.push_back(new simple_tuple(tpl, -1, state.depth));
-		if(is_a_leaf)
-			state.leaves_for_deletion.push_back(make_pair((predicate*)tpl->get_predicate(), state.get_leaf(reg)));
-	} else {
-		if(is_a_leaf) // tuple was fetched from database
-			state.leaves_for_deletion.push_back(make_pair((predicate*)tpl->get_predicate(), state.get_leaf(reg)));
-		else {
-			// tuple was marked before, it will be deleted after this round
-		}
-	}
+   if(state.count > 0) {
+      state.store->deregister_tuple_fact(tpl, state.count);
+      if(tpl->is_reused())
+         state.store->persistent_tuples.push_back(new simple_tuple(tpl, -1, state.depth));
+   }
+}
+
+static inline void
+execute_update(pcounter pc, state& state)
+{
+   const reg_num reg(pcounter_reg(pc + instr_size));
+   vm::tuple *tpl(state.get_tuple(reg));
+
+   tpl->set_updated();
+   state.store->mark(tpl->get_predicate());
 }
 
 static inline void
@@ -2269,6 +2274,12 @@ eval_loop:
          CASE(REMOVE_INSTR)
             JUMP(remove, REMOVE_BASE)
             execute_remove(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(UPDATE_INSTR)
+            JUMP(update, UPDATE_BASE)
+            execute_update(pc, state);
             ADVANCE()
          ENDOP()
             

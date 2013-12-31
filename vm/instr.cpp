@@ -426,7 +426,10 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          }
          break;
       case REMOVE_INSTR:
-         cout << "REMOVE " << reg_string(remove_source(pc)) << endl;
+         cout << "REMOVE " << reg_string(pcounter_reg(pc + instr_size)) << endl;
+         break;
+      case UPDATE_INSTR:
+         cout << "UPDATE " << reg_string(pcounter_reg(pc + instr_size)) << endl;
          break;
     	case NOT_INSTR:
          cout << "NOT " << reg_string(not_op(pc)) << " TO " << reg_string(not_dest(pc)) << endl;
@@ -666,7 +669,7 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          cout << operation_string(pc, "INT NOT EQUAL") << endl;
          break;
       case INTPLUS_INSTR:
-         cout << operation_string(pc, "INT EQUAL") << endl;
+         cout << operation_string(pc, "INT PLUS") << endl;
          break;
       case INTLESSER_INSTR:
          cout << operation_string(pc, "INT LESSER") << endl;

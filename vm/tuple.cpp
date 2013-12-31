@@ -21,7 +21,7 @@ namespace vm
 {
    
 tuple::tuple(const predicate* _pred):
-   to_delete(false), pred((predicate*)_pred)
+   flags(0x00), pred((predicate*)_pred)
 {
    assert(pred != NULL);
    memset(getfp(), 0, sizeof(tuple_field) * pred->num_fields());

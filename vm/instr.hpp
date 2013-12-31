@@ -146,6 +146,7 @@ const size_t ADDLINEAR_BASE      = instr_size + reg_val_size;
 const size_t ADDPERS_BASE        = ADDLINEAR_BASE;
 const size_t RUNACTION_BASE      = ADDLINEAR_BASE;
 const size_t ENQUEUE_LINEAR_BASE = ADDLINEAR_BASE;
+const size_t UPDATE_BASE         = instr_size + reg_val_size;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -263,6 +264,7 @@ enum instr_type {
    ADDPERS_INSTR        =  0x78,
    RUNACTION_INSTR      =  0x79,
    ENQUEUE_LINEAR_INSTR =  0x7A,
+   UPDATE_INSTR         =  0x7B,
    REMOVE_INSTR 	      =  0x80,
    ITER_INSTR		      =  0xA0,
    RETURN_LINEAR_INSTR  =  0xD0,
@@ -439,10 +441,6 @@ inline predicate_id delete_predicate(const pcounter pc) { return predicate_get(p
 inline size_t delete_num_args(pcounter pc) { return (size_t)byte_get(pc, 2); }
 inline instr_val delete_val(pcounter pc) { return val_get(pc, index_size); }
 inline field_num delete_index(pcounter pc) { return field_num_get(pc, 0); }
-
-/* REMOVE */
-
-inline reg_num remove_source(const pcounter pc) { return pcounter_reg(pc + instr_size); }
 
 /* RESET LINEAR */
 
@@ -622,6 +620,9 @@ advance(pcounter pc)
          
       case REMOVE_INSTR:
          return pc + REMOVE_BASE;
+
+      case UPDATE_INSTR:
+         return pc + UPDATE_BASE;
          
       case RESET_LINEAR_INSTR:
          return pc + RESET_LINEAR_BASE;
