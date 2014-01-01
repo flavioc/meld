@@ -872,11 +872,16 @@ next_every_tuple:
             assert(to_delete);
             assert(TO_FINISH(ret));
             if(match_tuple->is_updated()) {
-               it = local_tuples->erase(it);
+               //cout << "re do " << *match_tuple << endl;
                match_tuple->will_not_delete();
                match_tuple->set_not_updated();
-               state.store->add_generated(match_tuple);
-               next_iter = false;
+               if(reg > 0) {
+                  // if this is the first iterate, we do not need to send this to the generate list
+                  it = local_tuples->erase(it);
+                  state.store->add_generated(match_tuple);
+                  state.generated_facts = true;
+                  next_iter = false;
+               }
             } else {
                it = local_tuples->erase(it);
                vm::tuple::destroy(match_tuple);
@@ -1512,11 +1517,15 @@ execute_mvregfieldr(pcounter& pc, state& state)
    const reg_num reg(pcounter_reg(pc + instr_size));
    tuple *tuple(get_tuple_field(state, pc + instr_size + reg_val_size));
    const field_num field(val_field_num(pc + instr_size + reg_val_size));
+
+   const tuple_field old(tuple->get_field(field));
+
    tuple->set_field(field, state.get_reg(reg));
 
    assert(reference_type(tuple->get_field_type(field)->get_type()));
 
    do_increment_runtime(tuple->get_field(field));
+   do_decrement_runtime(old, tuple->get_field_type(field));
 }
 
 static inline void

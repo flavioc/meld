@@ -39,6 +39,23 @@ static inline void do_increment_runtime(const vm::tuple_field& f)
       p->refs++;
 }
 
+static inline void do_decrement_runtime(const vm::tuple_field& f, const vm::type* t)
+{
+   runtime::ref_base *p((ref_base*)FIELD_PTR(f));
+
+   if(p) {
+      p->refs--;
+      if(p->refs == 0) {
+         switch(t->get_type()) {
+            case vm::FIELD_LIST: ((runtime::cons*)p)->destroy(); break;
+            case vm::FIELD_STRING: ((runtime::rstring*)p)->destroy(); break;
+            case vm::FIELD_STRUCT: ((runtime::struct1*)p)->destroy(); break;
+            default: assert(false);
+         }
+      }
+   }
+}
+
 static inline void increment_runtime_data(const vm::tuple_field& f, vm::type *t)
 {
    if(t->is_ref())

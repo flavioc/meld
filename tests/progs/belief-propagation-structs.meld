@@ -78,9 +78,9 @@ sent-neighbor-belief(A, B, OldOut),
 Cavity = normalizestruct(dividestruct(NewBelief, OldIn)),
 Convolved = normalizestruct(convolvestruct(global-potential, Cavity)),
 OutMessage = dampstruct(Convolved, OldOut, damping)
-   -o sent-neighbor-belief(A, B, OutMessage),
-      check-residual(A, B, residualstruct(OutMessage, OldOut), OutMessage),
-      update-messages(A, NewBelief).
+   -o check-residual(A, B, residualstruct(OutMessage, OldOut), OutMessage),
+      update-messages(A, NewBelief),
+      sent-neighbor-belief(A, B, OutMessage).
 
 // all beliefs were sent!
 update-messages(A, NewBelief) -o 1.
