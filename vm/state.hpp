@@ -71,15 +71,14 @@ public:
 #endif
 
    bool generated_facts;
+   bool running_rule;
    bool hash_removes;
    typedef std::unordered_set<vm::tuple*, std::hash<vm::tuple*>, std::equal_to<vm::tuple*>, mem::allocator<vm::tuple*> > removed_hash;
    removed_hash removed;
    typedef std::list<match*> match_list;
    match_list matches_created;
-   bool use_local_tuples;
    temporary_store *store;
    db::lists *lists;
-   bool persistent_only; // we are running one persistent tuple (not a rule)
    vm::all *all;
 #ifdef CORE_STATISTICS
    core_statistics stat;

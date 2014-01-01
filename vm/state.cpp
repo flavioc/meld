@@ -66,7 +66,6 @@ state::copy_reg2const(const reg_num& reg_from, const const_id& cid)
 void
 state::setup(vm::tuple *tpl, db::node *n, const derivation_count count, const depth_t depth)
 {
-   this->use_local_tuples = false;
    this->node = n;
    this->count = count;
    if(tpl != NULL) {
@@ -382,9 +381,7 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
 
       if(is_new) {
          setup(tpl, node, stpl->get_count(), stpl->get_depth());
-         use_local_tuples = false;
-         persistent_only = true;
-         execute_bytecode(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
+         execute_process(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
       }
 
       if(tpl->is_reused()) {
@@ -403,9 +400,7 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
    } else {
 		if(tpl->is_reused()) {
 			setup(tpl, node, stpl->get_count(), stpl->get_depth());
-			persistent_only = true;
-			use_local_tuples = false;
-			execute_bytecode(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
+			execute_process(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
          delete stpl;
 		} else {
       	node::delete_info deleter(node->delete_tuple(tpl, -stpl->get_count(), stpl->get_depth()));
@@ -415,9 +410,7 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
          } else if(deleter.to_delete()) { // to be removed
             store->matcher.deregister_tuple(tpl, -stpl->get_count());
          	setup(tpl, node, stpl->get_count(), stpl->get_depth());
-         	persistent_only = true;
-         	use_local_tuples = false;
-         	execute_bytecode(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
+         	execute_process(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
          	deleter();
       	} else if(tpl->is_cycle()) {
             store->matcher.deregister_tuple(tpl, -stpl->get_count());
@@ -429,9 +422,7 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
                (void)deleted;
                if(deleter.to_delete()) {
                   setup(tpl, node, stpl->get_count(), stpl->get_depth());
-                  persistent_only = true;
-                  use_local_tuples = false;
-                  execute_bytecode(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
+                  execute_process(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
                   deleter();
                }
             }
@@ -501,8 +492,6 @@ state::run_node(db::node *no)
 		}
 		
 		setup(NULL, node, 1, 0);
-		use_local_tuples = true;
-      persistent_only = false;
 		execute_rule(rule, *this);
 
       //node->assert_tries();
@@ -608,7 +597,6 @@ state::state(vm::all *_all):
 #ifdef DEBUG_MODE
    , print_instrs(false)
 #endif
-   , persistent_only(false)
    , all(_all)
 #ifdef CORE_STATISTICS
    , stat(_all)

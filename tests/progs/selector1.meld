@@ -1,0 +1,11 @@
+
+type linear a(node, int).
+type linear b(node).
+type linear c(node, int).
+
+b(@0).
+a(@0, 1).
+a(@0, 2).
+a(@0, 3).
+
+[:min W | b(A), a(A, W)] -o c(A, W).

@@ -288,6 +288,7 @@ private:
    
    vm::tuple *tpl;
    vm::ref_count count;
+   /// XXX this may be deleted...
    vm::ref_count used; // this is utilized by the VM core to manage leaves
    depth_counter *depths; // depth counter -- usually NULL
    

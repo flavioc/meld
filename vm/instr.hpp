@@ -57,7 +57,14 @@ const size_t iter_options_size = 2 * sizeof(utils::byte);
 
 const size_t SEND_BASE           = instr_size + 2 * reg_val_size;
 const size_t OP_BASE             = instr_size + 4;
-const size_t ITER_BASE           = instr_size + ptr_size + predicate_size + reg_val_size + 2 * jump_size + iter_options_size + count_size;
+const size_t BASE_ITER           = instr_size + ptr_size + predicate_size + reg_val_size + bool_size + 2 * jump_size + count_size;
+const size_t ITER_BASE           = BASE_ITER + iter_options_size;
+const size_t PERS_ITER_BASE      = BASE_ITER;
+const size_t OPERS_ITER_BASE     = ITER_BASE;
+const size_t LINEAR_ITER_BASE    = BASE_ITER;
+const size_t RLINEAR_ITER_BASE   = BASE_ITER;
+const size_t OLINEAR_ITER_BASE   = ITER_BASE;
+const size_t ORLINEAR_ITER_BASE  = ITER_BASE;
 const size_t ALLOC_BASE          = instr_size + 2;
 const size_t CALL_BASE           = call_size + count_size;
 const size_t IF_BASE             = instr_size + 1 + jump_size;
@@ -151,17 +158,23 @@ const size_t UPDATE_BASE         = instr_size + reg_val_size;
 enum instr_type {
    RETURN_INSTR	      =  0x00,
    NEXT_INSTR		      =  0x01,
+   PERS_ITER_INSTR      =  0x02,
    TESTNIL_INSTR	      =  0x03,
+   OPERS_ITER_INSTR     =  0x04,
+   LINEAR_ITER_INSTR    =  0x05,
+   RLINEAR_ITER_INSTR   =  0x06,
    NOT_INSTR		      =  0x07,
    SEND_INSTR 		      =  0x08,
    FLOAT_INSTR          =  0x09,
    SELECT_INSTR         =  0x0A,
    RETURN_SELECT_INSTR  =  0x0B,
+   OLINEAR_ITER_INSTR   =  0x0C,
    DELETE_INSTR         =  0x0D,
    RESET_LINEAR_INSTR   =  0x0E,
    END_LINEAR_INSTR     =  0x0F,
    RULE_INSTR           =  0x10,
    RULE_DONE_INSTR      =  0x11,
+   ORLINEAR_ITER_INSTR  =  0x12,
    NEW_NODE_INSTR       =  0x13,
    NEW_AXIOMS_INSTR     =  0x14,
    SEND_DELAY_INSTR     =  0x15,
@@ -375,17 +388,18 @@ inline ptr_val iter_match_object(pcounter pc) { return pcounter_ptr(pc + instr_s
 inline void iter_match_object_set(pcounter pc, ptr_val v) { *(ptr_val*)(pc + instr_size) = v; }
 inline predicate_id iter_predicate(pcounter pc) { return predicate_get(pc, instr_size + ptr_size); }
 inline reg_num iter_reg(pcounter pc) { return pcounter_reg(pc + instr_size + ptr_size + predicate_size); }
-inline utils::byte iter_options(pcounter pc) { return byte_get(pc, instr_size + ptr_size + predicate_size + reg_val_size); }
-inline utils::byte iter_options_argument(pcounter pc) { return byte_get(pc, instr_size + ptr_size + predicate_size + reg_val_size + sizeof(utils::byte)); }
-inline code_offset_t iter_inner_jump(pcounter pc) { return jump_get(pc, instr_size + ptr_size + predicate_size + reg_val_size + iter_options_size); }
-inline code_offset_t iter_outer_jump(pcounter pc) { return jump_get(pc, instr_size + ptr_size + predicate_size + reg_val_size + iter_options_size + jump_size); }
-inline size_t iter_matches_size(pcounter pc) { return (size_t)byte_get(pc, instr_size + ptr_size + predicate_size + reg_val_size + iter_options_size + 2 * jump_size); }
+inline bool iter_constant_match(const pcounter pc) { return pcounter_bool(pc + instr_size + ptr_size + predicate_size + reg_val_size); }
+inline code_offset_t iter_inner_jump(pcounter pc) { return jump_get(pc, instr_size + ptr_size + predicate_size + reg_val_size + bool_size); }
+inline code_offset_t iter_outer_jump(pcounter pc) { return jump_get(pc, instr_size + ptr_size + predicate_size + reg_val_size + bool_size + jump_size); }
+inline size_t iter_matches_size(const pcounter pc, const size_t base) { return (size_t)byte_get(pc, base - count_size); }
+
+inline utils::byte iter_options(const pcounter pc) { return byte_get(pc, BASE_ITER - count_size); }
+inline utils::byte iter_options_argument(const pcounter pc) { return byte_get(pc, BASE_ITER - count_size + sizeof(utils::byte)); }
 inline instr_val iter_match_val(iter_match m) { return val_get((pcounter)m, sizeof(utils::byte)); }
 inline field_num iter_match_field(iter_match m) { return (field_num)*m; }
 
 inline bool iter_options_random(const utils::byte b) { return b & 0x01; }
 inline bool iter_options_min(const utils::byte b) { return b & 0x04; }
-inline bool iter_options_const(const utils::byte b) { return b & 0x08; }
 inline field_num iter_options_min_arg(const utils::byte b) { return (field_num)b; }
 inline bool iter_options_to_delete(const utils::byte b) { return b & 0x02; }
 
@@ -566,6 +580,12 @@ advance(pcounter pc)
          return pc + FLOAT_BASE;
                    
       case ITER_INSTR:
+      case PERS_ITER_INSTR:
+      case OPERS_ITER_INSTR:
+      case LINEAR_ITER_INSTR:
+      case RLINEAR_ITER_INSTR:
+      case OLINEAR_ITER_INSTR:
+      case ORLINEAR_ITER_INSTR:
          return pc + iter_inner_jump(pc);
                    
       case ALLOC_INSTR:

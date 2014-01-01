@@ -531,19 +531,29 @@ count_variable_match_elements(pcounter pc, const predicate *pred, const size_t m
    return ret;
 }
 
-typedef enum {
-	ITER_DB,
-	ITER_LOCAL
-} iter_type_t;
+static inline bool
+sort_tuples(const tuple* t1, const tuple* t2, const field_num field, const predicate *pred)
+{
+   assert(t1 != NULL && t2 != NULL);
+
+   switch(pred->get_field_type(field)->get_type()) {
+      case FIELD_INT:
+         return t1->get_int(field) < t2->get_int(field);
+      case FIELD_FLOAT:
+         return t1->get_float(field) < t2->get_float(field);
+      case FIELD_NODE:
+         return t1->get_node(field) < t2->get_node(field);
+      default:
+         throw vm_exec_error("don't know how to compare this field type (tuple_sorter)");
+   }
+   return false;
+}
 
 typedef struct {
-   iter_type_t type;
-   union {
-      tuple *tpl;
-      tuple_trie_leaf *leaf;
-   };
+   tuple *tpl;
    db::intrusive_list<vm::tuple>::iterator iterator;
 } iter_object;
+typedef vector<iter_object, mem::allocator<iter_object> > vector_iter;
 
 class tuple_sorter
 {
@@ -551,39 +561,11 @@ private:
 	const predicate *pred;
 	const field_num field;
 	
-	static inline tuple *get_tuple(const iter_object& l)
-	{
-		switch(l.type) {
-			case ITER_LOCAL:
-				return l.tpl;
-			case ITER_DB:
-				return l.leaf->get_underlying_tuple();
-			default: assert(false); return NULL;
-		}
-	}
-	
 public:
 	
 	inline bool operator()(const iter_object& l1, const iter_object& l2)
 	{
-		tuple *t1(get_tuple(l1));
-		tuple *t2(get_tuple(l2));
-			
-		assert(t1 != NULL && t2 != NULL);
-		
-		switch(pred->get_field_type(field)->get_type()) {
-			case FIELD_INT:
-				return t1->get_int(field) < t2->get_int(field);
-			case FIELD_FLOAT:
-				return t1->get_float(field) < t2->get_float(field);
-			case FIELD_NODE:
-				return t1->get_node(field) < t2->get_node(field);
-			default:
-				throw vm_exec_error("don't know how to compare this field type (tuple_sorter)");
-		}
-		
-		assert(false);
-		return true;
+      return sort_tuples(l1.tpl, l2.tpl, field, pred);
 	}
 	
 	explicit tuple_sorter(const field_num _field, const predicate *_pred):
@@ -591,315 +573,427 @@ public:
 	{}
 };
 
-static inline return_type
-execute_iter(const reg_num reg, match* m, const utils::byte options, const utils::byte options_arguments,
-		pcounter first, state& state, tuple_trie::tuple_search_iterator tuples_it, const predicate *pred)
+class tuple_leaf_sorter
 {
-   const bool old_is_linear = state.is_linear;
-   const bool to_delete(iter_options_to_delete(options));
-   const bool pred_linear = pred->is_linear_pred();
-	const bool this_is_linear = (pred_linear && !state.persistent_only && to_delete);
+private:
+	const predicate *pred;
+	const field_num field;
+	
+public:
+	
+	inline bool operator()(const tuple_trie_leaf* l1, const tuple_trie_leaf* l2)
+	{
+      return sort_tuples(l1->get_underlying_tuple(), l2->get_underlying_tuple(), field, pred);
+	}
+	
+	explicit tuple_leaf_sorter(const field_num _field, const predicate *_pred):
+		pred(_pred), field(_field)
+	{}
+};
 
-#ifndef NDEBUG
-   if(pred->is_linear_pred() && state.persistent_only) {
-      assert(pred->is_reused_pred());
+static inline match*
+retrieve_match_object(state& state, pcounter pc, const predicate *pred, const size_t base)
+{
+   utils::byte *mdata((utils::byte*)iter_match_object(pc));
+   match *mobj(NULL);
+
+   if(mdata == NULL) {
+      const size_t size = state.all->NUM_THREADS;
+      const size_t matches = iter_matches_size(pc, base);
+      const size_t var_size = count_variable_match_elements(pc + base, pred, matches);
+      const size_t mem = match::mem_size(pred, var_size);
+      mdata = mem::allocator<utils::byte>().allocate(size * mem);
+      for(size_t i(0); i < size; ++i) {
+         match *m((match*)(mdata + mem * i));
+         m->init(pred, var_size);
+         build_match_object(m, pc + base, pred, state, matches);
+      }
+      state.matches_created.push_back((match*)mdata);
+      iter_match_object_set(pc, (ptr_val)mdata);
+      mobj = (match*)(mdata + mem * state.sched->get_id());
+   } else {
+      match *m((match*)mdata);
+      mobj = (match*)(mdata + m->mem_size() * state.sched->get_id());
+      if(!iter_constant_match(pc)) {
+         for(size_t i(0); i < mobj->var_size; ++i) {
+            variable_match_template& tmp(mobj->get_variable_match(i));
+            tuple *tpl(state.get_tuple(tmp.reg));
+            tmp.match->field = tpl->get_field(tmp.field);
+         }
+      }
    }
-#endif
-	
+   assert(mobj);
+   return mobj;
+}
+
+// iterate macros
 #define PUSH_CURRENT_STATE(TUPLE, TUPLE_LEAF, TUPLE_QUEUE, NEW_DEPTH)		\
-   const depth_t old_depth = state.depth;                                  \
-																					            \
 	state.is_linear = this_is_linear || state.is_linear;                    \
-   state.depth = !pred->is_cycle_pred() ? state.depth : max((NEW_DEPTH)+1, state.depth)
-	
+   state.depth = !pred->is_cycle_pred() ? old_depth : max((NEW_DEPTH)+1, old_depth)
 #define POP_STATE()								\
    state.is_linear = old_is_linear;       \
    state.depth = old_depth
-
-   if(state.persistent_only) {
-      // do nothing
-   } else if(iter_options_min(options) || iter_options_random(options)) {
-		typedef vector<iter_object, mem::allocator<iter_object> > vector_of_everything;
-      vector_of_everything everything;
-
-      // for each remove we put the address of the simple tuples in the hash 'removed'
-      // therefore if we attempt to use such tuples, we know they have been removed already and cannot be used
-      state.hash_removes = true;
-		
-      db::intrusive_list<vm::tuple> *local_tuples(state.lists->get_list(pred->get_id()));
-		if(state.use_local_tuples) {
-#ifdef CORE_STATISTICS
-         execution_time::scope s(state.stat.ts_search_time_predicate[pred->get_id()]);
-#endif
-			for(db::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()), end(local_tuples->end());
-				it != end; ++it)
-			{
-				tuple *tpl(*it);
-				if(tpl->get_predicate() == pred && !tpl->must_be_deleted()) {
-					if(do_matches(m, tpl)) {
-                  iter_object obj;
-                  obj.type = ITER_LOCAL;
-                  obj.tpl = tpl;
-                  obj.iterator = it;
-						everything.push_back(obj);
-               }
-				}
-			}
-		}
-
 #define TO_FINISH(ret) ((ret) == RETURN_LINEAR || (ret) == RETURN_DERIVED)
-		
-		for(tuple_trie::tuple_search_iterator end(tuple_trie::match_end());
-			tuples_it != end; ++tuples_it)
-		{
-			tuple_trie_leaf *tuple_leaf(*tuples_it);
+
+static inline return_type
+execute_pers_iter(const reg_num reg, match* m, const pcounter first, state& state, const predicate *pred)
+{
+   const depth_t old_depth(state.depth);
+   const bool old_is_linear(state.is_linear);
+   const bool this_is_linear(false);
+
+   tuple_trie::tuple_search_iterator tuples_it = state.node->match_predicate(pred->get_id(), m);
+   for(tuple_trie::tuple_search_iterator end(tuple_trie::match_end());
+         tuples_it != end;
+         ++tuples_it)
+   {
+      tuple_trie_leaf *tuple_leaf(*tuples_it);
+
+      // we get the tuple later since the previous leaf may have been deleted
+      tuple *match_tuple(tuple_leaf->get_underlying_tuple());
+      assert(match_tuple != NULL);
+
 #ifdef TRIE_MATCHING_ASSERT
-	      assert(do_matches(m, tuple_leaf->get_underlying_tuple()));
+      assert(do_matches(m, match_tuple));
 #endif
+
+      PUSH_CURRENT_STATE(match_tuple, tuple_leaf, NULL, tuple_leaf->get_min_depth());
+
+      return_type ret = execute(first, state, reg, match_tuple);
+
+      POP_STATE();
+
+      if(ret == RETURN_LINEAR) return ret;
+      else if(ret == RETURN_DERIVED && state.is_linear)
+         return RETURN_DERIVED;
+   }
+
+   return RETURN_NO_RETURN;
+}
+
+static inline return_type
+execute_olinear_iter(const reg_num reg, match* m, const pcounter pc, const pcounter first, state& state, const predicate *pred)
+{
+   const depth_t old_depth(state.depth);
+   const bool old_is_linear(state.is_linear);
+   const bool this_is_linear(true);
+   const utils::byte options(iter_options(pc));
+   const utils::byte options_arguments(iter_options_argument(pc));
+
+   vector_iter tpls;
+
+   db::intrusive_list<vm::tuple> *local_tuples(state.lists->get_list(pred->get_id()));
+#ifdef CORE_STATISTICS
+   execution_time::scope s(state.stat.ts_search_time_predicate[pred->get_id()]);
+#endif
+   for(db::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()), end(local_tuples->end());
+         it != end; ++it)
+   {
+      tuple *tpl(*it);
+      if(!tpl->must_be_deleted() && do_matches(m, tpl)) {
          iter_object obj;
-         obj.type = ITER_DB;
-         obj.leaf = tuple_leaf;
-			everything.push_back(obj);
-		}
-		
-		if(iter_options_random(options))
-			utils::shuffle_vector(everything, state.randgen);
-		else if(iter_options_min(options)) {
-			const field_num field(iter_options_min_arg(options_arguments));
-			
-			sort(everything.begin(), everything.end(), tuple_sorter(field, pred));
-		} else throw vm_exec_error("do not know how to use this selector");
-
-		for(vector_of_everything::iterator it(everything.begin());
-			it != everything.end(); )
-		{
-			iter_object p(*it);
-			return_type ret;
-
-         while(true) {
-
-            switch(p.type) {
-               case ITER_DB: {
-                                tuple_trie_leaf *tuple_leaf(p.leaf);
-
-                                if(pred_linear) {
-                                   if(!tuple_leaf->new_ref_use())
-                                      goto next_every_tuple;
-                                }
-
-                                tuple *match_tuple(tuple_leaf->get_underlying_tuple());
-                                assert(match_tuple != NULL);
-
-                                PUSH_CURRENT_STATE(match_tuple, tuple_leaf, NULL, tuple_leaf->get_min_depth());
-
-                                ret = execute(first, state, reg, match_tuple);
-
-                                POP_STATE();
-
-                                if(pred_linear) {
-                                   if(to_delete) {
-                                      if(!TO_FINISH(ret)) {
-                                         tuple_leaf->delete_ref_use();
-                                         goto next_every_tuple;
-                                      }
-                                   } else {
-                                      tuple_leaf->delete_ref_use();
-                                      if(!TO_FINISH(ret)) {
-                                         goto next_every_tuple;
-                                      }
-                                   }
-                                } else {
-                                   if(!TO_FINISH(ret))
-                                      goto next_every_tuple;
-                                }
-                             }
-                             break;
-               case ITER_LOCAL: {
-                                   tuple *match_tuple(p.tpl);
-
-                                   if(pred_linear) {
-                                      state::removed_hash::const_iterator found(state.removed.find(match_tuple));
-                                      if(found != state.removed.end()) {
-                                         // tuple already removed
-                                         goto next_every_tuple;
-                                      }
-                                   }
-
-                                   if(pred_linear && match_tuple->must_be_deleted())
-                                      goto next_every_tuple;
-
-                                   PUSH_CURRENT_STATE(match_tuple, NULL, match_tuple, (vm::depth_t)0);
-
-                                   if(pred_linear)
-                                      match_tuple->will_delete();
-
-                                   ret = execute(first, state, reg, match_tuple);
-
-                                   POP_STATE();
-
-                                   if(pred_linear) {
-                                      if(to_delete) {
-                                         if(TO_FINISH(ret)) {
-                                            db::intrusive_list<vm::tuple>::iterator it(p.iterator);
-                                            local_tuples->erase(it);
-                                            vm::tuple::destroy(match_tuple);
-                                         } else {
-                                            match_tuple->will_not_delete();
-                                            goto next_every_tuple;
-                                         }
-                                      } else {
-                                         match_tuple->will_not_delete();
-                                         if(!TO_FINISH(ret))
-                                            goto next_every_tuple;
-                                      }
-                                   } else {
-                                      goto next_every_tuple;
-                                   }
-                                }
-                                break;
-               default: ret = RETURN_NO_RETURN; assert(false);
-            }
-
-            if(ret == RETURN_LINEAR) {
-               state.hash_removes = false;
-               return ret;
-            }
-            if(ret == RETURN_DERIVED && state.is_linear) {
-               state.hash_removes = false;
-               return RETURN_DERIVED;
-            }
-         }
-next_every_tuple:
-         // removed item from the list because it is no longer needed
-         it = everything.erase(it);
+         obj.tpl = tpl;
+         obj.iterator = it;
+         tpls.push_back(obj);
       }
+   }
+
+   if(iter_options_random(options))
+      utils::shuffle_vector(tpls, state.randgen);
+   else if(iter_options_min(options)) {
+      const field_num field(iter_options_min_arg(options_arguments));
+
+      sort(tpls.begin(), tpls.end(), tuple_sorter(field, pred));
+   } else throw vm_exec_error("do not know how to use this selector");
+
+   for(vector_iter::iterator it(tpls.begin()); it != tpls.end(); ) {
+      iter_object p(*it);
+      return_type ret;
+
+      tuple *match_tuple(p.tpl);
+
+      state::removed_hash::const_iterator found(state.removed.find(match_tuple));
+      if(found != state.removed.end()) {
+         // tuple already removed
+         state.removed.erase(found);
+         goto next_tuple;
+      }
+
+      if(match_tuple->must_be_deleted())
+         goto next_tuple;
+
+      match_tuple->will_delete();
+
+      PUSH_CURRENT_STATE(match_tuple, NULL, match_tuple, (vm::depth_t)0);
+      state.hash_removes = true;
+
+      ret = execute(first, state, reg, match_tuple);
 
       state.hash_removes = false;
-      return RETURN_NO_RETURN;
+      POP_STATE();
+
+      if(TO_FINISH(ret)) {
+         db::intrusive_list<vm::tuple>::iterator it(p.iterator);
+         local_tuples->erase(it);
+         vm::tuple::destroy(match_tuple);
+         if(ret == RETURN_LINEAR)
+            return RETURN_LINEAR;
+         if(ret == RETURN_DERIVED && old_is_linear)
+            return RETURN_DERIVED;
+      } else {
+         match_tuple->will_not_delete();
+      }
+next_tuple:
+      // removed item from the list because it is no longer needed
+      it = tpls.erase(it);
    }
 
-   if(!pred_linear) {
-      assert(!pred_linear);
-      for(tuple_trie::tuple_search_iterator end(tuple_trie::match_end());
-            tuples_it != end;
-            ++tuples_it)
-      {
-         tuple_trie_leaf *tuple_leaf(*tuples_it);
+   return RETURN_NO_RETURN;
+}
 
-         while(true) {
-            if(pred_linear) {
-               if(!tuple_leaf->new_ref_use())
-                  break;
-            }
+static inline return_type
+execute_orlinear_iter(const reg_num reg, match* m, const pcounter pc, const pcounter first, state& state, const predicate *pred)
+{
+   const depth_t old_depth(state.depth);
+   const bool old_is_linear(state.is_linear);
+   const bool this_is_linear(false);
+   const utils::byte options(iter_options(pc));
+   const utils::byte options_arguments(iter_options_argument(pc));
 
-            // we get the tuple later since the previous leaf may have been deleted
-            tuple *match_tuple(tuple_leaf->get_underlying_tuple());
-            assert(match_tuple != NULL);
+   vector_iter tpls;
 
-#ifdef TRIE_MATCHING_ASSERT
-            assert(do_matches(m, match_tuple));
+   db::intrusive_list<vm::tuple> *local_tuples(state.lists->get_list(pred->get_id()));
+#ifdef CORE_STATISTICS
+   execution_time::scope s(state.stat.ts_search_time_predicate[pred->get_id()]);
 #endif
-
-            PUSH_CURRENT_STATE(match_tuple, tuple_leaf, NULL, tuple_leaf->get_min_depth());
-
-            return_type ret = execute(first, state, reg, match_tuple);
-
-            POP_STATE();
-
-            if(pred_linear && !to_delete)
-               tuple_leaf->delete_ref_use();
-
-            if(ret == RETURN_LINEAR)
-               return ret;
-
-            if(ret == RETURN_DERIVED && state.is_linear)
-               return RETURN_DERIVED;
-
-            if(pred_linear) {
-               if(to_delete) {
-                  if(!TO_FINISH(ret)) {
-                     tuple_leaf->delete_ref_use(); // not consumed because nothing was derived
-                     break; // exit while loop
-                  }
-               } else
-                  break;
-            } else {
-               break; // because the fact is persistent no need to try different versions of it
-            }
-         }
+   for(db::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()), end(local_tuples->end());
+         it != end; ++it)
+   {
+      tuple *tpl(*it);
+      if(!tpl->must_be_deleted() && do_matches(m, tpl)) {
+         iter_object obj;
+         obj.tpl = tpl;
+         obj.iterator = it;
+         tpls.push_back(obj);
       }
    }
 
-	// current set of tuples
-   if(!state.persistent_only && pred_linear) {
-      db::intrusive_list<vm::tuple> *local_tuples(state.lists->get_list(pred->get_id()));
-      bool next_iter;
-      assert(pred_linear);
-		for(db::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()); it != local_tuples->end(); ) {
-			tuple *match_tuple(*it);
+   if(iter_options_random(options))
+      utils::shuffle_vector(tpls, state.randgen);
+   else if(iter_options_min(options)) {
+      const field_num field(iter_options_min_arg(options_arguments));
 
-			if(match_tuple->must_be_deleted()) {
-            it++;
-				continue;
-         }
-				
-         assert(match_tuple->get_predicate() == pred);
-				
-         {
-#ifdef CORE_STATISTICS
-				execution_time::scope s2(state.stat.ts_search_time_predicate[pred->get_id()]);
+      sort(tpls.begin(), tpls.end(), tuple_sorter(field, pred));
+   } else throw vm_exec_error("do not know how to use this selector");
+
+   for(vector_iter::iterator it(tpls.begin()); it != tpls.end(); ) {
+      iter_object p(*it);
+      return_type ret;
+
+      tuple *match_tuple(p.tpl);
+
+      state::removed_hash::const_iterator found(state.removed.find(match_tuple));
+      if(found != state.removed.end()) {
+         // tuple already removed
+         state.removed.erase(found);
+         goto next_tuple;
+      }
+
+      if(match_tuple->must_be_deleted())
+         goto next_tuple;
+
+      match_tuple->will_delete();
+
+      PUSH_CURRENT_STATE(match_tuple, NULL, match_tuple, (vm::depth_t)0);
+      state.hash_removes = true;
+
+      ret = execute(first, state, reg, match_tuple);
+
+      state.hash_removes = false;
+      POP_STATE();
+
+      match_tuple->will_not_delete();
+
+      if(ret == RETURN_LINEAR)
+         return RETURN_LINEAR;
+      if(ret == RETURN_DERIVED && old_is_linear)
+         return RETURN_DERIVED;
+next_tuple:
+      // removed item from the list because it is no longer needed
+      it = tpls.erase(it);
+   }
+
+   return RETURN_NO_RETURN;
+}
+
+static inline return_type
+execute_opers_iter(const reg_num reg, match* m, const pcounter pc, const pcounter first, state& state, const predicate *pred)
+{
+   const depth_t old_depth(state.depth);
+   const bool old_is_linear(state.is_linear);
+   const bool this_is_linear(false);
+   const utils::byte options(iter_options(pc));
+   const utils::byte options_arguments(iter_options_argument(pc));
+
+   typedef vector<tuple_trie_leaf*, mem::allocator<tuple_trie_leaf*> > vector_leaves;
+   vector_leaves leaves;
+
+   tuple_trie::tuple_search_iterator tuples_it = state.node->match_predicate(pred->get_id(), m);
+
+   for(tuple_trie::tuple_search_iterator end(tuple_trie::match_end());
+         tuples_it != end; ++tuples_it)
+   {
+      tuple_trie_leaf *tuple_leaf(*tuples_it);
+#ifdef TRIE_MATCHING_ASSERT
+      assert(do_matches(m, tuple_leaf->get_underlying_tuple()));
 #endif
-            if(!do_matches(m, match_tuple)) {
-               it++;
-               continue;
-            }
+      leaves.push_back(tuple_leaf);
+   }
+
+   if(iter_options_random(options))
+      utils::shuffle_vector(leaves, state.randgen);
+   else if(iter_options_min(options)) {
+      const field_num field(iter_options_min_arg(options_arguments));
+
+      sort(leaves.begin(), leaves.end(), tuple_leaf_sorter(field, pred));
+   } else throw vm_exec_error("do not know how to use this selector");
+
+   for(vector_leaves::iterator it(leaves.begin());
+         it != leaves.end(); )
+   {
+      tuple_trie_leaf *tuple_leaf(*it);
+
+      tuple *match_tuple(tuple_leaf->get_underlying_tuple());
+      assert(match_tuple != NULL);
+
+      PUSH_CURRENT_STATE(match_tuple, tuple_leaf, NULL, tuple_leaf->get_min_depth());
+
+      return_type ret(execute(first, state, reg, match_tuple));
+
+      POP_STATE();
+
+      if(ret == RETURN_LINEAR)
+         return RETURN_LINEAR;
+      else if(ret == RETURN_DERIVED && old_is_linear)
+         return RETURN_DERIVED;
+      else
+         it = leaves.erase(it);
+   }
+
+   return RETURN_NO_RETURN;
+}
+
+static inline return_type
+execute_linear_iter(const reg_num reg, match* m, const pcounter first, state& state, const predicate *pred)
+{
+   const bool old_is_linear(state.is_linear);
+   const bool this_is_linear(true);
+   const depth_t old_depth(state.depth);
+
+   db::intrusive_list<vm::tuple> *local_tuples(state.lists->get_list(pred->get_id()));
+   for(db::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()); it != local_tuples->end(); ) {
+      tuple *match_tuple(*it);
+
+      if(match_tuple->must_be_deleted()) {
+         it++;
+         continue;
+      }
+
+      assert(match_tuple->get_predicate() == pred);
+
+      {
+#ifdef CORE_STATISTICS
+         execution_time::scope s2(state.stat.ts_search_time_predicate[pred->get_id()]);
+#endif
+         if(!do_matches(m, match_tuple)) {
+            it++;
+            continue;
          }
-		
-			PUSH_CURRENT_STATE(match_tuple, NULL, match_tuple, (vm::depth_t)0);
-		
-         match_tuple->will_delete(); // this will avoid future uses of this tuple!
-		
-			// execute...
-			return_type ret = execute(first, state, reg, match_tuple);
-		
-			POP_STATE();
+      }
 
-         next_iter = true;
+      PUSH_CURRENT_STATE(match_tuple, NULL, match_tuple, (vm::depth_t)0);
 
-         if(!TO_FINISH(ret) || !to_delete) { // tuple not consumed
-            match_tuple->will_not_delete(); // oops, revert
-         } else {
-            assert(to_delete);
-            assert(TO_FINISH(ret));
-            if(match_tuple->is_updated()) {
-               //cout << "re do " << *match_tuple << endl;
-               match_tuple->will_not_delete();
-               match_tuple->set_not_updated();
-               if(reg > 0) {
-                  // if this is the first iterate, we do not need to send this to the generate list
-                  it = local_tuples->erase(it);
-                  state.store->add_generated(match_tuple);
-                  state.generated_facts = true;
-                  next_iter = false;
-               }
-            } else {
+      match_tuple->will_delete(); // this will avoid future uses of this tuple!
+
+      return_type ret(execute(first, state, reg, match_tuple));
+
+      POP_STATE();
+
+      bool next_iter = true;
+
+      if(TO_FINISH(ret)) {
+         if(match_tuple->is_updated()) {
+            match_tuple->will_not_delete();
+            match_tuple->set_not_updated();
+            if(reg > 0) {
+               // if this is the first iterate, we do not need to send this to the generate list
                it = local_tuples->erase(it);
-               vm::tuple::destroy(match_tuple);
+               state.store->add_generated(match_tuple);
+               state.generated_facts = true;
                next_iter = false;
             }
+         } else {
+            it = local_tuples->erase(it);
+            vm::tuple::destroy(match_tuple);
+            next_iter = false;
          }
+      }
 
-			if(ret == RETURN_LINEAR) {
-				return ret;
-         }
-			if(state.is_linear && ret == RETURN_DERIVED) {
-				return ret;
-         }
-         if(next_iter)
-            it++;
-		}
-	}
-   
+      if(ret == RETURN_LINEAR)
+         return RETURN_LINEAR;
+      else if(old_is_linear && ret == RETURN_DERIVED)
+         return RETURN_DERIVED;
+      else if(next_iter) {
+         match_tuple->will_not_delete();
+         it++;
+      }
+   }
+
+   return RETURN_NO_RETURN;
+}
+
+static inline return_type
+execute_rlinear_iter(const reg_num reg, match* m, const pcounter first, state& state, const predicate *pred)
+{
+   const bool old_is_linear(state.is_linear);
+   const bool this_is_linear(false);
+   const depth_t old_depth(state.depth);
+
+   db::intrusive_list<vm::tuple> *local_tuples(state.lists->get_list(pred->get_id()));
+   for(db::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()); it != local_tuples->end(); ++it) {
+      tuple *match_tuple(*it);
+
+      if(match_tuple->must_be_deleted())
+         continue;
+
+      //cout << "using " << *match_tuple << endl;
+
+      assert(match_tuple->get_predicate() == pred);
+
+      {
+#ifdef CORE_STATISTICS
+         execution_time::scope s2(state.stat.ts_search_time_predicate[pred->get_id()]);
+#endif
+         if(!do_matches(m, match_tuple))
+            continue;
+      }
+
+      PUSH_CURRENT_STATE(match_tuple, NULL, match_tuple, (vm::depth_t)0);
+
+      match_tuple->will_delete(); // this will avoid future uses of this tuple!
+
+      return_type ret(execute(first, state, reg, match_tuple));
+
+      POP_STATE();
+
+      match_tuple->will_not_delete();
+
+      if(ret == RETURN_LINEAR)
+         return RETURN_LINEAR;
+      else if(old_is_linear && ret == RETURN_DERIVED)
+         return RETURN_DERIVED;
+   }
+
    return RETURN_NO_RETURN;
 }
 
@@ -2221,62 +2315,94 @@ eval_loop:
             ADVANCE();
          ENDOP()
             
+#define DECIDE_NEXT_ITER_INSTR() \
+            if(ret == RETURN_LINEAR) return RETURN_LINEAR;                       \
+            if(ret == RETURN_DERIVED && state.is_linear) return RETURN_DERIVED;  \
+            pc += iter_outer_jump(pc);                                           \
+            JUMP_NEXT()
+
          CASE(ITER_INSTR)
             COMPLEX_JUMP(iter)
             {
-               const predicate_id pred_id(iter_predicate(pc));
-               const predicate *pred(state.all->PROGRAM->get_predicate(pred_id));
+               throw vm_exec_error("ITER instruction no longer supported");
+            }
+         ENDOP()
+
+         CASE(PERS_ITER_INSTR)
+            COMPLEX_JUMP(pers_iter)
+            {
+               const predicate *pred(state.all->PROGRAM->get_predicate(iter_predicate(pc)));
                const reg_num reg(iter_reg(pc));
+               match *mobj(retrieve_match_object(state, pc, pred, PERS_ITER_BASE));
 
-               utils::byte *mdata((utils::byte*)iter_match_object(pc));
-               match *mobj(NULL);
+               const return_type ret(execute_pers_iter(reg, mobj, pc + iter_inner_jump(pc), state, pred));
 
-               if(mdata == NULL) {
-                  const size_t size = state.all->NUM_THREADS;
-                  const size_t matches = iter_matches_size(pc);
-                  const size_t var_size = count_variable_match_elements(pc + ITER_BASE, pred, matches);
-                  const size_t mem = match::mem_size(pred, var_size);
-                  mdata = mem::allocator<utils::byte>().allocate(size * mem);
-                  for(size_t i(0); i < size; ++i) {
-                     match *m((match*)(mdata + mem * i));
-                     m->init(pred, var_size);
-                     build_match_object(m, pc + ITER_BASE, pred, state, matches);
-                  }
-                  state.matches_created.push_back((match*)mdata);
-                  iter_match_object_set(pc, (ptr_val)mdata);
-                  mobj = (match*)(mdata + mem * state.sched->get_id());
-               } else {
-                  match *m((match*)mdata);
-                  mobj = (match*)(mdata + m->mem_size() * state.sched->get_id());
-                  if(!iter_options_const(iter_options(pc))) {
-                     for(size_t i(0); i < mobj->var_size; ++i) {
-                        variable_match_template& tmp(mobj->get_variable_match(i));
-                        tuple *tpl(state.get_tuple(tmp.reg));
-                        tmp.match->field = tpl->get_field(tmp.field);
-                     }
-                  }
-               }
-               assert(mobj);
-               
-#ifdef CORE_STATISTICS
-					state.stat.stat_db_hits++;
-#endif
-#ifdef CORE_STATISTICS
-                  //execution_time::scope s(state.stat.db_search_time_predicate[pred_id]);
-#endif
-               tuple_trie::tuple_search_iterator it = state.node->match_predicate(pred_id, mobj);
+               DECIDE_NEXT_ITER_INSTR();
+            }
+         ENDOP()
 
-               const return_type ret(execute_iter(reg, mobj,
-								iter_options(pc), iter_options_argument(pc),
-								pc + iter_inner_jump(pc), state, it, pred));
-                  
-               if(ret == RETURN_LINEAR)
-                 return ret;
-					if(state.is_linear && ret == RETURN_DERIVED)
-						return ret;
-               
-               pc += iter_outer_jump(pc);
-               JUMP_NEXT();
+         CASE(LINEAR_ITER_INSTR)
+            COMPLEX_JUMP(linear_iter)
+            {
+               const predicate *pred(state.all->PROGRAM->get_predicate(iter_predicate(pc)));
+               const reg_num reg(iter_reg(pc));
+               match *mobj(retrieve_match_object(state, pc, pred, LINEAR_ITER_BASE));
+
+               const return_type ret(execute_linear_iter(reg, mobj, pc + iter_inner_jump(pc), state, pred));
+
+               DECIDE_NEXT_ITER_INSTR();
+            }
+         ENDOP()
+
+         CASE(RLINEAR_ITER_INSTR)
+            COMPLEX_JUMP(rlinear_iter)
+            {
+               const predicate *pred(state.all->PROGRAM->get_predicate(iter_predicate(pc)));
+               const reg_num reg(iter_reg(pc));
+               match *mobj(retrieve_match_object(state, pc, pred, RLINEAR_ITER_BASE));
+
+               const return_type ret(execute_rlinear_iter(reg, mobj, pc + iter_inner_jump(pc), state, pred));
+
+               DECIDE_NEXT_ITER_INSTR();
+            }
+         ENDOP()
+
+         CASE(OPERS_ITER_INSTR)
+            COMPLEX_JUMP(opers_iter)
+            {
+               const predicate *pred(state.all->PROGRAM->get_predicate(iter_predicate(pc)));
+               const reg_num reg(iter_reg(pc));
+               match *mobj(retrieve_match_object(state, pc, pred, OPERS_ITER_BASE));
+
+               const return_type ret(execute_opers_iter(reg, mobj, pc, pc + iter_inner_jump(pc), state, pred));
+
+               DECIDE_NEXT_ITER_INSTR();
+            }
+         ENDOP()
+
+         CASE(OLINEAR_ITER_INSTR)
+            COMPLEX_JUMP(olinear_iter)
+            {
+               const predicate *pred(state.all->PROGRAM->get_predicate(iter_predicate(pc)));
+               const reg_num reg(iter_reg(pc));
+               match *mobj(retrieve_match_object(state, pc, pred, OLINEAR_ITER_BASE));
+
+               const return_type ret(execute_olinear_iter(reg, mobj, pc, pc + iter_inner_jump(pc), state, pred));
+
+               DECIDE_NEXT_ITER_INSTR();
+            }
+         ENDOP()
+
+         CASE(ORLINEAR_ITER_INSTR)
+            COMPLEX_JUMP(orlinear_iter)
+            {
+               const predicate *pred(state.all->PROGRAM->get_predicate(iter_predicate(pc)));
+               const reg_num reg(iter_reg(pc));
+               match *mobj(retrieve_match_object(state, pc, pred, ORLINEAR_ITER_BASE));
+
+               const return_type ret(execute_orlinear_iter(reg, mobj, pc, pc + iter_inner_jump(pc), state, pred));
+
+               DECIDE_NEXT_ITER_INSTR();
             }
          ENDOP()
             
@@ -3061,8 +3187,9 @@ do_execute(byte_code code, state& state, const reg_num reg, vm::tuple *tpl)
 }
    
 execution_return
-execute_bytecode(byte_code code, state& state, vm::tuple *tpl)
+execute_process(byte_code code, state& state, vm::tuple *tpl)
 {
+   state.running_rule = false;
    const return_type ret(do_execute(code, state, 0, tpl));
 	
 #ifdef CORE_STATISTICS
@@ -3090,6 +3217,7 @@ execute_rule(const rule_id rule_id, state& state)
 	
 	vm::rule *rule(state.all->PROGRAM->get_rule(rule_id));
 
+   state.running_rule = true;
    do_execute(rule->get_bytecode(), state, 0, NULL);
 
 #ifdef CORE_STATISTICS
