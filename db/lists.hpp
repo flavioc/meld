@@ -12,7 +12,7 @@
 namespace db
 {
 
-class lists: public mem::base
+struct lists
 {
    public:
 

@@ -7,6 +7,9 @@ INCLUDE_DIRS = -I.
 LIBRARY_DIRS =
 
 ARCH = -march=x86-64
+FLAGS =
+LIBS = 
+
 ifeq ($(RELEASE), true)
 	DEBUG =
 	OPTIMIZATIONS = -O3 -DNDEBUG
@@ -16,17 +19,22 @@ else
 	OPTIMIZATIONS = -O0
 endif
 
+ifeq ($(JIT), true)
+	FLAGS += -DUSE_JIT
+	LIBS += -L/usr/local/lib/x86_64 -ljit
+endif
+
 WARNINGS = -Wall -Wextra -Werror
 C0X = -std=c++0x
 
-CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) $(C0X)
-LIBRARIES = -pthread -lm -lreadline -lboost_thread-mt -lboost_system-mt \
-				-lboost_date_time-mt -lboost_regex-mt
-
 ifeq ($(INTERFACE),true)
-	LIBRARIES = -lwebsocketpp -ljson_spirit
-	CFLAGS += -DUSE_UI=1
+	LIBS += -lwebsocketpp -ljson_spirit
+	FLAGS += -DUSE_UI=1
 endif
+
+CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) $(FLAGS) $(C0X) #-fno-gcse -fno-crossjumping
+LIBRARIES = -pthread -lm -lreadline -lboost_thread-mt -lboost_system-mt \
+				-lboost_date_time-mt -lboost_regex-mt $(LIBS)
 
 CXX = g++
 
@@ -91,7 +99,8 @@ SRCS = utils/utils.cpp \
 			 ui/manager.cpp \
 			 ui/client.cpp \
 			 interface.cpp \
-			 sched/sim.cpp
+			 sched/sim.cpp \
+			 jit/build.cpp
 
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 

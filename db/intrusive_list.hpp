@@ -12,7 +12,7 @@ namespace db
    TYPE *__intrusive_prev
 
 template <class T>
-class intrusive_list
+struct intrusive_list
 {
    private:
 
@@ -22,7 +22,7 @@ class intrusive_list
 
    public:
 
-      class iterator
+      struct iterator
       {
          public:
             T *current;

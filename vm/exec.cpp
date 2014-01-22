@@ -13,6 +13,9 @@
 #ifdef USE_UI
 #include "ui/manager.hpp"
 #endif
+#ifdef USE_JIT
+#include "jit/build.hpp"
+#endif
 
 //#define DEBUG_SENDS
 //#define DEBUG_INSTRS
@@ -3218,7 +3221,14 @@ execute_rule(const rule_id rule_id, state& state)
 	vm::rule *rule(state.all->PROGRAM->get_rule(rule_id));
 
    state.running_rule = true;
-   do_execute(rule->get_bytecode(), state, 0, NULL);
+#ifdef USE_JIT
+   if(rule_id > 0)
+      jit::compile_bytecode(rule->get_bytecode(), rule->get_codesize(), state);
+   else
+#endif
+   {
+      do_execute(rule->get_bytecode(), state, 0, NULL);
+   }
 
 #ifdef CORE_STATISTICS
    if(state.stat.stat_rules_activated == 0)

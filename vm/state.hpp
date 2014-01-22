@@ -32,7 +32,7 @@ namespace vm {
 	
 typedef size_t deterministic_timestamp;
 
-class state
+struct state
 {
 private:
    

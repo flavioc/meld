@@ -562,7 +562,7 @@ instr_delete_args_size(pcounter arg, size_t num)
 }
 
 inline pcounter
-advance(pcounter pc)
+advance(const pcounter pc)
 {
 	switch(fetch(pc)) {
 		case SEND_INSTR:

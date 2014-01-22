@@ -14,9 +14,15 @@
 namespace vm
 {
 
-class temporary_store: public mem::base
+struct temporary_store
 {
    public:
+      bool *predicates;
+      size_t size_predicates;
+
+      bool *rules;
+      size_t size_rules;
+
       db::intrusive_list<vm::tuple> *incoming;
       db::simple_tuple_list incoming_persistent_tuples;
       db::simple_tuple_list incoming_action_tuples;
@@ -26,11 +32,6 @@ class temporary_store: public mem::base
       db::simple_tuple_list action_tuples;
       db::simple_tuple_list persistent_tuples;
       size_t num_lists;
-
-      bool *rules;
-      size_t size_rules;
-      bool *predicates;
-      size_t size_predicates;
 
       vm::rule_matcher matcher;
 
