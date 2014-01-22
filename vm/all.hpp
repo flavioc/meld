@@ -42,7 +42,8 @@ class all
    process::router *ROUTER;
    size_t NUM_THREADS;
    size_t NUM_NODES_PER_PROCESS;
-	machine_arguments ARGUMENTS;
+	machine_arguments ARGS;
+   std::vector<runtime::rstring::ptr> ARGUMENTS;
    std::vector<sched::base*> ALL_THREADS;
 
    inline void set_const(const const_id& id, const tuple_field d) { consts[id] = d; }
@@ -74,10 +75,32 @@ class all
 	inline runtime::rstring::ptr get_argument(const argument_id id)
 	{
 		assert(id <= ARGUMENTS.size());
-		return runtime::rstring::make_string(ARGUMENTS[id-1]);
+      runtime::rstring::ptr ret(ARGUMENTS[id-1]);
+
+      if(ret == NULL)
+         ARGUMENTS[id-1] = ret = runtime::rstring::make_string(ARGS[id-1]);
+      return ret;
 	}
+
+   inline void set_arguments(const machine_arguments& args)
+   {
+      ARGS = args;
+      ARGUMENTS.resize(args.size());
+      for(size_t i(0); i < args.size(); ++i) {
+         ARGUMENTS[i] = NULL;
+      }
+   }
 	
    explicit all(void) {}
+
+   virtual ~all(void)
+   {
+      for(size_t i(0); i < ARGUMENTS.size(); ++i) {
+         if(ARGUMENTS[i] != NULL) {
+            ARGUMENTS[i]->dec_refs();
+         }
+      }
+   }
 };
 
 }

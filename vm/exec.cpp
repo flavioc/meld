@@ -1688,6 +1688,15 @@ execute_mvintstack(pcounter& pc, state& state)
 }
 
 static inline void
+execute_mvargreg(pcounter& pc, state& state)
+{
+   const argument_id arg(pcounter_argument_id(pc + instr_size));
+   const reg_num reg(pcounter_reg(pc + instr_size + argument_size));
+
+   state.set_string(reg, state.all->get_argument(arg));
+}
+
+static inline void
 execute_mvfloatstack(pcounter& pc, state& state)
 {
    const float_val f(pcounter_float(pc + instr_size));
@@ -3104,6 +3113,15 @@ eval_loop:
             state.stat.stat_moves_executed++;
 #endif
             execute_mvfloatstack(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(MVARGREG_INSTR)
+            JUMP(mvargreg, MVARGREG_BASE)
+#ifdef CORE_STATISTICS
+            state.stat.stat_moves_executed++;
+#endif
+            execute_mvargreg(pc, state);
             ADVANCE()
          ENDOP()
             

@@ -117,6 +117,7 @@ const size_t MVREGSTACK_BASE     = instr_size + reg_val_size + stack_val_size;
 const size_t MVADDRREG_BASE      = instr_size + node_size + reg_val_size;
 const size_t MVHOSTREG_BASE      = instr_size + reg_val_size;
 const size_t MVREGREG_BASE       = instr_size + 2 * reg_val_size;
+const size_t MVARGREG_BASE       = instr_size + argument_size + reg_val_size;
 const size_t HEADRR_BASE         = instr_size + 2 * reg_val_size;
 const size_t HEADFR_BASE         = instr_size + field_size + reg_val_size;
 const size_t HEADFF_BASE         = instr_size + 2 * field_size;
@@ -278,6 +279,7 @@ enum instr_type {
    RUNACTION_INSTR      =  0x79,
    ENQUEUE_LINEAR_INSTR =  0x7A,
    UPDATE_INSTR         =  0x7B,
+   MVARGREG_INSTR       =  0x7C,
    REMOVE_INSTR 	      =  0x80,
    ITER_INSTR		      =  0xA0,
    RETURN_LINEAR_INSTR  =  0xD0,
@@ -772,6 +774,9 @@ advance(const pcounter pc)
 
       case MVFLOATSTACK_INSTR:
          return pc + MVFLOATSTACK_BASE;
+
+      case MVARGREG_INSTR:
+         return pc + MVARGREG_BASE;
 
       case ADDRNOTEQUAL_INSTR:
       case ADDREQUAL_INSTR:

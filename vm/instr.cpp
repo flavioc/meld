@@ -19,6 +19,12 @@ reg_string(const reg_num num)
 }
 
 static inline string
+argument_string(const argument_id id)
+{
+   return string("@arg ") + to_string((int)id);
+}
+
+static inline string
 operation_string(pcounter& pc, const string& op)
 {
    return reg_string(pcounter_reg(pc + instr_size)) + " " + op + " " + reg_string(pcounter_reg(pc + instr_size + reg_val_size)) + " TO "
@@ -139,7 +145,7 @@ val_string(const instr_val v, pcounter *pm, const program *prog)
 		pcounter_move_uint(pm);
 		return ret;
 	} else if(val_is_arg(v)) {
-		const string ret(string("ARG ") + to_string(pcounter_argument_id(*pm)));
+      const string ret(argument_string(pcounter_argument_id(*pm)));
 
 		pcounter_move_argument_id(pm);
 
@@ -725,6 +731,9 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          break;
       case MVINTSTACK_INSTR:
          cout << "MVINTSTACK " << int_string(pcounter_int(pc + instr_size)) << " TO " << stack_string(pcounter_stack(pc + instr_size + int_size)) << endl;
+         break;
+      case MVARGREG_INSTR:
+         cout << "MVARGREG " << argument_string(pcounter_argument_id(pc + instr_size)) << " TO " << reg_string(pcounter_reg(pc + instr_size + argument_size)) << endl;
          break;
       case ADDRNOTEQUAL_INSTR:
          cout << operation_string(pc, "ADDR NOT EQUAL") << endl;
