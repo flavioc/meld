@@ -154,11 +154,8 @@ execute_run_action(pcounter& pc, state& state)
 }
 
 static inline void
-execute_enqueue_linear(pcounter& pc, state& state)
+execute_enqueue_linear0(tuple *tuple, state& state)
 {
-   const reg_num r(pcounter_reg(pc + instr_size));
-   tuple *tuple(state.get_tuple(r));
-
    assert(tuple->is_linear());
 #ifdef DEBUG_SENDS
    cout << "enqueue " << *tuple << endl;
@@ -167,6 +164,14 @@ execute_enqueue_linear(pcounter& pc, state& state)
    state.store->add_generated(tuple);
    state.store->register_tuple_fact(tuple, 1);
    state.generated_facts = true;
+}
+
+static inline void
+execute_enqueue_linear(pcounter& pc, state& state)
+{
+   const reg_num r(pcounter_reg(pc + instr_size));
+
+   execute_enqueue_linear0(state.get_tuple(r), state);
 }
 
 static inline void
@@ -203,7 +208,23 @@ execute_send(const pcounter& pc, state& state)
       LOG_TUPLE_SEND(state.node, state.all->DATABASE->find_node((node::node_id)dest_val), tuple);
    }
 #endif
-   state.all->MACHINE->route(state.node, state.sched, (node::node_id)dest_val, tuple, state.count, state.depth);
+#ifdef USE_REAL_NODES
+   if(state.node == (db::node*)dest_val)
+#else
+   if(state.node->get_id() == dest_val)
+#endif
+   {
+      // same node
+      if(tuple->is_action()) {
+         execute_run_action0(tuple, state);
+      } else if(tuple->is_persistent() || tuple->is_reused()) {
+         execute_add_persistent0(tuple, state);
+      } else {
+         execute_enqueue_linear0(tuple, state);
+      }
+   } else {
+      state.all->MACHINE->route(state.node, state.sched, (node::node_id)dest_val, tuple, state.count, state.depth);
+   }
 }
 
 static inline void
@@ -1906,6 +1927,12 @@ execute_intdiv(pcounter& pc, state& state)
 }
 
 static inline void
+execute_intmod(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_int, get_int, %);
+}
+
+static inline void
 execute_floatplus(pcounter& pc, state& state)
 {
    DO_OPERATION(set_float, get_float, +);
@@ -2936,6 +2963,12 @@ eval_loop:
          CASE(INTDIV_INSTR)
             JUMP(intdiv, operation_size)
             execute_intdiv(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(INTMOD_INSTR)
+            JUMP(intmod, operation_size)
+            execute_intmod(pc, state);
             ADVANCE()
          ENDOP()
 

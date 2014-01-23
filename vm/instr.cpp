@@ -774,6 +774,9 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
       case INTDIV_INSTR:
          cout << operation_string(pc, "INT DIV") << endl;
          break;
+      case INTMOD_INSTR:
+         cout << operation_string(pc, "INT MOD") << endl;
+         break;
       case FLOATPLUS_INSTR:
          cout << operation_string(pc, "FLOAT PLUS") << endl;
          break;

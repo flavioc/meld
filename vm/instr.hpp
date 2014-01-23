@@ -280,6 +280,7 @@ enum instr_type {
    ENQUEUE_LINEAR_INSTR =  0x7A,
    UPDATE_INSTR         =  0x7B,
    MVARGREG_INSTR       =  0x7C,
+   INTMOD_INSTR         =  0x7D,
    REMOVE_INSTR 	      =  0x80,
    ITER_INSTR		      =  0xA0,
    RETURN_LINEAR_INSTR  =  0xD0,
@@ -790,6 +791,7 @@ advance(const pcounter pc)
       case INTGREATER_INSTR:
       case INTMUL_INSTR:
       case INTDIV_INSTR:
+      case INTMOD_INSTR:
       case FLOATPLUS_INSTR:
       case FLOATMINUS_INSTR:
       case FLOATMUL_INSTR:

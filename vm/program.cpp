@@ -457,11 +457,11 @@ program::fix_node_addresses(db::database *data)
    const size_t total(data->num_nodes());
    for(node_val n(0); n < total; ++n) {
       vector<byte_code>& vec(node_references[n]);
-         node *ptr(data->find_node(n));
-         assert(ptr != NULL);
-         for(vector<byte_code>::iterator jt(vec.begin()), jend(vec.end()); jt != jend; ++jt) {
-            pcounter_set_node(*jt, (node_val)ptr);
-         }
+      node *ptr(data->find_node(n));
+      assert(ptr != NULL);
+      for(vector<byte_code>::iterator jt(vec.begin()), jend(vec.end()); jt != jend; ++jt) {
+         pcounter_set_node(*jt, (node_val)ptr);
+      }
    }
 }
 #endif
