@@ -77,8 +77,8 @@ sent-neighbor-belief(A, B, OldOut),
 Cavity = normalize(divide(NewBelief, OldIn)),
 Convolved = normalize(convolve(global-potential, Cavity)),
 OutMessage = damp(Convolved, OldOut, damping)
-   -o sent-neighbor-belief(A, B, OutMessage),
-      check-residual(A, B, residual(OutMessage, OldOut), OutMessage),
+   -o check-residual(A, B, residual(OutMessage, OldOut), OutMessage),
+      sent-neighbor-belief(A, B, OutMessage),
       update-messages(A, NewBelief).
 
 // all beliefs were sent!
