@@ -2,6 +2,7 @@
 #include "external/utils.hpp"
 #include "runtime/objs.hpp"
 #include "utils/utils.hpp"
+#include "db/node.hpp"
 
 namespace vm
 {
@@ -104,8 +105,12 @@ argument
 node2int(EXTERNAL_ARG(x))
 {
    DECLARE_NODE(x);
-
+#ifdef USE_REAL_NODES
+   db::node *n((db::node*)x);
+   RETURN_INT((int_val)n->get_id());
+#else
    RETURN_INT((int_val)x);
+#endif
 }
 
 }
