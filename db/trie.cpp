@@ -1321,12 +1321,15 @@ match_succeeded_and_pop:
 
 match_succeeded:
 	if(node->is_leaf()) {
-		assert(node != NULL);
-		assert(node->is_leaf());
+      assert(node != NULL);
+      assert(node->is_leaf());
 
-		tuple_trie_leaf *leaf((tuple_trie_leaf*)node->get_leaf());
-		next = leaf; // NEW
-		return;
+      if(((tuple_trie_leaf*)node->get_leaf())->get_count() == 0)
+         goto try_again;
+
+      tuple_trie_leaf *leaf((tuple_trie_leaf*)node->get_leaf());
+      next = leaf; // NEW
+      return;
 	}
    
    parent = node;
