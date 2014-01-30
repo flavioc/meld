@@ -1,6 +1,6 @@
 
-#ifndef DB_LISTS_HPP
-#define DB_LISTS_HPP
+#ifndef DB_LINEAR_STORE_HPP
+#define DB_LINEAR_STORE_HPP
 
 #include <list>
 
@@ -12,7 +12,7 @@
 namespace db
 {
 
-struct lists
+struct linear_store
 {
    public:
 
@@ -37,7 +37,7 @@ struct lists
          get_list(tpl->get_predicate_id())->push_back(tpl);
       }
 
-      explicit lists(vm::program *prog):
+      explicit linear_store(vm::program *prog):
          num_lists(prog->num_predicates())
       {
          data = mem::allocator<tuple_list>().allocate(num_lists);
@@ -46,7 +46,7 @@ struct lists
          }
       }
 
-      ~lists(void)
+      ~linear_store(void)
       {
          for(size_t i(0); i < num_lists; ++i) {
             mem::allocator<tuple_list>().destroy(get_list(i));

@@ -22,7 +22,7 @@
 #include "utils/atomic.hpp"
 #include "vm/rule_matcher.hpp"
 #include "vm/all.hpp"
-#include "db/lists.hpp"
+#include "db/linear_store.hpp"
 #include "vm/temporary.hpp"
 
 #ifdef USE_UI
@@ -111,7 +111,7 @@ public:
 	json_spirit::Value dump_json(void) const;
 #endif
 
-   db::lists db;
+   db::linear_store linear;
    vm::temporary_store store;
    bool unprocessed_facts;
 
@@ -119,7 +119,7 @@ public:
    inline void unlock(void) { store.spin.unlock(); }
    inline void add_linear_fact(vm::tuple *tpl)
    {
-      db.add_fact(tpl);
+      linear.add_fact(tpl);
       store.register_tuple_fact(tpl, 1);
    }
    inline void add_work_myself(vm::tuple *tpl, const vm::ref_count count, const vm::depth_t depth)

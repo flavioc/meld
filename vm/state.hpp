@@ -19,7 +19,7 @@
 #include "vm/stat.hpp"
 #include "vm/call_stack.hpp"
 #include "vm/temporary.hpp"
-#include "db/lists.hpp"
+#include "db/linear_store.hpp"
 
 #define USE_TEMPORARY_STORE
 
@@ -81,7 +81,7 @@ public:
    typedef std::list<match*> match_list;
    match_list matches_created;
    temporary_store *store;
-   db::lists *lists;
+   db::linear_store *lstore;
    vm::all *all;
 #ifdef CORE_STATISTICS
    core_statistics stat;

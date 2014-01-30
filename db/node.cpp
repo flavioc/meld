@@ -183,7 +183,7 @@ node::assert_end(void) const
 }
 
 node::node(const node_id _id, const node_id _trans, vm::all *_all):
-   all(_all), id(_id), translation(_trans), owner(NULL), db(_all->PROGRAM),
+   all(_all), id(_id), translation(_trans), owner(NULL), linear(_all->PROGRAM),
    store(_all->PROGRAM), unprocessed_facts(false)
 {
 }
@@ -203,7 +203,7 @@ node::dump(ostream& cout) const
    
    for(size_t i(0); i < all->PROGRAM->num_predicates(); ++i) {
       predicate *pred(all->PROGRAM->get_sorted_predicate(i));
-      const intrusive_list<vm::tuple> *ls(db.get_list(pred->get_id()));
+      const intrusive_list<vm::tuple> *ls(linear.get_list(pred->get_id()));
       simple_tuple_map::const_iterator it(tuples.find(pred->get_id()));
       tuple_trie *tr = NULL;
       if(it != tuples.end())
@@ -234,7 +234,7 @@ node::print(ostream& cout) const
    
    for(size_t i(0); i < all->PROGRAM->num_predicates(); ++i) {
       predicate *pred(all->PROGRAM->get_sorted_predicate(i));
-      const intrusive_list<vm::tuple> *ls(db.get_list(pred->get_id()));
+      const intrusive_list<vm::tuple> *ls(linear.get_list(pred->get_id()));
       simple_tuple_map::const_iterator it(tuples.find(pred->get_id()));
       tuple_trie *tr = NULL;
       bool empty = true;

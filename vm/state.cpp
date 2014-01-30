@@ -331,7 +331,7 @@ state::process_incoming_tuples(void)
       for(db::intrusive_list<vm::tuple>::iterator it(ls->begin()), end(ls->end());
          it != end; ++it)
          store->register_tuple_fact(*it, 1);
-      db::intrusive_list<vm::tuple> *inc(node->db.get_list(i));
+      db::intrusive_list<vm::tuple> *inc(lstore->get_list(i));
       if(!ls->empty())
          inc->splice_back(*ls);
    }
@@ -445,7 +445,7 @@ state::run_node(db::node *no)
 #endif
 
    store = &(no->store);
-   lists = &(no->db);
+   lstore = &(no->linear);
 
 	{
 #ifdef CORE_STATISTICS
@@ -506,7 +506,7 @@ state::run_node(db::node *no)
       if(generated_facts) {
          for(size_t i(0); i < store->num_lists; ++i) {
             db::intrusive_list<vm::tuple> *gen(store->get_generated(i));
-            db::intrusive_list<vm::tuple> *ls(node->db.get_list(i));
+            db::intrusive_list<vm::tuple> *ls(lstore->get_list(i));
             if(!gen->empty())
                ls->splice_back(*gen);
          }

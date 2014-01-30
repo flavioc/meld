@@ -715,7 +715,7 @@ execute_olinear_iter(const reg_num reg, match* m, const pcounter pc, const pcoun
 
    vector_iter tpls;
 
-   db::intrusive_list<vm::tuple> *local_tuples(state.lists->get_list(pred->get_id()));
+   db::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_list(pred->get_id()));
 #ifdef CORE_STATISTICS
    execution_time::scope s(state.stat.ts_search_time_predicate[pred->get_id()]);
 #endif
@@ -795,7 +795,7 @@ execute_orlinear_iter(const reg_num reg, match* m, const pcounter pc, const pcou
 
    vector_iter tpls;
 
-   db::intrusive_list<vm::tuple> *local_tuples(state.lists->get_list(pred->get_id()));
+   db::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_list(pred->get_id()));
 #ifdef CORE_STATISTICS
    execution_time::scope s(state.stat.ts_search_time_predicate[pred->get_id()]);
 #endif
@@ -923,7 +923,7 @@ execute_linear_iter(const reg_num reg, match* m, const pcounter first, state& st
    const bool this_is_linear(true);
    const depth_t old_depth(state.depth);
 
-   db::intrusive_list<vm::tuple> *local_tuples(state.lists->get_list(pred->get_id()));
+   db::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_list(pred->get_id()));
    for(db::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()); it != local_tuples->end(); ) {
       tuple *match_tuple(*it);
 
@@ -992,7 +992,7 @@ execute_rlinear_iter(const reg_num reg, match* m, const pcounter first, state& s
    const bool this_is_linear(false);
    const depth_t old_depth(state.depth);
 
-   db::intrusive_list<vm::tuple> *local_tuples(state.lists->get_list(pred->get_id()));
+   db::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_list(pred->get_id()));
    for(db::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()); it != local_tuples->end(); ++it) {
       tuple *match_tuple(*it);
 
