@@ -330,12 +330,10 @@ state::process_incoming_tuples(void)
       db::intrusive_list<vm::tuple> *ls(store->get_incoming(i));
       for(db::intrusive_list<vm::tuple>::iterator it(ls->begin()), end(ls->end());
          it != end; ++it)
-      {
          store->register_tuple_fact(*it, 1);
-      }
       db::intrusive_list<vm::tuple> *inc(node->db.get_list(i));
       if(!ls->empty())
-         inc->splice(*ls);
+         inc->splice_back(*ls);
    }
    if(!store->incoming_persistent_tuples.empty())
       store->persistent_tuples.splice(store->persistent_tuples.end(), store->incoming_persistent_tuples);
@@ -510,7 +508,7 @@ state::run_node(db::node *no)
             db::intrusive_list<vm::tuple> *gen(store->get_generated(i));
             db::intrusive_list<vm::tuple> *ls(node->db.get_list(i));
             if(!gen->empty())
-               ls->splice(*gen);
+               ls->splice_back(*gen);
          }
       }
       if(!do_persistent_tuples()) {

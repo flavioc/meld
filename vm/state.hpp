@@ -70,6 +70,9 @@ public:
 	bool print_instrs;
 #endif
 
+   size_t linear_facts_generated;
+   size_t persistent_facts_generated;
+   size_t linear_facts_consumed;
    bool generated_facts;
    bool running_rule;
    bool hash_removes;

@@ -130,6 +130,27 @@ struct intrusive_list
       inline const iterator begin(void) const { return iterator(head); }
       inline const iterator end(void) const { return iterator(); }
 
+      inline void push_front(T *n)
+      {
+         if(head == NULL) {
+            assert(size == 0);
+            assert(tail == NULL);
+            head = tail = n;
+            n->__intrusive_next = NULL;
+         } else {
+            assert(head && tail);
+            assert(size > 0);
+            head->__intrusive_prev = n;
+            n->__intrusive_next = head;
+            head = n;
+         }
+         n->__intrusive_prev = NULL;
+         size++;
+         assert(n == head);
+         assert(tail->__intrusive_next == NULL);
+         assert(head->__intrusive_prev == NULL);
+      }
+
       inline void push_back(T *n)
       {
          //std::cout << "push_back " << this << " " << *n << std::endl;
@@ -154,7 +175,35 @@ struct intrusive_list
          //assertl();
       }
 
-      inline void splice(intrusive_list& ls)
+      inline void splice_front(intrusive_list& ls)
+      {
+         if(tail == NULL) {
+            assert(head == NULL);
+            head = ls.head;
+            tail = ls.tail;
+            assert(!tail || tail->__intrusive_next == NULL);
+            assert(!head || head->__intrusive_prev == NULL);
+         } else {
+            assert(head);
+            head->__intrusive_prev = ls.tail;
+            if(ls.tail) {
+               ls.tail->__intrusive_next = head;
+               assert(ls.head);
+               head = ls.head;
+            } else {
+               assert(ls.head == NULL);
+               assert(head->__intrusive_prev == NULL);
+            }
+            assert(tail->__intrusive_next == NULL);
+            assert(head->__intrusive_prev == NULL);
+         }
+         size += ls.size;
+         ls.size = 0;
+         ls.head = NULL;
+         ls.tail = NULL;
+      }
+
+      inline void splice_back(intrusive_list& ls)
       {
          //std::cout << "splice " << this << " " << &ls << std::endl;
          //ls.assertl();

@@ -23,16 +23,27 @@ struct temporary_store
       bool *rules;
       size_t size_rules;
 
+      // incoming linear tuples
       db::intrusive_list<vm::tuple> *incoming;
-      db::simple_tuple_list incoming_persistent_tuples;
-      db::simple_tuple_list incoming_action_tuples;
-      utils::spinlock spin;
 
+      // incoming persistent tuples
+      db::simple_tuple_list incoming_persistent_tuples;
+
+      // incoming action tuples
+      db::simple_tuple_list incoming_action_tuples;
+
+      // generated linear facts
       db::intrusive_list<vm::tuple> *generated;
+
+      // new action facts
       db::simple_tuple_list action_tuples;
+
+      // queue of persistent tuples
       db::simple_tuple_list persistent_tuples;
+
       size_t num_lists;
 
+      utils::spinlock spin;
       vm::rule_matcher matcher;
 
       inline db::intrusive_list<vm::tuple>* get_generated(const vm::predicate_id p)

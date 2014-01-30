@@ -86,6 +86,13 @@ execute_alloc(const pcounter& pc, state& state)
 }
 
 static inline void
+execute_add_linear0(tuple *tuple, state& state)
+{
+   state.node->add_linear_fact(tuple);
+   state.linear_facts_generated++;
+}
+
+static inline void
 execute_add_linear(pcounter& pc, state& state)
 {
    const reg_num r(pcounter_reg(pc + instr_size));
@@ -103,7 +110,7 @@ execute_add_linear(pcounter& pc, state& state)
    cout << "add linear " << *tuple << endl;
 #endif
 
-   state.node->add_linear_fact(tuple);
+   execute_add_linear0(tuple, state);
 }
 
 static inline void
@@ -125,6 +132,7 @@ execute_add_persistent0(tuple *tpl, state& state)
    assert(tpl->is_persistent() || tpl->is_reused());
    simple_tuple *stuple(new simple_tuple(tpl, state.count, state.depth));
    state.store->persistent_tuples.push_back(stuple);
+   state.persistent_facts_generated++;
 }
 
 static inline void
@@ -164,6 +172,7 @@ execute_enqueue_linear0(tuple *tuple, state& state)
    state.store->add_generated(tuple);
    state.store->register_tuple_fact(tuple, 1);
    state.generated_facts = true;
+   state.linear_facts_generated++;
 }
 
 static inline void
@@ -1128,6 +1137,7 @@ execute_remove(pcounter pc, state& state)
       state.store->deregister_tuple_fact(tpl, state.count);
       if(tpl->is_reused())
          state.store->persistent_tuples.push_back(new simple_tuple(tpl, -1, state.depth));
+      state.linear_facts_consumed++;
    }
 }
 
@@ -1444,7 +1454,7 @@ execute_new_axioms(pcounter pc, state& state)
       else if(tpl->is_reused() || tpl->is_persistent())
          execute_add_persistent0(tpl, state);
       else
-         state.node->add_linear_fact(tpl);
+         execute_add_linear0(tpl, state);
    }
 }
 
@@ -3229,8 +3239,12 @@ do_execute(byte_code code, state& state, const reg_num reg, vm::tuple *tpl)
 {
    assert(state.stack.empty());
    assert(state.removed.empty());
+
    state.hash_removes = false;
    state.generated_facts = false;
+   state.linear_facts_generated = 0;
+   state.persistent_facts_generated = 0;
+   state.linear_facts_consumed = 0;
 
    const return_type ret(execute((pcounter)code, state, reg, tpl));
 
