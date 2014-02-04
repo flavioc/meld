@@ -8,3 +8,4 @@ Makefile.externs
 predicates
 server
 simulator
+*.swp
