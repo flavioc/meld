@@ -15,6 +15,8 @@ type linear test-diag-right(node, int, int, list int, list node, list int).
 type linear send-down(node, list node, list int).
 type linear final-state(node, list node, list int).
 
+priority @cluster @static.
+
 const size = 9.
 
 propagate-right(@0, [], []).

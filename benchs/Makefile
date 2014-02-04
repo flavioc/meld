@@ -1,6 +1,5 @@
 
-all:
-	@echo "Nothing to do. Type 'make compiled' if you want to compile the benchmarks."
+all: compiled
 
 run:
 	@bash run.sh
