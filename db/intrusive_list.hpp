@@ -60,10 +60,12 @@ struct intrusive_list
 
       typedef iterator const_iterator;
 
-      inline bool empty(void) const { return head == NULL; }
+      inline bool empty(void) const { assert((head == NULL && size == 0) || (head != NULL && size > 0)); return head == NULL; }
+      inline size_t get_size(void) const { return size; }
 
-      void assertl(void)
+      inline void assertl(void)
       {
+#ifndef NDEBUG
          if(head == NULL) {
             assert(size == 0);
             assert(tail == NULL);
@@ -83,6 +85,7 @@ struct intrusive_list
                assert(prev->__intrusive_next == p);
             }
          }
+#endif
       }
 
       inline iterator erase(iterator& it)
@@ -121,7 +124,7 @@ struct intrusive_list
             assert(head->__intrusive_prev == NULL);
          }
          size--;
-         //assertl();
+         assertl();
          return it2;
       }
 
@@ -146,6 +149,7 @@ struct intrusive_list
          }
          n->__intrusive_prev = NULL;
          size++;
+         assertl();
          assert(n == head);
          assert(tail->__intrusive_next == NULL);
          assert(head->__intrusive_prev == NULL);
@@ -154,6 +158,7 @@ struct intrusive_list
       inline void push_back(T *n)
       {
          //std::cout << "push_back " << this << " " << *n << std::endl;
+         assertl();
          if(head == NULL) {
             assert(size == 0);
             assert(tail == NULL);
@@ -172,11 +177,12 @@ struct intrusive_list
          assert(n == tail);
          assert(tail->__intrusive_next == NULL);
          assert(head->__intrusive_prev == NULL);
-         //assertl();
+         assertl();
       }
 
       inline void splice_front(intrusive_list& ls)
       {
+         assertl();
          if(tail == NULL) {
             assert(head == NULL);
             head = ls.head;
@@ -198,15 +204,14 @@ struct intrusive_list
             assert(head->__intrusive_prev == NULL);
          }
          size += ls.size;
-         ls.size = 0;
-         ls.head = NULL;
-         ls.tail = NULL;
+         ls.clear();
+         assertl();
       }
 
       inline void splice_back(intrusive_list& ls)
       {
          //std::cout << "splice " << this << " " << &ls << std::endl;
-         //ls.assertl();
+         ls.assertl();
          if(head == NULL) {
             assert(tail == NULL);
             head = ls.head;
@@ -228,16 +233,22 @@ struct intrusive_list
             assert(head->__intrusive_prev == NULL);
          }
          size += ls.size;
-         ls.size = 0;
-         ls.head = NULL;
-         ls.tail = NULL;
-         //assertl();
+         ls.clear();
+         assertl();
+      }
+
+      inline void clear(void)
+      {
+         size = 0;
+         head = NULL;
+         tail = NULL;
+         assertl();
       }
 
       explicit intrusive_list(void):
          head(NULL), tail(NULL), size(0)
       {
-         //assertl();
+         assertl();
       }
 };
 

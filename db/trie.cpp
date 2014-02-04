@@ -723,7 +723,6 @@ trie::check_insert(void *data, const derivation_count many, const depth_t depth,
 				mstk.pop();
             
             assert(!parent->is_leaf());
-            
             parent = parent->insert(field, typ, mstk);
          }
          

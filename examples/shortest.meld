@@ -1,4 +1,3 @@
-
 include #shortest-data.meld
 
 type linear path(node, int, int).

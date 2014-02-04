@@ -96,7 +96,6 @@ public:
    bool sim_instr_use;
 #endif
 
-   
 #define define_get(WHAT, RET, BODY) \
    inline RET get_ ## WHAT (const reg_num& num) const { BODY; }
    

@@ -306,7 +306,7 @@ compile_bytecode(byte_code code, const size_t len, vm::state& state)
       assert(jit_type_get_size(jit_type_float64) == sizeof(float_val));
       assert(jit_type_get_size(jit_type_void_ptr) == sizeof(ptr_val));
 
-      // create type for db::lists
+      // create type for db::linear_store
       jit_type_t list_type_fields[] = {jit_type_void_ptr, jit_type_ulong};
       assert(jit_type_get_size(jit_type_ulong) == sizeof(size_t));
       list_type = jit_type_create_struct(list_type_fields, sizeof(list_type_fields)/sizeof(jit_type_t), 0);

@@ -17,6 +17,6 @@ path(A, U, B1, X), path(A, U, B2, Y), B1 <= B2
    -o path(A, U, B1, X).
 
 path(A, X, D, notused)
-   -o {B, W | !edge(A, B, W) | path(B, X, D + W, notused), set-priority(B, float(D + W))}, path(A, X, D, used).
+   -o path(A, X, D, used), {B, W | !edge(A, B, W) | path(B, X, D + W, notused), set-priority(B, float(D + W))}.
 
 

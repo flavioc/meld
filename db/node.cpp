@@ -203,26 +203,42 @@ node::dump(ostream& cout) const
    
    for(size_t i(0); i < all->PROGRAM->num_predicates(); ++i) {
       predicate *pred(all->PROGRAM->get_sorted_predicate(i));
-      const intrusive_list<vm::tuple> *ls(linear.get_list(pred->get_id()));
-      simple_tuple_map::const_iterator it(tuples.find(pred->get_id()));
-      tuple_trie *tr = NULL;
-      if(it != tuples.end())
-         tr = it->second;
 
       vector<string> vec;
-      
-      if(tr && !tr->empty())
-         vec = tr->get_print_strings();
-
-      if(!ls->empty()) {
-         for(intrusive_list<vm::tuple>::const_iterator it(ls->begin()), end(ls->end()); it != end; ++it) {
-            vec.push_back(to_string(*(*it)));
+      if(pred->is_persistent_pred()) {
+         simple_tuple_map::const_iterator it(tuples.find(pred->get_id()));
+         tuple_trie *tr = NULL;
+         if(it != tuples.end())
+            tr = it->second;
+         if(tr && !tr->empty())
+            vec = tr->get_print_strings();
+      } else {
+         if(pred->is_hash_table()) {
+            const hash_table *table(linear.get_hash_table(pred->get_id()));
+            for(hash_table::iterator it(table->begin()); !it.end(); ++it) {
+               const intrusive_list<vm::tuple> *ls(*it);
+               if(!ls->empty()) {
+                  for(intrusive_list<vm::tuple>::const_iterator it(ls->begin()), end(ls->end());
+                        it != end; ++it)
+                     vec.push_back(to_string(*(*it)));
+               }
+            }
+         } else {
+            const intrusive_list<vm::tuple> *ls(linear.get_linked_list(pred->get_id()));
+            if(!ls->empty()) {
+               for(intrusive_list<vm::tuple>::const_iterator it(ls->begin()), end(ls->end());
+                     it != end; ++it)
+                  vec.push_back(to_string(*(*it)));
+            }
          }
       }
-      sort(vec.begin(), vec.end());
 
-      for(size_t i(0); i < vec.size(); ++i)
-         cout << vec[i] << endl;
+      if(!vec.empty()) {
+         sort(vec.begin(), vec.end());
+
+         for(size_t i(0); i < vec.size(); ++i)
+            cout << vec[i] << endl;
+      }
    }
 }
 
@@ -234,33 +250,43 @@ node::print(ostream& cout) const
    
    for(size_t i(0); i < all->PROGRAM->num_predicates(); ++i) {
       predicate *pred(all->PROGRAM->get_sorted_predicate(i));
-      const intrusive_list<vm::tuple> *ls(linear.get_list(pred->get_id()));
-      simple_tuple_map::const_iterator it(tuples.find(pred->get_id()));
-      tuple_trie *tr = NULL;
-      bool empty = true;
-      if(it != tuples.end()) {
-         tr = it->second;
-         empty = tr->empty();
-      }
-      if(empty)
-         empty = ls->empty();
 
-      if(empty)
+      vector<string> vec;
+      if(pred->is_persistent_pred()) {
+         simple_tuple_map::const_iterator it(tuples.find(pred->get_id()));
+         tuple_trie *tr = NULL;
+         if(it != tuples.end())
+            tr = it->second;
+         if(tr && !tr->empty())
+            vec = tr->get_print_strings();
+      } else {
+         if(pred->is_hash_table()) {
+            const hash_table *table(linear.get_hash_table(pred->get_id()));
+            for(hash_table::iterator it(table->begin()); !it.end(); ++it) {
+               const intrusive_list<vm::tuple> *ls(*it);
+               if(!ls->empty()) {
+                  for(intrusive_list<vm::tuple>::const_iterator it(ls->begin()), end(ls->end());
+                        it != end; ++it)
+                     vec.push_back(to_string(*(*it)));
+               }
+            }
+         } else {
+            const intrusive_list<vm::tuple> *ls(linear.get_linked_list(pred->get_id()));
+            if(!ls->empty()) {
+               for(intrusive_list<vm::tuple>::iterator it(ls->begin()), end(ls->end());
+                     it != end; ++it)
+                  vec.push_back(to_string(*(*it)));
+            }
+         }
+      }
+
+      if(vec.empty())
          continue;
 
       cout << " ";
       pred->print_simple(cout);
       cout << endl;
-      vector<string> vec;
-      
-      if(tr && !tr->empty())
-         vec = tr->get_print_strings();
 
-      if(!ls->empty()) {
-         for(intrusive_list<vm::tuple>::iterator it(ls->begin()), end(ls->end()); it != end; ++it) {
-            vec.push_back(to_string(*(*it)));
-         }
-      }
       sort(vec.begin(), vec.end());
       write_strings(vec, cout, 1);
    }

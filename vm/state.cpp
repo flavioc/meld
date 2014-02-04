@@ -331,9 +331,7 @@ state::process_incoming_tuples(void)
       for(db::intrusive_list<vm::tuple>::iterator it(ls->begin()), end(ls->end());
          it != end; ++it)
          store->register_tuple_fact(*it, 1);
-      db::intrusive_list<vm::tuple> *inc(lstore->get_list(i));
-      if(!ls->empty())
-         inc->splice_back(*ls);
+      lstore->increment_database(all->PROGRAM->get_predicate(i), ls);
    }
    if(!store->incoming_persistent_tuples.empty())
       store->persistent_tuples.splice(store->persistent_tuples.end(), store->incoming_persistent_tuples);
@@ -502,13 +500,12 @@ state::run_node(db::node *no)
          local_tuples.splice(local_tuples.end(), new_tuples);
       }
 #endif
-      /* move from generated tuples to local_tuples */
+      /* move from generated tuples to linear store */
       if(generated_facts) {
          for(size_t i(0); i < store->num_lists; ++i) {
             db::intrusive_list<vm::tuple> *gen(store->get_generated(i));
-            db::intrusive_list<vm::tuple> *ls(lstore->get_list(i));
             if(!gen->empty())
-               ls->splice_back(*gen);
+               lstore->increment_database(all->PROGRAM->get_predicate(i), gen);
          }
       }
       if(!do_persistent_tuples()) {
@@ -572,6 +569,7 @@ state::run_node(db::node *no)
    if(sim_instr_use && sim_instr_counter < sim_instr_limit)
       ++sim_instr_counter;
 #endif
+   lstore->improve_index();
 }
 
 state::state(sched::base *_sched, vm::all *_all):

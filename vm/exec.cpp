@@ -107,7 +107,7 @@ execute_add_linear(pcounter& pc, state& state)
    }
 #endif
 #ifdef DEBUG_SENDS
-   cout << "add linear " << *tuple << endl;
+   cout << "\tadd linear " << *tuple << endl;
 #endif
 
    execute_add_linear0(tuple, state);
@@ -126,7 +126,7 @@ execute_add_persistent0(tuple *tpl, state& state)
    }
 #endif
 #ifdef DEBUG_SENDS
-   cout << "add persistent " << *tpl << endl;
+   cout << "\tadd persistent " << *tpl << endl;
 #endif
 
    assert(tpl->is_persistent() || tpl->is_reused());
@@ -166,7 +166,7 @@ execute_enqueue_linear0(tuple *tuple, state& state)
 {
    assert(tuple->is_linear());
 #ifdef DEBUG_SENDS
-   cout << "enqueue " << *tuple << endl;
+   cout << "\tenqueue " << *tuple << endl;
 #endif
 
    state.store->add_generated(tuple);
@@ -715,7 +715,7 @@ execute_olinear_iter(const reg_num reg, match* m, const pcounter pc, const pcoun
 
    vector_iter tpls;
 
-   db::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_list(pred->get_id()));
+   db::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_linked_list(pred->get_id()));
 #ifdef CORE_STATISTICS
    execution_time::scope s(state.stat.ts_search_time_predicate[pred->get_id()]);
 #endif
@@ -795,7 +795,7 @@ execute_orlinear_iter(const reg_num reg, match* m, const pcounter pc, const pcou
 
    vector_iter tpls;
 
-   db::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_list(pred->get_id()));
+   db::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_linked_list(pred->get_id()));
 #ifdef CORE_STATISTICS
    execution_time::scope s(state.stat.ts_search_time_predicate[pred->get_id()]);
 #endif
@@ -917,14 +917,15 @@ execute_opers_iter(const reg_num reg, match* m, const pcounter pc, const pcounte
 }
 
 static inline return_type
-execute_linear_iter(const reg_num reg, match* m, const pcounter first, state& state, const predicate *pred)
+execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, state& state, const predicate* pred, db::intrusive_list<vm::tuple> *local_tuples)
 {
    const bool old_is_linear(state.is_linear);
    const bool this_is_linear(true);
    const depth_t old_depth(state.depth);
 
-   db::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_list(pred->get_id()));
-   for(db::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()); it != local_tuples->end(); ) {
+   for(db::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()), end(local_tuples->end());
+         it != end; )
+   {
       tuple *match_tuple(*it);
 
       if(match_tuple->must_be_deleted()) {
@@ -981,25 +982,56 @@ execute_linear_iter(const reg_num reg, match* m, const pcounter first, state& st
          it++;
       }
    }
+   return RETURN_NO_RETURN;
+}
+
+static inline return_type
+execute_linear_iter(const reg_num reg, match* m, const pcounter first, state& state, const predicate *pred)
+{
+   if(pred->is_hash_table()) {
+      const field_num hashed(pred->get_hashed_field());
+      hash_table *table(state.lstore->get_hash_table(pred->get_id()));
+
+      //cout << "Table" << endl;
+      //table->dump(cout);
+
+      if(m->has_match(hashed)) {
+         const match_field mf(m->get_match(hashed));
+         db::intrusive_list<vm::tuple> *local_tuples(table->lookup_list(mf.field));
+         return_type ret(execute_linear_iter_list(reg, m, first, state, pred, local_tuples));
+         return ret;
+      } else {
+         // go through hash table
+         for(hash_table::iterator it(table->begin()); !it.end(); ++it) {
+            db::intrusive_list<vm::tuple> *local_tuples(*it);
+            return_type ret(execute_linear_iter_list(reg, m, first, state, pred, local_tuples));
+            if(ret != RETURN_NO_RETURN)
+               return ret;
+         }
+         return RETURN_NO_RETURN;
+      }
+   } else {
+      db::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_linked_list(pred->get_id()));
+      return execute_linear_iter_list(reg, m, first, state, pred, local_tuples);
+   }
 
    return RETURN_NO_RETURN;
 }
 
 static inline return_type
-execute_rlinear_iter(const reg_num reg, match* m, const pcounter first, state& state, const predicate *pred)
+execute_rlinear_iter_list(const reg_num reg, match* m, const pcounter first, state& state, const predicate *pred, db::intrusive_list<vm::tuple> *local_tuples)
 {
    const bool old_is_linear(state.is_linear);
    const bool this_is_linear(false);
    const depth_t old_depth(state.depth);
 
-   db::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_list(pred->get_id()));
-   for(db::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()); it != local_tuples->end(); ++it) {
+   for(db::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()), end(local_tuples->end());
+         it != end; ++it)
+   {
       tuple *match_tuple(*it);
 
       if(match_tuple->must_be_deleted())
          continue;
-
-      //cout << "using " << *match_tuple << endl;
 
       assert(match_tuple->get_predicate() == pred);
 
@@ -1028,6 +1060,34 @@ execute_rlinear_iter(const reg_num reg, match* m, const pcounter first, state& s
    }
 
    return RETURN_NO_RETURN;
+}
+
+static inline return_type
+execute_rlinear_iter(const reg_num reg, match* m, const pcounter first, state& state, const predicate *pred)
+{
+   if(pred->is_hash_table()) {
+      const field_num hashed(pred->get_hashed_field());
+      hash_table *table(state.lstore->get_hash_table(pred->get_id()));
+
+      if(m->has_match(hashed)) {
+         const match_field mf(m->get_match(hashed));
+         db::intrusive_list<vm::tuple> *local_tuples(table->lookup_list(mf.field));
+         return_type ret(execute_rlinear_iter_list(reg, m, first, state, pred, local_tuples));
+         return ret;
+      } else {
+         // go through hash table
+         for(hash_table::iterator it(table->begin()); !it.end(); ++it) {
+            db::intrusive_list<vm::tuple> *local_tuples(*it);
+            return_type ret(execute_rlinear_iter_list(reg, m, first, state, pred, local_tuples));
+            if(ret != RETURN_NO_RETURN)
+               return ret;
+         }
+         return RETURN_NO_RETURN;
+      }
+   } else {
+      db::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_linked_list(pred->get_id()));
+      return execute_rlinear_iter_list(reg, m, first, state, pred, local_tuples);
+   }
 }
 
 static inline void
@@ -1148,6 +1208,9 @@ execute_update(pcounter pc, state& state)
    vm::tuple *tpl(state.get_tuple(reg));
 
    tpl->set_updated();
+#ifdef DEBUG_SENDS
+   cout << "\tupdate " << *tpl << endl;
+#endif
    state.store->mark(tpl->get_predicate());
 }
 

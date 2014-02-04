@@ -112,6 +112,16 @@ typedef struct _match
       return get_matches()[num].exact;
    }
 
+   inline void unset_match(const field_num& num)
+   {
+      get_matches()[num].exact = false;
+   }
+
+   inline void restore_match(const field_num& num)
+   {
+      get_matches()[num].exact = true;
+   }
+
    inline match_field get_match(const field_num& num) const { return get_matches()[num]; }
    inline match_field *get_update_match(const field_num& num) { return get_matches() + num; }
    

@@ -211,7 +211,7 @@ predicate::cache_info(vm::program *prog)
       build_aggregate_info(prog);
 }
 
-predicate::predicate(void)
+predicate::predicate(void): store_type(LINKED_LIST)
 {
    tuple_size = 0;
    agg_info = NULL;

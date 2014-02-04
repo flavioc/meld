@@ -20,6 +20,11 @@ const size_t PRED_AGG_INFO_MAX = 32;
 
 class program;
 
+typedef enum {
+   LINKED_LIST,
+   HASH_TABLE
+} store_type_t;
+
 class predicate {
 private:
    friend class program;
@@ -55,6 +60,9 @@ private:
    bool is_cycle;
 
    std::vector<rule_id> affected_rules;
+
+   store_type_t store_type;
+   field_num hash_argument;
    
    void build_field_info(void);
    void build_aggregate_info(vm::program *);
@@ -113,12 +121,29 @@ public:
    inline size_t get_size(void) const { return tuple_size; }
    
    inline strat_level get_strat_level(void) const { return level; }
+
+   inline void store_as_hash_table(const field_num field) {
+      store_type = HASH_TABLE;
+      hash_argument = field;
+   }
+
+   inline field_num get_hashed_field(void) const
+   {
+      assert(is_hash_table());
+      return hash_argument;
+   }
+
+   inline bool is_hash_table(void) const
+   {
+      return store_type == HASH_TABLE;
+   }
    
    void print_simple(std::ostream&) const;
    void print(std::ostream&) const;
 
    bool operator==(const predicate&) const;
-   bool operator!=(const predicate& other) const {
+   bool operator!=(const predicate& other) const
+   {
       return !operator==(other);
    }
    
