@@ -41,6 +41,10 @@ public:
    typedef vm::node_val node_id;
    
    typedef trie::delete_info delete_info;
+
+private:
+	node_id id;
+   node_id translation;
    
 protected:
 
@@ -48,9 +52,6 @@ protected:
 
 private:
    
-	node_id id;
-   node_id translation;
-	
    typedef std::map<vm::predicate_id, tuple_trie*,
                std::less<vm::predicate_id>,
                mem::allocator<std::pair<const vm::predicate_id,

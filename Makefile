@@ -72,6 +72,7 @@ SRCS = utils/utils.cpp \
 			 db/tuple_aggregate.cpp \
 			 db/database.cpp \
 			 db/trie.cpp \
+			 db/hash_table.cpp \
 			 process/machine.cpp \
 			 process/remote.cpp \
 			 process/router.cpp \
