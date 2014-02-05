@@ -115,9 +115,12 @@ public:
    db::linear_store linear;
    vm::temporary_store store;
    bool unprocessed_facts;
+   bool running;
 
    inline void lock(void) { store.spin.lock(); }
    inline void unlock(void) { store.spin.unlock(); }
+   inline void internal_lock(void) { linear.internal.lock(); }
+   inline void internal_unlock(void) { linear.internal.unlock(); }
    inline void add_linear_fact(vm::tuple *tpl)
    {
       linear.add_fact(tpl);

@@ -184,7 +184,7 @@ node::assert_end(void) const
 
 node::node(const node_id _id, const node_id _trans, vm::all *_all):
    id(_id), translation(_trans), all(_all), owner(NULL), linear(_all->PROGRAM),
-   store(_all->PROGRAM), unprocessed_facts(false)
+   store(_all->PROGRAM), unprocessed_facts(false), running(false)
 {
 }
 

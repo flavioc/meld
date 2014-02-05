@@ -455,6 +455,11 @@ state::run_node(db::node *no)
       no->unprocessed_facts = false;
       no->unlock();
 	}
+
+#ifdef FASTER_INDEXING
+   node->running = true;
+   node->internal_lock();
+#endif
 	
    if(do_persistent_tuples()) {
 #ifdef CORE_STATISTICS
@@ -564,12 +569,17 @@ state::run_node(db::node *no)
    }
 #endif
 	
+   // this method must always run this code at the end
    store->persistent_tuples.clear();
 #ifdef USE_SIM
    if(sim_instr_use && sim_instr_counter < sim_instr_limit)
       ++sim_instr_counter;
 #endif
    lstore->improve_index();
+#ifdef FASTER_INDEXING
+   node->internal_unlock();
+   node->running = false;
+#endif
 }
 
 state::state(sched::base *_sched, vm::all *_all):

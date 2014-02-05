@@ -58,14 +58,33 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, const ref_count co
    threads_sched *owner(dynamic_cast<threads_sched*>(tnode->get_owner()));
 
    if(owner == this) {
+      assert(!tnode->running);
+#ifdef FASTER_INDEXING
+      tnode->internal_lock();
+#endif
       tnode->add_work_myself(tpl, count, depth);
+#ifdef FASTER_INDEXING
+      tnode->internal_unlock();
+#endif
       if(!tnode->in_queue()) {
          tnode->set_in_queue(true);
          add_to_queue((thread_intrusive_node*)tnode);
       }
    } else {
-      simple_tuple *stpl(new simple_tuple(tpl, count, depth));
-      tnode->add_work_others(stpl);
+#ifdef FASTER_INDEXING
+      if(tnode->running) {
+         // the node is currently being executed by the owner thread
+         // just buffer the new fact that will be used by the owner
+         tnode->add_work_others(new simple_tuple(tpl, count, depth));
+      } else {
+         // the node is asleep, we can add it immediatelly to the index
+         tnode->internal_lock();
+         tnode->add_work_myself(tpl, count, depth);
+         tnode->internal_unlock();
+      }
+#else
+      tnode->add_work_others(new simple_tuple(tpl, count, depth));
+#endif
       if(!tnode->in_queue()) {
          tnode->set_in_queue(true);
          owner->add_to_queue((thread_intrusive_node*)tnode);
