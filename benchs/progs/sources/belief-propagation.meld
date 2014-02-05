@@ -16,8 +16,6 @@ type linear sum-messages(node, :(float, float, float, float, float)).
 type linear update-messages(node, :(float, float, float, float, float)).
 type linear check-residual(node, node, float, :(float, float, float, float, float)).
 
-priority @cluster @static.
-
 const global-potential =  :(-0.0, -2.0, -4.0, -6.0, -8.0, -2.0, -0.0, -2.0, -4.0, -6.0, -4.0, -2.0, -0.0, -2.0, -4.0, -6.0, -4.0, -2.0, -0.0, -2.0, -8.0, -6.0, -4.0, -2.0, -0.0).
 const initial-message = :(-1.60944, -1.60944, -1.60944, -1.60944, -1.60944).
 const initial-belief = :(-1.609438, -1.609438, -1.609438, -1.609438, -1.609438).
