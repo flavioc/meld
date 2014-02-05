@@ -2,6 +2,8 @@
 #ifndef VM_TEMPORARY_HPP
 #define VM_TEMPORARY_HPP
 
+#include <unordered_map>
+
 #include "mem/base.hpp"
 #include "vm/program.hpp"
 #include "vm/predicate.hpp"
@@ -17,14 +19,16 @@ namespace vm
 struct temporary_store
 {
    public:
-      bool *predicates;
-      size_t size_predicates;
 
+      bool *predicates;
       bool *rules;
-      size_t size_rules;
+
+      typedef db::intrusive_list<vm::tuple> tuple_list;
+      typedef std::unordered_map<vm::predicate_id, tuple_list*, std::hash<vm::predicate_id>,
+              std::equal_to<vm::predicate_id>, mem::allocator< std::pair<const vm::predicate_id, tuple_list*> > > list_map;
 
       // incoming linear tuples
-      db::intrusive_list<vm::tuple> *incoming;
+      list_map incoming;
 
       // incoming persistent tuples
       db::simple_tuple_list incoming_persistent_tuples;
@@ -33,7 +37,7 @@ struct temporary_store
       db::simple_tuple_list incoming_action_tuples;
 
       // generated linear facts
-      db::intrusive_list<vm::tuple> *generated;
+      list_map generated;
 
       // new action facts
       db::simple_tuple_list action_tuples;
@@ -41,26 +45,35 @@ struct temporary_store
       // queue of persistent tuples
       db::simple_tuple_list persistent_tuples;
 
-      size_t num_lists;
-
       utils::spinlock spin;
       vm::rule_matcher matcher;
 
-      inline db::intrusive_list<vm::tuple>* get_generated(const vm::predicate_id p)
+      inline tuple_list* get_generated(const vm::predicate_id p)
       {
-         assert(p < num_lists);
-         return generated + p;
+         assert(p < theProgram->num_predicates());
+         list_map::iterator it(generated.find(p));
+         if(it == generated.end())
+            return NULL;
+         return it->second;
       }
 
-      inline db::intrusive_list<vm::tuple>* get_incoming(const vm::predicate_id p)
+      inline tuple_list* get_incoming(const vm::predicate_id p)
       {
-         assert(p < num_lists);
-         return incoming + p;
+         assert(p < theProgram->num_predicates());
+         list_map::iterator it(incoming.find(p));
+         if(it == incoming.end())
+            return NULL;
+         return it->second;
       }
 
       inline void add_incoming(vm::tuple *tpl)
       {
-         get_incoming(tpl->get_predicate_id())->push_back(tpl);
+         tuple_list *ls(get_incoming(tpl->get_predicate_id()));
+
+         if(ls == NULL)
+            ls = create_incoming(tpl->get_predicate_id());
+
+         ls->push_back(tpl);
       }
 
       inline void register_fact(db::simple_tuple *stpl)
@@ -84,9 +97,28 @@ struct temporary_store
          matcher.deregister_tuple(tpl, count);
       }
 
+      inline tuple_list* create_generated(const vm::predicate_id p)
+      {
+         tuple_list *ls(mem::allocator<tuple_list>().allocate(1));
+         mem::allocator<tuple_list>().construct(ls);
+         generated.insert(std::make_pair(p, ls));
+         return ls;
+      }
+
+      inline tuple_list* create_incoming(const vm::predicate_id p)
+      {
+         tuple_list *ls(mem::allocator<tuple_list>().allocate(1));
+         mem::allocator<tuple_list>().construct(ls);
+         incoming.insert(std::make_pair(p, ls));
+         return ls;
+      }
+
       inline void add_generated(vm::tuple *tpl)
       {
-         get_generated(tpl->get_predicate_id())->push_back(tpl);
+         tuple_list *ls(get_generated(tpl->get_predicate_id()));
+         if(ls == NULL)
+            ls = create_generated(tpl->get_predicate_id());
+         ls->push_back(tpl);
       }
 
       inline void add_action_fact(db::simple_tuple *stpl)
@@ -101,7 +133,7 @@ struct temporary_store
 
       inline void clear_predicates(void)
       {
-         std::fill_n(predicates, size_predicates, false);
+         std::fill_n(predicates, theProgram->num_predicates(), false);
       }
 
       inline void mark(const vm::predicate *pred)
@@ -109,34 +141,28 @@ struct temporary_store
          predicates[pred->get_id()] = true;
       }
 
-      explicit temporary_store(vm::program *prog):
-         num_lists(prog->num_predicates()),
-         matcher(prog)
+      explicit temporary_store(void)
       {
-         incoming = mem::allocator<db::intrusive_list<vm::tuple> >().allocate(num_lists);
-         generated = mem::allocator<db::intrusive_list<vm::tuple> >().allocate(num_lists);
-         for(size_t i(0); i < num_lists; ++i) {
-            mem::allocator<db::intrusive_list<vm::tuple> >().construct(get_incoming(i));
-            mem::allocator<db::intrusive_list<vm::tuple> >().construct(get_generated(i));
-         }
-         size_rules = prog->num_rules();
-         rules = mem::allocator<bool>().allocate(size_rules);
-         size_predicates = prog->num_predicates();
-         predicates = mem::allocator<bool>().allocate(size_predicates);
-         std::fill_n(predicates, size_predicates, false);
-         std::fill_n(rules, size_rules, false);
+         rules = mem::allocator<bool>().allocate(theProgram->num_rules());
+         predicates = mem::allocator<bool>().allocate(theProgram->num_predicates());
+         std::fill_n(predicates, theProgram->num_predicates(), false);
+         std::fill_n(rules, theProgram->num_rules(), false);
       }
 
       ~temporary_store(void)
       {
-         for(size_t i(0); i < num_lists; ++i) {
-            mem::allocator<db::intrusive_list<vm::tuple> >().destroy(get_incoming(i));
-            mem::allocator<db::intrusive_list<vm::tuple> >().destroy(get_generated(i));
+         for(list_map::iterator it(incoming.begin()), end(incoming.end()); it != end; ++it) {
+            tuple_list *ls(it->second);
+            mem::allocator<tuple_list>().destroy(ls);
+            mem::allocator<tuple_list>().deallocate(ls, 1);
          }
-         mem::allocator<db::intrusive_list<vm::tuple> >().deallocate(incoming, num_lists);
-         mem::allocator<db::intrusive_list<vm::tuple> >().deallocate(generated, num_lists);
-         mem::allocator<bool>().deallocate(rules, size_rules);
-         mem::allocator<bool>().deallocate(predicates, size_predicates);
+         for(list_map::iterator it(generated.begin()), end(generated.end()); it != end; ++it) {
+            tuple_list *ls(it->second);
+            mem::allocator<tuple_list>().destroy(ls);
+            mem::allocator<tuple_list>().deallocate(ls, 1);
+         }
+         mem::allocator<bool>().deallocate(rules, theProgram->num_rules());
+         mem::allocator<bool>().deallocate(predicates, theProgram->num_predicates());
       }
 };
 

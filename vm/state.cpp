@@ -326,13 +326,14 @@ state::process_action_tuples(void)
 void
 state::process_incoming_tuples(void)
 {
-   for(size_t i(0); i < store->num_lists; ++i) {
-      db::intrusive_list<vm::tuple> *ls(store->get_incoming(i));
-      for(db::intrusive_list<vm::tuple>::iterator it(ls->begin()), end(ls->end());
-         it != end; ++it)
-         store->register_tuple_fact(*it, 1);
-      if(!ls->empty())
-         lstore->increment_database(all->PROGRAM->get_predicate(i), ls);
+   for(temporary_store::list_map::iterator it(store->incoming.begin()), end(store->incoming.end()); it != end; ++it) {
+      db::intrusive_list<vm::tuple> *ls(it->second);
+      if(!ls->empty()) {
+         for(db::intrusive_list<vm::tuple>::iterator it2(ls->begin()), end2(ls->end());
+            it2 != end2; ++it2)
+            store->register_tuple_fact(*it2, 1);
+         lstore->increment_database(theProgram->get_predicate(it->first), ls);
+      }
    }
    if(!store->incoming_persistent_tuples.empty())
       store->persistent_tuples.splice(store->persistent_tuples.end(), store->incoming_persistent_tuples);
@@ -507,10 +508,10 @@ state::run_node(db::node *no)
 #endif
       /* move from generated tuples to linear store */
       if(generated_facts) {
-         for(size_t i(0); i < store->num_lists; ++i) {
-            db::intrusive_list<vm::tuple> *gen(store->get_generated(i));
+         for(temporary_store::list_map::iterator it(store->generated.begin()), end(store->generated.end()); it != end; ++it) {
+            db::intrusive_list<vm::tuple> *gen(it->second);
             if(!gen->empty())
-               lstore->increment_database(all->PROGRAM->get_predicate(i), gen);
+               lstore->increment_database(theProgram->get_predicate(it->first), gen);
          }
       }
       if(!do_persistent_tuples()) {
