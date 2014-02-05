@@ -86,7 +86,7 @@ public:
    
    static inline list_ptr null_list(void) { return (list_ptr)0; }
    
-   static inline bool is_null(const list_ptr ls) { return ls == null_list(); }
+   static inline bool is_null(cons const * ls) { return ls == null_list(); }
    
    static inline void dec_refs(list_ptr ls)
 	 {

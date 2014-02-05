@@ -153,27 +153,33 @@ listappend(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
    DECLARE_LIST(ls1);
    DECLARE_LIST(ls2);
 
-   runtime::cons *p1((runtime::cons*)ls1);
-   runtime::cons *p2((runtime::cons*)ls2);
+   if(runtime::cons::is_null(ls1) && runtime::cons::is_null(ls2)) {
+      RETURN_LIST(runtime::cons::null_list());
+   } else {
+      runtime::cons *p1((runtime::cons*)ls1);
+      runtime::cons *p2((runtime::cons*)ls2);
 
-   stack_general_list s;
+      stack_general_list s;
 
-   while(!runtime::cons::is_null(p1)) {
-      s.push(p1->get_head());
-      p1 = p1->get_tail();
+      while(!runtime::cons::is_null(p1)) {
+         s.push(p1->get_head());
+         p1 = p1->get_tail();
+      }
+
+      while(!runtime::cons::is_null(p2)) {
+         s.push(p2->get_head());
+         p2 = p2->get_tail();
+      }
+
+      list_type *t(NULL);
+      if(ls1)
+         t = ls1->get_type();
+      if(t == NULL)
+         t = ls2->get_type();
+
+      runtime::cons *ptr(from_general_stack_to_list(s, t));
+      RETURN_LIST(ptr);
    }
-
-   while(!runtime::cons::is_null(p2)) {
-      s.push(p2->get_head());
-      p2 = p2->get_tail();
-   }
-
-   list_type *t(ls1->get_type());
-   if(t == NULL)
-      t = ls2->get_type();
-   runtime::cons *ptr(from_general_stack_to_list(s, t));
-
-   RETURN_LIST(ptr);
 }
 
 static bool
@@ -313,17 +319,21 @@ argument
 listreverse(EXTERNAL_ARG(ls))
 {
    DECLARE_LIST(ls);
-   runtime::cons *p((runtime::cons *)ls);
-   stack_general_list s;
+   if(runtime::cons::is_null(ls)) {
+      RETURN_LIST(runtime::cons::null_list());
+   } else {
+      runtime::cons *p((runtime::cons *)ls);
+      stack_general_list s;
 
-   while(!runtime::cons::is_null(p)) {
-      s.push(p->get_head());
-      p = p->get_tail();
+      while(!runtime::cons::is_null(p)) {
+         s.push(p->get_head());
+         p = p->get_tail();
+      }
+
+      runtime::cons *ptr(from_general_stack_to_reverse_list(s, ls->get_type()));
+
+      RETURN_LIST(ptr);
    }
-
-   runtime::cons *ptr(from_general_stack_to_reverse_list(s, ls->get_type()));
-
-   RETURN_LIST(ptr);
 }
 
 argument
