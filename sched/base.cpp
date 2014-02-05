@@ -72,7 +72,7 @@ base::loop(void)
    // start process pool
    mem::ensure_pool();
 
-   init(state.all->NUM_THREADS);
+   init(All->NUM_THREADS);
 
    do_loop();
 
@@ -104,16 +104,15 @@ base::~base(void)
 	delete thread;
 }
 
-base::base(const vm::process_id _id, vm::all *_all):
+base::base(const vm::process_id _id):
    id(_id),
 	thread(NULL),
-	state(this, _all),
+	state(this),
 	iteration(0)
 #ifdef INSTRUMENTATION
    , processed_facts(0), sent_facts(0), ins_state(statistics::NOW_ACTIVE)
 #endif
 {
-
 }
 
 }

@@ -14,8 +14,8 @@ class thread_node: public in_queue_node
 {
 public:
 	   
-   explicit thread_node(const db::node::node_id _id, const db::node::node_id _trans, vm::all *all):
-      in_queue_node(_id, _trans, all)
+   explicit thread_node(const db::node::node_id _id, const db::node::node_id _trans):
+      in_queue_node(_id, _trans)
    {}
    
    virtual ~thread_node(void) { }

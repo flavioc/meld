@@ -36,10 +36,10 @@ protected:
    size_t thread_round_state;
    static utils::atomic<size_t> total_in_agg;
    
-   static inline void add_thread(sched::base *add, vm::all *all)
+   static inline void add_thread(sched::base *add)
    {
-      all->ALL_THREADS.push_back(add);
-      assert((size_t)all->ALL_THREADS.size() == (size_t)(add->get_id() + 1));
+      vm::All->ALL_THREADS.push_back(add);
+      assert((size_t)vm::All->ALL_THREADS.size() == (size_t)(add->get_id() + 1));
    }
    
 #define threads_synchronize() thread_barrier->wait(get_id())
@@ -96,11 +96,11 @@ public:
 
 #define DEFINE_START_FUNCTION(CLASS)                  \
    static inline void                                 \
-   start(const size_t num_threads, vm::all *all)      \
+   start(const size_t num_threads)                    \
    {                                                  \
       init_barriers(num_threads);                     \
       for(vm::process_id i(0); i < num_threads; ++i)  \
-         add_thread(new CLASS(i, all), all);          \
+         add_thread(new CLASS(i));                    \
    }
 
 #define BUSY_LOOP_MAKE_INACTIVE()         \
@@ -146,7 +146,7 @@ public:
       COMPUTE_MORE_WORK                                  \
       if(more_work) {                                    \
          reset_barrier();                                \
-         total_in_agg = state.all->NUM_THREADS;          \
+         total_in_agg = All->NUM_THREADS;                \
          round_state = GET_NEXT(round_state);            \
          IF_TRUE                                         \
          return true;                                    \

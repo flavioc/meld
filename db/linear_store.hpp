@@ -39,7 +39,6 @@ struct linear_store
       table_map tables;
 #else
       hash_table *tables;
-      vm::program *prog;
 #endif
 
       utils::spinlock internal;
@@ -187,25 +186,21 @@ struct linear_store
 #endif
       }
 
-      explicit linear_store(vm::program *_prog)
-#ifndef USE_UNORDERED_MAP
-         : prog(_prog)
-#endif
+      explicit linear_store(void)
       {
-         (void)_prog;
 #ifndef USE_UNORDERED_MAP
          lists = NULL;
          tables = NULL;
-         for(size_t i(0); i < prog->num_predicates(); ++i) {
-            vm::predicate *pred(prog->get_predicate(i));
+         for(size_t i(0); i < theProgram->num_predicates(); ++i) {
+            vm::predicate *pred(theProgram->get_predicate(i));
             if(pred->is_hash_table()) {
                if(!tables)
-                  tables = mem::allocator<hash_table>().allocate(prog->num_predicates());
+                  tables = mem::allocator<hash_table>().allocate(theProgram->num_predicates());
                mem::allocator<hash_table>().construct(get_table(i));
                get_table(i)->setup(pred->get_hashed_field(), pred->get_field_type(pred->get_hashed_field())->get_type());
             } else {
                if(!lists)
-                  lists = mem::allocator<tuple_list>().allocate(prog->num_predicates());
+                  lists = mem::allocator<tuple_list>().allocate(theProgram->num_predicates());
                mem::allocator<tuple_list>().construct(get_list(i));
             }
          }
@@ -226,8 +221,8 @@ struct linear_store
             mem::allocator<tuple_list>().deallocate(list, 1);
          }
 #else
-         for(size_t i(0); i < prog->num_predicates(); ++i) {
-            vm::predicate *pred(prog->get_predicate(i));
+         for(size_t i(0); i < theProgram->num_predicates(); ++i) {
+            vm::predicate *pred(theProgram->get_predicate(i));
             if(pred->is_hash_table()) {
                assert(tables);
                mem::allocator<hash_table>().destroy(get_table(i));
@@ -237,9 +232,9 @@ struct linear_store
             }
          }
          if(tables)
-            mem::allocator<hash_table>().deallocate(tables, prog->num_predicates());
+            mem::allocator<hash_table>().deallocate(tables, theProgram->num_predicates());
          if(lists)
-            mem::allocator<tuple_list>().deallocate(lists, prog->num_predicates());
+            mem::allocator<tuple_list>().deallocate(lists, theProgram->num_predicates());
 #endif
       }
 };

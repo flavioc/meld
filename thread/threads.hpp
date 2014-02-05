@@ -77,16 +77,16 @@ public:
    virtual void end(void);
    virtual bool terminate_iteration(void);
    
-   static db::node *create_node(const db::node::node_id id, const db::node::node_id trans, vm::all *all)
+   static db::node *create_node(const db::node::node_id id, const db::node::node_id trans)
    {
-      return new thread_intrusive_node(id, trans, all);
+      return new thread_intrusive_node(id, trans);
    }
    
    DEFINE_START_FUNCTION(threads_sched);
    
    virtual void write_slice(statistics::slice&) const;
    
-   explicit threads_sched(const vm::process_id, vm::all *);
+   explicit threads_sched(const vm::process_id);
    
    virtual ~threads_sched(void);
 };

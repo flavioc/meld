@@ -96,10 +96,10 @@ rule_matcher::deregister_tuple(tuple *tpl, const derivation_count count)
 	return ret;
 }
 
-rule_matcher::rule_matcher(vm::program *prog)
+rule_matcher::rule_matcher(void)
 {
-	predicate_count.resize(prog->num_predicates());
-	rules.resize(prog->num_rules());
+	predicate_count.resize(theProgram->num_predicates());
+	rules.resize(theProgram->num_rules());
 
 	fill(predicate_count.begin(), predicate_count.end(), 0);
 	
@@ -110,9 +110,9 @@ rule_matcher::rule_matcher(vm::program *prog)
 	{
 		rule_matcher_obj& obj(*it);
 		
-      obj.ignore = prog->get_rule(rid)->as_persistent();
+      obj.ignore = theProgram->get_rule(rid)->as_persistent();
 		obj.total_have = 0;
-		obj.total_needed = prog->get_rule(rid)->num_predicates();
+		obj.total_needed = theProgram->get_rule(rid)->num_predicates();
 	}
 }
 

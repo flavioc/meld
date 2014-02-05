@@ -30,8 +30,8 @@ public:
       assert(!unprocessed_facts);
    }
 
-   explicit serial_node(const db::node::node_id _id, const db::node::node_id _trans, vm::all *all):
-      in_queue_node(_id, _trans, all),
+   explicit serial_node(const db::node::node_id _id, const db::node::node_id _trans):
+      in_queue_node(_id, _trans),
       INIT_DOUBLE_QUEUE_NODE()
    {}
 

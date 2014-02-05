@@ -13,8 +13,8 @@ using namespace utils;
 namespace db
 {
    
-database::database(const string& filename, create_node_fn _create_fn, vm::all *_all):
-   all(_all), create_fn(_create_fn), nodes_total(0)
+database::database(const string& filename, create_node_fn _create_fn):
+   create_fn(_create_fn), nodes_total(0)
 {
    int_val num_nodes;
    node::node_id fake_id;
@@ -31,7 +31,7 @@ database::database(const string& filename, create_node_fn _create_fn, vm::all *_
    
    nodes_total = num_nodes;
    
-   all->ROUTER->set_nodes_total(nodes_total, all); // can throw database_error
+   All->ROUTER->set_nodes_total(nodes_total); // can throw database_error
    
    const size_t nodes_to_skip(remote::self->get_nodes_base());
    
@@ -47,7 +47,7 @@ database::database(const string& filename, create_node_fn _create_fn, vm::all *_
       fp.read((char*)&fake_id, sizeof(node::node_id));
       fp.read((char*)&real_id, sizeof(node::node_id));
       
-      node *node(create_fn(fake_id, real_id, all));
+      node *node(create_fn(fake_id, real_id));
       
       translation[fake_id] = real_id;
       nodes[fake_id] = node;
@@ -100,7 +100,7 @@ database::create_node_id(const db::node::node_id id)
    max_node_id = id;
    max_translated_id = id;
 
-   node *ret(create_fn(max_node_id, max_translated_id, all));
+   node *ret(create_fn(max_node_id, max_translated_id));
    
    translation[max_node_id] = max_translated_id;
    nodes[max_node_id] = ret;
@@ -122,7 +122,7 @@ database::create_node(void)
    	++max_translated_id;
 	}
 	
-   node *ret(create_fn(max_node_id, max_translated_id, all));
+   node *ret(create_fn(max_node_id, max_translated_id));
    
    translation[max_node_id] = max_translated_id;
    nodes[max_node_id] = ret;

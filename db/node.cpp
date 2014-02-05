@@ -182,9 +182,9 @@ node::assert_end(void) const
    }
 }
 
-node::node(const node_id _id, const node_id _trans, vm::all *_all):
-   id(_id), translation(_trans), all(_all), owner(NULL), linear(_all->PROGRAM),
-   store(_all->PROGRAM), unprocessed_facts(false), running(false)
+node::node(const node_id _id, const node_id _trans):
+   id(_id), translation(_trans), owner(NULL), linear(),
+   store(), unprocessed_facts(false), running(false)
 {
 }
 
@@ -201,8 +201,8 @@ node::dump(ostream& cout) const
 {
    cout << get_id() << endl;
    
-   for(size_t i(0); i < all->PROGRAM->num_predicates(); ++i) {
-      predicate *pred(all->PROGRAM->get_sorted_predicate(i));
+   for(size_t i(0); i < theProgram->num_predicates(); ++i) {
+      predicate *pred(theProgram->get_sorted_predicate(i));
 
       vector<string> vec;
       if(pred->is_persistent_pred()) {
@@ -248,8 +248,8 @@ node::print(ostream& cout) const
    cout << "--> node " << get_translated_id() << "/(id " << get_id()
         << ") (" << this << ") <--" << endl;
    
-   for(size_t i(0); i < all->PROGRAM->num_predicates(); ++i) {
-      predicate *pred(all->PROGRAM->get_sorted_predicate(i));
+   for(size_t i(0); i < theProgram->num_predicates(); ++i) {
+      predicate *pred(theProgram->get_sorted_predicate(i));
 
       vector<string> vec;
       if(pred->is_persistent_pred()) {

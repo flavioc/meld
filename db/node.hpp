@@ -46,10 +46,6 @@ private:
 	node_id id;
    node_id translation;
    
-protected:
-
-   vm::all *all;
-
 private:
    
    typedef std::map<vm::predicate_id, tuple_trie*,
@@ -156,7 +152,7 @@ public:
       }
    }
    
-   explicit node(const node_id, const node_id, vm::all *);
+   explicit node(const node_id, const node_id);
    
    virtual ~node(void);
 };

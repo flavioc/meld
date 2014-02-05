@@ -59,7 +59,7 @@ get_node_val(pcounter& m, state& state)
    
    pcounter_move_node(&m);
 
-   assert(ret <= state.all->DATABASE->max_id());
+   assert(ret <= All->DATABASE->max_id());
    
    return ret;
 }
@@ -80,7 +80,7 @@ get_tuple_field(state& state, const pcounter& pc)
 static inline void
 execute_alloc(const pcounter& pc, state& state)
 {
-   tuple *tuple(vm::tuple::create(state.all->PROGRAM->get_predicate(alloc_predicate(pc))));
+   tuple *tuple(vm::tuple::create(theProgram->get_predicate(alloc_predicate(pc))));
 
    state.set_tuple(alloc_reg(pc), tuple);
 }
@@ -149,7 +149,7 @@ execute_run_action0(tuple *tpl, state& state)
 {
    assert(tpl->is_action());
    if(state.count > 0)
-      state.all->MACHINE->run_action(state.sched, state.node, tpl);
+      All->MACHINE->run_action(state.sched, state.node, tpl);
    else
       vm::tuple::destroy(tpl);
 }
@@ -214,7 +214,7 @@ execute_send(const pcounter& pc, state& state)
 #endif
 #ifdef USE_UI
    if(state::UI) {
-      LOG_TUPLE_SEND(state.node, state.all->DATABASE->find_node((node::node_id)dest_val), tuple);
+      LOG_TUPLE_SEND(state.node, All->DATABASE->find_node((node::node_id)dest_val), tuple);
    }
 #endif
 #ifdef USE_REAL_NODES
@@ -232,7 +232,7 @@ execute_send(const pcounter& pc, state& state)
          execute_enqueue_linear0(tuple, state);
       }
    } else {
-      state.all->MACHINE->route(state.node, state.sched, (node::node_id)dest_val, tuple, state.count, state.depth);
+      All->MACHINE->route(state.node, state.sched, (node::node_id)dest_val, tuple, state.count, state.depth);
    }
 }
 
@@ -259,10 +259,10 @@ execute_send_delay(const pcounter& pc, state& state)
 #endif
 #ifdef USE_UI
       if(state::UI) {
-         LOG_TUPLE_SEND(state.node, state.all->DATABASE->find_node((node::node_id)dest_val), tuple);
+         LOG_TUPLE_SEND(state.node, All->DATABASE->find_node((node::node_id)dest_val), tuple);
       }
 #endif
-      state.all->MACHINE->route(state.node, state.sched, (node::node_id)dest_val, tuple, state.count, state.depth, send_delay_time(pc));
+      All->MACHINE->route(state.node, state.sched, (node::node_id)dest_val, tuple, state.count, state.depth, send_delay_time(pc));
    }
 }
 
@@ -631,7 +631,7 @@ retrieve_match_object(state& state, pcounter pc, const predicate *pred, const si
    match *mobj(NULL);
 
    if(mdata == NULL) {
-      const size_t size = state.all->NUM_THREADS;
+      const size_t size = All->NUM_THREADS;
       const size_t matches = iter_matches_size(pc, base);
       const size_t var_size = count_variable_match_elements(pc + base, pred, matches);
       const size_t mem = match::mem_size(pred, var_size);
@@ -1119,7 +1119,7 @@ execute_float(pcounter& pc, state& state)
 static inline pcounter
 execute_select(pcounter pc, state& state)
 {
-   if(state.node->get_id() > state.all->DATABASE->static_max_id())
+   if(state.node->get_id() > All->DATABASE->static_max_id())
       return pc + select_size(pc);
 
    const pcounter hash_start(select_hash_start(pc));
@@ -1136,7 +1136,7 @@ static inline void
 execute_delete(const pcounter pc, state& state)
 {
    const predicate_id id(delete_predicate(pc));
-   const predicate *pred(state.all->PROGRAM->get_predicate(id));
+   const predicate *pred(All->PROGRAM->get_predicate(id));
    pcounter m(pc + DELETE_BASE);
    const size_t num_args(delete_num_args(pc));
    match mobj(pred);
@@ -1381,7 +1381,7 @@ execute_rule(const pcounter& pc, state& state)
 
 #ifdef USE_UI
    if(state::UI) {
-      vm::rule *rule(state.all->PROGRAM->get_rule(state.current_rule));
+      vm::rule *rule(theProgram->get_rule(state.current_rule));
       LOG_RULE_START(state.node, rule);
    }
 #endif
@@ -1403,7 +1403,7 @@ execute_rule_done(const pcounter& pc, state& state)
 
 #ifdef USE_UI
    if(state::UI) {
-      vm::rule *rule(state.all->PROGRAM->get_rule(state.current_rule));
+      vm::rule *rule(theProgram->get_rule(state.current_rule));
       LOG_RULE_APPLIED(state.node, rule);
    }
 #endif
@@ -1424,7 +1424,7 @@ static inline void
 execute_new_node(const pcounter& pc, state& state)
 {
    const reg_num reg(new_node_reg(pc));
-   node *new_node(state.all->DATABASE->create_node());
+   node *new_node(All->DATABASE->create_node());
 
    state.sched->init_node(new_node);
 
@@ -1487,7 +1487,7 @@ execute_new_axioms(pcounter pc, state& state)
    while(pc < end) {
       // read axions until the end!
       predicate_id pid(predicate_get(pc, 0));
-      predicate *pred(state.all->PROGRAM->get_predicate(pid));
+      predicate *pred(theProgram->get_predicate(pid));
       tuple *tpl(vm::tuple::create(pred));
 
       pc++;
@@ -1530,7 +1530,7 @@ execute_new_axioms(pcounter pc, state& state)
 static inline void
 execute_make_structr(pcounter& pc, state& state)
 {
-   struct_type *st((struct_type*)state.all->PROGRAM->get_type(make_structr_type(pc)));
+   struct_type *st((struct_type*)theProgram->get_type(make_structr_type(pc)));
    const reg_num to(pcounter_reg(pc + instr_size + type_size));
 
    struct1 *s(new struct1(st));
@@ -1742,9 +1742,9 @@ static inline void
 execute_mvregconst(pcounter& pc, state& state)
 {
    const const_id id(pcounter_const_id(pc + instr_size + reg_val_size));
-   state.all->set_const(id, state.get_reg(pcounter_reg(pc + instr_size)));
-   if(reference_type(state.all->PROGRAM->get_const_type(id)->get_type()))
-      do_increment_runtime(state.all->get_const(id));
+   All->set_const(id, state.get_reg(pcounter_reg(pc + instr_size)));
+   if(reference_type(theProgram->get_const_type(id)->get_type()))
+      do_increment_runtime(All->get_const(id));
 }
 
 static inline void
@@ -1754,7 +1754,7 @@ execute_mvconstfield(pcounter& pc, state& state)
    const field_num field(val_field_num(pc + instr_size + const_id_size));
    tuple *tuple(get_tuple_field(state, pc + instr_size + const_id_size));
 
-   tuple->set_field(field, state.all->get_const(id));
+   tuple->set_field(field, All->get_const(id));
    assert(!reference_type(tuple->get_field_type(field)->get_type()));
 }
 
@@ -1765,7 +1765,7 @@ execute_mvconstfieldr(pcounter& pc, state& state)
    const field_num field(val_field_num(pc + instr_size + const_id_size));
    tuple *tuple(get_tuple_field(state, pc + instr_size + const_id_size));
 
-   tuple->set_field(field, state.all->get_const(id));
+   tuple->set_field(field, All->get_const(id));
    assert(reference_type(tuple->get_field_type(field)->get_type()));
    do_increment_runtime(tuple->get_field(field));
 }
@@ -1776,7 +1776,7 @@ execute_mvconstreg(pcounter& pc, state& state)
    const const_id id(pcounter_const_id(pc + instr_size));
    const reg_num reg(pcounter_reg(pc + instr_size + const_id_size));
 
-   state.set_reg(reg, state.all->get_const(id));
+   state.set_reg(reg, All->get_const(id));
 }
 
 static inline void
@@ -1793,7 +1793,7 @@ execute_mvargreg(pcounter& pc, state& state)
    const argument_id arg(pcounter_argument_id(pc + instr_size));
    const reg_num reg(pcounter_reg(pc + instr_size + argument_size));
 
-   state.set_string(reg, state.all->get_argument(arg));
+   state.set_string(reg, All->get_argument(arg));
 }
 
 static inline void
@@ -1834,12 +1834,12 @@ execute_mvfloatreg(pcounter& pc, state& state)
 }
 
 static inline void
-execute_mvintconst(pcounter& pc, state& state)
+execute_mvintconst(pcounter& pc)
 {
    const int_val i(pcounter_int(pc + instr_size));
    const const_id id(pcounter_const_id(pc + instr_size + int_size));
 
-   state.all->set_const_int(id, i);
+   All->set_const_int(id, i);
 }
 
 static inline void
@@ -1848,7 +1848,7 @@ execute_mvworldfield(pcounter& pc, state& state)
    const field_num field(val_field_num(pc + instr_size));
    tuple *tuple(get_tuple_field(state, pc + instr_size));
 
-   tuple->set_int(field, state.all->DATABASE->nodes_total);
+   tuple->set_int(field, All->DATABASE->nodes_total);
 }
 
 static inline void
@@ -1856,7 +1856,7 @@ execute_mvworldreg(pcounter& pc, state& state)
 {
    const reg_num reg(pcounter_reg(pc + instr_size));
 
-   state.set_int(reg, state.all->DATABASE->nodes_total);
+   state.set_int(reg, All->DATABASE->nodes_total);
 }
 
 static inline pcounter
@@ -2212,7 +2212,7 @@ execute_consrrr(pcounter& pc, state& state)
    const reg_num tail(pcounter_reg(pc + instr_size + type_size + reg_val_size));
    const reg_num dest(pcounter_reg(pc + instr_size + type_size + 2 * reg_val_size));
 
-   list_type *ltype((list_type*)state.all->PROGRAM->get_type(cons_type(pc)));
+   list_type *ltype((list_type*)theProgram->get_type(cons_type(pc)));
    cons *new_list(new cons(state.get_cons(tail), state.get_reg(head), ltype));
 	state.add_cons(new_list);
    state.set_cons(dest, new_list);
@@ -2291,7 +2291,7 @@ execute_consfrr(pcounter& pc, state& state)
    const reg_num tail(pcounter_reg(pc + instr_size + type_size + field_size));
    const reg_num dest(pcounter_reg(pc + instr_size + type_size + field_size + reg_val_size));
 
-   list_type *ltype((list_type*)state.all->PROGRAM->get_type(cons_type(pc)));
+   list_type *ltype((list_type*)theProgram->get_type(cons_type(pc)));
    cons *new_list(new cons(state.get_cons(tail), head->get_field(field), ltype));
    state.add_cons(new_list);
    state.set_cons(dest, new_list);
@@ -2352,7 +2352,7 @@ execute(pcounter pc, state& state, const reg_num reg, tuple *tpl)
 eval_loop:
 
 #ifdef DEBUG_INSTRS
-      instr_print_simple(pc, 0, state.all->PROGRAM, cout);
+      instr_print_simple(pc, 0, theProgram, cout);
 #endif
 
 #ifdef USE_SIM
@@ -2449,7 +2449,7 @@ eval_loop:
          CASE(PERS_ITER_INSTR)
             COMPLEX_JUMP(pers_iter)
             {
-               const predicate *pred(state.all->PROGRAM->get_predicate(iter_predicate(pc)));
+               const predicate *pred(theProgram->get_predicate(iter_predicate(pc)));
                const reg_num reg(iter_reg(pc));
                match *mobj(retrieve_match_object(state, pc, pred, PERS_ITER_BASE));
 
@@ -2462,7 +2462,7 @@ eval_loop:
          CASE(LINEAR_ITER_INSTR)
             COMPLEX_JUMP(linear_iter)
             {
-               const predicate *pred(state.all->PROGRAM->get_predicate(iter_predicate(pc)));
+               const predicate *pred(theProgram->get_predicate(iter_predicate(pc)));
                const reg_num reg(iter_reg(pc));
                match *mobj(retrieve_match_object(state, pc, pred, LINEAR_ITER_BASE));
 
@@ -2475,7 +2475,7 @@ eval_loop:
          CASE(RLINEAR_ITER_INSTR)
             COMPLEX_JUMP(rlinear_iter)
             {
-               const predicate *pred(state.all->PROGRAM->get_predicate(iter_predicate(pc)));
+               const predicate *pred(theProgram->get_predicate(iter_predicate(pc)));
                const reg_num reg(iter_reg(pc));
                match *mobj(retrieve_match_object(state, pc, pred, RLINEAR_ITER_BASE));
 
@@ -2488,7 +2488,7 @@ eval_loop:
          CASE(OPERS_ITER_INSTR)
             COMPLEX_JUMP(opers_iter)
             {
-               const predicate *pred(state.all->PROGRAM->get_predicate(iter_predicate(pc)));
+               const predicate *pred(theProgram->get_predicate(iter_predicate(pc)));
                const reg_num reg(iter_reg(pc));
                match *mobj(retrieve_match_object(state, pc, pred, OPERS_ITER_BASE));
 
@@ -2501,7 +2501,7 @@ eval_loop:
          CASE(OLINEAR_ITER_INSTR)
             COMPLEX_JUMP(olinear_iter)
             {
-               const predicate *pred(state.all->PROGRAM->get_predicate(iter_predicate(pc)));
+               const predicate *pred(theProgram->get_predicate(iter_predicate(pc)));
                const reg_num reg(iter_reg(pc));
                match *mobj(retrieve_match_object(state, pc, pred, OLINEAR_ITER_BASE));
 
@@ -2514,7 +2514,7 @@ eval_loop:
          CASE(ORLINEAR_ITER_INSTR)
             COMPLEX_JUMP(orlinear_iter)
             {
-               const predicate *pred(state.all->PROGRAM->get_predicate(iter_predicate(pc)));
+               const predicate *pred(theProgram->get_predicate(iter_predicate(pc)));
                const reg_num reg(iter_reg(pc));
                match *mobj(retrieve_match_object(state, pc, pred, ORLINEAR_ITER_BASE));
 
@@ -2692,7 +2692,7 @@ eval_loop:
             COMPLEX_JUMP(callf)
             {
               const vm::callf_id id(callf_get_id(pc));
-              function *fun(state.all->PROGRAM->get_function(id));
+              function *fun(theProgram->get_function(id));
 
               pc = fun->get_bytecode();
               JUMP_NEXT();
@@ -2900,7 +2900,7 @@ eval_loop:
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
-            execute_mvintconst(pc, state);
+            execute_mvintconst(pc);
             ADVANCE()
          ENDOP()
 
@@ -3343,16 +3343,16 @@ execute_rule(const rule_id rule_id, state& state)
 {
 #ifdef DEBUG_RULES
    cout << "================> NODE " << state.node->get_id() << " ===============\n";
-	cout << "Running rule " << state.all->PROGRAM->get_rule(rule_id)->get_string() << endl;
+	cout << "Running rule " << theProgram->get_rule(rule_id)->get_string() << endl;
 #endif
 #ifdef CORE_STATISTICS
    execution_time::scope s(state.stat.rule_times[rule_id]);
 #endif
    
    //   state.node->print(cout);
-   //   state.all->DATABASE->print_db(cout);
+   //   All->DATABASE->print_db(cout);
 	
-	vm::rule *rule(state.all->PROGRAM->get_rule(rule_id));
+	vm::rule *rule(theProgram->get_rule(rule_id));
 
    state.running_rule = true;
 #ifdef USE_JIT

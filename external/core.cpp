@@ -22,10 +22,8 @@ node_priority(EXTERNAL_ARG(id))
 #ifdef USE_REAL_NODES
    n = (node*)id;
 #else
-   if(prio_db != NULL) {
-      n = prio_db->find_node(id);
-      assert(n != NULL);
-   }
+   n = All->DATABASE->find_node(id);
+   assert(n != NULL);
 #endif
 
    if(n) {
@@ -47,10 +45,8 @@ cpu_id(EXTERNAL_ARG(id))
 #ifdef USE_REAL_NODES
    n = (node*)id;
 #else
-   if(prio_db != NULL) {
-      n = prio_db->find_node(id);
-      assert(n != NULL);
-   }
+   n = All->DATABASE->find_node(id);
+   assert(n != NULL);
 #endif
 
    if(n)

@@ -103,6 +103,9 @@ class all
    }
 };
 
+extern all *All;
+extern program *theProgram;
+
 }
 
 #endif

@@ -82,7 +82,6 @@ public:
    match_list matches_created;
    temporary_store *store;
    db::linear_store *lstore;
-   vm::all *all;
 #ifdef CORE_STATISTICS
    core_statistics stat;
 #endif
@@ -160,8 +159,8 @@ public:
    void setup(vm::tuple*, db::node*, const vm::derivation_count, const vm::depth_t);
    void cleanup(void);
 
-   explicit state(sched::base *, vm::all *);
-	explicit state(vm::all *);
+   explicit state(sched::base *);
+	explicit state(void);
    ~state(void);
 };
 

@@ -27,6 +27,11 @@ using namespace utils;
 
 namespace vm {
 
+all* All;     // global variable that holds pointer to vm
+   // all structure.  Set by process/machine.cpp
+   // in constructor.
+program* theProgram;
+
 // most integers in the byte-code have 4 bytes
 BOOST_STATIC_ASSERT(sizeof(uint_val) == 4);
 

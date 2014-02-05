@@ -34,11 +34,10 @@ public:
    typedef std::map<node::node_id, node*,
            std::less<node::node_id>,
            mem::allocator< std::pair<const node::node_id, node*> > > map_nodes;
-   typedef boost::function3<node*, node::node_id, node::node_id, vm::all *> create_node_fn;
+   typedef boost::function2<node*, node::node_id, node::node_id> create_node_fn;
 
 private:
 
-   vm::all *all;
    create_node_fn create_fn;
    
    map_nodes nodes;
@@ -76,7 +75,7 @@ public:
    
    void print(std::ostream&) const;
    
-   explicit database(const std::string&, create_node_fn, vm::all *);
+   explicit database(const std::string&, create_node_fn);
    
    ~database(void);
 };

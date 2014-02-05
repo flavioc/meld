@@ -55,7 +55,7 @@ public:
 	rule_iterator begin_dropped_rules(void) const { return dropped_rules.begin(); }
 	rule_iterator end_dropped_rules(void) const { return dropped_rules.end(); }
 
-   rule_matcher(vm::program *);
+   rule_matcher(void);
 };
 
 }

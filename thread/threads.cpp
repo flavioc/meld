@@ -26,7 +26,7 @@ threads_sched::assert_end(void) const
    assert(is_inactive());
    assert(all_threads_finished());
    assert_thread_end_iteration();
-   assert_static_nodes_end(id, state.all);
+   assert_static_nodes_end(id);
 }
 
 void
@@ -36,7 +36,7 @@ threads_sched::assert_end_iteration(void) const
    assert(is_inactive());
    assert(all_threads_finished());
    assert_thread_end_iteration();
-   assert_static_nodes_end_iteration(id, state.all);
+   assert_static_nodes_end_iteration(id);
 }
 
 void
@@ -302,8 +302,8 @@ threads_sched::init(const size_t)
    const node::node_id first_node(remote::self->find_first_node(id));
    const node::node_id last_node(remote::self->find_last_node(id));
 
-   database::map_nodes::iterator it(state.all->DATABASE->get_node_iterator(first_node));
-   database::map_nodes::iterator end(state.all->DATABASE->get_node_iterator(last_node));
+   database::map_nodes::iterator it(All->DATABASE->get_node_iterator(first_node));
+   database::map_nodes::iterator end(All->DATABASE->get_node_iterator(last_node));
    
    for(; it != end; ++it)
    {
@@ -337,8 +337,8 @@ threads_sched::write_slice(statistics::slice& sl) const
 #endif
 }
 
-threads_sched::threads_sched(const vm::process_id _id, vm::all *all):
-   base(_id, all),
+threads_sched::threads_sched(const vm::process_id _id):
+   base(_id),
    current_node(NULL)
 #if defined(TASK_STEALING) && defined(INSTRUMENTATION)
    , stolen_total(0), steal_requests(0)

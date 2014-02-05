@@ -61,12 +61,12 @@ serial_ui_local::end(void)
 	WAIT_FOR_DONE();
 }
 
-serial_ui_local::serial_ui_local(vm::all *all):
-	serial_local(all),
+serial_ui_local::serial_ui_local(void):
+	serial_local(),
 	first_done(false)
 {
-	LOG_DATABASE(state.all->DATABASE);
-	LOG_PROGRAM(state.all->PROGRAM);
+	LOG_DATABASE(All->DATABASE);
+	LOG_PROGRAM(All->PROGRAM);
 	scheduler = this;
 #ifdef USE_UI
    state::UI = true;
@@ -79,7 +79,7 @@ using namespace json_spirit;
 Value
 serial_ui_local::dump_this_node(const db::node::node_id id)
 {
-	node *n(state.all->DATABASE->find_node(id));
+	node *n(All->DATABASE->find_node(id));
 	serial_node *snode((serial_node*)n);
 	
 	Object ret;
@@ -134,7 +134,7 @@ serial_ui_local::change_to_node(serial_node *n)
 void
 serial_ui_local::change_node(const db::node::node_id id)
 {
-	node *n(scheduler->state.all->DATABASE->find_node(id));
+	node *n(All->DATABASE->find_node(id));
 	
 	scheduler->change_to_node((serial_node*)n);
 }

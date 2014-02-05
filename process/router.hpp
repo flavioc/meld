@@ -17,7 +17,6 @@
 #include "vm/defs.hpp"
 #include "utils/time.hpp"
 #include "utils/types.hpp"
-#include "vm/all.hpp"
 #include "process/remote.hpp"
 
 namespace process
@@ -44,7 +43,7 @@ public:
    
    inline bool use_mpi(void) const { return world_size > 1; }
    
-   void set_nodes_total(const size_t, vm::all *);
+   void set_nodes_total(const size_t);
 
    remote* find_remote(const db::node::node_id) const;
    

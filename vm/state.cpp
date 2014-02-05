@@ -53,12 +53,12 @@ state::cleanup(void)
 void
 state::copy_reg2const(const reg_num& reg_from, const const_id& cid)
 {
-   all->set_const(cid, regs[reg_from]);
-	switch(all->PROGRAM->get_const_type(cid)->get_type()) {
+   All->set_const(cid, regs[reg_from]);
+	switch(theProgram->get_const_type(cid)->get_type()) {
 		case FIELD_LIST:
-         runtime::cons::inc_refs(all->get_const_cons(cid)); break;
+         runtime::cons::inc_refs(All->get_const_cons(cid)); break;
 		case FIELD_STRING:
-			all->get_const_string(cid)->inc_refs(); break;
+			All->get_const_string(cid)->inc_refs(); break;
 		default: break;
 	}
 }
@@ -100,7 +100,7 @@ state::mark_active_rules(void)
 		rule_id rid(*it);
 		if(!store->rules[rid]) {
 			// we need check if at least one predicate was activated in this loop
-			vm::rule *rule(all->PROGRAM->get_rule(rid));
+			vm::rule *rule(theProgram->get_rule(rid));
          bool flag = false;
          for(rule::predicate_iterator jt(rule->begin_predicates()), endj(rule->end_predicates());
                jt != endj;
@@ -317,7 +317,7 @@ state::process_action_tuples(void)
    {
       db::simple_tuple *stpl(*it);
       vm::tuple *tpl(stpl->get_tuple());
-      all->MACHINE->run_action(sched, node, tpl);
+      All->MACHINE->run_action(sched, node, tpl);
       delete stpl;
    }
    store->action_tuples.clear();
@@ -378,7 +378,7 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
 
       if(is_new) {
          setup(tpl, node, stpl->get_count(), stpl->get_depth());
-         execute_process(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
+         execute_process(theProgram->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
       }
 
       if(tpl->is_reused()) {
@@ -397,7 +397,7 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
    } else {
 		if(tpl->is_reused()) {
 			setup(tpl, node, stpl->get_count(), stpl->get_depth());
-			execute_process(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
+			execute_process(theProgram->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
          delete stpl;
 		} else {
       	node::delete_info deleter(node->delete_tuple(tpl, -stpl->get_count(), stpl->get_depth()));
@@ -407,7 +407,7 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
          } else if(deleter.to_delete()) { // to be removed
             store->matcher.deregister_tuple(tpl, -stpl->get_count());
          	setup(tpl, node, stpl->get_count(), stpl->get_depth());
-         	execute_process(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
+         	execute_process(theProgram->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
          	deleter();
       	} else if(tpl->is_cycle()) {
             store->matcher.deregister_tuple(tpl, -stpl->get_count());
@@ -419,7 +419,7 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
                (void)deleted;
                if(deleter.to_delete()) {
                   setup(tpl, node, stpl->get_count(), stpl->get_depth());
-                  execute_process(all->PROGRAM->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
+                  execute_process(theProgram->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
                   deleter();
                }
             }
@@ -480,7 +480,7 @@ state::run_node(db::node *no)
 		rule_id rule(rule_queue.pop());
 		
 #ifdef DEBUG_RULES
-      cout << "Run rule " << all->PROGRAM->get_rule(rule)->get_string() << endl;
+      cout << "Run rule " << theProgram->get_rule(rule)->get_string() << endl;
 #endif
 
 		/* delete rule and every check */
@@ -527,7 +527,7 @@ state::run_node(db::node *no)
 
 #if 0
    // push remaining tuples into node
-   for(size_t i(0); i < store->num_lists; ++i) {
+   for(size_t i(0); i < theProgram->num_predicates(); ++i) {
       db::simple_tuple_list *ls(store->get_list(i));
       for(db::simple_tuple_list::iterator it(ls->begin()), end(ls->end());
          it != end; ++it)
@@ -582,14 +582,13 @@ state::run_node(db::node *no)
 #endif
 }
 
-state::state(sched::base *_sched, vm::all *_all):
+state::state(sched::base *_sched):
    sched(_sched)
 #ifdef DEBUG_MODE
    , print_instrs(false)
 #endif
-   , all(_all)
 #ifdef CORE_STATISTICS
-   , stat(_all)
+   , stat()
 #endif
 {
 	rule_queue.set_type(HEAP_INT_ASC);
@@ -598,14 +597,13 @@ state::state(sched::base *_sched, vm::all *_all):
 #endif
 }
 
-state::state(vm::all *_all):
+state::state(void):
    sched(NULL)
 #ifdef DEBUG_MODE
    , print_instrs(false)
 #endif
-   , all(_all)
 #ifdef CORE_STATISTICS
-   , stat(_all)
+   , stat()
 #endif
 {
 #ifdef USE_SIM
@@ -617,7 +615,7 @@ state::~state(void)
 {
 #ifdef CORE_STATISTICS
 	if(sched != NULL) {
-      stat.print(cout, all);
+      stat.print(cout);
 	}
 #endif
 	assert(rule_queue.empty());
@@ -625,11 +623,11 @@ state::~state(void)
       match *obj(*it);
       const size_t mem(obj->mem_size());
       utils::byte *mdata((utils::byte*)obj);
-      for(size_t i(0); i < all->NUM_THREADS; ++i) {
+      for(size_t i(0); i < All->NUM_THREADS; ++i) {
          match *t((match*)(mdata + i * mem));
          t->destroy();
       }
-      mem::allocator<utils::byte>().deallocate(mdata, obj->mem_size() * all->NUM_THREADS);
+      mem::allocator<utils::byte>().deallocate(mdata, obj->mem_size() * All->NUM_THREADS);
    }
 }
 

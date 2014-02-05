@@ -84,7 +84,7 @@ public:
 
    virtual void init_node(db::node *node)
    {
-      vm::tuple *init_tuple(vm::tuple::create(state.all->PROGRAM->get_init_predicate()));
+      vm::tuple *init_tuple(vm::tuple::create(vm::theProgram->get_init_predicate()));
       node->set_owner(this);
       node->add_linear_fact(init_tuple);
       node->unprocessed_facts = true;
@@ -166,7 +166,7 @@ public:
 
    static base* get_scheduler(void);
    
-	explicit base(const vm::process_id, vm::all *);
+	explicit base(const vm::process_id);
    
 	virtual ~base(void);
 };

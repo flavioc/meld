@@ -20,7 +20,7 @@ namespace process
 static mutex mpi_mutex;
    
 void
-router::set_nodes_total(const size_t total, vm::all *all)
+router::set_nodes_total(const size_t total)
 {
    nodes_per_remote = total / world_size;
    
@@ -29,7 +29,7 @@ router::set_nodes_total(const size_t total, vm::all *all)
       throw database_error("Number of nodes is less than the number of remote machines");
 #endif
 
-   all->NUM_NODES_PER_PROCESS = nodes_per_remote;
+   All->NUM_NODES_PER_PROCESS = nodes_per_remote;
    
    // cache values for each remote
    

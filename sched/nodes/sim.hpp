@@ -177,8 +177,8 @@ public:
       return neighbor_count;
    }
 
-   explicit sim_node(const db::node::node_id _id, const db::node::node_id _trans, vm::all *all):
-		db::node(_id, _trans, all),
+   explicit sim_node(const db::node::node_id _id, const db::node::node_id _trans):
+		db::node(_id, _trans),
       top(NO_NEIGHBOR), bottom(NO_NEIGHBOR), east(NO_NEIGHBOR),
       west(NO_NEIGHBOR), north(NO_NEIGHBOR), south(NO_NEIGHBOR),
       instantiated_flag(false),

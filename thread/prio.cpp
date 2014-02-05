@@ -33,8 +33,6 @@ static atomic<size_t> prio_nodes_changed(0);
 namespace sched
 {
 
-db::database *prio_db(NULL);
-
 void
 threads_prio::assert_end(void) const
 {
@@ -156,7 +154,7 @@ threads_prio::check_if_current_useless(void)
    {
       current_node->lock();
       current_node->set_in_queue(false);
-      switch(state.all->PROGRAM->get_priority_type()) {
+      switch(theProgram->get_priority_type()) {
          case FIELD_INT:
             current_node->set_int_priority_level(0);
             break;
@@ -178,7 +176,7 @@ threads_prio::check_if_current_useless(void)
       
       current_node->lock();
       current_node->set_in_queue(false);
-      switch(state.all->PROGRAM->get_priority_type()) {
+      switch(theProgram->get_priority_type()) {
          case FIELD_INT:
             current_node->set_int_priority_level(0);
             break;
@@ -484,18 +482,16 @@ threads_prio::do_set_node_priority(node *n, const double priority)
 void
 threads_prio::init(const size_t)
 {
-   prio_db = state.all->DATABASE;
-
    // normal priorities
-   switch(state.all->PROGRAM->get_priority_type()) {
+   switch(theProgram->get_priority_type()) {
       case FIELD_FLOAT:
-         if(state.all->PROGRAM->is_priority_desc())
+         if(theProgram->is_priority_desc())
             priority_type = HEAP_FLOAT_DESC;
          else
             priority_type = HEAP_FLOAT_ASC;
          break;
       case FIELD_INT:
-         if(state.all->PROGRAM->is_priority_desc())
+         if(theProgram->is_priority_desc())
             priority_type = HEAP_INT_DESC;
          else
             priority_type = HEAP_INT_ASC;
@@ -505,13 +501,13 @@ threads_prio::init(const size_t)
 
    prio_queue.set_type(priority_type);
 
-   database::map_nodes::iterator it(state.all->DATABASE->get_node_iterator(remote::self->find_first_node(id)));
-   database::map_nodes::iterator end(state.all->DATABASE->get_node_iterator(remote::self->find_last_node(id)));
+   database::map_nodes::iterator it(All->DATABASE->get_node_iterator(remote::self->find_first_node(id)));
+   database::map_nodes::iterator end(All->DATABASE->get_node_iterator(remote::self->find_last_node(id)));
    
    for(; it != end; ++it)
    {
       thread_intrusive_node *cur_node((thread_intrusive_node*)it->second);
-      heap_priority initial(state.all->PROGRAM->get_initial_priority());
+      heap_priority initial(theProgram->get_initial_priority());
       
       cur_node->set_priority_level(initial);
 
@@ -538,8 +534,8 @@ threads_prio::write_slice(statistics::slice& sl) const
 #endif
 }
 
-threads_prio::threads_prio(const vm::process_id _id, vm::all *all):
-   threads_sched(_id, all)
+threads_prio::threads_prio(const vm::process_id _id):
+   threads_sched(_id)
 {
 }
 

@@ -93,16 +93,16 @@ public:
 	virtual void add_node_priority(db::node *, const double);
    virtual void schedule_next(db::node *);
    
-   static db::node *create_node(const db::node::node_id id, const db::node::node_id trans, vm::all *all)
+   static db::node *create_node(const db::node::node_id id, const db::node::node_id trans)
    {
-      return new thread_intrusive_node(id, trans, all);
+      return new thread_intrusive_node(id, trans);
    }
    
    DEFINE_START_FUNCTION(threads_prio);
    
    virtual void write_slice(statistics::slice&) const;
    
-   explicit threads_prio(const vm::process_id, vm::all *);
+   explicit threads_prio(const vm::process_id);
    
    virtual ~threads_prio(void);
 };

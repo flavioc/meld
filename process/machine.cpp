@@ -192,7 +192,7 @@ machine::slice_function(void)
 void
 machine::execute_const_code(void)
 {
-	state st(all);
+	state st;
 	
 	// no node or tuple whatsoever
 	st.setup(NULL, NULL, 0, 0);
@@ -308,7 +308,9 @@ machine::machine(const string& file, router& _rout, const size_t th,
 {
    bool added_data_file(false);
 
+   All = all;
    this->all->PROGRAM = new vm::program(file);
+   theProgram = this->all->PROGRAM;
    if(this->all->PROGRAM->is_data())
       throw machine_error(string("cannot run data files"));
    if(data_file != string("")) {
@@ -329,7 +331,7 @@ machine::machine(const string& file, router& _rout, const size_t th,
       throw machine_error(string("this program requires ") + utils::to_string(all->PROGRAM->num_args_needed()) + " arguments");
 
    this->all->set_arguments(margs);
-   this->all->DATABASE = new database(added_data_file ? data_file : filename, get_creation_function(_sched_type), this->all);
+   this->all->DATABASE = new database(added_data_file ? data_file : filename, get_creation_function(_sched_type));
    this->all->NUM_THREADS = th;
    this->all->MACHINE = this;
 #ifdef USE_REAL_NODES
@@ -338,10 +340,10 @@ machine::machine(const string& file, router& _rout, const size_t th,
 
    switch(sched_type) {
       case SCHED_THREADS:
-         sched::threads_sched::start(all->NUM_THREADS, this->all);
+         sched::threads_sched::start(all->NUM_THREADS);
          break;
       case SCHED_THREADS_PRIO:
-         sched::threads_prio::start(all->NUM_THREADS, this->all);
+         sched::threads_prio::start(all->NUM_THREADS);
          break;
 #if 0
       case SCHED_THREADS_SINGLE_LOCAL:
@@ -364,14 +366,14 @@ machine::machine(const string& file, router& _rout, const size_t th,
          break;
 #endif
       case SCHED_SERIAL:
-         this->all->ALL_THREADS.push_back(dynamic_cast<sched::base*>(new sched::serial_local(this->all)));
+         this->all->ALL_THREADS.push_back(dynamic_cast<sched::base*>(new sched::serial_local()));
          break;
       case SCHED_SERIAL_UI:
-         this->all->ALL_THREADS.push_back(dynamic_cast<sched::base*>(new sched::serial_ui_local(this->all)));
+         this->all->ALL_THREADS.push_back(dynamic_cast<sched::base*>(new sched::serial_ui_local()));
          break;
 #ifdef USE_SIM
       case SCHED_SIM:
-         this->all->ALL_THREADS.push_back(dynamic_cast<sched::base*>(new sched::sim_sched(this->all)));
+         this->all->ALL_THREADS.push_back(dynamic_cast<sched::base*>(new sched::sim_sched()));
          break;
 #endif
       case SCHED_UNKNOWN: assert(false); break;

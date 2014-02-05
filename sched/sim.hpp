@@ -107,25 +107,25 @@ public:
    virtual void end(void) {}
    virtual bool terminate_iteration(void);
    
-   static db::node* create_node(const db::node::node_id id, const db::node::node_id trans, vm::all *all)
+   static db::node* create_node(const db::node::node_id id, const db::node::node_id trans)
    {
-      return dynamic_cast<db::node*>(new sched::sim_node(id, trans, all));
+      return dynamic_cast<db::node*>(new sched::sim_node(id, trans));
    }
 
 	void set_color(db::node *, const int, const int, const int);
    
    sim_sched *find_scheduler(const db::node *) { return this; }
    
-   explicit sim_sched(vm::all *all):
-      sched::base(0, all),
+   explicit sim_sched(void):
+      sched::base(0),
       current_node(NULL),
 		socket(NULL),
 		slave(false)
    {
    }
 
-	explicit sim_sched(vm::all *all, const vm::process_id id, sim_node *_node):
-		sched::base(id, all),
+	explicit sim_sched(const vm::process_id id, sim_node *_node):
+		sched::base(id),
 		current_node(_node),
 		socket(NULL),
 		slave(true)
