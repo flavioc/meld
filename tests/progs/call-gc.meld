@@ -1,0 +1,7 @@
+
+type linear a(node, :(float, float, float)).
+type linear b(node, :(float, float, float)).
+
+a(@0, :(1.0, 2.0, 3.0)).
+
+a(A, L) -o b(A, normalizestruct(normalizestruct(L))).
