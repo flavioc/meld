@@ -331,7 +331,8 @@ state::process_incoming_tuples(void)
       for(db::intrusive_list<vm::tuple>::iterator it(ls->begin()), end(ls->end());
          it != end; ++it)
          store->register_tuple_fact(*it, 1);
-      lstore->increment_database(all->PROGRAM->get_predicate(i), ls);
+      if(!ls->empty())
+         lstore->increment_database(all->PROGRAM->get_predicate(i), ls);
    }
    if(!store->incoming_persistent_tuples.empty())
       store->persistent_tuples.splice(store->persistent_tuples.end(), store->incoming_persistent_tuples);
@@ -436,8 +437,7 @@ state::run_node(db::node *no)
 {
    bool aborted(false);
 
-	this->node = no;
-	
+	node = no;
 #ifdef DEBUG_RULES
    cout << "Node " << node->get_id() << " (is " << node->get_translated_id() << ")" << endl;
 #endif

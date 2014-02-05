@@ -919,6 +919,9 @@ execute_opers_iter(const reg_num reg, match* m, const pcounter pc, const pcounte
 static inline return_type
 execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, state& state, const predicate* pred, db::intrusive_list<vm::tuple> *local_tuples)
 {
+   if(local_tuples == NULL)
+      return RETURN_NO_RETURN;
+
    const bool old_is_linear(state.is_linear);
    const bool this_is_linear(true);
    const depth_t old_depth(state.depth);
@@ -991,6 +994,9 @@ execute_linear_iter(const reg_num reg, match* m, const pcounter first, state& st
    if(pred->is_hash_table()) {
       const field_num hashed(pred->get_hashed_field());
       hash_table *table(state.lstore->get_hash_table(pred->get_id()));
+
+      if(table == NULL)
+         return RETURN_NO_RETURN;
 
       //cout << "Table" << endl;
       //table->dump(cout);

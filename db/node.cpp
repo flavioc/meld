@@ -225,7 +225,7 @@ node::dump(ostream& cout) const
             }
          } else {
             const intrusive_list<vm::tuple> *ls(linear.get_linked_list(pred->get_id()));
-            if(!ls->empty()) {
+            if(ls && !ls->empty()) {
                for(intrusive_list<vm::tuple>::const_iterator it(ls->begin()), end(ls->end());
                      it != end; ++it)
                   vec.push_back(to_string(*(*it)));
@@ -272,7 +272,7 @@ node::print(ostream& cout) const
             }
          } else {
             const intrusive_list<vm::tuple> *ls(linear.get_linked_list(pred->get_id()));
-            if(!ls->empty()) {
+            if(ls && !ls->empty()) {
                for(intrusive_list<vm::tuple>::iterator it(ls->begin()), end(ls->end());
                      it != end; ++it)
                   vec.push_back(to_string(*(*it)));
