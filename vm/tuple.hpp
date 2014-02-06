@@ -24,7 +24,7 @@
 namespace vm
 {
 
-class tuple
+struct tuple
 {
 public:
    DECLARE_LIST_INTRUSIVE(tuple);
@@ -131,8 +131,8 @@ public:
 
    inline static void destroy(tuple *tpl) {
       const size_t size(sizeof(vm::tuple) + sizeof(tuple_field) * tpl->num_fields());
-      mem::center::deallocate(tpl, size, 1);
       tpl->~tuple();
+      mem::center::deallocate(tpl, size, 1);
    }
    
 private:

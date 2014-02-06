@@ -64,6 +64,7 @@ private:
 
 	size_t num_args;
    size_t number_rules;
+   size_t number_rules_uint;
 
    std::vector<rule*> rules;
 
@@ -71,6 +72,7 @@ private:
    
    std::vector<predicate*> predicates;
    std::vector<predicate*> sorted_predicates;
+   size_t num_predicates_uint;
   
    std::vector<byte_code> code;
    std::vector<code_size_t> code_size;
@@ -115,6 +117,7 @@ public:
    inline type* get_type(const size_t i) const { assert(i < types.size()); return types[i]; }
 
    inline size_t num_rules(void) const { return number_rules; }
+   inline size_t num_rules_next_uint(void) const { return number_rules_uint; }
 	inline size_t num_args_needed(void) const { return num_args; }
 
    inline std::string get_name(void) const { return filename; }
@@ -168,6 +171,7 @@ public:
    
    size_t num_predicates(void) const { return predicates.size(); }
    size_t num_route_predicates(void) const { return route_predicates.size(); }
+   size_t num_predicates_next_uint(void) const { return num_predicates_uint; }
 
 	inline runtime::rstring::ptr get_default_string(const size_t i) const
 	{

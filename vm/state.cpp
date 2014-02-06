@@ -98,7 +98,7 @@ state::mark_active_rules(void)
 		it++)
 	{
 		rule_id rid(*it);
-		if(!store->rules[rid]) {
+		if(!store->rules->get_bit(rid)) {
 			// we need check if at least one predicate was activated in this loop
 			vm::rule *rule(theProgram->get_rule(rid));
          bool flag = false;
@@ -107,13 +107,13 @@ state::mark_active_rules(void)
                jt++)
          {
             const predicate *pred(*jt);
-            if(store->predicates[pred->get_id()]) {
+            if(store->predicates->get_bit(pred->get_id())) {
                flag = true;
                break;
             }
          }
 			if(flag) {
-				store->rules[rid] = true;
+				store->rules->set_bit(rid);
 				heap_priority pr;
 				pr.int_priority = (int)rid;
 				rule_queue.insert(rid, pr);
@@ -127,8 +127,8 @@ state::mark_active_rules(void)
 		it++)
 	{
 		rule_id rid(*it);
-		if(store->rules[rid]) {
-			store->rules[rid] = false;
+		if(store->rules->get_bit(rid)) {
+			store->rules->unset_bit(rid);
          heap_priority pr;
          pr.int_priority = (int)rid;
 			rule_queue.remove(rid, pr);
@@ -489,7 +489,7 @@ state::run_node(db::node *no)
 #ifdef CORE_STATISTICS
 			execution_time::scope s(stat.core_engine_time);
 #endif
-			store->rules[rule] = false;
+			store->rules->unset_bit(rule);
          store->clear_predicates();
 		}
 		

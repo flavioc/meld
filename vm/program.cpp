@@ -41,6 +41,16 @@ predicate_sorter(const predicate* p1, const predicate* p2)
 	return p1->get_name() < p2->get_name();
 }
 
+static inline size_t
+next_multiple_of_uint(const size_t v)
+{
+   static const size_t num_bits_per_item(sizeof(uint_val) * 8);
+   size_t ret(v / num_bits_per_item);
+   if(v % num_bits_per_item > 0)
+      ret++;
+   return ret;
+}
+
 static inline ptr_val 
 get_function_pointer(char *lib_path, char* func_name)
 {
@@ -174,6 +184,7 @@ program::program(const string& _filename):
    read.read_type<uint32_t>(&n_rules);
 
    number_rules = n_rules;
+   number_rules_uint = next_multiple_of_uint(number_rules);
 
    for(size_t i(0); i < n_rules; ++i) {
       // read rule string length
@@ -299,7 +310,20 @@ program::program(const string& _filename):
 
       if(predicates[i]->is_route_pred())
          route_predicates.push_back(predicates[i]);
+
+      if(i == num_predicates - 1 && predicates[i]->get_name() == "path" && predicates[i]->num_fields() == 3) {
+         predicates[i]->store_as_hash_table(0);
+      }
+      else if(predicates[i]->get_name() == "new-neighbor-belief") {
+         //predicates[i]->store_as_hash_table(0);
+      } else if(predicates[i]->get_name() == "neighbor-belief-old") {
+         //predicates[i]->store_as_hash_table(0);
+      } else if(predicates[i]->get_name() == "sent-neighbor-belief") {
+         //predicates[i]->store_as_hash_table(0);
+      }
    }
+
+   num_predicates_uint = next_multiple_of_uint(num_predicates);
 
    // create 'sorted_predicates' from 'predicates'
    sort(sorted_predicates.begin(), sorted_predicates.end(), predicate_sorter);

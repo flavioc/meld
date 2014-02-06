@@ -12,6 +12,7 @@
 #include "utils/spinlock.hpp"
 #include "utils/atomic.hpp"
 #include "db/intrusive_list.hpp"
+#include "vm/bitmap.hpp"
 
 namespace vm
 {
@@ -20,8 +21,8 @@ struct temporary_store
 {
    public:
 
-      bool *predicates;
-      bool *rules;
+      bitmap *predicates;
+      bitmap *rules;
 
       typedef db::intrusive_list<vm::tuple> tuple_list;
       typedef std::unordered_map<vm::predicate_id, tuple_list*, std::hash<vm::predicate_id>,
@@ -133,20 +134,20 @@ struct temporary_store
 
       inline void clear_predicates(void)
       {
-         std::fill_n(predicates, theProgram->num_predicates(), false);
+         predicates->clear(theProgram->num_predicates_next_uint());
       }
 
       inline void mark(const vm::predicate *pred)
       {
-         predicates[pred->get_id()] = true;
+         predicates->set_bit(pred->get_id());
       }
 
       explicit temporary_store(void)
       {
-         rules = mem::allocator<bool>().allocate(theProgram->num_rules());
-         predicates = mem::allocator<bool>().allocate(theProgram->num_predicates());
-         std::fill_n(predicates, theProgram->num_predicates(), false);
-         std::fill_n(rules, theProgram->num_rules(), false);
+         rules = create_bitmap(theProgram->num_rules_next_uint());
+         predicates = create_bitmap(theProgram->num_predicates_next_uint());
+         rules->clear(theProgram->num_rules_next_uint());
+         clear_predicates();
       }
 
       ~temporary_store(void)
@@ -161,8 +162,8 @@ struct temporary_store
             mem::allocator<tuple_list>().destroy(ls);
             mem::allocator<tuple_list>().deallocate(ls, 1);
          }
-         mem::allocator<bool>().deallocate(rules, theProgram->num_rules());
-         mem::allocator<bool>().deallocate(predicates, theProgram->num_predicates());
+         delete_bitmap(rules, theProgram->num_rules_next_uint());
+         delete_bitmap(predicates, theProgram->num_predicates_next_uint());
       }
 };
 

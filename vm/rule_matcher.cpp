@@ -17,18 +17,19 @@ void
 rule_matcher::register_predicate_availability(const predicate *pred)
 {
 	for(predicate::rule_iterator it(pred->begin_rules()), end(pred->end_rules()); it != end; it++) {
-		vm::rule_id rule(*it);
+		vm::rule_id rule_id(*it);
+      vm::rule *rule(theProgram->get_rule(rule_id));
 
-      if(rules[rule].ignore)
+      if(rule->as_persistent())
          continue;
 
-      rules[rule].total_have++;
-		if(rules[rule].total_have == rules[rule].total_needed) {
+      rules[rule_id]++;
+		if(rules[rule_id] == rule->num_predicates()) {
 #ifdef DEBUG_RULES
-			cout << "Rule " << rule << " activated" << endl;
+			cout << "Rule " << *rule << " activated" << endl;
 #endif
-         active_rules.insert(rule);
-         dropped_rules.erase(rule);
+         active_rules.insert(rule_id);
+         dropped_rules.erase(rule_id);
 		}
 	}
 }
@@ -37,20 +38,21 @@ void
 rule_matcher::register_predicate_unavailability(const predicate *pred)
 {
 	for(predicate::rule_iterator it(pred->begin_rules()), end(pred->end_rules()); it != end; it++) {
-		vm::rule_id rule(*it);
+		vm::rule_id rule_id(*it);
+      vm::rule *rule(theProgram->get_rule(rule_id));
 
-      if(rules[rule].ignore)
+      if(rule->as_persistent())
          continue;
 
-		if(rules[rule].total_have == rules[rule].total_needed) {
+		if(rules[rule_id] == rule->num_predicates()) {
 #ifdef DEBUG_RULES
 			cout << "Rule " << rule << " deactivated" << endl;
 #endif
-         active_rules.erase(rule);
-         dropped_rules.insert(rule);
+         active_rules.erase(rule_id);
+         dropped_rules.insert(rule_id);
 		}
 
-		rules[rule].total_have--;
+		rules[rule_id]--;
 	}
 }
 
@@ -85,9 +87,9 @@ rule_matcher::deregister_tuple(tuple *tpl, const derivation_count count)
 	cout << "Remove tuple " << *tpl << " " << count << " " << predicate_count[id] << endl;
 #endif
    assert(count > 0);
-   assert(predicate_count[id] >= (ref_count)count);
+   assert(predicate_count[id] >= (pred_count)count);
 
-   if(predicate_count[id] == (ref_count)count) {
+   if(predicate_count[id] == (pred_count)count) {
 		ret = true;
 		register_predicate_unavailability(tpl->get_predicate());
    }
@@ -98,22 +100,25 @@ rule_matcher::deregister_tuple(tuple *tpl, const derivation_count count)
 
 rule_matcher::rule_matcher(void)
 {
-	predicate_count.resize(theProgram->num_predicates());
-	rules.resize(theProgram->num_rules());
+   predicate_count = mem::allocator<pred_count>().allocate(theProgram->num_predicates());
+   memset(predicate_count, 0, theProgram->num_predicates() * sizeof(pred_count));
 
-	fill(predicate_count.begin(), predicate_count.end(), 0);
-	
-	rule_id rid(0);
-	for(rule_vector::iterator it(rules.begin()), end(rules.end());
-		it != end;
-		it++, rid++)
-	{
-		rule_matcher_obj& obj(*it);
-		
-      obj.ignore = theProgram->get_rule(rid)->as_persistent();
-		obj.total_have = 0;
-		obj.total_needed = theProgram->get_rule(rid)->num_predicates();
+   rules = mem::allocator<utils::byte>().allocate(theProgram->num_rules());
+   memset(rules, 0, sizeof(utils::byte) * theProgram->num_rules());
+
+#ifndef NDEBUG
+   for(rule_id rid(0); rid < theProgram->num_rules(); ++rid)
+   {
+      rule *rl(theProgram->get_rule(rid));
+      assert(rl->num_predicates() <= 255);
 	}
+#endif
+}
+
+rule_matcher::~rule_matcher(void)
+{
+   mem::allocator<pred_count>().deallocate(predicate_count, theProgram->num_predicates());
+   mem::allocator<utils::byte>().deallocate(rules, theProgram->num_rules());
 }
 
 }
