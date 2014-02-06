@@ -2,11 +2,9 @@
 #ifndef VM_RULE_MATCHER_HPP
 #define VM_RULE_MATCHER_HPP
 
-#include <vector>
-#include <unordered_set>
-
 #include "vm/predicate.hpp"
 #include "vm/tuple.hpp"
+#include "vm/bitmap.hpp"
 
 namespace vm
 {
@@ -19,9 +17,8 @@ private:
    utils::byte *rules; // availability statistics per rule
    pred_count *predicate_count; // number of tuples per predicate
 
-   typedef std::unordered_set<rule_id, std::hash<rule_id>, std::equal_to<rule_id>, mem::allocator<rule_id> > set_rules;
-	set_rules active_rules; // rules that *may* be derivable
-	set_rules dropped_rules; // any dropped rule
+   bitmap *active_bitmap;
+   bitmap *dropped_bitmap;
 	
 	void register_predicate_availability(const predicate *);
 	void register_predicate_unavailability(const predicate *);
@@ -36,16 +33,14 @@ public:
 
 	void clear_dropped_rules(void)
 	{
-		dropped_rules.clear();
+      dropped_bitmap->clear(theProgram->num_rules_next_uint());
 	}
 
-	typedef set_rules::const_iterator rule_iterator;
-	
-	rule_iterator begin_active_rules(void) const { return active_rules.begin(); }
-	rule_iterator end_active_rules(void) const { return active_rules.end(); }
-	rule_iterator begin_dropped_rules(void) const { return dropped_rules.begin(); }
-	rule_iterator end_dropped_rules(void) const { return dropped_rules.end(); }
+	//typedef set_rules::const_iterator rule_iterator;
 
+   bitmap::iterator active_rules_iterator(void) const { return active_bitmap->begin(theProgram->num_rules_next_uint()); }
+   bitmap::iterator dropped_rules_iterator(void) const { return dropped_bitmap->begin(theProgram->num_rules_next_uint()); }
+	
    rule_matcher(void);
    ~rule_matcher(void);
 };

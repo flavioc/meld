@@ -28,8 +28,8 @@ rule_matcher::register_predicate_availability(const predicate *pred)
 #ifdef DEBUG_RULES
 			cout << "Rule " << *rule << " activated" << endl;
 #endif
-         active_rules.insert(rule_id);
-         dropped_rules.erase(rule_id);
+         active_bitmap->set_bit(rule_id);
+         dropped_bitmap->unset_bit(rule_id);
 		}
 	}
 }
@@ -48,8 +48,8 @@ rule_matcher::register_predicate_unavailability(const predicate *pred)
 #ifdef DEBUG_RULES
 			cout << "Rule " << rule << " deactivated" << endl;
 #endif
-         active_rules.erase(rule_id);
-         dropped_rules.insert(rule_id);
+         active_bitmap->unset_bit(rule_id);
+         dropped_bitmap->set_bit(rule_id);
 		}
 
 		rules[rule_id]--;
@@ -106,6 +106,11 @@ rule_matcher::rule_matcher(void)
    rules = mem::allocator<utils::byte>().allocate(theProgram->num_rules());
    memset(rules, 0, sizeof(utils::byte) * theProgram->num_rules());
 
+   active_bitmap = create_bitmap(theProgram->num_rules_next_uint());
+   dropped_bitmap = create_bitmap(theProgram->num_rules_next_uint());
+   active_bitmap->clear(theProgram->num_rules_next_uint());
+   dropped_bitmap->clear(theProgram->num_rules_next_uint());
+
 #ifndef NDEBUG
    for(rule_id rid(0); rid < theProgram->num_rules(); ++rid)
    {
@@ -119,6 +124,8 @@ rule_matcher::~rule_matcher(void)
 {
    mem::allocator<pred_count>().deallocate(predicate_count, theProgram->num_predicates());
    mem::allocator<utils::byte>().deallocate(rules, theProgram->num_rules());
+   delete_bitmap(active_bitmap, theProgram->num_rules_next_uint());
+   delete_bitmap(dropped_bitmap, theProgram->num_rules_next_uint());
 }
 
 }

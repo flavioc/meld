@@ -92,10 +92,8 @@ state::setup(vm::tuple *tpl, db::node *n, const derivation_count count, const de
 void
 state::mark_active_rules(void)
 {
-	for(rule_matcher::rule_iterator it(store->matcher.begin_active_rules()),
-		end(store->matcher.end_active_rules());
-		it != end;
-		it++)
+   for(bitmap::iterator it(store->matcher.active_rules_iterator());
+         !it.end(); it++)
 	{
 		rule_id rid(*it);
 		if(!store->rules->get_bit(rid)) {
@@ -121,10 +119,8 @@ state::mark_active_rules(void)
 		}
 	}
 	
-	for(rule_matcher::rule_iterator it(store->matcher.begin_dropped_rules()),
-		end(store->matcher.end_dropped_rules());
-		it != end;
-		it++)
+   for(bitmap::iterator it(store->matcher.dropped_rules_iterator());
+         !it.end(); ++it)
 	{
 		rule_id rid(*it);
 		if(store->rules->get_bit(rid)) {
