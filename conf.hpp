@@ -36,5 +36,8 @@ const bool USE_ALLOCATOR = true;
 // faster multithreading by allowing threads to index on other thread's nodes
 #define FASTER_INDEXING 1
 
+#define BITMAP_TYPE uint64_t
+#define BITMAP_BITS (sizeof(BITMAP_TYPE) * 8)
+
 #endif
 

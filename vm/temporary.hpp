@@ -144,8 +144,8 @@ struct temporary_store
 
       explicit temporary_store(void)
       {
-         rules = create_bitmap(theProgram->num_rules_next_uint());
-         predicates = create_bitmap(theProgram->num_predicates_next_uint());
+         rules = bitmap::create(theProgram->num_rules_next_uint());
+         predicates = bitmap::create(theProgram->num_predicates_next_uint());
          rules->clear(theProgram->num_rules_next_uint());
          clear_predicates();
       }
@@ -162,8 +162,8 @@ struct temporary_store
             mem::allocator<tuple_list>().destroy(ls);
             mem::allocator<tuple_list>().deallocate(ls, 1);
          }
-         delete_bitmap(rules, theProgram->num_rules_next_uint());
-         delete_bitmap(predicates, theProgram->num_predicates_next_uint());
+         bitmap::destroy(rules, theProgram->num_rules_next_uint());
+         bitmap::destroy(predicates, theProgram->num_predicates_next_uint());
       }
 };
 

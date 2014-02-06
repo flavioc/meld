@@ -44,9 +44,8 @@ predicate_sorter(const predicate* p1, const predicate* p2)
 static inline size_t
 next_multiple_of_uint(const size_t v)
 {
-   static const size_t num_bits_per_item(sizeof(uint_val) * 8);
-   size_t ret(v / num_bits_per_item);
-   if(v % num_bits_per_item > 0)
+   size_t ret(v / BITMAP_BITS);
+   if(v % BITMAP_BITS > 0)
       ret++;
    return ret;
 }

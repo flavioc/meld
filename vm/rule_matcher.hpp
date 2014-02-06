@@ -36,10 +36,8 @@ public:
       dropped_bitmap->clear(theProgram->num_rules_next_uint());
 	}
 
-	//typedef set_rules::const_iterator rule_iterator;
-
-   bitmap::iterator active_rules_iterator(void) const { return active_bitmap->begin(theProgram->num_rules_next_uint()); }
-   bitmap::iterator dropped_rules_iterator(void) const { return dropped_bitmap->begin(theProgram->num_rules_next_uint()); }
+   bitmap::iterator active_rules_iterator(void) const { return active_bitmap->begin(theProgram->num_rules_next_uint(), theProgram->num_rules()); }
+   bitmap::iterator dropped_rules_iterator(void) const { return dropped_bitmap->begin(theProgram->num_rules_next_uint(), theProgram->num_rules()); }
 	
    rule_matcher(void);
    ~rule_matcher(void);
