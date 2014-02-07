@@ -31,9 +31,8 @@ public:
 
 private:
    utils::byte flags;
-	predicate* pred;
 
-   void copy_field(tuple *, const field_num) const;
+   void copy_field(type *, tuple *, const field_num) const;
 
    inline tuple_field *getfp(void) { return (tuple_field*)(this + 1); }
    inline const tuple_field *getfp(void) const { return (tuple_field*)(this + 1); }
@@ -42,9 +41,9 @@ public:
 
    MEM_METHODS(tuple)
 
-   bool field_equal(const tuple&, const field_num) const;
+   bool field_equal(type *, const tuple&, const field_num) const;
 
-   bool operator==(const tuple&) const;
+   bool equal(const tuple&, vm::predicate *) const;
 
 #define define_set(NAME, TYPE, VAL) \
    inline void set_ ## NAME (const field_num& field, TYPE val) { VAL; }
@@ -62,24 +61,14 @@ public:
    inline void set_field(const field_num& field, const tuple_field& f) { getfp()[field] = f; }
 #undef define_set
 
-   inline size_t num_fields(void) const { return pred->num_fields(); }
-
-   inline std::string pred_name(void) const { return pred->get_name(); }
-
-   inline const predicate* get_predicate(void) const { return pred; }
-
-   inline predicate_id get_predicate_id(void) const { return pred->get_id(); }
+   size_t get_storage_size(vm::predicate *) const;
    
-   size_t get_storage_size(void) const;
-   
-   void pack(utils::byte *, const size_t, int *) const;
-   void load(utils::byte *, const size_t, int *);
+   void pack(vm::predicate *, utils::byte *, const size_t, int *) const;
+   void load(vm::predicate *, utils::byte *, const size_t, int *);
 
-   void copy_runtime(void);
+   void copy_runtime(const vm::predicate*);
    
    static tuple* unpack(utils::byte *, const size_t, int *, vm::program *);
-
-   inline type* get_field_type(const field_num& field) const { return pred->get_field_type(field); }
 
    inline tuple_field get_field(const field_num& field) const { return getfp()[field]; }
    
@@ -97,21 +86,14 @@ public:
 
 #undef define_get
 
-	inline bool is_persistent(void) const { return pred->is_persistent_pred(); }
-   inline bool is_aggregate(void) const { return pred->is_aggregate(); }
-   inline bool is_linear(void) const { return pred->is_linear_pred(); }
-   inline bool is_action(void) const { return pred->is_action_pred(); }
-   inline bool is_reused(void) const { return pred->is_reused_pred(); }
-   inline bool is_cycle(void) const { return pred->is_cycle_pred(); }
-   inline bool is_reused_or_pred(void) const { return is_reused() || is_persistent(); }
-   
-   void print(std::ostream&) const;
+   std::string to_str(const vm::predicate *) const;
+   void print(std::ostream&, const vm::predicate*) const;
 #ifdef USE_UI
-	json_spirit::Value dump_json(void) const;
+	json_spirit::Value dump_json(const vm::predicate*) const;
 #endif
    
-   tuple *copy_except(const field_num) const;
-   tuple *copy(void) const;
+   tuple *copy_except(vm::predicate *, const field_num) const;
+   tuple *copy(vm::predicate *) const;
 
 #define TUPLE_DELETE_FLAG 0x01
 #define TUPLE_UPDATED_FLAG 0x02
@@ -129,9 +111,9 @@ public:
       return ptr;
    }
 
-   inline static void destroy(tuple *tpl) {
-      const size_t size(sizeof(vm::tuple) + sizeof(tuple_field) * tpl->num_fields());
-      tpl->~tuple();
+   inline static void destroy(tuple *tpl, vm::predicate *pred) {
+      const size_t size(sizeof(vm::tuple) + sizeof(tuple_field) * pred->num_fields());
+      tpl->destructor(pred);
       mem::center::deallocate(tpl, size, 1);
    }
    
@@ -139,10 +121,8 @@ private:
 
 	explicit tuple(const predicate* pred);
 	
-   ~tuple(void);
+   void destructor(vm::predicate*);
 };
-
-std::ostream& operator<<(std::ostream& cout, const tuple& pred);
 
 typedef std::list<tuple*, mem::allocator<vm::tuple*> > tuple_list;
 

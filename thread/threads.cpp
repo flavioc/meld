@@ -46,7 +46,7 @@ threads_sched::new_agg(work&)
 }
 
 void
-threads_sched::new_work(node *from, node *to, vm::tuple *tpl, const ref_count count, const depth_t depth)
+threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pred, const ref_count count, const depth_t depth)
 {
    assert(is_active());
    (void)from;
@@ -62,7 +62,7 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, const ref_count co
 #ifdef FASTER_INDEXING
       tnode->internal_lock();
 #endif
-      tnode->add_work_myself(tpl, count, depth);
+      tnode->add_work_myself(tpl, pred, count, depth);
 #ifdef FASTER_INDEXING
       tnode->internal_unlock();
 #endif
@@ -75,11 +75,11 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, const ref_count co
       if(tnode->running) {
          // the node is currently being executed by the owner thread
          // just buffer the new fact that will be used by the owner
-         tnode->add_work_others(new simple_tuple(tpl, count, depth));
+         tnode->add_work_others(new simple_tuple(tpl, pred, count, depth));
       } else {
          // the node is asleep, we can add it immediatelly to the index
          tnode->internal_lock();
-         tnode->add_work_myself(tpl, count, depth);
+         tnode->add_work_myself(tpl, pred, count, depth);
          tnode->internal_unlock();
       }
 #else

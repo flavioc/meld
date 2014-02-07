@@ -16,7 +16,7 @@ namespace db
 class tuple_aggregate: public mem::base
 {
 protected:
-   const vm::predicate *pred;
+   vm::predicate *pred;
    
 private:
 
@@ -34,14 +34,14 @@ public:
 
    simple_tuple_list generate(void);
 
-   agg_configuration* add_to_set(vm::tuple *, const vm::derivation_count, const vm::depth_t);
+   agg_configuration* add_to_set(vm::tuple *, vm::predicate *, const vm::derivation_count, const vm::depth_t);
    
    bool no_changes(void) const;
    inline bool empty(void) const { return vals.empty(); }
    
    void delete_by_index(const vm::match&);
 
-   explicit tuple_aggregate(const vm::predicate *_pred): pred(_pred) {}
+   explicit tuple_aggregate(vm::predicate *_pred): pred(_pred) {}
 
    ~tuple_aggregate(void);
 };

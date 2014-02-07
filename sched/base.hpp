@@ -84,9 +84,10 @@ public:
 
    virtual void init_node(db::node *node)
    {
-      vm::tuple *init_tuple(vm::tuple::create(vm::theProgram->get_init_predicate()));
+      vm::predicate *init_pred(vm::theProgram->get_init_predicate());
+      vm::tuple *init_tuple(vm::tuple::create(init_pred));
       node->set_owner(this);
-      node->add_linear_fact(init_tuple);
+      node->add_linear_fact(init_tuple, init_pred);
       node->unprocessed_facts = true;
    }
    
@@ -98,9 +99,9 @@ public:
    }
    
    // work to be sent to the same thread
-   virtual void new_work(db::node *, db::node *, vm::tuple*, const vm::ref_count, const vm::depth_t) = 0;
+   virtual void new_work(db::node *, db::node *, vm::tuple*, vm::predicate *, const vm::ref_count, const vm::depth_t) = 0;
    // delayed work to be sent to the target thread
-   virtual void new_work_delay(db::node *, db::node *, vm::tuple*, const vm::ref_count, const vm::depth_t, const vm::uint_val)
+   virtual void new_work_delay(db::node *, db::node *, vm::tuple*, vm::predicate *, const vm::ref_count, const vm::depth_t, const vm::uint_val)
    {
       assert(false);
    }

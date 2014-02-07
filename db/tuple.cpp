@@ -17,11 +17,11 @@ simple_tuple::pack(byte *buf, const size_t buf_size, int *pos) const
    utils::pack<derivation_count>((void*)&count, 1, buf, buf_size, pos);
    utils::pack<depth_t>((void*)&depth, 1, buf, buf_size, pos);
    
-   data->pack(buf, buf_size, pos);
+   data->pack(pred, buf, buf_size, pos);
 }
 
 simple_tuple*
-simple_tuple::unpack(byte *buf, const size_t buf_size, int *pos, vm::program *prog)
+simple_tuple::unpack(vm::predicate *pred, byte *buf, const size_t buf_size, int *pos, vm::program *prog)
 {
    derivation_count count;
    depth_t depth;
@@ -31,7 +31,7 @@ simple_tuple::unpack(byte *buf, const size_t buf_size, int *pos, vm::program *pr
    
    vm::tuple *tpl(vm::tuple::unpack(buf, buf_size, pos, prog));
    
-   return new simple_tuple(tpl, count, depth);
+   return new simple_tuple(tpl, pred, count, depth);
 }
 
 simple_tuple::~simple_tuple(void)
@@ -42,7 +42,7 @@ simple_tuple::~simple_tuple(void)
 void
 simple_tuple::print(ostream& cout) const
 {
-	cout << *data;
+   data->print(cout, pred);
 	
 	if(count > 1)
 		cout << "@" << count;

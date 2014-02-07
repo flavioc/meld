@@ -64,20 +64,20 @@ state::copy_reg2const(const reg_num& reg_from, const const_id& cid)
 }
 
 void
-state::setup(vm::tuple *tpl, db::node *n, const derivation_count count, const depth_t depth)
+state::setup(vm::predicate *pred, db::node *n, const derivation_count count, const depth_t depth)
 {
    this->node = n;
    this->count = count;
-   if(tpl != NULL) {
-      if(tpl->is_cycle())
+   if(pred != NULL) {
+      if(pred->is_cycle_pred())
          this->depth = depth + 1;
       else
          this->depth = 0;
    } else {
       this->depth = 0;
    }
-	if(tpl != NULL)
-   	this->is_linear = tpl->is_linear();
+	if(pred != NULL)
+   	this->is_linear = pred->is_linear_pred();
 	else
 		this->is_linear = false;
    for(size_t i(0); i < NUM_REGS; ++i) {
@@ -135,26 +135,27 @@ state::mark_active_rules(void)
 }
 
 bool
-state::add_fact_to_node(vm::tuple *tpl, const vm::derivation_count count, const vm::depth_t depth)
+state::add_fact_to_node(vm::tuple *tpl, vm::predicate *pred, const vm::derivation_count count, const vm::depth_t depth)
 {
 #ifdef CORE_STATISTICS
    execution_time::scope s(stat.db_insertion_time_predicate[tpl->get_predicate_id()]);
 #endif
 
-	return node->add_tuple(tpl, count, depth);
+	return node->add_tuple(tpl, pred, count, depth);
 }
 
 static inline bool
 tuple_for_assertion(db::simple_tuple *stpl)
 {
-   return ((stpl->get_tuple())->is_aggregate() && stpl->is_aggregate())
-      || !stpl->get_tuple()->is_aggregate();
+   return (stpl->get_predicate()->is_aggregate_pred() && stpl->is_aggregate())
+      || !stpl->get_predicate()->is_aggregate_pred();
 }
 
 db::simple_tuple*
 state::search_for_negative_tuple_partial_agg(db::simple_tuple *stpl)
 {
    vm::tuple *tpl(stpl->get_tuple());
+   vm::predicate *pred(stpl->get_predicate());
 
    assert(!stpl->is_aggregate());
 
@@ -164,9 +165,10 @@ state::search_for_negative_tuple_partial_agg(db::simple_tuple *stpl)
    {
       db::simple_tuple *stpl2(*it);
       vm::tuple *tpl2(stpl2->get_tuple());
+      vm::predicate *pred2(stpl2->get_predicate());
 
-      if(tpl2->is_aggregate() && !stpl2->is_aggregate() &&
-            stpl2->get_count() == -1 && *tpl2 == *tpl)
+      if(pred == pred2 && !stpl2->is_aggregate() &&
+            stpl2->get_count() == -1 && tpl2->equal(*tpl, pred))
       {
          store->persistent_tuples.erase(it);
          return stpl2;
@@ -180,8 +182,9 @@ db::simple_tuple*
 state::search_for_negative_tuple_normal(db::simple_tuple *stpl)
 {
    vm::tuple *tpl(stpl->get_tuple());
+   vm::predicate *pred1(stpl->get_predicate());
 
-   assert(!tpl->is_aggregate());
+   assert(!pred1->is_aggregate_pred());
    assert(!stpl->is_aggregate());
 
    for(db::simple_tuple_list::iterator it(store->persistent_tuples.begin()),
@@ -190,8 +193,9 @@ state::search_for_negative_tuple_normal(db::simple_tuple *stpl)
    {
       db::simple_tuple *stpl2(*it);
       vm::tuple *tpl2(stpl2->get_tuple());
+      vm::predicate* pred2(stpl2->get_predicate());
 
-      if(!tpl2->is_aggregate() && stpl2->get_count() == -1 && *tpl2 == *tpl)
+      if(pred1 == pred2 && stpl2->get_count() == -1 && tpl2->equal(*tpl, pred1))
       {
          store->persistent_tuples.erase(it);
          return stpl2;
@@ -205,6 +209,7 @@ db::simple_tuple*
 state::search_for_negative_tuple_full_agg(db::simple_tuple *stpl)
 {
    vm::tuple *tpl(stpl->get_tuple());
+   vm::predicate *pred1(stpl->get_predicate());
 
    for(db::simple_tuple_list::iterator it(store->persistent_tuples.begin()),
          end(store->persistent_tuples.end());
@@ -212,8 +217,9 @@ state::search_for_negative_tuple_full_agg(db::simple_tuple *stpl)
    {
       db::simple_tuple *stpl2(*it);
       vm::tuple *tpl2(stpl2->get_tuple());
+      vm::predicate *pred2(stpl2->get_predicate());
 
-      if(tpl2->is_aggregate() && stpl2->is_aggregate() && stpl2->get_count() == -1 && *tpl2 == *tpl)
+      if(pred1 == pred2 && stpl2->is_aggregate() && stpl2->get_count() == -1 && tpl2->equal(*tpl, pred1))
       {
          store->persistent_tuples.erase(it);
          return stpl2;
@@ -241,13 +247,14 @@ state::do_persistent_tuples(void)
       }
 #endif
       db::simple_tuple *stpl(store->persistent_tuples.front());
+      vm::predicate *pred(stpl->get_predicate());
       vm::tuple *tpl(stpl->get_tuple());
 
       store->persistent_tuples.pop_front();
 
-      if(tpl->is_persistent()) {
+      if(pred->is_persistent_pred()) {
          // XXX crashes when calling wipeout below
-         if(stpl->get_count() == 1 && (tpl->is_aggregate() && !stpl->is_aggregate())) {
+         if(stpl->get_count() == 1 && (pred->is_aggregate_pred() && !stpl->is_aggregate())) {
             db::simple_tuple *stpl2(search_for_negative_tuple_partial_agg(stpl));
             if(stpl2) {
                assert(stpl != stpl2);
@@ -259,7 +266,7 @@ state::do_persistent_tuples(void)
             }
          }
 
-         if(stpl->get_count() == 1 && (tpl->is_aggregate() && stpl->is_aggregate())) {
+         if(stpl->get_count() == 1 && (pred->is_aggregate_pred() && stpl->is_aggregate())) {
             db::simple_tuple *stpl2(search_for_negative_tuple_full_agg(stpl));
             if(stpl2) {
                assert(stpl != stpl2);
@@ -274,7 +281,7 @@ state::do_persistent_tuples(void)
             }
          }
 
-         if(stpl->get_count() == 1 && !tpl->is_aggregate()) {
+         if(stpl->get_count() == 1 && !pred->is_aggregate_pred()) {
             db::simple_tuple *stpl2(search_for_negative_tuple_normal(stpl));
             if(stpl2) {
                //simple_tuple::wipeout(stpl);
@@ -313,7 +320,8 @@ state::process_action_tuples(void)
    {
       db::simple_tuple *stpl(*it);
       vm::tuple *tpl(stpl->get_tuple());
-      All->MACHINE->run_action(sched, node, tpl);
+      vm::predicate *pred(stpl->get_predicate());
+      All->MACHINE->run_action(sched, node, tpl, pred);
       delete stpl;
    }
    store->action_tuples.clear();
@@ -324,10 +332,9 @@ state::process_incoming_tuples(void)
 {
    for(temporary_store::list_map::iterator it(store->incoming.begin()), end(store->incoming.end()); it != end; ++it) {
       db::intrusive_list<vm::tuple> *ls(it->second);
+      vm::predicate *pred(theProgram->get_predicate(it->first));
       if(!ls->empty()) {
-         for(db::intrusive_list<vm::tuple>::iterator it2(ls->begin()), end2(ls->end());
-            it2 != end2; ++it2)
-            store->register_tuple_fact(*it2, 1);
+         store->register_tuple_fact(pred, ls->get_size());
          lstore->increment_database(theProgram->get_predicate(it->first), ls);
       }
    }
@@ -339,19 +346,19 @@ void
 state::add_to_aggregate(db::simple_tuple *stpl)
 {
    vm::tuple *tpl(stpl->get_tuple());
-   const predicate *pred(tpl->get_predicate());
+   predicate *pred(stpl->get_predicate());
    vm::derivation_count count(stpl->get_count());
    agg_configuration *agg(NULL);
 
    if(count < 0) {
-      agg = node->remove_agg_tuple(tpl, -count, stpl->get_depth());
+      agg = node->remove_agg_tuple(tpl, stpl->get_predicate(), -count, stpl->get_depth());
    } else {
-      agg = node->add_agg_tuple(tpl, count, stpl->get_depth());
+      agg = node->add_agg_tuple(tpl, stpl->get_predicate(), count, stpl->get_depth());
    }
 
    simple_tuple_list list;
 
-   agg->generate(pred->get_aggregate_type(), pred->get_aggregate_field(), list);
+   agg->generate(pred, pred->get_aggregate_type(), pred->get_aggregate_field(), list);
 
    for(simple_tuple_list::iterator it(list.begin()); it != list.end(); ++it) {
       simple_tuple *stpl(*it);
@@ -363,51 +370,53 @@ state::add_to_aggregate(db::simple_tuple *stpl)
 void
 state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
 {
+   predicate *pred(stpl->get_predicate());
+
    // persistent tuples are marked inside this loop
    if(stpl->get_count() > 0) {
       bool is_new;
 
-      if(tpl->is_reused()) {
+      if(pred->is_reused_pred()) {
          is_new = true;
       } else {
-         is_new = add_fact_to_node(tpl, stpl->get_count(), stpl->get_depth());
+         is_new = add_fact_to_node(tpl, pred, stpl->get_count(), stpl->get_depth());
       }
 
       if(is_new) {
-         setup(tpl, node, stpl->get_count(), stpl->get_depth());
-         execute_process(theProgram->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
+         setup(pred, node, stpl->get_count(), stpl->get_depth());
+         execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
       }
 
-      if(tpl->is_reused()) {
-         node->add_linear_fact(tpl);
+      if(pred->is_reused_pred()) {
+         node->add_linear_fact(stpl->get_tuple(), pred);
       } else {
-         store->matcher.register_tuple(tpl, stpl->get_count(), is_new);
+         store->matcher.register_tuple(pred, stpl->get_count(), is_new);
 
          if(is_new) {
-            store->mark(tpl->get_predicate());
+            store->mark(pred);
          } else {
-            vm::tuple::destroy(tpl);
+            vm::tuple::destroy(tpl, pred);
          }
       }
 
       delete stpl;
    } else {
-		if(tpl->is_reused()) {
-			setup(tpl, node, stpl->get_count(), stpl->get_depth());
-			execute_process(theProgram->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
+		if(pred->is_reused_pred()) {
+			setup(pred, node, stpl->get_count(), stpl->get_depth());
+			execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
          delete stpl;
 		} else {
-      	node::delete_info deleter(node->delete_tuple(tpl, -stpl->get_count(), stpl->get_depth()));
+      	node::delete_info deleter(node->delete_tuple(tpl, pred, -stpl->get_count(), stpl->get_depth()));
 
          if(!deleter.is_valid()) {
             // do nothing... it does not exist
          } else if(deleter.to_delete()) { // to be removed
-            store->matcher.deregister_tuple(tpl, -stpl->get_count());
-         	setup(tpl, node, stpl->get_count(), stpl->get_depth());
-         	execute_process(theProgram->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
+            store->matcher.deregister_tuple(pred, -stpl->get_count());
+         	setup(pred, node, stpl->get_count(), stpl->get_depth());
+         	execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
          	deleter();
-      	} else if(tpl->is_cycle()) {
-            store->matcher.deregister_tuple(tpl, -stpl->get_count());
+      	} else if(pred->is_cycle_pred()) {
+            store->matcher.deregister_tuple(pred, -stpl->get_count());
             depth_counter *dc(deleter.get_depth_counter());
             assert(dc != NULL);
 
@@ -415,14 +424,14 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
                vm::derivation_count deleted(deleter.delete_depths_above(stpl->get_depth()));
                (void)deleted;
                if(deleter.to_delete()) {
-                  setup(tpl, node, stpl->get_count(), stpl->get_depth());
-                  execute_process(theProgram->get_predicate_bytecode(tpl->get_predicate_id()), *this, tpl);
+                  setup(pred, node, stpl->get_count(), stpl->get_depth());
+                  execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
                   deleter();
                }
             }
          } else {
-            store->matcher.deregister_tuple(tpl, -stpl->get_count());
-            vm::tuple::destroy(tpl);
+            store->matcher.deregister_tuple(pred, -stpl->get_count());
+            vm::tuple::destroy(tpl, pred);
          }
          delete stpl;
 		}

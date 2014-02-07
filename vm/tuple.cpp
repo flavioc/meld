@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <iostream>
+#include <sstream>
 
 #include "vm/tuple.hpp"
 #include "db/node.hpp"
@@ -20,28 +21,23 @@ using namespace boost;
 namespace vm
 {
    
-tuple::tuple(const predicate* _pred):
-   flags(0x00), pred((predicate*)_pred)
+tuple::tuple(const predicate* pred):
+   flags(0x00)
 {
    assert(pred != NULL);
    memset(getfp(), 0, sizeof(tuple_field) * pred->num_fields());
 }
 
 static inline bool
-value_equal(type *t1, type *t2, const tuple_field& v1, const tuple_field& v2)
+value_equal(type *t, const tuple_field& v1, const tuple_field& v2)
 {
-   if(!t1->equal(t2))
-      return false;
-
-   switch(t1->get_type()) {
+   switch(t->get_type()) {
       case FIELD_INT: return FIELD_INT(v1) == FIELD_INT(v2);
       case FIELD_FLOAT: return FIELD_FLOAT(v1) == FIELD_FLOAT(v2);
       case FIELD_NODE: return FIELD_NODE(v1) == FIELD_NODE(v2);
       case FIELD_LIST: {
-         list_type *lt1((list_type*)t1);
-         list_type *lt2((list_type*)t2);
-         type *st1(lt1->get_subtype());
-         type *st2(lt2->get_subtype());
+         list_type *lt((list_type*)t);
+         type *st(lt->get_subtype());
          runtime::cons *l1(FIELD_CONS(v1));
          runtime::cons *l2(FIELD_CONS(v2));
 
@@ -60,42 +56,37 @@ value_equal(type *t1, type *t2, const tuple_field& v1, const tuple_field& v2)
          SET_FIELD_CONS(tail1, l1->get_tail());
          SET_FIELD_CONS(tail2, l2->get_tail());
 
-         if(!value_equal(st1, st2, head1, head2))
+         if(!value_equal(st, head1, head2))
             return false;
-         return value_equal(t1, t2, tail1, tail2);
+         return value_equal(t, tail1, tail2);
       }
       break;
       default:
-         throw type_error("Unrecognized field type " + t1->string());
+         throw type_error("Unrecognized field type " + t->string());
    }
    return false;
 }
 
 bool
-tuple::field_equal(const tuple& other, const field_num i) const
+tuple::field_equal(type *ty, const tuple& other, const field_num i) const
 {
-   assert(i < num_fields());
-   
-   return value_equal(get_field_type(i), other.get_field_type(i), get_field(i), other.get_field(i));
+   return value_equal(ty, get_field(i), other.get_field(i));
 }
 
 bool
-tuple::operator==(const tuple& other) const
+tuple::equal(const tuple& other, predicate *pred) const
 {
-   if(get_predicate() != other.get_predicate())
-      return false;
-
-   for(field_num i = 0; i < num_fields(); ++i)
-      if(!field_equal(other, i))
+   for(field_num i = 0; i < pred->num_fields(); ++i)
+      if(!field_equal(pred->get_field_type(i), other, i))
          return false;
    
    return true;
 }
 
 void
-tuple::copy_field(tuple *ret, const field_num i) const
+tuple::copy_field(type *ty, tuple *ret, const field_num i) const
 {
-   switch(get_field_type(i)->get_type()) {
+   switch(ty->get_type()) {
       case FIELD_INT:
          ret->set_int(i, get_int(i));
          break;
@@ -109,33 +100,33 @@ tuple::copy_field(tuple *ret, const field_num i) const
          ret->set_cons(i, get_cons(i));
          break;
       default:
-         throw type_error("Unrecognized field type " + to_string((int)i) + ": " + to_string(get_field_type(i)));
+         throw type_error("Unrecognized field type " + to_string((int)i) + ": " + to_string(ty));
    }
 }
 
 tuple*
-tuple::copy(void) const
+tuple::copy(vm::predicate *pred) const
 {
    assert(pred != NULL);
    
-   tuple *ret(tuple::create(get_predicate()));
+   tuple *ret(tuple::create(pred));
    
-   for(size_t i(0); i < num_fields(); ++i)
-      copy_field(ret, i);
+   for(size_t i(0); i < pred->num_fields(); ++i)
+      copy_field(pred->get_field_type(i), ret, i);
    
    return ret;
 }
 
 tuple*
-tuple::copy_except(const field_num field) const
+tuple::copy_except(predicate *pred, const field_num field) const
 {
    assert(pred != NULL);
    
-   tuple *ret(tuple::create(get_predicate()));
+   tuple *ret(tuple::create(pred));
    
-   for(size_t i(0); i < num_fields(); ++i) {
+   for(size_t i(0); i < pred->num_fields(); ++i) {
       if(i != field)
-         copy_field(ret, i);
+         copy_field(pred->get_field_type(i), ret, i);
    }
    
    return ret;
@@ -229,21 +220,31 @@ print_tuple_type(ostream& cout, const tuple_field& field, type *t, const bool in
    }
 }
 
+string
+tuple::to_str(const vm::predicate *pred) const
+{
+   stringstream ss;
+
+   print(ss, pred);
+
+   return ss.str();
+}
+
 void
-tuple::print(ostream& cout) const
+tuple::print(ostream& cout, const vm::predicate *pred) const
 {
    assert(pred != NULL);
 
-	if(is_persistent())
+	if(pred->is_persistent_pred())
 		cout << "!";
    
-   cout << pred_name() << "(";
+   cout << pred->get_name() << "(";
    
-   for(field_num i = 0; i < num_fields(); ++i) {
+   for(field_num i = 0; i < pred->num_fields(); ++i) {
       if(i != 0)
          cout << ", ";
 
-      print_tuple_type(cout, get_field(i), get_field_type(i));
+      print_tuple_type(cout, get_field(i), pred->get_field_type(i));
    }
    
    cout << ")";
@@ -285,15 +286,15 @@ value_to_json_value(type *t, const tuple_field& val)
 }
 
 Value
-tuple::dump_json(void) const
+tuple::dump_json(const vm::predicate *pred) const
 {
 	Object ret;
 
 	UI_ADD_FIELD(ret, "predicate", (int)get_predicate_id());
 	Array fields;
 
-	for(field_num i = 0; i < num_fields(); ++i) {
-      UI_ADD_ELEM(fields, value_to_json_value(get_field_type(i), get_field(i)));
+	for(field_num i = 0; i < pred->num_fields(); ++i) {
+      UI_ADD_ELEM(fields, value_to_json_value(pred->get_field_type(i), get_field(i)));
 	}
 
 	UI_ADD_FIELD(ret, "fields", fields);
@@ -302,10 +303,11 @@ tuple::dump_json(void) const
 }
 #endif
 
-tuple::~tuple(void)
+void
+tuple::destructor(predicate *pred)
 {
-   for(field_num i = 0; i < num_fields(); ++i) {
-      switch(get_field_type(i)->get_type()) {
+   for(field_num i = 0; i < pred->num_fields(); ++i) {
+      switch(pred->get_field_type(i)->get_type()) {
          case FIELD_LIST: cons::dec_refs(get_cons(i)); break;
          case FIELD_STRING: get_string(i)->dec_refs(); break;
          case FIELD_STRUCT: get_struct(i)->dec_refs(); break;
@@ -319,12 +321,12 @@ tuple::~tuple(void)
 }
 
 size_t
-tuple::get_storage_size(void) const
+tuple::get_storage_size(predicate *pred) const
 {
    size_t ret(sizeof(predicate_id));
 
-   for(size_t i(0); i < num_fields(); ++i) {
-      switch(get_field_type(i)->get_type()) {
+   for(size_t i(0); i < pred->num_fields(); ++i) {
+      switch(pred->get_field_type(i)->get_type()) {
          case FIELD_INT:
          case FIELD_FLOAT:
          case FIELD_NODE:
@@ -342,16 +344,16 @@ tuple::get_storage_size(void) const
 }
 
 void
-tuple::pack(byte *buf, const size_t buf_size, int *pos) const
+tuple::pack(vm::predicate *pred, byte *buf, const size_t buf_size, int *pos) const
 {
-   const predicate_id id(get_predicate_id());
+   const predicate_id id(pred->get_id());
    
    assert(*pos <= (int)buf_size);
    utils::pack<predicate_id>((void*)&id, 1, buf, buf_size, pos);
    assert(*pos <= (int)buf_size);
    
-   for(field_num i(0); i < num_fields(); ++i) {
-      switch(get_field_type(i)->get_type()) {
+   for(field_num i(0); i < pred->num_fields(); ++i) {
+      switch(pred->get_field_type(i)->get_type()) {
          case FIELD_INT: {
                const int_val val(get_int(i));
                utils::pack<int_val>((void*)&val, 1, buf, buf_size, pos);
@@ -378,10 +380,10 @@ tuple::pack(byte *buf, const size_t buf_size, int *pos) const
 }
 
 void
-tuple::load(byte *buf, const size_t buf_size, int *pos)
+tuple::load(vm::predicate *pred, byte *buf, const size_t buf_size, int *pos)
 {
-   for(field_num i(0); i < num_fields(); ++i) {
-      switch(get_field_type(i)->get_type()) {
+   for(field_num i(0); i < pred->num_fields(); ++i) {
+      switch(pred->get_field_type(i)->get_type()) {
          case FIELD_INT: {
                int_val val;
                utils::unpack<int_val>(buf, buf_size, pos, &val, 1);
@@ -401,7 +403,7 @@ tuple::load(byte *buf, const size_t buf_size, int *pos)
             }
             break;
          case FIELD_LIST:
-            set_cons(i, cons::unpack(buf, buf_size, pos, (list_type*)get_field_type(i)));
+            set_cons(i, cons::unpack(buf, buf_size, pos, (list_type*)pred->get_field_type(i)));
             break;
          default:
             throw type_error("unsupported field type to unpack");
@@ -416,19 +418,20 @@ tuple::unpack(byte *buf, const size_t buf_size, int *pos, vm::program *prog)
    
    utils::unpack<predicate_id>(buf, buf_size, pos, &pred_id, 1);
    
-   tuple *ret(tuple::create(prog->get_predicate(pred_id)));
+   predicate *pred(prog->get_predicate(pred_id));
+   tuple *ret(tuple::create(pred));
    
-   ret->load(buf, buf_size, pos);
+   ret->load(pred, buf, buf_size, pos);
    
    return ret;
    
 }
 
 void
-tuple::copy_runtime(void)
+tuple::copy_runtime(const vm::predicate *pred)
 {
-   for(field_num i(0); i < num_fields(); ++i) {
-      switch(get_field_type(i)->get_type()) {
+   for(field_num i(0); i < pred->num_fields(); ++i) {
+      switch(pred->get_field_type(i)->get_type()) {
          case FIELD_LIST: {
                cons *old(get_cons(i));
                cons *ne(cons::copy(old));
@@ -448,12 +451,6 @@ tuple::copy_runtime(void)
          default: break;
       }
    }
-}
-
-ostream& operator<<(ostream& cout, const tuple& tuple)
-{
-   tuple.print(cout);
-   return cout;
 }
 
 }

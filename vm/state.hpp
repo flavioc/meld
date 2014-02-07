@@ -58,6 +58,7 @@ public:
 
    typedef tuple_field reg;
    reg regs[NUM_REGS];
+   vm::predicate *preds[NUM_REGS];
    call_stack stack;
    db::node *node;
    derivation_count count;
@@ -143,7 +144,7 @@ public:
    inline void add_struct(runtime::struct1 *s) { s->inc_refs();
                                                  free_struct1.push_back(s); }
    
-	bool add_fact_to_node(vm::tuple *, const vm::derivation_count count = 1, const vm::depth_t depth = 0);
+	bool add_fact_to_node(vm::tuple *, vm::predicate *, const vm::derivation_count count = 1, const vm::depth_t depth = 0);
 	
 	void mark_active_rules(void);
    void add_to_aggregate(db::simple_tuple *);
@@ -156,7 +157,7 @@ public:
    void process_action_tuples(void);
    void process_incoming_tuples(void);
 	void run_node(db::node *);
-   void setup(vm::tuple*, db::node*, const vm::derivation_count, const vm::depth_t);
+   void setup(vm::predicate *, db::node*, const vm::derivation_count, const vm::depth_t);
    void cleanup(void);
 
    explicit state(sched::base *);

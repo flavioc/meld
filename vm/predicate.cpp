@@ -94,7 +94,7 @@ predicate::make_predicate_from_reader(code_reader& read, code_size_t *code_size,
    // get aggregate information, if any
    byte agg;
    read.read_type<byte>(&agg);
-   if(pred->is_aggregate()) {
+   if(pred->is_aggregate_pred()) {
       pred->agg_info->safeness = AGG_UNSAFE;
       pred->agg_info->field = agg & 0xf;
       pred->agg_info->type = (aggregate_type)((0xf0 & agg) >> 4);
@@ -147,7 +147,7 @@ predicate::make_predicate_from_reader(code_reader& read, code_size_t *code_size,
    read.read_any(buf_vec, PRED_AGG_INFO_MAX);
    char *buf = buf_vec;
    
-   if(pred->is_aggregate()) {
+   if(pred->is_aggregate_pred()) {
       if(buf[0] == PRED_AGG_LOCAL) {
          buf++;
          pred->agg_info->safeness = AGG_LOCALLY_GENERATED;
@@ -207,7 +207,7 @@ void
 predicate::cache_info(vm::program *prog)
 {
    build_field_info();
-   if(is_aggregate())
+   if(is_aggregate_pred())
       build_aggregate_info(prog);
 }
 
@@ -237,7 +237,7 @@ predicate::print_simple(ostream& cout) const
 
       const string typ(types[i]->string());
       
-      if(is_aggregate() && agg_info->field == i)
+      if(is_aggregate_pred() && agg_info->field == i)
          cout << aggregate_type_string(agg_info->type) << " " << typ;
       else
          cout << typ;
@@ -253,7 +253,7 @@ predicate::print(ostream& cout) const
 
 	cout << " [size=" << tuple_size;
    
-   if(is_aggregate())
+   if(is_aggregate_pred())
       cout << ",agg";
       
    cout << ",strat_level=" << get_strat_level();
@@ -273,7 +273,7 @@ predicate::print(ostream& cout) const
    
    cout << "]";
    
-   if(is_aggregate()) {
+   if(is_aggregate_pred()) {
       cout << "[";
       switch(get_agg_safeness()) {
          case AGG_LOCALLY_GENERATED:

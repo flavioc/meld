@@ -28,7 +28,7 @@ private:
 public:
    
    virtual void new_agg(process::work&);
-   virtual void new_work(db::node *, db::node *, vm::tuple*, const vm::ref_count, const vm::depth_t);
+   virtual void new_work(db::node *, db::node *, vm::tuple*, vm::predicate *, const vm::ref_count, const vm::depth_t);
    
 #ifdef COMPILE_MPI
    virtual void new_work_remote(process::remote *, const db::node::node_id, message *)

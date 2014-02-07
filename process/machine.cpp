@@ -47,11 +47,11 @@ machine::same_place(const node::node_id id1, const node::node_id id2) const
 }
 
 void
-machine::run_action(sched::base *sched, node* node, vm::tuple *tpl)
+machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, vm::predicate *pred)
 {
-	const predicate_id pid(tpl->get_predicate_id());
+	const predicate_id pid(pred->get_id());
 	
-	assert(tpl->is_action());
+	assert(pred->is_action_pred());
 	
    switch(pid) {
       case SETCOLOR_PREDICATE_ID:
@@ -115,7 +115,7 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl)
       break;
    }
 
-   vm::tuple::destroy(tpl);
+   vm::tuple::destroy(tpl, pred);
 }
 
 static inline string
@@ -197,7 +197,7 @@ machine::execute_const_code(void)
 	// no node or tuple whatsoever
 	st.setup(NULL, NULL, 0, 0);
 	
-	execute_process(all->PROGRAM->get_const_bytecode(), st, NULL);
+	execute_process(all->PROGRAM->get_const_bytecode(), st, NULL, NULL);
 }
 
 void

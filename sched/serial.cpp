@@ -15,17 +15,17 @@ void
 serial_local::new_agg(work& w)
 {
    db::simple_tuple *stpl(w.get_tuple());
-   new_work(w.get_node(), w.get_node(), stpl->get_tuple(), stpl->get_count(), stpl->get_depth());
+   new_work(w.get_node(), w.get_node(), stpl->get_tuple(), stpl->get_predicate(), stpl->get_count(), stpl->get_depth());
    delete stpl;
 }
 
 void
-serial_local::new_work(node *from, node *target, vm::tuple *tpl, const ref_count count, const depth_t depth)
+serial_local::new_work(node *from, node *target, vm::tuple *tpl, vm::predicate *pred, const ref_count count, const depth_t depth)
 {
    (void)from;
    serial_node *to(dynamic_cast<serial_node*>(target));
    
-   to->add_work_myself(tpl, count, depth);
+   to->add_work_myself(tpl, pred, count, depth);
    
    if(!to->in_queue()) {
       to->set_in_queue(true);

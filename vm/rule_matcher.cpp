@@ -58,9 +58,9 @@ rule_matcher::register_predicate_unavailability(const predicate *pred)
 
 /* returns true if we did not have any tuples of this predicate */
 bool
-rule_matcher::register_tuple(tuple *tpl, const derivation_count count, const bool is_new)
+rule_matcher::register_tuple(predicate *pred, const derivation_count count, const bool is_new)
 {
-   const vm::predicate_id id(tpl->get_predicate_id());
+   const vm::predicate_id id(pred->get_id());
 	bool ret(false);
 #ifdef DEBUG_RULES
 	cout << "Add tuple " << *tpl << endl;
@@ -68,7 +68,7 @@ rule_matcher::register_tuple(tuple *tpl, const derivation_count count, const boo
 	if(is_new) {
    	if(predicate_count[id] == 0) {
 			ret = true;
-      	register_predicate_availability(tpl->get_predicate());
+      	register_predicate_availability(pred);
    	}
 	}
 
@@ -78,20 +78,17 @@ rule_matcher::register_tuple(tuple *tpl, const derivation_count count, const boo
 
 /* returns true if now we do not have any tuples of this predicate */
 bool
-rule_matcher::deregister_tuple(tuple *tpl, const derivation_count count)
+rule_matcher::deregister_tuple(predicate *pred, const derivation_count count)
 {
-   const vm::predicate_id id(tpl->get_predicate_id());
+   const vm::predicate_id id(pred->get_id());
 	bool ret(false);
 	
-#ifdef DEBUG_RULES
-	cout << "Remove tuple " << *tpl << " " << count << " " << predicate_count[id] << endl;
-#endif
    assert(count > 0);
    assert(predicate_count[id] >= (pred_count)count);
 
    if(predicate_count[id] == (pred_count)count) {
 		ret = true;
-		register_predicate_unavailability(tpl->get_predicate());
+		register_predicate_unavailability(pred);
    }
 
    predicate_count[id] -= count;

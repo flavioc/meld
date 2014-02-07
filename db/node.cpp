@@ -19,7 +19,7 @@ namespace db
 {
 
 tuple_trie*
-node::get_storage(const predicate* pred)
+node::get_storage(predicate* pred)
 {
    simple_tuple_map::iterator it(tuples.find(pred->get_id()));
    
@@ -33,28 +33,25 @@ node::get_storage(const predicate* pred)
 }
 
 bool
-node::add_tuple(vm::tuple *tpl, const derivation_count many, const depth_t depth)
+node::add_tuple(vm::tuple *tpl, vm::predicate *pred, const derivation_count many, const depth_t depth)
 {
-   const predicate* pred(tpl->get_predicate());
    tuple_trie *tr(get_storage(pred));
    
-   bool ret = tr->insert_tuple(tpl, many, depth);
+   bool ret = tr->insert_tuple(tpl, pred, many, depth);
    return ret;
 }
 
 node::delete_info
-node::delete_tuple(vm::tuple *tuple, const derivation_count many, const depth_t depth)
+node::delete_tuple(vm::tuple *tuple, vm::predicate *pred, const derivation_count many, const depth_t depth)
 {
-   const predicate *pred(tuple->get_predicate());
    tuple_trie *tr(get_storage(pred));
    
-   return tr->delete_tuple(tuple, many, depth);
+   return tr->delete_tuple(tuple, pred, many, depth);
 }
 
 agg_configuration*
-node::add_agg_tuple(vm::tuple *tuple, const derivation_count many, const depth_t depth)
+node::add_agg_tuple(vm::tuple *tuple, predicate *pred, const derivation_count many, const depth_t depth)
 {
-   const predicate *pred(tuple->get_predicate());
    predicate_id pred_id(pred->get_id());
    aggregate_map::iterator it(aggs.find(pred_id));
    tuple_aggregate *agg;
@@ -65,13 +62,13 @@ node::add_agg_tuple(vm::tuple *tuple, const derivation_count many, const depth_t
    } else
       agg = it->second;
 
-   return agg->add_to_set(tuple, many, depth);
+   return agg->add_to_set(tuple, pred, many, depth);
 }
 
 agg_configuration*
-node::remove_agg_tuple(vm::tuple *tuple, const derivation_count many, const depth_t depth)
+node::remove_agg_tuple(vm::tuple *tuple, vm::predicate *pred, const derivation_count many, const depth_t depth)
 {
-   return add_agg_tuple(tuple, -many, depth);
+   return add_agg_tuple(tuple, pred, -many, depth);
 }
 
 simple_tuple_list
@@ -127,7 +124,7 @@ node::delete_all(const predicate*)
 }
 
 void
-node::delete_by_leaf(const predicate *pred, tuple_trie_leaf *leaf, const depth_t depth)
+node::delete_by_leaf(predicate *pred, tuple_trie_leaf *leaf, const depth_t depth)
 {
    tuple_trie *tr(get_storage(pred));
 
@@ -144,7 +141,7 @@ node::assert_tries(void)
 }
 
 void
-node::delete_by_index(const predicate *pred, const match& m)
+node::delete_by_index(predicate *pred, const match& m)
 {
    tuple_trie *tr(get_storage(pred));
    
@@ -220,7 +217,7 @@ node::dump(ostream& cout) const
                if(!ls->empty()) {
                   for(intrusive_list<vm::tuple>::const_iterator it(ls->begin()), end(ls->end());
                         it != end; ++it)
-                     vec.push_back(to_string(*(*it)));
+                     vec.push_back((*it)->to_str(pred));
                }
             }
          } else {
@@ -228,7 +225,7 @@ node::dump(ostream& cout) const
             if(ls && !ls->empty()) {
                for(intrusive_list<vm::tuple>::const_iterator it(ls->begin()), end(ls->end());
                      it != end; ++it)
-                  vec.push_back(to_string(*(*it)));
+                  vec.push_back(to_string((*it)->to_str(pred)));
             }
          }
       }
@@ -267,7 +264,7 @@ node::print(ostream& cout) const
                if(!ls->empty()) {
                   for(intrusive_list<vm::tuple>::const_iterator it(ls->begin()), end(ls->end());
                         it != end; ++it)
-                     vec.push_back(to_string(*(*it)));
+                     vec.push_back((*it)->to_str(pred));
                }
             }
          } else {
@@ -275,7 +272,7 @@ node::print(ostream& cout) const
             if(ls && !ls->empty()) {
                for(intrusive_list<vm::tuple>::iterator it(ls->begin()), end(ls->end());
                      it != end; ++it)
-                  vec.push_back(to_string(*(*it)));
+                  vec.push_back((*it)->to_str(pred));
             }
          }
       }

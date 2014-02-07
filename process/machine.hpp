@@ -53,10 +53,10 @@ public:
    
    bool same_place(const db::node::node_id, const db::node::node_id) const;
    
-   void run_action(sched::base *, db::node *, vm::tuple *);
+   void run_action(sched::base *, db::node *, vm::tuple *, vm::predicate *);
    
    inline void route(db::node *from, sched::base *sched_caller, const db::node::node_id id, vm::tuple* tpl,
-         const vm::ref_count count, const vm::depth_t depth, const vm::uint_val delay = 0)
+         vm::predicate *pred, const vm::ref_count count, const vm::depth_t depth, const vm::uint_val delay = 0)
    {
       assert(sched_caller != NULL);
 #ifdef USE_REAL_NODES
@@ -66,14 +66,12 @@ public:
       db::node *node(this->all->DATABASE->find_node(id));
 #endif
          
-      const vm::predicate *pred(tpl->get_predicate());
-
       if(delay > 0)
-         sched_caller->new_work_delay(from, node, tpl, count, depth, delay);
+         sched_caller->new_work_delay(from, node, tpl, pred, count, depth, delay);
       else if(pred->is_action_pred())
-         run_action(sched_caller, node, tpl);
+         run_action(sched_caller, node, tpl, pred);
       else
-         sched_caller->new_work(from, node, tpl, count, depth);
+         sched_caller->new_work(from, node, tpl, pred, count, depth);
 #if 0 //COMPILE_MPI
       {
          // remote, mpi machine

@@ -287,6 +287,7 @@ private:
    friend class tuple_trie_iterator;
    
    vm::tuple *tpl;
+   vm::predicate *pred;
    vm::ref_count count;
    /// XXX this may be deleted...
    vm::ref_count used; // this is utilized by the VM core to manage leaves
@@ -382,10 +383,11 @@ public:
    explicit tuple_trie_leaf(simple_tuple *_tpl):
       trie_leaf(),
       tpl(_tpl->get_tuple()),
+      pred(_tpl->get_predicate()),
       count(0),
       used(0)
    {
-      if(tpl->is_cycle())
+      if(_tpl->get_predicate()->is_cycle_pred())
          depths = new depth_counter();
       else
          depths = NULL;
@@ -396,7 +398,7 @@ public:
    {
       if(depths != NULL)
          delete depths;
-      vm::tuple::destroy(tpl);
+      vm::tuple::destroy(tpl, pred);
    }
 };
 
@@ -489,10 +491,10 @@ protected:
    void delete_path(trie_node *);
    void sanity_check(void) const;
    
-   virtual trie_leaf* create_leaf(void *data, const vm::ref_count many, const vm::depth_t depth) = 0;
+   virtual trie_leaf* create_leaf(void *data, vm::predicate*, const vm::ref_count many, const vm::depth_t depth) = 0;
    void inner_delete_by_leaf(trie_leaf *, const vm::derivation_count, const vm::depth_t);
    
-   trie_node *check_insert(void *, const vm::derivation_count, const vm::depth_t, vm::match_stack&, bool&);
+   trie_node *check_insert(void *, vm::predicate *, const vm::derivation_count, const vm::depth_t, vm::match_stack&, bool&);
    
 public:
    
@@ -570,14 +572,14 @@ class tuple_trie: public trie, public mem::base
 {
 private:
 
-   const vm::predicate *pred;
+   vm::predicate *pred;
    
-   virtual trie_leaf* create_leaf(void *data, const vm::ref_count many, const vm::depth_t depth)
+   virtual trie_leaf* create_leaf(void *data, vm::predicate *pred, const vm::ref_count many, const vm::depth_t depth)
    {
-      return new tuple_trie_leaf(new simple_tuple((vm::tuple*)data, many, depth));
+      return new tuple_trie_leaf(new simple_tuple((vm::tuple*)data, pred, many, depth));
    }
    
-   trie_node* check_insert(vm::tuple *, const vm::derivation_count, const vm::depth_t, bool&);
+   trie_node* check_insert(vm::tuple *, vm::predicate *, const vm::derivation_count, const vm::depth_t, bool&);
 
    void visit(trie_node *n) const;
    void do_visit(trie_node *, const int, std::stack<vm::type*>&) const;
@@ -678,12 +680,12 @@ public:
    // inserts tuple into the trie
    // returns false if tuple is repeated (+ ref count)
    // returns true if tuple is new
-   bool insert_tuple(vm::tuple *, const vm::derivation_count, const vm::depth_t);
+   bool insert_tuple(vm::tuple *, vm::predicate *, const vm::derivation_count, const vm::depth_t);
    
    // returns delete info object
    // call to_delete to know if the ref count reached zero
    // call the object to commit the deletion operation
-   delete_info delete_tuple(vm::tuple *, const vm::derivation_count, const vm::depth_t);
+   delete_info delete_tuple(vm::tuple *, vm::predicate *, const vm::derivation_count, const vm::depth_t);
    
    inline const_iterator begin(void) const { return iterator((tuple_trie_leaf*)first_leaf); }
    inline const_iterator end(void) const { return iterator(); }
@@ -695,11 +697,13 @@ public:
    void print(std::ostream&) const;
    
    tuple_search_iterator match_predicate(const vm::match*) const;
+
+   inline vm::predicate *get_predicate(void) const { return pred; }
    
    tuple_search_iterator match_predicate(void) const;
 	static inline tuple_search_iterator match_end(void) { return tuple_search_iterator(); }
    
-   explicit tuple_trie(const vm::predicate *_pred): trie(), pred(_pred) { basic_invariants(); }
+   explicit tuple_trie(vm::predicate *_pred): trie(), pred(_pred) { basic_invariants(); }
    
    virtual ~tuple_trie(void) {}
 };
@@ -799,7 +803,7 @@ class agg_trie: public trie, public mem::base
 {
 private:
    
-   virtual trie_leaf* create_leaf(void *, const vm::ref_count, const vm::depth_t)
+   virtual trie_leaf* create_leaf(void *, vm::predicate *, const vm::ref_count, const vm::depth_t)
    {
       return new agg_trie_leaf(NULL);
    }
@@ -811,7 +815,7 @@ public:
    typedef agg_trie_iterator iterator;
    typedef agg_trie_iterator const_iterator;
    
-   agg_trie_leaf *find_configuration(vm::tuple *);
+   agg_trie_leaf *find_configuration(vm::tuple *, vm::predicate *);
    
    void delete_configuration(trie_node *node);
    

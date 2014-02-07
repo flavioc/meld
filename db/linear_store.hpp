@@ -115,9 +115,8 @@ struct linear_store
       inline hash_table* get_hash_table(const vm::predicate_id p) { return get_table(p); }
       inline const hash_table* get_hash_table(const vm::predicate_id p) const { return get_table(p); }
 
-      inline void add_fact(vm::tuple *tpl)
+      inline void add_fact(vm::tuple *tpl, vm::predicate *pred)
       {
-         const vm::predicate *pred(tpl->get_predicate());
          if(pred->is_hash_table()) {
             hash_table *table(get_table(pred->get_id()));
 #ifdef USE_UNORDERED_MAP

@@ -67,35 +67,35 @@ struct temporary_store
          return it->second;
       }
 
-      inline void add_incoming(vm::tuple *tpl)
+      inline void add_incoming(vm::tuple *tpl, vm::predicate *pred)
       {
-         tuple_list *ls(get_incoming(tpl->get_predicate_id()));
+         tuple_list *ls(get_incoming(pred->get_id()));
 
          if(ls == NULL)
-            ls = create_incoming(tpl->get_predicate_id());
+            ls = create_incoming(pred->get_id());
 
          ls->push_back(tpl);
       }
 
       inline void register_fact(db::simple_tuple *stpl)
       {
-         register_tuple_fact(stpl->get_tuple(), stpl->get_count());
+         register_tuple_fact(stpl->get_predicate(), stpl->get_count());
       }
 
-      inline void register_tuple_fact(vm::tuple *tpl, const vm::ref_count count)
+      inline void register_tuple_fact(vm::predicate *pred, const vm::ref_count count)
       {
-         matcher.register_tuple(tpl, count);
-         mark(tpl->get_predicate());
+         matcher.register_tuple(pred, count);
+         mark(pred);
       }
 
       inline void deregister_fact(db::simple_tuple *stpl)
       {
-         deregister_tuple_fact(stpl->get_tuple(), stpl->get_count());
+         deregister_tuple_fact(stpl->get_predicate(), stpl->get_count());
       }
 
-      inline void deregister_tuple_fact(vm::tuple *tpl, const vm::ref_count count)
+      inline void deregister_tuple_fact(vm::predicate *pred, const vm::ref_count count)
       {
-         matcher.deregister_tuple(tpl, count);
+         matcher.deregister_tuple(pred, count);
       }
 
       inline tuple_list* create_generated(const vm::predicate_id p)
@@ -114,11 +114,11 @@ struct temporary_store
          return ls;
       }
 
-      inline void add_generated(vm::tuple *tpl)
+      inline void add_generated(vm::tuple *tpl, vm::predicate *pred)
       {
-         tuple_list *ls(get_generated(tpl->get_predicate_id()));
+         tuple_list *ls(get_generated(pred->get_id()));
          if(ls == NULL)
-            ls = create_generated(tpl->get_predicate_id());
+            ls = create_generated(pred->get_id());
          ls->push_back(tpl);
       }
 

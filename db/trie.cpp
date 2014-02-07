@@ -653,7 +653,7 @@ trie::sanity_check(void) const
 
 // inserts the data inside the trie
 trie_node*
-trie::check_insert(void *data, const derivation_count many, const depth_t depth, match_stack& mstk, bool& found)
+trie::check_insert(void *data, predicate *pred, const derivation_count many, const depth_t depth, match_stack& mstk, bool& found)
 {
    if(mstk.empty()) {
       // 0-arity tuple
@@ -661,7 +661,7 @@ trie::check_insert(void *data, const derivation_count many, const depth_t depth,
          // branch not found
          found = false;
          if(many > 0) {
-            trie_leaf *leaf(create_leaf(data, many, depth));
+            trie_leaf *leaf(create_leaf(data, pred, many, depth));
             root->set_leaf(leaf);
             leaf->node = root;
             leaf->prev = leaf->next = NULL;
@@ -729,7 +729,7 @@ trie::check_insert(void *data, const derivation_count many, const depth_t depth,
          assert(mstk.empty());
          
          // parent is now set as a leaf
-         trie_leaf *leaf(create_leaf(data, many, depth));
+         trie_leaf *leaf(create_leaf(data, pred, many, depth));
          leaf->node = parent;
          parent->set_leaf(leaf);
          leaf->next = NULL;
@@ -924,32 +924,32 @@ trie::~trie(void)
 }
 
 trie_node*
-tuple_trie::check_insert(vm::tuple *tpl, const derivation_count many, const depth_t depth, bool& found)
+tuple_trie::check_insert(vm::tuple *tpl, vm::predicate *pred, const derivation_count many, const depth_t depth, bool& found)
 {
    //cout << "Starting insertion of " << *tpl << endl;
  
-	match_stack mstk(tpl->num_fields() + STACK_EXTRA_SIZE);
+	match_stack mstk(pred->num_fields() + STACK_EXTRA_SIZE);
   
-   if(tpl->num_fields() > 0) {
-      for(int i(tpl->num_fields()-1); i >= 0; --i) {
-			const match_field f = {false, tpl->get_field_type(i), tpl->get_field(i)};
+   if(pred->num_fields() > 0) {
+      for(int i(pred->num_fields()-1); i >= 0; --i) {
+			const match_field f = {false, pred->get_field_type(i), tpl->get_field(i)};
 			mstk.push(f);
       }
    }
    
-   trie_node *ret(trie::check_insert((void*)tpl, many, depth, mstk, found));
+   trie_node *ret(trie::check_insert((void*)tpl, pred, many, depth, mstk, found));
 
    return ret;
 }
 
 bool
-tuple_trie::insert_tuple(vm::tuple *tpl, const derivation_count many, const depth_t depth)
+tuple_trie::insert_tuple(vm::tuple *tpl, vm::predicate *pred, const derivation_count many, const depth_t depth)
 {
    sanity_check();
 
    bool found;
    number_of_references += many;
-   check_insert(tpl, many, depth, found);
+   check_insert(tpl, pred, many, depth, found);
    
    if(found) {
       assert(root->child != NULL);
@@ -965,13 +965,13 @@ tuple_trie::insert_tuple(vm::tuple *tpl, const derivation_count many, const dept
 }
 
 trie::delete_info
-tuple_trie::delete_tuple(vm::tuple *tpl, const derivation_count many, const depth_t depth)
+tuple_trie::delete_tuple(vm::tuple *tpl, vm::predicate *pred, const derivation_count many, const depth_t depth)
 {
    assert(many > 0);
    basic_invariants();
    
    bool found;
-   trie_node *node(check_insert(tpl, -many, depth, found));
+   trie_node *node(check_insert(tpl, pred, -many, depth, found));
 
    if(node == NULL) {
       // already deleted
@@ -1003,7 +1003,7 @@ tuple_trie::get_print_strings(void) const
       tuple_trie_leaf *leaf(*it);
       if(leaf->to_delete())
          continue;
-      string str = utils::to_string(*(leaf->get_underlying_tuple()));
+      string str = leaf->get_underlying_tuple()->to_str(get_predicate());
       vec.push_back(str);
       if(leaf->get_count() > 1) {
          for(size_t i(1); i < leaf->get_count(); ++i) {
@@ -1366,20 +1366,18 @@ agg_trie_leaf::~agg_trie_leaf(void)
 }
 
 agg_trie_leaf*
-agg_trie::find_configuration(vm::tuple *tpl)
+agg_trie::find_configuration(vm::tuple *tpl, vm::predicate *pred)
 {
-   const predicate *pred(tpl->get_predicate());
-   
    const size_t stack_size(pred->get_aggregate_field() + STACK_EXTRA_SIZE);
    match_stack mstk(stack_size);
   
    for(int i(pred->get_aggregate_field()-1); i >= 0; --i) {
-		const match_field f = {false, tpl->get_field_type(i), tpl->get_field(i)};
+		const match_field f = {false, pred->get_field_type(i), tpl->get_field(i)};
 		mstk.push(f);
    }
    
    bool found;
-   trie_node *node(trie::check_insert(NULL, 1, 0, mstk, found));
+   trie_node *node(trie::check_insert(NULL, pred, 1, 0, mstk, found));
    
    if(!found)
       ++number_of_references;

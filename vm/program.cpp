@@ -330,7 +330,7 @@ program::program(const string& _filename):
    safe = true;
    for(size_t i(0); i < num_predicates; ++i) {
       predicates[i]->cache_info(this);
-      if(predicates[i]->is_aggregate() && predicates[i]->is_unsafe_agg()) {
+      if(predicates[i]->is_aggregate_pred() && predicates[i]->is_unsafe_agg()) {
          safe = false;
 		}
    }

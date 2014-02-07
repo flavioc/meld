@@ -17,7 +17,7 @@ typedef enum {
    EXECUTION_CONSUMED
 } execution_return;
 
-execution_return execute_process(byte_code, state&, vm::tuple*);
+execution_return execute_process(byte_code, state&, vm::tuple*, vm::predicate*);
 void execute_rule(const rule_id, state&);
 
 class vm_exec_error : public std::runtime_error {
