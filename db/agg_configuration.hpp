@@ -43,7 +43,7 @@ public:
 
    MEM_METHODS(agg_configuration)
 
-   void print(std::ostream&) const;
+   void print(std::ostream&, vm::predicate *) const;
 
    void generate(vm::predicate *, const vm::aggregate_type, const vm::field_num, simple_tuple_list&);
 
@@ -57,17 +57,17 @@ public:
    
    bool matches_first_int_arg(vm::predicate *, const vm::int_val) const;
 
-   explicit agg_configuration(vm::predicate *_pred):
-      changed(false), corresponds(NULL), last_depth(0), vals(_pred)
+   explicit agg_configuration(void):
+      changed(false), corresponds(NULL), last_depth(0)
    {
       assert(corresponds == NULL);
       assert(!changed);
    }
 
-   virtual ~agg_configuration(void);
+   inline void wipeout(vm::predicate *pred) {
+      vals.wipeout(pred);
+   }
 };
-
-std::ostream& operator<<(std::ostream&, const agg_configuration&);
 }
 
 #endif

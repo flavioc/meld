@@ -34,7 +34,7 @@ agg_configuration::add_to_set(vm::tuple *tpl, vm::predicate *pred, const derivat
       if(!deleter.is_valid()) {
          changed = false;
       } else if(deleter.to_delete()) {
-         deleter();
+         deleter.perform_delete(pred);
       } else if(pred->is_cycle_pred()) {
          depth_counter *dc(deleter.get_depth_counter());
          assert(dc != NULL);
@@ -46,7 +46,7 @@ agg_configuration::add_to_set(vm::tuple *tpl, vm::predicate *pred, const derivat
             vm::ref_count deleted(deleter.delete_depths_above(depth));
             (void)deleted;
             if(deleter.to_delete()) {
-               deleter();
+               deleter.perform_delete(pred);
             }
             assert(vals.size() == old_size-deleted);
          }
@@ -397,12 +397,8 @@ agg_configuration::generate(predicate *pred, const aggregate_type typ, const fie
    corresponds = generated;
 }
 
-agg_configuration::~agg_configuration(void)
-{
-}
-
 void
-agg_configuration::print(ostream& cout) const
+agg_configuration::print(ostream& cout, predicate *pred) const
 {
    for(const_iterator it(vals.begin());
       it != vals.end();
@@ -410,7 +406,7 @@ agg_configuration::print(ostream& cout) const
    {
       tuple_trie_leaf *leaf(*it);
       cout << "\t\t";
-      leaf->get_underlying_tuple()->print(cout, vals.get_predicate());
+      leaf->get_underlying_tuple()->print(cout, pred);
       cout << "@";
       cout << leaf->get_count();
       if(leaf->has_depth_counter()) {
@@ -426,11 +422,4 @@ agg_configuration::print(ostream& cout) const
    }
 }
 
-ostream&
-operator<<(ostream& cout, const agg_configuration& conf)
-{
-   conf.print(cout);
-   return cout;
-}
-  
 }

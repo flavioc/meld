@@ -25,7 +25,7 @@ node::get_storage(predicate* pred)
    
    if(it == tuples.end()) {
       //cout << "New trie for " << *pred << endl;
-      tuple_trie *tr(new tuple_trie(pred));
+      tuple_trie *tr(new tuple_trie());
       tuples[pred->get_id()] = tr;
       return tr;
    } else
@@ -128,7 +128,7 @@ node::delete_by_leaf(predicate *pred, tuple_trie_leaf *leaf, const depth_t depth
 {
    tuple_trie *tr(get_storage(pred));
 
-   tr->delete_by_leaf(leaf, depth);
+   tr->delete_by_leaf(leaf, pred, depth);
 }
 
 void
@@ -145,7 +145,7 @@ node::delete_by_index(predicate *pred, const match& m)
 {
    tuple_trie *tr(get_storage(pred));
    
-   tr->delete_by_index(m);
+   tr->delete_by_index(pred, m);
    
    aggregate_map::iterator it(aggs.find(pred->get_id()));
    
@@ -187,8 +187,12 @@ node::node(const node_id _id, const node_id _trans):
 
 node::~node(void)
 {
-   for(simple_tuple_map::iterator it(tuples.begin()), end(tuples.end()); it != end; it++)
+   for(simple_tuple_map::iterator it(tuples.begin()), end(tuples.end()); it != end; it++) {
+      tuple_trie *tr(it->second);
+      predicate *pred(theProgram->get_predicate(it->first));
+      tr->wipeout(pred);
       delete it->second;
+   }
    for(aggregate_map::iterator it(aggs.begin()), end(aggs.end()); it != end; it++)
       delete it->second;
 }
@@ -208,7 +212,7 @@ node::dump(ostream& cout) const
          if(it != tuples.end())
             tr = it->second;
          if(tr && !tr->empty())
-            vec = tr->get_print_strings();
+            vec = tr->get_print_strings(pred);
       } else {
          if(pred->is_hash_table()) {
             const hash_table *table(linear.get_hash_table(pred->get_id()));
@@ -255,7 +259,7 @@ node::print(ostream& cout) const
          if(it != tuples.end())
             tr = it->second;
          if(tr && !tr->empty())
-            vec = tr->get_print_strings();
+            vec = tr->get_print_strings(pred);
       } else {
          if(pred->is_hash_table()) {
             const hash_table *table(linear.get_hash_table(pred->get_id()));

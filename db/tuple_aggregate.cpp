@@ -12,7 +12,7 @@ namespace db
 agg_configuration*
 tuple_aggregate::create_configuration(void) const
 {
-   return new agg_configuration(pred);
+   return new agg_configuration();
 }
    
 agg_configuration*
@@ -61,7 +61,7 @@ tuple_aggregate::generate(void)
       assert(!conf->has_changed());
       
       if(conf->is_empty())
-         it = vals.erase(it);
+         it = vals.erase(it, pred);
       else
          it++;
    }
@@ -88,11 +88,19 @@ tuple_aggregate::no_changes(void) const
 void
 tuple_aggregate::delete_by_index(const match& m)
 {
-   vals.delete_by_index(m);
+   vals.delete_by_index(pred, m);
 }
 
 tuple_aggregate::~tuple_aggregate(void)
 {
+   for(agg_trie::const_iterator it(vals.begin());
+      it != vals.end();
+      it++)
+   {
+      agg_configuration *conf(*it);
+      assert(conf != NULL);
+      conf->wipeout(pred);
+   }
 }
 
 void
@@ -106,7 +114,8 @@ tuple_aggregate::print(ostream& cout) const
    {
       agg_configuration *conf(*it);
       assert(conf != NULL);
-      cout << *conf << endl;
+      conf->print(cout, pred);
+      cout << endl;
    }
 }
 
