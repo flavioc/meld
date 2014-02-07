@@ -21,8 +21,8 @@ struct temporary_store
 {
    public:
 
-      bitmap *predicates;
-      bitmap *rules;
+      bitmap predicates;
+      bitmap rules;
 
       typedef db::intrusive_list<vm::tuple> tuple_list;
       typedef std::unordered_map<vm::predicate_id, tuple_list*, std::hash<vm::predicate_id>,
@@ -134,19 +134,19 @@ struct temporary_store
 
       inline void clear_predicates(void)
       {
-         predicates->clear(theProgram->num_predicates_next_uint());
+         predicates.clear(theProgram->num_predicates_next_uint());
       }
 
       inline void mark(const vm::predicate *pred)
       {
-         predicates->set_bit(pred->get_id());
+         predicates.set_bit(pred->get_id());
       }
 
       explicit temporary_store(void)
       {
-         rules = bitmap::create(theProgram->num_rules_next_uint());
-         predicates = bitmap::create(theProgram->num_predicates_next_uint());
-         rules->clear(theProgram->num_rules_next_uint());
+         bitmap::create(rules, theProgram->num_rules_next_uint());
+         bitmap::create(predicates, theProgram->num_predicates_next_uint());
+         rules.clear(theProgram->num_rules_next_uint());
          clear_predicates();
       }
 

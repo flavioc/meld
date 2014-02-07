@@ -17,8 +17,8 @@ private:
    utils::byte *rules; // availability statistics per rule
    pred_count *predicate_count; // number of tuples per predicate
 
-   bitmap *active_bitmap;
-   bitmap *dropped_bitmap;
+   bitmap active_bitmap;
+   bitmap dropped_bitmap;
 	
 	void register_predicate_availability(const predicate *);
 	void register_predicate_unavailability(const predicate *);
@@ -33,11 +33,11 @@ public:
 
 	void clear_dropped_rules(void)
 	{
-      dropped_bitmap->clear(theProgram->num_rules_next_uint());
+      dropped_bitmap.clear(theProgram->num_rules_next_uint());
 	}
 
-   bitmap::iterator active_rules_iterator(void) const { return active_bitmap->begin(theProgram->num_rules_next_uint(), theProgram->num_rules()); }
-   bitmap::iterator dropped_rules_iterator(void) const { return dropped_bitmap->begin(theProgram->num_rules_next_uint(), theProgram->num_rules()); }
+   bitmap::iterator active_rules_iterator(void) { return active_bitmap.begin(theProgram->num_rules()); }
+   bitmap::iterator dropped_rules_iterator(void) { return dropped_bitmap.begin(theProgram->num_rules()); }
 	
    rule_matcher(void);
    ~rule_matcher(void);
