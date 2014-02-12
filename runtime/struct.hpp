@@ -5,13 +5,15 @@
 #error "Please include runtime/objs.hpp instead"
 #endif
 
-class struct1: public mem::base
+struct struct1
 {
    private:
 
       utils::atomic<vm::ref_count> refs;
-      vm::tuple_field *fields;
       vm::struct_type *typ;
+
+      inline vm::tuple_field *get_fields(void) { return (vm::tuple_field*)(this + 1); }
+      inline vm::tuple_field *get_fields(void) const { return (vm::tuple_field*)(this + 1);}
 
    public:
 
@@ -38,33 +40,41 @@ class struct1: public mem::base
       {
          assert(zero_refs());
          for(size_t i(0); i < get_size(); ++i) {
-            decrement_runtime_data(fields[i], typ->get_type(i));
+            decrement_runtime_data(get_data(i), typ->get_type(i));
          }
-         delete this;
+         remove(this);
       }
 
       inline void set_data(const size_t i, const vm::tuple_field& data)
       {
-         fields[i] = data;
-         increment_runtime_data(fields[i], typ->get_type(i));
+         *get_ptr(i) = data;
+         increment_runtime_data(get_data(i), typ->get_type(i));
       }
 
       inline vm::tuple_field get_data(const size_t i) const
       {
-         return fields[i];
+         return get_fields()[i];
       }
 
       inline vm::tuple_field* get_ptr(const size_t i)
       {
-         return fields + i;
+         return get_fields() + i;
       }
 
-      explicit struct1(vm::struct_type *_typ): refs(0), typ(_typ) {
-         assert(typ);
-         fields = mem::allocator<vm::tuple_field>().allocate(get_size());
+      static inline struct1* create(vm::struct_type *_typ) {
+         const size_t size(sizeof(struct1) + sizeof(vm::tuple_field) * _typ->get_size());
+         struct1 *p((struct1*)mem::allocator<utils::byte>().allocate(size));
+         mem::allocator<struct1>().construct(p);
+         assert(p->fields);
+         p->typ = _typ;
+         return p;
       }
 
-      ~struct1(void) {
-         mem::allocator<vm::tuple_field>().deallocate(fields, get_size());
+      static inline void remove(struct1 *p) {
+         const size_t size(sizeof(struct1) + sizeof(vm::tuple_field) * p->get_size());
+         mem::allocator<utils::byte>().deallocate((utils::byte*)p, size);
       }
+
+      struct1(void): refs(0) {}
 };
+

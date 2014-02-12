@@ -46,10 +46,13 @@ normalizestruct(EXTERNAL_ARG(x))
    }
 
    const float_val logZ(std::log(Z));
-   struct1 *ret(new struct1(x->get_type()));
+   struct1 *ret(struct1::create(x->get_type()));
+   assert(ret);
 
-   for(size_t i(0), size(x->get_size()); i < size; ++i)
-      ret->get_ptr(i)->float_field = x->get_data(i).float_field - max_value - logZ;
+   for(size_t i(0), size(x->get_size()); i < size; ++i) {
+      const float_val f(x->get_data(i).float_field - max_value - logZ);
+      SET_FIELD_FLOAT(*(ret->get_ptr(i)), f);
+   }
 
    RETURN_STRUCT(ret);
 }
@@ -109,7 +112,7 @@ dampstruct(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2), EXTERNAL_ARG(fact))
    DECLARE_FLOAT(fact);
 
    assert(s1->get_size() == s2->get_size());
-   struct1 *ret(new struct1(s1->get_type()));
+   struct1 *ret(struct1::create(s1->get_type()));
    for(size_t i(0), size(s1->get_size()); i < size; ++i) {
       const float_val h1(s1->get_data(i).float_field);
       const float_val h2(s2->get_data(i).float_field);
@@ -163,7 +166,7 @@ dividestruct(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2))
    DECLARE_STRUCT(s2);
 
    assert(s1->get_size() == s2->get_size());
-   struct1 *ret(new struct1(s1->get_type()));
+   struct1 *ret(struct1::create(s1->get_type()));
    for(size_t i(0), size(s1->get_size()); i < size; ++i)
       ret->get_ptr(i)->float_field = s1->get_data(i).float_field - s2->get_data(i).float_field;
 
@@ -204,7 +207,7 @@ convolvestruct(EXTERNAL_ARG(bin_fact), EXTERNAL_ARG(s))
 
    assert(bin_fact->get_size() == length * length);
 
-   struct1 *ret(new struct1(s->get_type()));
+   struct1 *ret(struct1::create(s->get_type()));
    for(size_t x(0); x < length; ++x) {
       float_val sum(0.0);
       for(size_t y(0); y < length; ++y) {
@@ -272,7 +275,7 @@ addfloatstructs(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2))
 
    assert(s1->get_size() == s2->get_size());
 
-   struct1 *ret(new struct1(s1->get_type()));
+   struct1 *ret(struct1::create(s1->get_type()));
 
    for(size_t i(0), size(s1->get_size()); i < size; ++i)
       ret->get_ptr(i)->float_field = s1->get_data(i).float_field + s2->get_data(i).float_field;

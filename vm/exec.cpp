@@ -1469,7 +1469,7 @@ axiom_read_data(pcounter& pc, type *t)
             tuple_field head(axiom_read_data(pc, lt->get_subtype()));
             tuple_field tail(axiom_read_data(pc, t));
             runtime::cons *c(FIELD_CONS(tail));
-            runtime::cons *nc(new runtime::cons(c, head, lt));
+            runtime::cons *nc(cons::create(c, head, lt));
             SET_FIELD_CONS(f, nc);
          } else {
             assert(false);
@@ -1537,7 +1537,7 @@ execute_make_structr(pcounter& pc, state& state)
    struct_type *st((struct_type*)theProgram->get_type(make_structr_type(pc)));
    const reg_num to(pcounter_reg(pc + instr_size + type_size));
 
-   struct1 *s(new struct1(st));
+   struct1 *s(struct1::create(st));
 
    for(size_t i(0); i < st->get_size(); ++i)
       s->set_data(i, *state.stack.get_stack_at(i));
@@ -1555,7 +1555,7 @@ execute_make_structf(pcounter& pc, state& state)
    const field_num field(val_field_num(pc + instr_size));
    struct_type *st((struct_type*)pred->get_field_type(field));
 
-   struct1 *s(new struct1(st));
+   struct1 *s(struct1::create(st));
 
    for(size_t i(0); i < st->get_size(); ++i)
       s->set_data(i, *state.stack.get_stack_at(i));
@@ -2207,7 +2207,7 @@ execute_consrrr(pcounter& pc, state& state)
    const reg_num dest(pcounter_reg(pc + instr_size + type_size + 2 * reg_val_size));
 
    list_type *ltype((list_type*)theProgram->get_type(cons_type(pc)));
-   cons *new_list(new cons(state.get_cons(tail), state.get_reg(head), ltype));
+   cons *new_list(cons::create(state.get_cons(tail), state.get_reg(head), ltype));
 	state.add_cons(new_list);
    state.set_cons(dest, new_list);
 }
@@ -2222,7 +2222,7 @@ execute_consrff(pcounter& pc, state& state)
    tuple *dest(get_tuple_field(state, pc + instr_size + reg_val_size + field_size));
    const field_num dest_field(val_field_num(pc + instr_size + reg_val_size + field_size));
 
-   cons *new_list(new cons(tail->get_cons(tail_field), state.get_reg(head), (list_type*)pred->get_field_type(tail_field)));
+   cons *new_list(cons::create(tail->get_cons(tail_field), state.get_reg(head), (list_type*)pred->get_field_type(tail_field)));
    dest->set_cons(dest_field, new_list);
 }
 
@@ -2236,7 +2236,7 @@ execute_consfrf(pcounter& pc, state& state)
    tuple *dest(get_tuple_field(state, pc + instr_size + field_size + reg_val_size));
    const field_num dest_field(val_field_num(pc + instr_size + field_size + reg_val_size));
 
-   cons *new_list(new cons(state.get_cons(tail), head->get_field(head_field), (list_type*)pred->get_field_type(dest_field)));
+   cons *new_list(cons::create(state.get_cons(tail), head->get_field(head_field), (list_type*)pred->get_field_type(dest_field)));
    dest->set_cons(dest_field, new_list);
 }
 
@@ -2250,7 +2250,7 @@ execute_consffr(pcounter& pc, state& state)
    const field_num tail_field(val_field_num(pc + instr_size + field_size));
    const reg_num dest(pcounter_reg(pc + instr_size + 2 * field_size));
 
-   cons *new_list(new cons(tail->get_cons(tail_field), head->get_field(head_field), (list_type*)pred->get_field_type(tail_field)));
+   cons *new_list(cons::create(tail->get_cons(tail_field), head->get_field(head_field), (list_type*)pred->get_field_type(tail_field)));
 	state.add_cons(new_list);
    state.set_cons(dest, new_list);
 }
@@ -2264,7 +2264,7 @@ execute_consrrf(pcounter& pc, state& state)
    predicate *pred(state.preds[val_field_reg(pc + instr_size + 2 * reg_val_size)]);
    const field_num field(val_field_num(pc + instr_size + 2 * reg_val_size));
 
-   cons *new_list(new cons(state.get_cons(tail), state.get_reg(head), (list_type*)pred->get_field_type(field)));
+   cons *new_list(cons::create(state.get_cons(tail), state.get_reg(head), (list_type*)pred->get_field_type(field)));
    dest->set_cons(field, new_list);
 }
 
@@ -2277,7 +2277,7 @@ execute_consrfr(pcounter& pc, state& state)
    const field_num field(val_field_num(pc + instr_size + reg_val_size));
    const reg_num dest(pcounter_reg(pc + instr_size + reg_val_size + field_size));
 
-   cons *new_list(new cons(tail->get_cons(field), state.get_reg(head), (list_type*)pred->get_field_type(field)));
+   cons *new_list(cons::create(tail->get_cons(field), state.get_reg(head), (list_type*)pred->get_field_type(field)));
    state.add_cons(new_list);
    state.set_cons(dest, new_list);
 }
@@ -2291,7 +2291,7 @@ execute_consfrr(pcounter& pc, state& state)
    const reg_num dest(pcounter_reg(pc + instr_size + type_size + field_size + reg_val_size));
 
    list_type *ltype((list_type*)theProgram->get_type(cons_type(pc)));
-   cons *new_list(new cons(state.get_cons(tail), head->get_field(field), ltype));
+   cons *new_list(cons::create(state.get_cons(tail), head->get_field(field), ltype));
    state.add_cons(new_list);
    state.set_cons(dest, new_list);
 }
@@ -2307,7 +2307,7 @@ execute_consfff(pcounter& pc, state& state)
    tuple *dest(get_tuple_field(state, pc + instr_size + 2 * field_size));
    const field_num field_dest(val_field_num(pc + instr_size + 2 * field_size));
 
-   cons *new_list(new cons(tail->get_cons(field_tail), head->get_field(field_head), (list_type*)pred->get_field_type(field_tail)));
+   cons *new_list(cons::create(tail->get_cons(field_tail), head->get_field(field_head), (list_type*)pred->get_field_type(field_tail)));
    dest->set_cons(field_dest, new_list);
 }
 

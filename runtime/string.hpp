@@ -3,24 +3,17 @@
 #error "Please include runtime/objs.hpp instead"
 #endif
 
-class rstring: public mem::base
+struct rstring
 {
 public:
 	
 	typedef rstring* rstring_ptr;
    typedef rstring_ptr ptr;
 	
-	MEM_METHODS(rstring)
-	
 private:
 	
 	utils::atomic<vm::ref_count> refs;
-	const std::string content;
-	
-	explicit rstring(const std::string& _content, const size_t _refs):
-      refs(_refs), content(_content)
-	{
-	}
+	std::string content;
 	
 public:
 	
@@ -40,7 +33,7 @@ public:
 	inline void destroy(void)
 	{
 		assert(zero_refs());
-      delete this;
+      remove(this);
 	}
 	
 	inline bool zero_refs(void) const
@@ -65,14 +58,32 @@ public:
 	
 	// XXX implement MPI stuff
 
-	static rstring_ptr make_default_string(const std::string& str)
+	static inline rstring_ptr make_default_string(const std::string& str)
 	{
-		return new rstring(str, 1);
+      rstring_ptr p = mem::allocator<rstring>().allocate(1);
+      mem::allocator<rstring>().construct(p);
+      p->content = str;
+      p->refs = 1;
+		return p;
 	}
 	
-	static rstring_ptr make_string(const std::string& str)
+	static inline rstring_ptr make_string(const std::string& str)
 	{
-		return new rstring(str, 0);
+      rstring_ptr p = mem::allocator<rstring>().allocate(1);
+      mem::allocator<rstring>().construct(p);
+      p->content = str;
+		return p;
+	}
+
+   static inline void remove(rstring_ptr p)
+   {
+      mem::allocator<rstring>().destroy(p);
+      mem::allocator<rstring>().deallocate(p, 1);
+   }
+
+	explicit rstring():
+      refs(0)
+	{
 	}
 };
 

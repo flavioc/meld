@@ -1,24 +1,24 @@
 
 // do NOT include this file directly, please include runtime/objs.hpp
 
+#include <iostream>
+
 #ifndef RUNTIME_OBJS_HPP
 #error "Please include runtime/objs.hpp instead"
 #endif
 
-class cons: public mem::base
+struct cons
 {
 public:
    
    typedef cons* list_ptr;
    typedef list_ptr ptr;
-
-   MEM_METHODS(cons)
    
 private:
    
    utils::atomic<vm::ref_count> refs;
    list_ptr tail;
-   const vm::tuple_field head;
+   vm::tuple_field head;
    
    vm::list_type *type;
    
@@ -64,7 +64,7 @@ public:
       if(!is_null(get_tail()))
          get_tail()->dec_refs();
       decrement_runtime_data(get_head(), type->get_subtype());
-      delete this;
+      remove(this);
    }
    
    typedef void (*print_function)(std::ostream&, const vm::tuple_field&);
@@ -141,7 +141,7 @@ public:
 
          utils::unpack<vm::tuple_field>(buf, buf_size, pos, &head, 1);
          
-         list_ptr n(new cons(null_list(), head, t));
+         list_ptr n(cons::create(null_list(), head, t));
          
          if(is_null(prev))
             init = n;
@@ -162,13 +162,13 @@ public:
       if(is_null(ptr))
          return null_list();
          
-      list_ptr init(new cons(null_list(), ptr->get_head(), ptr->type));
+      list_ptr init(cons::create(null_list(), ptr->get_head(), ptr->type));
       list_ptr cur(init);
       
       ptr = ptr->get_tail();
    
       while (!is_null(ptr)) {
-         cur->set_tail(new cons(null_list(), ptr->get_head(), ptr->type));
+         cur->set_tail(cons::create(null_list(), ptr->get_head(), ptr->type));
          cur = cur->get_tail();
          ptr = ptr->get_tail();
       }
@@ -244,12 +244,26 @@ public:
 		return ret;
 	}
 
-   explicit cons(list_ptr _tail, const vm::tuple_field _head, vm::list_type *_type):
-      refs(0), head(_head), type(_type)
+   static inline cons* create(list_ptr _tail, const vm::tuple_field _head, vm::list_type *_type)
    {
-      assert(type != NULL);
-      increment_runtime_data(head, type->get_subtype());
-      set_tail(_tail);
+      cons *c(mem::allocator<cons>().allocate(1));
+      c->refs = 0;
+      c->head = _head;
+      c->type = _type;
+      c->set_tail(_tail);
+      increment_runtime_data(c->head, c->type->get_subtype());
+      return c;
+   }
+
+   static inline void remove(cons *c)
+   {
+      mem::allocator<cons>().deallocate(c, 1);
+   }
+
+private:
+   explicit cons(void):
+      refs(0)
+   {
    }
 };
 
@@ -296,7 +310,7 @@ from_stack_to_list(TStack& stk, vm::tuple_field (*conv)(const Convert), vm::list
    cons *ptr(cons::null_list());
    
    while(!stk.empty()) {
-      ptr = new cons(ptr, conv(stk.top()), t);
+      ptr = cons::create(ptr, conv(stk.top()), t);
       stk.pop();
    }
    
@@ -361,7 +375,7 @@ from_vector_to_reverse_list(TVector& vec, vm::tuple_field (*conv)(const Convert)
    cons *ptr(cons::null_list());
 
    for(typename TVector::iterator it(vec.begin()), end(vec.end()); it != end; ++it) {
-      ptr = new cons(ptr, conv(*it), t);
+      ptr = cons::create(ptr, conv(*it), t);
    }
 
    return ptr;
