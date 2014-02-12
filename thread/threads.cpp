@@ -75,7 +75,7 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
       if(tnode->running) {
          // the node is currently being executed by the owner thread
          // just buffer the new fact that will be used by the owner
-         tnode->add_work_others(new simple_tuple(tpl, pred, count, depth));
+         tnode->add_work_others(tpl, pred, count, depth);
       } else {
          // the node is asleep, we can add it immediatelly to the index
          tnode->internal_lock();
@@ -83,7 +83,7 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
          tnode->internal_unlock();
       }
 #else
-      tnode->add_work_others(new simple_tuple(tpl, count, depth));
+      tnode->add_work_others(tpl, pred, count, depth);
 #endif
       if(!tnode->in_queue()) {
          tnode->set_in_queue(true);

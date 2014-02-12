@@ -136,22 +136,18 @@ public:
          add_linear_fact(tpl, pred);
    }
 
-   // XXX do not pass stpl as argument but a tpl and pred
-   inline void add_work_others(db::simple_tuple *stpl)
+   inline void add_work_others(vm::tuple *tpl, vm::predicate *pred, const vm::ref_count count, const vm::depth_t depth)
    {
-      vm::tuple *tpl(stpl->get_tuple());
-      vm::predicate *pred(stpl->get_predicate());
-
       unprocessed_facts = true;
 
-      if(pred->is_action_pred())
+      if(pred->is_action_pred()) {
+         simple_tuple *stpl(new simple_tuple(tpl, pred, count, depth));
          store.incoming_action_tuples.push_back(stpl);
-      else if(pred->is_persistent_pred() || pred->is_reused_pred())
+      } else if(pred->is_persistent_pred() || pred->is_reused_pred()) {
+         simple_tuple *stpl(new simple_tuple(tpl, pred, count, depth));
          store.incoming_persistent_tuples.push_back(stpl);
-      else {
+      } else
          store.add_incoming(tpl, pred);
-         delete stpl;
-      }
    }
    
    explicit node(const node_id, const node_id);
