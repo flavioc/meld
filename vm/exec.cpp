@@ -112,7 +112,9 @@ execute_add_linear(pcounter& pc, state& state)
    }
 #endif
 #ifdef DEBUG_SENDS
-   cout << "\tadd linear " << *tuple << endl;
+   cout << "\tadd linear ";
+   tuple->print(cout, pred);
+   cout << endl;
 #endif
 
    execute_add_linear0(tuple, pred, state);
@@ -131,7 +133,9 @@ execute_add_persistent0(tuple *tpl, predicate *pred, state& state)
    }
 #endif
 #ifdef DEBUG_SENDS
-   cout << "\tadd persistent " << *tpl << endl;
+   cout << "\tadd persistent ";
+   tpl->print(cout, pred);
+   cout << endl;
 #endif
 
    assert(pred->is_persistent_pred() || pred->is_reused_pred());
@@ -171,7 +175,9 @@ execute_enqueue_linear0(tuple *tuple, predicate *pred, state& state)
 {
    assert(pred->is_linear_pred());
 #ifdef DEBUG_SENDS
-   cout << "\tenqueue " << *tuple << endl;
+   cout << "\tenqueue ";
+   tuple->print(cout, pred);
+   cout << endl;
 #endif
 
    state.store->add_generated(tuple, pred);
@@ -214,7 +220,9 @@ execute_send(const pcounter& pc, state& state)
 #ifdef USE_REAL_NODES
    print_val = ((db::node*)print_val)->get_id();
 #endif
-   ss << "\t" << *tuple << " " << state.count << " -> " << print_val << " (" << state.depth << ")" << endl;
+   ss << "\t";
+   tuple->print(ss, pred);
+   ss << " " << state.count << " -> " << print_val << " (" << state.depth << ")" << endl;
    cout << ss.str();
    print_mtx.unlock();
 #endif
@@ -257,12 +265,16 @@ execute_send_delay(const pcounter& pc, state& state)
 
    if(msg == dest) {
 #ifdef DEBUG_SENDS
-      cout << "\t" << *tuple << " -> self " << state.node->get_id() << endl;
+      cout << "\t";
+      tuple->print(cout, pred);
+      cout << " -> self " << state.node->get_id() << endl;
 #endif
       state.sched->new_work_delay(state.node, state.node, tuple, pred, state.count, state.depth, send_delay_time(pc));
    } else {
 #ifdef DEBUG_SENDS
-      cout << "\t" << *tuple << " -> " << dest_val << endl;
+      cout << "\t";
+      tuple->print(cout, pred);
+      cout << " -> " << dest_val << endl;
 #endif
 #ifdef USE_UI
       if(state::UI) {
@@ -1194,7 +1206,9 @@ execute_remove(pcounter pc, state& state)
 #endif
 
 #ifdef DEBUG_REMOVE
-   cout << "\tdelete " << *tpl << endl;
+   cout << "\tdelete ";
+   tpl->print(cout, pred);
+   cout << endl;
 #endif
    assert(tpl != NULL);
 		
@@ -1219,7 +1233,9 @@ execute_update(pcounter pc, state& state)
 
    tpl->set_updated();
 #ifdef DEBUG_SENDS
-   cout << "\tupdate " << *tpl << endl;
+   cout << "\tupdate ";
+   tpl->print(cout, pred);
+   cout << endl;
 #endif
    state.store->mark(pred);
 }
