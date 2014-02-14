@@ -214,7 +214,7 @@ node::dump(ostream& cout) const
          if(tr && !tr->empty())
             vec = tr->get_print_strings(pred);
       } else {
-         if(pred->is_hash_table()) {
+         if(linear.stored_as_hash_table(pred)) {
             const hash_table *table(linear.get_hash_table(pred->get_id()));
             for(hash_table::iterator it(table->begin()); !it.end(); ++it) {
                const intrusive_list<vm::tuple> *ls(*it);
@@ -261,7 +261,7 @@ node::print(ostream& cout) const
          if(tr && !tr->empty())
             vec = tr->get_print_strings(pred);
       } else {
-         if(pred->is_hash_table()) {
+         if(linear.stored_as_hash_table(pred)) {
             const hash_table *table(linear.get_hash_table(pred->get_id()));
             for(hash_table::iterator it(table->begin()); !it.end(); ++it) {
                const intrusive_list<vm::tuple> *ls(*it);

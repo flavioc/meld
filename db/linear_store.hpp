@@ -10,12 +10,13 @@
 #include "mem/base.hpp"
 #include "db/tuple.hpp"
 #include "vm/defs.hpp"
+#include "vm/bitmap.hpp"
 #include "db/intrusive_list.hpp"
 #include "db/hash_table.hpp"
 #include "utils/spinlock.hpp"
 
 #define EXPAND_HASH_TABLES 1
-#define USE_UNORDERED_MAP 1
+#define CREATE_HASHTABLE_THREADSHOLD 8
 
 namespace db
 {
@@ -25,22 +26,15 @@ struct linear_store
    public:
 
       typedef intrusive_list<vm::tuple> tuple_list;
-#ifdef USE_UNORDERED_MAP
       typedef std::unordered_map<vm::predicate_id, tuple_list*, std::hash<vm::predicate_id>,
               std::equal_to<vm::predicate_id>, mem::allocator< std::pair<const vm::predicate_id, tuple_list*> > > list_map;
       list_map lists;
-#else
-      tuple_list *lists;
-#endif
 
-#ifdef USE_UNORDERED_MAP
       typedef std::unordered_map<vm::predicate_id, hash_table*, std::hash<vm::predicate_id>,
               std::equal_to<vm::predicate_id>, mem::allocator< std::pair<const vm::predicate_id, hash_table*> > > table_map;
       table_map tables;
-#else
-      hash_table *tables;
-#endif
 
+      vm::bitmap types;
       utils::spinlock internal;
 
 #ifdef EXPAND_HASH_TABLES
@@ -52,26 +46,18 @@ struct linear_store
 
       inline hash_table* get_table(const vm::predicate_id p)
       {
-#ifdef USE_UNORDERED_MAP
          table_map::iterator it(tables.find(p));
          if(it == tables.end())
             return NULL;
          return it->second;
-#else
-         return tables + p;
-#endif
       }
 
       inline hash_table* get_table(const vm::predicate_id p) const
       {
-#ifdef USE_UNORDERED_MAP
          table_map::const_iterator it(tables.find(p));
          if(it == tables.end())
             return NULL;
          return it->second;
-#else
-         return tables + p;
-#endif
       }
 
       inline hash_table* create_table(const vm::predicate *pred)
@@ -83,28 +69,44 @@ struct linear_store
          return table;
       }
 
+      inline tuple_list* create_list(const vm::predicate *pred)
+      {
+         tuple_list *add(mem::allocator<tuple_list>().allocate(1));
+         mem::allocator<tuple_list>().construct(add);
+         lists[pred->get_id()] = add;
+         return add;
+      }
+
       inline tuple_list* get_list(const vm::predicate_id p)
       {
-#ifdef USE_UNORDERED_MAP
          list_map::iterator it(lists.find(p));
          if(it == lists.end())
             return NULL;
          return it->second;
-#else
-         return lists + p;
-#endif
       }
 
       inline const tuple_list* get_list(const vm::predicate_id p) const
       {
-#ifdef USE_UNORDERED_MAP
          list_map::const_iterator it(lists.find(p));
          if(it == lists.end())
             return NULL;
          return it->second;
-#else
-         return lists + p;
-#endif
+      }
+
+      inline hash_table *transform_list_to_hash_table(table_list *ls, const vm::predicate *pred)
+      {
+         hash_table *tbl(create_table(pred));
+
+         for(tuple_list::iterator it(ls->begin()), end(ls->end()); it != end; ) {
+            vm::tuple *tpl(*it);
+            ++it;
+            tbl->insert(tpl);
+         }
+
+         lists.erase(pred->get_id());
+         types.set_bit(pred->get_id());
+
+         return tbl;
       }
 
    public:
@@ -115,28 +117,36 @@ struct linear_store
       inline hash_table* get_hash_table(const vm::predicate_id p) { return get_table(p); }
       inline const hash_table* get_hash_table(const vm::predicate_id p) const { return get_table(p); }
 
+      inline bool stored_as_hash_table(const vm::predicate *pred) const { return types.get_bit(pred->get_id()); }
+
       inline void add_fact(vm::tuple *tpl, vm::predicate *pred)
       {
          if(pred->is_hash_table()) {
-            hash_table *table(get_table(pred->get_id()));
-#ifdef USE_UNORDERED_MAP
-            if(table == NULL)
-               table = create_table(pred);
-#endif
-            table->insert(tpl);
+            if(types.get_bit(pred->get_id())) {
+               hash_table *table(get_table(pred->get_id()));
+               if(table == NULL)
+                  table = create_table(pred);
+               table->insert(tpl);
 #ifdef EXPAND_HASH_TABLES
-            if(table->must_check_hash_table())
-               tables_to_expand.insert(table);
+               if(table->must_check_hash_table())
+                  tables_to_expand.insert(table);
 #endif
+            } else {
+               // still using a list
+               table_list *ls(get_list(pred->get_id()));
+               if(ls == NULL)
+                  ls = create_list(pred);
+
+               if(ls->get_size() + 1 >= CREATE_HASHTABLE_THREADSHOLD) {
+                  hash_table *table(transform_list_to_hash_table(ls, pred));
+                  table->insert(tpl);
+               } else
+                  ls->push_back(tpl);
+            }
          } else {
             table_list *ls(get_list(pred->get_id()));
-#ifdef USE_UNORDERED_MAP
-            if(ls == NULL) {
-               ls = mem::allocator<tuple_list>().allocate(1);
-               mem::allocator<tuple_list>().construct(ls);
-               lists.insert(std::make_pair(pred->get_id(), ls));
-            }
-#endif
+            if(ls == NULL)
+               ls = create_list(pred);
             ls->push_back(tpl);
          }
       }
@@ -145,10 +155,8 @@ struct linear_store
       {
          if(pred->is_hash_table()) {
             hash_table *table(get_table(pred->get_id()));
-#ifdef USE_UNORDERED_MAP
             if(table == NULL)
                table = create_table(pred);
-#endif
             for(tuple_list::iterator it(ls->begin()), end(ls->end()); it != end; ++it)
                table->insert(*it);
             ls->clear();
@@ -158,13 +166,8 @@ struct linear_store
 #endif
          } else {
             table_list *add(get_list(pred->get_id()));
-#ifdef USE_UNORDERED_MAP
-            if(add == NULL) {
-               add = mem::allocator<tuple_list>().allocate(1);
-               mem::allocator<tuple_list>().construct(add);
-               lists[pred->get_id()] = add;
-            }
-#endif
+            if(add == NULL)
+               add = create_list(pred);
             add->splice_back(*ls);
          }
       }
@@ -187,28 +190,13 @@ struct linear_store
 
       explicit linear_store(void)
       {
-#ifndef USE_UNORDERED_MAP
-         lists = NULL;
-         tables = NULL;
-         for(size_t i(0); i < theProgram->num_predicates(); ++i) {
-            vm::predicate *pred(theProgram->get_predicate(i));
-            if(pred->is_hash_table()) {
-               if(!tables)
-                  tables = mem::allocator<hash_table>().allocate(theProgram->num_predicates());
-               mem::allocator<hash_table>().construct(get_table(i));
-               get_table(i)->setup(pred->get_hashed_field(), pred->get_field_type(pred->get_hashed_field())->get_type());
-            } else {
-               if(!lists)
-                  lists = mem::allocator<tuple_list>().allocate(theProgram->num_predicates());
-               mem::allocator<tuple_list>().construct(get_list(i));
-            }
-         }
-#endif
+         vm::bitmap::create(types, vm::theProgram->num_predicates_next_uint());
+         types.clear(vm::theProgram->num_predicates_next_uint());
       }
 
       ~linear_store(void)
       {
-#ifdef USE_UNORDERED_MAP
+         vm::bitmap::destroy(types, vm::theProgram->num_predicates_next_uint());
          for(table_map::iterator it(tables.begin()), end(tables.end()); it != end; ++it) {
             hash_table *table(it->second);
             mem::allocator<hash_table>().destroy(table);
@@ -219,22 +207,6 @@ struct linear_store
             mem::allocator<tuple_list>().destroy(list);
             mem::allocator<tuple_list>().deallocate(list, 1);
          }
-#else
-         for(size_t i(0); i < theProgram->num_predicates(); ++i) {
-            vm::predicate *pred(theProgram->get_predicate(i));
-            if(pred->is_hash_table()) {
-               assert(tables);
-               mem::allocator<hash_table>().destroy(get_table(i));
-            } else {
-               assert(lists);
-               mem::allocator<tuple_list>().destroy(get_list(i));
-            }
-         }
-         if(tables)
-            mem::allocator<hash_table>().deallocate(tables, theProgram->num_predicates());
-         if(lists)
-            mem::allocator<tuple_list>().deallocate(lists, theProgram->num_predicates());
-#endif
       }
 };
 

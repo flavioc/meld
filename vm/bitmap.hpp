@@ -124,9 +124,18 @@ struct bitmap {
       return rest + (id - 1);
    }
 
-   inline bool get_bit(const size_t i)
+   inline BITMAP_TYPE const *get_array(const size_t i) const
    {
-      BITMAP_TYPE *p(get_array(i));
+      const size_t id(i / BITMAP_BITS);
+
+      if(id == 0)
+         return (const BITMAP_TYPE*)&first;
+      return rest + (id - 1);
+   }
+
+   inline bool get_bit(const size_t i) const
+   {
+      const BITMAP_TYPE *p(get_array(i));
 
       return *p & ((BITMAP_TYPE)0x1 << (BITMAP_TYPE)(i % BITMAP_BITS));
    }
@@ -136,6 +145,8 @@ struct bitmap {
    {
       if(size >= 2)
          b.rest = mem::allocator<BITMAP_TYPE>().allocate(size-1);
+      else
+         b.rest = NULL;
    }
 
    static inline void

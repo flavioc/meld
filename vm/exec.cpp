@@ -936,7 +936,7 @@ execute_opers_iter(const reg_num reg, match* m, const pcounter pc, const pcounte
 }
 
 static inline return_type
-execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, state& state, predicate* pred, db::intrusive_list<vm::tuple> *local_tuples)
+execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, state& state, predicate* pred, db::intrusive_list<vm::tuple> *local_tuples, int *removed = NULL)
 {
    if(local_tuples == NULL)
       return RETURN_NO_RETURN;
@@ -1008,7 +1008,7 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
 static inline return_type
 execute_linear_iter(const reg_num reg, match* m, const pcounter first, state& state, predicate *pred)
 {
-   if(pred->is_hash_table()) {
+   if(state.lstore->stored_as_hash_table(pred)) {
       const field_num hashed(pred->get_hashed_field());
       hash_table *table(state.lstore->get_hash_table(pred->get_id()));
 
@@ -1086,7 +1086,7 @@ execute_rlinear_iter_list(const reg_num reg, match* m, const pcounter first, sta
 static inline return_type
 execute_rlinear_iter(const reg_num reg, match* m, const pcounter first, state& state, predicate *pred)
 {
-   if(pred->is_hash_table()) {
+   if(state.lstore->stored_as_hash_table(pred)) {
       const field_num hashed(pred->get_hashed_field());
       hash_table *table(state.lstore->get_hash_table(pred->get_id()));
 
