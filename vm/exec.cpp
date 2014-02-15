@@ -1676,11 +1676,14 @@ execute_mvfieldfieldr(pcounter pc, state& state)
 {
    tuple *tuple_from(get_tuple_field(state, pc + instr_size));
    tuple *tuple_to(get_tuple_field(state, pc + instr_size + field_size));
+   predicate *pred_to(state.preds[val_field_reg(pc + instr_size + field_size)]);
    const field_num from(val_field_num(pc + instr_size));
    const field_num to(val_field_num(pc + instr_size + field_size));
+   const tuple_field old(tuple_to->get_field(to));
    tuple_to->set_field(to, tuple_from->get_field(from));
 
-   do_increment_runtime(tuple_from->get_field(from));
+   do_increment_runtime(tuple_to->get_field(to));
+   do_decrement_runtime(old, pred_to->get_field_type(to));
 }
 
 static inline void
