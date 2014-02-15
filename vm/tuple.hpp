@@ -107,20 +107,25 @@ public:
    inline static tuple* create(const predicate* pred) {
       const size_t size(sizeof(vm::tuple) + sizeof(tuple_field) * pred->num_fields());
       vm::tuple *ptr((vm::tuple*)mem::center::allocate(size, 1));
-      new (ptr) vm::tuple(pred);
+      ptr->init(pred);
       return ptr;
    }
 
    inline static void destroy(tuple *tpl, vm::predicate *pred) {
       const size_t size(sizeof(vm::tuple) + sizeof(tuple_field) * pred->num_fields());
       tpl->destructor(pred);
-      mem::center::deallocate(tpl, size, 1);
+      mem::allocator<utils::byte>().deallocate((utils::byte*)tpl, size);
    }
    
 private:
 
-	explicit tuple(const predicate* pred);
-	
+   inline void init(const predicate *pred)
+   {
+      flags = 0x00;
+      assert(pred != NULL);
+      memset(getfp(), 0, sizeof(tuple_field) * pred->num_fields());
+   }
+
    void destructor(vm::predicate*);
 };
 

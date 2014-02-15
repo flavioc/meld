@@ -21,13 +21,6 @@ using namespace boost;
 namespace vm
 {
    
-tuple::tuple(const predicate* pred):
-   flags(0x00)
-{
-   assert(pred != NULL);
-   memset(getfp(), 0, sizeof(tuple_field) * pred->num_fields());
-}
-
 static inline bool
 value_equal(type *t, const tuple_field& v1, const tuple_field& v2)
 {
