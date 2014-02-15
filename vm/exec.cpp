@@ -936,7 +936,7 @@ execute_opers_iter(const reg_num reg, match* m, const pcounter pc, const pcounte
 }
 
 static inline return_type
-execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, state& state, predicate* pred, db::intrusive_list<vm::tuple> *local_tuples, int *removed = NULL)
+execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, state& state, predicate* pred, db::intrusive_list<vm::tuple> *local_tuples)
 {
    if(local_tuples == NULL)
       return RETURN_NO_RETURN;
@@ -989,8 +989,6 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
          } else {
             it = local_tuples->erase(it);
             vm::tuple::destroy(match_tuple, pred);
-            if(removed)
-               *removed = *removed + 1;
             next_iter = false;
          }
       }

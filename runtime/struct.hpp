@@ -65,7 +65,6 @@ struct struct1
          const size_t size(sizeof(struct1) + sizeof(vm::tuple_field) * _typ->get_size());
          struct1 *p((struct1*)mem::allocator<utils::byte>().allocate(size));
          mem::allocator<struct1>().construct(p);
-         assert(p->fields);
          p->typ = _typ;
          return p;
       }
