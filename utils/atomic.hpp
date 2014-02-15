@@ -8,7 +8,7 @@ namespace utils
 {
    
 template <class T>
-class atomic
+struct atomic
 {
 private:
    
