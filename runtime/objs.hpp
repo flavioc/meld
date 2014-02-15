@@ -44,6 +44,7 @@ static inline void do_decrement_runtime(const vm::tuple_field& f, const vm::type
    runtime::ref_base *p((ref_base*)FIELD_PTR(f));
 
    if(p) {
+      assert(p->refs > 0);
       p->refs--;
       if(p->refs == 0) {
          switch(t->get_type()) {
