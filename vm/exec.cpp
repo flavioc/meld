@@ -989,6 +989,8 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
          } else {
             it = local_tuples->erase(it);
             vm::tuple::destroy(match_tuple, pred);
+            if(removed)
+               *removed = *removed + 1;
             next_iter = false;
          }
       }

@@ -23,74 +23,30 @@ hash_table::hash_field(const tuple_field field) const
    }
 }
 
-void
+size_t
 hash_table::insert(tuple *item)
 {
    const uint_val id(hash_tuple(item));
    table_list *bucket(table + (id % size_table));
-#ifdef MIXED_BUCKET
    bucket->push_back(item);
-#else
-   // try to find correct table_node
-   table_node *node(bucket->head);
-   for(; node != NULL; node = node->next) {
-      switch(hash_type) {
-         case FIELD_INT:
-            if(FIELD_INT(node->field) == item->get_int(hash_argument))
-               goto found;
-            break;
-         case FIELD_FLOAT:
-            if(FIELD_FLOAT(node->field) == item->get_float(hash_argument))
-               goto found;
-            break;
-         case FIELD_NODE:
-            if(FIELD_NODE(node->field) == item->get_node(hash_argument))
-               goto found;
-            break;
-         default:
-            assert(false);
-            break;
-      }
-   }
-
-   // add new table node
-   node = mem::allocator<table_node>().allocate(1);
-   mem::allocator<table_node>().construct(node);
-
-   node->field = item->get_field(hash_argument);
-   node->next = bucket->head;
-   bucket->head = node;
-   bucket->size++;
-   assert(node->ls.empty());
-
-found:
-   node->ls.push_back(item);
-#endif
-   added_so_far++;
+   return bucket->get_size();
 }
 
 void
-hash_table::expand(void)
+hash_table::change_table(const size_t new_size_table)
 {
-   const uint_val new_size_table(size_table * 2);
-   table_list *new_table(alloc().allocate(new_size_table));
+   assert(new_size_table >= HASH_TABLE_INITIAL_TABLE_SIZE);
 
-   check_limit *= 2;
+   table_list *new_table(alloc().allocate(new_size_table));
 
    for(size_t i(0); i < new_size_table; ++i) {
       table_list *ls(new_table + i);
-#ifdef MIXED_BUCKET
       alloc().construct(ls);
-#else
-      ls->head = NULL;
-      ls->size = 0;
-#endif
    }
 
    for(size_t i(0); i < size_table; ++i) {
       table_list *ls(table + i);
 
-#ifdef MIXED_BUCKET
       for(table_list::iterator it(ls->begin()), end(ls->end()); it != end; ) {
          tuple *tpl(*it);
          it++;
@@ -100,20 +56,6 @@ hash_table::expand(void)
 
          ls->push_back(tpl);
       }
-#else
-      for(table_node *node(ls->head); node != NULL; ) {
-         table_node *next(node->next);
-         const uint_val id(hash_field(node->field));
-         table_list *bucket(new_table + (id % new_size_table));
-
-         // add to bucket 'bucket'
-         node->next = bucket->head;
-         bucket->size++;
-         bucket->head = node;
-
-         node = next;
-      }
-#endif
    }
 
    // change pointers

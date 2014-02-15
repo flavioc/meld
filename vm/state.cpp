@@ -335,7 +335,7 @@ state::process_incoming_tuples(void)
       vm::predicate *pred(theProgram->get_predicate(it->first));
       if(!ls->empty()) {
          store->register_tuple_fact(pred, ls->get_size());
-         lstore->increment_database(theProgram->get_predicate(it->first), ls);
+         lstore->increment_database(theProgram->get_predicate(it->first), ls, store->matcher);
       }
    }
    if(!store->incoming_persistent_tuples.empty())
@@ -466,6 +466,7 @@ state::run_node(db::node *no)
    node->running = true;
    node->internal_lock();
 #endif
+   node->rounds++;
 	
    if(do_persistent_tuples()) {
 #ifdef CORE_STATISTICS
@@ -516,7 +517,7 @@ state::run_node(db::node *no)
          for(temporary_store::list_map::iterator it(store->generated.begin()), end(store->generated.end()); it != end; ++it) {
             db::intrusive_list<vm::tuple> *gen(it->second);
             if(!gen->empty())
-               lstore->increment_database(theProgram->get_predicate(it->first), gen);
+               lstore->increment_database(theProgram->get_predicate(it->first), gen, store->matcher);
          }
       }
       if(!do_persistent_tuples()) {
@@ -582,6 +583,9 @@ state::run_node(db::node *no)
       ++sim_instr_counter;
 #endif
    lstore->improve_index();
+   if(node->rounds > 0 && node->rounds % 5 == 0) {
+      lstore->cleanup_index();
+   }
 #ifdef FASTER_INDEXING
    node->internal_unlock();
    node->running = false;

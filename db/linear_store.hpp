@@ -15,7 +15,6 @@
 #include "db/hash_table.hpp"
 #include "utils/spinlock.hpp"
 
-#define EXPAND_HASH_TABLES 1
 #define CREATE_HASHTABLE_THREADSHOLD 8
 
 namespace db
@@ -37,10 +36,7 @@ struct linear_store
       vm::bitmap types;
       utils::spinlock internal;
 
-#ifdef EXPAND_HASH_TABLES
-      typedef std::set<hash_table*, std::less<hash_table*>, mem::allocator<hash_table*> > set_tables_expand;
-      set_tables_expand tables_to_expand;
-#endif
+      hash_table *expand;
 
    private:
 
@@ -103,10 +99,37 @@ struct linear_store
             tbl->insert(tpl);
          }
 
+         mem::allocator<tuple_list>().destroy(ls);
+         mem::allocator<tuple_list>().deallocate(ls, 1);
          lists.erase(pred->get_id());
          types.set_bit(pred->get_id());
 
          return tbl;
+      }
+
+      inline tuple_list* transform_hash_table_to_list(hash_table *tbl, const vm::predicate *pred)
+      {
+         tuple_list *ls(create_list(pred));
+
+         for(hash_table::iterator it(tbl->begin()); !it.end(); ) {
+            tuple_list *bucket_ls(*it);
+            ++it;
+
+            ls->splice_back(*bucket_ls);
+         }
+
+         mem::allocator<hash_table>().destroy(tbl);
+         mem::allocator<hash_table>().deallocate(tbl, 1);
+
+         tables.erase(pred->get_id());
+         types.unset_bit(pred->get_id());
+
+         return ls;
+      }
+
+      inline bool decide_if_expand(vm::rule_matcher& m, const vm::predicate *pred, hash_table *table) const
+      {
+         return m.get_count(pred->get_id()) >= table->get_num_buckets();
       }
 
    public:
@@ -119,18 +142,21 @@ struct linear_store
 
       inline bool stored_as_hash_table(const vm::predicate *pred) const { return types.get_bit(pred->get_id()); }
 
-      inline void add_fact(vm::tuple *tpl, vm::predicate *pred)
+      inline void add_fact(vm::tuple *tpl, vm::predicate *pred, vm::rule_matcher& m)
       {
          if(pred->is_hash_table()) {
             if(types.get_bit(pred->get_id())) {
                hash_table *table(get_table(pred->get_id()));
                if(table == NULL)
                   table = create_table(pred);
-               table->insert(tpl);
-#ifdef EXPAND_HASH_TABLES
-               if(table->must_check_hash_table())
-                  tables_to_expand.insert(table);
-#endif
+               size_t size_bucket(table->insert(tpl));
+               if(!table->next_expand && size_bucket >= CREATE_HASHTABLE_THREADSHOLD) {
+                  if(decide_if_expand(m, pred, table)) {
+                     assert(!table->next_expand);
+                     table->next_expand = expand;
+                     expand = table;
+                  }
+               }
             } else {
                // still using a list
                table_list *ls(get_list(pred->get_id()));
@@ -151,15 +177,26 @@ struct linear_store
          }
       }
 
-      inline void increment_database(vm::predicate *pred, tuple_list *ls)
+      inline void increment_database(vm::predicate *pred, tuple_list *ls, vm::rule_matcher& m)
       {
          if(pred->is_hash_table()) {
             hash_table *table(get_table(pred->get_id()));
             if(table == NULL)
                table = create_table(pred);
-            for(tuple_list::iterator it(ls->begin()), end(ls->end()); it != end; ++it)
-               table->insert(*it);
+            bool big_bucket(false);
+            for(tuple_list::iterator it(ls->begin()), end(ls->end()); it != end; ++it) {
+               const size_t size_bucket(table->insert(*it));
+               if(size_bucket >= CREATE_HASHTABLE_THREADSHOLD)
+                  big_bucket = true;
+            }
             ls->clear();
+            if(!table->next_expand && big_bucket) {
+               if(decide_if_expand(m, pred, table)) {
+                  assert(!table->next_expand);
+                  table->next_expand = expand;
+                  expand = table;
+               }
+            }
 #ifdef EXPAND_HASH_TABLES
             if(table->must_check_hash_table())
                tables_to_expand.insert(table);
@@ -174,24 +211,37 @@ struct linear_store
 
       inline void improve_index(void)
       {
-#ifdef EXPAND_HASH_TABLES
-         for(set_tables_expand::iterator it(tables_to_expand.begin()), end(tables_to_expand.end());
-               it != end; ++it)
-         {
-            hash_table *table(*it);
-            if(table->too_crowded()) {
-               table->expand();
-            }
-            table->reset_added();
+         for(hash_table *tbl(expand); tbl != NULL; ) {
+            hash_table *next(tbl->next_expand);
+            tbl->next_expand = NULL;
+            if(tbl->too_crowded())
+               tbl->expand();
+            tbl = next;
          }
-         tables_to_expand.clear();
-#endif
+      }
+
+      inline void cleanup_index(void)
+      {
+         for(vm::bitmap::iterator it(types.begin(vm::theProgram->num_predicates())); !it.end(); ++it) {
+            const vm::predicate_id id(*it);
+            hash_table *tbl(get_table(id));
+
+            if(tbl) {
+               if(tbl->too_sparse()) {
+                  if(tbl->smallest_possible())
+                     transform_hash_table_to_list(tbl, vm::theProgram->get_predicate(id));
+                  else
+                     tbl->shrink();
+               }
+            }
+         }
       }
 
       explicit linear_store(void)
       {
          vm::bitmap::create(types, vm::theProgram->num_predicates_next_uint());
          types.clear(vm::theProgram->num_predicates_next_uint());
+         expand = NULL;
       }
 
       ~linear_store(void)

@@ -31,6 +31,8 @@ public:
 	// returns true if now we do not have any tuples of this predicate
 	bool deregister_tuple(predicate *, const derivation_count);
 
+   inline pred_count get_count(const vm::predicate_id id) const { return predicate_count[id]; }
+
 	void clear_dropped_rules(void)
 	{
       dropped_bitmap.clear(theProgram->num_rules_next_uint());

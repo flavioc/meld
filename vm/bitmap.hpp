@@ -87,7 +87,10 @@ struct bitmap {
          iterator(bitmap *_b, const size_t _items):
             rest(&(_b->first)), b(_b), in_first(true), pos(0), total(0), items(_items)
          {
-            find_first_pos();
+            if(_b->rest == NULL && _b->first == (BITMAP_TYPE)0)
+               total = items; // the end...
+            else
+               find_first_pos();
          }
    };
 

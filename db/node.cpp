@@ -181,7 +181,8 @@ node::assert_end(void) const
 
 node::node(const node_id _id, const node_id _trans):
    id(_id), translation(_trans), owner(NULL), linear(),
-   store(), unprocessed_facts(false), running(false)
+   store(), unprocessed_facts(false), running(false),
+   rounds(0)
 {
 }
 
@@ -247,7 +248,7 @@ void
 node::print(ostream& cout) const
 {
    cout << "--> node " << get_translated_id() << "/(id " << get_id()
-        << ") (" << this << ") <--" << endl;
+        << ") (" << this << "/" << rounds << ") <--" << endl;
    
    for(size_t i(0); i < theProgram->num_predicates(); ++i) {
       predicate *pred(theProgram->get_sorted_predicate(i));

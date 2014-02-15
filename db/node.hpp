@@ -112,6 +112,7 @@ public:
    vm::temporary_store store;
    bool unprocessed_facts;
    bool running;
+   uint16_t rounds;
 
    inline void lock(void) { store.spin.lock(); }
    inline void unlock(void) { store.spin.unlock(); }
@@ -119,8 +120,8 @@ public:
    inline void internal_unlock(void) { linear.internal.unlock(); }
    inline void add_linear_fact(vm::tuple *tpl, vm::predicate *pred)
    {
-      linear.add_fact(tpl, pred);
       store.register_tuple_fact(pred, 1);
+      linear.add_fact(tpl, pred, store.matcher);
    }
    inline void add_work_myself(vm::tuple *tpl, vm::predicate *pred, const vm::ref_count count, const vm::depth_t depth)
    {
