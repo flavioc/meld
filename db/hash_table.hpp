@@ -159,10 +159,6 @@ struct hash_table
 
       ~hash_table(void)
       {
-         for(size_t i(0); i < size_table; ++i) {
-            table_list *ls(table + i);
-            alloc().destroy(ls);
-         }
          alloc().deallocate(table, size_table);
       }
 };
