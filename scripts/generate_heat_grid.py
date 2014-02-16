@@ -71,7 +71,26 @@ def write_inbound(id, number):
 def do_node(row, col):
 	isouter = inside_outer(row, col)
 	id = row * side + col
-	write_inbound(id, 4)
+	if row == 0:
+		if col == 0:
+			write_inbound(id, 2)
+		elif col == side - 1:
+			write_inbound(id, 2)
+		else:
+			write_inbound(id, 3)
+	elif row == side - 1:
+		if col == 0:
+			write_inbound(id, 2)
+		elif col == side - 1:
+		 	write_inbound(id, 2)
+		else:
+			write_inbound(id, 3)
+	elif col == 0:
+		write_inbound(id, 3)
+	elif col == side - 1:
+	  	write_inbound(id, 3)
+	else:
+		write_inbound(id, 4)
 	if WRITE_COORDS:
 		write_coord(id, row, col)
 	if isouter:
