@@ -1,0 +1,71 @@
+
+type inbound(node, int).
+type route edge(node, node, float).
+type coord(node, int, int).
+type inner(node).
+type linear heat(node, float).
+type linear neighbor-heat(node, node, float).
+type linear neighbor-heat-copy(node, node, float).
+type linear new-neighbor-heat(node, node, float).
+type linear start(node).
+type linear wait(node, int).
+type linear update(node).
+type linear sum-heats(node).
+type linear new-heat(node, float, float).
+type linear check-residual(node, float).
+type linear total(node, int).
+
+priority @order @desc.
+priority @cluster @static.
+priority @initial 100.
+
+const epsilon = str2float(@arg1).
+const delta = str2float(@arg2).
+
+start(A).
+
+start(A), heat(A, H), !inbound(A, T) -o {B, W | !edge(A, B, W) | new-neighbor-heat(B, A, H)},
+                                        wait(A, T),
+                                        heat(A, H),
+                                        total(A, 0).
+
+sum-heats(A),
+heat(A, H),
+total(A, N),
+!inbound(A, T)
+   -o [sum => X | B | neighbor-heat-copy(A, B, X) | new-heat(A, (X + H) / float(T + 1), H)],
+      total(A, N + 1).
+
+new-heat(A, New, Old)
+   -o {B, W | !edge(A, B, W) | new-neighbor-heat(B, A, New)},
+      heat(A, New),
+      check-residual(A, if (New - Old > 0.0) then (New - Old) else (Old - New) end).
+
+check-residual(A, R),
+R > delta
+   -o {B, W | !edge(A, B, W) | set-priority(B, R), update(B)}.
+
+check-residual(A, R),
+R > epsilon
+   -o {B, W | !edge(A, B, W) | update(B)}.
+
+check-residual(A, R)
+   -o 1.
+
+new-neighbor-heat(A, B, Heat),
+neighbor-heat(A, B, OldHeat)
+   -o neighbor-heat(A, B, Heat).
+
+new-neighbor-heat(A, B, Heat),
+wait(A, T),
+T > 0
+   -o wait(A, T - 1),
+      neighbor-heat(A, B, Heat).
+
+wait(A, 0)
+   -o update(A).
+
+update(A), update(A) -o update(A).
+update(A)
+   -o {B, H | neighbor-heat(A, B, H) | neighbor-heat-copy(A, B, H), neighbor-heat(A, B, H)},
+      sum-heats(A).
