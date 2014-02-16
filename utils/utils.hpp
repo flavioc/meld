@@ -9,6 +9,9 @@
 namespace utils
 {
 
+#define true_likely(x)      __builtin_expect(!!(x), 1)
+#define false_likely(x)    __builtin_expect(!!(x), 0)
+
 size_t number_cpus(void);
 
 template <typename T>

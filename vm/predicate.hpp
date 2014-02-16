@@ -85,6 +85,8 @@ public:
 
    typedef std::vector<rule_id>::const_iterator rule_iterator;
 
+   inline bitmap& get_rules_map(void) { return rule_map; }
+
    inline rule_iterator begin_rules(void) const
    {
       return affected_rules.begin();

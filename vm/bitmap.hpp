@@ -97,7 +97,7 @@ struct bitmap {
 
    inline bool empty(const size_t size) const
    {
-      if(size == 1)
+      if(true_likely(size == 1))
          return first == (BITMAP_TYPE)0;
       else {
          if(first != (BITMAP_TYPE)0)
@@ -113,14 +113,14 @@ struct bitmap {
    inline void clear(const size_t size)
    {
       first = 0;
-      if(size > 1)
+      if(false_likely(size > 1))
          memset(rest, 0, sizeof(BITMAP_TYPE) * (size-1));
    }
 
 #define BITMAP_GET_BIT(ARR, POS) ((ARR) & ((BITMAP_TYPE)0x1 << (BITMAP_TYPE)(POS)))
 
    inline size_t front(const size_t size) {
-      if(size == 1) {
+      if(true_likely(size == 1)) {
          if(first != (BITMAP_TYPE)0)
             return ffsl(first) - 1;
          return -1;
@@ -143,7 +143,7 @@ struct bitmap {
    }
 
    inline void unset_front(const size_t size) {
-      if(size == 1) {
+      if(true_likely(size == 1)) {
          assert(first != (BITMAP_TYPE)0);
          first = first & (first - (BITMAP_TYPE)1);
       } else {
@@ -162,7 +162,7 @@ struct bitmap {
    }
 
    inline size_t remove_front(const size_t size) {
-      if(size == 1) {
+      if(true_likely(size == 1)) {
          assert(first != (BITMAP_TYPE)0);
          const size_t ret(ffsl(first) - 1);
          first = first & (first - (BITMAP_TYPE)1);
@@ -191,13 +191,21 @@ struct bitmap {
    inline void unset_bits(bitmap& other, const size_t size)
    {
       // we assume that both have same size!
-      if(size == 1) {
+      if(true_likely(size == 1))
          first = first & ~(other.first);
-      } else {
+      else {
          first = first & ~(other.first);
          for(size_t i(0); i < size - 1; ++i)
             *(rest + i) = *(rest + i) & ~(*(other.rest + i));
       }
+   }
+
+   // and the two arguments and set the corresponding bits on our bitmap
+   inline void set_bits_of_and_result(const bitmap& a, const bitmap& b, const size_t size)
+   {
+      first = first | (a.first & b.first);
+      for(size_t i(0); i < size - 1; ++i)
+         *(rest + i) = *(rest + i) | (*(a.rest + i) & *(b.rest + i));
    }
 
    // set bit to true

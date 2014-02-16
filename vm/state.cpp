@@ -92,28 +92,14 @@ state::setup(vm::predicate *pred, db::node *n, const derivation_count count, con
 void
 state::mark_active_rules(void)
 {
-   for(bitmap::iterator it(store->matcher.active_rules_iterator());
+   for(bitmap::iterator it(store->matcher.predicates.begin(theProgram->num_predicates()));
          !it.end(); it++)
-	{
-		rule_id rid(*it);
-		if(!rule_queue.get_bit(rid)) {
-			// we need check if at least one predicate was activated in this loop
-			vm::rule *rule(theProgram->get_rule(rid));
-         bool flag = false;
-         for(rule::predicate_iterator jt(rule->begin_predicates()), endj(rule->end_predicates());
-               jt != endj;
-               jt++)
-         {
-            const predicate *pred(*jt);
-            if(store->matcher.predicates.get_bit(pred->get_id())) {
-               flag = true;
-               break;
-            }
-         }
-			if(flag)
-            rule_queue.set_bit(rid);
-		}
-	}
+   {
+      const predicate_id p(*it);
+      predicate *pred(theProgram->get_predicate(p));
+      rule_queue.set_bits_of_and_result(pred->get_rules_map(), store->matcher.active_bitmap,
+            theProgram->num_rules_next_uint());
+   }
 	
    rule_queue.unset_bits(store->matcher.dropped_bitmap, theProgram->num_rules_next_uint());
    store->matcher.clear_dropped_rules();
