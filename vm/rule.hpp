@@ -9,6 +9,7 @@
 #include "conf.hpp"
 #include "vm/defs.hpp"
 #include "vm/predicate.hpp"
+#include "vm/bitmap.hpp"
 
 namespace vm
 {
@@ -24,6 +25,7 @@ class rule
 		typedef std::vector<predicate*> predicate_vector;
       predicate_vector predicates;
       bool is_persistent;
+      bitmap predicate_map;
 
    public:
 	
@@ -32,7 +34,11 @@ class rule
       inline rule_id get_id(void) const { return id; }
 		inline const std::string get_string(void) const { return str; }
 
-      inline void add_predicate(predicate *p) { predicates.push_back(p); }
+      inline void add_predicate(predicate *p) {
+         predicates.push_back(p);
+         predicate_map.set_bit(p->get_id());
+      }
+
       inline void set_bytecode(code_size_t _size, byte_code _code) {
 			code_size = _size;
 			code = _code;
@@ -49,10 +55,18 @@ class rule
 		inline predicate_iterator begin_predicates(void) const { return predicates.begin(); }
 		inline predicate_iterator end_predicates(void) const { return predicates.end(); }
 
-      explicit rule(const rule_id _id, const std::string& _str):
-         id(_id), str(_str), is_persistent(false) { }
+      explicit rule(const rule_id _id, const std::string& _str, const size_t predicates_next_uint):
+         id(_id), str(_str), is_persistent(false)
+      {
+         bitmap::create(predicate_map, predicates_next_uint);
+         predicate_map.clear(predicates_next_uint);
+      }
 
-		~rule(void) { delete []code; }
+      inline void destroy(const size_t predicates_next_uint)
+      {
+         delete []code;
+         bitmap::destroy(predicate_map, predicates_next_uint);
+      }
 };
 
 }

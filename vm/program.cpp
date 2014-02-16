@@ -103,6 +103,7 @@ program::program(const string& _filename):
 	read.read_type<byte>(&num_preds);
    
    const size_t num_predicates = (size_t)num_preds;
+   num_predicates_uint = next_multiple_of_uint(num_predicates);
    
    predicates.resize(num_predicates);
    sorted_predicates.resize(num_predicates);
@@ -199,7 +200,7 @@ program::program(const string& _filename):
 
       str[rule_len] = '\0';
 
-      rules.push_back(new rule((rule_id)i, string(str)));
+      rules.push_back(new rule((rule_id)i, string(str), num_predicates_uint));
    }
 
 	// read string constants
@@ -302,7 +303,7 @@ program::program(const string& _filename):
       code_size_t size;
 
       sorted_predicates[i] = predicates[i] =
-         predicate::make_predicate_from_reader(read, &size, (predicate_id)i, major_version, minor_version, types);
+         predicate::make_predicate_from_reader(read, &size, (predicate_id)i, major_version, minor_version, types, number_rules_uint);
       code_size[i] = size;
 
       MAX_STRAT_LEVEL = max(predicates[i]->get_strat_level() + 1, MAX_STRAT_LEVEL);
@@ -321,8 +322,6 @@ program::program(const string& _filename):
          //predicates[i]->store_as_hash_table(0);
       }
    }
-
-   num_predicates_uint = next_multiple_of_uint(num_predicates);
 
    // create 'sorted_predicates' from 'predicates'
    sort(sorted_predicates.begin(), sorted_predicates.end(), predicate_sorter);
@@ -425,7 +424,7 @@ program::program(const string& _filename):
          read.read_type<predicate_id>(&id);
          predicate *pred(predicates[id]);
 
-         pred->affected_rules.push_back(i);
+         pred->add_affected_rule(i);
          rules[i]->add_predicate(pred);
       }
    }
@@ -439,10 +438,12 @@ program::~program(void)
       delete types[i];
    }
    for(size_t i(0); i < num_predicates(); ++i) {
+      predicates[i]->destroy(number_rules_uint);
       delete predicates[i];
       delete []code[i];
    }
 	for(size_t i(0); i < num_rules(); ++i) {
+      rules[i]->destroy(num_predicates_uint);
 		delete rules[i];
 	}
    if(data_rule != NULL)

@@ -68,7 +68,8 @@ read_type_id_from_reader(code_reader& read, const vector<type*>& types)
 predicate*
 predicate::make_predicate_from_reader(code_reader& read, code_size_t *code_size, const predicate_id id,
       const uint32_t major_version, const uint32_t minor_version,
-      const vector<type*>& types)
+      const vector<type*>& types,
+      const size_t rules_next_uint)
 {
    predicate *pred = new predicate();
    
@@ -168,6 +169,9 @@ predicate::make_predicate_from_reader(code_reader& read, code_size_t *code_size,
          pred->agg_info->safeness = AGG_UNSAFE;
       }
    }
+
+   bitmap::create(pred->rule_map, rules_next_uint);
+   pred->rule_map.clear(rules_next_uint);
    
    return pred;
 }
@@ -217,9 +221,15 @@ predicate::predicate(void): store_type(LINKED_LIST)
    agg_info = NULL;
 }
 
+void
+predicate::destroy(const size_t rules_next_uint)
+{
+   bitmap::destroy(rule_map, rules_next_uint);
+   delete agg_info;
+}
+
 predicate::~predicate(void)
 {
-   delete agg_info;
    // types are not deleted here, they are deleted in vm/program.
 }
 

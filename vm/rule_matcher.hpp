@@ -5,6 +5,7 @@
 #include "vm/predicate.hpp"
 #include "vm/tuple.hpp"
 #include "vm/bitmap.hpp"
+#include "vm/all.hpp"
 
 namespace vm
 {

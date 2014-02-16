@@ -10,6 +10,7 @@
 #include "vm/defs.hpp"
 #include "utils/types.hpp"
 #include "vm/reader.hpp"
+#include "vm/bitmap.hpp"
 
 namespace vm {
 
@@ -60,6 +61,13 @@ private:
    bool is_cycle;
 
    std::vector<rule_id> affected_rules;
+   bitmap rule_map;
+
+   inline void add_affected_rule(const rule_id rule)
+   {
+      affected_rules.push_back(rule);
+      rule_map.set_bit(rule);
+   }
 
    store_type_t store_type;
    field_num hash_argument;
@@ -70,7 +78,8 @@ private:
    
    explicit predicate(void);
 
-   virtual ~predicate(void);
+   void destroy(const size_t);
+   ~predicate(void);
    
 public:
 
@@ -148,7 +157,8 @@ public:
    }
    
    static predicate* make_predicate_from_reader(code_reader&, code_size_t *,
-         const predicate_id, const uint32_t, const uint32_t, const std::vector<type*>&);
+         const predicate_id, const uint32_t, const uint32_t, const std::vector<type*>&,
+         const size_t);
 };
 
 type* read_type_from_reader(code_reader&);

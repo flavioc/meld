@@ -7,7 +7,6 @@
 #include "vm/defs.hpp"
 #include "utils/utils.hpp"
 #include "mem/allocator.hpp"
-#include "vm/all.hpp"
 #include <iostream>
 
 namespace vm
