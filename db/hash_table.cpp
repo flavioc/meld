@@ -38,11 +38,7 @@ hash_table::change_table(const size_t new_size_table)
    assert(new_size_table >= HASH_TABLE_INITIAL_TABLE_SIZE);
 
    table_list *new_table(alloc().allocate(new_size_table));
-
-   for(size_t i(0); i < new_size_table; ++i) {
-      table_list *ls(new_table + i);
-      alloc().construct(ls);
-   }
+   memset(new_table, 0, sizeof(table_list)*new_size_table);
 
    for(size_t i(0); i < size_table; ++i) {
       table_list *ls(table + i);

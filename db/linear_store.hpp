@@ -91,23 +91,26 @@ struct linear_store
       inline tuple_list* transform_hash_table_to_list(hash_table *tbl, const vm::predicate *pred)
       {
          hash_table::iterator it(tbl->begin());
+         assert(tbl->next_expand == NULL);
          tuple_list ls;
          // cannot get list immediatelly since that would remove the pointer to the hash table data
 
+         size_t total_size(0);
          while(!it.end()) {
             tuple_list *bucket_ls(*it);
             ++it;
 
+            total_size += bucket_ls->get_size();
             ls.splice_back(*bucket_ls);
          }
+         assert(ls.get_size() == total_size);
 
          mem::allocator<hash_table>().destroy(tbl);
-         tuple_list *target(create_list(pred));
-         memcpy(target, &ls, sizeof(tuple_list));
+         memcpy(tbl, &ls, sizeof(tuple_list));
 
          types.unset_bit(pred->get_id());
 
-         return target;
+         return (tuple_list*)tbl;
       }
 
       inline bool decide_if_expand(vm::rule_matcher& m, const vm::predicate *pred, hash_table *table) const
@@ -157,20 +160,37 @@ struct linear_store
       inline void increment_database(vm::predicate *pred, tuple_list *ls, vm::rule_matcher& m)
       {
          if(pred->is_hash_table()) {
-            hash_table *table(get_table(pred->get_id()));
-            bool big_bucket(false);
-            for(tuple_list::iterator it(ls->begin()), end(ls->end()); it != end; ++it) {
-               const size_t size_bucket(table->insert(*it));
-               if(size_bucket >= CREATE_HASHTABLE_THREADSHOLD)
-                  big_bucket = true;
-            }
-            ls->clear();
-            if(!table->next_expand && big_bucket) {
-               if(decide_if_expand(m, pred, table)) {
-                  assert(!table->next_expand);
-                  table->next_expand = expand;
-                  expand = table;
+            if(stored_as_hash_table(pred)) {
+               hash_table *table(get_table(pred->get_id()));
+               bool big_bucket(false);
+               for(tuple_list::iterator it(ls->begin()), end(ls->end()); it != end;) {
+                  vm::tuple *tpl(*it);
+                  it++;
+                  const size_t size_bucket(table->insert(tpl));
+                  if(size_bucket >= CREATE_HASHTABLE_THREADSHOLD)
+                     big_bucket = true;
                }
+               ls->clear();
+               if(!table->next_expand && big_bucket) {
+                  if(decide_if_expand(m, pred, table)) {
+                     assert(!table->next_expand);
+                     table->next_expand = expand;
+                     expand = table;
+                  }
+               }
+            } else {
+               table_list *add(get_list(pred->get_id()));
+
+               if(add->get_size() + ls->get_size() >= CREATE_HASHTABLE_THREADSHOLD) {
+                  hash_table *table(transform_list_to_hash_table(add, pred));
+                  for(tuple_list::iterator it(ls->begin()), end(ls->end()); it != end; ) {
+                     vm::tuple *tpl(*it);
+                     it++;
+                     table->insert(tpl);
+                  }
+                  ls->clear();
+               } else
+                  add->splice_back(*ls);
             }
          } else {
             table_list *add(get_list(pred->get_id()));
@@ -180,12 +200,12 @@ struct linear_store
 
       inline void improve_index(void)
       {
-         for(hash_table *tbl(expand); tbl != NULL; ) {
-            hash_table *next(tbl->next_expand);
-            tbl->next_expand = NULL;
-            if(tbl->too_crowded())
-               tbl->expand();
-            tbl = next;
+         while(expand) {
+            hash_table *next(expand->next_expand);
+            expand->next_expand = NULL;
+            if(expand->too_crowded())
+               expand->expand();
+            expand = next;
          }
       }
 

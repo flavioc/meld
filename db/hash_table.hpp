@@ -138,7 +138,7 @@ struct hash_table
          for(size_t i(0); i < size_table; ++i) {
             table_list *ls(table + i);
             total += ls->get_size();
-            if(total > size_table)
+            if(total >= size_table)
                return false;
          }
          return true;
@@ -148,13 +148,10 @@ struct hash_table
       {
          hash_argument = field;
          hash_type = type;
-         size_table = HASH_TABLE_INITIAL_TABLE_SIZE;
          next_expand = NULL;
-         table = alloc().allocate(HASH_TABLE_INITIAL_TABLE_SIZE);
-         for(size_t i(0); i < size_table; ++i) {
-            table_list *ls(table + i);
-            alloc().construct(ls);
-         }
+         size_table = HASH_TABLE_INITIAL_TABLE_SIZE;
+         table = alloc().allocate(size_table);
+         memset(table, 0, sizeof(table_list)*size_table);
       }
 
       ~hash_table(void)
