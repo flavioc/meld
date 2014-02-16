@@ -1393,6 +1393,54 @@ execute_calle(pcounter pc, state& state)
 }
 
 static inline void
+execute_set_priority(pcounter& pc, state& state)
+{
+   const reg_num prio_reg(pcounter_reg(pc + instr_size));
+   const reg_num node_reg(pcounter_reg(pc + instr_size + reg_val_size));
+   const float_val prio(state.get_float(prio_reg));
+   const node_val node(state.get_node(node_reg));
+
+#ifdef USE_REAL_NODES
+   state.sched->set_node_priority((db::node*)node, prio);
+#else
+   state.sched->set_node_priority(All->DATABASE->find_node(node), prio);
+#endif
+}
+
+static inline void
+execute_set_priority_here(pcounter& pc, state& state)
+{
+   const reg_num prio_reg(pcounter_reg(pc + instr_size));
+   const float_val prio(state.get_float(prio_reg));
+
+   state.sched->set_node_priority(state.node, prio);
+}
+
+static inline void
+execute_add_priority(pcounter& pc, state& state)
+{
+   const reg_num prio_reg(pcounter_reg(pc + instr_size));
+   const reg_num node_reg(pcounter_reg(pc + instr_size + reg_val_size));
+   const float_val prio(state.get_float(prio_reg));
+   const node_val node(state.get_node(node_reg));
+
+#ifdef USE_REAL_NODES
+   state.sched->add_node_priority((db::node*)node, prio);
+#else
+   state.sched->add_node_priority(All->DATABASE->find_node(node), prio);
+#endif
+}
+
+static inline void
+execute_add_priority_here(pcounter& pc, state& state)
+{
+   const reg_num prio_reg(pcounter_reg(pc + instr_size));
+   const float_val prio(state.get_float(prio_reg));
+
+   state.sched->add_node_priority(state.node, prio);
+}
+
+static inline void
 execute_rule(const pcounter& pc, state& state)
 {
    const size_t rule_id(rule_get_id(pc));
@@ -2459,13 +2507,6 @@ eval_loop:
             pc += iter_outer_jump(pc);                                           \
             JUMP_NEXT()
 
-         CASE(ITER_INSTR)
-            COMPLEX_JUMP(iter)
-            {
-               throw vm_exec_error("ITER instruction no longer supported");
-            }
-         ENDOP()
-
          CASE(PERS_ITER_INSTR)
             COMPLEX_JUMP(pers_iter)
             {
@@ -3308,6 +3349,30 @@ eval_loop:
          CASE(CALLE_INSTR)
             JUMP(calle, CALLE_BASE * calle_num_args(pc))
             execute_calle(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(SET_PRIORITY_INSTR)
+            JUMP(set_priority, SET_PRIORITY_BASE)
+            execute_set_priority(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(SET_PRIORITYH_INSTR)
+            JUMP(set_priorityh, SET_PRIORITYH_BASE)
+            execute_set_priority_here(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(ADD_PRIORITY_INSTR)
+            JUMP(add_priority, ADD_PRIORITY_BASE)
+            execute_add_priority(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(ADD_PRIORITYH_INSTR)
+            JUMP(add_priorityh, ADD_PRIORITYH_BASE)
+            execute_add_priority_here(pc, state);
             ADVANCE()
          ENDOP()
 

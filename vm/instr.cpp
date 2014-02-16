@@ -411,28 +411,6 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
             return pc + iter_outer_jump(pc);
          }
          break;
-   	case ITER_INSTR: {
-				const byte opts(iter_options(pc));
-            
-            cout << "ITERATE OVER " << prog->get_predicate(iter_predicate(pc))->get_name() << " (";
-
-				if(iter_options_random(opts))
-					cout << "r";
-				if(iter_options_to_delete(opts))
-					cout << "d";
-				if(iter_options_min(opts))
-					cout << "m" << iter_options_min_arg(iter_options_argument(pc));
-
-				cout << ") MATCHING TO " << reg_string(iter_reg(pc)) << endl;
-
-            print_iter_matches(pc, ITER_BASE, tabcount, prog);
-
-            if(recurse) {
-               instrs_print_until(pc + iter_inner_jump(pc), pc + iter_outer_jump(pc), tabcount + 1, prog, cout);
-               return pc + iter_outer_jump(pc);
-            }
-   		}
-   		break;
    	case NEXT_INSTR:
          cout << "NEXT" << endl;
          break;
@@ -885,6 +863,18 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          break;
       case MVFLOATSTACK_INSTR:
          cout << "MVFLOATSTACK " << float_string(pcounter_float(pc + instr_size)) << " TO " << stack_string(pcounter_stack(pc + instr_size + float_size)) << endl;
+         break;
+      case SET_PRIORITY_INSTR:
+         cout << "SET PRIORITY " << reg_string(pcounter_reg(pc + instr_size)) << " ON " << reg_string(pcounter_reg(pc + instr_size + reg_val_size)) << endl;
+         break;
+      case SET_PRIORITYH_INSTR:
+         cout << "SET PRIORITY " << reg_string(pcounter_reg(pc + instr_size)) << endl;
+         break;
+      case ADD_PRIORITY_INSTR:
+         cout << "ADD PRIORITY " << reg_string(pcounter_reg(pc + instr_size)) << " ON " << reg_string(pcounter_reg(pc + instr_size + reg_val_size)) << endl;
+         break;
+      case ADD_PRIORITYH_INSTR:
+         cout << "ADD PRIORITY " << reg_string(pcounter_reg(pc + instr_size)) << endl;
          break;
 		default:
          throw malformed_instr_error("unknown instruction code");

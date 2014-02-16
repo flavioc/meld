@@ -14,7 +14,6 @@ type linear neighbor-belief-old(node, node, list float).
 
 type linear start(node).
 type linear update(node).
-type linear copy-messages(node).
 type linear sum-messages(node, list float).
 type linear update-messages(node, list float).
 type linear check-residual(node, node, float, list float).
@@ -34,20 +33,10 @@ start(A) -o belief(A, initial-belief),
                                sent-neighbor-belief(A, B, initial-message)},
             update(A).
 
-// if we have two update functions, just run one of them
-update(A), update(A) -o update(A).
-
 // new neighbor beliefs
 neighbor-belief(A, B, Belief),
 new-neighbor-belief(A, B, NewBelief)
    -o neighbor-belief(A, B, NewBelief).
-
-// make a copy of neighbors beliefs in order to add them up
-copy-messages(A),
-!potential(A, Potential),
-belief(A, MyBelief)
-   -o {B, Belief | neighbor-belief(A, B, Belief) | neighbor-belief-old(A, B, Belief), neighbor-belief-copy(A, Belief), neighbor-belief(A, B, Belief)},
-      sum-messages(A, Potential).
 
 // ... adding them up
 sum-messages(A, L1),
@@ -81,6 +70,13 @@ OutMessage = damp(Convolved, OldOut, damping)
 // all beliefs were sent!
 update-messages(A, NewBelief) -o 1.
 
-// this starts the update process
-update(A) -o copy-messages(A).
+// if we have two update functions, just run one of them
+update(A), update(A) -o update(A).
+
+// make a copy of neighbors beliefs in order to add them up
+update(A),
+!potential(A, Potential),
+belief(A, MyBelief)
+   -o {B, Belief | neighbor-belief(A, B, Belief) | neighbor-belief-old(A, B, Belief), neighbor-belief-copy(A, Belief), neighbor-belief(A, B, Belief)},
+      sum-messages(A, Potential).
 

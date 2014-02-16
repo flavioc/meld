@@ -155,6 +155,10 @@ const size_t ADDPERS_BASE        = ADDLINEAR_BASE;
 const size_t RUNACTION_BASE      = ADDLINEAR_BASE;
 const size_t ENQUEUE_LINEAR_BASE = ADDLINEAR_BASE;
 const size_t UPDATE_BASE         = instr_size + reg_val_size;
+const size_t SET_PRIORITY_BASE   = instr_size + 2 * reg_val_size;
+const size_t SET_PRIORITYH_BASE  = instr_size + reg_val_size;
+const size_t ADD_PRIORITY_BASE   = instr_size + 2 * reg_val_size;
+const size_t ADD_PRIORITYH_BASE  = instr_size + reg_val_size;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -185,8 +189,8 @@ enum instr_type {
    POP_REGS_INSTR       =  0x19,
    CALLF_INSTR          =  0x1A,
    CALLE_INSTR          =  0x1B,
+   SET_PRIORITY_INSTR   =  0x1C,
    MAKE_STRUCTR_INSTR   =  0x1D,
-   MVNILFIELD_INSTR	   =  0x70,
    MVINTFIELD_INSTR     =  0x1E,
    MVINTREG_INSTR       =  0x1F,
    CALL_INSTR		      =  0x20,
@@ -205,6 +209,7 @@ enum instr_type {
    MVFLOATFIELD_INSTR   =  0x2D,
    MVFLOATREG_INSTR     =  0x2E,
    MVINTCONST_INSTR     =  0x2F,
+   SET_PRIORITYH_INSTR  =  0x30,
    MVWORLDFIELD_INSTR   =  0x31,
    MVSTACKPCOUNTER_INSTR=  0x32,
    MVPCOUNTERSTACK_INSTR=  0x33,
@@ -268,6 +273,7 @@ enum instr_type {
    PUSHN_INSTR          =  0x6D,
    MAKE_STRUCTF_INSTR   =  0x6E,
    STRUCT_VALRR_INSTR   =  0x6F,
+   MVNILFIELD_INSTR	   =  0x70,
    STRUCT_VALFR_INSTR   =  0x71,
    STRUCT_VALRF_INSTR   =  0x72,
    STRUCT_VALRFR_INSTR  =  0x73,
@@ -282,7 +288,8 @@ enum instr_type {
    MVARGREG_INSTR       =  0x7C,
    INTMOD_INSTR         =  0x7D,
    REMOVE_INSTR 	      =  0x80,
-   ITER_INSTR		      =  0xA0,
+   ADD_PRIORITY_INSTR   =  0xA0,
+   ADD_PRIORITYH_INSTR  =  0xA1,
    RETURN_LINEAR_INSTR  =  0xD0,
    RETURN_DERIVED_INSTR =  0xF0
 };
@@ -582,7 +589,6 @@ advance(const pcounter pc)
       case FLOAT_INSTR:
          return pc + FLOAT_BASE;
                    
-      case ITER_INSTR:
       case PERS_ITER_INSTR:
       case OPERS_ITER_INSTR:
       case LINEAR_ITER_INSTR:
@@ -868,6 +874,18 @@ advance(const pcounter pc)
 
       case CONSFFF_INSTR:
          return pc + CONSFFF_BASE;
+
+      case SET_PRIORITY_INSTR:
+         return pc + SET_PRIORITY_BASE;
+
+      case SET_PRIORITYH_INSTR:
+         return pc + SET_PRIORITYH_BASE;
+
+      case ADD_PRIORITY_INSTR:
+         return pc + ADD_PRIORITY_BASE;
+
+      case ADD_PRIORITYH_INSTR:
+         return pc + ADD_PRIORITYH_BASE;
 
       default:
          throw malformed_instr_error("unknown instruction code (advance)");
