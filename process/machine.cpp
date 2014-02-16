@@ -94,13 +94,6 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, vm::predicat
       }
 #endif
       break;
-      case SET_PRIORITY_PREDICATE_ID:
-         assert(sched);
-         sched->set_node_priority(node, tpl->get_float(0));
-      break;
-      case ADD_PRIORITY_PREDICATE_ID:
-         sched->add_node_priority(node, tpl->get_float(0));
-      break;
       case WRITE_STRING_PREDICATE_ID: {
          runtime::rstring::ptr s(tpl->get_string(0));
 
