@@ -96,7 +96,7 @@ state::mark_active_rules(void)
          !it.end(); it++)
 	{
 		rule_id rid(*it);
-		if(!store->rules.get_bit(rid)) {
+		if(!rule_queue.get_bit(rid)) {
 			// we need check if at least one predicate was activated in this loop
 			vm::rule *rule(theProgram->get_rule(rid));
          bool flag = false;
@@ -105,32 +105,17 @@ state::mark_active_rules(void)
                jt++)
          {
             const predicate *pred(*jt);
-            if(store->predicates.get_bit(pred->get_id())) {
+            if(store->matcher.predicates.get_bit(pred->get_id())) {
                flag = true;
                break;
             }
          }
-			if(flag) {
-				store->rules.set_bit(rid);
-				heap_priority pr;
-				pr.int_priority = (int)rid;
-				rule_queue.insert(rid, pr);
-			}
+			if(flag)
+            rule_queue.set_bit(rid);
 		}
 	}
 	
-   for(bitmap::iterator it(store->matcher.dropped_rules_iterator());
-         !it.end(); ++it)
-	{
-		rule_id rid(*it);
-		if(store->rules.get_bit(rid)) {
-			store->rules.unset_bit(rid);
-         heap_priority pr;
-         pr.int_priority = (int)rid;
-			rule_queue.remove(rid, pr);
-		}
-	}
-
+   rule_queue.unset_bits(store->matcher.dropped_bitmap, theProgram->num_rules_next_uint());
    store->matcher.clear_dropped_rules();
 }
 
@@ -392,9 +377,7 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
       } else {
          store->matcher.register_tuple(pred, stpl->get_count(), is_new);
 
-         if(is_new) {
-            store->mark(pred);
-         } else {
+         if(!is_new) {
             vm::tuple::destroy(tpl, pred);
          }
       }
@@ -477,14 +460,13 @@ state::run_node(db::node *no)
       // if using the simulator, we check if we exhausted the available time to run
       aborted = true;
 
-	while(!rule_queue.empty() && !aborted) {
+	while(!rule_queue.empty(theProgram->num_rules_next_uint()) && !aborted) {
 #ifdef USE_SIM
       if(check_instruction_limit()) {
          break;
       }
 #endif
-
-		rule_id rule(rule_queue.pop());
+		rule_id rule(rule_queue.remove_front(theProgram->num_rules_next_uint()));
 		
 #ifdef DEBUG_RULES
       cout << "Run rule " << theProgram->get_rule(rule)->get_string() << endl;
@@ -495,8 +477,7 @@ state::run_node(db::node *no)
 #ifdef CORE_STATISTICS
 			execution_time::scope s(stat.core_engine_time);
 #endif
-			store->rules.unset_bit(rule);
-         store->clear_predicates();
+         store->matcher.clear_predicates();
 		}
 		
 		setup(NULL, node, 1, 0);
@@ -562,7 +543,9 @@ state::run_node(db::node *no)
 	}
 #endif
 
-   rule_queue.clear();
+   if(aborted)
+      rule_queue.clear(theProgram->num_rules_next_uint());
+   assert(rule_queue.empty(theProgram->num_rules_next_uint()));
 
 #ifdef USE_SIM
    // store any remaining persistent tuples
@@ -601,7 +584,8 @@ state::state(sched::base *_sched):
    , stat()
 #endif
 {
-	rule_queue.set_type(HEAP_INT_ASC);
+   bitmap::create(rule_queue, theProgram->num_rules_next_uint());
+   rule_queue.clear(theProgram->num_rules_next_uint());
 #ifdef USE_SIM
    sim_instr_use = false;
 #endif
@@ -628,6 +612,7 @@ state::~state(void)
       stat.print(cout);
 	}
 #endif
+   bitmap::destroy(rule_queue, theProgram->num_rules_next_uint());
 	assert(rule_queue.empty());
    for(match_list::iterator it(matches_created.begin()), end(matches_created.end()); it != end; ++it) {
       match *obj(*it);

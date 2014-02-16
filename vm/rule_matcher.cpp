@@ -73,6 +73,7 @@ rule_matcher::register_tuple(predicate *pred, const derivation_count count, cons
 	}
 
    predicate_count[id] += count;
+   predicates.set_bit(id);
 	return ret;
 }
 
@@ -115,6 +116,9 @@ rule_matcher::rule_matcher(void)
       assert(rl->num_predicates() <= 255);
 	}
 #endif
+
+   bitmap::create(predicates, theProgram->num_predicates_next_uint());
+   clear_predicates();
 }
 
 rule_matcher::~rule_matcher(void)
@@ -123,6 +127,7 @@ rule_matcher::~rule_matcher(void)
    mem::allocator<utils::byte>().deallocate(rules, theProgram->num_rules());
    bitmap::destroy(active_bitmap, theProgram->num_rules_next_uint());
    bitmap::destroy(dropped_bitmap, theProgram->num_rules_next_uint());
+   bitmap::destroy(predicates, theProgram->num_predicates_next_uint());
 }
 
 }

@@ -96,11 +96,109 @@ struct bitmap {
 
    inline iterator begin(const size_t items) { return iterator(this, items); }
 
+   inline bool empty(const size_t size) const
+   {
+      if(size == 1)
+         return first == (BITMAP_TYPE)0;
+      else {
+         if(first != (BITMAP_TYPE)0)
+            return false;
+         for(size_t i(0); i < size-1; ++i) {
+            if(*(rest + i) != (BITMAP_TYPE)0)
+               return false;
+         }
+         return true;
+      }
+   }
+
    inline void clear(const size_t size)
    {
       first = 0;
       if(size > 1)
          memset(rest, 0, sizeof(BITMAP_TYPE) * (size-1));
+   }
+
+#define BITMAP_GET_BIT(ARR, POS) ((ARR) & ((BITMAP_TYPE)0x1 << (BITMAP_TYPE)(POS)))
+
+   inline size_t front(const size_t size) {
+      if(size == 1) {
+         if(first != (BITMAP_TYPE)0)
+            return ffsl(first) - 1;
+         return -1;
+      } else {
+         if(first != (BITMAP_TYPE)0)
+            return ffsl(first) - 1;
+         else {
+            int pos = BITMAP_BITS;
+            // look into others
+            for(size_t j(0); j < size - 1; ++j) {
+               BITMAP_TYPE a(*(rest + j));
+               if(a != (BITMAP_TYPE)0)
+                  return pos + ffsl(a) - 1;
+               else
+                  pos += BITMAP_BITS;
+            }
+            return -1;
+         }
+      }
+   }
+
+   inline void unset_front(const size_t size) {
+      if(size == 1) {
+         assert(first != (BITMAP_TYPE)0);
+         first = first & (first - (BITMAP_TYPE)1);
+      } else {
+         if(first != (BITMAP_TYPE)0)
+            first = first & (first - (BITMAP_TYPE)1);
+         else {
+            for(size_t j(0); j < size - 1; ++j) {
+               BITMAP_TYPE a(*(rest + j));
+               if(a != (BITMAP_TYPE)0) {
+                  *(rest + j) = a & (a - (BITMAP_TYPE)1);
+                  return;
+               }
+            }
+         }
+      }
+   }
+
+   inline size_t remove_front(const size_t size) {
+      if(size == 1) {
+         assert(first != (BITMAP_TYPE)0);
+         const size_t ret(ffsl(first) - 1);
+         first = first & (first - (BITMAP_TYPE)1);
+         return ret;
+      } else {
+         if(first != (BITMAP_TYPE)0) {
+            const size_t ret(ffsl(first) - 1);
+            first = first & (first - (BITMAP_TYPE)1);
+            return ret;
+         } else {
+            size_t pos(BITMAP_BITS);
+            for(size_t j(0); j < size - 1; ++j, pos += BITMAP_BITS) {
+               BITMAP_TYPE a(*(rest + j));
+               if(a != (BITMAP_TYPE)0) {
+                  pos += ffsl(a) - 1;
+                  *(rest + j) = a & (a - (BITMAP_TYPE)1);
+                  return pos;
+               }
+            }
+            return -1;
+         }
+      }
+   }
+
+   // remove all bits in our bitmap set in the other bitmap
+   inline void unset_bits(bitmap& other, const size_t size)
+   {
+      // we assume that both have same size!
+      if(size == 1) {
+         first = first & ~(other.first);
+      } else {
+         first = first & ~(other.first);
+         for(size_t i(0); i < size - 1; ++i)
+            *(rest + i) = *(rest + i) & ~(*(other.rest + i));
+      }
    }
 
    // set bit to true
@@ -140,7 +238,7 @@ struct bitmap {
    {
       const BITMAP_TYPE *p(get_array(i));
 
-      return *p & ((BITMAP_TYPE)0x1 << (BITMAP_TYPE)(i % BITMAP_BITS));
+      return BITMAP_GET_BIT(*p, i % BITMAP_BITS);
    }
 
    static inline void

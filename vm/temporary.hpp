@@ -21,9 +21,6 @@ struct temporary_store
 {
    public:
 
-      bitmap predicates;
-      bitmap rules;
-
       typedef db::intrusive_list<vm::tuple> tuple_list;
       typedef std::unordered_map<vm::predicate_id, tuple_list*, std::hash<vm::predicate_id>,
               std::equal_to<vm::predicate_id>, mem::allocator< std::pair<const vm::predicate_id, tuple_list*> > > list_map;
@@ -85,7 +82,6 @@ struct temporary_store
       inline void register_tuple_fact(vm::predicate *pred, const vm::ref_count count)
       {
          matcher.register_tuple(pred, count);
-         mark(pred);
       }
 
       inline void deregister_fact(db::simple_tuple *stpl)
@@ -132,24 +128,6 @@ struct temporary_store
          persistent_tuples.push_back(stpl);
       }
 
-      inline void clear_predicates(void)
-      {
-         predicates.clear(theProgram->num_predicates_next_uint());
-      }
-
-      inline void mark(const vm::predicate *pred)
-      {
-         predicates.set_bit(pred->get_id());
-      }
-
-      explicit temporary_store(void)
-      {
-         bitmap::create(rules, theProgram->num_rules_next_uint());
-         bitmap::create(predicates, theProgram->num_predicates_next_uint());
-         rules.clear(theProgram->num_rules_next_uint());
-         clear_predicates();
-      }
-
       ~temporary_store(void)
       {
          for(list_map::iterator it(incoming.begin()), end(incoming.end()); it != end; ++it) {
@@ -162,8 +140,6 @@ struct temporary_store
             mem::allocator<tuple_list>().destroy(ls);
             mem::allocator<tuple_list>().deallocate(ls, 1);
          }
-         bitmap::destroy(rules, theProgram->num_rules_next_uint());
-         bitmap::destroy(predicates, theProgram->num_predicates_next_uint());
       }
 };
 

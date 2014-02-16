@@ -1237,7 +1237,7 @@ execute_update(pcounter pc, state& state)
    tpl->print(cout, pred);
    cout << endl;
 #endif
-   state.store->mark(pred);
+   state.store->matcher.mark(pred);
 }
 
 static inline void

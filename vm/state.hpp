@@ -46,8 +46,7 @@ private:
    typedef std::pair<db::tuple_trie_leaf *, vm::ref_count> pair_linear;
    typedef std::list<pair_linear> list_linear;
 
-	/* execution data for when using rules */
-	queue::heap_queue<vm::rule_id> rule_queue;
+   vm::bitmap rule_queue;
 	
    void purge_runtime_objects(void);
    db::simple_tuple* search_for_negative_tuple_partial_agg(db::simple_tuple *);
