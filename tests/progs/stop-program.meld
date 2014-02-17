@@ -1,0 +1,9 @@
+
+type linear a(node, int).
+type linear b(node, int).
+
+a(@1, 2).
+a(@0, 1).
+
+a(A, 1) -o stop-program(A), b(A, 1).
+a(A, 2) -o b(A, 2).
