@@ -61,6 +61,8 @@ protected:
    }
    
    virtual bool has_work(void) const { return !queue_nodes.empty() || !stolen_nodes_buffer.empty(); }
+
+   virtual void killed_while_active(void);
    
 public:
    

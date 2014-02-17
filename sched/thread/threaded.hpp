@@ -114,7 +114,7 @@ public:
    }
 
 #define BUSY_LOOP_CHECK_TERMINATION_THREADS()   \
-   if(all_threads_finished()) {                 \
+   if(all_threads_finished() || stop_flag) {    \
       assert(is_inactive());                    \
       return false;                             \
    }

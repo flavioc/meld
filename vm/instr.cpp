@@ -876,6 +876,9 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
       case ADD_PRIORITYH_INSTR:
          cout << "ADD PRIORITY " << reg_string(pcounter_reg(pc + instr_size)) << endl;
          break;
+      case STOP_PROG_INSTR:
+         cout << "STOP PROGRAM" << endl;
+         break;
 		default:
          throw malformed_instr_error("unknown instruction code");
 	}

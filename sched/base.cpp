@@ -20,6 +20,7 @@ static bool init(void);
 
 pthread_key_t sched_key;
 static bool started(init());
+volatile bool base::stop_flag(false);
 
 static void
 cleanup_sched_key(void)
@@ -54,6 +55,14 @@ base::do_loop(void)
       while((node = get_work())) {
          do_work(node);
          finish_work(node);
+         if(stop_flag) {
+            killed_while_active();
+            return;
+         }
+      }
+      if(stop_flag) {
+         killed_while_active();
+         return;
       }
 
       assert_end_iteration();

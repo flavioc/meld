@@ -23,9 +23,9 @@ private:
 
 public:
 
-   bitmap active_bitmap;
-   bitmap dropped_bitmap;
-   bitmap predicates;
+   bitmap active_bitmap; // rules that may run
+   bitmap dropped_bitmap; // rules that are no longer runnable
+   bitmap predicates; // new generated predicates
 
    // returns true if we did not have any tuples of this predicate
 	bool register_tuple(predicate *, const derivation_count, const bool is_new = true);

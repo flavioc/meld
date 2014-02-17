@@ -176,6 +176,14 @@ threads_sched::generate_aggs(void)
    iterate_static_nodes(id);
 }
 
+void
+threads_sched::killed_while_active(void)
+{
+   spinlock::scoped_lock l(lock);
+   if(is_active())
+      set_inactive();
+}
+
 bool
 threads_sched::busy_wait(void)
 {

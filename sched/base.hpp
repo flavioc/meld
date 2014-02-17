@@ -64,6 +64,7 @@ protected:
    void do_agg_tuple_add(db::node *, vm::tuple *, const vm::derivation_count);
    void do_tuple_add(db::node *, vm::tuple *, const vm::derivation_count);
    
+   virtual void killed_while_active(void) { };
    virtual bool terminate_iteration(void) = 0;
    
    inline void node_iteration(db::node *node)
@@ -164,6 +165,8 @@ public:
       (void)sl;
 #endif
    }
+
+   static volatile bool stop_flag;
 
    static base* get_scheduler(void);
    

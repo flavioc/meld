@@ -3376,6 +3376,12 @@ eval_loop:
             ADVANCE()
          ENDOP()
 
+         CASE(STOP_PROG_INSTR)
+            JUMP(stop_program, STOP_PROG_BASE)
+            sched::base::stop_flag = true;
+            ADVANCE()
+         ENDOP()
+
          COMPLEX_JUMP(not_found)
 #ifndef COMPUTED_GOTOS
          default:
