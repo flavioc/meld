@@ -117,12 +117,12 @@ threads_sched::new_work_remote(remote *, const node::node_id, message *)
 void
 threads_sched::go_steal_nodes(void)
 {
-   if(state.all->NUM_THREADS == 1)
+   if(All->NUM_THREADS == 1)
       return;
 
-   size_t tid(rand(state.all->NUM_THREADS));
+   size_t tid(rand(All->NUM_THREADS));
 
-   threads_sched *target((threads_sched*)state.all->ALL_THREADS[tid]);
+   threads_sched *target((threads_sched*)All->ALL_THREADS[tid]);
 
    if(target == this) {
       return;
@@ -194,7 +194,7 @@ threads_sched::busy_wait(void)
    
    while(!has_work()) {
 #ifdef TASK_STEALING
-      if(!state.all->PROGRAM->is_static_priority()) {
+      if(!theProgram->is_static_priority()) {
          count++;
          if(count > 1) {
             go_steal_nodes();
