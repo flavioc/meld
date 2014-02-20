@@ -1,15 +1,17 @@
 
+#include "conf.hpp"
+
+#ifdef USE_JIT
+
 #include <jit/jit-dump.h>
 #include <iostream>
 
-#include "conf.hpp"
 #include "jit/build.hpp"
 
 using namespace vm;
 using namespace std;
 using namespace instr;
 
-#ifdef USE_JIT
 
 namespace jit
 {
