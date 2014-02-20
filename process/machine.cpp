@@ -222,10 +222,12 @@ machine::start(void)
       this->all->ALL_THREADS[i]->join();
       
 #ifndef NDEBUG
-   for(size_t i(1); i < all->NUM_THREADS; ++i)
-      assert(this->all->ALL_THREADS[i-1]->num_iterations() == this->all->ALL_THREADS[i]->num_iterations());
-   if(this->all->PROGRAM->is_safe())
-      assert(this->all->ALL_THREADS[0]->num_iterations() == 1);
+   if(!sched::base::stop_flag) {
+      for(size_t i(1); i < all->NUM_THREADS; ++i)
+         assert(this->all->ALL_THREADS[i-1]->num_iterations() == this->all->ALL_THREADS[i]->num_iterations());
+      if(this->all->PROGRAM->is_safe())
+         assert(this->all->ALL_THREADS[0]->num_iterations() == 1);
+   }
 #endif
    
    if(alarm_thread) {
@@ -299,6 +301,9 @@ machine::machine(const string& file, router& _rout, const size_t th,
    alarm_thread(NULL),
    slices(th)
 {
+   init_types();
+   init_external_functions();
+
    bool added_data_file(false);
 
    All = all;

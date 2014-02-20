@@ -675,15 +675,18 @@ retrieve_match_object(state& state, pcounter pc, const predicate *pred, const si
       }
    }
    assert(mobj);
-   if(state.sched && state.sched->get_id() == 0) {
+#ifdef DYNAMIC_INDEXING
+   if(state.sched && state.sched->get_id() == 0 && mobj->size() > 0 && pred->is_linear_pred()) {
       // increment statistics for matching
-      const size_t start(pred->get_argument_position());
-      const size_t end(start + pred->num_fields() - 1);
-      for(size_t i(0); i < mobj->size(); ++i) {
-         if(mobj->has_match(i))
+      const int start(pred->get_argument_position());
+      const int end(start + pred->num_fields() - 1);
+      for(int i(0); i < (int)mobj->size(); ++i) {
+         if(mobj->has_match(i)) {
             state.match_counter->increment_count(start + i, start, end);
+         }
       }
    }
+#endif
    return mobj;
 }
 
@@ -1265,6 +1268,7 @@ static inline void
 set_call_return(const reg_num reg, const tuple_field ret, external_function* f, state& state)
 {
    type *ret_type(f->get_return_type());
+   assert(ret_type);
    switch(ret_type->get_type()) {
       case FIELD_INT:
          state.set_int(reg, FIELD_INT(ret));

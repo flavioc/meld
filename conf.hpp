@@ -39,5 +39,8 @@ const bool USE_ALLOCATOR = true;
 #define BITMAP_TYPE uint64_t
 #define BITMAP_BITS (sizeof(BITMAP_TYPE) * 8)
 
+// activate dynamic indexing of linear facts
+#define DYNAMIC_INDEXING 1
+
 #endif
 

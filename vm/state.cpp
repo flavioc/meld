@@ -16,7 +16,7 @@ using namespace runtime;
 using namespace utils;
 
 //#define DEBUG_RULES
-#define DEBUG_INDEXING
+//#define DEBUG_INDEXING
 
 namespace vm
 {
@@ -28,6 +28,7 @@ bool state::UI = false;
 bool state::SIM = false;
 #endif
 
+#ifdef DYNAMIC_INDEXING
 static volatile deterministic_timestamp indexing_epoch(0);
 static size_t run_node_calls(0);
 
@@ -37,6 +38,7 @@ static enum {
    ADD_INDEXES,
    DONE_INDEXING
 } indexing_phase = INDEXING_COUNTS;
+#endif
 
 void
 state::purge_runtime_objects(void)
@@ -571,6 +573,8 @@ gather_indexing_stats_about_node(db::node *node, vm::counter *counter)
       const double entropy2(compute_entropy(node, pred, arg2));
       const double count1((double)counter->get_count(start + arg1));
       const double count2((double)counter->get_count(start + arg2));
+      assert(count1 > 0.0);
+      assert(count2 > 0.0);
       const double res1(entropy1 * -log2(1.0/count1));
       const double res2(entropy2 * -log2(1.0/count2));
 
@@ -590,9 +594,10 @@ gather_indexing_stats_about_node(db::node *node, vm::counter *counter)
 void
 state::indexing_state_machine(db::node *no)
 {
+#ifdef DYNAMIC_INDEXING
    switch(indexing_phase) {
       case INDEXING_COUNTS: {
-         const size_t target(max(max((size_t)50, All->DATABASE->num_nodes() / 100), All->DATABASE->num_nodes() / (25 * All->NUM_THREADS)));
+         const size_t target(max(max((size_t)100, All->DATABASE->num_nodes() / 100), All->DATABASE->num_nodes() / (25 * All->NUM_THREADS)));
          run_node_calls++;
          if(run_node_calls >= target) {
 #ifdef DEBUG_INDEXING
@@ -613,7 +618,7 @@ state::indexing_state_machine(db::node *no)
       break;
       case GUESSING_FIELDS: {
          // perform specific work on nodes
-         const size_t target(max(All->DATABASE->num_nodes() / 100, max((size_t)25, All->DATABASE->num_nodes() / (25 * All->NUM_THREADS))));
+         const size_t target(max(All->DATABASE->num_nodes() / 100, max((size_t)50, All->DATABASE->num_nodes() / (25 * All->NUM_THREADS))));
          run_node_calls++;
          gather_indexing_stats_about_node(no, match_counter);
          if(run_node_calls >= target) {
@@ -647,19 +652,29 @@ state::indexing_state_machine(db::node *no)
             }
          }
          for(size_t i(0); i < indexing_scores.size(); i += 2) {
-            const size_t score1(indexing_scores[i]);
-            const size_t score2(indexing_scores[i + 1]);
+            size_t score1(indexing_scores[i]);
+            size_t score2(indexing_scores[i + 1]);
             size_t arg1(two_indexing_fields[i].second);
             size_t arg2(two_indexing_fields[i + 1].second);
             predicate *pred(two_indexing_fields[i].first);
             const size_t start(pred->get_argument_position());
-            if(score1 < score2)
+            if(score1 < score2) {
                swap(arg1, arg2);
-            else if(score1 == score2) {
+               swap(score1, score2);
+            } else if(score1 == score2) {
                // pick the one with the most counts
-               if(match_counter->get_count(start + arg2) > match_counter->get_count(start + arg1))
+#ifdef DEBUG_INDEX               
+               cout << "Same score" << endl;
+#endif
+               if(match_counter->get_count(start + arg2) > match_counter->get_count(start + arg1)) {
                   swap(arg1, arg2);
+                  swap(score1, score2);
+               }
             }
+#ifdef DEBUG_INDEXING
+            cout << "For predicate " << pred->get_name() << " pick " << arg1 << endl;
+            cout << arg1 << " " << match_counter->get_count(start + arg1) << " " << arg2 << " " << match_counter->get_count(start + arg2) << endl;
+#endif
             // arg1 is the best
             if(pred->is_hash_table()) {
                const field_num old(pred->get_hashed_field());
@@ -683,6 +698,9 @@ state::indexing_state_machine(db::node *no)
       break;
       case DONE_INDEXING: break;
    }
+#else
+   (void)no;
+#endif
 }
 
 void
@@ -708,10 +726,12 @@ state::run_node(db::node *no)
       no->lock();
       process_action_tuples();
 		process_incoming_tuples();
+#ifdef DYNAMIC_INDEXING
       if(node->indexing_epoch != indexing_epoch) {
          lstore->rebuild_index();
          node->indexing_epoch = indexing_epoch;
       }
+#endif
       no->unprocessed_facts = false;
       no->unlock();
 	}
@@ -859,10 +879,12 @@ state::state(sched::base *_sched):
    sim_instr_use = false;
 #endif
    match_counter = create_counter(theProgram->get_total_arguments());
+#ifdef DYNAMIC_INDEXING
    if(sched->get_id() == 0) {
       indexing_epoch = 0;
       run_node_calls = 0;
    }
+#endif
 }
 
 state::state(void):

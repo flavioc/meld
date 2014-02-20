@@ -307,13 +307,15 @@ program::program(const string& _filename):
          predicate::make_predicate_from_reader(read, &size, (predicate_id)i, major_version, minor_version, types, number_rules_uint);
       code_size[i] = size;
 
-      MAX_STRAT_LEVEL = max(predicates[i]->get_strat_level() + 1, MAX_STRAT_LEVEL);
+      predicate *pred(predicates[i]);
 
-      if(predicates[i]->is_route_pred())
-         route_predicates.push_back(predicates[i]);
+      MAX_STRAT_LEVEL = max(pred->get_strat_level() + 1, MAX_STRAT_LEVEL);
 
-      predicates[i]->set_argument_position(total_arguments);
-      total_arguments += predicates[i]->num_fields();
+      if(pred->is_route_pred())
+         route_predicates.push_back(pred);
+
+      pred->set_argument_position(total_arguments);
+      total_arguments += pred->num_fields();
    }
 
    // create 'sorted_predicates' from 'predicates'

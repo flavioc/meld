@@ -22,16 +22,16 @@ using namespace external;
 
 typedef unordered_map<external_function_id, external_function*> hash_external_type;
 
-static bool init_external_functions(void);
 static external_function_id external_counter(0);
 static external_function_id first_custom(0);
 static hash_external_type hash_external;
-static bool dummy(init_external_functions());
+static bool external_functions_initiated(false);
 
 void
 external_function::set_arg_type(const size_t arg, type *typ)
 {
    assert(arg < num_args);
+   assert(typ);
    
    spec[arg] = typ;
 }
@@ -43,6 +43,7 @@ external_function::external_function(external_function_ptr _ptr,
    ptr(_ptr), ret(_ret),
    spec(new type*[_num_args])
 {
+   assert(ret);
    assert(num_args <= EXTERNAL_ARG_LIMIT);
 }
 
@@ -126,7 +127,7 @@ register_custom_external_function(external_function_ptr ptr, const size_t num_ar
    }
 }
 
-static bool
+void
 init_external_functions(void)
 {
 #define EXTERN(NAME) (external_function_ptr) external :: NAME
@@ -134,6 +135,11 @@ init_external_functions(void)
 #define EXTERNAL1(NAME, RET, ARG1) external1(EXTERN(NAME), RET, ARG1)
 #define EXTERNAL2(NAME, RET, ARG1, ARG2) external2(EXTERN(NAME), RET, ARG1, ARG2)
 #define EXTERNAL3(NAME, RET, ARG1, ARG2, ARG3) external3(EXTERN(NAME), RET, ARG1, ARG2, ARG3)
+
+   if(external_functions_initiated)
+      return;
+   external_functions_initiated = true;
+   init_types();
 
    static type *i(TYPE_INT);
    static type *f(TYPE_FLOAT);
@@ -193,8 +199,6 @@ init_external_functions(void)
    atexit(cleanup_externals);
 
    first_custom = external_counter;
-   
-   return true;
 }
 
 external_function_id first_custom_external_function(void)

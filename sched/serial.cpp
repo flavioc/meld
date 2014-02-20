@@ -36,7 +36,7 @@ serial_local::new_work(node *from, node *target, vm::tuple *tpl, vm::predicate *
 void
 serial_local::assert_end(void) const
 {
-   assert(!has_work());
+   assert((!has_work() && !stop_flag) || stop_flag);
    assert_static_nodes_end(id);
 }
 

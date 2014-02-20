@@ -12,15 +12,35 @@ using namespace utils;
 
 namespace vm {
 
-type *TYPE_INT(new type(FIELD_INT));
-type *TYPE_FLOAT(new type(FIELD_FLOAT));
-type *TYPE_NODE(new type(FIELD_NODE));
-type *TYPE_STRING(new type(FIELD_STRING));
-type *TYPE_ANY(new type(FIELD_ANY));
-type *TYPE_STRUCT(new type(FIELD_STRUCT));
-list_type *TYPE_LIST_INT(new list_type(new type(FIELD_INT)));
-list_type *TYPE_LIST_FLOAT(new list_type(new type(FIELD_FLOAT)));
-list_type *TYPE_LIST_NODE(new list_type(new type(FIELD_NODE)));
+type *TYPE_INT(NULL);
+type *TYPE_FLOAT(NULL);
+type *TYPE_NODE(NULL);
+type *TYPE_STRING(NULL);
+type *TYPE_ANY(NULL);
+type *TYPE_STRUCT(NULL);
+list_type *TYPE_LIST_INT(NULL);
+list_type *TYPE_LIST_FLOAT(NULL);
+list_type *TYPE_LIST_NODE(NULL);
+static bool types_initiated(false);
+
+void
+init_types(void)
+{
+   if(types_initiated)
+      return;
+
+   types_initiated = true;
+
+   TYPE_INT = new type(FIELD_INT);
+   TYPE_FLOAT = new type(FIELD_FLOAT);
+   TYPE_NODE = new type(FIELD_NODE);
+   TYPE_STRING = new type(FIELD_STRING);
+   TYPE_ANY = new type(FIELD_ANY);
+   TYPE_STRUCT = new type(FIELD_STRUCT);
+   TYPE_LIST_INT = new list_type(TYPE_INT);
+   TYPE_LIST_FLOAT = new list_type(TYPE_FLOAT);
+   TYPE_LIST_NODE = new list_type(TYPE_NODE);
+}
    
 size_t
 field_type_size(field_type type)
