@@ -253,7 +253,7 @@ predicate::print_simple(ostream& cout) const
          cout << typ;
    }
    
-   cout << ")";
+   cout << ")/" << num_fields();
 }
 
 void

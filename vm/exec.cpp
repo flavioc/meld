@@ -675,6 +675,15 @@ retrieve_match_object(state& state, pcounter pc, const predicate *pred, const si
       }
    }
    assert(mobj);
+   if(state.sched && state.sched->get_id() == 0) {
+      // increment statistics for matching
+      const size_t start(pred->get_argument_position());
+      const size_t end(start + pred->num_fields() - 1);
+      for(size_t i(0); i < mobj->size(); ++i) {
+         if(mobj->has_match(i))
+            state.match_counter->increment_count(start + i, start, end);
+      }
+   }
    return mobj;
 }
 
@@ -936,7 +945,7 @@ execute_opers_iter(const reg_num reg, match* m, const pcounter pc, const pcounte
 }
 
 static inline return_type
-execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, state& state, predicate* pred, db::intrusive_list<vm::tuple> *local_tuples)
+execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, state& state, predicate* pred, db::intrusive_list<vm::tuple> *local_tuples, hash_table *tbl = NULL)
 {
    if(local_tuples == NULL)
       return RETURN_NO_RETURN;
@@ -985,6 +994,16 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
                state.store->add_generated(match_tuple, pred);
                state.generated_facts = true;
                next_iter = false;
+            } else {
+               if(tbl) {
+                  // may need to re hash tuple
+                  // it is not a problem if the tuple gets in the same bucket (will appear at the end of the list)
+                  it = local_tuples->erase(it);
+                  // add the tuple to the back of the bucket
+                  // that way, we do not see it again if it's added to the same bucket
+                  tbl->insert_front(match_tuple);
+                  next_iter = false;
+               }
             }
          } else {
             it = local_tuples->erase(it);
@@ -1015,19 +1034,21 @@ execute_linear_iter(const reg_num reg, match* m, const pcounter first, state& st
       if(table == NULL)
          return RETURN_NO_RETURN;
 
-      //cout << "Table" << endl;
-      //table->dump(cout);
+#if 0
+      cout << "Table" << endl;
+      table->dump(cout, pred);
+#endif
 
       if(m->has_match(hashed)) {
          const match_field mf(m->get_match(hashed));
          db::intrusive_list<vm::tuple> *local_tuples(table->lookup_list(mf.field));
-         return_type ret(execute_linear_iter_list(reg, m, first, state, pred, local_tuples));
+         return_type ret(execute_linear_iter_list(reg, m, first, state, pred, local_tuples, table));
          return ret;
       } else {
          // go through hash table
          for(hash_table::iterator it(table->begin()); !it.end(); ++it) {
             db::intrusive_list<vm::tuple> *local_tuples(*it);
-            return_type ret(execute_linear_iter_list(reg, m, first, state, pred, local_tuples));
+            return_type ret(execute_linear_iter_list(reg, m, first, state, pred, local_tuples, table));
             if(ret != RETURN_NO_RETURN)
                return ret;
          }

@@ -103,6 +103,8 @@ private:
    std::vector<byte_code> *node_references;
 #endif
 
+   size_t total_arguments;
+
    void print_predicate_code(std::ostream&, predicate*) const;
    void read_node_references(byte_code, code_reader&);
    
@@ -129,6 +131,8 @@ public:
       assert(id < functions.size());
       return functions[id];
    }
+
+   inline size_t get_total_arguments(void) const { return total_arguments; }
 
    inline field_type get_priority_type(void) const { return priority_type; }
    inline strat_level get_priority_strat_level(void) const { return priority_strat_level; }

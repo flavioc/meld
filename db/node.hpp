@@ -113,6 +113,7 @@ public:
    bool unprocessed_facts;
    bool running;
    uint16_t rounds;
+   vm::deterministic_timestamp indexing_epoch;
 
    inline void lock(void) { store.spin.lock(); }
    inline void unlock(void) { store.spin.unlock(); }

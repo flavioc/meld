@@ -1,8 +1,11 @@
 
+#include <iostream>
+
 #include "db/hash_table.hpp"
 #include "db/node.hpp"
 
 using namespace vm;
+using namespace std;
 
 namespace db
 {
@@ -19,16 +22,30 @@ hash_table::hash_field(const tuple_field field) const
 #else
          return FIELD_NODE(field);
 #endif
+      case FIELD_LIST:
+         if(FIELD_PTR(field) == 0)
+            return 0;
+         else
+            return 1;
       default: assert(false); return 0;
    }
 }
 
 size_t
-hash_table::insert(tuple *item)
+hash_table::insert(vm::tuple *item)
 {
    const uint_val id(hash_tuple(item));
    table_list *bucket(table + (id % size_table));
    bucket->push_back(item);
+   return bucket->get_size();
+}
+
+size_t
+hash_table::insert_front(vm::tuple *item)
+{
+   const uint_val id(hash_tuple(item));
+   table_list *bucket(table + (id % size_table));
+   bucket->push_front(item);
    return bucket->get_size();
 }
 
@@ -44,7 +61,7 @@ hash_table::change_table(const size_t new_size_table)
       table_list *ls(table + i);
 
       for(table_list::iterator it(ls->begin()), end(ls->end()); it != end; ) {
-         tuple *tpl(*it);
+         vm::tuple *tpl(*it);
          it++;
 
          const uint_val id(hash_tuple(tpl));

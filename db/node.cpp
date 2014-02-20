@@ -182,7 +182,7 @@ node::assert_end(void) const
 node::node(const node_id _id, const node_id _trans):
    id(_id), translation(_trans), owner(NULL), linear(),
    store(), unprocessed_facts(false), running(false),
-   rounds(0)
+   rounds(0), indexing_epoch(0)
 {
 }
 

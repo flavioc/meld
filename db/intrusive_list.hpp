@@ -237,6 +237,13 @@ struct intrusive_list
          assertl();
       }
 
+      inline void dump(std::ostream& out, const vm::predicate *pred) const
+      {
+         for(T *tpl(head); tpl != NULL; tpl = tpl->__intrusive_next) {
+            out << "\t"; tpl->print(out, pred); out << "\n";
+         }
+      }
+
       inline void clear(void)
       {
          size = 0;

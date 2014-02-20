@@ -19,6 +19,7 @@
 #include "vm/call_stack.hpp"
 #include "vm/temporary.hpp"
 #include "db/linear_store.hpp"
+#include "vm/counter.hpp"
 
 #define USE_TEMPORARY_STORE
 
@@ -29,8 +30,6 @@ namespace sched {
 
 namespace vm {
 	
-typedef size_t deterministic_timestamp;
-
 struct state
 {
 private:
@@ -51,6 +50,8 @@ private:
    db::simple_tuple* search_for_negative_tuple_partial_agg(db::simple_tuple *);
    db::simple_tuple* search_for_negative_tuple_full_agg(db::simple_tuple *);
    db::simple_tuple* search_for_negative_tuple_normal(db::simple_tuple *);
+
+   void indexing_state_machine(db::node *);
 
 public:
 
@@ -81,6 +82,7 @@ public:
    match_list matches_created;
    temporary_store *store;
    db::linear_store *lstore;
+   vm::counter *match_counter;
 #ifdef CORE_STATISTICS
    core_statistics stat;
 #endif

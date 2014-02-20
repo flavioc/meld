@@ -43,6 +43,7 @@ struct hash_table
       hash_table *next_expand;
 
       inline size_t get_num_buckets(void) const { return size_table; }
+      inline vm::field_num get_hash_argument(void) const { return hash_argument; }
 
       class iterator
       {
@@ -95,6 +96,7 @@ struct hash_table
       inline size_t get_table_size() const { return size_table; }
 
       size_t insert(vm::tuple *);
+      size_t insert_front(vm::tuple *);
 
       inline db::intrusive_list<vm::tuple>* lookup_list(const vm::tuple_field field)
       {
@@ -103,15 +105,17 @@ struct hash_table
          return bucket;
       }
 
-      inline void dump(std::ostream& out) const
+      inline void dump(std::ostream& out, const vm::predicate *pred) const
       {
          for(size_t i(0); i < size_table; ++i) {
             table_list *ls(table + i);
             out << "Bucket for " << i << ": ";
             if(ls->empty())
                out << "empty\n";
-            else
-               out << "has " << ls->get_size() << " elements\n";
+            else {
+               out << "has " << ls->get_size() << " elements:\n";
+               ls->dump(out, pred);
+            }
          }
       }
 
@@ -144,17 +148,18 @@ struct hash_table
          return true;
       }
 
-      inline void setup(const vm::field_num field, const vm::field_type type)
+      inline void setup(const vm::field_num field, const vm::field_type type,
+            const size_t default_table_size = HASH_TABLE_INITIAL_TABLE_SIZE)
       {
          hash_argument = field;
          hash_type = type;
          next_expand = NULL;
-         size_table = HASH_TABLE_INITIAL_TABLE_SIZE;
+         size_table = default_table_size;
          table = alloc().allocate(size_table);
          memset(table, 0, sizeof(table_list)*size_table);
       }
 
-      ~hash_table(void)
+      inline void destroy(void)
       {
          alloc().deallocate(table, size_table);
       }

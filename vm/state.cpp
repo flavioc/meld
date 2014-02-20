@@ -1,4 +1,6 @@
 
+#include <queue>
+
 #include "vm/state.hpp"
 #include "process/machine.hpp"
 #include "vm/exec.hpp"
@@ -14,6 +16,7 @@ using namespace runtime;
 using namespace utils;
 
 //#define DEBUG_RULES
+#define DEBUG_INDEXING
 
 namespace vm
 {
@@ -25,15 +28,25 @@ bool state::UI = false;
 bool state::SIM = false;
 #endif
 
+static volatile deterministic_timestamp indexing_epoch(0);
+static size_t run_node_calls(0);
+
+static enum {
+   INDEXING_COUNTS,
+   GUESSING_FIELDS,
+   ADD_INDEXES,
+   DONE_INDEXING
+} indexing_phase = INDEXING_COUNTS;
+
 void
 state::purge_runtime_objects(void)
 {
-#define PURGE_OBJ(TYPE) \
-   for(list<TYPE*>::iterator it(free_ ## TYPE.begin()); it != free_ ## TYPE .end(); ++it) { \
-      TYPE *x(*it); \
-      assert(x != NULL); \
-      x->dec_refs(); \
-   } \
+#define PURGE_OBJ(TYPE)                                                                      \
+   for(list<TYPE*>::iterator it(free_ ## TYPE.begin()); it != free_ ## TYPE .end(); ++it) {  \
+      TYPE *x(*it);                                                                          \
+      assert(x != NULL);                                                                     \
+      x->dec_refs();                                                                         \
+   }                                                                                         \
    free_ ## TYPE .clear()
 
    PURGE_OBJ(cons);
@@ -407,10 +420,278 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
    }
 }
 
+static vector< pair<predicate*, size_t> > one_indexing_fields;
+static vector< pair<predicate*, size_t> > two_indexing_fields;
+static vector<size_t> indexing_scores;
+
+static inline void
+find_fields_to_improve_index(vm::counter *match_counter)
+{
+   for(size_t i(0); i < theProgram->num_predicates(); ++i) {
+      predicate *pred(theProgram->get_predicate(i));
+      if(pred->is_persistent_pred())
+         continue;
+      const int start(pred->get_argument_position());
+      const int end(start + pred->num_fields() - 1);
+      priority_queue< pair<size_t, size_t>, std::vector< pair<size_t, size_t>, mem::allocator< pair<size_t, size_t> > > > queue;
+      for(int j(start); j <= end; ++j) {
+         const size_t count(match_counter->get_count((size_t)j));
+         if(count > 0)
+            queue.push(make_pair(count, j));
+      }
+      if(!queue.empty()) {
+         if(queue.size() == 1) {
+            // select one
+            pair<size_t, size_t> fst(queue.top());
+            one_indexing_fields.push_back(make_pair(pred, fst.second - start));
+         } else {
+            // select best two
+            pair<size_t, size_t> fst(queue.top());
+            queue.pop();
+            pair<size_t, size_t> snd(queue.top());
+            two_indexing_fields.push_back(make_pair(pred, fst.second - start));
+            two_indexing_fields.push_back(make_pair(pred, snd.second - start));
+            indexing_scores.push_back(0);
+            indexing_scores.push_back(0);
+         }
+      }
+   }
+#ifdef DEBUG_INDEXING
+   for(size_t i(0); i < two_indexing_fields.size(); ++i) {
+      pair<predicate*, size_t> p(two_indexing_fields[i]);
+      cout << p.first->get_name() << " " << p.second << endl;
+   }
+#endif
+}
+
+static unordered_map<vm::int_val, size_t> count_ints;
+static unordered_map<vm::float_val, size_t> count_floats;
+static unordered_map<vm::node_val, size_t> count_nodes;
+
+static inline double
+compute_entropy(db::node *node, const predicate *pred, const size_t arg)
+{
+   double ret = 0.0;
+   size_t total(0);
+
+   assert(count_ints.empty());
+   assert(count_floats.empty());
+   assert(count_nodes.empty());
+
+   if(node->linear.stored_as_hash_table(pred)) {
+      // XXX TODO
+   } else {
+      db::intrusive_list<tuple> *ls(node->linear.get_linked_list(pred->get_id()));
+
+      for(db::intrusive_list<tuple>::iterator it(ls->begin()), end(ls->end()); it != end; ++it) {
+         vm::tuple *tpl(*it);
+         total++;
+         switch(pred->get_field_type(arg)->get_type()) {
+            case FIELD_INT: {
+               const int_val val(tpl->get_int(arg));
+               unordered_map<int_val, size_t>::iterator it(count_ints.find(val));
+               if(it == count_ints.end())
+                  count_ints[val] = 1;
+               else
+                  it->second++;
+            }
+            break;
+            case FIELD_FLOAT: {
+               const float_val val(tpl->get_float(arg));
+               unordered_map<float_val, size_t>::iterator it(count_floats.find(val));
+               if(it == count_floats.end())
+                  count_floats[val] = 1;
+               else
+                  it->second++;
+            }
+            break;
+            case FIELD_NODE: {
+               node_val val(tpl->get_node(arg));
+#ifdef USE_REAL_NODES
+               val = ((db::node*)val)->get_id();
+#endif
+               unordered_map<node_val, size_t>::iterator it(count_nodes.find(val));
+               if(it == count_nodes.end())
+                  count_nodes[val] = 1;
+               else
+                  it->second++;
+            }
+            break;
+            default: throw vm_exec_error("type not implemented"); assert(false); break;
+         }
+      }
+   }
+
+   double all((double)total);
+   if(all <= 0.0)
+      return ret;
+
+   switch(pred->get_field_type(arg)->get_type()) {
+      case FIELD_INT: {
+         for(unordered_map<int_val, size_t>::iterator it(count_ints.begin()), end(count_ints.end()); it != end; ++it) {
+            double items((double)it->second);
+            ret += items/all * log2(items/all);
+         }
+         count_ints.clear();
+      }
+      break;
+      case FIELD_FLOAT: {
+         for(unordered_map<float_val, size_t>::iterator it(count_floats.begin()), end(count_floats.end()); it != end; ++it) {
+            double items((double)it->second);
+            ret += items/all * log2(items/all);
+         }
+         count_floats.clear();
+      }
+      break;
+      case FIELD_NODE: {
+         for(unordered_map<node_val, size_t>::iterator it(count_nodes.begin()), end(count_nodes.end()); it != end; ++it) {
+            double items((double)it->second);
+            ret += items/all * log2(items/all);
+         }
+         count_nodes.clear();
+      }
+      break;
+      default: assert(false); break;
+   }
+
+   return -ret;
+}
+
+static inline void
+gather_indexing_stats_about_node(db::node *node, vm::counter *counter)
+{
+   for(size_t i(0); i < two_indexing_fields.size(); i += 2) {
+      const pair<predicate*, size_t> p1(two_indexing_fields[i]);
+      const predicate *pred(p1.first);
+      const size_t start(pred->get_argument_position());
+      const size_t arg1(p1.second);
+      const pair<predicate*, size_t> p2(two_indexing_fields[i+1]);
+      const size_t arg2(p2.second);
+      const double entropy1(compute_entropy(node, pred, arg1));
+      const double entropy2(compute_entropy(node, pred, arg2));
+      const double count1((double)counter->get_count(start + arg1));
+      const double count2((double)counter->get_count(start + arg2));
+      const double res1(entropy1 * -log2(1.0/count1));
+      const double res2(entropy2 * -log2(1.0/count2));
+
+#ifdef DEBUG_INDEXING
+      cout << pred->get_name() << " " << arg1 << " -> " << entropy1 << "  VS " << arg2 << " -> " << entropy2 << endl;
+      cout << "count " << arg1 << " -> " << count1 << "  VS  " << arg2 << " -> " << count2 << endl;
+      cout << "res " << arg1 << " -> " << res1 << "  VS  " << arg2 << " -> " << res2 << endl;
+#endif
+         
+      if(res1 > res2)
+         indexing_scores[i]++;
+      else if(res2 > res1)
+         indexing_scores[i + 1]++;
+   }
+}
+
+void
+state::indexing_state_machine(db::node *no)
+{
+   switch(indexing_phase) {
+      case INDEXING_COUNTS: {
+         const size_t target(max(max((size_t)50, All->DATABASE->num_nodes() / 100), All->DATABASE->num_nodes() / (25 * All->NUM_THREADS)));
+         run_node_calls++;
+         if(run_node_calls >= target) {
+#ifdef DEBUG_INDEXING
+            cout << "Computing fields in " << run_node_calls << " calls\n";
+#endif
+            run_node_calls = 0;
+            find_fields_to_improve_index(match_counter);
+            if(!two_indexing_fields.empty())
+               indexing_phase = GUESSING_FIELDS;
+            else {
+               if(one_indexing_fields.empty())
+                  indexing_phase = DONE_INDEXING;
+               else
+                  indexing_phase = ADD_INDEXES;
+            }
+         }
+       }
+      break;
+      case GUESSING_FIELDS: {
+         // perform specific work on nodes
+         const size_t target(max(All->DATABASE->num_nodes() / 100, max((size_t)25, All->DATABASE->num_nodes() / (25 * All->NUM_THREADS))));
+         run_node_calls++;
+         gather_indexing_stats_about_node(no, match_counter);
+         if(run_node_calls >= target) {
+#ifdef DEBUG_INDEXING
+            cout << "Indexing phase " << run_node_calls << endl;
+#endif
+            run_node_calls = 0;
+            indexing_phase = ADD_INDEXES;
+            // fall through
+         } else
+            break;
+      }
+      case ADD_INDEXES: {
+         bool different(false);
+         for(size_t i(0); i < one_indexing_fields.size(); ++i) {
+            pair<predicate*, size_t> p(one_indexing_fields[i]);
+            predicate *pred(p.first);
+            const size_t arg(p.second);
+#ifdef DEBUG_INDEXING
+            cout << "Hash in " << pred->get_name() << " " << arg << endl;
+#endif
+            if(pred->is_hash_table()) {
+               const field_num old(pred->get_hashed_field());
+               if(old != arg) {
+                  different = true;
+                  pred->store_as_hash_table(arg);
+               }
+            } else {
+               different = true;
+               pred->store_as_hash_table(arg);
+            }
+         }
+         for(size_t i(0); i < indexing_scores.size(); i += 2) {
+            const size_t score1(indexing_scores[i]);
+            const size_t score2(indexing_scores[i + 1]);
+            size_t arg1(two_indexing_fields[i].second);
+            size_t arg2(two_indexing_fields[i + 1].second);
+            predicate *pred(two_indexing_fields[i].first);
+            const size_t start(pred->get_argument_position());
+            if(score1 < score2)
+               swap(arg1, arg2);
+            else if(score1 == score2) {
+               // pick the one with the most counts
+               if(match_counter->get_count(start + arg2) > match_counter->get_count(start + arg1))
+                  swap(arg1, arg2);
+            }
+            // arg1 is the best
+            if(pred->is_hash_table()) {
+               const field_num old(pred->get_hashed_field());
+               if(old != arg1) {
+                  different = true;
+                  pred->store_as_hash_table(arg1);
+               }
+            } else {
+               different = true;
+               pred->store_as_hash_table(arg1);
+            }
+            // TODO: remove indexes?
+#ifdef DEBUG_INDEXING
+            cout << *pred << " " << arg1 << " " << score1 << " vs " << arg2 << " " << score2 << endl;
+#endif
+         }
+         if(different)
+            indexing_epoch++;
+         indexing_phase = DONE_INDEXING;
+      }
+      break;
+      case DONE_INDEXING: break;
+   }
+}
+
 void
 state::run_node(db::node *no)
 {
    bool aborted(false);
+
+   if(sched && sched->get_id() == 0)
+      indexing_state_machine(no);
 
 	node = no;
 #ifdef DEBUG_RULES
@@ -427,6 +708,10 @@ state::run_node(db::node *no)
       no->lock();
       process_action_tuples();
 		process_incoming_tuples();
+      if(node->indexing_epoch != indexing_epoch) {
+         lstore->rebuild_index();
+         node->indexing_epoch = indexing_epoch;
+      }
       no->unprocessed_facts = false;
       no->unlock();
 	}
@@ -448,9 +733,8 @@ state::run_node(db::node *no)
 
 	while(!rule_queue.empty(theProgram->num_rules_next_uint()) && !aborted) {
 #ifdef USE_SIM
-      if(check_instruction_limit()) {
+      if(check_instruction_limit())
          break;
-      }
 #endif
 		rule_id rule(rule_queue.remove_front(theProgram->num_rules_next_uint()));
 		
@@ -552,9 +836,8 @@ state::run_node(db::node *no)
       ++sim_instr_counter;
 #endif
    lstore->improve_index();
-   if(node->rounds > 0 && node->rounds % 5 == 0) {
+   if(node->rounds > 0 && node->rounds % 5 == 0)
       lstore->cleanup_index();
-   }
 #ifdef FASTER_INDEXING
    node->internal_unlock();
    node->running = false;
@@ -575,6 +858,11 @@ state::state(sched::base *_sched):
 #ifdef USE_SIM
    sim_instr_use = false;
 #endif
+   match_counter = create_counter(theProgram->get_total_arguments());
+   if(sched->get_id() == 0) {
+      indexing_epoch = 0;
+      run_node_calls = 0;
+   }
 }
 
 state::state(void):
@@ -582,6 +870,7 @@ state::state(void):
 #ifdef DEBUG_MODE
    , print_instrs(false)
 #endif
+   , match_counter(NULL)
 #ifdef CORE_STATISTICS
    , stat()
 #endif
@@ -598,8 +887,10 @@ state::~state(void)
       stat.print(cout);
 	}
 #endif
-   bitmap::destroy(rule_queue, theProgram->num_rules_next_uint());
-	assert(rule_queue.empty());
+   if(sched != NULL) {
+      bitmap::destroy(rule_queue, theProgram->num_rules_next_uint());
+      assert(rule_queue.empty(theProgram->num_rules_next_uint()));
+   }
    for(match_list::iterator it(matches_created.begin()), end(matches_created.end()); it != end; ++it) {
       match *obj(*it);
       const size_t mem(obj->mem_size());
@@ -609,6 +900,11 @@ state::~state(void)
          t->destroy();
       }
       mem::allocator<utils::byte>().deallocate(mdata, obj->mem_size() * All->NUM_THREADS);
+   }
+   if(match_counter) {
+      //cout << "==================================\n";
+      //match_counter->print(theProgram->get_total_arguments());
+      delete_counter(match_counter, theProgram->get_total_arguments());
    }
 }
 

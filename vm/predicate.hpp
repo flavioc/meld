@@ -71,6 +71,9 @@ private:
 
    store_type_t store_type;
    field_num hash_argument;
+
+   // index of this predicate's arguments in the whole set of program's predicates
+   size_t argument_position;
    
    void build_field_info(void);
    void build_aggregate_info(vm::program *);
@@ -147,6 +150,16 @@ public:
    inline bool is_hash_table(void) const
    {
       return store_type == HASH_TABLE;
+   }
+
+   inline void set_argument_position(const size_t arg)
+   {
+      argument_position = arg;
+   }
+
+   inline size_t get_argument_position(void) const
+   {
+      return argument_position;
    }
    
    void print_simple(std::ostream&) const;

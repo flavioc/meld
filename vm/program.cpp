@@ -298,6 +298,7 @@ program::program(const string& _filename):
    }
 
    // read predicate information
+   total_arguments = 0;
 
    for(size_t i(0); i < num_predicates; ++i) {
       code_size_t size;
@@ -311,16 +312,8 @@ program::program(const string& _filename):
       if(predicates[i]->is_route_pred())
          route_predicates.push_back(predicates[i]);
 
-      if(i == num_predicates - 1 && predicates[i]->get_name() == "path" && predicates[i]->num_fields() == 3) {
-         predicates[i]->store_as_hash_table(0);
-      }
-      else if(predicates[i]->get_name() == "new-neighbor-belief") {
-         //predicates[i]->store_as_hash_table(0);
-      } else if(predicates[i]->get_name() == "neighbor-belief-old") {
-         //predicates[i]->store_as_hash_table(0);
-      } else if(predicates[i]->get_name() == "sent-neighbor-belief") {
-         //predicates[i]->store_as_hash_table(0);
-      }
+      predicates[i]->set_argument_position(total_arguments);
+      total_arguments += predicates[i]->num_fields();
    }
 
    // create 'sorted_predicates' from 'predicates'

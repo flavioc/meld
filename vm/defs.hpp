@@ -29,6 +29,7 @@ typedef size_t argument_id;
 typedef uint_val const_id;
 typedef uint32_t rule_id;
 typedef uint32_t depth_t;
+typedef size_t deterministic_timestamp;
 
 static const ptr_val null_ptr_val = 0;
 
