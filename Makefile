@@ -34,7 +34,7 @@ endif
 
 CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) $(FLAGS) $(C0X) #-fno-gcse -fno-crossjumping
 LIBRARIES = -pthread -lm -lreadline -lboost_thread-mt -lboost_system-mt \
-				-lboost_date_time-mt -lboost_regex-mt $(LIBS)
+				-lboost_date_time-mt -lboost_regex-mt -ldl $(LIBS)
 
 CXX = g++
 
