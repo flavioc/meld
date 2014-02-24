@@ -7,20 +7,20 @@ type linear input-rank(node, node, float).
 type linear start(node).
 type linear update(node).
 type linear new-input-rank(node, node, float).
-type linear add-input-ranks(node, float).
+type linear add-input-ranks(node).
 type linear sum-ranks(node, float).
 type linear input-rank-copy(node, node, float).
 type linear output-rank(node, node, float).
+type linear output-rank-copy(node, node, float).
 type linear new-output-rank(node, node, float).
 
 priority @initial 100.
+//priority @cluster @static.
 
 const damping = 0.15.
 const bound = str2float(@arg1).
 const pages = @world.
 const start-pagerank = 1.0 / float(pages).
-
-fun fabs(float X) : float = if X > 0.0 then X else -1.0 * X end.
 
 start(A).
 
@@ -37,21 +37,22 @@ new-output-rank(A, B, V),
 output-rank(A, B, OldV)
    -o output-rank(A, B, V).
 
-add-input-ranks(A, Total)
-   -o [sum => V | B | input-rank-copy(A, B, V) | sum-ranks(A, (V + Total))].
+add-input-ranks(A)
+   -o [sum => V | B | input-rank-copy(A, B, V) | sum-ranks(A, V)].
 
 sum-ranks(A, Acc),
 V = damping/float(pages) + (1.0 - damping) * Acc,
 pagerank(A, Old)
    -o pagerank(A, V),
-      {B, W, O | !output(A, B, W), output-rank(A, B, O), fabs(O - V) * W > bound |
-            update(B), new-input-rank(B, A, V), output-rank(A, B, O)},
-      {B, W, O | !output(A, B, W), output-rank(A, B, O), fabs(O - V) * W <= bound |
-            new-input-rank(B, A, V), output-rank(A, B, O)}.
+      {B, W, O | !output(A, B, W), output-rank-copy(A, B, O), (if O > V then O - V else V - O end) * W > bound |
+            update(B), new-input-rank(B, A, V)},
+      {B, W, O | !output(A, B, W), output-rank-copy(A, B, O), (if O > V then O - V else V - O end) * W <= bound |
+            new-input-rank(B, A, V)}.
 
 update(A), update(A) -o update(A).
 
 update(A)
    -o {B, V, W | input-rank(A, B, V), !input(A, B, W) | input-rank(A, B, V), input-rank-copy(A, B, V * W) , new-output-rank(B, A, V)},
-   add-input-ranks(A, 0.0).
+      {B, V | output-rank(A, B, V) | output-rank-copy(A, B, V), output-rank(A, B, V)},
+      add-input-ranks(A).
 
