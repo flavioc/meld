@@ -1,0 +1,39 @@
+
+include #data/a-star-grid-500.meld
+
+type route edge(node, node, int).
+type coord(node, int, int).
+type linear new-distance(node, int, list node).
+type linear distance(node, int, list node).
+
+priority @order @asc.
+
+const endx = 499.
+const endy = 499.
+
+fun abs(int X) : int = if X >= 0 then X else 0 - X end.
+
+new-distance(@0, 0, [@0]).
+
+new-distance(A, X1, P1), new-distance(A, X2, P2),
+X1 <= X2
+   -o new-distance(A, X1, P1).
+
+new-distance(A, X1, P1), distance(A, X2, P2),
+X1 < X2
+   -o new-distance(A, X1, P1).
+
+new-distance(A, X1, P1), distance(A, X2, P2),
+X1 >= X2
+   -o distance(A, X2, P2).
+
+new-distance(A, T, P),
+!coord(A, endx, endy)
+   -o stop-program(A),
+      distance(A, T, P).
+
+new-distance(A, D, P),
+!coord(A, X, Y)
+   -o {B, W | !edge(A, B, W) | new-distance(B, D + W, [ B | P]), set-priority(B, float(abs(endx - X)) + float(abs(endy - Y)))},
+      distance(A, X, P).
+
