@@ -1466,6 +1466,21 @@ execute_add_priority_here(pcounter& pc, state& state)
 }
 
 static inline void
+execute_cpu_id(pcounter& pc, state& state)
+{
+   const reg_num node_reg(pcounter_reg(pc + instr_size));
+   const reg_num dest_reg(pcounter_reg(pc + instr_size + reg_val_size));
+   const node_val nodeval(state.get_node(node_reg));
+#ifdef USE_REAL_NODES
+   db::node *node((db::node*)nodeval);
+#else
+   db::node *node(All->DATABASE->find_node(nodeval));
+#endif
+
+   state.set_int(dest_reg, node->get_owner()->get_id());
+}
+
+static inline void
 execute_rule(const pcounter& pc, state& state)
 {
    const size_t rule_id(rule_get_id(pc));
@@ -3404,6 +3419,12 @@ eval_loop:
          CASE(STOP_PROG_INSTR)
             JUMP(stop_program, STOP_PROG_BASE)
             sched::base::stop_flag = true;
+            ADVANCE()
+         ENDOP()
+
+         CASE(CPU_ID_INSTR)
+            JUMP(cpu_id, CPU_ID_BASE)
+            execute_cpu_id(pc, state);
             ADVANCE()
          ENDOP()
 

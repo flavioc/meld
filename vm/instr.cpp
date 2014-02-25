@@ -879,6 +879,9 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
       case STOP_PROG_INSTR:
          cout << "STOP PROGRAM" << endl;
          break;
+      case CPU_ID_INSTR:
+         cout << "CPU ID OF " << reg_string(pcounter_reg(pc + instr_size)) << " TO " << reg_string(pcounter_reg(pc + instr_size + reg_val_size)) << endl;
+         break;
 		default:
          throw malformed_instr_error("unknown instruction code");
 	}

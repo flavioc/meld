@@ -160,6 +160,7 @@ const size_t SET_PRIORITYH_BASE  = instr_size + reg_val_size;
 const size_t ADD_PRIORITY_BASE   = instr_size + 2 * reg_val_size;
 const size_t ADD_PRIORITYH_BASE  = instr_size + reg_val_size;
 const size_t STOP_PROG_BASE      = instr_size;
+const size_t CPU_ID_BASE         = instr_size + 2 * reg_val_size;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -288,6 +289,7 @@ enum instr_type {
    UPDATE_INSTR         =  0x7B,
    MVARGREG_INSTR       =  0x7C,
    INTMOD_INSTR         =  0x7D,
+   CPU_ID_INSTR         =  0x7E,
    REMOVE_INSTR 	      =  0x80,
    ADD_PRIORITY_INSTR   =  0xA0,
    ADD_PRIORITYH_INSTR  =  0xA1,
@@ -891,6 +893,9 @@ advance(const pcounter pc)
 
       case STOP_PROG_INSTR:
          return pc + STOP_PROG_BASE;
+
+      case CPU_ID_INSTR:
+         return pc + CPU_ID_BASE;
 
       default:
          throw malformed_instr_error("unknown instruction code (advance)");
