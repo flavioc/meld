@@ -10,6 +10,7 @@
 #include "vm/match.hpp"
 #include "db/tuple.hpp"
 #include "process/machine.hpp"
+#include "sched/nodes/thread_intrusive.hpp"
 #ifdef USE_UI
 #include "ui/manager.hpp"
 #endif
@@ -1478,6 +1479,22 @@ execute_cpu_id(pcounter& pc, state& state)
 #endif
 
    state.set_int(dest_reg, node->get_owner()->get_id());
+}
+
+static inline void
+execute_node_priority(pcounter& pc, state& state)
+{
+   const reg_num node_reg(pcounter_reg(pc + instr_size));
+   const reg_num dest_reg(pcounter_reg(pc + instr_size + reg_val_size));
+   const node_val nodeval(state.get_node(node_reg));
+#ifdef USE_REAL_NODES
+   db::node *node((db::node*)nodeval);
+#else
+   db::node *node(All->DATABASE->find_node(nodeval));
+#endif
+
+   sched::thread_intrusive_node *tn((sched::thread_intrusive_node *)node);
+   state.set_float(dest_reg, tn->get_float_priority_level());
 }
 
 static inline void
@@ -3425,6 +3442,12 @@ eval_loop:
          CASE(CPU_ID_INSTR)
             JUMP(cpu_id, CPU_ID_BASE)
             execute_cpu_id(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(NODE_PRIORITY_INSTR)
+            JUMP(node_priority, NODE_PRIORITY_BASE)
+            execute_node_priority(pc, state);
             ADVANCE()
          ENDOP()
 
