@@ -13,10 +13,9 @@ type linear update(node).
 type linear sum-heats(node).
 type linear new-heat(node, float, float).
 type linear check-residual(node, float).
-type linear total(node, int).
 
 priority @order @desc.
-priority @cluster @static.
+//priority @cluster @static.
 priority @initial 100.
 
 const epsilon = str2float(@arg1).
@@ -26,20 +25,22 @@ start(A).
 
 start(A), heat(A, H), !inbound(A, T) -o {B, W | !edge(A, B, W) | new-neighbor-heat(B, A, H)},
                                         wait(A, T),
-                                        heat(A, H),
-                                        total(A, 0).
+                                        heat(A, H).
+
+new-neighbor-heat(A, B, Heat),
+neighbor-heat(A, B, OldHeat)
+   -o neighbor-heat(A, B, Heat).
 
 sum-heats(A),
 heat(A, H),
-total(A, N),
 !inbound(A, T)
-   -o [sum => X | B | neighbor-heat-copy(A, B, X) | new-heat(A, (X + H) / float(T + 1), H)],
-      total(A, N + 1).
+   -o [sum => X | B | neighbor-heat-copy(A, B, X) | new-heat(A, (X + H) / float(T + 1), H)].
 
-new-heat(A, New, Old)
+new-heat(A, New, Old),
+Diff = if (New - Old > 0.0) then (New - Old) else (Old - New) end
    -o {B, W | !edge(A, B, W) | new-neighbor-heat(B, A, New)},
       heat(A, New),
-      check-residual(A, if (New - Old > 0.0) then (New - Old) else (Old - New) end).
+      check-residual(A, Diff).
 
 check-residual(A, R),
 R > delta
@@ -49,12 +50,7 @@ check-residual(A, R),
 R > epsilon
    -o {B, W | !edge(A, B, W) | update(B)}.
 
-check-residual(A, R)
-   -o 1.
-
-new-neighbor-heat(A, B, Heat),
-neighbor-heat(A, B, OldHeat)
-   -o neighbor-heat(A, B, Heat).
+check-residual(A, R) -o 1.
 
 new-neighbor-heat(A, B, Heat),
 wait(A, T),
