@@ -5,7 +5,7 @@ import random
 from lib import *
 
 print_inout = True
-OUTPUT_MELD = False
+OUTPUT_MELD = True
 
 def list_has(list, x):
 	try:
@@ -58,12 +58,11 @@ for i in range(total):
 			print str(i) + ":",
 		for link in list:
 			if OUTPUT_MELD:
-				write_winout(i, link, w)
+				write_winout(link, i, w)
 			else:
 				print link,
 		if not OUTPUT_MELD:
 			print
-
 	else:
 		for link in list:
 			write_edge(i, link)
