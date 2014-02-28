@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <iostream>
 #include <sstream>
+#include <limits>
 
 #include "vm/tuple.hpp"
 #include "db/node.hpp"
@@ -134,7 +135,7 @@ print_int(ostream& out, const tuple_field& val)
 static inline void
 print_float(ostream& out, const tuple_field& val)
 {
-   out << FIELD_FLOAT(val);
+   out << std::setprecision (numeric_limits<double>::digits10 + 1) << FIELD_FLOAT(val);
 }
 
 static inline void
