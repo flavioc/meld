@@ -18,10 +18,13 @@
 #include "jit/build.hpp"
 #endif
 
-//#define DEBUG_SENDS
-//#define DEBUG_INSTRS
-//#define DEBUG_RULES
-//#define DEBUG_REMOVE
+#if 0
+#define DEBUG_INSTRS
+#define DEBUG_RULES
+#define DEBUG_SENDS
+#define DEBUG_REMOVE
+#define DEBUG_ITERS
+#endif
 
 #define COMPUTED_GOTOS
 
@@ -723,6 +726,11 @@ execute_pers_iter(const reg_num reg, match* m, const pcounter first, state& stat
 #endif
 
       PUSH_CURRENT_STATE(match_tuple, tuple_leaf, NULL, tuple_leaf->get_min_depth());
+#ifdef DEBUG_ITERS
+      cout << "\t use ";
+      match_tuple->print(cout, pred);
+      cout << "\n";
+#endif
 
       return_type ret = execute(first, state, reg, match_tuple, pred);
 
@@ -979,6 +987,11 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
       }
 
       PUSH_CURRENT_STATE(match_tuple, NULL, match_tuple, (vm::depth_t)0);
+#ifdef DEBUG_ITERS
+      cout << "\tuse ";
+      match_tuple->print(cout, pred);
+      cout << "\n";
+#endif
 
       match_tuple->will_delete(); // this will avoid future uses of this tuple!
 
