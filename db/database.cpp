@@ -130,14 +130,28 @@ database::create_node(void)
    return ret;
 }
 
+static bool
+node_sorter(db::node *a1, db::node *a2)
+{
+   return a1->get_translated_id() < a2->get_translated_id();
+}
+
 void
 database::print_db(ostream& cout) const
 {
+   std::vector<db::node*> arr(num_nodes(), NULL);
+
+   size_t i(0);
    for(map_nodes::const_iterator it(nodes.begin());
       it != nodes.end();
       ++it)
    {
-      cout << *(it->second) << endl;
+      arr[i++] = it->second;
+   }
+
+   sort(arr.begin(), arr.end(), node_sorter);
+   for(size_t i(0); i < arr.size(); ++i) {
+      cout << *arr[i] << endl;
    }
 }
 
