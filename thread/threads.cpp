@@ -362,12 +362,12 @@ threads_sched::threads_sched(const vm::process_id _id):
    base(_id),
    current_node(NULL)
 #ifdef INSTRUMENTATION
-#ifdef TASK_STEALING
-   , stolen_total(0)
-#endif
    , sent_facts_same_thread(0)
    , sent_facts_other_thread(0)
    , sent_facts_other_thread_now(0)
+#ifdef TASK_STEALING
+   , stolen_total(0)
+#endif
 #endif
 {
 }
