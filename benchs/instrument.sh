@@ -33,4 +33,6 @@ do_run ()
 do_run 4
 do_run 8
 do_run 16
+do_run 24
+do_run 32
 
