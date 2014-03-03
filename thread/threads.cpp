@@ -123,6 +123,7 @@ threads_sched::new_work_remote(remote *, const node::node_id, message *)
 void
 threads_sched::go_steal_nodes(void)
 {
+   ins_sched;
    if(All->NUM_THREADS == 1)
       return;
 
@@ -196,9 +197,9 @@ threads_sched::busy_wait(void)
 #ifdef TASK_STEALING
    uint64_t count(0);
 #endif
-   ins_idle;
    
    while(!has_work()) {
+      ins_idle;
 #ifdef TASK_STEALING
       if(!theProgram->is_static_priority()) {
          count++;
@@ -288,6 +289,7 @@ threads_sched::get_work(void)
       return NULL;
 
    set_active_if_inactive();
+   ins_active;
    assert(current_node != NULL);
    assert(current_node->in_queue());
    assert(current_node->unprocessed_facts);
