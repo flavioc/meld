@@ -35,7 +35,6 @@ private:
    void write_derived_facts(const std::string&, vm::all *) const;
    void write_consumed_facts(const std::string&, vm::all *) const;
    void write_rules_run(const std::string&, vm::all *) const;
-   void write_sent_facts(const std::string&, vm::all *) const;
    void write_stolen_nodes(const std::string&, vm::all *) const;
    void write_sent_facts_same_thread(const std::string&, vm::all *) const;
    void write_sent_facts_other_thread(const std::string&, vm::all *) const;

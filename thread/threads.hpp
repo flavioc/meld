@@ -79,7 +79,6 @@ public:
 #endif
    
    virtual db::node* get_work(void);
-   virtual void finish_work(db::node *);
    virtual void end(void);
    virtual bool terminate_iteration(void);
    

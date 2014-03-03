@@ -54,7 +54,6 @@ base::do_loop(void)
    while(true) {
       while((node = get_work())) {
          do_work(node);
-         finish_work(node);
          if(stop_flag) {
             killed_while_active();
             return;
@@ -119,7 +118,7 @@ base::base(const vm::process_id _id):
 	state(this),
 	iteration(0)
 #ifdef INSTRUMENTATION
-   , processed_facts(0), sent_facts(0), ins_state(statistics::NOW_ACTIVE)
+   , ins_state(statistics::NOW_ACTIVE)
 #endif
 {
 }

@@ -106,9 +106,6 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
          owner->set_active();
          assert(owner->is_active());
       }
-#ifdef INSTRUMENTATION
-      sent_facts++;
-#endif
    }
 
    tnode->unlock();
@@ -236,16 +233,6 @@ threads_sched::terminate_iteration(void)
    END_ROUND(
       more_work = num_active() > 0;
    );
-}
-
-void
-threads_sched::finish_work(db::node *no)
-{
-   base::finish_work(no);
-   
-   assert(current_node != NULL);
-   assert(current_node->in_queue());
-   assert(current_node->get_owner() == this);
 }
 
 bool

@@ -17,7 +17,6 @@ public:
    sched_state state;
    size_t work_queue;
    size_t derived_facts;
-   size_t sent_facts;
    size_t consumed_facts;
    size_t rules_run;
    size_t stolen_nodes;
@@ -29,7 +28,6 @@ public:
    void print_derived_facts(utils::csv_line&) const;
    void print_consumed_facts(utils::csv_line&) const;
    void print_rules_run(utils::csv_line&) const;
-   void print_sent_facts(utils::csv_line&) const;
    void print_stolen_nodes(utils::csv_line&) const;
    void print_sent_facts_same_thread(utils::csv_line&) const;
    void print_sent_facts_other_thread(utils::csv_line&) const;
@@ -39,7 +37,6 @@ public:
       state(NOW_IDLE),
       work_queue(0),
       derived_facts(0),
-      sent_facts(0),
       consumed_facts(0),
       rules_run(0),
       stolen_nodes(0),

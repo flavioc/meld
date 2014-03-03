@@ -40,8 +40,6 @@ protected:
    size_t iteration;
    
 #ifdef INSTRUMENTATION
-   mutable utils::atomic<size_t> processed_facts;
-   mutable utils::atomic<size_t> sent_facts;
    mutable statistics::sched_state ins_state;
    
 #define ins_active ins_state = statistics::NOW_ACTIVE
@@ -127,13 +125,6 @@ public:
    
    virtual db::node *get_work(void) = 0;
    
-   virtual void finish_work(db::node *)
-   {
-#ifdef INSTRUMENTATION
-      processed_facts++;
-#endif
-   }
-   
    virtual void assert_end(void) const = 0;
    virtual void assert_end_iteration(void) const = 0;
    
@@ -156,13 +147,10 @@ public:
 #ifdef INSTRUMENTATION
       sl.state = ins_state;
       sl.consumed_facts = state.instr_facts_consumed;
-      sl.sent_facts = sent_facts;
       sl.derived_facts = state.instr_facts_derived;
       sl.rules_run = state.instr_rules_run;
       
       // reset stats
-      processed_facts = 0;
-      sent_facts = 0;
       state.instr_facts_consumed = 0;
       state.instr_facts_derived = 0;
       state.instr_rules_run = 0;

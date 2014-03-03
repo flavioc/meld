@@ -86,12 +86,6 @@ slice_set::write_rules_run(const string& file, vm::all *all) const
 }
 
 void
-slice_set::write_sent_facts(const string& file, vm::all *all) const
-{
-   write_general(file + ".sent_facts", "sentfacts", &slice::print_sent_facts, all);
-}
-
-void
 slice_set::write_stolen_nodes(const string& file, vm::all *all) const
 {
    write_general(file + ".stolen_nodes", "stolennodes", &slice::print_stolen_nodes, all);
@@ -123,7 +117,6 @@ slice_set::write(const string& file, const scheduler_type type, vm::all *all) co
    write_derived_facts(file, all);
    write_consumed_facts(file, all);
    write_rules_run(file, all);
-   write_sent_facts(file, all);
    write_stolen_nodes(file, all);
    write_sent_facts_same_thread(file, all);
    write_sent_facts_other_thread(file, all);

@@ -49,12 +49,6 @@ slice::print_rules_run(csv_line& csv) const
 }
 
 void
-slice::print_sent_facts(csv_line& csv) const
-{
-   csv << to_string<size_t>(sent_facts);
-}
-
-void
 slice::print_stolen_nodes(csv_line& csv) const
 {
    csv << to_string<size_t>(stolen_nodes);
