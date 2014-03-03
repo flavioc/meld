@@ -68,15 +68,21 @@ slice_set::write_state(const string& file, vm::all *all) const
 }
 
 void
-slice_set::write_work_queue(const string& file, vm::all *all) const
+slice_set::write_derived_facts(const string& file, vm::all *all) const
 {
-   write_general(file + ".work_queue", "workqueue", &slice::print_work_queue, all);
+   write_general(file + ".derived_facts", "derivedfacts", &slice::print_derived_facts, all);
 }
 
 void
-slice_set::write_processed_facts(const string& file, vm::all *all) const
+slice_set::write_consumed_facts(const string& file, vm::all *all) const
 {
-   write_general(file + ".processed_facts", "processedfacts", &slice::print_processed_facts, all);
+   write_general(file + ".consumed_facts", "consumedfacts", &slice::print_consumed_facts, all);
+}
+
+void
+slice_set::write_rules_run(const string& file, vm::all *all) const
+{
+   write_general(file + ".rules_run", "rulesrun", &slice::print_rules_run, all);
 }
 
 void
@@ -92,28 +98,40 @@ slice_set::write_stolen_nodes(const string& file, vm::all *all) const
 }
 
 void
-slice_set::write_steal_requests(const string& file, vm::all *all) const
+slice_set::write_sent_facts_same_thread(const string& file, vm::all *all) const
 {
-   write_general(file + ".steal_requests", "stealrequests", &slice::print_steal_requests, all);
+   write_general(file + ".sent_facts_same_thread", "sentfactssamethread", &slice::print_sent_facts_same_thread, all);
 }
 
 void
-slice_set::write_priority_queue(const string& file, vm::all *all) const
+slice_set::write_sent_facts_other_thread(const string& file, vm::all *all) const
 {
-   write_general(file + ".priority_queue", "priorityqueue", &slice::print_priority_queue, all);
+   write_general(file + ".sent_facts_other_thread", "sentfactsotherthread", &slice::print_sent_facts_other_thread, all);
+}
+
+void
+slice_set::write_sent_facts_other_thread_now(const string& file, vm::all *all) const
+{
+   write_general(file + ".sent_facts_other_thread_now", "sentfactsotherthreadnow", &slice::print_sent_facts_other_thread_now, all);
 }
 
 void
 slice_set::write(const string& file, const scheduler_type type, vm::all *all) const
 {
+   (void)type;
    write_state(file, all);
-   write_work_queue(file, all);
-   write_processed_facts(file, all);
+   write_derived_facts(file, all);
+   write_consumed_facts(file, all);
+   write_rules_run(file, all);
    write_sent_facts(file, all);
    write_stolen_nodes(file, all);
-   write_steal_requests(file, all);
+   write_sent_facts_same_thread(file, all);
+   write_sent_facts_other_thread(file, all);
+   write_sent_facts_other_thread_now(file, all);
+#if 0
    if(is_priority_sched(type))
       write_priority_queue(file, all);
+#endif
 }
    
 void

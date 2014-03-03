@@ -32,11 +32,15 @@ protected:
    mutable utils::randgen rand;
 
    queue::push_safe_linear_queue<thread_intrusive_node*> stolen_nodes_buffer;
+#ifdef INSTRUMENTATION
+   size_t sent_facts_same_thread;
+   size_t sent_facts_other_thread;
+   size_t sent_facts_other_thread_now;
+#endif
 
 #ifdef TASK_STEALING
 #ifdef INSTRUMENTATION
-   mutable size_t stolen_total;
-   mutable size_t steal_requests;
+   size_t stolen_total;
 #endif
 
    void clear_steal_requests(void);
@@ -86,7 +90,7 @@ public:
    
    DEFINE_START_FUNCTION(threads_sched);
    
-   virtual void write_slice(statistics::slice&) const;
+   virtual void write_slice(statistics::slice&);
    
    explicit threads_sched(const vm::process_id);
    

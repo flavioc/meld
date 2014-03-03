@@ -73,6 +73,11 @@ public:
    size_t linear_facts_generated;
    size_t persistent_facts_generated;
    size_t linear_facts_consumed;
+#ifdef INSTRUMENTATION
+   size_t instr_facts_consumed;
+   size_t instr_facts_derived;
+   size_t instr_rules_run;
+#endif
    bool generated_facts;
    bool running_rule;
    bool hash_removes;

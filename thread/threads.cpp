@@ -66,6 +66,9 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
 #ifdef FASTER_INDEXING
       tnode->internal_unlock();
 #endif
+#ifdef INSTRUMENTATION
+      sent_facts_same_thread++;
+#endif
       if(!tnode->in_queue()) {
          tnode->set_in_queue(true);
          add_to_queue((thread_intrusive_node*)tnode);
@@ -81,6 +84,9 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
          tnode->internal_lock();
          tnode->add_work_myself(tpl, pred, count, depth);
          tnode->internal_unlock();
+#ifdef INSTRUMENTATION
+         sent_facts_other_thread_now++;
+#endif
       }
 #else
       tnode->add_work_others(tpl, pred, count, depth);
@@ -89,6 +95,9 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
          tnode->set_in_queue(true);
          owner->add_to_queue((thread_intrusive_node*)tnode);
       }
+#ifdef INSTRUMENTATION
+      sent_facts_other_thread++;
+#endif
 
       spinlock::scoped_lock l2(owner->lock);
       
@@ -329,16 +338,20 @@ threads_sched::init(const size_t)
 }
 
 void
-threads_sched::write_slice(statistics::slice& sl) const
+threads_sched::write_slice(statistics::slice& sl)
 {
 #ifdef INSTRUMENTATION
    base::write_slice(sl);
    sl.work_queue = queue_nodes.size();
+   sl.sent_facts_same_thread = sent_facts_same_thread;
+   sl.sent_facts_other_thread = sent_facts_other_thread;
+   sl.sent_facts_other_thread_now = sent_facts_other_thread_now;
+   sent_facts_same_thread = 0;
+   sent_facts_other_thread = 0;
+   sent_facts_other_thread_now = 0;
 #ifdef TASK_STEALING
    sl.stolen_nodes = stolen_total;
-   sl.steal_requests = steal_requests;
    stolen_total = 0;
-   steal_requests = 0;
 #endif
 #else
    (void)sl;
@@ -348,8 +361,13 @@ threads_sched::write_slice(statistics::slice& sl) const
 threads_sched::threads_sched(const vm::process_id _id):
    base(_id),
    current_node(NULL)
-#if defined(TASK_STEALING) && defined(INSTRUMENTATION)
-   , stolen_total(0), steal_requests(0)
+#ifdef INSTRUMENTATION
+#ifdef TASK_STEALING
+   , stolen_total(0)
+#endif
+   , sent_facts_same_thread(0)
+   , sent_facts_other_thread(0)
+   , sent_facts_other_thread_now(0)
 #endif
 {
 }

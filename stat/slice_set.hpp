@@ -32,12 +32,14 @@ private:
    void beat_thread(const vm::process_id, slice&, vm::all *);
    
    void write_state(const std::string&, vm::all *) const;
-   void write_work_queue(const std::string&, vm::all *) const;
-   void write_processed_facts(const std::string&, vm::all *) const;
+   void write_derived_facts(const std::string&, vm::all *) const;
+   void write_consumed_facts(const std::string&, vm::all *) const;
+   void write_rules_run(const std::string&, vm::all *) const;
    void write_sent_facts(const std::string&, vm::all *) const;
    void write_stolen_nodes(const std::string&, vm::all *) const;
-   void write_steal_requests(const std::string&, vm::all *) const;
-   void write_priority_queue(const std::string&, vm::all *) const;
+   void write_sent_facts_same_thread(const std::string&, vm::all *) const;
+   void write_sent_facts_other_thread(const std::string&, vm::all *) const;
+   void write_sent_facts_other_thread_now(const std::string&, vm::all *) const;
    
    typedef  void (slice::*print_fn)(utils::csv_line&) const;
    

@@ -151,16 +151,21 @@ public:
 	
 	void start(void);
    
-   virtual void write_slice(statistics::slice& sl) const
+   virtual void write_slice(statistics::slice& sl)
    {
 #ifdef INSTRUMENTATION
       sl.state = ins_state;
-      sl.processed_facts = processed_facts;
+      sl.consumed_facts = state.instr_facts_consumed;
       sl.sent_facts = sent_facts;
+      sl.derived_facts = state.instr_facts_derived;
+      sl.rules_run = state.instr_rules_run;
       
       // reset stats
       processed_facts = 0;
       sent_facts = 0;
+      state.instr_facts_consumed = 0;
+      state.instr_facts_derived = 0;
+      state.instr_rules_run = 0;
 #else
       (void)sl;
 #endif

@@ -524,11 +524,11 @@ threads_prio::init(const size_t)
 }
 
 void
-threads_prio::write_slice(statistics::slice& sl) const
+threads_prio::write_slice(statistics::slice& sl)
 {
 #ifdef INSTRUMENTATION
    threads_sched::write_slice(sl);
-   sl.priority_queue = prio_queue.size();
+   sl.work_queue += prio_queue.size();
 #else
    (void)sl;
 #endif

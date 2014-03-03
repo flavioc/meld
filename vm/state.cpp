@@ -878,6 +878,11 @@ state::state(sched::base *_sched):
 #ifdef USE_SIM
    sim_instr_use = false;
 #endif
+#ifdef INSTRUMENTATION
+   instr_facts_consumed = 0;
+   instr_facts_derived = 0;
+   instr_rules_run = 0;
+#endif
    match_counter = create_counter(theProgram->get_total_arguments());
 #ifdef DYNAMIC_INDEXING
    if(sched->get_id() == 0) {

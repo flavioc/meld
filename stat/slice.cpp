@@ -15,7 +15,7 @@ slice::print_state(csv_line& csv) const
 {
    switch(state) {
       case NOW_ACTIVE:
-         csv << to_string<size_t>(work_queue + priority_queue);
+         csv << to_string<size_t>(work_queue);
          break;
       case NOW_IDLE:
          csv << "i";
@@ -31,15 +31,21 @@ slice::print_state(csv_line& csv) const
 }
 
 void
-slice::print_work_queue(csv_line& csv) const
+slice::print_derived_facts(csv_line& csv) const
 {
-   csv << to_string<size_t>(work_queue);
+   csv << to_string<size_t>(derived_facts);
 }
 
 void
-slice::print_processed_facts(csv_line& csv) const
+slice::print_consumed_facts(csv_line& csv) const
 {
-   csv << to_string<size_t>(processed_facts);
+   csv << to_string<size_t>(consumed_facts);
+}
+
+void
+slice::print_rules_run(csv_line& csv) const
+{
+   csv << to_string<size_t>(rules_run);
 }
 
 void
@@ -55,15 +61,21 @@ slice::print_stolen_nodes(csv_line& csv) const
 }
 
 void
-slice::print_steal_requests(csv_line& csv) const
+slice::print_sent_facts_same_thread(csv_line& csv) const
 {
-   csv << to_string<size_t>(steal_requests);
+   csv << to_string<size_t>(sent_facts_same_thread);
 }
 
 void
-slice::print_priority_queue(csv_line& csv) const
+slice::print_sent_facts_other_thread(csv_line& csv) const
 {
-   csv << to_string<size_t>(priority_queue);
+   csv << to_string<size_t>(sent_facts_other_thread);
+}
+
+void
+slice::print_sent_facts_other_thread_now(csv_line& csv) const
+{
+   csv << to_string<size_t>(sent_facts_other_thread_now);
 }
 
 }

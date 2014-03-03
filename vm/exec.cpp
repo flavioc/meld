@@ -98,6 +98,9 @@ execute_add_linear0(tuple *tuple, predicate *pred, state& state)
 {
    state.node->add_linear_fact(tuple, pred);
    state.linear_facts_generated++;
+#ifdef INSTRUMENTATION
+   state.instr_facts_derived++;
+#endif
 }
 
 static inline void
@@ -146,6 +149,9 @@ execute_add_persistent0(tuple *tpl, predicate *pred, state& state)
    simple_tuple *stuple(new simple_tuple(tpl, pred, state.count, state.depth));
    state.store->persistent_tuples.push_back(stuple);
    state.persistent_facts_generated++;
+#ifdef INSTRUMENTATION
+   state.instr_facts_derived++;
+#endif
 }
 
 static inline void
@@ -188,6 +194,9 @@ execute_enqueue_linear0(tuple *tuple, predicate *pred, state& state)
    state.store->register_tuple_fact(pred, 1);
    state.generated_facts = true;
    state.linear_facts_generated++;
+#ifdef INSTRUMENTATION
+   state.instr_facts_derived++;
+#endif
 }
 
 static inline void
@@ -251,6 +260,9 @@ execute_send(const pcounter& pc, state& state)
       }
    } else {
       All->MACHINE->route(state.node, state.sched, (node::node_id)dest_val, tuple, pred, state.count, state.depth);
+#ifdef INSTRUMENTATION
+      state.instr_facts_derived++;
+#endif
    }
 }
 
@@ -1259,6 +1271,9 @@ execute_remove(pcounter pc, state& state)
       if(pred->is_reused_pred())
          state.store->persistent_tuples.push_back(new simple_tuple(tpl, pred, -1, state.depth));
       state.linear_facts_consumed++;
+#ifdef INSTRUMENTATION
+      state.instr_facts_consumed++;
+#endif
    }
 }
 
@@ -3520,6 +3535,9 @@ execute_rule(const rule_id rule_id, state& state)
 #endif
 #ifdef CORE_STATISTICS
    execution_time::scope s(state.stat.rule_times[rule_id]);
+#endif
+#ifdef INSTRUMENTATION
+   state.instr_rules_run++;
 #endif
    
    //   state.node->print(cout);
