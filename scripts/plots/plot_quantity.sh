@@ -3,7 +3,8 @@
 . ./common.sh
 . ./lines.sh
 
-BIGGER=`bash ./find_bigger_value.sh ${FILE}`
+BIGGER=`python ./find_max_value.py ${FILE}`
+TOTAL=`python ./find_total_value.py ${FILE}`
 
 if [ $BIGGER -eq 0 ]; then
    echo "No quantities for ${FILE}"
@@ -18,11 +19,20 @@ for i in `seq 2 $NUMCOLS`; do
 	$NOW"
 done
 
+WIDTH=800
+HEIGHT=600
+
+if [ $NUMCOLS -gt 24 ]; then
+   WIDTH=1000
+   HEIGHT=800
+fi
+
 gnuplot <<EOF
 set output "$FILE.png"
 load 'base.plt'
+set terminal png size $WIDTH,$HEIGHT
 set xrange [0:$MAXX]
-set ylabel "Max: $BIGGER"
+set ylabel "Max: $BIGGER \n Total: $TOTAL"
 
 set style line 1 lt 1 lc rgb "black" lw 2
 set style line 3 lt 1 lw 1

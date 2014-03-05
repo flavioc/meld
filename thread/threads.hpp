@@ -15,7 +15,6 @@
 #include "utils/random.hpp"
 
 #define TASK_STEALING 1
-#define STEALING_ROUND_MAX 1000000
 
 namespace sched
 {
@@ -29,9 +28,12 @@ protected:
    node_queue queue_nodes;
    
    thread_intrusive_node *current_node;
+#ifdef TASK_STEALING
    mutable utils::randgen rand;
+   size_t next_thread;
+   size_t backoff;
+#endif
 
-   queue::push_safe_linear_queue<thread_intrusive_node*> stolen_nodes_buffer;
 #ifdef INSTRUMENTATION
    size_t sent_facts_same_thread;
    size_t sent_facts_other_thread;
@@ -44,7 +46,7 @@ protected:
 #endif
 
    void clear_steal_requests(void);
-   void go_steal_nodes(void);
+   bool go_steal_nodes(void);
    virtual thread_intrusive_node* steal_node(void);
    virtual size_t number_of_nodes(void) const;
    virtual void check_stolen_node(thread_intrusive_node *) {};
@@ -64,7 +66,7 @@ protected:
       queue_nodes.push_tail(node);
    }
    
-   virtual bool has_work(void) const { return !queue_nodes.empty() || !stolen_nodes_buffer.empty(); }
+   virtual bool has_work(void) const { return !queue_nodes.empty(); }
 
    virtual void killed_while_active(void);
    

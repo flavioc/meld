@@ -22,7 +22,7 @@ public:
       return rng(state);
    }
    
-   explicit randgen(void) {}
+   explicit randgen(const size_t seed = 5489U): state(seed) {}
 };
 
 template <class T>

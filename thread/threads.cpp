@@ -1,5 +1,6 @@
 #include <iostream>
 #include <boost/thread/barrier.hpp>
+#include <climits>
 
 #include "thread/threads.hpp"
 #include "db/database.hpp"
@@ -120,46 +121,58 @@ threads_sched::new_work_remote(remote *, const node::node_id, message *)
 #endif
 
 #ifdef TASK_STEALING
-void
+bool
 threads_sched::go_steal_nodes(void)
 {
-   ins_sched;
    if(All->NUM_THREADS == 1)
-      return;
+      return false;
 
-   size_t tid(rand(All->NUM_THREADS));
+   ins_sched;
+   assert(is_active());
 
-   threads_sched *target((threads_sched*)All->ALL_THREADS[tid]);
+   // roubar em ciclo
+   // verificar se o rand se inicializa com seeds diferentes
+   // tentar roubar mesmo que a fila so tenha 1 no
 
-   if(target == this) {
-      return;
-   }
+   for(size_t i(0); i < All->NUM_THREADS; ++i) {
+      size_t tid((next_thread + i) % All->NUM_THREADS);
+      if(tid == get_id())
+         continue;
 
-   if(!target->is_active())
-      return;
+      threads_sched *target((threads_sched*)All->ALL_THREADS[tid]);
 
-   thread_intrusive_node *node(NULL);
-   size_t size = 1;
-   while(size > 0) {
+      if(!target->is_active())
+         continue;
       if(target->number_of_nodes() < 3)
-         return;
+         continue;
+      size_t size = 1;
 
-      node = target->steal_node();
+      assert(size > 0);
 
-      if(node != NULL) {
+      while(size > 0) {
+         thread_intrusive_node *node(target->steal_node());
+
+         if(node == NULL)
+            break;
+
          node->lock();
          check_stolen_node(node);
          node->set_owner(this);
-         node->set_in_queue(false);
          add_to_queue(node);
-         node->set_in_queue(true);
          node->unlock();
 #ifdef INSTRUMENTATION
          stolen_total++;
 #endif
+         --size;
       }
-      size--;
+      if(size == 0) {
+         // set the next thread as the next one
+         next_thread = (tid + 1) % All->NUM_THREADS;
+         return true;
+      }
    }
+
+   return false;
 }
 
 thread_intrusive_node*
@@ -195,20 +208,38 @@ bool
 threads_sched::busy_wait(void)
 {
 #ifdef TASK_STEALING
-   uint64_t count(0);
+   if(go_steal_nodes()) {
+      ins_active;
+      return true;
+   }
+#endif
+
+#ifdef TASK_STEALING
+   size_t count(0);
 #endif
    
    while(!has_work()) {
-      ins_idle;
 #ifdef TASK_STEALING
+#define STEALING_ROUND_MAX 1000
+#define BACKOFF_INCREASE_FACTOR 4
+#define BACKOFF_DECREASE_FACTOR 2
       if(!theProgram->is_static_priority()) {
          count++;
-         if(count > 1) {
-            go_steal_nodes();
+         if(count == backoff) {
             count = 0;
+            set_active_if_inactive();
+            if(go_steal_nodes()) {
+               ins_active;
+               backoff = max(backoff / BACKOFF_DECREASE_FACTOR, (size_t)STEALING_ROUND_MAX);
+               return true;
+            } else {
+               if(backoff < UINT_MAX/BACKOFF_INCREASE_FACTOR)
+                  backoff *= BACKOFF_INCREASE_FACTOR;
+            }
          }
       }
 #endif
+      ins_idle;
       BUSY_LOOP_MAKE_INACTIVE()
       BUSY_LOOP_CHECK_TERMINATION_THREADS()
    }
@@ -350,6 +381,11 @@ threads_sched::write_slice(statistics::slice& sl)
 threads_sched::threads_sched(const vm::process_id _id):
    base(_id),
    current_node(NULL)
+#ifdef TASK_STEALING
+   , rand(time(NULL) + _id * 10)
+   , next_thread(rand(All->NUM_THREADS))
+   , backoff(STEALING_ROUND_MAX)
+#endif
 #ifdef INSTRUMENTATION
    , sent_facts_same_thread(0)
    , sent_facts_other_thread(0)

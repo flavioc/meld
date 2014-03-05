@@ -110,7 +110,7 @@ public:
 
    db::linear_store linear;
    vm::temporary_store store;
-   bool unprocessed_facts;
+   volatile bool unprocessed_facts;
    bool running;
    uint16_t rounds;
    vm::deterministic_timestamp indexing_epoch;

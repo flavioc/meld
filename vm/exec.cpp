@@ -1024,7 +1024,7 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
                state.generated_facts = true;
                next_iter = false;
             } else {
-               if(tbl) {
+               if (tbl) {
                   // may need to re hash tuple
                   // it is not a problem if the tuple gets in the same bucket (will appear at the end of the list)
                   it = local_tuples->erase(it);
