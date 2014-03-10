@@ -15,10 +15,14 @@ if [ -z "${MIN}" ]; then
 	MIN=1
 fi
 if [ -z "${MAX}" ]; then
-	MAX=16
+	MAX=32
 fi
 if [ -z "${STEP}" ]; then
    STEP=even
+fi
+if [ ! -r "${FILE}" ]; then
+   echo "Code file $FILE does not exist."
+   exit 1
 fi
 
 RUN="bash ./threads.sh"
@@ -30,7 +34,7 @@ do_run ()
 }
 
 if [ "$STEP" = "even" ]; then
-   for x in 1 2 4 6 8 10 12 14 16; do
+   for x in 1 2 4 6 8 10 12 14 16 20 24 28 32; do
       if [ $MIN -le $x ]; then
          if [ $MAX -ge $x ]; then
             do_run $x

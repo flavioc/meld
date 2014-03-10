@@ -24,15 +24,17 @@ do_run ()
 	SUBSUBDIR="${SUBDIR}/${SCHEDULER}/${NUM_THREADS}"
 	mkdir -p $SUBSUBDIR
 
-	TO_RUN="${EXEC} ${FILE} -c ${SCHEDULER}${NUM_THREADS} -i $SUBSUBDIR/data"
+	TO_RUN="${EXEC} ${FILE} -c ${SCHEDULER}${NUM_THREADS} -i $SUBSUBDIR/data -- ${MELD_ARGS}"
 	echo -n "$FILEBASENAME sched:${SCHEDULER} ${NUM_THREADS} "
 	TIME=`time_run ${TO_RUN}`
 	echo $TIME
 }
 
+do_run 2
 do_run 4
 do_run 8
 do_run 16
 do_run 24
+do_run 28
 do_run 32
 
