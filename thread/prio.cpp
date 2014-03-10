@@ -66,7 +66,7 @@ threads_prio::steal_node(void)
 
    if(steal_flag) {
       if(!queue_nodes.empty())
-         queue_nodes.pop(node);
+         queue_nodes.pop_head(node);
       else if(!prio_queue.empty())
          node = prio_queue.pop();
       steal_flag = false;
@@ -74,7 +74,7 @@ threads_prio::steal_node(void)
       if(!prio_queue.empty())
          node = prio_queue.pop();
       else if(!queue_nodes.empty())
-         queue_nodes.pop(node);
+         queue_nodes.pop_head(node);
       steal_flag = true;
    }
    return node;
@@ -219,7 +219,7 @@ threads_prio::set_next_node(void)
          taken_from_priority_queue = true;
 			goto loop_check;
 		} else if(!queue_nodes.empty()) {
-			const bool suc(queue_nodes.pop(current_node));
+			const bool suc(queue_nodes.pop_head(current_node));
 			if(!suc)
 				continue;
          taken_from_priority_queue = false;

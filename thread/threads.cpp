@@ -143,7 +143,7 @@ threads_sched::go_steal_nodes(void)
 
       if(!target->is_active())
          continue;
-      if(target->number_of_nodes() < 3)
+      if(target->number_of_nodes() < 2)
          continue;
       size_t size = 1;
 
@@ -166,8 +166,8 @@ threads_sched::go_steal_nodes(void)
          --size;
       }
       if(size == 0) {
-         // set the next thread as the next one
-         next_thread = (tid + 1) % All->NUM_THREADS;
+         // set the next thread to the current one
+         next_thread = tid;
          return true;
       }
    }
@@ -179,7 +179,7 @@ thread_intrusive_node*
 threads_sched::steal_node(void)
 {
    thread_intrusive_node *node(NULL);
-   queue_nodes.pop(node);
+   queue_nodes.pop_tail(node);
    return node;
 }
 
@@ -297,7 +297,7 @@ threads_sched::set_next_node(void)
             return false;
       }
 
-      if(!queue_nodes.pop(current_node))
+      if(!queue_nodes.pop_head(current_node))
          continue;
       
       assert(current_node->in_queue());
