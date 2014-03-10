@@ -76,7 +76,7 @@ for line in lines:
 			if v == 0:
 				ctx.set_source_rgb(1, 1, 0)
 			else:
-				ratio = float(thr) /float(maxqueue)
+				ratio = math.log(float(thr)) / math.log(float(maxqueue))
 				ctx.set_source_rgb(ratio, 0, 0)
 		else:
 			print thr
