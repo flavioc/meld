@@ -74,7 +74,7 @@ normalize(EXTERNAL_ARG(x))
       const tuple_field data(ptr->get_head());
       const float_val val(data.float_field);
 
-      assert(!isnan(val));
+      assert(!std::isnan(val));
    
       if(val > max_value)
          max_value = val;
@@ -185,8 +185,8 @@ divide(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
    stack_float_list vals;
    
    while(!runtime::cons::is_null(ptr1) && !runtime::cons::is_null(ptr2)) {
-      assert(!isnan(ptr1->get_head().float_field));
-      assert(!isnan(ptr2->get_head().float_field));
+      assert(!std::isnan(ptr1->get_head().float_field));
+      assert(!std::isnan(ptr2->get_head().float_field));
       vals.push(ptr1->get_head().float_field - ptr2->get_head().float_field);
       
       ptr1 = ptr1->get_tail();
@@ -214,8 +214,8 @@ convolvestruct(EXTERNAL_ARG(bin_fact), EXTERNAL_ARG(s))
          const float_val other(s->get_data(y).float_field);
          const float_val val_bin(bin_fact->get_data(x + y * length).float_field);
 
-         assert(!isnan(other));
-         assert(!isnan(val_bin));
+         assert(!std::isnan(other));
+         assert(!std::isnan(val_bin));
          sum += std::exp(val_bin + other);
       }
 
@@ -247,8 +247,8 @@ convolve(EXTERNAL_ARG(bin_fact), EXTERNAL_ARG(ls))
          const float_val other(ptr->get_head().float_field);
          const float_val val_bin(runtime::cons::get((runtime::cons*)bin_fact, x + y * length, def).float_field);
 
-         assert(!isnan(other));
-         assert(!isnan(val_bin));
+         assert(!std::isnan(other));
+         assert(!std::isnan(val_bin));
          sum += std::exp(val_bin + other);
          
          ptr = ptr->get_tail();
@@ -295,8 +295,8 @@ addfloatlists(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
    stack_float_list vals;
    
    while(!runtime::cons::is_null(ptr1) && !runtime::cons::is_null(ptr2)) {
-      assert(!isnan(ptr1->get_head().float_field));
-      assert(!isnan(ptr2->get_head().float_field));
+      assert(!std::isnan(ptr1->get_head().float_field));
+      assert(!std::isnan(ptr2->get_head().float_field));
       vals.push(ptr1->get_head().float_field + ptr2->get_head().float_field);
       
       ptr1 = ptr1->get_tail();
@@ -338,8 +338,8 @@ residual(EXTERNAL_ARG(l1), EXTERNAL_ARG(l2))
    size_t size(0);
 
    while(!runtime::cons::is_null(ls1) && !runtime::cons::is_null(ls2)) {
-      assert(!isnan(ls1->get_head().float_field));
-      assert(!isnan(ls2->get_head().float_field));
+      assert(!std::isnan(ls1->get_head().float_field));
+      assert(!std::isnan(ls2->get_head().float_field));
       residual += std::abs(std::exp(ls1->get_head().float_field) - std::exp(ls2->get_head().float_field));
       ls1 = ls1->get_tail();
       ls2 = ls2->get_tail();
@@ -391,6 +391,7 @@ static bool de_start(de_init());
 static int
 create_random_bm(int size_bitmask)
 {
+   (void)de_start;
    int j;
    double cur_random = de_uni->operator()();
    double threshold = 0;
