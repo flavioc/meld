@@ -78,7 +78,7 @@ public:
    size_t instr_facts_derived;
    size_t instr_rules_run;
 #endif
-   bool generated_facts;
+   volatile bool generated_facts;
    bool running_rule;
    bool hash_removes;
    typedef std::unordered_set<vm::tuple*, std::hash<vm::tuple*>, std::equal_to<vm::tuple*>, mem::allocator<vm::tuple*> > removed_hash;
