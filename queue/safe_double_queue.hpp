@@ -36,7 +36,7 @@ public:
 		QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP_IF_NOT_EMPTY();
    }
    
-   inline bool pop(node_type& data)
+   inline bool pop_head(node_type& data)
    {
       if(empty())
          return false;
@@ -44,6 +44,16 @@ public:
       utils::spinlock::scoped_lock l(mtx);
       
 		QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP();
+   }
+
+   inline bool pop_tail(node_type& data)
+   {
+      if(empty())
+         return false;
+
+      utils::spinlock::scoped_lock l(mtx);
+
+      QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP_TAIL();
    }
    
    inline void push_tail(node_type data)

@@ -72,6 +72,23 @@
 																					\
    return true
 
+#define QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP_TAIL()               \
+   if(empty())                                                 \
+      return false;                                            \
+   assert(!empty());                                           \
+   data = tail;                                                \
+   tail = __INTRUSIVE_PREV(tail);                              \
+   if(tail)                                                    \
+      __INTRUSIVE_NEXT(tail) = NULL;                           \
+   else                                                        \
+      head = NULL;                                             \
+   assert(__INTRUSIVE_IN_QUEUE(data) == true);                 \
+   __INTRUSIVE_IN_QUEUE(data) = false;                         \
+   assert((tail && __INTRUSIVE_NEXT(tail) == NULL) || !tail);  \
+   assert((head && tail) || (!head && !tail));                 \
+   QUEUE_DECREMENT_TOTAL();                                    \
+   return true;
+
 #define QUEUE_DEFINE_INTRUSIVE_DOUBLE_OPS() 			\
 	inline void push_head_node(node_type new_node)	\
 	{																\
