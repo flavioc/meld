@@ -162,6 +162,8 @@ const size_t ADD_PRIORITYH_BASE  = instr_size + reg_val_size;
 const size_t STOP_PROG_BASE      = instr_size;
 const size_t CPU_ID_BASE         = instr_size + 2 * reg_val_size;
 const size_t NODE_PRIORITY_BASE  = instr_size + 2 * reg_val_size;
+const size_t IF_ELSE_BASE        = instr_size + reg_val_size + 2 * jump_size;
+const size_t JUMP_BASE           = instr_size + jump_size;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -293,6 +295,8 @@ enum instr_type {
    CPU_ID_INSTR         =  0x7E,
    NODE_PRIORITY_INSTR  =  0x7F,
    REMOVE_INSTR 	      =  0x80,
+   IF_ELSE_INSTR        =  0x81,
+   JUMP_INSTR           =  0x82,
    ADD_PRIORITY_INSTR   =  0xA0,
    ADD_PRIORITYH_INSTR  =  0xA1,
    STOP_PROG_INSTR      =  0xA2,
@@ -385,6 +389,11 @@ inline void pcounter_move_ptr(pcounter *pc) { *pc = *pc + ptr_size; }
 
 inline reg_num if_reg(pcounter pc) { return pcounter_reg(pc + instr_size); }
 inline code_offset_t if_jump(pcounter pc) { return jump_get(pc, instr_size + reg_val_size); }
+
+/* IF reg THEN ... ELSE ... ENDIF */
+
+inline code_offset_t if_else_jump_else(pcounter pc) { return jump_get(pc, instr_size + reg_val_size); }
+inline code_offset_t if_else_jump(pcounter pc) { return jump_get(pc, instr_size + reg_val_size + jump_size); }
 
 /* SEND a TO B */
 
@@ -628,6 +637,11 @@ advance(const pcounter pc)
                    
       case IF_INSTR:
          return pc + IF_BASE;
+      case IF_ELSE_INSTR:
+         return pc + IF_ELSE_BASE;
+
+      case JUMP_INSTR:
+         return pc + JUMP_BASE;
          
       case TESTNIL_INSTR:
          return pc + TESTNIL_BASE;

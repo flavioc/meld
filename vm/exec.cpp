@@ -2559,6 +2559,28 @@ eval_loop:
             }
             ADVANCE();
          ENDOP()
+
+         CASE(IF_ELSE_INSTR)
+            JUMP(if_else, IF_ELSE_BASE)
+#ifdef CORE_STATISTICS
+            state.stat.stat_if_tests++;
+#endif
+            if(!state.get_bool(if_reg(pc))) {
+#ifdef CORE_STATISTICS
+               state.stat.stat_if_failed++;
+#endif
+               pc += if_else_jump_else(pc);
+               JUMP_NEXT();
+            }
+            ADVANCE();
+         ENDOP()
+
+         CASE(JUMP_INSTR)
+            COMPLEX_JUMP(jump)
+            pc += jump_get(pc, instr_size) + JUMP_BASE;
+
+            JUMP_NEXT();
+        ENDOP()
          
 			CASE(END_LINEAR_INSTR)
             COMPLEX_JUMP(end_linear)

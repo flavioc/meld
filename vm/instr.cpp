@@ -311,6 +311,20 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
 				}
 			}
 			break;
+      case IF_ELSE_INSTR: {
+            cout << "IF (" << reg_string(if_reg(pc)) << ") THEN" << endl;
+            if(recurse) {
+               pcounter cont_then = instrs_print(advance(pc), if_else_jump_else(pc) - (advance(pc) - pc), tabcount + 1, prog, cout);
+               (void)cont_then;
+               print_tab(tabcount);
+               cout << "ELSE" << endl;
+               instrs_print(pc + if_else_jump_else(pc), if_else_jump(pc) - if_else_jump_else(pc), tabcount + 1, prog, cout);
+               print_tab(tabcount);
+               cout << "ENDIF" << endl;
+               return pc + if_else_jump(pc);
+            }
+         }
+         break;
 		case TESTNIL_INSTR:
          cout << "TESTNIL " << reg_string(test_nil_op(pc)) << " TO " << reg_string(test_nil_dest(pc)) << endl;
          break;
@@ -884,6 +898,9 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          break;
       case NODE_PRIORITY_INSTR:
          cout << "NODE PRIORITY OF " << reg_string(pcounter_reg(pc + instr_size)) << " TO " << reg_string(pcounter_reg(pc + instr_size + reg_val_size)) << endl;
+         break;
+      case JUMP_INSTR:
+         cout << "JUMP TO " << jump_get(pc, instr_size) << endl;
          break;
 		default:
          throw malformed_instr_error("unknown instruction code");
