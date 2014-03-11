@@ -92,6 +92,11 @@ public:
       else
          return find_first_node(id + 1);
    }
+
+   inline size_t find_owned_nodes(const vm::process_id id) const
+   {
+      return find_last_node(id) - find_first_node(id);
+   }
    
    inline remote_id get_rank(void) const { return addr; }
    inline bool is_leader(void) const { return get_rank() == LEADER_RANK; }

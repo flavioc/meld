@@ -483,41 +483,46 @@ void
 threads_prio::init(const size_t)
 {
    // normal priorities
-   switch(theProgram->get_priority_type()) {
-      case FIELD_FLOAT:
-         if(theProgram->is_priority_desc())
-            priority_type = HEAP_FLOAT_DESC;
-         else
-            priority_type = HEAP_FLOAT_ASC;
-         break;
-      case FIELD_INT:
-         if(theProgram->is_priority_desc())
-            priority_type = HEAP_INT_DESC;
-         else
-            priority_type = HEAP_INT_ASC;
-         break;
-      default: assert(false);
-   }
+   assert(theProgram->get_priority_type() == FIELD_FLOAT);
+
+   if(theProgram->is_priority_desc())
+      priority_type = HEAP_FLOAT_DESC;
+   else
+      priority_type = HEAP_FLOAT_ASC;
 
    prio_queue.set_type(priority_type);
 
    database::map_nodes::iterator it(All->DATABASE->get_node_iterator(remote::self->find_first_node(id)));
    database::map_nodes::iterator end(All->DATABASE->get_node_iterator(remote::self->find_last_node(id)));
-   
-   for(; it != end; ++it)
-   {
-      thread_intrusive_node *cur_node((thread_intrusive_node*)it->second);
-      heap_priority initial(theProgram->get_initial_priority());
+   const heap_priority initial(theProgram->get_initial_priority());
+
+   if(initial.float_priority == 0.0) {
+      for(; it != end; ++it)
+      {
+         thread_intrusive_node *cur_node((thread_intrusive_node*)it->second);
       
-      cur_node->set_priority_level(initial);
+         init_node(cur_node);
+         cur_node->set_in_queue(true);
+      	queue_nodes.push_tail(cur_node);
 
-      init_node(cur_node);
-      cur_node->set_in_queue(true);
-      add_to_queue(cur_node);
+         assert(cur_node->get_owner() == this);
+         assert(cur_node->in_queue());
+         assert(cur_node->unprocessed_facts);
+      }
+   } else {
+      prio_queue.start_initial_insert(remote::self->find_owned_nodes(id));
+      for(size_t i(0); it != end; ++it, ++i) {
+         thread_intrusive_node *cur_node((thread_intrusive_node*)it->second);
+      
+         init_node(cur_node);
+         cur_node->set_priority_level(initial);
+         cur_node->set_in_queue(true);
+         prio_queue.initial_fast_insert(cur_node, initial, i);
 
-      assert(cur_node->get_owner() == this);
-      assert(cur_node->in_queue());
-      assert(cur_node->unprocessed_facts);
+         assert(cur_node->get_owner() == this);
+         assert(cur_node->in_queue());
+         assert(cur_node->unprocessed_facts);
+      }
    }
    
    threads_synchronize();

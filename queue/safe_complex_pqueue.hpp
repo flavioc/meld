@@ -35,7 +35,7 @@ private:
 	
 	HEAP_DEFINE_DATA;
 	
-	void do_insert(heap_object node, const heap_priority prio)
+	inline void do_insert(heap_object node, const heap_priority prio)
 	{
       assert(__INTRUSIVE_IN_PRIORITY_QUEUE(node) == false);
 		__INTRUSIVE_PRIORITY(node) = prio;
@@ -99,11 +99,26 @@ public:
    	return __INTRUSIVE_IN_PRIORITY_QUEUE(node);
 	}
 	
-	void insert(heap_object node, const heap_priority prio)
+	inline void insert(heap_object node, const heap_priority prio)
 	{
       utils::spinlock::scoped_lock l(mtx);
 		do_insert(node, prio);
 	}
+
+   inline void start_initial_insert(const size_t many)
+   {
+      heap.resize(many);
+   }
+
+   inline void initial_fast_insert(heap_object node, const heap_priority prio, const size_t i)
+   {
+      assert(__INTRUSIVE_IN_PRIORITY_QUEUE(node) == false);
+		__INTRUSIVE_PRIORITY(node) = prio;
+		__INTRUSIVE_IN_PRIORITY_QUEUE(node) = true;
+		
+      heap[i] = node;
+		HEAP_GET_POS(node) = i;
+   }
 	
 	heap_priority min_value(void) const
 	{
