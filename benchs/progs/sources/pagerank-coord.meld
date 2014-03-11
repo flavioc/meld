@@ -14,6 +14,7 @@ type linear output-rank(node, node, float).
 type linear output-rank-copy(node, node, float).
 type linear new-output-rank(node, node, float).
 
+priority @initial 100.
 //priority @cluster @static.
 
 const damping = 0.15.
@@ -44,7 +45,8 @@ V = damping/float(pages) + (1.0 - damping) * Acc,
 pagerank(A, Old)
    -o pagerank(A, V),
       {B, W, O, Delta | !output(A, B, W), output-rank-copy(A, B, O), Delta = (if O > V then O - V else V - O end) * W |
-           new-input-rank(B, A, V), (if Delta > bound then update(B) otherwise 1 end)}.
+         (if Delta <= bound then (if cpu-id(A) = cpu-id(B) then new-input-rank(B, A, V) otherwise 1 end) otherwise
+         new-input-rank(B, A, V), update(B), (if cpu-id(A) = cpu-id(B) then set-priority(B, Delta) otherwise 1 end) end)}.
 
 update(A), update(A) -o update(A).
 
