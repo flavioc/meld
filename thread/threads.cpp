@@ -141,9 +141,7 @@ threads_sched::go_steal_nodes(void)
 
       threads_sched *target((threads_sched*)All->ALL_THREADS[tid]);
 
-      if(!target->is_active())
-         continue;
-      if(target->number_of_nodes() < 2)
+      if(!target->is_active() || !target->has_work())
          continue;
       size_t size = 1;
 
