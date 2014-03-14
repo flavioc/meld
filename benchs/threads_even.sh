@@ -7,7 +7,7 @@ MIN="${4}"
 MAX="${5}"
 
 if [ -z "${SCHEDULER}" ] || [ -z "${FILE}" ]; then
-	echo "Usage: threads_even.sh <file> <scheduler> [step=even|power] [min=2] [max=16]"
+	echo "Usage: threads_even.sh <file> <scheduler> [step=even|power] [min=1] [max=32]"
 	exit 1
 fi
 
