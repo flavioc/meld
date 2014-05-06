@@ -449,7 +449,7 @@ inline size_t calle_num_args(pcounter pc) { return (size_t)byte_get(pc, instr_si
 /* TEST-NIL a TO b */
 
 inline reg_num test_nil_op(pcounter pc) { return pcounter_reg(pc + instr_size); }
-inline reg_num test_nil_dest(pcounter pc) { return pcounter_reg(pc + instr_size + reg_size); }
+inline reg_num test_nil_dest(pcounter pc) { return pcounter_reg(pc + instr_size + reg_val_size); }
 
 /* CONS (a :: b) TO c */
 
