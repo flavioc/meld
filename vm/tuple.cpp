@@ -198,12 +198,12 @@ print_tuple_type(ostream& cout, const tuple_field& field, type *t, const bool in
             break;
          }
 
-         tuple_field head(FIELD_CONS(field)->get_head());
-         runtime::cons *tail(FIELD_CONS(field)->get_tail());
+         tuple_field head(ls->get_head());
+         runtime::cons *tail(ls->get_tail());
          list_type *lt((list_type*)t);
          tuple_field arg;
          SET_FIELD_CONS(arg, tail);
-         print_tuple_type(cout, head, lt->get_subtype());
+         print_tuple_type(cout, head, lt->get_subtype(), false);
          if(!runtime::cons::is_null(tail))
             cout << ",";
          print_tuple_type(cout, arg, t, true);
