@@ -292,9 +292,9 @@ program::program(const string& _filename):
             arg_type[j] = read_type_id_from_reader(read, types);
          }
 
-         register_custom_external_function((external_function_ptr)skip_ptr,num_args,ret_type,arg_type);             
+         register_custom_external_function((external_function_ptr)skip_ptr, num_args, ret_type, arg_type, extern_name);
       } else
-         register_custom_external_function((external_function_ptr)skip_ptr,0,ret_type,NULL);
+         register_custom_external_function((external_function_ptr)skip_ptr, 0, ret_type, NULL, extern_name);
    }
 
    // read predicate information

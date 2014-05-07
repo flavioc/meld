@@ -34,7 +34,8 @@ operation_string(pcounter& pc, const string& op)
 static inline string
 call_string(const string& extra, pcounter& pc, const size_t args)
 {
-   return string("CALL") + extra + " func(" + to_string(call_extern_id(pc)) + "):" + to_string(args) + " TO " + reg_string(call_dest(pc)) + " = (";
+   external_function* f(lookup_external_function(call_extern_id(pc)));
+   return string("CALL") + extra + " " + f->get_name() + "/" + to_string(args) + " TO " + reg_string(call_dest(pc)) + " = (";
 }
 
 static string val_string(const instr_val, pcounter *, const program *);

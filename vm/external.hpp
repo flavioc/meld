@@ -2,6 +2,8 @@
 #ifndef VM_EXTERNAL_HPP
 #define VM_EXTERNAL_HPP
 
+#include <string>
+
 #include "vm/types.hpp"
 #include "vm/defs.hpp"
 #include "utils/types.hpp"
@@ -40,6 +42,7 @@ class external_function
 private:
    
    const size_t num_args;
+   const std::string name;
    external_function_ptr ptr;
    type *ret;
    type **spec;
@@ -50,12 +53,14 @@ public:
    
    inline type* get_return_type(void) const { return ret; }
    inline type* get_arg_type(const size_t i) const { return spec[i]; }
+
+   inline const std::string& get_name(void) const { return name; }
    
    inline external_function_ptr get_fun_ptr(void) const { return ptr; }
    
    void set_arg_type(const size_t, type*);
    
-   explicit external_function(external_function_ptr, const size_t, type*);
+   explicit external_function(external_function_ptr, const size_t, type*, const std::string&);
    
    ~external_function(void);
 };
@@ -64,7 +69,7 @@ void init_external_functions(void);
 external_function_id first_custom_external_function(void);
 external_function_id register_external_function(external_function *);
 external_function* lookup_external_function(const external_function_id);
-void register_custom_external_function(external_function_ptr, const size_t, type*, type**);
+void register_custom_external_function(external_function_ptr, const size_t, type*, type**, const std::string&);
 
 }
 

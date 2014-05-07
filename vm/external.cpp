@@ -38,8 +38,10 @@ external_function::set_arg_type(const size_t arg, type *typ)
 
 external_function::external_function(external_function_ptr _ptr,
          const size_t _num_args,
-         type *_ret):
+         type *_ret,
+         const string& _name):
    num_args(_num_args),
+   name(_name),
    ptr(_ptr), ret(_ret),
    spec(new type*[_num_args])
 {
@@ -62,6 +64,9 @@ register_external_function(external_function *ex)
 external_function*
 lookup_external_function(const external_function_id id)
 {
+   if(!external_functions_initiated)
+      init_external_functions();
+
    external_function *ret(hash_external[id]);
    
    assert(ret != NULL);
@@ -70,15 +75,15 @@ lookup_external_function(const external_function_id id)
 }
 
 static inline external_function*
-external0(external_function_ptr ptr, type *ret)
+external0(external_function_ptr ptr, type *ret, const string& name)
 {
-   return new external_function(ptr, 0, ret);
+   return new external_function(ptr, 0, ret, name);
 }
 
 static inline external_function*
-external1(external_function_ptr ptr, type *ret, type *arg1)
+external1(external_function_ptr ptr, type *ret, type *arg1, const string& name)
 {
-   external_function *f(new external_function(ptr, 1, ret));
+   external_function *f(new external_function(ptr, 1, ret, name));
    
    f->set_arg_type(0, arg1);
    
@@ -86,9 +91,9 @@ external1(external_function_ptr ptr, type *ret, type *arg1)
 }
 
 static inline external_function*
-external2(external_function_ptr ptr, type *ret, type *arg1, type *arg2)
+external2(external_function_ptr ptr, type *ret, type *arg1, type *arg2, const string& name)
 {
-   external_function *f(new external_function(ptr, 2, ret));
+   external_function *f(new external_function(ptr, 2, ret, name));
    
    f->set_arg_type(0, arg1);
    f->set_arg_type(1, arg2);
@@ -97,9 +102,9 @@ external2(external_function_ptr ptr, type *ret, type *arg1, type *arg2)
 }
 
 static inline external_function*
-external3(external_function_ptr ptr, type *ret, type *arg1, type *arg2, type *arg3)
+external3(external_function_ptr ptr, type *ret, type *arg1, type *arg2, type *arg3, const string& name)
 {
-   external_function *f(new external_function(ptr, 3, ret));
+   external_function *f(new external_function(ptr, 3, ret, name));
    
    f->set_arg_type(0, arg1);
    f->set_arg_type(1, arg2);
@@ -116,13 +121,13 @@ cleanup_externals(void)
 }
 
 void
-register_custom_external_function(external_function_ptr ptr, const size_t num_args, type *ret, type **args)
+register_custom_external_function(external_function_ptr ptr, const size_t num_args, type *ret, type **args, const string& name)
 {
    switch(num_args) {
-      case 0: register_external_function(external0(ptr, ret)); break;
-      case 1: register_external_function(external1(ptr, ret, args[0])); break;
-      case 2: register_external_function(external2(ptr, ret, args[0], args[1])); break;
-      case 3: register_external_function(external3(ptr, ret, args[0], args[1], args[2])); break;
+      case 0: register_external_function(external0(ptr, ret, name)); break;
+      case 1: register_external_function(external1(ptr, ret, args[0], name)); break;
+      case 2: register_external_function(external2(ptr, ret, args[0], args[1], name)); break;
+      case 3: register_external_function(external3(ptr, ret, args[0], args[1], args[2], name)); break;
       default: assert(false);
    }
 }
@@ -131,10 +136,10 @@ void
 init_external_functions(void)
 {
 #define EXTERN(NAME) (external_function_ptr) external :: NAME
-#define EXTERNAL0(NAME, RET) external0(EXTERN(NAME), RET)
-#define EXTERNAL1(NAME, RET, ARG1) external1(EXTERN(NAME), RET, ARG1)
-#define EXTERNAL2(NAME, RET, ARG1, ARG2) external2(EXTERN(NAME), RET, ARG1, ARG2)
-#define EXTERNAL3(NAME, RET, ARG1, ARG2, ARG3) external3(EXTERN(NAME), RET, ARG1, ARG2, ARG3)
+#define EXTERNAL0(NAME, RET) external0(EXTERN(NAME), RET, #NAME)
+#define EXTERNAL1(NAME, RET, ARG1) external1(EXTERN(NAME), RET, ARG1, #NAME)
+#define EXTERNAL2(NAME, RET, ARG1, ARG2) external2(EXTERN(NAME), RET, ARG1, ARG2, #NAME)
+#define EXTERNAL3(NAME, RET, ARG1, ARG2, ARG3) external3(EXTERN(NAME), RET, ARG1, ARG2, ARG3, #NAME)
 
    if(external_functions_initiated)
       return;
