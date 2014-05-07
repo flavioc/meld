@@ -1581,7 +1581,11 @@ execute_new_node(const pcounter& pc, state& state)
 
    state.sched->init_node(new_node);
 
+#ifdef USE_REAL_NODES
+   state.set_node(reg, (node_val)new_node);
+#else
    state.set_node(reg, new_node->get_id());
+#endif
 
 #ifdef USE_UI
    if(state::UI) {
