@@ -48,7 +48,7 @@ start(A, Id),
 !hidden(A),
 !bias(A),
 sendbias(A, Id)
-	-o {B, W | !link(A, B), weight(A, Id, B, W) | receive(B, Id, (0.0 - 1.0) * W), oldweight(A, Id, B, W)}, oldactivated(A, Id, 0.0 - 1.0).
+	-o {B, W | !link(A, B), weight(A, Id, B, W) | receive(B, Id, (0.0 - 1.0) * W), oldweight(A, Id, B, W)}.
 
 activated(A, Id, V),
 !hidden(A)
