@@ -4,7 +4,6 @@ include #data/nn-data.meld
 type route link(node, node).
 type route back-link(node, node).
 type linear weight(node, int, node, float).
-type linear sendbias(node, int).
 type input(node).
 type hidden(node).
 type output(node).
@@ -17,43 +16,30 @@ type linear expected(node, int, float).
 type linear receive(node, int, float).
 type linear toreceive(node, int, int, float).
 type linear start(node, int).
-type linear outgrad(node, int, float).
+type linear outgrad(node, node, int, float).
 type linear oldweight(node, int, node, float).
-type linear delta(node, int, node, float).
 type linear hiddengrad(node, node, float).
-type linear toreceivehidden(node, int, int).
+type linear missing-gradients(node, int).
 
 const lrate = 0.01.
 
-!totalinput(A, T) -o toreceive(A, T, 0, 0.0).
-!input(A), !totaloutput(A, T) -o start(A, 0), toreceivehidden(A, 0, T * 2).
-
-!hidden(A),
-!bias(A),
-delta(A, Id, B, V),
-oldweight(A, Id, B, W)
-	-o sendbias(A, Id + 1),
-      weight(A, Id + 1, B, W + V).
-
-!hidden(A),
-delta(A, Id, B, V),
-oldweight(A, Id, B, W)
-	-o weight(A, Id + 1, B, W + V).
-
+!input(A),
 activated(A, Id, V),
-start(A, Id),
-!input(A)
-	-o {B, W | !link(A, B), weight(A, Id, B, W) | receive(B, Id, V * W), oldweight(A, Id, B, W)}, oldactivated(A, Id, V).
+start(A, Id)
+	-o {B, W | !link(A, B), weight(A, Id, B, W) | receive(B, Id, V * W), weight(A, Id, B, W)}, oldactivated(A, Id, V).
 
+// hidden bias has no activated axiom
 !hidden(A),
 !bias(A),
-sendbias(A, Id)
+start(A, Id)
 	-o {B, W | !link(A, B), weight(A, Id, B, W) | receive(B, Id, (0.0 - 1.0) * W), oldweight(A, Id, B, W)}.
 
 activated(A, Id, V),
 !hidden(A)
 	-o {B, W | !link(A, B), weight(A, Id, B, W) | receive(B, Id, V * W), oldweight(A, Id, B, W)}, oldactivated(A, Id, V).
 
+// process signal at hidden or output layer from inputs
+!hidden(A),
 !bias(A),
 toreceive(A, 0, Id, Acc),
 !totalinput(A, T) -o
@@ -68,44 +54,44 @@ toreceive(A, 0, Id, Acc),
 receive(A, Id, V),
 toreceive(A, T, Id, Acc),
 T > 0
-	-o toreceive(A, T - 1, Id, Acc + V).
+	-o [sum => S, count => C | receive(A, Id, S) | toreceive(A, T - (C + 1), Id, Acc + V + S)].
 
 // compare output
 !output(A),
 expected(A, Id, E),
 activated(A, Id, G)
-	-o {B | !back-link(A, B) | outgrad(B, Id, G * (1.0 - G) * (E - G))}.
+	-o {B | !back-link(A, B) | outgrad(B, A, Id, G * (1.0 - G) * (E - G))}.
 
-outgrad(A, Id, G),
+!hidden(A),
+!bias(A),
+!link(A, B),
+outgrad(A, B, Id, G),
+oldweight(A, Id, B, W)
+   -o weight(A, Id + 1, B, W + lrate * (0.0 - 1.0) * G),
+      start(A, Id + 1).
+
 !hidden(A),
 !link(A, B),
+outgrad(A, B, Id, G),
 oldactivated(A, Id, V),
 oldweight(A, Id, B, W)
-	-o delta(A, Id, B, lrate * V * G),
-		{C | !back-link(A, C) | hiddengrad(C, A, V * (1.0 - V) * (V * W))},
-		oldweight(A, Id, B, W).
+	-o {C | !back-link(A, C) | hiddengrad(C, A, V * (1.0 - V) * (V * W))},
+		weight(A, Id + 1, B, W + lrate * V * G).
 
 !input(A),
-toreceivehidden(A, Id, 0),
+missing-gradients(A, 0),
 !totaloutput(A, T),
 oldactivated(A, Id, _)
 	-o start(A, Id + 1),
-      toreceivehidden(A, Id + 1, T * 2).
+      missing-gradients(A, T).
 
 !input(A),
 !link(A, B),
-toreceivehidden(A, Id, T),
+missing-gradients(A, T),
 oldactivated(A, Id, V),
-hiddengrad(A, B, G)
+hiddengrad(A, B, G),
+weight(A, Id, B, W)
 	-o oldactivated(A, Id, V),
-		delta(A, Id, B, lrate * V * G),
-		toreceivehidden(A, Id, T - 1).
-
-!input(A),
-delta(A, Id, B, V),
-oldweight(A, Id, B, W),
-!link(A, B),
-toreceivehidden(A, Id, T)
-	-o weight(A, Id + 1, B, W + V),
-		toreceivehidden(A, Id, T - 1).
+      weight(A, Id + 1, B, W + lrate * V * G),
+		missing-gradients(A, T - 1).
 
