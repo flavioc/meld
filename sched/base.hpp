@@ -19,6 +19,7 @@
 #include "stat/stat.hpp"
 #include "vm/state.hpp"
 #include "vm/temporary.hpp"
+#include "mem/thread.hpp"
 
 namespace process {
    class remote;
@@ -85,6 +86,9 @@ public:
    {
       vm::predicate *init_pred(vm::theProgram->get_init_predicate());
       vm::tuple *init_tuple(vm::tuple::create(init_pred));
+#ifdef FACT_STATISTICS
+      state.facts_derived++;
+#endif
       node->set_owner(this);
       node->add_linear_fact(init_tuple, init_pred);
       node->unprocessed_facts = true;

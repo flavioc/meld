@@ -28,12 +28,6 @@ def lookup_serial_result(name):
    global data
    return data[name]['sl'][1]
       
-def my_round(time):
-   return round(time, 3)
-   
-def make_speedup(time, serial):
-   return my_round(serial / time)
-   
 def make_efficiency(time, serial, cpu):
    return my_round((serial / time) / float(cpu))
 
@@ -145,7 +139,7 @@ if len(sys.argv) < 3:
 dir = str(sys.argv[1])
 file = str(sys.argv[2])
 
-read_csv_file(file)
+data = read_csv_file(file)
 HAS_THS = detect('ths')
 HAS_THP = detect('thp')
 HAS_THX = detect('thx')

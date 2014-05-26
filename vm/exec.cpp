@@ -91,6 +91,10 @@ execute_alloc(const pcounter& pc, state& state)
    state.preds[reg] = pred;
 
    state.set_tuple(reg, tuple);
+
+#ifdef FACT_STATISTICS
+   state.facts_derived++;
+#endif
 }
 
 static inline void
@@ -223,6 +227,9 @@ execute_send(const pcounter& pc, state& state)
 
 #ifdef CORE_STATISTICS
    state.stat.stat_predicate_proven[pred->get_id()]++;
+#endif
+#ifdef FACT_STATISTICS
+   state.facts_sent++;
 #endif
 
    assert(msg != dest);
@@ -1254,6 +1261,9 @@ execute_remove(pcounter pc, state& state)
 #ifdef CORE_STATISTICS
    state.stat.stat_predicate_success[pred->get_id()]++;
 #endif
+#ifdef FACT_STATISTICS
+   state.facts_consumed++;
+#endif
 
 #ifdef DEBUG_REMOVE
    cout << "\tdelete ";
@@ -1646,6 +1656,9 @@ execute_new_axioms(pcounter pc, state& state)
       predicate_id pid(predicate_get(pc, 0));
       predicate *pred(theProgram->get_predicate(pid));
       tuple *tpl(vm::tuple::create(pred));
+#ifdef FACT_STATISTICS
+   state.facts_derived++;
+#endif
 
       pc++;
 

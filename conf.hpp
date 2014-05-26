@@ -17,10 +17,13 @@
 // #define TRIE_MATCHING_ASSERT 1
 
 // gather statistics about the core VM execution
-//#define CORE_STATISTICS 1
+// #define CORE_STATISTICS 1
 
 // activate instrumentation code
-// #define INSTRUMENTATION 1
+//#define INSTRUMENTATION 1
+
+// gather fact statistics
+// #define FACT_STATISTICS 1
 
 // use simulator
 //#define USE_SIM

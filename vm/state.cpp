@@ -872,6 +872,11 @@ state::state(sched::base *_sched):
 #ifdef CORE_STATISTICS
    , stat()
 #endif
+#ifdef FACT_STATISTICS
+   , facts_derived(0)
+   , facts_consumed(0)
+   , facts_sent(0)
+#endif
 {
    bitmap::create(rule_queue, theProgram->num_rules_next_uint());
    rule_queue.clear(theProgram->num_rules_next_uint());
@@ -901,6 +906,11 @@ state::state(void):
 #ifdef CORE_STATISTICS
    , stat()
 #endif
+#ifdef FACT_STATISTICS
+   , facts_derived(0)
+   , facts_consumed(0)
+   , facts_sent(0)
+#endif
 {
 #ifdef USE_SIM
    sim_instr_use = false;
@@ -913,6 +923,13 @@ state::~state(void)
 	if(sched != NULL) {
       stat.print(cout);
 	}
+#endif
+#ifdef FACT_STATISTICS
+   if(sched != NULL) {
+      cout << "Facts derived: " << facts_derived << endl;
+      cout << "Facts consumed: " << facts_consumed << endl;
+      cout << "Facts sent: " << facts_sent << endl;
+   }
 #endif
    if(sched != NULL) {
       bitmap::destroy(rule_queue, theProgram->num_rules_next_uint());

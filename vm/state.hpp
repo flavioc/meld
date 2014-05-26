@@ -91,6 +91,11 @@ public:
 #ifdef CORE_STATISTICS
    core_statistics stat;
 #endif
+#ifdef FACT_STATISTICS
+   uint64_t facts_derived;
+   uint64_t facts_consumed;
+   uint64_t facts_sent;
+#endif
 #ifdef USE_UI
    static bool UI;
 #endif
