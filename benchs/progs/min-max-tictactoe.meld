@@ -18,7 +18,7 @@ const maxinf = 9999.
 const mininf = -9999.
 const maxdepth = 999.
 
-play(@0, [0, 0, 0, 0, 0, 0, 0, 0, 0], 1, 0, 1).
+play(@0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 1, 0, 1).
 root(@0).
 depth(@0, 1).
 
