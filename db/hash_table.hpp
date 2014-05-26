@@ -95,6 +95,16 @@ struct hash_table
 
       inline size_t get_table_size() const { return size_table; }
 
+      inline size_t get_total_size(void) const
+      {
+         size_t total(0);
+         for(size_t i(0); i < size_table; ++i) {
+            table_list *ls(table + i);
+            total += ls->get_size();
+         }
+         return total;
+      }
+
       size_t insert(vm::tuple *);
       size_t insert_front(vm::tuple *);
 

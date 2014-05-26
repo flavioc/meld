@@ -136,6 +136,17 @@ node_sorter(db::node *a1, db::node *a2)
    return a1->get_translated_id() < a2->get_translated_id();
 }
 
+size_t
+database::total_facts(void) const
+{
+   size_t total(0);
+   for(map_nodes::const_iterator it(nodes.begin()); it != nodes.end(); ++it) {
+      db::node *n(it->second);
+      total += n->count_total_all();
+   }
+   return total;
+}
+
 void
 database::print_db(ostream& cout) const
 {

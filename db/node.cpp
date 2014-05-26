@@ -158,14 +158,35 @@ node::delete_by_index(predicate *pred, const match& m)
 size_t
 node::count_total(const predicate_id id) const
 {
-   simple_tuple_map::const_iterator it(tuples.find(id));
+   predicate *pred(theProgram->get_predicate(id));
+   if(pred->is_persistent_pred()) {
+      simple_tuple_map::const_iterator it(tuples.find(id));
    
-   if(it == tuples.end())
-      return 0;
+      if(it == tuples.end())
+         return 0;
 
-   const tuple_trie *tr(it->second);
+      const tuple_trie *tr(it->second);
    
-   return tr->size();
+      return tr->size();
+   } else {
+      if(linear.stored_as_hash_table(pred)) {
+         const hash_table *table(linear.get_hash_table(pred->get_id()));
+         return table->get_total_size();
+      } else {
+         const intrusive_list<vm::tuple> *ls(linear.get_linked_list(pred->get_id()));
+         return ls->get_size();
+      }
+   }
+}
+
+size_t
+node::count_total_all(void) const
+{
+   size_t total(0);
+   for(size_t i(0); i < theProgram->num_predicates(); ++i) {
+      total += count_total(i);
+   }
+   return total;
 }
 
 void

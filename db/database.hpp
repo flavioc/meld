@@ -67,6 +67,7 @@ public:
    node* create_node(void);
    node* create_node_id(const node::node_id);
    
+   size_t total_facts(void) const;
    void print_db(std::ostream&) const;
    void dump_db(std::ostream&) const;
 #ifdef USE_UI
