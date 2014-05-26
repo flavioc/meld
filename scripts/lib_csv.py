@@ -14,6 +14,12 @@ def mkdir_p(path):
             pass
         else: raise
 
+def my_round(time):
+   return round(time, 3)
+   
+def make_speedup(time, serial):
+   return my_round(serial / time)
+
 def get_sched_name(sched):
 	if sched == 'sl':
 		return 'sl'
@@ -68,6 +74,8 @@ def add_result(name, sched, threads, result):
       
 def read_csv_file(file):
    f = open(file, 'rb')
+   global data
+   data = {}
 
    for line in f:
       line = line.rstrip('\n')
@@ -79,6 +87,7 @@ def read_csv_file(file):
       result = build_results(vec)
       print sched_name, sched_threads
       add_result(name, sched_name, sched_threads, result)
+   return data
 
 def natural_dict_sort(dic):
    convert = lambda text: int(text) if text.isdigit() else text 
