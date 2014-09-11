@@ -58,8 +58,6 @@ public:
    
    ~intrusive_unsafe_double_queue(void)
    {
-      assert(empty());
-		QUEUE_ASSERT_TOTAL_ZERO();
    }
 };
 

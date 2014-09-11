@@ -9,6 +9,8 @@
 #include "version.hpp"
 #include "utils/atomic.hpp"
 #include "utils/fs.hpp"
+
+#ifdef USE_SIM
 #include "ui/client.hpp"
 #include "ui/manager.hpp"
 #include "sched/sim.hpp"
@@ -20,7 +22,6 @@ using namespace sched;
 using namespace boost;
 using namespace utils;
 
-#ifdef USE_SIM
 static char *progname = NULL;
 static char *meldprog = NULL;
 static int port = 0;

@@ -4,7 +4,7 @@
 
 #include <list>
 #include <stack>
-#include <tr1/unordered_map>
+#include <unordered_map>
 #include <ostream>
 
 #include "mem/base.hpp"
@@ -108,7 +108,6 @@ private:
    
    vm::type *type;
    
-   trie_node *parent;
    trie_node **buckets;
    size_t num_buckets;
    size_t total;

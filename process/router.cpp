@@ -17,7 +17,7 @@ using namespace sched;
 namespace process
 {
    
-static mutex mpi_mutex;
+static boost::mutex mpi_mutex;
    
 void
 router::set_nodes_total(const size_t total)

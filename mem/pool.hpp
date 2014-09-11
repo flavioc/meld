@@ -6,7 +6,7 @@
 #include <iostream>
 #include <assert.h>
 #include <cstdio>
-#include <tr1/unordered_map>
+#include <unordered_map>
 
 #include "mem/chunkgroup.hpp"
 #include "conf.hpp"
@@ -20,7 +20,7 @@ private:
    
    static const size_t ATOM_SIZE = 4;
    
-   typedef std::tr1::unordered_map<size_t, chunkgroup*> chunk_map;
+   typedef std::unordered_map<size_t, chunkgroup*> chunk_map;
 
    chunk_map chunks;
    

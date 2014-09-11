@@ -28,7 +28,7 @@ class node;
 
 namespace vm
 {
-class tuple;
+struct tuple;
 class program;
 }
 

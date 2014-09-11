@@ -9,7 +9,7 @@
 #include <ostream>
 #include <vector>
 #include <utility>
-#include <tr1/unordered_map>
+#include <unordered_map>
 
 #include "vm/tuple.hpp"
 #include "vm/predicate.hpp"

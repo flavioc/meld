@@ -54,27 +54,6 @@ enum return_type {
 
 static inline return_type execute(pcounter, state&, const reg_num, tuple*, predicate*);
 
-static inline node_val
-get_node_val(pcounter& m, state& state)
-{
-   (void)state;
-
-   const node_val ret(pcounter_node(m));
-   
-   pcounter_move_node(&m);
-
-   assert(ret <= All->DATABASE->max_id());
-   
-   return ret;
-}
-
-static inline node_val
-get_node_val(const pcounter& m, state& state)
-{
-   (void)state;
-   return pcounter_node(m);
-}
-
 static inline tuple*
 get_tuple_field(state& state, const pcounter& pc)
 {
@@ -317,6 +296,7 @@ execute_not(pcounter& pc, state& state)
    state.set_bool(dest, !state.get_bool(op));
 }
 
+#if 0
 static inline bool
 do_match(predicate *pred, const tuple *tuple, const field_num& field, const instr_val& val,
    pcounter &pc, const state& state)
@@ -363,6 +343,7 @@ do_match(predicate *pred, const tuple *tuple, const field_num& field, const inst
    else
       throw vm_exec_error("match value in iter is not valid");
 }
+#endif
 
 static bool
 do_rec_match(match_field m, tuple_field x, type *t)
@@ -2483,7 +2464,7 @@ execute_consfff(pcounter& pc, state& state)
 #ifdef COMPUTED_GOTOS
 #define CASE(X)
 #define JUMP_NEXT() goto *jump_table[fetch(pc)]
-#define JUMP(label, jump_offset) label: { const pcounter npc = pc + jump_offset; register void *to_go = (void*)jump_table[fetch(npc)];
+#define JUMP(label, jump_offset) label: { const pcounter npc = pc + jump_offset; void *to_go = (void*)jump_table[fetch(npc)];
 #define COMPLEX_JUMP(label) label: {
 #define ADVANCE() pc = npc; goto *to_go;
 #define ENDOP() }

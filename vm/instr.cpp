@@ -903,6 +903,10 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
       case JUMP_INSTR:
          cout << "JUMP TO " << jump_get(pc, instr_size) << endl;
          break;
+      case MVSTACKFIELD_INSTR:
+         cout << "MVSTACKFIELD " << stack_string(pcounter_stack(pc + instr_size)) << " TO " <<
+            field_string(pc + instr_size + stack_val_size) << endl;
+         break;
 		default:
          throw malformed_instr_error("unknown instruction code");
 	}

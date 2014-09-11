@@ -3,7 +3,7 @@
 #define MEM_ALLOCATOR_HPP
 
 #include <limits>
-#include <tr1/unordered_set>
+#include <unordered_set>
 
 #include "conf.hpp"
 #include "mem/center.hpp"
@@ -62,8 +62,13 @@ public:
       return std::numeric_limits<size_type>::max() / sizeof(T);
    }
    
-   inline void construct(pointer p, const T& t) { new (p) T(t); }
-   inline void construct(pointer p) { new (p) T(); }
+   template <class U, class... Args>
+   void construct (U* p, Args&&... args)
+   {
+      ::new((void *)p) U(std::forward<Args>(args)...);
+   }
+//   inline void construct(pointer p, const T& t) { new (p) T(t); }
+ //  inline void construct(pointer p) { new (p) T(); }
    inline void destroy(pointer p) { p->~T(); }
    
    inline bool operator==(allocator const&) { return true; }

@@ -2,6 +2,10 @@
 #include <boost/asio.hpp>
 #include <string>
 
+#include "conf.hpp"
+
+#ifdef USE_SIM
+
 #include "sched/sim.hpp"
 #include "db/database.hpp"
 #include "process/remote.hpp"
@@ -19,8 +23,6 @@ using std::max;
 using std::cerr;
 using std::list;
 using std::set;
-
-#ifdef USE_SIM
 
 // when running in thread mode, the VM waits this milliseconds to instantiate all neighbor facts
 static const int TIME_TO_INSTANTIATE = 500;

@@ -113,6 +113,7 @@ const size_t MVWORLDFIELD_BASE   = instr_size + field_size;
 const size_t MVSTACKPCOUNTER_BASE= instr_size + stack_val_size;
 const size_t MVPCOUNTERSTACK_BASE= instr_size + stack_val_size;
 const size_t MVSTACKREG_BASE     = instr_size + stack_val_size + reg_val_size;
+const size_t MVSTACKFIELD_BASE   = instr_size + stack_val_size + field_size;
 const size_t MVREGSTACK_BASE     = instr_size + reg_val_size + stack_val_size;
 const size_t MVADDRREG_BASE      = instr_size + node_size + reg_val_size;
 const size_t MVHOSTREG_BASE      = instr_size + reg_val_size;
@@ -297,6 +298,7 @@ enum instr_type {
    REMOVE_INSTR 	      =  0x80,
    IF_ELSE_INSTR        =  0x81,
    JUMP_INSTR           =  0x82,
+   MVSTACKFIELD_INSTR   =  0x83,
    ADD_PRIORITY_INSTR   =  0xA0,
    ADD_PRIORITYH_INSTR  =  0xA1,
    STOP_PROG_INSTR      =  0xA2,
@@ -568,7 +570,8 @@ STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING>(const instr_val v)
    else if(val_is_ptr(v))
       return ptr_size;
 	else
-      throw malformed_instr_error("invalid instruction argument value");
+      return 0;
+      //throw malformed_instr_error("invalid instruction argument value");
 }
 
 inline size_t
@@ -916,8 +919,12 @@ advance(const pcounter pc)
       case NODE_PRIORITY_INSTR:
          return pc + NODE_PRIORITY_BASE;
 
+      case MVSTACKFIELD_INSTR:
+         return pc + MVSTACKFIELD_BASE;
+
       default:
-         throw malformed_instr_error("unknown instruction code (advance)");
+         return pc;
+         //throw malformed_instr_error("unknown instruction code (advance)");
    }
 }
 

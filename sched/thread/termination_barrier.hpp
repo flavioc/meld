@@ -14,7 +14,6 @@ class termination_barrier
 private:
    
    utils::atomic<size_t> active_threads;
-   const size_t num_threads;
    
    volatile bool done;
    
@@ -25,7 +24,6 @@ public:
    
    inline void is_active(void)
    {
-      assert(active_threads < num_threads);
       active_threads++;
    }
    
@@ -45,7 +43,7 @@ public:
    inline bool zero_active_threads(void) const { return active_threads == 0; }
    
    explicit termination_barrier(const size_t _num_threads):
-      active_threads(_num_threads), num_threads(_num_threads), done(false)
+      active_threads(_num_threads), done(false)
    {
    }
    

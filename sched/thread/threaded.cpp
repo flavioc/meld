@@ -1,5 +1,6 @@
 
 #include "sched/thread/threaded.hpp"
+#include "utils/atomic.hpp"
 
 using namespace boost;
 using namespace std;
@@ -10,7 +11,7 @@ namespace sched
    
 tree_barrier* threaded::thread_barrier(NULL);
 termination_barrier* threaded::term_barrier(NULL);
-atomic<size_t> threaded::total_in_agg(0);
+utils::atomic<size_t> threaded::total_in_agg(0);
 volatile size_t threaded::round_state(1);
 
 void

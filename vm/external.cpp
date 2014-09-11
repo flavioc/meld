@@ -1,5 +1,5 @@
 
-#include <tr1/unordered_map>
+#include <unordered_map>
 #include <assert.h>
 #include <stdlib.h>
 
@@ -13,7 +13,6 @@
 #include "external/core.hpp"
 
 using namespace std;
-using namespace std::tr1;
 
 namespace vm
 {

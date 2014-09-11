@@ -20,7 +20,6 @@ class serial_ui_local: public serial_local
 private:
    
 	bool first_done;
-   bool stop;
 	
 public:
 

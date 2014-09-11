@@ -8,7 +8,6 @@
 using namespace vm;
 using namespace std;
 using namespace runtime;
-using namespace std::tr1;
 
 namespace db
 {
@@ -376,35 +375,35 @@ trie_node::~trie_node(void)
 trie_node*
 trie_hash::get_int(const int_val& val) const
 {
-   const size_t bucket(hash_item(std::tr1::hash<int_val>()(val)));
+   const size_t bucket(hash_item(std::hash<int_val>()(val)));
    return buckets[bucket];
 }
 
 trie_node*
 trie_hash::get_float(const float_val& val) const
 {
-   const size_t bucket(hash_item(std::tr1::hash<float_val>()(val)));
+   const size_t bucket(hash_item(std::hash<float_val>()(val)));
    return buckets[bucket];
 }
 
 trie_node*
 trie_hash::get_node(const node_val& val) const
 {
-   const size_t bucket(hash_item(std::tr1::hash<node_val>()(val)));
+   const size_t bucket(hash_item(std::hash<node_val>()(val)));
    return buckets[bucket];
 }
 
 trie_node*
 trie_hash::get_uint(const uint_val& val) const
 {
-	const size_t bucket(hash_item(std::tr1::hash<uint_val>()(val)));
+	const size_t bucket(hash_item(std::hash<uint_val>()(val)));
 	return buckets[bucket];
 }
 
 void
 trie_hash::insert_int(const int_val& val, trie_node *node)
 {
-   const size_t bucket(hash_item(std::tr1::hash<int_val>()(val)));
+   const size_t bucket(hash_item(std::hash<int_val>()(val)));
    
    assert(num_buckets > 0);
    assert(bucket < num_buckets);
@@ -423,7 +422,7 @@ trie_hash::insert_int(const int_val& val, trie_node *node)
 void
 trie_hash::insert_uint(const uint_val& val, trie_node *node)
 {
-	const size_t bucket(hash_item(std::tr1::hash<uint_val>()(val)));
+	const size_t bucket(hash_item(std::hash<uint_val>()(val)));
    
    assert(num_buckets > 0);
    assert(bucket < num_buckets);
@@ -442,7 +441,7 @@ trie_hash::insert_uint(const uint_val& val, trie_node *node)
 void
 trie_hash::insert_float(const float_val& val, trie_node *node)
 {
-   const size_t bucket(hash_item(std::tr1::hash<float_val>()(val)));
+   const size_t bucket(hash_item(std::hash<float_val>()(val)));
    
    assert(bucket < num_buckets);
    
@@ -460,7 +459,7 @@ trie_hash::insert_float(const float_val& val, trie_node *node)
 void
 trie_hash::insert_node(const node_val& val, trie_node *node)
 {
-   const size_t bucket(hash_item(std::tr1::hash<node_val>()(val)));
+   const size_t bucket(hash_item(std::hash<node_val>()(val)));
    
    assert(bucket < num_buckets);
    
@@ -513,8 +512,8 @@ trie_hash::expand(void)
    allocator<trie_node*>().deallocate(old_buckets, old_num_buckets);
 }
 
-trie_hash::trie_hash(vm::type *_type, trie_node *_parent):
-   type(_type), parent(_parent), total(0)
+trie_hash::trie_hash(vm::type *_type, trie_node *):
+   type(_type), total(0)
 {
    buckets = allocator<trie_node*>().allocate(TRIE_HASH_BASE_BUCKETS);
    num_buckets = TRIE_HASH_BASE_BUCKETS;

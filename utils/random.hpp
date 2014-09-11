@@ -2,6 +2,8 @@
 #ifndef UTILS_RANDOM_HPP
 #define UTILS_RANDOM_HPP
 
+#define BOOST_NO_RTTI
+#define BOOST_NO_TYPEID
 #include <boost/random.hpp>
 #include <vector>
 #include <algorithm>

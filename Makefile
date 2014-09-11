@@ -3,12 +3,12 @@ include conf.mk
 
 OS = $(shell uname -s)
 
-INCLUDE_DIRS = -I.
+INCLUDE_DIRS = -I $(PWD) -Wno-error=unused-command-line-argument
 LIBRARY_DIRS =
 
 ARCH = -march=x86-64
 FLAGS =
-LIBS = 
+LIBS =
 
 ifeq ($(RELEASE), true)
 	DEBUG =
@@ -33,7 +33,7 @@ ifeq ($(INTERFACE),true)
 endif
 
 CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) $(FLAGS) $(C0X) #-fno-gcse -fno-crossjumping
-LIBRARIES = -pthread -lm -lreadline -lboost_thread-mt -lboost_system-mt \
+LIBRARIES = -lm -lreadline -lboost_thread-mt -lboost_system-mt \
 				-lboost_date_time-mt -lboost_regex-mt -ldl $(LIBS)
 
 CXX = g++

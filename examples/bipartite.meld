@@ -1,8 +1,8 @@
 
 type route edge(node, node).
-type linear visit(node, int).
-type linear unchecked(node).
-type linear checked(node, int).
+type linear mark(node, int).
+type linear uncolored(node).
+type linear colored(node, int).
 type linear fail(node).
 
 fun next(int X) : int = if X <> 1 then 1 else 2 end.
@@ -12,14 +12,14 @@ fun next(int X) : int = if X <> 1 then 1 else 2 end.
 !edge(@3, @2).
 !edge(@3, @1).
 
-unchecked(@1). unchecked(@2). unchecked(@3).
+uncolored(@1). uncolored(@2). uncolored(@3).
 
-visit(@1, 1).
+mark(@1, 1).
 
-visit(A, P), unchecked(A)
-   -o {B | !edge(A, B) | visit(B, next(P))}, checked(A, P).
+mark(A, P), uncolored(A)
+   -o {B | !edge(A, B) | mark(B, next(P))}, colored(A, P).
 
-visit(A, P1), checked(A, P2), P1 <> P2
+mark(A, P1), colored(A, P2), P1 <> P2
    -o fail(A).
-visit(A, P), checked(A, P) -o checked(A, P).
-visit(A, P), fail(A) -o fail(A).
+mark(A, P), colored(A, P) -o colored(A, P).
+mark(A, P), fail(A) -o fail(A).

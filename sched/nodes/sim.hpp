@@ -99,6 +99,7 @@ public:
          case TOP: return &top;
          default: assert(false);
       }
+      return NULL;
    }
 
    face_t get_face(const vm::node_val node) {

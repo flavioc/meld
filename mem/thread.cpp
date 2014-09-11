@@ -1,6 +1,6 @@
 
 #include <iostream>
-#include <tr1/unordered_set>
+#include <unordered_set>
 
 #include "mem/thread.hpp"
 #ifdef INSTRUMENTATION
@@ -9,7 +9,6 @@
 
 using namespace boost;
 using namespace std;
-using namespace std::tr1;
 
 #ifdef ALLOCATOR_ASSERT
 mutex allocator_mtx;

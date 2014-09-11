@@ -13,10 +13,13 @@
 #include "interface.hpp"
 #include "sched/serial.hpp"
 #include "sched/serial_ui.hpp"
+#ifdef USE_SIM
 #include "sched/sim.hpp"
+#endif
 #include "thread/threads.hpp"
 #include "runtime/objs.hpp"
 #include "thread/prio.hpp"
+#include <malloc/malloc.h>
 
 using namespace process;
 using namespace db;
@@ -109,12 +112,6 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, vm::predicat
    }
 
    vm::tuple::destroy(tpl, pred);
-}
-
-static inline string
-get_output_filename(const string other, const remote::remote_id id)
-{
-   return string("meld_output." + other + "." + utils::to_string(id));
 }
 
 void
@@ -220,6 +217,12 @@ machine::start(void)
    
    for(size_t i(1); i < all->NUM_THREADS; ++i)
       this->all->ALL_THREADS[i]->join();
+
+#if 0
+   cout << "Total Facts: " << this->all->DATABASE->total_facts() << endl;
+   cout << "Total Nodes: " << this->all->DATABASE->num_nodes() << endl;
+   cout << "Bytes used: " << bytes_used << endl;
+#endif
       
 #ifndef NDEBUG
    if(!sched::base::stop_flag) {

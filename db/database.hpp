@@ -5,7 +5,7 @@
 #include <map>
 #include <fstream>
 #include <ostream>
-#include <tr1/unordered_map>
+#include <unordered_map>
 #include <stdexcept>
 #include <boost/function.hpp>
 #include <boost/static_assert.hpp>
@@ -27,8 +27,8 @@ class database
 {
 public:
    
-   typedef std::tr1::unordered_map<node::node_id, node::node_id,
-           std::tr1::hash<node::node_id>,
+   typedef std::unordered_map<node::node_id, node::node_id,
+           std::hash<node::node_id>,
            std::equal_to<node::node_id>,
            mem::allocator< std::pair<const node::node_id, node::node_id> > > map_translate;
    typedef std::map<node::node_id, node*,

@@ -56,8 +56,8 @@ class code_reader
       explicit code_reader(const std::string& file_name):
             fp(file_name.c_str(), std::ios::in | std::ios::binary)
       {
-         if(!fp.is_open())
-            throw load_file_error(file_name, std::string("could not open file"));
+         //if(!fp.is_open())
+            //throw load_file_error(file_name, std::string("could not open file"));
       }
 };
 
