@@ -1,16 +1,19 @@
 
 VM = ../meld -d -f
 
-all: compiled
+.PHONY: test clean
 
-test-serial: test
+all: compiled
 
 test:
 	@bash test_all.sh sl
+
+code/%.m: FORCE
+	@bash test.sh $@ sl
 
 compiled:
 	@mkdir -p code
 	@meld-compile-directory progs code
 
 clean:
-	rm -f code/*.m
+	rm -f code/*.m test
