@@ -12,7 +12,9 @@
 #include "utils/fs.hpp"
 #include "interface.hpp"
 #include "sched/serial.hpp"
+#ifdef USE_UI
 #include "sched/serial_ui.hpp"
+#endif
 #ifdef USE_SIM
 #include "sched/sim.hpp"
 #endif
@@ -268,22 +270,12 @@ get_creation_function(const scheduler_type sched_type)
          return database::create_node_fn(sched::threads_sched::create_node);
       case SCHED_THREADS_PRIO:
          return database::create_node_fn(sched::threads_prio::create_node);
-#if 0
-      case SCHED_THREADS_DYNAMIC_LOCAL:
-         return database::create_node_fn(sched::dynamic_local::create_node);
-      case SCHED_THREADS_DIRECT_LOCAL:
-         return database::create_node_fn(sched::direct_local::create_node);
-      case SCHED_MPI_AND_THREADS_STATIC_LOCAL:
-         return database::create_node_fn(sched::mpi_thread_static::create_node);
-      case SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL:
-         return database::create_node_fn(sched::mpi_thread_dynamic::create_node);
-      case SCHED_MPI_AND_THREADS_SINGLE_LOCAL:
-         return database::create_node_fn(sched::mpi_thread_single::create_node);
-#endif
       case SCHED_SERIAL:
          return database::create_node_fn(sched::serial_local::create_node);
+#ifdef USE_UI
 		case SCHED_SERIAL_UI:
 			return database::create_node_fn(sched::serial_ui_local::create_node);
+#endif
 #ifdef USE_SIM
 		case SCHED_SIM:
 			return database::create_node_fn(sched::sim_sched::create_node);
@@ -346,32 +338,14 @@ machine::machine(const string& file, router& _rout, const size_t th,
       case SCHED_THREADS_PRIO:
          sched::threads_prio::start(all->NUM_THREADS);
          break;
-#if 0
-      case SCHED_THREADS_SINGLE_LOCAL:
-         process_list = sched::threads_single::start(num_threads);
-         break;
-      case SCHED_THREADS_DYNAMIC_LOCAL:
-         process_list = sched::dynamic_local::start(num_threads);
-         break;
-      case SCHED_THREADS_DIRECT_LOCAL:
-         process_list = sched::direct_local::start(num_threads);
-         break;
-      case SCHED_MPI_AND_THREADS_STATIC_LOCAL:
-         process_list = sched::mpi_thread_static::start(num_threads);
-         break;
-      case SCHED_MPI_AND_THREADS_DYNAMIC_LOCAL:
-         process_list = sched::mpi_thread_dynamic::start(num_threads);
-         break;
-      case SCHED_MPI_AND_THREADS_SINGLE_LOCAL:
-         process_list = sched::mpi_thread_single::start(num_threads);
-         break;
-#endif
       case SCHED_SERIAL:
          this->all->ALL_THREADS.push_back(dynamic_cast<sched::base*>(new sched::serial_local()));
          break;
+#ifdef USE_UI
       case SCHED_SERIAL_UI:
          this->all->ALL_THREADS.push_back(dynamic_cast<sched::base*>(new sched::serial_ui_local()));
          break;
+#endif
 #ifdef USE_SIM
       case SCHED_SIM:
          this->all->ALL_THREADS.push_back(dynamic_cast<sched::base*>(new sched::sim_sched()));

@@ -11,8 +11,10 @@ enum scheduler_type {
    SCHED_UNKNOWN,
    SCHED_THREADS,
    SCHED_THREADS_PRIO,
-   SCHED_SERIAL,
-	SCHED_SERIAL_UI
+   SCHED_SERIAL
+#ifdef USE_UI
+	, SCHED_SERIAL_UI
+#endif
 #ifdef USE_SIM
 	, SCHED_SIM
 #endif
@@ -20,7 +22,10 @@ enum scheduler_type {
 
 inline bool is_serial_sched(const scheduler_type type)
 {
-   return type == SCHED_SERIAL || type == SCHED_SERIAL_UI
+   return type == SCHED_SERIAL
+#ifdef USE_UI
+      || type == SCHED_SERIAL_UI
+#endif
 #ifdef USE_SIM
       || type == SCHED_SIM
 #endif

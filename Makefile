@@ -93,7 +93,6 @@ SRCS = utils/utils.cpp \
 			 sched/base.cpp \
 			 sched/common.cpp \
 			 sched/serial.cpp \
-			 sched/serial_ui.cpp \
 			 thread/threads.cpp \
 			 thread/prio.cpp \
 			 sched/thread/threaded.cpp \
@@ -108,11 +107,17 @@ SRCS = utils/utils.cpp \
 			 stat/stat.cpp \
 			 stat/slice.cpp \
 			 stat/slice_set.cpp \
-			 ui/manager.cpp \
-			 ui/client.cpp \
-			 interface.cpp \
-			 sched/sim.cpp \
-			 jit/build.cpp
+			 jit/build.cpp \
+			 interface.cpp
+
+ifeq ($(SIMULATOR), true)
+	SRCS += sched/sim.cpp
+endif
+ifeq ($(INTERFACE), true)
+	SRCS += sched/serial_ui.cpp \
+			  ui/manager.cpp \
+			  ui/client.cpp
+endif
 
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 

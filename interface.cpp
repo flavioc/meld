@@ -93,7 +93,9 @@ parse_sched(char *sched)
    match_threads("thp", sched, SCHED_THREADS_PRIO) ||
       match_threads("th", sched, SCHED_THREADS) ||
       match_serial("sl", sched, SCHED_SERIAL) ||
+#ifdef USE_UI
 		match_serial("ui", sched, SCHED_SERIAL_UI) ||
+#endif
       fail_sched(sched);
 
 	if (num_threads == 0) {
