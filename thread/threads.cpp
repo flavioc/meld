@@ -60,13 +60,9 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
 
    if(owner == this) {
       assert(!tnode->running);
-#ifdef FASTER_INDEXING
       tnode->internal_lock();
-#endif
       tnode->add_work_myself(tpl, pred, count, depth);
-#ifdef FASTER_INDEXING
       tnode->internal_unlock();
-#endif
 #ifdef INSTRUMENTATION
       sent_facts_same_thread++;
 #endif
@@ -75,7 +71,6 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
          add_to_queue((thread_intrusive_node*)tnode);
       }
    } else {
-#ifdef FASTER_INDEXING
       if(tnode->running) {
          // the node is currently being executed by the owner thread
          // just buffer the new fact that will be used by the owner
@@ -89,9 +84,6 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
          sent_facts_other_thread_now++;
 #endif
       }
-#else
-      tnode->add_work_others(tpl, pred, count, depth);
-#endif
       if(!tnode->in_queue()) {
          tnode->set_in_queue(true);
          owner->add_to_queue((thread_intrusive_node*)tnode);

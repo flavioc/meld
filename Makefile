@@ -20,8 +20,17 @@ else
 	PROFILING = -pg
 	OPTIMIZATIONS = -O0
 endif
+ifeq ($(ALLOCATOR), pool)
+	FLAGS += -DPOOL_ALLOCATOR
+endif
 ifeq ($(EXTRA_ASSERTS), true)
 	FLAGS += -DASSERT_THREADS -DALLOCATOR_ASSERT -DTRIE_MATCHING_ASSERT
+endif
+ifeq ($(INDEXING), true)
+	FLAGS += -DDYNAMIC_INDEXING
+endif
+ifeq ($(USE_ADDRESSES), true)
+	FLAGS += -DUSE_REAL_NODES
 endif
 
 ifeq ($(JIT), true)
@@ -124,7 +133,7 @@ OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 all: $(TARGETS)
 
 -include Makefile.externs
-Makefile.externs:	Makefile conf.mk
+Makefile.externs:	conf.mk
 	@echo "Remaking Makefile.externs"
 	@/bin/rm -f Makefile.externs
 	@for i in $(SRCS); do $(CXX) $(CXXFLAGS) -MM -MT $${i/%.cpp/.o} $$i >> Makefile.externs; done

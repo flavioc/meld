@@ -736,10 +736,8 @@ state::run_node(db::node *no)
       no->unlock();
 	}
 
-#ifdef FASTER_INDEXING
    node->running = true;
    node->internal_lock();
-#endif
    node->rounds++;
 	
    if(do_persistent_tuples()) {
@@ -858,10 +856,8 @@ state::run_node(db::node *no)
    lstore->improve_index();
    if(node->rounds > 0 && node->rounds % 5 == 0)
       lstore->cleanup_index();
-#ifdef FASTER_INDEXING
    node->internal_unlock();
    node->running = false;
-#endif
 }
 
 state::state(sched::base *_sched):

@@ -11,10 +11,41 @@ namespace mem
 
 class center
 {
-public:
+   private:
 
-   static void* allocate(size_t cnt, size_t sz);
-   static void deallocate(void *p, size_t cnt, size_t sz);
+      static size_t bytes_used;
+
+   public:
+
+      static void* allocate(size_t cnt, size_t sz)
+      {
+         register_allocation(cnt, sz);
+#ifdef TRACK_MEMORY
+         bytes_used += cnt * sz;
+#endif
+         
+#ifdef POOL_ALLOCATOR
+         return get_pool()->allocate(cnt * sz);
+#else
+         return ::operator new(cnt * sz);
+#endif
+      }
+
+      static void deallocate(void *p, size_t cnt, size_t sz)
+      {
+         register_deallocation(cnt, sz);
+#ifdef TRACK_MEMORY
+         bytes_used -= cnt * sz;
+#endif
+
+#ifdef POOL_ALLOCATOR
+         get_pool()->deallocate(p, cnt * sz);
+#else
+         (void)cnt;
+         (void)sz;
+         ::operator delete(p);
+#endif
+      }
 };
 
 }
