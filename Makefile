@@ -1,6 +1,8 @@
 
 include conf.mk
 
+TARGETS = meld print
+
 OS = $(shell uname -s)
 
 INCLUDE_DIRS = -I $(PWD) -Wno-error=unused-command-line-argument
@@ -18,6 +20,9 @@ else
 	PROFILING = -pg
 	OPTIMIZATIONS = -O0
 endif
+ifeq ($(EXTRA_ASSERTS), true)
+	FLAGS += -DASSERT_THREADS -DALLOCATOR_ASSERT -DTRIE_MATCHING_ASSERT
+endif
 
 ifeq ($(JIT), true)
 	FLAGS += -DUSE_JIT
@@ -30,6 +35,12 @@ C0X = -std=c++0x
 ifeq ($(INTERFACE),true)
 	LIBS += -lwebsocketpp -ljson_spirit
 	FLAGS += -DUSE_UI=1
+	TARGETS += server
+endif
+
+ifeq ($(SIMULATOR), true)
+	TARGETS += simulator
+	FLAGS += -DUSE_SIM
 endif
 
 CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) $(FLAGS) $(C0X) #-fno-gcse -fno-crossjumping
@@ -105,10 +116,10 @@ SRCS = utils/utils.cpp \
 
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
-all: meld print server simulator
+all: $(TARGETS)
 
 -include Makefile.externs
-Makefile.externs:	Makefile
+Makefile.externs:	Makefile conf.mk
 	@echo "Remaking Makefile.externs"
 	@/bin/rm -f Makefile.externs
 	@for i in $(SRCS); do $(CXX) $(CXXFLAGS) -MM -MT $${i/%.cpp/.o} $$i >> Makefile.externs; done
@@ -120,8 +131,10 @@ meld: $(OBJS) meld.o
 print: $(OBJS) print.o
 	$(COMPILE) print.o -o print $(LDFLAGS)
 
+ifeq ($(INTERFACE),true)
 server: $(OBJS) server.o
 	$(COMPILE) server.o -o server $(LDFLAGS)
+endif
 
 simulator: $(OBJS) simulator.o
 	$(COMPILE) simulator.o -o simulator $(LDFLAGS)
