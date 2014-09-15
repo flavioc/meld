@@ -5,9 +5,10 @@ SCHEDULER="${2}"
 STEP="${3}"
 MIN="${4}"
 MAX="${5}"
+RUNS="${6}"
 
 if [ -z "${SCHEDULER}" ] || [ -z "${FILE}" ]; then
-	echo "Usage: threads_even.sh <file> <scheduler> [step=even|power] [min=1] [max=32]"
+	echo "Usage: threads_even.sh <file> <scheduler> [step=even|power] [min=1] [max=32] [runs=3]"
 	exit 1
 fi
 
@@ -20,6 +21,9 @@ fi
 if [ -z "${STEP}" ]; then
    STEP=even
 fi
+if [ -z "${RUNS}" ]; then
+   RUNS=3
+fi
 if [ ! -r "${FILE}" ]; then
    echo "Code file $FILE does not exist."
    exit 1
@@ -30,7 +34,7 @@ RUN="bash ./threads.sh"
 do_run ()
 {
 	NUM_THREADS="${1}"
-	$RUN "${SCHEDULER}${NUM_THREADS}" ${FILE}
+	$RUN "${SCHEDULER}${NUM_THREADS}" ${FILE} ${RUNS}
 }
 
 if [ "$STEP" = "even" ]; then

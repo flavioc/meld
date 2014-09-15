@@ -16,8 +16,10 @@ time_run_n ()
 	local time=()
 	
 	for((I = 0; I < ${RUNS}; I++)); do
+      echo -n " $I/$RUNS"
 		time[${I}]="$(time_run ${CMD})"
-		echo -n " ${time[$I]}"
+      tput cub 3
+		echo -n "${time[$I]}"
 	done
 
 	total=0

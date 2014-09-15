@@ -4,7 +4,7 @@ FILE="${1}"
 RUNS="${2}"
 
 if [ -z "${RUNS}" ]; then
-	RUNS=3
+	RUNS=1
 fi
 
 if [ -z "$FILE" ]; then
