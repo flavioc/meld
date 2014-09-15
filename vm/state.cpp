@@ -422,6 +422,7 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
    }
 }
 
+#ifdef DYNAMIC_INDEXING
 static vector< pair<predicate*, size_t> > one_indexing_fields;
 static vector< pair<predicate*, size_t> > two_indexing_fields;
 static vector<size_t> indexing_scores;
@@ -702,14 +703,17 @@ state::indexing_state_machine(db::node *no)
    (void)no;
 #endif
 }
+#endif
 
 void
 state::run_node(db::node *no)
 {
    bool aborted(false);
 
+#ifdef DYNAMIC_INDEXING
    if(sched && sched->get_id() == 0)
       indexing_state_machine(no);
+#endif
 
 	node = no;
 #ifdef DEBUG_RULES

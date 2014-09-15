@@ -28,12 +28,16 @@ public:
    bitmap predicates; // new generated predicates
 
    // returns true if we did not have any tuples of this predicate
-	bool register_tuple(predicate *, const derivation_count, const bool is_new = true);
+	bool register_tuple(predicate *, const derivation_count,
+         const bool is_new = true);
 
 	// returns true if now we do not have any tuples of this predicate
 	bool deregister_tuple(predicate *, const derivation_count);
 
-   inline pred_count get_count(const vm::predicate_id id) const { return predicate_count[id]; }
+   inline pred_count get_count(const vm::predicate_id id) const
+   {
+      return predicate_count[id];
+   }
 
    inline void mark(const vm::predicate *pred)
    {
@@ -50,8 +54,13 @@ public:
       dropped_bitmap.clear(theProgram->num_rules_next_uint());
 	}
 
-   bitmap::iterator active_rules_iterator(void) { return active_bitmap.begin(theProgram->num_rules()); }
-   bitmap::iterator dropped_rules_iterator(void) { return dropped_bitmap.begin(theProgram->num_rules()); }
+   bitmap::iterator active_rules_iterator(void) {
+      return active_bitmap.begin(theProgram->num_rules());
+   }
+
+   bitmap::iterator dropped_rules_iterator(void) {
+      return dropped_bitmap.begin(theProgram->num_rules());
+   }
 	
    rule_matcher(void);
    ~rule_matcher(void);

@@ -52,10 +52,13 @@ class rule
       inline bool as_persistent(void) const { return is_persistent; }
 
 		typedef predicate_vector::const_iterator predicate_iterator;
-		inline predicate_iterator begin_predicates(void) const { return predicates.begin(); }
-		inline predicate_iterator end_predicates(void) const { return predicates.end(); }
+		inline predicate_iterator begin_predicates(void) const
+      { return predicates.begin(); }
+		inline predicate_iterator end_predicates(void) const
+      { return predicates.end(); }
 
-      explicit rule(const rule_id _id, const std::string& _str, const size_t predicates_next_uint):
+      explicit rule(const rule_id _id, const std::string& _str,
+            const size_t predicates_next_uint):
          id(_id), str(_str), is_persistent(false)
       {
          bitmap::create(predicate_map, predicates_next_uint);
