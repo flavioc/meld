@@ -38,44 +38,38 @@ $ ./meld -f file.m -c tl4
 ;; First and foremost, install sbcl using the operating systems facilities
 ;; On my mac, I use brew install sbcl.
 
+;; Now download quicklisp, an utility for installing Lisp packages.
+curl -O http://beta.quicklisp.org/quicklisp.lisp
+
 ;; Now let's install all the required sbcl packages, load sbcl by typing:
 $ sbcl
 
 ;; Type the following instructions into SBCL, one by one:
 
 (require 'asdf)
-(require 'asdf-install)
-(asdf-install:install :cl-ppcre)
-(asdf-install:install :cl-yacc)
-(asdf-install:install :cl-lex)
-(asdf-install:install :arnesi)
-(asdf-install:install :alexandria)
-(asdf-install:install :flexi-streams)
-
-;; For every asdf-install:install you may choose to install system-wide or just for the current user
-;; I recommend selecting user installation
-
-;; If gpg authentication is required then press 0 to skip
-;; If "Component xxx not found" just select 0: reinitialize source registry and retry
-
-;; We also need to install ieee-floats, but asdf-install fails to do this...
-;; We need to do this by hand:
-$ cd ~/.sbcl/site
-$ git clone https://github.com/marijnh/ieee-floats.git
-$ ln -sf $HOME/.sbcl/site/ieee-floats/ieee-floats.asd ~/.sbcl/systems/
+(load "quicklisp")
+(quicklisp-quickstart:install)
+(ql:quickload "cl-ppcre")
+(ql:quickload "yacc")
+(ql:quickload "cl-lex")
+(ql:quickload "arnesi")
+(ql:quickload "alexandria")
+(ql:quickload "flexi-streams")
+(ql:quickload "ieee-floats")
+(ql:add-to-init-file)
 
 ;; Now it's time to download cl-meld:
-$ cd ~
+$ cd ~/quicklisp/local-projects
 $ git clone https://github.com/flavioc/cl-meld.git
 
 ;; Before you can load up the compiler, you need to patch CL-Yacc so that it supports comments in the source code:
 
-$ cd ~/.sbcl/site/cl-yacc-0.3
+$ cd ~/quicklisp/dists/quicklisp/software/cl-yacc-<version>
 $ patch -p0 < ~/cl-meld/yacc-comments.patch
-$ cd ~/cl-meld
 $ sbcl
 
-;; Type in: (load "load") and you'll see several messages (it's just sbcl compiling and loading everything)
+;; Run on the lisp interpreter:
+(ql:quickload "cl-meld")
 ;; To compile a file, just do this:
 (cl-meld:meld-compile "path-to-file.meld" "path-to-output-file")
 

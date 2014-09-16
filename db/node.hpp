@@ -43,6 +43,7 @@ public:
    typedef trie::delete_info delete_info;
 
 private:
+
 	node_id id;
    node_id translation;
    
@@ -83,11 +84,15 @@ public:
    inline void set_owner(sched::base *_owner) { owner = _owner; }
    inline sched::base *get_owner(void) const { return owner; }
    
-   bool add_tuple(vm::tuple*, vm::predicate *, const vm::derivation_count, const vm::depth_t);
-   delete_info delete_tuple(vm::tuple *, vm::predicate *, const vm::derivation_count, const vm::depth_t);
+   bool add_tuple(vm::tuple*, vm::predicate *, const vm::derivation_count,
+         const vm::depth_t);
+   delete_info delete_tuple(vm::tuple *, vm::predicate *,
+         const vm::derivation_count, const vm::depth_t);
    
-   db::agg_configuration* add_agg_tuple(vm::tuple*, vm::predicate *, const vm::derivation_count, const vm::depth_t);
-   db::agg_configuration* remove_agg_tuple(vm::tuple*, vm::predicate *, const vm::derivation_count, const vm::depth_t);
+   db::agg_configuration* add_agg_tuple(vm::tuple*, vm::predicate *,
+         const vm::derivation_count, const vm::depth_t);
+   db::agg_configuration* remove_agg_tuple(vm::tuple*, vm::predicate *,
+         const vm::derivation_count, const vm::depth_t);
    simple_tuple_list end_iteration(void);
    
    void delete_by_index(vm::predicate*, const vm::match&);
@@ -125,7 +130,8 @@ public:
       store.register_tuple_fact(pred, 1);
       linear.add_fact(tpl, pred, store.matcher);
    }
-   inline void add_work_myself(vm::tuple *tpl, vm::predicate *pred, const vm::ref_count count, const vm::depth_t depth)
+   inline void add_work_myself(vm::tuple *tpl, vm::predicate *pred,
+         const vm::ref_count count, const vm::depth_t depth)
    {
       unprocessed_facts = true;
 
@@ -139,7 +145,8 @@ public:
          add_linear_fact(tpl, pred);
    }
 
-   inline void add_work_others(vm::tuple *tpl, vm::predicate *pred, const vm::ref_count count, const vm::depth_t depth)
+   inline void add_work_others(vm::tuple *tpl, vm::predicate *pred,
+         const vm::ref_count count, const vm::depth_t depth)
    {
       unprocessed_facts = true;
 
