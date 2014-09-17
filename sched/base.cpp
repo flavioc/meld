@@ -60,6 +60,7 @@ base::loop(void)
 {
    // start process pool
    mem::ensure_pool();
+   scheduler = this;
 
    init(All->NUM_THREADS);
 
