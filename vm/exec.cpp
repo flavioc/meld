@@ -1189,7 +1189,7 @@ static inline void
 execute_delete(const pcounter pc, state& state)
 {
    const predicate_id id(delete_predicate(pc));
-   const predicate *pred(All->PROGRAM->get_predicate(id));
+   const predicate *pred(theProgram->get_predicate(id));
    pcounter m(pc + DELETE_BASE);
    const size_t num_args(delete_num_args(pc));
    match mobj(pred);

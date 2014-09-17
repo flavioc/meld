@@ -22,7 +22,7 @@ class rule
       const std::string str;
       byte_code code;
 		code_size_t code_size;
-		typedef std::vector<predicate*> predicate_vector;
+		typedef std::vector<predicate*, mem::allocator<predicate*> > predicate_vector;
       predicate_vector predicates;
       bool is_persistent;
       bitmap predicate_map;

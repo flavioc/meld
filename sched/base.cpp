@@ -16,29 +16,10 @@ using namespace db;
 namespace sched
 {
 	
-static bool init(void);
+static __thread base *scheduler(NULL);
 
-pthread_key_t sched_key;
-static bool started(init());
 volatile bool base::stop_flag(false);
 
-static void
-cleanup_sched_key(void)
-{
-   pthread_key_delete(sched_key);
-}
-
-static bool
-init(void)
-{
-   int ret(pthread_key_create(&sched_key, NULL));
-   (void)ret;
-   (void)started;
-   assert(ret == 0);
-   atexit(cleanup_sched_key);
-   return true;
-}
-	
 void
 base::do_work(db::node *node)
 {
@@ -92,14 +73,12 @@ base::loop(void)
 base*
 base::get_scheduler(void)
 {
-   sched::base *s((sched::base*)pthread_getspecific(sched_key));
-   return s;
+   return scheduler;
 }
 	
 void
 base::start(void)
 {
-   pthread_setspecific(sched_key, this);
    if(id == 0) {
       thread = new boost::thread();
       loop();

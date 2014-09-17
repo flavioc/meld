@@ -27,6 +27,7 @@ private:
    inline chunkgroup *get_group(const size_t size)
    {
       assert(size > 0);
+      assert(size < MAX_CHUNK_SIZE);
         
       chunkgroup *grp = chunks[size];
       
