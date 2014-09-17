@@ -14,28 +14,26 @@
 namespace mem
 {
 
+#define MAX_CHUNK_SIZE 2048
+
 class pool
 {
 private:
    
    static const size_t ATOM_SIZE = 4;
    
-   typedef std::unordered_map<size_t, chunkgroup*> chunk_map;
+   chunkgroup *chunks[MAX_CHUNK_SIZE];
 
-   chunk_map chunks;
-   
-   chunkgroup *get_group(const size_t size)
+   inline chunkgroup *get_group(const size_t size)
    {
       assert(size > 0);
         
-      chunk_map::iterator it(chunks.find(size));
-      chunkgroup *grp;
+      chunkgroup *grp = chunks[size];
       
-      if(it == chunks.end()) {
+      if(grp == NULL) {
          grp = new chunkgroup(size);
          chunks[size] = grp;
-      } else
-         grp = it->second;
+      }
          
       assert(grp != NULL);
       
@@ -56,15 +54,14 @@ public:
    
    explicit pool(void)
    {
+      memset(chunks, 0, sizeof(chunks));
    }
    
    ~pool(void)
    {
-      for(chunk_map::iterator it(chunks.begin());
-         it != chunks.end();
-         ++it)
-      {
-         delete it->second;
+      for(size_t i(1); i < MAX_CHUNK_SIZE; ++i) {
+         if(chunks[i] != NULL)
+            delete chunks[i];
       }
    }
 };

@@ -4,8 +4,6 @@
 
 #include "conf.hpp"
 
-#include <boost/thread/thread.hpp>
-
 #include "mem/pool.hpp"
 
 namespace mem

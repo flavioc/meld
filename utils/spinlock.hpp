@@ -2,6 +2,7 @@
 #ifndef UTILS_SPINLOCK_HPP
 #define UTILS_SPINLOCK_HPP
 
+#include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 
