@@ -41,9 +41,6 @@ private:
 	std::list<runtime::rstring::ptr, mem::allocator<runtime::rstring::ptr> > free_rstring;
    std::list<runtime::struct1*, mem::allocator<runtime::struct1*> > free_struct1;
    
-   typedef std::pair<db::tuple_trie_leaf *, vm::ref_count> pair_linear;
-   typedef std::list<pair_linear> list_linear;
-
    vm::bitmap rule_queue;
 	
    void purge_runtime_objects(void);
@@ -83,7 +80,7 @@ public:
    bool hash_removes;
    typedef std::unordered_set<vm::tuple*, std::hash<vm::tuple*>, std::equal_to<vm::tuple*>, mem::allocator<vm::tuple*> > removed_hash;
    removed_hash removed;
-   typedef std::list<match*> match_list;
+   typedef std::list<match*, mem::allocator<match*> > match_list;
    match_list matches_created;
    temporary_store *store;
    db::linear_store *lstore;
