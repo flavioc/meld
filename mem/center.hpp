@@ -25,7 +25,7 @@ class center
 #endif
          
 #ifdef POOL_ALLOCATOR
-         return get_pool()->allocate(cnt * sz);
+         return mem_pool->allocate(cnt * sz);
 #else
          return ::operator new(cnt * sz);
 #endif
@@ -39,7 +39,7 @@ class center
 #endif
 
 #ifdef POOL_ALLOCATOR
-         get_pool()->deallocate(p, cnt * sz);
+         mem_pool->deallocate(p, cnt * sz);
 #else
          (void)cnt;
          (void)sz;

@@ -10,14 +10,16 @@
 
 namespace mem
 {
-   
-pool *get_pool(void);
-   
-void create_pool(void);
-void ensure_pool(void);
-void delete_pool(void);
 
-void cleanup(const size_t);
+extern __thread pool *mem_pool;
+   
+inline void ensure_pool(void)
+{
+#ifdef POOL_ALLOCATOR
+   if(mem_pool == NULL)
+      mem_pool = new pool();
+#endif
+}
   
 }
 

@@ -2,7 +2,8 @@ RELEASE = true
 INTERFACE = false
 JIT = false
 EXTRA_ASSERTS = false
-ALLOCATOR = pool # may use 'pool' or 'malloc'
+# may use 'pool' or 'malloc'
+ALLOCATOR = pool
 # Use 'true' for dynamic indexing of facts.
 INDEXING = true
 # Make the virtual machine use the node pointers in predicate arguments

@@ -296,6 +296,8 @@ machine::machine(const string& file, router& _rout, const size_t th,
    alarm_thread(NULL),
    slices(th)
 {
+   mem::ensure_pool();
+
    init_types();
    init_external_functions();
 
@@ -370,8 +372,6 @@ machine::~machine(void)
       
    if(alarm_thread)
       delete alarm_thread;
-      
-   mem::cleanup(all->NUM_THREADS);
 }
 
 }
