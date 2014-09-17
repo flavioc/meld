@@ -32,9 +32,10 @@ run_diff ()
 	if [ ! -z "${DIFF}" ]; then
 		diff -u ${FILE} test.out
 		echo "!!!!!! DIFFERENCES IN FILE ${TEST} ($TO_RUN)"
-#exit 1
+      return 1
 	fi
 	rm test.out
+   return 0
 }
 
 do_serial ()
@@ -61,9 +62,12 @@ run_serial_n ()
 
 	echo -n "Running ${TEST} ${TIMES} times (SCHED: ${SCHED})..."
 	for((I=1; I <= ${TIMES}; I++)); do
-		do_serial ${SCHED}
+		if ! do_serial ${SCHED}; then
+         return 1
+      fi
 	done
    echo " OK!"
+   return 0
 }
 
 run_test_n ()
@@ -118,7 +122,7 @@ fi
 
 if [ "${TYPE}" = "sl" ]; then
 	run_serial_n sl 1
-	exit 0
+	exit $?
 fi
 
 if [ "${TYPE}" = "tl" ]; then

@@ -7,7 +7,12 @@ if [ "$WHAT" == "sl" ]; then
 fi
 
 run_test () {
-   ./test.sh $1 $WHAT || (echo "TEST FAILED" && exit 1)
+   ./test.sh $1 $WHAT
+   if [ $? != 0 ]; then
+      echo "TEST FAILED"
+      return 1
+   fi
+   return 0
 }
 
 not_excluded () {
@@ -16,12 +21,16 @@ not_excluded () {
 
 if [ -z "$EXCEPT_LIST" ]; then
    for file in `ls code/*.m`; do
-      run_test $file || exit 1
+      if ! run_test $file; then
+         exit 1
+      fi
    done
 else
    for file in `ls code/*.m`; do
       if not_excluded `basename $file .m`; then
-         run_test $file || exit 1
+         if ! run_test $file; then
+            exit 1
+         fi
       fi
    done
 fi

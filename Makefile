@@ -156,6 +156,7 @@ simulator: $(OBJS) simulator.o
 depend:
 	makedepend -- $(CXXFLAGS) -- $(shell find . -name '*.cpp')
 
+.PHONY: clean
 clean:
 	find . -name '*.o' | xargs rm -f
 	rm -f meld predicates print server Makefile.externs
