@@ -1,0 +1,14 @@
+type linear tap(node).
+type route neighbor(node,node,int).
+type vacant(node, int).
+
+type tapped(node,int).
+
+!neighbor(@0, @1, 1).
+!neighbor(@1, @0, 1).
+tap(@0).
+
+tap(A) -o !tapped(A, node2int(A)).
+
+!tapped(A,C), !neighbor(A,B,_) -o !tapped(B,C).
+!tapped(A,C) -o !setColor2(A, C).
