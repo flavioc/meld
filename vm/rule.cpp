@@ -13,7 +13,7 @@ rule::print(ostream& out, const vm::program *const prog) const
 {
 	out << str << endl;
 	
-	for(vector<predicate*>::const_iterator it(predicates.begin()),
+	for(vector<predicate*, mem::allocator<predicate*> >::const_iterator it(predicates.begin()),
 		end(predicates.end());
 		it != end;
 		it++)

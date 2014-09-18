@@ -21,7 +21,6 @@
 #include "thread/threads.hpp"
 #include "runtime/objs.hpp"
 #include "thread/prio.hpp"
-#include <malloc/malloc.h>
 
 using namespace process;
 using namespace db;

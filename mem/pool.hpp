@@ -6,7 +6,7 @@
 #include <iostream>
 #include <assert.h>
 #include <cstdio>
-#include <unordered_map>
+#include <cstring>
 
 #include "mem/chunkgroup.hpp"
 #include "conf.hpp"
