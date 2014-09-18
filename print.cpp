@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "vm/program.hpp"
+#include "mem/thread.hpp"
 
 using namespace vm;
 using namespace process;
@@ -19,6 +20,7 @@ main(int argc, char **argv)
    const string file(argv[1]);
 
    try {
+      mem::ensure_pool();
       program prog(file);
       if(argc == 2)
          prog.print_bytecode(cout);

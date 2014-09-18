@@ -26,7 +26,7 @@ router::set_nodes_total(const size_t total)
    
 #ifndef USE_SIM
    if(nodes_per_remote == 0)
-      throw database_error("Number of nodes is less than the number of remote machines");
+      throw database_error("The program has no nodes to run.");
 #endif
 
    All->NUM_NODES_PER_PROCESS = nodes_per_remote;

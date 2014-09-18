@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <cstdio>
 #include <cstring>
+#include <unordered_map>
 
 #include "mem/chunkgroup.hpp"
 #include "conf.hpp"
@@ -14,27 +15,26 @@
 namespace mem
 {
 
-#define MAX_CHUNK_SIZE 2048
-
 class pool
 {
 private:
    
    static const size_t ATOM_SIZE = 4;
    
-   chunkgroup *chunks[MAX_CHUNK_SIZE];
+   std::unordered_map<size_t, chunkgroup*> chunks;
 
    inline chunkgroup *get_group(const size_t size)
    {
       assert(size > 0);
-      assert(size < MAX_CHUNK_SIZE);
         
-      chunkgroup *grp = chunks[size];
-      
-      if(grp == NULL) {
+      auto it(chunks.find(size));
+
+      chunkgroup *grp;
+      if(it == chunks.end()) {
          grp = new chunkgroup(size);
          chunks[size] = grp;
-      }
+      } else
+         grp = it->second;
          
       assert(grp != NULL);
       
@@ -55,15 +55,13 @@ public:
    
    explicit pool(void)
    {
-      memset(chunks, 0, sizeof(chunks));
+      chunks.reserve(128);
    }
    
    ~pool(void)
    {
-      for(size_t i(1); i < MAX_CHUNK_SIZE; ++i) {
-         if(chunks[i] != NULL)
-            delete chunks[i];
-      }
+      for(auto it(chunks.begin()); it != chunks.end(); ++it)
+         delete it->second;
    }
 };
 
