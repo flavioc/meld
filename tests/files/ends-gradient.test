@@ -1,0 +1,48 @@
+0
+!dist(0)
+!neighborCount(0)
+1
+!___robhgien(@2, 0)
+!dist(1)
+!neighbor(@2, 0)
+!neighborCount(1)
+2
+!___robhgien(@1, 0)
+!___robhgien(@3, 0)
+!dist(2)
+!neighbor(@1, 0)
+!neighbor(@3, 0)
+!neighborCount(2)
+3
+!___robhgien(@2, 0)
+!___robhgien(@4, 0)
+!___robhgien(@5, 0)
+!___robhgien(@6, 0)
+!___robhgien(@7, 0)
+!dist(2)
+!neighbor(@2, 0)
+!neighbor(@4, 0)
+!neighbor(@5, 0)
+!neighbor(@6, 0)
+!neighbor(@7, 0)
+!neighborCount(5)
+4
+!___robhgien(@3, 0)
+!dist(1)
+!neighbor(@3, 0)
+!neighborCount(1)
+5
+!___robhgien(@3, 0)
+!dist(1)
+!neighbor(@3, 0)
+!neighborCount(1)
+6
+!___robhgien(@3, 0)
+!dist(1)
+!neighbor(@3, 0)
+!neighborCount(1)
+7
+!___robhgien(@3, 0)
+!dist(1)
+!neighbor(@3, 0)
+!neighborCount(1)

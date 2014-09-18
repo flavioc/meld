@@ -1,0 +1,25 @@
+
+type neighborCount(node, int).
+type route neighbor(node, node, int).
+type route dist(node, min int).
+
+!neighbor(@0, @1, 0). !neighborCount(@0, 1).
+!neighbor(@1, @0, 0).
+!neighbor(@1, @2, 0).
+!neighbor(@1, @3, 0).
+!neighbor(@1, @4, 0).
+!neighbor(@1, @5, 0). !neighborCount(@1, 5).
+!neighbor(@2, @1, 0). !neighborCount(@2, 1).
+!neighbor(@3, @1, 0). !neighborCount(@3, 1).
+!neighbor(@4, @1, 0). !neighborCount(@4, 1).
+!neighbor(@5, @1, 0). !neighborCount(@5, 2).
+!neighbor(@5, @7, 0).
+!neighbor(@7, @5, 0). !neighborCount(@7, 1).
+
+!neighborCount(@6, 0).
+
+!neighborCount(X, 0) -o !dist(X, 0).
+!neighborCount(X, 1) -o !dist(X, 1).
+!neighbor(X, Y, _),
+!dist(Y, N)
+   -o !dist(X, N + 1).
