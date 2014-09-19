@@ -1,0 +1,34 @@
+
+type route neighbor(node, node).
+type neighborCount(node, int).
+type ending(node).
+type nearEnding(node).
+type middle(node).
+type color(node, max int).
+
+!neighborCount(@0, 1).
+!neighbor(@0, @1). !neighbor(@1, @0).
+!neighborCount(@1, 2).
+!neighbor(@1, @2). !neighbor(@2, @1).
+!neighborCount(@2, 2).
+!neighbor(@2, @3), !neighbor(@3, @2).
+!neighborCount(@3, 2).
+!neighbor(@3, @4), !neighbor(@4, @3).
+!neighborCount(@4, 2).
+!neighbor(@4, @5), !neighbor(@5, @4).
+!neighborCount(@5, 1).
+
+!neighborCount(A, C),
+C > 1
+   -o color(A, 2),
+      !middle(A).
+
+!neighborCount(A, 1)
+   -o !ending(A),
+      color(A, 0).
+
+!neighbor(A, B),
+!ending(B),
+!middle(A)
+   -o !nearEnding(A),
+      color(A, 3).
