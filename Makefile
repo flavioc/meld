@@ -5,7 +5,7 @@ TARGETS = meld print
 
 OS = $(shell uname -s)
 
-INCLUDE_DIRS = -I $(PWD) -Wno-error=unused-command-line-argument
+INCLUDE_DIRS = -I $(PWD)
 LIBRARY_DIRS =
 
 ARCH = -march=x86-64
@@ -63,6 +63,11 @@ CXX = g++
 
 GCC_MINOR    := $(shell $(CXX) -v 2>&1 | \
 													grep " version " | cut -d' ' -f3  | cut -d'.' -f2)
+
+CLANG = $(shell $(CXX) -v 2>&1 | grep LLVM)
+ifneq ($(CLANG), )
+	CFLAGS += -Qunused-arguments
+endif
 
 ifeq ($(GCC_MINOR),2)
 	CFLAGS += -DTEMPLATE_OPTIMIZERS=1
