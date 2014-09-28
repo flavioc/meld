@@ -5,7 +5,6 @@
 #include "conf.hpp"
 
 #include <list>
-#include <map>
 #include <ostream>
 #include <vector>
 #include <utility>
@@ -49,13 +48,15 @@ private:
    
 private:
    
-   typedef std::map<vm::predicate_id, tuple_trie*,
-               std::less<vm::predicate_id>,
+   typedef std::unordered_map<vm::predicate_id, tuple_trie*,
+               std::hash<vm::predicate_id>,
+               std::equal_to<vm::predicate_id>,
                mem::allocator<std::pair<const vm::predicate_id,
                                  tuple_trie*> > > simple_tuple_map;
                                  
-   typedef std::map<vm::predicate_id, tuple_aggregate*,
-               std::less<vm::predicate_id>,
+   typedef std::unordered_map<vm::predicate_id, tuple_aggregate*,
+               std::hash<vm::predicate_id>,
+               std::equal_to<vm::predicate_id>,
                mem::allocator<std::pair<const vm::predicate_id,
                                  tuple_aggregate*> > > aggregate_map;
 	

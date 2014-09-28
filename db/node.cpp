@@ -114,7 +114,10 @@ node::match_predicate(const predicate_id id, const match* m) const
    
    const tuple_trie *tr(it->second);
    
-   return tr->match_predicate(m);
+   if(m)
+      return tr->match_predicate(m);
+   else
+      return tr->match_predicate();
 }
 
 void

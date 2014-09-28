@@ -939,15 +939,12 @@ state::~state(void)
       bitmap::destroy(rule_queue, theProgram->num_rules_next_uint());
       assert(rule_queue.empty(theProgram->num_rules_next_uint()));
    }
-   for(match_list::iterator it(matches_created.begin()), end(matches_created.end()); it != end; ++it) {
-      match *obj(*it);
+   for(map_match::iterator it(matches.begin()), end(matches.end()); it != end; ++it) {
+      match *obj(it->second);
       const size_t mem(obj->mem_size());
       utils::byte *mdata((utils::byte*)obj);
-      for(size_t i(0); i < All->NUM_THREADS; ++i) {
-         match *t((match*)(mdata + i * mem));
-         t->destroy();
-      }
-      mem::allocator<utils::byte>().deallocate(mdata, obj->mem_size() * All->NUM_THREADS);
+      obj->destroy();
+      mem::allocator<utils::byte>().deallocate(mdata, mem);
    }
    if(match_counter) {
       //cout << "==================================\n";

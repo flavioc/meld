@@ -391,7 +391,7 @@ do_rec_match(match_field m, tuple_field x, type *t)
 static inline bool
 do_matches(match* m, const tuple *tuple, predicate *pred)
 {
-   if(!m->any_exact)
+   if(!m || !m->any_exact)
       return true;
 
    for(size_t i(0); i < pred->num_fields(); ++i) {
@@ -650,26 +650,19 @@ public:
 static inline match*
 retrieve_match_object(state& state, pcounter pc, const predicate *pred, const size_t base)
 {
-   utils::byte *mdata((utils::byte*)iter_match_object(pc));
    match *mobj(NULL);
-
-   if(mdata == NULL) {
-      const size_t size = All->NUM_THREADS;
-      const size_t matches = iter_matches_size(pc, base);
-      const size_t var_size = count_variable_match_elements(pc + base, pred, matches);
-      const size_t mem = match::mem_size(pred, var_size);
-      mdata = mem::allocator<utils::byte>().allocate(size * mem);
-      for(size_t i(0); i < size; ++i) {
-         match *m((match*)(mdata + mem * i));
-         m->init(pred, var_size);
-         build_match_object(m, pc + base, pred, state, matches);
-      }
-      state.matches_created.push_back((match*)mdata);
-      iter_match_object_set(pc, (ptr_val)mdata);
-      mobj = (match*)(mdata + mem * state.sched->get_id());
-   } else {
-      match *m((match*)mdata);
-      mobj = (match*)(mdata + m->mem_size() * state.sched->get_id());
+   const size_t matches = iter_matches_size(pc, base);
+   if(matches > 0) {
+      vm::state::map_match::iterator it(state.matches.find(pc));
+      if(it == state.matches.end()) {
+         const size_t var_size = count_variable_match_elements(pc + base, pred, matches);
+         const size_t mem = match::mem_size(pred, var_size);
+         mobj = (match*)mem::allocator<utils::byte>().allocate(mem);
+         mobj->init(pred, var_size);
+         build_match_object(mobj, pc + base, pred, state, matches);
+         state.matches[pc] = mobj;
+      } else
+         mobj = it->second;
       if(!iter_constant_match(pc)) {
          for(size_t i(0); i < mobj->var_size; ++i) {
             variable_match_template& tmp(mobj->get_variable_match(i));
@@ -678,9 +671,11 @@ retrieve_match_object(state& state, pcounter pc, const predicate *pred, const si
          }
       }
    }
-   assert(mobj);
+
 #ifdef DYNAMIC_INDEXING
-   if(state.sched && state.sched->get_id() == 0 && mobj->size() > 0 && pred->is_linear_pred()) {
+   if(mobj && state.sched && state.sched->get_id() == 0 &&
+         mobj->size() > 0 && pred->is_linear_pred())
+   {
       // increment statistics for matching
       const int start(pred->get_argument_position());
       const int end(start + pred->num_fields() - 1);
@@ -1044,6 +1039,7 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
 static inline return_type
 execute_linear_iter(const reg_num reg, match* m, const pcounter first, state& state, predicate *pred)
 {
+#ifdef DYNAMIC_INDEXING
    if(state.lstore->stored_as_hash_table(pred)) {
       const field_num hashed(pred->get_hashed_field());
       hash_table *table(state.lstore->get_hash_table(pred->get_id()));
@@ -1056,7 +1052,7 @@ execute_linear_iter(const reg_num reg, match* m, const pcounter first, state& st
       table->dump(cout, pred);
 #endif
 
-      if(m->has_match(hashed)) {
+      if(m && m->has_match(hashed)) {
          const match_field mf(m->get_match(hashed));
          db::intrusive_list<vm::tuple> *local_tuples(table->lookup_list(mf.field));
          return_type ret(execute_linear_iter_list(reg, m, first, state, pred, local_tuples, table));
@@ -1071,7 +1067,9 @@ execute_linear_iter(const reg_num reg, match* m, const pcounter first, state& st
          }
          return RETURN_NO_RETURN;
       }
-   } else {
+   } else
+#endif
+   {
       db::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_linked_list(pred->get_id()));
       return execute_linear_iter_list(reg, m, first, state, pred, local_tuples);
    }
@@ -1124,11 +1122,12 @@ execute_rlinear_iter_list(const reg_num reg, match* m, const pcounter first, sta
 static inline return_type
 execute_rlinear_iter(const reg_num reg, match* m, const pcounter first, state& state, predicate *pred)
 {
+#ifdef DYNAMIC_INDEXING
    if(state.lstore->stored_as_hash_table(pred)) {
       const field_num hashed(pred->get_hashed_field());
       hash_table *table(state.lstore->get_hash_table(pred->get_id()));
 
-      if(m->has_match(hashed)) {
+      if(m && m->has_match(hashed)) {
          const match_field mf(m->get_match(hashed));
          db::intrusive_list<vm::tuple> *local_tuples(table->lookup_list(mf.field));
          return_type ret(execute_rlinear_iter_list(reg, m, first, state, pred, local_tuples));
@@ -1143,7 +1142,9 @@ execute_rlinear_iter(const reg_num reg, match* m, const pcounter first, state& s
          }
          return RETURN_NO_RETURN;
       }
-   } else {
+   } else
+#endif
+   {
       db::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_linked_list(pred->get_id()));
       return execute_rlinear_iter_list(reg, m, first, state, pred, local_tuples);
    }
