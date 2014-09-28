@@ -1,0 +1,10 @@
+
+type linear a(node, int).
+type linear b(node, int).
+
+const limit = 5000000.
+
+a(@0, 1).
+
+a(A, N), N < limit -o b(A, N + 1).
+b(A, N), N < limit -o a(A, N + 1).

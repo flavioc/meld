@@ -21,7 +21,7 @@ serial:
 	done
 
 thread:
-	@bash threads_even.sh code/simple.m th even 1 $(NPROCS) $(RUNS)
+	@bash threads_even.sh code/simple32.m th even 1 $(NPROCS) $(RUNS)
 
 compiled:
 	@mkdir -p code
