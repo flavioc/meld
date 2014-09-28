@@ -32,6 +32,9 @@ endif
 ifeq ($(USE_ADDRESSES), true)
 	FLAGS += -DUSE_REAL_NODES
 endif
+ifeq ($(TASK_STEALING), true)
+	FLAGS += -DTASK_STEALING
+endif
 
 ifeq ($(JIT), true)
 	FLAGS += -DUSE_JIT

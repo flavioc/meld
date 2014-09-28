@@ -14,8 +14,6 @@
 #include "queue/safe_double_queue.hpp"
 #include "utils/random.hpp"
 
-#define TASK_STEALING 1
-
 namespace sched
 {
 

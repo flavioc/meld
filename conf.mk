@@ -10,3 +10,4 @@ INDEXING = true
 # typed as 'node'. For multithreaded meld this will improve speed since
 # there's one less lookup.
 USE_ADDRESSES = true
+TASK_STEALING = true
