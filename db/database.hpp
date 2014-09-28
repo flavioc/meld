@@ -66,6 +66,7 @@ public:
    node* find_node(const node::node_id) const;
    node* create_node(void);
    node* create_node_id(const node::node_id);
+   node* create_node_iterator(map_nodes::iterator);
    
    size_t total_facts(void) const;
    void print_db(std::ostream&) const;

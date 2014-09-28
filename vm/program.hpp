@@ -30,6 +30,7 @@ namespace process {
 
 namespace db {
    class database;
+   class node;
 }
 
 namespace vm {
@@ -186,7 +187,7 @@ public:
 
    bool add_data_file(vm::program&);
 #ifdef USE_REAL_NODES
-   void fix_node_addresses(db::database*);
+   void fix_node_address(db::node *);
 #endif
    
    explicit program(const std::string&);

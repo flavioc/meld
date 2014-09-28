@@ -96,14 +96,10 @@ serial_local::init(const size_t)
    
    for(; it != end; ++it)
    {
-      serial_node *cur_node(dynamic_cast<serial_node*>(it->second));
-      
-      init_node(cur_node);
+      serial_node *cur_node(dynamic_cast<serial_node*>(init_node(it)));
+
       cur_node->set_in_queue(true);
       queue_nodes.push(cur_node);
-      
-      assert(cur_node->in_queue());
-      assert(cur_node->unprocessed_facts);
    }
 }
 

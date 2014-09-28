@@ -476,17 +476,11 @@ program::read_node_references(byte_code code, code_reader& read)
 
 #ifdef USE_REAL_NODES
 void
-program::fix_node_addresses(db::database *data)
+program::fix_node_address(db::node *n)
 {
-   const size_t total(data->num_nodes());
-   for(node_val n(0); n < total; ++n) {
-      vector<byte_code>& vec(node_references[n]);
-      node *ptr(data->find_node(n));
-      assert(ptr != NULL);
-      for(vector<byte_code>::iterator jt(vec.begin()), jend(vec.end()); jt != jend; ++jt) {
-         pcounter_set_node(*jt, (node_val)ptr);
-      }
-   }
+   vector<byte_code>& vec(node_references[n->get_id()]);
+   for(vector<byte_code>::iterator it(vec.begin()), end(vec.end()); it != end; ++it)
+      pcounter_set_node(*it, (node_val)n);
 }
 #endif
 

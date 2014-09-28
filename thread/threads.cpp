@@ -334,14 +334,10 @@ threads_sched::init(const size_t)
    
    for(; it != end; ++it)
    {
-      thread_intrusive_node *cur_node((thread_intrusive_node*)it->second);
-      
-      init_node(cur_node);
+      thread_intrusive_node *cur_node(dynamic_cast<thread_intrusive_node*>(init_node(it)));
+
       cur_node->set_in_queue(true);
       add_to_queue(cur_node);
-      
-      assert(cur_node->in_queue());
-      assert(cur_node->unprocessed_facts);
    }
    
    threads_synchronize();

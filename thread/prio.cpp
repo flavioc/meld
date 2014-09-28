@@ -499,29 +499,18 @@ threads_prio::init(const size_t)
    if(initial.float_priority == 0.0) {
       for(; it != end; ++it)
       {
-         thread_intrusive_node *cur_node((thread_intrusive_node*)it->second);
-      
-         init_node(cur_node);
+         thread_intrusive_node *cur_node(dynamic_cast<thread_intrusive_node*>(init_node(it)));
          cur_node->set_in_queue(true);
       	queue_nodes.push_tail(cur_node);
-
-         assert(cur_node->get_owner() == this);
-         assert(cur_node->in_queue());
-         assert(cur_node->unprocessed_facts);
       }
    } else {
       prio_queue.start_initial_insert(remote::self->find_owned_nodes(id));
       for(size_t i(0); it != end; ++it, ++i) {
-         thread_intrusive_node *cur_node((thread_intrusive_node*)it->second);
-      
-         init_node(cur_node);
+         thread_intrusive_node *cur_node(dynamic_cast<thread_intrusive_node*>(init_node(it)));
+
          cur_node->set_priority_level(initial);
          cur_node->set_in_queue(true);
          prio_queue.initial_fast_insert(cur_node, initial, i);
-
-         assert(cur_node->get_owner() == this);
-         assert(cur_node->in_queue());
-         assert(cur_node->unprocessed_facts);
       }
    }
    

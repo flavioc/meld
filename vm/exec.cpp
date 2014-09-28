@@ -1568,9 +1568,7 @@ static inline void
 execute_new_node(const pcounter& pc, state& state)
 {
    const reg_num reg(new_node_reg(pc));
-   node *new_node(All->DATABASE->create_node());
-
-   state.sched->init_node(new_node);
+   node *new_node(state.sched->create_node());
 
 #ifdef USE_REAL_NODES
    state.set_node(reg, (node_val)new_node);

@@ -18,7 +18,7 @@ database::database(const string& filename, create_node_fn _create_fn):
 {
    int_val num_nodes;
    node::node_id fake_id;
-   node::node_id real_id;
+   node::node_id user_id;
    
    ifstream fp(filename.c_str(), ios::in | ios::binary);
 
@@ -45,17 +45,16 @@ database::database(const string& filename, create_node_fn _create_fn):
       
    for(size_t i(0); i < nodes_to_read; ++i) {
       fp.read((char*)&fake_id, sizeof(node::node_id));
-      fp.read((char*)&real_id, sizeof(node::node_id));
+      fp.read((char*)&user_id, sizeof(node::node_id));
       
-      node *node(create_fn(fake_id, real_id));
-      
-      translation[fake_id] = real_id;
-      nodes[fake_id] = node;
+      // nodes themselves are created by each thread in sched/init_node.
+      translation[fake_id] = user_id;
+      nodes[fake_id] = NULL;
 
       if(fake_id > max_node_id)
          max_node_id = fake_id;
-      if(real_id > max_translated_id)
-         max_translated_id = real_id;
+      if(user_id > max_translated_id)
+         max_translated_id = user_id;
    }
    
    original_max_node_id = max_node_id;
@@ -107,6 +106,17 @@ database::create_node_id(const db::node::node_id id)
    nodes_total++;
 
    return ret;
+}
+
+node*
+database::create_node_iterator(database::map_nodes::iterator it)
+{
+   map_translate::const_iterator tr(translation.find(it->first));
+   if(tr == translation.end())
+      return NULL;
+
+   it->second = create_fn(it->first, tr->second);
+   return it->second;
 }
 
 node*

@@ -12,6 +12,7 @@
 
 #include "db/tuple.hpp"
 #include "db/node.hpp"
+#include "db/database.hpp"
 #include "vm/state.hpp"
 #include "utils/macros.hpp"
 #include "stat/slice.hpp"
@@ -76,12 +77,8 @@ protected:
          new_work_agg(node, *it);
       }
    }
-   
-public:
-   
-   inline bool leader_thread(void) const { return get_id() == 0; }
 
-   virtual void init_node(db::node *node)
+   inline void setup_node(db::node *node)
    {
       vm::predicate *init_pred(vm::theProgram->get_init_predicate());
       vm::tuple *init_tuple(vm::tuple::create(init_pred));
@@ -91,6 +88,27 @@ public:
       node->set_owner(this);
       node->add_linear_fact(init_tuple, init_pred);
       node->unprocessed_facts = true;
+   }
+   
+public:
+   
+   inline bool leader_thread(void) const { return get_id() == 0; }
+
+   db::node* init_node(db::database::map_nodes::iterator it)
+   {
+      db::node *node(vm::All->DATABASE->create_node_iterator(it));
+#ifdef USE_REAL_NODES
+      vm::theProgram->fix_node_address(node);
+#endif
+      setup_node(node);
+      return node;
+   }
+
+   db::node* create_node(void)
+   {
+      db::node *node(vm::All->DATABASE->create_node());
+      setup_node(node);
+      return node;
    }
    
    // a new aggregate is to be inserted into the work queue
