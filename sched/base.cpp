@@ -17,15 +17,9 @@ namespace sched
 {
 	
 static __thread base *scheduler(NULL);
+static __thread vm::state *state(NULL);
 
 volatile bool base::stop_flag(false);
-
-void
-base::do_work(db::node *node)
-{
-   state.run_node(node);
-}
-
 
 void
 base::do_loop(void)
@@ -34,7 +28,7 @@ base::do_loop(void)
 
    while(true) {
       while((node = get_work())) {
-         do_work(node);
+         state->run_node(node);
          if(stop_flag) {
             killed_while_active();
             return;
@@ -61,6 +55,8 @@ base::loop(void)
    // start process pool
    mem::ensure_pool();
    scheduler = this;
+   state = mem::allocator<vm::state>().allocate(1);
+   mem::allocator<vm::state>().construct(state, scheduler);
 
    init(All->NUM_THREADS);
 
@@ -95,7 +91,6 @@ base::~base(void)
 base::base(const vm::process_id _id):
    id(_id),
 	thread(NULL),
-	state(this),
 	iteration(0)
 #ifdef INSTRUMENTATION
    , ins_state(statistics::NOW_ACTIVE)

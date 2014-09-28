@@ -742,7 +742,9 @@ state::run_node(db::node *no)
 
    node->running = true;
    node->internal_lock();
+#ifdef DYNAMIC_INDEXING
    node->rounds++;
+#endif
 	
    if(do_persistent_tuples()) {
 #ifdef CORE_STATISTICS
@@ -857,9 +859,11 @@ state::run_node(db::node *no)
    if(sim_instr_use && sim_instr_counter < sim_instr_limit)
       ++sim_instr_counter;
 #endif
+#ifdef DYNAMIC_INDEXING
    lstore->improve_index();
    if(node->rounds > 0 && node->rounds % 5 == 0)
       lstore->cleanup_index();
+#endif
    node->internal_unlock();
    node->running = false;
 }
