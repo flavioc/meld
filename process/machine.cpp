@@ -192,11 +192,35 @@ machine::execute_const_code(void)
 }
 
 void
-machine::init_thread(sched::base *sched)
+machine::start(const process_id id)
 {
-	all->ALL_THREADS.push_back(sched);
-	all->NUM_THREADS++;
-	sched->start();
+   // ensure own memory pool
+   mem::ensure_pool();
+
+   switch(sched_type) {
+      case SCHED_THREADS:
+         all->SCHEDS[id] = dynamic_cast<sched::base*>(new sched::threads_sched(id));
+         break;
+      case SCHED_THREADS_PRIO:
+         all->SCHEDS[id] = dynamic_cast<sched::base*>(new sched::threads_prio(id));
+         break;
+      case SCHED_SERIAL:
+         all->SCHEDS[id] = dynamic_cast<sched::base*>(new sched::serial_local());
+         break;
+#ifdef USE_UI
+      case SCHED_SERIAL_UI:
+         all->SCHEDS[id] = dynamic_cast<sched::base*>(new sched::serial_ui_local());
+         break;
+#endif
+#ifdef USE_SIM
+      case SCHED_SIM:
+         all->SCHEDS[id] = dynamic_cast<sched::base*>(new sched::sim_sched());
+         break;
+#endif
+      case SCHED_UNKNOWN: assert(false); break;
+   }
+
+   all->SCHEDS[id]->loop();
 }
 
 void
@@ -211,13 +235,26 @@ machine::start(void)
       // initiate alarm thread
       alarm_thread = new boost::thread(bind(&machine::slice_function, this));
    }
+
+   switch(sched_type) {
+      case SCHED_THREADS:
+         sched::threads_sched::init_barriers(all->NUM_THREADS);
+         break;
+      case SCHED_THREADS_PRIO:
+         sched::threads_prio::init_barriers(all->NUM_THREADS);
+         break;
+      default: break;
+   }
    
-   for(size_t i(1); i < all->NUM_THREADS; ++i)
-      this->all->ALL_THREADS[i]->start();
-   this->all->ALL_THREADS[0]->start();
+   boost::thread *threads[all->NUM_THREADS];
+   for(process_id i(1); i < all->NUM_THREADS; ++i)
+      threads[i] = new boost::thread(bind(&machine::start, this, i));
+   start(0);
    
-   for(size_t i(1); i < all->NUM_THREADS; ++i)
-      this->all->ALL_THREADS[i]->join();
+   for(size_t i(1); i < all->NUM_THREADS; ++i) {
+      threads[i]->join();
+      delete threads[i];
+   }
 
 #if 0
    cout << "Total Facts: " << this->all->DATABASE->total_facts() << endl;
@@ -225,15 +262,6 @@ machine::start(void)
    cout << "Bytes used: " << bytes_used << endl;
 #endif
       
-#ifndef NDEBUG
-   if(!sched::base::stop_flag) {
-      for(size_t i(1); i < all->NUM_THREADS; ++i)
-         assert(this->all->ALL_THREADS[i-1]->num_iterations() == this->all->ALL_THREADS[i]->num_iterations());
-      if(this->all->PROGRAM->is_safe())
-         assert(this->all->ALL_THREADS[0]->num_iterations() == 1);
-   }
-#endif
-   
    if(alarm_thread) {
       kill(getpid(), SIGUSR1);
       alarm_thread->join();
@@ -328,31 +356,7 @@ machine::machine(const string& file, router& _rout, const size_t th,
    this->all->DATABASE = new database(added_data_file ? data_file : filename, get_creation_function(_sched_type));
    this->all->NUM_THREADS = th;
    this->all->MACHINE = this;
-
-   switch(sched_type) {
-      case SCHED_THREADS:
-         sched::threads_sched::start(all->NUM_THREADS);
-         break;
-      case SCHED_THREADS_PRIO:
-         sched::threads_prio::start(all->NUM_THREADS);
-         break;
-      case SCHED_SERIAL:
-         this->all->ALL_THREADS.push_back(dynamic_cast<sched::base*>(new sched::serial_local()));
-         break;
-#ifdef USE_UI
-      case SCHED_SERIAL_UI:
-         this->all->ALL_THREADS.push_back(dynamic_cast<sched::base*>(new sched::serial_ui_local()));
-         break;
-#endif
-#ifdef USE_SIM
-      case SCHED_SIM:
-         this->all->ALL_THREADS.push_back(dynamic_cast<sched::base*>(new sched::sim_sched()));
-         break;
-#endif
-      case SCHED_UNKNOWN: assert(false); break;
-   }
-
-   assert(this->all->ALL_THREADS.size() == all->NUM_THREADS);
+   this->all->SCHEDS.resize(th, NULL);
 }
 
 machine::~machine(void)
@@ -362,7 +366,7 @@ machine::~machine(void)
    delete this->all->DATABASE;
    
    for(process_id i(0); i != all->NUM_THREADS; ++i)
-      delete all->ALL_THREADS[i];
+      delete all->SCHEDS[i];
 
    delete this->all->PROGRAM;
       

@@ -98,8 +98,6 @@ public:
       return new thread_intrusive_node(id, trans);
    }
    
-   DEFINE_START_FUNCTION(threads_prio);
-   
    virtual void write_slice(statistics::slice&);
    
    explicit threads_prio(const vm::process_id);

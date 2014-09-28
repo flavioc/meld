@@ -131,7 +131,7 @@ threads_sched::go_steal_nodes(void)
       if(tid == get_id())
          continue;
 
-      threads_sched *target((threads_sched*)All->ALL_THREADS[tid]);
+      threads_sched *target((threads_sched*)All->SCHEDS[tid]);
 
       if(!target->is_active() || !target->has_work())
          continue;
@@ -308,6 +308,7 @@ threads_sched::get_work(void)
 {  
    if(!set_next_node())
       return NULL;
+//   cout << "Take node " << current_node->get_id() << endl;
 
    set_active_if_inactive();
    ins_active;

@@ -36,15 +36,7 @@ protected:
    size_t thread_round_state;
    static utils::atomic<size_t> total_in_agg;
    
-   static inline void add_thread(sched::base *add)
-   {
-      vm::All->ALL_THREADS.push_back(add);
-      assert((size_t)vm::All->ALL_THREADS.size() == (size_t)(add->get_id() + 1));
-   }
-   
 #define threads_synchronize() thread_barrier->wait(get_id())
-   
-   static void init_barriers(const size_t);
    
    inline void set_active(void)
    {
@@ -82,6 +74,8 @@ protected:
    }
    
 public:
+
+   static void init_barriers(const size_t);
    
    explicit threaded(void): tstate(THREAD_ACTIVE),
       thread_round_state(1)
@@ -93,15 +87,6 @@ public:
       assert(tstate == THREAD_INACTIVE);
    }
 };
-
-#define DEFINE_START_FUNCTION(CLASS)                  \
-   static inline void                                 \
-   start(const size_t num_threads)                    \
-   {                                                  \
-      init_barriers(num_threads);                     \
-      for(vm::process_id i(0); i < num_threads; ++i)  \
-         add_thread(new CLASS(i));                    \
-   }
 
 #define BUSY_LOOP_MAKE_INACTIVE()         \
    if(is_active() && !has_work()) {       \

@@ -38,4 +38,4 @@ compiled:
 	@rm -f code/*.ast code/*.code
 
 clean:
-	rm -rf code
+	rm -f $(RESULTS_FILE)

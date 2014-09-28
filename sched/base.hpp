@@ -5,7 +5,6 @@
 #include <iostream>
 #include <list>
 #include <stdexcept>
-#include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 
 #include "conf.hpp"
@@ -36,7 +35,6 @@ class base
 protected:
    
    const vm::process_id id;
-   boost::thread *thread;
    
    size_t iteration;
    
@@ -58,7 +56,6 @@ protected:
 #endif
 
    void do_loop(void);
-   void loop(void);
 
    void do_agg_tuple_add(db::node *, vm::tuple *, const vm::derivation_count);
    void do_tuple_add(db::node *, vm::tuple *, const vm::derivation_count);
@@ -159,9 +156,8 @@ public:
    
    inline size_t num_iterations(void) const { return iteration; }
 
-	inline void join(void) { thread->join(); }
-	
 	void start(void);
+   void loop(void);
    
    virtual void write_slice(statistics::slice& sl)
    {
@@ -184,9 +180,16 @@ public:
 
    static base* get_scheduler(void);
    
-	explicit base(const vm::process_id);
-   
-	virtual ~base(void);
+   explicit base(const vm::process_id _id):
+      id(_id),
+      iteration(0)
+#ifdef INSTRUMENTATION
+      , ins_state(statistics::NOW_ACTIVE)
+#endif
+   {
+   }
+
+	virtual ~base(void) {}
 };
 
 }

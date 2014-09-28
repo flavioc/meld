@@ -130,7 +130,7 @@ slice_set::write(const string& file, const scheduler_type type, vm::all *all) co
 void
 slice_set::beat_thread(const process_id id, slice& sl, vm::all *all)
 {
-   all->MACHINE->get_scheduler(id)->write_slice(sl);
+   all->SCHEDS[id]->write_slice(sl);
 }
 
 void

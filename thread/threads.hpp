@@ -87,8 +87,6 @@ public:
       return new thread_intrusive_node(id, trans);
    }
    
-   DEFINE_START_FUNCTION(threads_sched);
-   
    virtual void write_slice(statistics::slice&);
    
    explicit threads_sched(const vm::process_id);

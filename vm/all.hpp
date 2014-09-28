@@ -38,13 +38,12 @@ class all
    
    db::database *DATABASE;
    process::machine *MACHINE;
-   //process::remote *REMOTE;
    process::router *ROUTER;
    size_t NUM_THREADS;
    size_t NUM_NODES_PER_PROCESS;
+   std::vector<sched::base*> SCHEDS;
 	machine_arguments ARGS;
    std::vector<runtime::rstring::ptr> ARGUMENTS;
-   std::vector<sched::base*> ALL_THREADS;
 
    inline void set_const(const const_id& id, const tuple_field d) { consts[id] = d; }
 

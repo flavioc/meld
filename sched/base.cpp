@@ -52,8 +52,6 @@ base::do_loop(void)
 void
 base::loop(void)
 {
-   // start process pool
-   mem::ensure_pool();
    scheduler = this;
    state = mem::allocator<vm::state>().allocate(1);
    mem::allocator<vm::state>().construct(state, scheduler);
@@ -73,29 +71,4 @@ base::get_scheduler(void)
    return scheduler;
 }
 	
-void
-base::start(void)
-{
-   if(id == 0) {
-      thread = new boost::thread();
-      loop();
-   } else
-      thread = new boost::thread(bind(&base::loop, this));
-}
-
-base::~base(void)
-{
-	delete thread;
-}
-
-base::base(const vm::process_id _id):
-   id(_id),
-	thread(NULL),
-	iteration(0)
-#ifdef INSTRUMENTATION
-   , ins_state(statistics::NOW_ACTIVE)
-#endif
-{
-}
-
 }
