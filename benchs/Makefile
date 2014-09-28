@@ -10,6 +10,8 @@ ifeq ($(OS),Darwin)
   NPROCS := $(shell sysctl hw.ncpu | awk '{print $$2}')
 endif # $(OS)
 
+export RESULTS_FILE=$(PWD)/results.csv
+
 all: compiled
 
 run:
@@ -21,7 +23,14 @@ serial:
 	done
 
 thread:
+	@rm -f $(RESULTS_FILE)
 	@bash threads_even.sh code/simple32.m th even 1 $(NPROCS) $(RUNS)
+	@bash threads_even.sh code/8queens-13.m th even 1 $(NPROCS) $(RUNS)
+	@bash threads_even.sh code/belief-propagation-400.m th even 1 $(NPROCS) $(RUNS)
+	@bash threads_even.sh code/greedy-graph-coloring-2000.m th even 1 $(NPROCS) $(RUNS)
+	@bash threads_even.sh code/min-max-tictactoe.m th even 1 $(NPROCS) $(RUNS)
+	@bash threads_even.sh code/shortest-5000-all.m th even 1 $(NPROCS) $(RUNS)
+	@bash threads_even.sh code/shortest-usairports500.m th even 1 $(NPROCS) $(RUNS)
 
 compiled:
 	@mkdir -p code

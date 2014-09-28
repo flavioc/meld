@@ -28,6 +28,7 @@ time_run_n ()
 	done
 	average=`expr ${total} / ${#time[@]}`
 	echo " -> ${average}"
+   export BENCHMARK_TIME=${average}
 }
 
 do_time_mpi ()

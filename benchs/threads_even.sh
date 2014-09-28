@@ -29,32 +29,41 @@ if [ ! -r "${FILE}" ]; then
    exit 1
 fi
 
-RUN="bash ./threads.sh"
+source $PWD/lib/common.sh
 
 do_run ()
 {
 	NUM_THREADS="${1}"
-	$RUN "${SCHEDULER}${NUM_THREADS}" ${FILE} ${RUNS}
+	TO_RUN="${EXEC} ${FILE} -c ${SCHEDULER}${NUM_THREADS} -- ${MELD_ARGS}"
+	time_run_n "${TO_RUN}" "$(basename ${FILE} .m) ${SCHEDULER}${NUM_THREADS}"
 }
 
+run_thread ()
+{
+   NUM_THREADS="${1}"
+   if [ $MIN -le $x ]; then
+      if [ $MAX -ge $x ]; then
+         if ! do_run $x; then
+            echo "Error..."
+            exit 1
+         fi
+         echo -n " $BENCHMARK_TIME" >> $RESULTS_FILE
+      fi
+   fi
+}
+
+echo -n "`basename ${FILE} .m`" >> $RESULTS_FILE
 if [ "$STEP" = "even" ]; then
    for x in 1 2 4 6 8 10 12 14 16 20 24 28 32; do
-      if [ $MIN -le $x ]; then
-         if [ $MAX -ge $x ]; then
-            do_run $x
-         fi
-      fi
+      run_thread $x
    done
 elif [ "$STEP" = "power" ]; then
    for x in 1 2 4 8 16; do
-      if [ $MIN -le $x ]; then
-         if [ $MAX -ge $x ]; then
-            do_run $x
-         fi
-      fi
+      run_thread $x
    done
 else
    echo "Unrecognized step $STEP"
    exit 1
 fi
+echo >> $RESULTS_FILE
 
