@@ -27,6 +27,8 @@ remote::cache_values(const size_t world_size, const size_t nodes_per_remote, con
       
    nodes_base = get_rank() * nodes_per_remote;
    nodes_per_proc = total_nodes / num_threads;
+   if(nodes_per_proc * num_threads < total_nodes)
+      nodes_per_proc++;
 
 #ifndef USE_SIM
    assert(total_nodes > 0);

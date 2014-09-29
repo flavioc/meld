@@ -82,15 +82,12 @@ public:
    
    inline db::node::node_id find_first_node(const vm::process_id id) const
    {
-      return get_nodes_base() + id * nodes_per_proc;
+      return std::min(get_nodes_base() + get_total_nodes(), get_nodes_base() + id * nodes_per_proc);
    }
    
    inline db::node::node_id find_last_node(const vm::process_id id) const
    {
-      if(num_threads - 1 == id)
-         return get_nodes_base() + get_total_nodes();
-      else
-         return find_first_node(id + 1);
+      return find_first_node(id + 1);
    }
 
    inline size_t find_owned_nodes(const vm::process_id id) const
