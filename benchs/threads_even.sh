@@ -52,7 +52,7 @@ run_thread ()
    fi
 }
 
-echo -n "`basename ${FILE} .m`" >> $RESULTS_FILE
+echo -n "`basename ${FILE} .m` $SCHEDULER" >> $RESULTS_FILE
 if [ "$STEP" = "even" ]; then
    for x in 1 2 4 6 8 10 12 14 16 20 24 28 32; do
       run_thread $x
