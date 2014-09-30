@@ -316,11 +316,20 @@ threads_prio::set_node_priority_other(node *n, const double priority)
 {
    (void)priority;
    (void)n;
-   // this is called by the other scheduler!
-   //cout << "other" << endl;
-   //if(n->has_priority_level()) {
-   //} else {
-   //}
+   thread_intrusive_node *tn((thread_intrusive_node*)n);
+   if(tn->has_priority_level()) {
+      if(theProgram->is_priority_desc()) {
+         if(tn->get_priority_level() > priority) {
+            // does not change
+         }
+      } else {
+         if(tn->get_priority_level() < priority) {
+            // does not change
+         }
+      }
+   } else {
+      // may change
+   }
 }
 
 void
@@ -339,9 +348,11 @@ threads_prio::add_node_priority(node *n, const double priority)
    }
    tn->unlock();
 #else
-	const double old_prio(tn->get_float_priority_level());
-
-	set_node_priority(n, old_prio + priority);
+   threads_prio *other((threads_prio*)tn->get_owner());
+   if(other == this) {
+      const double old_prio(tn->get_float_priority_level());
+      set_node_priority(n, old_prio + priority);
+   }
 #endif
 }
 
@@ -359,8 +370,9 @@ threads_prio::set_node_priority(node *n, const double priority)
    }
    tn->unlock();
 #else
-   (void)tn;
-   do_set_node_priority(n, priority);
+   threads_prio *other((threads_prio*)tn->get_owner());
+   if(other == this)
+      do_set_node_priority(n, priority);
 #endif
 }
 
