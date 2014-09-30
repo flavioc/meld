@@ -26,8 +26,6 @@ protected:
 	priority_queue prio_queue;
    bool taken_from_priority_queue;
 
-	heap_type priority_type;
-	
    typedef enum {
       ADD_PRIORITY,
       SET_PRIORITY
@@ -63,7 +61,7 @@ protected:
 
 	inline void add_to_priority_queue(thread_intrusive_node *node)
 	{
-		prio_queue.insert(node, node->get_priority_level());
+      prio_queue.insert(node, node->get_priority_level());
 	}
    
    virtual void add_to_queue(thread_intrusive_node *node)

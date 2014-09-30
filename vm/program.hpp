@@ -94,10 +94,9 @@ private:
 	string_store default_strings;
 	
    strat_level priority_strat_level;
-   field_type priority_type;
    vm::priority_type priority_order;
    bool priority_static;
-   heap_priority initial_priority;
+   double initial_priority;
 
 #ifdef USE_REAL_NODES
    // node references in the byte code
@@ -135,12 +134,11 @@ public:
 
    inline size_t get_total_arguments(void) const { return total_arguments; }
 
-   inline field_type get_priority_type(void) const { return priority_type; }
    inline strat_level get_priority_strat_level(void) const { return priority_strat_level; }
 	inline bool is_priority_asc(void) const { return priority_order == PRIORITY_ASC; }
 	inline bool is_priority_desc(void) const { return priority_order == PRIORITY_DESC; }
 
-   inline heap_priority get_initial_priority(void) const { return initial_priority; }
+   inline double get_initial_priority(void) const { return initial_priority; }
    inline bool is_static_priority(void) const { return priority_static; }
 	
    predicate *get_predicate_by_name(const std::string&) const;

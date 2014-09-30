@@ -19,15 +19,15 @@ private:
 	class heap_object
 	{
 	public:
-		heap_priority val;
+		double val;
 		T data;
 		int pos;
 	};
 	
 	HEAP_DEFINE_UTILS;
 	
-#define HEAP_GET_PRIORITY(OBJ) ((typ == HEAP_INT_ASC || typ == HEAP_INT_DESC) ? (OBJ).val.int_priority : (OBJ).val.float_priority)
-#define HEAP_COMPARE(V1, V2) ((typ == HEAP_INT_ASC || typ == HEAP_FLOAT_ASC) ? ((V1) <= (V2)) : ((V1) >= (V2)))
+#define HEAP_GET_PRIORITY(OBJ) ((OBJ).val)
+#define HEAP_COMPARE(V1, V2) (typ == HEAP_ASC ? ((V1) <= (V2)) : ((V1) >= (V2)))
 #define HEAP_GET_POS(OBJ) (OBJ).pos
 
 	HEAP_DEFINE_HEAPIFYUP;
@@ -98,7 +98,7 @@ public:
 	inline const_iterator end(void) const
 	{ return const_iterator(); }
 	
-	void insert(T el, const heap_priority prio)
+	void insert(T el, const double prio)
 	{
 		heap_object obj;
 		
@@ -110,7 +110,7 @@ public:
 		heapifyup(heap.size() - 1);
 	}
 	
-	void remove(T val, const heap_priority prio)
+	void remove(T val, const double prio)
 	{
 		int shift = 1;
 		int remain = 1;

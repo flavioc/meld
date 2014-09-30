@@ -334,8 +334,7 @@ program::program(const string& _filename):
 	
 	read.read_type<byte>(&global_info);
 
-   initial_priority.int_priority = 0;
-   initial_priority.float_priority = 0.0;
+   initial_priority = 0.0;
    priority_static = false;
 
    is_data_file = false;
@@ -351,7 +350,6 @@ program::program(const string& _filename):
          byte asc_desc;
 
          read.read_type<byte>(&type);
-         priority_type = FIELD_FLOAT;
          assert(type == 0x01);
 
          read.read_type<byte>(&asc_desc);
@@ -361,7 +359,7 @@ program::program(const string& _filename):
             priority_order = PRIORITY_DESC;
          priority_static = (asc_desc & 0x02) ? true : false;
 
-         read.read_type<float_val>(&initial_priority.float_priority);
+         read.read_type<float_val>(&initial_priority);
       }
       break;
       case 0x03: { // data file
@@ -369,7 +367,6 @@ program::program(const string& _filename):
       }
       break;
       default:
-         priority_type = FIELD_FLOAT; 
          priority_order = PRIORITY_DESC;
       break;
    }
@@ -588,7 +585,7 @@ program::print_predicates(ostream& cout) const
    else
       cout << ">> Unsafe program" << endl;
    cout << ">> Priorities: " << (priority_order == PRIORITY_ASC ? "ascending" : "descending") << " ";
-   cout << "initial: " << (priority_type == FIELD_FLOAT ? initial_priority.float_priority : initial_priority.int_priority) << endl;
+   cout << "initial: " << initial_priority << endl;
    if(priority_static)
       cout << ">> No work stealing" << endl;
    if(is_data())

@@ -109,7 +109,7 @@ threads_prio::check_priority_buffer(void)
       if (it == node_map.end()) {
          switch(typ) {
             case ADD_PRIORITY:
-               node_map[target] = tn->get_float_priority_level() + howmuch;
+               node_map[target] = tn->get_priority_level() + howmuch;
                break;
             case SET_PRIORITY:
                node_map[target] = howmuch;
@@ -154,17 +154,7 @@ threads_prio::check_if_current_useless(void)
    {
       current_node->lock();
       current_node->set_in_queue(false);
-      switch(theProgram->get_priority_type()) {
-         case FIELD_INT:
-            current_node->set_int_priority_level(0);
-            break;
-         case FIELD_FLOAT:
-            current_node->set_float_priority_level(0.0);
-            break;
-         default:
-            assert(false);
-            break;
-      }
+      current_node->set_priority_level(0.0);
       assert(!current_node->in_queue());
       assert(!priority_queue::in_queue(current_node));
       current_node->unlock();
@@ -176,17 +166,7 @@ threads_prio::check_if_current_useless(void)
       
       current_node->lock();
       current_node->set_in_queue(false);
-      switch(theProgram->get_priority_type()) {
-         case FIELD_INT:
-            current_node->set_int_priority_level(0);
-            break;
-         case FIELD_FLOAT:
-            current_node->set_float_priority_level(0.0);
-            break;
-         default:
-            assert(false);
-            break;
-      }
+      current_node->set_priority_level(0.0);
       assert(!current_node->in_queue());
       current_node->unlock();
       current_node = NULL;
@@ -295,9 +275,9 @@ threads_prio::schedule_next(node *n)
    if(prio_queue.empty()) {
       prio = add;
    } else {
-      heap_priority pr(prio_queue.min_value());
+      const double pr(prio_queue.min_value());
 
-      prio = pr.float_priority + add;
+      prio = pr + add;
    }
 #ifdef TASK_STEALING
    thread_intrusive_node *tn((thread_intrusive_node*)n);
@@ -334,17 +314,13 @@ threads_prio::add_node_priority_other(node *n, const double priority)
 void
 threads_prio::set_node_priority_other(node *n, const double priority)
 {
-   // this is called by the other scheduler!
-#if 0
-   priority_add_item item;
-   item.typ = SET_PRIORITY;
-   item.val = priority;
-   item.target = n;
-   priority_buffer.push(item);
-#else
-   (void)n;
    (void)priority;
-#endif
+   (void)n;
+   // this is called by the other scheduler!
+   //cout << "other" << endl;
+   //if(n->has_priority_level()) {
+   //} else {
+   //}
 }
 
 void
@@ -356,7 +332,7 @@ threads_prio::add_node_priority(node *n, const double priority)
    tn->lock();
    threads_prio *other((threads_prio*)tn->get_owner());
    if(other == this) {
-      const double old_prio(tn->get_float_priority_level());
+      const double old_prio(tn->get_priority_level());
       do_set_node_priority(n, old_prio + priority);
    } else {
       other->add_node_priority_other(n, priority);
@@ -404,7 +380,7 @@ threads_prio::do_set_node_priority(node *n, const double priority)
          taken_from_priority_queue = false;
       else
          taken_from_priority_queue = true;
-      tn->set_float_priority_level(priority);
+      tn->set_priority_level(priority);
       return;
    }
 
@@ -419,9 +395,9 @@ threads_prio::do_set_node_priority(node *n, const double priority)
 #endif
 		if(priority_queue::in_queue(tn)) {
          // node is in the priority queue
-         if(tn->get_float_priority_level() != priority) {
+         if(tn->get_priority_level() != priority) {
             if(priority == 0.0) {
-               tn->set_float_priority_level(0.0);
+               tn->set_priority_level(0.0);
                //cout << "Remove from frio put into main\n";
                prio_queue.remove(tn);
                queue_nodes.push_tail(tn);
@@ -431,19 +407,16 @@ threads_prio::do_set_node_priority(node *n, const double priority)
                // we check if new priority is bigger than the current priority
                bool must_change(false);
 
-               switch(priority_type) {
-                  case HEAP_FLOAT_DESC: must_change = tn->get_float_priority_level() < priority; break;
-                  case HEAP_FLOAT_ASC: must_change = tn->get_float_priority_level() > priority; break;
-                  default: assert(false);
-               }
+               if(theProgram->is_priority_desc())
+                  must_change = tn->get_priority_level() < priority;
+               else
+                  must_change = tn->get_priority_level() > priority;
 
                if(must_change) {
-                  heap_priority pr;
-                  pr.float_priority = priority;
-                  tn->set_float_priority_level(priority);
+                  tn->set_priority_level(priority);
                   assert(tn->in_queue());
                   //cout << "Moving priority\n";
-                  prio_queue.move_node(tn, pr);
+                  prio_queue.move_node(tn, priority);
                }
             }
 			} else {
@@ -452,7 +425,7 @@ threads_prio::do_set_node_priority(node *n, const double priority)
 		} else {
          // node is in the normal queue
          if(priority > 0) {
-            tn->set_float_priority_level(priority);
+            tn->set_priority_level(priority);
 #ifdef DEBUG_PRIORITIES
             //cout << "Add node " << tn->get_id() << " with priority " << priority << endl;
 #endif
@@ -470,7 +443,7 @@ threads_prio::do_set_node_priority(node *n, const double priority)
          prio_marked++;
 #endif
       //cout << "Just define priority\n";
-      tn->set_float_priority_level(priority);
+      tn->set_priority_level(priority);
 	}
 	
 #ifdef PROFILE_QUEUE
@@ -483,20 +456,16 @@ void
 threads_prio::init(const size_t)
 {
    // normal priorities
-   assert(theProgram->get_priority_type() == FIELD_FLOAT);
-
    if(theProgram->is_priority_desc())
-      priority_type = HEAP_FLOAT_DESC;
+      prio_queue.set_type(HEAP_DESC);
    else
-      priority_type = HEAP_FLOAT_ASC;
-
-   prio_queue.set_type(priority_type);
+      prio_queue.set_type(HEAP_ASC);
 
    database::map_nodes::iterator it(All->DATABASE->get_node_iterator(remote::self->find_first_node(id)));
    database::map_nodes::iterator end(All->DATABASE->get_node_iterator(remote::self->find_last_node(id)));
-   const heap_priority initial(theProgram->get_initial_priority());
+   const double initial(theProgram->get_initial_priority());
 
-   if(initial.float_priority == 0.0) {
+   if(initial == 0.0) {
       for(; it != end; ++it)
       {
          thread_intrusive_node *cur_node(dynamic_cast<thread_intrusive_node*>(init_node(it)));

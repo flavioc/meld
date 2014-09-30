@@ -1514,7 +1514,7 @@ execute_node_priority(pcounter& pc, state& state)
 #endif
 
    sched::thread_intrusive_node *tn((sched::thread_intrusive_node *)node);
-   state.set_float(dest_reg, tn->get_float_priority_level());
+   state.set_float(dest_reg, tn->get_priority_level());
 }
 
 static inline void

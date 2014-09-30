@@ -21,11 +21,9 @@ private:
 	heap_type typ;
    static const bool debug = false;
 
-#define HEAP_IS_INT() ((typ == HEAP_INT_ASC || typ == HEAP_INT_DESC))
-#define HEAP_GET_PRIORITY(OBJ) (HEAP_IS_INT() ? \
-					(__INTRUSIVE_PRIORITY(OBJ).int_priority) : (__INTRUSIVE_PRIORITY(OBJ).float_priority))
+#define HEAP_GET_PRIORITY(OBJ) (__INTRUSIVE_PRIORITY(OBJ))
 #define HEAP_GET_POS(OBJ) __INTRUSIVE_POS(OBJ)
-#define HEAP_COMPARE(V1, V2) ((typ == HEAP_INT_ASC || typ == HEAP_FLOAT_ASC) ? ((V1) <= (V2)) : ((V1) >= (V2)))
+#define HEAP_COMPARE(V1, V2) (typ == HEAP_ASC ? ((V1) <= (V2)) : ((V1) >= (V2)))
 
 	HEAP_DEFINE_UTILS;
 	
@@ -35,7 +33,7 @@ private:
 	
 	HEAP_DEFINE_DATA;
 	
-	inline void do_insert(heap_object node, const heap_priority prio)
+	inline void do_insert(heap_object node, const double prio)
 	{
       assert(__INTRUSIVE_IN_PRIORITY_QUEUE(node) == false);
 		__INTRUSIVE_PRIORITY(node) = prio;
@@ -99,7 +97,7 @@ public:
    	return __INTRUSIVE_IN_PRIORITY_QUEUE(node);
 	}
 	
-	inline void insert(heap_object node, const heap_priority prio)
+	inline void insert(heap_object node, const double prio)
 	{
       utils::spinlock::scoped_lock l(mtx);
 		do_insert(node, prio);
@@ -110,7 +108,7 @@ public:
       heap.resize(many);
    }
 
-   inline void initial_fast_insert(heap_object node, const heap_priority prio, const size_t i)
+   inline void initial_fast_insert(heap_object node, const double prio, const size_t i)
    {
       assert(__INTRUSIVE_IN_PRIORITY_QUEUE(node) == false);
 		__INTRUSIVE_PRIORITY(node) = prio;
@@ -120,18 +118,12 @@ public:
 		HEAP_GET_POS(node) = i;
    }
 	
-	heap_priority min_value(void) const
+	double min_value(void) const
 	{
       utils::spinlock::scoped_lock l(mtx);
 
-      if(empty()) {
-         heap_priority pr;
-         if(HEAP_IS_INT())
-            pr.int_priority = 0;
-         else
-            pr.float_priority = 0.0;
-         return pr;
-      }
+      if(empty())
+         return 0.0;
 
 		return __INTRUSIVE_PRIORITY(heap.front());
 	}
@@ -150,7 +142,7 @@ public:
 		do_remove(obj);
 	}
 	
-	void move_node(heap_object node, const heap_priority new_prio)
+	void move_node(heap_object node, const double new_prio)
 	{
       if(!__INTRUSIVE_IN_PRIORITY_QUEUE(node))
          return; // not in the queue

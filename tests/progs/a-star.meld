@@ -1,5 +1,5 @@
 
-include #data/grid10.meld
+include #data/grid5.meld
 
 type route edge(node, node, int).
 type coord(node, int, int).

@@ -9,7 +9,7 @@ test:
 	@bash test_all.sh sl
 
 code/%.m: FORCE
-	@bash test.sh $@ sl
+	@bash test.sh $@ th1
 
 compiled:
 	@mkdir -p code

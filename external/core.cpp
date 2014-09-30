@@ -28,7 +28,7 @@ node_priority(EXTERNAL_ARG(id))
 
    if(n) {
       thread_intrusive_node *tn((thread_intrusive_node *)n);
-      ret = tn->get_float_priority_level();
+      ret = tn->get_priority_level();
    } else
       ret = 0.0;
 

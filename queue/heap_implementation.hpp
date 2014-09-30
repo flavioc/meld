@@ -5,16 +5,9 @@
 #include "vm/defs.hpp"
 
 typedef enum {
-	HEAP_INT_ASC,
-	HEAP_INT_DESC,
-	HEAP_FLOAT_ASC,
-	HEAP_FLOAT_DESC
+   HEAP_ASC,
+   HEAP_DESC
 } heap_type;
-
-typedef union {
-   vm::int_val int_priority;
-   vm::float_val float_priority;
-} heap_priority;
 
 #define HEAP_DEFINE_DATA \
 	typedef std::vector<heap_object, mem::allocator<heap_object> > heap_vector;	\
@@ -82,7 +75,7 @@ typedef union {
 	}
 	
 #define HEAP_DEFINE_MIN_VALUE											\
-	heap_priority min_value(void) const								\
+	double min_value(void) const								      \
 	{																			\
 		assert(!heap.empty());											\
 		return heap.at(0).val;											\
