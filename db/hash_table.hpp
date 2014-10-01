@@ -8,7 +8,7 @@
 
 #include "conf.hpp"
 #include "vm/tuple.hpp"
-#include "db/intrusive_list.hpp"
+#include "utils/intrusive_list.hpp"
 #include "mem/allocator.hpp"
 
 namespace db
@@ -16,7 +16,7 @@ namespace db
 
 #define HASH_TABLE_INITIAL_TABLE_SIZE 8
 
-typedef db::intrusive_list<vm::tuple> table_list;
+typedef utils::intrusive_list<vm::tuple> table_list;
 
 struct hash_table
 {
@@ -64,7 +64,7 @@ struct hash_table
 
             inline bool end(void) const { return bucket == finish; }
 
-            inline db::intrusive_list<vm::tuple>* operator*(void) const
+            inline utils::intrusive_list<vm::tuple>* operator*(void) const
             {
                return bucket;
             }
@@ -108,7 +108,7 @@ struct hash_table
       size_t insert(vm::tuple *);
       size_t insert_front(vm::tuple *);
 
-      inline db::intrusive_list<vm::tuple>* lookup_list(const vm::tuple_field field)
+      inline utils::intrusive_list<vm::tuple>* lookup_list(const vm::tuple_field field)
       {
          const vm::uint_val id(hash_field(field));
          table_list *bucket(table + (id % size_table));

@@ -11,7 +11,7 @@
 #include "vm/rule_matcher.hpp"
 #include "utils/spinlock.hpp"
 #include "utils/atomic.hpp"
-#include "db/intrusive_list.hpp"
+#include "utils/intrusive_list.hpp"
 #include "vm/bitmap.hpp"
 
 namespace vm
@@ -21,7 +21,7 @@ struct temporary_store
 {
    public:
 
-      typedef db::intrusive_list<vm::tuple> tuple_list;
+      typedef utils::intrusive_list<vm::tuple> tuple_list;
       typedef std::unordered_map<vm::predicate_id, tuple_list*, std::hash<vm::predicate_id>,
               std::equal_to<vm::predicate_id>, mem::allocator< std::pair<const vm::predicate_id, tuple_list*> > > list_map;
 

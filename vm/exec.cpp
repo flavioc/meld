@@ -607,7 +607,7 @@ sort_tuples(const tuple* t1, const tuple* t2, const field_num field, const predi
 
 typedef struct {
    tuple *tpl;
-   db::intrusive_list<vm::tuple>::iterator iterator;
+   utils::intrusive_list<vm::tuple>::iterator iterator;
 } iter_object;
 typedef vector<iter_object, mem::allocator<iter_object> > vector_iter;
 
@@ -750,11 +750,11 @@ execute_olinear_iter(const reg_num reg, match* m, const pcounter pc, const pcoun
 
    vector_iter tpls;
 
-   db::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_linked_list(pred->get_id()));
+   utils::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_linked_list(pred->get_id()));
 #ifdef CORE_STATISTICS
    execution_time::scope s(state.stat.ts_search_time_predicate[pred->get_id()]);
 #endif
-   for(db::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()), end(local_tuples->end());
+   for(utils::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()), end(local_tuples->end());
          it != end; ++it)
    {
       tuple *tpl(*it);
@@ -801,7 +801,7 @@ execute_olinear_iter(const reg_num reg, match* m, const pcounter pc, const pcoun
       POP_STATE();
 
       if(TO_FINISH(ret)) {
-         db::intrusive_list<vm::tuple>::iterator it(p.iterator);
+         utils::intrusive_list<vm::tuple>::iterator it(p.iterator);
          local_tuples->erase(it);
          vm::tuple::destroy(match_tuple, pred);
          if(ret == RETURN_LINEAR)
@@ -830,11 +830,11 @@ execute_orlinear_iter(const reg_num reg, match* m, const pcounter pc, const pcou
 
    vector_iter tpls;
 
-   db::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_linked_list(pred->get_id()));
+   utils::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_linked_list(pred->get_id()));
 #ifdef CORE_STATISTICS
    execution_time::scope s(state.stat.ts_search_time_predicate[pred->get_id()]);
 #endif
-   for(db::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()), end(local_tuples->end());
+   for(utils::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()), end(local_tuples->end());
          it != end; ++it)
    {
       tuple *tpl(*it);
@@ -952,7 +952,8 @@ execute_opers_iter(const reg_num reg, match* m, const pcounter pc, const pcounte
 }
 
 static inline return_type
-execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, state& state, predicate* pred, db::intrusive_list<vm::tuple> *local_tuples, hash_table *tbl = NULL)
+execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, state& state, predicate* pred,
+      utils::intrusive_list<vm::tuple> *local_tuples, hash_table *tbl = NULL)
 {
    if(local_tuples == NULL)
       return RETURN_NO_RETURN;
@@ -961,7 +962,7 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
    const bool this_is_linear(true);
    const depth_t old_depth(state.depth);
 
-   for(db::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()), end(local_tuples->end());
+   for(utils::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()), end(local_tuples->end());
          it != end; )
    {
       tuple *match_tuple(*it);
@@ -1054,13 +1055,13 @@ execute_linear_iter(const reg_num reg, match* m, const pcounter first, state& st
 
       if(m && m->has_match(hashed)) {
          const match_field mf(m->get_match(hashed));
-         db::intrusive_list<vm::tuple> *local_tuples(table->lookup_list(mf.field));
+         utils::intrusive_list<vm::tuple> *local_tuples(table->lookup_list(mf.field));
          return_type ret(execute_linear_iter_list(reg, m, first, state, pred, local_tuples, table));
          return ret;
       } else {
          // go through hash table
          for(hash_table::iterator it(table->begin()); !it.end(); ++it) {
-            db::intrusive_list<vm::tuple> *local_tuples(*it);
+            utils::intrusive_list<vm::tuple> *local_tuples(*it);
             return_type ret(execute_linear_iter_list(reg, m, first, state, pred, local_tuples, table));
             if(ret != RETURN_NO_RETURN)
                return ret;
@@ -1070,7 +1071,7 @@ execute_linear_iter(const reg_num reg, match* m, const pcounter first, state& st
    } else
 #endif
    {
-      db::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_linked_list(pred->get_id()));
+      utils::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_linked_list(pred->get_id()));
       return execute_linear_iter_list(reg, m, first, state, pred, local_tuples);
    }
 
@@ -1078,13 +1079,14 @@ execute_linear_iter(const reg_num reg, match* m, const pcounter first, state& st
 }
 
 static inline return_type
-execute_rlinear_iter_list(const reg_num reg, match* m, const pcounter first, state& state, predicate *pred, db::intrusive_list<vm::tuple> *local_tuples)
+execute_rlinear_iter_list(const reg_num reg, match* m, const pcounter first, state& state, predicate *pred,
+      utils::intrusive_list<vm::tuple> *local_tuples)
 {
    const bool old_is_linear(state.is_linear);
    const bool this_is_linear(false);
    const depth_t old_depth(state.depth);
 
-   for(db::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()), end(local_tuples->end());
+   for(utils::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()), end(local_tuples->end());
          it != end; ++it)
    {
       tuple *match_tuple(*it);
@@ -1129,13 +1131,13 @@ execute_rlinear_iter(const reg_num reg, match* m, const pcounter first, state& s
 
       if(m && m->has_match(hashed)) {
          const match_field mf(m->get_match(hashed));
-         db::intrusive_list<vm::tuple> *local_tuples(table->lookup_list(mf.field));
+         utils::intrusive_list<vm::tuple> *local_tuples(table->lookup_list(mf.field));
          return_type ret(execute_rlinear_iter_list(reg, m, first, state, pred, local_tuples));
          return ret;
       } else {
          // go through hash table
          for(hash_table::iterator it(table->begin()); !it.end(); ++it) {
-            db::intrusive_list<vm::tuple> *local_tuples(*it);
+            utils::intrusive_list<vm::tuple> *local_tuples(*it);
             return_type ret(execute_rlinear_iter_list(reg, m, first, state, pred, local_tuples));
             if(ret != RETURN_NO_RETURN)
                return ret;
@@ -1145,7 +1147,7 @@ execute_rlinear_iter(const reg_num reg, match* m, const pcounter first, state& s
    } else
 #endif
    {
-      db::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_linked_list(pred->get_id()));
+      utils::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_linked_list(pred->get_id()));
       return execute_rlinear_iter_list(reg, m, first, state, pred, local_tuples);
    }
 }

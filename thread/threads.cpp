@@ -210,7 +210,7 @@ threads_sched::busy_wait(void)
    
    while(!has_work()) {
 #ifdef TASK_STEALING
-#define STEALING_ROUND_MAX 1000
+#define STEALING_ROUND_MAX 10
 #define BACKOFF_INCREASE_FACTOR 4
 #define BACKOFF_DECREASE_FACTOR 2
       if(!theProgram->is_static_priority()) {

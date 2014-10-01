@@ -317,7 +317,7 @@ void
 state::process_incoming_tuples(void)
 {
    for(temporary_store::list_map::iterator it(store->incoming.begin()), end(store->incoming.end()); it != end; ++it) {
-      db::intrusive_list<vm::tuple> *ls(it->second);
+      utils::intrusive_list<vm::tuple> *ls(it->second);
       vm::predicate *pred(theProgram->get_predicate(it->first));
       if(!ls->empty()) {
          store->register_tuple_fact(pred, ls->get_size());
@@ -484,9 +484,9 @@ compute_entropy(db::node *node, const predicate *pred, const size_t arg)
    if(node->linear.stored_as_hash_table(pred)) {
       // XXX TODO
    } else {
-      db::intrusive_list<tuple> *ls(node->linear.get_linked_list(pred->get_id()));
+      utils::intrusive_list<tuple> *ls(node->linear.get_linked_list(pred->get_id()));
 
-      for(db::intrusive_list<tuple>::iterator it(ls->begin()), end(ls->end()); it != end; ++it) {
+      for(utils::intrusive_list<tuple>::iterator it(ls->begin()), end(ls->end()); it != end; ++it) {
          vm::tuple *tpl(*it);
          total++;
          switch(pred->get_field_type(arg)->get_type()) {
@@ -790,7 +790,7 @@ state::run_node(db::node *no)
       /* move from generated tuples to linear store */
       if(generated_facts) {
          for(temporary_store::list_map::iterator it(store->generated.begin()), end(store->generated.end()); it != end; ++it) {
-            db::intrusive_list<vm::tuple> *gen(it->second);
+            utils::intrusive_list<vm::tuple> *gen(it->second);
             if(!gen->empty())
                lstore->increment_database(theProgram->get_predicate(it->first), gen, store->matcher);
          }

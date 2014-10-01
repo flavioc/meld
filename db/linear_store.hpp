@@ -11,7 +11,7 @@
 #include "db/tuple.hpp"
 #include "vm/defs.hpp"
 #include "vm/bitmap.hpp"
-#include "db/intrusive_list.hpp"
+#include "utils/intrusive_list.hpp"
 #include "db/hash_table.hpp"
 #include "utils/spinlock.hpp"
 
@@ -25,7 +25,7 @@ struct linear_store
 {
    public:
 
-      typedef intrusive_list<vm::tuple> tuple_list;
+      typedef utils::intrusive_list<vm::tuple> tuple_list;
       // we store N lists or hash tables (the biggest structure) so that it is contiguous
       utils::byte *data;
 

@@ -19,7 +19,7 @@
 #include "runtime/objs.hpp"
 #include "mem/allocator.hpp"
 #include "utils/types.hpp"
-#include "db/intrusive_list.hpp"
+#include "utils/intrusive_list.hpp"
 
 namespace vm
 {

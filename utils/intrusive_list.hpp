@@ -1,10 +1,10 @@
 
-#ifndef DB_INTRUSIVE_LIST_HPP
-#define DB_INTRUSIVE_LIST_HPP
+#ifndef UTILS_INTRUSIVE_LIST_HPP
+#define UTILS_INTRUSIVE_LIST_HPP
 
 #include <iostream>
 
-namespace db
+namespace utils
 {
 
 #define DECLARE_LIST_INTRUSIVE(TYPE)      \
