@@ -18,6 +18,7 @@ using namespace utils;
 
 //#define DEBUG_PRIORITIES
 //#define PROFILE_QUEUE
+#define SEND_OTHERS
 
 #ifdef PROFILE_QUEUE
 static atomic<size_t> prio_count(0);
@@ -36,7 +37,6 @@ namespace sched
 void
 threads_prio::assert_end(void) const
 {
-   assert(priority_buffer.empty());
 	threads_sched::assert_end();
 }
 
@@ -44,7 +44,6 @@ void
 threads_prio::assert_end_iteration(void) const
 {
 	threads_sched::assert_end_iteration();
-   assert(priority_buffer.empty());
 }
 
 #ifdef TASK_STEALING
@@ -84,64 +83,45 @@ threads_prio::steal_node(void)
 void
 threads_prio::check_priority_buffer(void)
 {
-#if 0
-   while(!priority_buffer.empty()) {
-      priority_buffer.pop();
-   }
+#ifdef SEND_OTHERS
+   if(buffer_amount == 0)
+      return;
 
-   return;
-#else
+   buffer_mtx.lock();
 
-   while(!priority_buffer.empty()) {
-      priority_add_item p(priority_buffer.pop());
+   const int size(buffer_amount);
+   priority_add_item items[size];
+
+   for(int i(0); i < size; ++i)
+      items[i] = priority_buffer[(buffer_start + i) % BUFFER_SIZE];
+   buffer_amount = 0;
+   buffer_start = 0;
+
+   buffer_mtx.unlock();
+
+   for(int i(0); i < size; ++i) {
+      priority_add_item p(items[i]);
       node *target(p.target);
       thread_intrusive_node *tn((thread_intrusive_node *)target);
-      double howmuch(p.val);
+      const double howmuch(p.val);
       priority_add_type typ(p.typ);
-
-		if(tn->get_owner() != this) {
-         threads_prio *other((threads_prio*)tn->get_owner());
-         other->priority_buffer.push(p);
-			continue; // skip nodes we do not own
-      }
-
-      node_priorities::iterator it(node_map.find(target));
-      if (it == node_map.end()) {
+      if(tn->get_owner() != this)
+         continue;
+#ifdef TASK_STEALING
+      tn->lock();
+		if(tn->get_owner() == this) {
          switch(typ) {
             case ADD_PRIORITY:
-               node_map[target] = tn->get_priority_level() + howmuch;
+               do_set_node_priority(tn, tn->get_priority_level() + howmuch);
                break;
             case SET_PRIORITY:
-               node_map[target] = howmuch;
-               break;
-            default:
-               assert(false);
-         }
-      } else {
-         const double oldval(it->second);
-         switch(typ) {
-            case ADD_PRIORITY:
-               node_map[target] = oldval + oldval;
-               break;
-            case SET_PRIORITY:
-               node_map[target] = howmuch;
+               do_set_node_priority(tn, howmuch);
                break;
          }
       }
+      tn->unlock();
+#endif
    }
-
-   // go through the map and set the priority
-   for(node_priorities::iterator it(node_map.begin()), end(node_map.end());
-         it != end;
-         ++it)
-   {
-      node *target(it->first);
-      const double priority(it->second);
-
-      set_node_priority(target, priority);
-   }
-
-   node_map.clear();
 #endif
 }
 
@@ -285,8 +265,6 @@ threads_prio::schedule_next(node *n)
    threads_prio *other((threads_prio*)tn->get_owner());
    if(other == this) {
       do_set_node_priority(n, prio);
-   } else {
-      // do nothing XXX
    }
 
    tn->unlock();
@@ -314,22 +292,37 @@ threads_prio::add_node_priority_other(node *n, const double priority)
 void
 threads_prio::set_node_priority_other(node *n, const double priority)
 {
-   (void)priority;
-   (void)n;
+#ifdef SEND_OTHERS
    thread_intrusive_node *tn((thread_intrusive_node*)n);
+   threads_prio *other((threads_prio*)tn->get_owner());
    if(tn->has_priority_level()) {
       if(theProgram->is_priority_desc()) {
-         if(tn->get_priority_level() > priority) {
+         if(tn->get_priority_level() > priority)
             // does not change
-         }
+            return;
       } else {
-         if(tn->get_priority_level() < priority) {
+         if(tn->get_priority_level() < priority)
             // does not change
-         }
+            return;
       }
-   } else {
-      // may change
    }
+   // may change
+   priority_add_item item;
+   item.typ = SET_PRIORITY;
+   item.val = priority;
+
+   other->buffer_mtx.lock();
+   if(other->buffer_amount < BUFFER_SIZE) {
+      const int idx = (other->buffer_start + other->buffer_amount) % BUFFER_SIZE;
+      other->buffer_amount++;
+      other->priority_buffer[idx] = item;
+   }
+   other->buffer_mtx.unlock();
+   //other->priority_buffer.push(item);
+#else
+   (void)priority;
+   (void)n;
+#endif
 }
 
 void
@@ -507,15 +500,6 @@ threads_prio::write_slice(statistics::slice& sl)
 #else
    (void)sl;
 #endif
-}
-
-threads_prio::threads_prio(const vm::process_id _id):
-   threads_sched(_id)
-{
-}
-
-threads_prio::~threads_prio(void)
-{
 }
 
 }

@@ -11,6 +11,7 @@
 #include "sched/nodes/thread_intrusive.hpp"
 #include "queue/safe_double_queue.hpp"
 #include "sched/thread/threaded.hpp"
+#include "utils/circular_buffer.hpp"
 
 namespace sched
 {
@@ -38,11 +39,12 @@ protected:
    } priority_add_item;
 
    // priority buffer
-   queue::push_safe_linear_queue<priority_add_item> priority_buffer;
-
-   typedef std::map<db::node *, int, std::less<db::node *>,
-           mem::allocator< std::pair<const db::node *, int> > > node_priorities;
-   node_priorities node_map;
+   //queue::push_safe_linear_queue<priority_add_item> priority_buffer;
+#define BUFFER_SIZE 128
+   priority_add_item priority_buffer[BUFFER_SIZE];
+   boost::mutex buffer_mtx;
+   int buffer_start, buffer_amount;
+   utils::circular_buffer<priority_add_item, BUFFER_SIZE> mybuffer;
 
 #ifdef TASK_STEALING
    bool steal_flag;
@@ -98,9 +100,16 @@ public:
    
    virtual void write_slice(statistics::slice&);
    
-   explicit threads_prio(const vm::process_id);
-   
-   virtual ~threads_prio(void);
+   explicit threads_prio(const vm::process_id _id):
+      threads_sched(_id),
+      buffer_start(0),
+      buffer_amount(0)
+   {
+   }
+
+   ~threads_prio(void)
+   {
+   }
 };
 
 }
