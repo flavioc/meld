@@ -11,12 +11,13 @@
 namespace utils
 {
 
-template <class T, int BUF_SIZE>
+template <class T, int MAX_SIZE>
 class circular_buffer: public mem::base
 {
    private:
 
-      T buffer[BUF_SIZE];
+      const uint32_t total_size;
+      T buffer[MAX_SIZE];
       volatile uint64_t start_length;
 
       inline uint32_t start(const uint64_t sl) const
@@ -50,20 +51,19 @@ class circular_buffer: public mem::base
          for(size_t i(0); i < 5; ++i) {
             const uint64_t copy(start_length);
             uint32_t len(length(copy));
-            if(len >= BUF_SIZE)
+            if(len >= total_size)
                return false;
             const uint32_t s(start(copy));
 
-            len = len + 1;
-            const uint32_t pos = (s + len) % BUF_SIZE;
-            const uint64_t new_slen(make_start_length(s, len));
+            const uint32_t pos = (s + len) % total_size;
+            const uint64_t new_slen(make_start_length(s, len + 1));
             // attempt to change variables
             if(__sync_bool_compare_and_swap(&start_length, copy, new_slen)) {
-               std::cout << "set" << endl;
                buffer[pos] = x;
                return true;
             }
          }
+         return false;
       }
 
       size_t pop(T *ptr)
@@ -71,7 +71,10 @@ class circular_buffer: public mem::base
          const uint32_t s(start(start_length));
          const uint32_t l(size());
 
-         const size_t right_size(std::min(BUF_SIZE - s, l));
+         // we copy all available items to ptr
+         // and resets counters to 0
+
+         const size_t right_size(std::min(total_size - s, l));
          memcpy(ptr, buffer + s, sizeof(T) * right_size);
          if(right_size < l)
             memcpy(ptr + right_size, buffer, sizeof(T) * l - right_size);
@@ -81,7 +84,7 @@ class circular_buffer: public mem::base
          return l;
       }
 
-      explicit circular_buffer(void): start_length(0) {}
+      explicit circular_buffer(const uint32_t size): total_size(size), start_length(0) {}
 };
 
 }

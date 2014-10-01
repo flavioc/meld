@@ -80,27 +80,19 @@ threads_prio::steal_node(void)
 }
 #endif
 
+static __thread priority_add_item priority_tmp[PRIORITY_BUFFER_SIZE];
+
 void
 threads_prio::check_priority_buffer(void)
 {
 #ifdef SEND_OTHERS
-   if(buffer_amount == 0)
+   if(priority_buffer.size() == 0)
       return;
 
-   buffer_mtx.lock();
+   size_t size(priority_buffer.pop(priority_tmp));
 
-   const int size(buffer_amount);
-   priority_add_item items[size];
-
-   for(int i(0); i < size; ++i)
-      items[i] = priority_buffer[(buffer_start + i) % BUFFER_SIZE];
-   buffer_amount = 0;
-   buffer_start = 0;
-
-   buffer_mtx.unlock();
-
-   for(int i(0); i < size; ++i) {
-      priority_add_item p(items[i]);
+   for(size_t i(0); i < size; ++i) {
+      priority_add_item p(priority_tmp[i]);
       node *target(p.target);
       thread_intrusive_node *tn((thread_intrusive_node *)target);
       const double howmuch(p.val);
@@ -164,8 +156,6 @@ threads_prio::set_next_node(void)
       check_if_current_useless();
    
    while (current_node == NULL) {   
-      check_priority_buffer();
-		
       if(!has_work()) {
          if(!busy_wait())
             return false;
@@ -276,13 +266,16 @@ threads_prio::schedule_next(node *n)
 void
 threads_prio::add_node_priority_other(node *n, const double priority)
 {
-#if 0
-   // this is called by the other scheduler!
+#ifdef SEND_OTHERS
+   thread_intrusive_node *tn((thread_intrusive_node*)n);
+   threads_prio *other((threads_prio*)tn->get_owner());
+
    priority_add_item item;
    item.typ = ADD_PRIORITY;
    item.val = priority;
    item.target = n;
-   priority_buffer.push(item);
+
+   other->priority_buffer.add(item);
 #else
    (void)n;
    (void)priority;
@@ -294,7 +287,7 @@ threads_prio::set_node_priority_other(node *n, const double priority)
 {
 #ifdef SEND_OTHERS
    thread_intrusive_node *tn((thread_intrusive_node*)n);
-   threads_prio *other((threads_prio*)tn->get_owner());
+
    if(tn->has_priority_level()) {
       if(theProgram->is_priority_desc()) {
          if(tn->get_priority_level() > priority)
@@ -306,19 +299,13 @@ threads_prio::set_node_priority_other(node *n, const double priority)
             return;
       }
    }
-   // may change
+   // will potentially change
+   threads_prio *other((threads_prio*)tn->get_owner());
    priority_add_item item;
    item.typ = SET_PRIORITY;
    item.val = priority;
 
-   other->buffer_mtx.lock();
-   if(other->buffer_amount < BUFFER_SIZE) {
-      const int idx = (other->buffer_start + other->buffer_amount) % BUFFER_SIZE;
-      other->buffer_amount++;
-      other->priority_buffer[idx] = item;
-   }
-   other->buffer_mtx.unlock();
-   //other->priority_buffer.push(item);
+   other->priority_buffer.add(item);
 #else
    (void)priority;
    (void)n;

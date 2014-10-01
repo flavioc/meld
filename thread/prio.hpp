@@ -18,6 +18,17 @@ namespace sched
 
 extern db::database *prio_db;
 
+typedef enum {
+   ADD_PRIORITY,
+   SET_PRIORITY
+} priority_add_type;
+
+typedef struct {
+   priority_add_type typ;
+   int val;
+   db::node *target;
+} priority_add_item;
+
 class threads_prio: public threads_sched
 {
 protected:
@@ -27,25 +38,6 @@ protected:
 	priority_queue prio_queue;
    bool taken_from_priority_queue;
 
-   typedef enum {
-      ADD_PRIORITY,
-      SET_PRIORITY
-   } priority_add_type;
-
-   typedef struct {
-      priority_add_type typ;
-      int val;
-      db::node *target;
-   } priority_add_item;
-
-   // priority buffer
-   //queue::push_safe_linear_queue<priority_add_item> priority_buffer;
-#define BUFFER_SIZE 128
-   priority_add_item priority_buffer[BUFFER_SIZE];
-   boost::mutex buffer_mtx;
-   int buffer_start, buffer_amount;
-   utils::circular_buffer<priority_add_item, BUFFER_SIZE> mybuffer;
-
 #ifdef TASK_STEALING
    bool steal_flag;
    thread_intrusive_node *steal_node(void);
@@ -54,6 +46,10 @@ protected:
    }
    virtual void check_stolen_node(thread_intrusive_node *);
 #endif
+
+   // priority buffer
+#define PRIORITY_BUFFER_SIZE ((unsigned long)128)
+   utils::circular_buffer<priority_add_item, PRIORITY_BUFFER_SIZE> priority_buffer;
 	
    virtual void assert_end(void) const;
    virtual void assert_end_iteration(void) const;
@@ -102,8 +98,8 @@ public:
    
    explicit threads_prio(const vm::process_id _id):
       threads_sched(_id),
-      buffer_start(0),
-      buffer_amount(0)
+      priority_buffer(std::min(PRIORITY_BUFFER_SIZE,
+                     vm::All->DATABASE->num_nodes() / vm::All->NUM_THREADS))
    {
    }
 
