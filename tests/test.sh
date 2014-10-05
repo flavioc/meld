@@ -121,6 +121,6 @@ if [ "${TYPE}" = "all" ]; then
 fi
 
 if [ "${TYPE}" = "th" ]; then
-   run_serial_n thp1 1
+   run_serial_n th1 1
 	exit 0
 fi
