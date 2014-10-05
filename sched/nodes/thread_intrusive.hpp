@@ -44,6 +44,7 @@ public:
    inline void set_static(sched::base *b) { static_node = b; }
    inline void set_moving(void) { static_node = NULL; }
    inline bool is_static(void) const { return static_node != NULL; }
+   inline bool is_moving(void) const { return static_node == NULL; }
 
    explicit thread_intrusive_node(const db::node::node_id _id, const db::node::node_id _trans):
 		db::node(_id, _trans),

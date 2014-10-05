@@ -193,6 +193,7 @@ public:
    virtual bool terminate_iteration(void);
 
    virtual void set_node_static(db::node *);
+   virtual void set_node_moving(db::node *);
    virtual void set_default_node_priority(db::node *, const double);
    virtual void set_node_priority(db::node *, const double);
 	virtual void add_node_priority(db::node *, const double);

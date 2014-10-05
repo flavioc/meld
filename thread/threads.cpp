@@ -735,6 +735,44 @@ threads_sched::set_node_static(db::node *n)
 }
 
 void
+threads_sched::set_node_moving(db::node *n)
+{
+   if(!scheduling_mechanism)
+      return;
+
+   cout << "Moving " << n->get_id() << endl;
+
+   thread_intrusive_node *tn(dynamic_cast<thread_intrusive_node*>(n));
+   if(n == current_node) {
+      tn->set_moving();
+      return;
+   }
+
+   if(tn->is_moving())
+      return;
+
+   tn->lock();
+   tn->set_moving();
+   if(tn->node_state() == STATE_STEALING) {
+      // node was stolen but the thief does not
+      // know yet that this node is now static!
+      // since the static field was set, the
+      // thief knows that he needs to do something.
+   } else if(node_in_normal_queue(tn)) {
+      if(tn->node_state() == NORMAL_QUEUE_STATIC) {
+         queues.stati.remove(tn, STATE_STATIC_CHANGE);
+         queues.moving.push_tail(tn);
+      }
+   } else if(node_in_priority_queue(tn)) {
+      if(tn->node_state() == PRIORITY_STATIC) {
+         prios.stati.remove(tn, STATE_STATIC_CHANGE);
+         prios.moving.insert(tn, tn->get_priority_level());
+      }
+   }
+   tn->unlock();
+}
+
+void
 threads_sched::write_slice(statistics::slice& sl)
 {
 #ifdef INSTRUMENTATION
