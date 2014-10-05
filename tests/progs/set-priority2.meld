@@ -1,0 +1,43 @@
+
+type linear a(node, int).
+type linear b(node, int).
+type linear c(node, int).
+type linear d(node, int).
+
+type route edge(node, node, int).
+
+!edge(@0, @1, 1). !edge(@1, @0, 0).
+!edge(@1, @2, 2). !edge(@2, @1, 1).
+!edge(@2, @0, 0). !edge(@0, @2, 2).
+
+a(@0, 0).
+
+!edge(A, B, 1),
+!edge(A, C, 2),
+a(A, N)
+   -o a(B, N + 1),
+      a(C, N + 1),
+      b(A, N + 1).
+
+!edge(A, B, 2),
+!edge(A, C, 0),
+a(A, N)
+   -o a(B, N + 1),
+      c(C, 5).
+
+a(A, N1),
+a(A, N2)
+   -o a(A, N1 + N2).
+
+a(A, N),
+!edge(A, B, 0),
+!edge(A, C, 1)
+   -o d(B, N + 1).
+
+d(A, N1),
+b(A, N2)
+   -o b(A, N1 + N2).
+
+c(A, N1),
+b(A, N2)
+   -o b(A, N1 * N2).
