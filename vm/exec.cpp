@@ -5,6 +5,7 @@
 #include <cmath>
 #include <sstream>
 
+#include "interface.hpp"
 #include "vm/exec.hpp"
 #include "vm/tuple.hpp"
 #include "vm/match.hpp"
@@ -3584,7 +3585,8 @@ eval_loop:
 
          CASE(STOP_PROG_INSTR)
             JUMP(stop_program, STOP_PROG_BASE)
-            sched::base::stop_flag = true;
+            if(scheduling_mechanism)
+               sched::base::stop_flag = true;
             ADVANCE()
          ENDOP()
 

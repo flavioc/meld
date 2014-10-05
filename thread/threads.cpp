@@ -39,7 +39,6 @@ namespace sched
 void
 threads_sched::assert_end(void) const
 {
-   assert(!has_work());
    assert(is_inactive());
    assert(all_threads_finished());
    assert_thread_end_iteration();
@@ -702,7 +701,7 @@ threads_sched::set_node_static(db::node *n)
    if(!scheduling_mechanism)
       return;
 
-   cout << "Static " << n->get_id() << endl;
+   //cout << "Static " << n->get_id() << endl;
 
    thread_intrusive_node *tn(dynamic_cast<thread_intrusive_node*>(n));
    if(n == current_node) {
@@ -740,7 +739,7 @@ threads_sched::set_node_moving(db::node *n)
    if(!scheduling_mechanism)
       return;
 
-   cout << "Moving " << n->get_id() << endl;
+//   cout << "Moving " << n->get_id() << endl;
 
    thread_intrusive_node *tn(dynamic_cast<thread_intrusive_node*>(n));
    if(n == current_node) {

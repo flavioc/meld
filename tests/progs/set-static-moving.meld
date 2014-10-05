@@ -1,0 +1,27 @@
+
+type linear a(node, int).
+type route edge(node, node).
+
+// all nodes start as moving
+
+a(@0, 1).
+!edge(@0, @1).
+!edge(@1, @0).
+
+a(A, 1),
+!edge(A, B)
+   -o set-static(A),
+      set-static(B),
+      a(B, 2).
+
+a(A, 2),
+!edge(A, B)
+   -o set-moving(A),
+      set-static(B),
+      a(B, 3).
+
+a(A, 3),
+!edge(A, B)
+   -o set-moving(B),
+      set-moving(A),
+      a(B, 4).
