@@ -1,6 +1,6 @@
 
 #include "external/core.hpp"
-#include "thread/prio.hpp"
+#include "thread/threads.hpp"
 #include "db/database.hpp"
 
 using namespace sched;

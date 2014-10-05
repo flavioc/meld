@@ -109,9 +109,7 @@ SRCS = utils/utils.cpp \
 			 mem/stat.cpp \
 			 sched/base.cpp \
 			 sched/common.cpp \
-			 sched/serial.cpp \
 			 thread/threads.cpp \
-			 thread/prio.cpp \
 			 sched/thread/threaded.cpp \
 			 sched/thread/assert.cpp \
 			 external/math.cpp \

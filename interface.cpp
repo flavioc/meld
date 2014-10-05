@@ -26,6 +26,7 @@ bool show_database = false;
 bool dump_database = false;
 bool time_execution = false;
 bool memory_statistics = false;
+bool scheduling_mechanism = true;
 
 static inline size_t
 num_cpus_available(void)
@@ -59,6 +60,7 @@ match_threads(const char *name, char *arg, const scheduler_type type)
    return match_mpi(name, arg, type);
 }
 
+#ifdef USE_UI
 static inline bool
 match_serial(const char *name, char *arg, const scheduler_type type)
 {
@@ -72,6 +74,7 @@ match_serial(const char *name, char *arg, const scheduler_type type)
    
    return false;
 }
+#endif
 
 static inline bool
 fail_sched(char* sched)
@@ -90,9 +93,7 @@ parse_sched(char *sched)
       fail_sched(sched);
    
    // attempt to parse the scheduler string
-   match_threads("thp", sched, SCHED_THREADS_PRIO) ||
-      match_threads("th", sched, SCHED_THREADS) ||
-      match_serial("sl", sched, SCHED_SERIAL) ||
+   match_threads("th", sched, SCHED_THREADS) ||
 #ifdef USE_UI
 		match_serial("ui", sched, SCHED_SERIAL_UI) ||
 #endif
@@ -108,10 +109,8 @@ void
 help_schedulers(void)
 {
 	cerr << "\t-c <scheduler>\tselect scheduling type" << endl;
-	cerr << "\t\t\tsl simple serial scheduler" << endl;
 	cerr << "\t\t\tui serial scheduler + ui" << endl;
    cerr << "\t\t\tthX multithreaded scheduler with task stealing" << endl;
-   cerr << "\t\t\tthpX multithreaded scheduler with priorities and task stealing" << endl;
 }
 
 static inline void

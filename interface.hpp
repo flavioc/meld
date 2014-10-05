@@ -11,6 +11,7 @@ extern bool show_database;
 extern bool dump_database;
 extern bool time_execution;
 extern bool memory_statistics;
+extern bool scheduling_mechanism;
 
 void parse_sched(char *);
 void help_schedulers(void);

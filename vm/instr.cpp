@@ -891,6 +891,25 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
       case ADD_PRIORITYH_INSTR:
          cout << "ADD PRIORITY " << reg_string(pcounter_reg(pc + instr_size)) << endl;
          break;
+      case SET_DEFPRIOH_INSTR:
+         cout << "SET DEFAULT PRIORITY " << reg_string(pcounter_reg(pc + instr_size)) << endl;
+         break;
+      case SET_DEFPRIO_INSTR:
+         cout << "SET DEFAULT PRIORITY " << reg_string(pcounter_reg(pc + instr_size)) << " ON " <<
+            reg_string(pcounter_reg(pc + instr_size + reg_val_size)) << endl;
+         break;
+      case SET_STATIC_INSTR:
+         cout << "SET STATIC " << reg_string(pcounter_reg(pc + instr_size)) << endl;
+         break;
+      case SET_STATICH_INSTR:
+         cout << "SET STATIC" << endl;
+         break;
+      case SET_MOVING_INSTR:
+         cout << "SET MOVING " << reg_string(pcounter_reg(pc + instr_size)) << endl;
+         break;
+      case SET_MOVINGH_INSTR:
+         cout << "SET MOVING" << endl;
+         break;
       case STOP_PROG_INSTR:
          cout << "STOP PROGRAM" << endl;
          break;

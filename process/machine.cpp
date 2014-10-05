@@ -11,7 +11,6 @@
 #include "stat/stat.hpp"
 #include "utils/fs.hpp"
 #include "interface.hpp"
-#include "sched/serial.hpp"
 #ifdef USE_UI
 #include "sched/serial_ui.hpp"
 #endif
@@ -20,7 +19,6 @@
 #endif
 #include "thread/threads.hpp"
 #include "runtime/objs.hpp"
-#include "thread/prio.hpp"
 
 using namespace process;
 using namespace db;
@@ -201,12 +199,6 @@ machine::start(const process_id id)
       case SCHED_THREADS:
          all->SCHEDS[id] = dynamic_cast<sched::base*>(new sched::threads_sched(id));
          break;
-      case SCHED_THREADS_PRIO:
-         all->SCHEDS[id] = dynamic_cast<sched::base*>(new sched::threads_prio(id));
-         break;
-      case SCHED_SERIAL:
-         all->SCHEDS[id] = dynamic_cast<sched::base*>(new sched::serial_local());
-         break;
 #ifdef USE_UI
       case SCHED_SERIAL_UI:
          all->SCHEDS[id] = dynamic_cast<sched::base*>(new sched::serial_ui_local());
@@ -239,9 +231,6 @@ machine::start(void)
    switch(sched_type) {
       case SCHED_THREADS:
          sched::threads_sched::init_barriers(all->NUM_THREADS);
-         break;
-      case SCHED_THREADS_PRIO:
-         sched::threads_prio::init_barriers(all->NUM_THREADS);
          break;
       default: break;
    }
@@ -295,10 +284,6 @@ get_creation_function(const scheduler_type sched_type)
    switch(sched_type) {
       case SCHED_THREADS:
          return database::create_node_fn(sched::threads_sched::create_node);
-      case SCHED_THREADS_PRIO:
-         return database::create_node_fn(sched::threads_prio::create_node);
-      case SCHED_SERIAL:
-         return database::create_node_fn(sched::serial_local::create_node);
 #ifdef USE_UI
 		case SCHED_SERIAL_UI:
 			return database::create_node_fn(sched::serial_ui_local::create_node);

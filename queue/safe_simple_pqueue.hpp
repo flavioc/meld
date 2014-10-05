@@ -14,8 +14,6 @@ class heap_queue
 {
 private:
 
-	heap_type typ;
-	
 	class heap_object
 	{
 	public:
@@ -194,7 +192,7 @@ public:
 		typ = _typ;
 	}
 	
-	explicit heap_queue(void) {}
+	explicit heap_queue(const queue_id_t id): queue_number(id) {}
 	~heap_queue(void) {}
 };
 

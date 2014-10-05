@@ -2,9 +2,10 @@
 #ifndef QUEUE_SAFE_COMPLEX_PQUEUE_HPP
 #define QUEUE_SAFE_COMPLEX_PQUEUE_HPP
 
+#include <boost/thread/mutex.hpp>
+
 #include "queue/intrusive_implementation.hpp"
 #include "queue/heap_implementation.hpp"
-#include "utils/spinlock.hpp"
 
 namespace queue
 {
@@ -16,9 +17,8 @@ private:
 	
 	typedef T* heap_object;
 
-	mutable utils::spinlock mtx;
+	mutable boost::mutex mtx;
 
-	heap_type typ;
    static const bool debug = false;
 
 #define HEAP_GET_PRIORITY(OBJ) (__INTRUSIVE_PRIORITY(OBJ))
@@ -35,16 +35,15 @@ private:
 	
 	inline void do_insert(heap_object node, const double prio)
 	{
-      assert(__INTRUSIVE_IN_PRIORITY_QUEUE(node) == false);
 		__INTRUSIVE_PRIORITY(node) = prio;
-		__INTRUSIVE_IN_PRIORITY_QUEUE(node) = true;
+		__INTRUSIVE_QUEUE(node) = queue_number;
 		
 		heap.push_back(node);
 		HEAP_GET_POS(node) = heap.size() - 1;
 		heapifyup(heap.size() - 1);
 	}
 	
-	heap_object do_pop(void)
+	heap_object do_pop(const queue_id_t new_state = queue_no_queue)
 	{
 		if(empty())
 			return NULL;
@@ -56,20 +55,20 @@ private:
 		heap.pop_back();
 		heapifydown(0);
 		
-      assert(__INTRUSIVE_IN_PRIORITY_QUEUE(min) == true);
-		__INTRUSIVE_IN_PRIORITY_QUEUE(min) = false;
+      assert(__INTRUSIVE_QUEUE(min) == queue_number);
+		__INTRUSIVE_QUEUE(min) = new_state;
 		
 		return min;
 	}
 
-	void do_remove(heap_object obj)
+	void do_remove(heap_object obj, const queue_id_t new_state = queue_no_queue)
 	{
 		size_t index(__INTRUSIVE_POS(obj));
 		heap_object tmp(heap.back());
 
 		heap.pop_back();
 		
-		__INTRUSIVE_IN_PRIORITY_QUEUE(obj) = false;
+		__INTRUSIVE_QUEUE(obj) = new_state;
 		
 		if(!heap.empty() && index != heap.size()) {
 			HEAP_SET_INDEX(index, tmp);
@@ -91,15 +90,11 @@ public:
 	
 	HEAP_DEFINE_EMPTY;
    HEAP_DEFINE_SIZE;
-	
-	static inline bool in_queue(heap_object node)
-	{
-   	return __INTRUSIVE_IN_PRIORITY_QUEUE(node);
-	}
+   HEAP_DEFINE_IN_HEAP;
 	
 	inline void insert(heap_object node, const double prio)
 	{
-      utils::spinlock::scoped_lock l(mtx);
+      boost::mutex::scoped_lock l(mtx);
 		do_insert(node, prio);
 	}
 
@@ -110,9 +105,9 @@ public:
 
    inline void initial_fast_insert(heap_object node, const double prio, const size_t i)
    {
-      assert(__INTRUSIVE_IN_PRIORITY_QUEUE(node) == false);
+      assert(__INTRUSIVE_QUEUE(node) == queue_no_queue);
 		__INTRUSIVE_PRIORITY(node) = prio;
-		__INTRUSIVE_IN_PRIORITY_QUEUE(node) = true;
+		__INTRUSIVE_QUEUE(node) = queue_number;
 		
       heap[i] = node;
 		HEAP_GET_POS(node) = i;
@@ -120,7 +115,7 @@ public:
 	
 	double min_value(void) const
 	{
-      utils::spinlock::scoped_lock l(mtx);
+      boost::mutex::scoped_lock l(mtx);
 
       if(empty())
          return 0.0;
@@ -128,25 +123,44 @@ public:
 		return __INTRUSIVE_PRIORITY(heap.front());
 	}
 	
-	heap_object pop(void)
+	heap_object pop(const queue_id_t new_state)
 	{
-      utils::spinlock::scoped_lock l(mtx);
-		return do_pop();
+      boost::mutex::scoped_lock l(mtx);
+		return do_pop(new_state);
 	}
-	
-	void remove(heap_object obj)
+
+   heap_object pop_best(intrusive_safe_complex_pqueue<T>& other, const queue_id_t new_state)
+   {
+      boost::mutex::scoped_lock l1(mtx);
+      boost::mutex::scoped_lock l2(other.mtx);
+
+      if(empty()) {
+         if(other.empty())
+            return NULL;
+         return other.do_pop(new_state);
+      } else {
+         if(other.empty())
+            return do_pop(new_state);
+         if(HEAP_COMPARE(HEAP_GET_PRIORITY(heap.front()), HEAP_GET_PRIORITY(other.heap.front())))
+            return do_pop(new_state);
+         else
+            return other.do_pop(new_state);
+      }
+   }
+
+	void remove(heap_object obj, const queue_id_t new_state)
 	{
-      utils::spinlock::scoped_lock l(mtx);
-      if(!__INTRUSIVE_IN_PRIORITY_QUEUE(obj))
+      boost::mutex::scoped_lock l(mtx);
+      if(__INTRUSIVE_QUEUE(obj) != queue_number)
          return;
-		do_remove(obj);
+		do_remove(obj, new_state);
 	}
 	
 	void move_node(heap_object node, const double new_prio)
 	{
-      if(!__INTRUSIVE_IN_PRIORITY_QUEUE(node))
+      if(__INTRUSIVE_QUEUE(node) != queue_number)
          return; // not in the queue
-		do_remove(node);
+		do_remove(node, queue_number);
 		do_insert(node, new_prio);
 	}
 
@@ -182,13 +196,15 @@ public:
 		}
 	}
 
-	intrusive_safe_complex_pqueue(void) {}
+	intrusive_safe_complex_pqueue(const queue_id_t id): queue_number(id) {}
 
-	intrusive_safe_complex_pqueue(const heap_type _typ): typ(_typ) {}
+	intrusive_safe_complex_pqueue(const queue_id_t id,
+         const heap_type _typ): queue_number(id), typ(_typ)
+   {
+   }
 	
 	~intrusive_safe_complex_pqueue(void)
    {
-      assert(empty());
 	}
 };
 

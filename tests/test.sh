@@ -6,7 +6,7 @@ TYPE="${2}"
 FORCE_THREADS="${3}"
 
 if test -z "${TEST}" -o -z "${TYPE}"; then
-	echo "Usage: test.sh <code file> <test type: serial, ts, tl, ...>"
+	echo "Usage: test.sh <code file> <test type: th, thp, ...>"
 	exit 1
 fi
 
@@ -116,16 +116,11 @@ loop_sched ()
 }
 
 if [ "${TYPE}" = "all" ]; then
-	loop_sched tl
+	loop_sched th
 	exit 0
 fi
 
-if [ "${TYPE}" = "sl" ]; then
-	run_serial_n sl 1
-	exit $?
-fi
-
-if [ "${TYPE}" = "tl" ]; then
-	loop_sched tl
+if [ "${TYPE}" = "th" ]; then
+   run_serial_n thp1 1
 	exit 0
 fi

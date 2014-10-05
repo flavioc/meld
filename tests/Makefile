@@ -6,7 +6,7 @@ VM = ../meld -d -f
 all: compiled
 
 test:
-	@bash test_all.sh sl
+	@bash test_all.sh th 1
 
 code/%.m: FORCE
 	@bash test.sh $@ th1

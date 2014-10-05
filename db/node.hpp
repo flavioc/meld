@@ -4,6 +4,7 @@
 
 #include "conf.hpp"
 
+#include <atomic>
 #include <list>
 #include <ostream>
 #include <vector>
@@ -23,6 +24,7 @@
 #include "vm/all.hpp"
 #include "db/linear_store.hpp"
 #include "vm/temporary.hpp"
+#include "queue/intrusive.hpp"
 
 #ifdef USE_UI
 #include <json_spirit.h>
@@ -40,6 +42,8 @@ public:
    typedef vm::node_val node_id;
    
    typedef trie::delete_info delete_info;
+
+	DECLARE_DOUBLE_QUEUE_NODE(node);
 
 private:
 
@@ -115,22 +119,46 @@ public:
 	json_spirit::Value dump_json(void) const;
 #endif
 
+   // internal database of the node.
+   // manages rule execution.
    db::linear_store linear;
    vm::temporary_store store;
-   volatile bool unprocessed_facts;
-   bool running;
+   bool unprocessed_facts;
+   std::atomic<bool> running;
+
+#ifdef DYNAMIC_INDEXING
    uint16_t rounds;
    vm::deterministic_timestamp indexing_epoch;
+#endif
 
+   // overall locking for changing the state of the node
    inline void lock(void) { store.spin.lock(); }
    inline void unlock(void) { store.spin.unlock(); }
+
+   // locking for faster insertion of facts
    inline void internal_lock(void) { linear.internal.lock(); }
    inline void internal_unlock(void) { linear.internal.unlock(); }
+
+   // return queue of the node.
+   inline queue_id_t node_state(void) const {
+      // node state is represented by the id of the queue.
+      return __INTRUSIVE_QUEUE(this);
+   }
+
+   inline bool active_node(void) const {
+      return node_state() != queue_no_queue;
+   }
+
+   inline void make_inactive(void) {
+      __INTRUSIVE_QUEUE(this) = queue_no_queue;
+   }
+
    inline void add_linear_fact(vm::tuple *tpl, vm::predicate *pred)
    {
       store.register_tuple_fact(pred, 1);
       linear.add_fact(tpl, pred, store.matcher);
    }
+
    inline void add_work_myself(vm::tuple *tpl, vm::predicate *pred,
          const vm::ref_count count, const vm::depth_t depth)
    {

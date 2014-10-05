@@ -160,6 +160,12 @@ const size_t SET_PRIORITY_BASE   = instr_size + 2 * reg_val_size;
 const size_t SET_PRIORITYH_BASE  = instr_size + reg_val_size;
 const size_t ADD_PRIORITY_BASE   = instr_size + 2 * reg_val_size;
 const size_t ADD_PRIORITYH_BASE  = instr_size + reg_val_size;
+const size_t SET_DEFPRIOH_BASE   = instr_size + reg_val_size;
+const size_t SET_DEFPRIO_BASE    = instr_size + 2 * reg_val_size;
+const size_t SET_STATICH_BASE    = instr_size;
+const size_t SET_STATIC_BASE     = instr_size + reg_val_size;
+const size_t SET_MOVINGH_BASE    = instr_size;
+const size_t SET_MOVING_BASE     = instr_size + reg_val_size;
 const size_t STOP_PROG_BASE      = instr_size;
 const size_t CPU_ID_BASE         = instr_size + 2 * reg_val_size;
 const size_t NODE_PRIORITY_BASE  = instr_size + 2 * reg_val_size;
@@ -302,6 +308,12 @@ enum instr_type {
    ADD_PRIORITY_INSTR   =  0xA0,
    ADD_PRIORITYH_INSTR  =  0xA1,
    STOP_PROG_INSTR      =  0xA2,
+   SET_DEFPRIOH_INSTR   =  0xA3,
+   SET_DEFPRIO_INSTR    =  0xA4,
+   SET_STATICH_INSTR    =  0xA5,
+   SET_STATIC_INSTR     =  0xA6,
+   SET_MOVINGH_INSTR    =  0xA7,
+   SET_MOVING_INSTR     =  0xA8,
    RETURN_LINEAR_INSTR  =  0xD0,
    RETURN_DERIVED_INSTR =  0xF0
 };
@@ -921,6 +933,24 @@ advance(const pcounter pc)
 
       case MVSTACKFIELD_INSTR:
          return pc + MVSTACKFIELD_BASE;
+
+      case SET_DEFPRIOH_INSTR:
+         return pc + SET_DEFPRIOH_BASE;
+
+      case SET_DEFPRIO_INSTR:
+         return pc + SET_DEFPRIO_BASE;
+
+      case SET_STATICH_INSTR:
+         return pc + SET_STATICH_BASE;
+
+      case SET_STATIC_INSTR:
+         return pc + SET_STATIC_BASE;
+
+      case SET_MOVINGH_INSTR:
+         return pc + SET_MOVINGH_BASE;
+
+      case SET_MOVING_INSTR:
+         return pc + SET_MOVING_BASE;
 
       default:
          return pc;

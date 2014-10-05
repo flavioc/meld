@@ -133,7 +133,10 @@ public:
    // ACTIONS
    virtual void set_node_priority(db::node *, const double) { }
 	virtual void add_node_priority(db::node *, const double) { }
+   virtual void set_default_node_priority(db::node *, const double) { }
    virtual void schedule_next(db::node *) { }
+   virtual void set_node_static(db::node *) { }
+   virtual void set_node_moving(db::node *) { }
 
 	// GATHER QUEUE FACTS FROM NODE
    virtual void gather_next_tuples(db::node *, db::simple_tuple_list&) { }

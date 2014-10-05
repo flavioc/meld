@@ -1489,6 +1489,70 @@ execute_add_priority_here(pcounter& pc, state& state)
 }
 
 static inline void
+execute_set_defprio_here(pcounter& pc, state& state)
+{
+   const reg_num prio_reg(pcounter_reg(pc + instr_size));
+   const float_val prio(state.get_float(prio_reg));
+
+   state.sched->set_default_node_priority(state.node, prio);
+}
+
+static inline void
+execute_set_defprio(pcounter& pc, state& state)
+{
+   const reg_num prio_reg(pcounter_reg(pc + instr_size));
+   const reg_num node_reg(pcounter_reg(pc + instr_size + reg_val_size));
+   const float_val prio(state.get_float(prio_reg));
+   const node_val node(state.get_node(node_reg));
+
+#ifdef USE_REAL_NODES
+   state.sched->set_default_node_priority((db::node*)node, prio);
+#else
+   state.sched->set_default_node_priority(All->DATABASE->find_node(node), prio);
+#endif
+}
+
+static inline void
+execute_set_static_here(pcounter& pc, state& state)
+{
+   (void)pc;
+   state.sched->set_node_static(state.node);
+}
+
+static inline void
+execute_set_static(pcounter& pc, state& state)
+{
+   const reg_num node_reg(pcounter_reg(pc + instr_size));
+   const node_val node(state.get_node(node_reg));
+
+#ifdef USE_REAL_NODES
+   state.sched->set_node_static((db::node*)node);
+#else
+   state.sched->set_node_static(All->DATABASE->find_node(node));
+#endif
+}
+
+static inline void
+execute_set_moving_here(pcounter& pc, state& state)
+{
+   (void)pc;
+   state.sched->set_node_moving(state.node);
+}
+
+static inline void
+execute_set_moving(pcounter& pc, state& state)
+{
+   const reg_num node_reg(pcounter_reg(pc + instr_size));
+   const node_val node(state.get_node(node_reg));
+
+#ifdef USE_REAL_NODES
+   state.sched->set_node_moving((db::node*)node);
+#else
+   state.sched->set_node_moving(All->DATABASE->find_node(node));
+#endif
+}
+
+static inline void
 execute_cpu_id(pcounter& pc, state& state)
 {
    const reg_num node_reg(pcounter_reg(pc + instr_size));
@@ -3479,6 +3543,42 @@ eval_loop:
          CASE(ADD_PRIORITYH_INSTR)
             JUMP(add_priorityh, ADD_PRIORITYH_BASE)
             execute_add_priority_here(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(SET_DEFPRIOH_INSTR)
+            JUMP(set_defprioh, SET_DEFPRIOH_BASE)
+            execute_set_defprio_here(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(SET_DEFPRIO_INSTR)
+            JUMP(set_defprio, SET_DEFPRIO_BASE)
+            execute_set_defprio(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(SET_STATICH_INSTR)
+            JUMP(set_statich, SET_STATICH_BASE)
+            execute_set_static_here(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(SET_STATIC_INSTR)
+            JUMP(set_static, SET_STATIC_BASE)
+            execute_set_static(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(SET_MOVINGH_INSTR)
+            JUMP(set_movingh, SET_MOVINGH_BASE)
+            execute_set_moving_here(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(SET_MOVING_INSTR)
+            JUMP(set_moving, SET_MOVING_BASE)
+            execute_set_moving(pc, state);
             ADVANCE()
          ENDOP()
 

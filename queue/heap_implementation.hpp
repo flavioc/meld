@@ -11,6 +11,8 @@ typedef enum {
 
 #define HEAP_DEFINE_DATA \
 	typedef std::vector<heap_object, mem::allocator<heap_object> > heap_vector;	\
+   const queue_id_t queue_number;                                                \
+   heap_type typ;                                                                \
 	heap_vector heap
 	
 #define HEAP_DEFINE_EMPTY				\
@@ -23,6 +25,11 @@ typedef enum {
    inline size_t size(void) const   \
    {                                \
       return heap.size();           \
+   }
+
+#define HEAP_DEFINE_IN_HEAP                           \
+   inline bool in_queue(heap_object obj) {            \
+      return __INTRUSIVE_QUEUE(obj) == queue_number;  \
    }
 	
 #define HEAP_DEFINE_UTILS								\

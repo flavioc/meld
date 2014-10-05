@@ -27,6 +27,7 @@ help(void)
 	cerr << "\t-f <name>\tmeld program" << endl;
    cerr << "\t-r <data file>\tdata file for meld program" << endl;
 	help_schedulers();
+   cerr << "\t-n \t\tno dynamic scheduling" << endl;
 	cerr << "\t-t \t\ttime execution" << endl;
 	cerr << "\t-m \t\tmemory statistics" << endl;
 	cerr << "\t-i <file>\tdump time statistics" << endl;
@@ -96,6 +97,9 @@ read_arguments(int argc, char **argv)
             argc--;
             argv++;
             break;
+         case 'n':
+            scheduling_mechanism = false;
+            break;
          case 'h':
             help();
             break;
@@ -121,7 +125,7 @@ main(int argc, char **argv)
    vm::machine_arguments margs(read_arguments(argc, argv));
 
    if(sched_type == SCHED_UNKNOWN) {
-      sched_type = SCHED_SERIAL;
+      sched_type = SCHED_THREADS;
       num_threads = 1;
    }
 

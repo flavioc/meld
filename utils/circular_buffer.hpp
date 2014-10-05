@@ -2,6 +2,7 @@
 #define UTILS_CIRCULAR_BUFFER_HPP
 
 #include <iostream>
+#include <atomic>
 
 #include "mem/base.hpp"
 
@@ -17,8 +18,8 @@ class circular_buffer: public mem::base
    private:
 
       const uint32_t total_size;
-      T buffer[MAX_SIZE];
-      volatile uint64_t start_length;
+      std::atomic<T> buffer[MAX_SIZE];
+      std::atomic<uint64_t> start_length;
 
       inline uint32_t start(const uint64_t sl) const
       {
@@ -49,7 +50,7 @@ class circular_buffer: public mem::base
          // multiple threads may be adding items to the buffer
          
          for(size_t i(0); i < 5; ++i) {
-            const uint64_t copy(start_length);
+            uint64_t copy(start_length.load(std::memory_order_acquire));
             uint32_t len(length(copy));
             if(len >= total_size)
                return false;
@@ -58,7 +59,7 @@ class circular_buffer: public mem::base
             const uint32_t pos = (s + len) % total_size;
             const uint64_t new_slen(make_start_length(s, len + 1));
             // attempt to change variables
-            if(__sync_bool_compare_and_swap(&start_length, copy, new_slen)) {
+            if(start_length.compare_exchange_strong(copy, new_slen, std::memory_order_release)) {
                buffer[pos] = x;
                return true;
             }
@@ -68,8 +69,9 @@ class circular_buffer: public mem::base
 
       size_t pop(T *ptr)
       {
-         const uint32_t s(start(start_length));
-         const uint32_t l(size());
+         const uint64_t copy(start_length.load(std::memory_order_acquire));
+         const uint32_t s(start(copy));
+         const uint32_t l(length(copy));
 
          // we copy all available items to ptr
          // and resets counters to 0
@@ -79,12 +81,17 @@ class circular_buffer: public mem::base
          if(right_size < l)
             memcpy(ptr + right_size, buffer, sizeof(T) * l - right_size);
 
-         start_length = 0;
+         memset(buffer, 0, total_size * sizeof(T));
+
+         start_length.store(0, std::memory_order_relaxed);
 
          return l;
       }
 
-      explicit circular_buffer(const uint32_t size): total_size(size), start_length(0) {}
+      explicit circular_buffer(const uint32_t size): total_size(size), start_length(0)
+      {
+         memset(buffer, 0, sizeof(buffer) * total_size);
+      }
 };
 
 }
