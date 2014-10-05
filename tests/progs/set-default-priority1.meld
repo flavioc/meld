@@ -1,0 +1,40 @@
+
+type linear a(node, int).
+type linear b(node, int).
+type linear c(node, int).
+type linear add(node, int).
+type linear total(node, int).
+type linear start(node).
+
+type route edge(node, node, int).
+
+a(@0, 1).
+start(@2).
+total(@2, 0).
+!edge(@0, @1, 0).
+!edge(@1, @0, 0).
+!edge(@0, @2, 1).
+
+start(A) -o set-default-priority(A, 1.0).
+
+a(A, N),
+N < 5,
+!edge(A, B, 0)
+   -o b(B, N).
+
+b(A, N),
+!edge(A, B, 0)
+   -o c(B, N).
+
+c(A, N),
+!edge(A, B, 1)
+   -o a(A, N + 1),
+      add(B, N).
+
+add(A, N1),
+add(A, N2)
+   -o add(A, N1 * N2).
+
+total(A, N1),
+add(A, N2)
+   -o total(A, N1 + N2).

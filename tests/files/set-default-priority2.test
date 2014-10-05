@@ -1,0 +1,10 @@
+Default priority 1
+Default priority 1
+0
+total(24)
+1
+!edge(@2, 0)
+2
+a(5)
+!edge(@0, 1)
+!edge(@1, 0)
