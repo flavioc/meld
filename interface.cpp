@@ -30,6 +30,7 @@ bool dump_database = false;
 bool time_execution = false;
 bool memory_statistics = false;
 bool scheduling_mechanism = true;
+bool work_stealing = true;
 
 static inline size_t
 num_cpus_available(void)

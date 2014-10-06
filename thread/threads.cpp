@@ -277,7 +277,7 @@ threads_sched::busy_wait(void)
 #define STEALING_ROUND_MAX 10
 #define BACKOFF_INCREASE_FACTOR 4
 #define BACKOFF_DECREASE_FACTOR 2
-      if(!theProgram->is_static_priority()) {
+      if(!theProgram->is_static_priority() && work_stealing) {
          count++;
          if(count == backoff) {
             count = 0;
