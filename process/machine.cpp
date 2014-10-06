@@ -237,7 +237,7 @@ machine::start(void)
    
    thread *threads[all->NUM_THREADS];
    for(process_id i(1); i < all->NUM_THREADS; ++i) {
-      threads[i] = new thread(&machine::init_sched, *this, i);
+      threads[i] = new thread(&machine::init_sched, this, i);
    }
    init_sched(0);
    

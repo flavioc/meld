@@ -144,6 +144,9 @@ protected:
 #define PRIORITY_BUFFER_SIZE ((unsigned long)128)
    utils::circular_buffer<priority_add_item, PRIORITY_BUFFER_SIZE> priority_buffer;
 
+   char __padding2[64];
+   priority_add_item priority_tmp[PRIORITY_BUFFER_SIZE];
+
    void check_priority_buffer(void);
 
    virtual void assert_end(void) const;

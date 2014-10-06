@@ -2,6 +2,7 @@
 #ifndef SCHED_BASE_HPP
 #define SCHED_BASE_HPP
 
+#include <atomic>
 #include <iostream>
 #include <list>
 #include <stdexcept>
@@ -36,6 +37,7 @@ protected:
    const vm::process_id id;
    
    size_t iteration;
+   vm::state state;
    
 #ifdef INSTRUMENTATION
    mutable statistics::sched_state ins_state;
@@ -179,13 +181,12 @@ public:
 #endif
    }
 
-   static volatile bool stop_flag;
+   static std::atomic<bool> stop_flag;
 
-   static base* get_scheduler(void);
-   
    explicit base(const vm::process_id _id):
       id(_id),
-      iteration(0)
+      iteration(0),
+      state(this)
 #ifdef INSTRUMENTATION
       , ins_state(statistics::NOW_ACTIVE)
 #endif

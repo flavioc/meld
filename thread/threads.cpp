@@ -225,8 +225,6 @@ threads_sched::killed_while_active(void)
       set_inactive();
 }
 
-static __thread priority_add_item priority_tmp[PRIORITY_BUFFER_SIZE];
-
 void
 threads_sched::check_priority_buffer(void)
 {

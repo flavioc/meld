@@ -15,10 +15,7 @@ using namespace db;
 namespace sched
 {
 	
-static __thread base *scheduler(NULL);
-static __thread vm::state *state(NULL);
-
-volatile bool base::stop_flag(false);
+std::atomic<bool> base::stop_flag(false);
 
 void
 base::do_loop(void)
@@ -27,7 +24,7 @@ base::do_loop(void)
 
    while(true) {
       while((node = get_work())) {
-         state->run_node(node);
+         state.run_node(node);
          if(stop_flag) {
             killed_while_active();
             return;
@@ -51,10 +48,6 @@ base::do_loop(void)
 void
 base::loop(void)
 {
-   scheduler = this;
-   state = mem::allocator<vm::state>().allocate(1);
-   mem::allocator<vm::state>().construct(state, scheduler);
-
    init(All->NUM_THREADS);
 
    do_loop();
@@ -64,10 +57,4 @@ base::loop(void)
    // cout << "DONE " << id << endl;
 }
 
-base*
-base::get_scheduler(void)
-{
-   return scheduler;
-}
-	
 }
