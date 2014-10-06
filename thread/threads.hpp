@@ -139,6 +139,7 @@ protected:
    size_t sent_facts_other_thread_now;
 #endif
 
+#ifndef DIRECT_PRIORITIES
    char __padding[64];
 
    // priority buffer for adding priority requests
@@ -150,6 +151,7 @@ protected:
    priority_add_item priority_tmp[PRIORITY_BUFFER_SIZE];
 
    void check_priority_buffer(void);
+#endif
 
    virtual void assert_end(void) const;
    virtual void assert_end_iteration(void) const;

@@ -19,6 +19,9 @@ using namespace utils;
 //#define DEBUG_PRIORITIES
 //#define PROFILE_QUEUE
 #define SEND_OTHERS
+#ifdef DIRECT_PRIORITIES
+#undef SEND_OTHERS
+#endif
 
 #ifdef PROFILE_QUEUE
 static atomic<size_t> prio_count(0);
@@ -216,6 +219,7 @@ threads_sched::killed_while_active(void)
       set_inactive();
 }
 
+#ifndef DIRECT_PRIORITIES
 void
 threads_sched::check_priority_buffer(void)
 {
@@ -252,6 +256,7 @@ threads_sched::check_priority_buffer(void)
    }
 #endif
 }
+#endif
 
 bool
 threads_sched::busy_wait(void)
@@ -343,7 +348,9 @@ threads_sched::check_if_current_useless(void)
 bool
 threads_sched::set_next_node(void)
 {
+#ifndef DIRECT_PRIORITIES
    check_priority_buffer();
+#endif
 
    if(current_node != NULL)
       check_if_current_useless();
@@ -945,8 +952,10 @@ threads_sched::threads_sched(const vm::process_id _id):
    , stolen_total(0)
 #endif
 #endif
+#ifndef DIRECT_PRIORITIES
    , priority_buffer(std::min(PRIORITY_BUFFER_SIZE,
                      vm::All->DATABASE->num_nodes() / vm::All->NUM_THREADS))
+#endif
 {
 }
 

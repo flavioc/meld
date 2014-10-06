@@ -3,6 +3,11 @@
 #define UTILS_MUTEX_HPP
 
 #define USE_STD_MUTEX
+//#define LOCK_STATISTICS
+
+#ifdef LOCK_STATISTICS
+#include <atomic>
+#endif
 
 #ifdef USE_STD_MUTEX
 #include <mutex>
@@ -13,11 +18,11 @@
 namespace utils
 {
 
-//#define LOCK_STATISTICS
-
+#ifdef LOCK_STATISTICS
 extern std::atomic<uint64_t> lock_count;
 extern std::atomic<uint64_t> ok_locks;
 extern std::atomic<uint64_t> failed_locks;
+#endif
 
 class mutex
 {
