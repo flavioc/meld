@@ -105,7 +105,7 @@ public:
 
    inline void initial_fast_insert(heap_object node, const double prio, const size_t i)
    {
-      assert(__INTRUSIVE_QUEUE(node) == queue_no_queue);
+      assert(__INTRUSIVE_QUEUE(node) != queue_number);
 		__INTRUSIVE_PRIORITY(node) = prio;
 		__INTRUSIVE_QUEUE(node) = queue_number;
 		
@@ -148,12 +148,13 @@ public:
       }
    }
 
-	void remove(heap_object obj, const queue_id_t new_state)
+	inline bool remove(heap_object obj, const queue_id_t new_state)
 	{
       boost::mutex::scoped_lock l(mtx);
       if(__INTRUSIVE_QUEUE(obj) != queue_number)
-         return;
+         return false;
 		do_remove(obj, new_state);
+      return true;
 	}
 	
 	void move_node(heap_object node, const double new_prio)

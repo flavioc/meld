@@ -105,7 +105,7 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
 
       spinlock::scoped_lock l2(owner->lock);
       
-      if(owner->is_inactive() && owner->has_work())
+      if(owner->is_inactive())
       {
          owner->set_active();
          assert(owner->is_active());
@@ -163,9 +163,16 @@ threads_sched::go_steal_nodes(void)
             continue;
          }
          if(node->is_static()) {
-            // meanwhile the node is now set as static.
-            // set ourselves as the static scheduler
-            node->set_static(this);
+            if(node->get_owner() != target) {
+               // set-affinity was used and the node was changed to another scheduler
+               move_node_to_new_owner(node, dynamic_cast<threads_sched*>(node->get_owner()));
+               node->unlock();
+               continue;
+            } else {
+               // meanwhile the node is now set as static.
+               // set ourselves as the static scheduler
+               node->set_static(this);
+            }
          }
          node->set_owner(this);
          add_to_queue(node);
@@ -330,6 +337,10 @@ threads_sched::check_if_current_useless(void)
       
       if(!current_node->unprocessed_facts) {
          current_node->make_inactive();
+         if(current_node->is_static() && current_node->get_static() != this) {
+            // the node has changed to another scheduler!
+            current_node->set_owner(current_node->get_static());
+         }
          current_node->set_priority_level(0.0);
          current_node->unlock();
          current_node = NULL;
@@ -355,7 +366,7 @@ threads_sched::set_next_node(void)
          if(!prios.moving.empty()) {
             current_node = prios.moving.pop_best(prios.stati, STATE_WORKING);
             if(current_node) {
-   //         cout << "Got node " << current_node->get_id() << " with prio " << current_node->get_priority_level() << endl;
+    //     cout << "Got node " << current_node->get_id() << " with prio " << current_node->get_priority_level() << endl;
                break;
             }
          }
@@ -530,7 +541,7 @@ threads_sched::set_default_node_priority(node *n, const double priority)
       return;
 
    thread_intrusive_node *tn((thread_intrusive_node*)n);
-   cout << "Default priority " << priority << endl;
+//   cout << "Default priority " << priority << endl;
    tn->set_default_priority_level(priority);
 }
 
@@ -575,6 +586,8 @@ threads_sched::do_set_node_priority(node *n, const double priority)
    if(priority > 0)
       tn->has_been_prioritized = true;
 #endif
+   if(priority < 0)
+      return;
 
    if(current_node == tn) {
       tn->set_priority_level(priority);
@@ -588,7 +601,6 @@ threads_sched::do_set_node_priority(node *n, const double priority)
          if(priority == 0.0)
             tn->set_priority_level(0.0);
          else {
-            assert(priority > 0.0);
             // we check if new priority is bigger than the current priority
             if(is_higher_priority(tn, priority))
                tn->set_priority_level(priority);
@@ -622,8 +634,6 @@ threads_sched::do_set_node_priority(node *n, const double priority)
                add_to_queue(tn);
             }
          } else {
-            // priority > 0
-            assert(priority > 0.0);
             // we check if new priority is bigger than the current priority
             if(is_higher_priority(tn, priority)) {
                tn->set_priority_level(priority);
@@ -721,13 +731,13 @@ threads_sched::set_node_static(db::node *n)
       // thief knows that he needs to do something.
    } else if(node_in_normal_queue(tn)) {
       if(tn->node_state() == NORMAL_QUEUE_MOVING) {
-         queues.moving.remove(tn, STATE_STATIC_CHANGE);
-         queues.stati.push_tail(tn);
+         if(queues.moving.remove(tn, STATE_STATIC_CHANGE))
+            queues.stati.push_tail(tn);
       }
    } else if(node_in_priority_queue(tn)) {
       if(tn->node_state() == PRIORITY_MOVING) {
-         prios.moving.remove(tn, STATE_STATIC_CHANGE);
-         prios.stati.insert(tn, tn->get_priority_level());
+         if(prios.moving.remove(tn, STATE_STATIC_CHANGE))
+            prios.stati.insert(tn, tn->get_priority_level());
       }
    }
    tn->unlock();
@@ -759,15 +769,97 @@ threads_sched::set_node_moving(db::node *n)
       // thief knows that he needs to do something.
    } else if(node_in_normal_queue(tn)) {
       if(tn->node_state() == NORMAL_QUEUE_STATIC) {
-         queues.stati.remove(tn, STATE_STATIC_CHANGE);
-         queues.moving.push_tail(tn);
+         if(queues.stati.remove(tn, STATE_STATIC_CHANGE))
+            queues.moving.push_tail(tn);
       }
    } else if(node_in_priority_queue(tn)) {
       if(tn->node_state() == PRIORITY_STATIC) {
-         prios.stati.remove(tn, STATE_STATIC_CHANGE);
-         prios.moving.insert(tn, tn->get_priority_level());
+         if(prios.stati.remove(tn, STATE_STATIC_CHANGE))
+            prios.moving.insert(tn, tn->get_priority_level());
       }
    }
+   tn->unlock();
+}
+
+void
+threads_sched::move_node_to_new_owner(thread_intrusive_node *tn, threads_sched *new_owner)
+{
+   new_owner->add_to_queue(tn);
+
+   spinlock::scoped_lock l2(new_owner->lock);
+   
+   if(new_owner->is_inactive())
+   {
+      new_owner->set_active();
+      assert(new_owner->is_active());
+   }
+}
+
+void
+threads_sched::set_node_affinity(db::node *node, db::node *affinity)
+{
+   threads_sched *new_owner(dynamic_cast<threads_sched*>(affinity->get_owner()));
+   thread_intrusive_node *tn(dynamic_cast<thread_intrusive_node*>(node));
+
+   if(tn == current_node) {
+      // we will change the owner field once we are done with the node.
+      tn->set_static(new_owner);
+      return;
+   }
+
+   tn->lock();
+   tn->set_static(new_owner);
+   if(tn->get_owner() == new_owner) {
+   } else if(tn->node_state() == STATE_STEALING) {
+      // node is being stolen right now!
+      // change both owner and is_static
+      tn->set_owner(new_owner);
+   } else if(node_in_normal_queue(tn)) {
+      const queue_id_t state(tn->node_state());
+      if(state == NORMAL_QUEUE_STATIC) {
+         if(queues.stati.remove(tn, STATE_AFFINITY_CHANGE)) {
+            tn->set_owner(new_owner);
+            move_node_to_new_owner(tn, new_owner);
+         } else {
+            // the node is now being processed by the scheduler!
+         }
+      } else if(state == NORMAL_QUEUE_MOVING) {
+         if(queues.moving.remove(tn, STATE_AFFINITY_CHANGE)) {
+            tn->set_owner(new_owner);
+            move_node_to_new_owner(tn, new_owner);
+         } else {
+            // node is being processed by the scheduler.
+         }
+      } else {
+         // node is being processed by the scheduler.
+      }
+   } else if(node_in_priority_queue(tn)) {
+      const queue_id_t state(tn->node_state());
+
+      if(state == PRIORITY_MOVING) {
+         if(prios.moving.remove(tn, STATE_AFFINITY_CHANGE)) {
+            tn->set_owner(new_owner);
+            move_node_to_new_owner(tn, new_owner);
+         } else {
+            // the node is now being processed by the scheduler!
+         }
+      } else if(state == PRIORITY_STATIC) {
+         if(prios.stati.remove(tn, STATE_AFFINITY_CHANGE)) {
+            tn->set_owner(new_owner);
+            move_node_to_new_owner(tn, new_owner);
+         } else {
+            // the node is now being processed by the scheduler!
+         }
+      } else {
+         // node is being processed by the scheduler.
+      }
+   } else if(tn->node_state() == STATE_WORKING) {
+      // we set static to the new owner
+      // the scheduler using that node right now will
+      // change its owner once it finishes processing the node
+   } else
+      tn->set_owner(new_owner);
+
    tn->unlock();
 }
 

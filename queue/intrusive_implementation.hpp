@@ -95,7 +95,7 @@
 	{																            \
 		QUEUE_INCREMENT_TOTAL();							            \
 																	            \
-      assert(__INTRUSIVE_QUEUE(new_node) == queue_no_queue);   \
+      assert(__INTRUSIVE_QUEUE(new_node) != queue_number);     \
 		__INTRUSIVE_QUEUE(new_node) = queue_number;			      \
 		__INTRUSIVE_NEXT(new_node) = head;				            \
 																	            \
@@ -125,7 +125,7 @@
       else														            \
          tail = new_node;									            \
 																	            \
-      assert(__INTRUSIVE_QUEUE(new_node) == queue_no_queue);   \
+      assert(__INTRUSIVE_QUEUE(new_node) != queue_number);     \
       __INTRUSIVE_QUEUE(new_node) = queue_number;			      \
       __INTRUSIVE_NEXT(new_node) = NULL;				            \
       tail = new_node;										            \

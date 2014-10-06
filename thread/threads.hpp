@@ -21,6 +21,7 @@ namespace sched
 #define STATE_STEALING 1
 #define STATE_PRIO_CHANGE 2
 #define STATE_STATIC_CHANGE 3
+#define STATE_AFFINITY_CHANGE 4
 #define NORMAL_QUEUE_MOVING 100
 #define NORMAL_QUEUE_STATIC 101
 #define PRIORITY_MOVING 102
@@ -172,6 +173,8 @@ protected:
       return queues.has_work() || prios.has_work();
    }
 
+   void move_node_to_new_owner(thread_intrusive_node *, threads_sched *);
+
    virtual void killed_while_active(void);
 
    void do_set_node_priority(db::node *, const double);
@@ -194,6 +197,7 @@ public:
 
    virtual void set_node_static(db::node *);
    virtual void set_node_moving(db::node *);
+   virtual void set_node_affinity(db::node *, db::node *);
    virtual void set_default_node_priority(db::node *, const double);
    virtual void set_node_priority(db::node *, const double);
 	virtual void add_node_priority(db::node *, const double);

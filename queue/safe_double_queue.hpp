@@ -83,14 +83,15 @@ public:
 		QUEUE_DEFINE_INTRUSIVE_MOVE_UP();
    }
 
-	inline void remove(node_type node, const queue_id_t new_state)
+	inline bool remove(node_type node, const queue_id_t new_state)
 	{
       boost::mutex::scoped_lock l(mtx);
 
       if(!in_queue(node))
-         return;
+         return false;
 		
 		QUEUE_DEFINE_INTRUSIVE_REMOVE(node);
+      return true;
 	}
 	
 	QUEUE_DEFINE_INTRUSIVE_CONSTRUCTOR(intrusive_safe_double_queue);

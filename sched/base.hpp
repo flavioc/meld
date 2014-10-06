@@ -137,6 +137,7 @@ public:
    virtual void schedule_next(db::node *) { }
    virtual void set_node_static(db::node *) { }
    virtual void set_node_moving(db::node *) { }
+   virtual void set_node_affinity(db::node *, db::node *) { }
 
 	// GATHER QUEUE FACTS FROM NODE
    virtual void gather_next_tuples(db::node *, db::simple_tuple_list&) { }

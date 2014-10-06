@@ -1,0 +1,19 @@
+
+type linear a(node, int).
+type route edge(node, node).
+
+// all nodes start as moving
+
+a(@0, 1).
+!edge(@0, @1).
+!edge(@1, @0).
+
+a(A, 1),
+!edge(A, B)
+   -o set-affinity(B, A),
+      a(B, 2).
+
+a(A, 2),
+!edge(A, B)
+   -o set-affinity(B, A),
+      a(B, 3).

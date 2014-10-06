@@ -1554,6 +1554,34 @@ execute_set_moving(pcounter& pc, state& state)
 }
 
 static inline void
+execute_set_affinity_here(pcounter& pc, state& state)
+{
+   const reg_num target_reg(pcounter_reg(pc + instr_size));
+   const node_val target(state.get_node(target_reg));
+
+#ifdef USE_REAL_NODES
+   state.sched->set_node_affinity(state.node, (db::node*)target);
+#else
+   state.sched->set_node_affinity(state.node, All->DATABASE->find_node(target));
+#endif
+}
+
+static inline void
+execute_set_affinity(pcounter& pc, state& state)
+{
+   const reg_num target_reg(pcounter_reg(pc + instr_size));
+   const node_val target(state.get_node(target_reg));
+   const reg_num node_reg(pcounter_reg(pc + instr_size + reg_val_size));
+   const node_val node(state.get_node(node_reg));
+
+#ifdef USE_REAL_NODES
+   state.sched->set_node_affinity((db::node*)node, (db::node*)target);
+#else
+   state.sched->set_node_affinity(All->DATABASE->find_node(node), All->DATABASE->find_node(target));
+#endif
+}
+
+static inline void
 execute_cpu_id(pcounter& pc, state& state)
 {
    const reg_num node_reg(pcounter_reg(pc + instr_size));
@@ -3580,6 +3608,18 @@ eval_loop:
          CASE(SET_MOVING_INSTR)
             JUMP(set_moving, SET_MOVING_BASE)
             execute_set_moving(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(SET_AFFINITYH_INSTR)
+            JUMP(set_affinityh, SET_AFFINITYH_BASE)
+            execute_set_affinity_here(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(SET_AFFINITY_INSTR)
+            JUMP(set_affinity, SET_AFFINITY_BASE)
+            execute_set_affinity(pc, state);
             ADVANCE()
          ENDOP()
 

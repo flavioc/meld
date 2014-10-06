@@ -104,13 +104,14 @@ public:
       return false;                             \
    }
    
+#if 0
 #define MAKE_OTHER_ACTIVE(OTHER) \
-   if((OTHER)->is_inactive() && (OTHER)->has_work()) {   \
+   if((OTHER)->is_inactive()) {   \
       spinlock::scoped_lock l(OTHER->lock);              \
       if((OTHER)->is_inactive() && (OTHER)->has_work())  \
          (OTHER)->set_active();                          \
    }
-   
+#endif
 }
 
 #define START_ROUND()   {           \

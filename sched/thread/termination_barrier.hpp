@@ -2,8 +2,9 @@
 #ifndef SCHED_THREAD_TERMINATION_BARRIER_HPP
 #define SCHED_THREAD_TERMINATION_BARRIER_HPP
 
+#include <atomic>
+
 #include "vm/state.hpp"
-#include "utils/atomic.hpp"
 #include "utils/macros.hpp"
 
 namespace sched
@@ -15,7 +16,7 @@ private:
    
    utils::atomic<size_t> active_threads;
    
-   volatile bool done;
+   std::atomic<bool> done;
    
 public:
    

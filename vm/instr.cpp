@@ -910,6 +910,13 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
       case SET_MOVINGH_INSTR:
          cout << "SET MOVING" << endl;
          break;
+      case SET_AFFINITYH_INSTR:
+         cout << "SET AFFINITY TO " << reg_string(pcounter_reg(pc + instr_size)) << endl;
+         break;
+      case SET_AFFINITY_INSTR:
+         cout << "SET AFFINITY OF " << reg_string(pcounter_reg(pc + instr_size + reg_val_size)) <<
+            " TO " << reg_string(pcounter_reg(pc + instr_size)) << endl;
+         break;
       case STOP_PROG_INSTR:
          cout << "STOP PROGRAM" << endl;
          break;
