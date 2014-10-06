@@ -8,10 +8,6 @@
 #include <ostream>
 #include <list>
 
-#ifdef COMPILE_MPI
-#include <boost/mpi.hpp>
-#endif
-
 #include "vm/defs.hpp"
 #include "vm/predicate.hpp"
 #include "vm/tuple.hpp"

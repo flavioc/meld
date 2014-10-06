@@ -2,7 +2,6 @@
 #include "sched/thread/threaded.hpp"
 #include "utils/atomic.hpp"
 
-using namespace boost;
 using namespace std;
 using namespace utils;
 

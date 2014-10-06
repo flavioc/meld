@@ -7,7 +7,6 @@
 #include <list>
 #include <cstdlib>
 #ifdef USE_UI
-#include <boost/thread/locks.hpp>
 #include <websocketpp/websocketpp.hpp>
 #endif
 #include <map>
@@ -52,7 +51,7 @@ class manager: public websocketpp::server::handler
 
       std::vector<client*> cleanup_list;
       client_list clients;
-      mutable boost::mutex client_mtx;
+      mutable std::mutex client_mtx;
       utils::atomic<size_t> clients_served;
 
       vm::all *all;

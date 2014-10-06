@@ -2,8 +2,7 @@
 #ifndef QUEUE_SAFE_QUEUE_HPP
 #define QUEUE_SAFE_QUEUE_HPP
 
-#include <boost/static_assert.hpp>
-#include <boost/thread/mutex.hpp>
+#include <mutex>
 
 #include "conf.hpp"
 #include "utils/atomic.hpp"
@@ -37,7 +36,7 @@ private:
    typedef queue_node<T> node;
    typedef special_queue_node<T> special_node;
    
-   BOOST_STATIC_ASSERT(sizeof(special_node) == sizeof(node));
+   static_assert(sizeof(special_node) == sizeof(node), "Nodes must have identical size.");
    
    volatile node *head;
    utils::atomic_ref<special_node*> tail;
@@ -215,7 +214,7 @@ private:
    volatile node *head;
    volatile node *tail;
 
-   boost::mutex mtx;
+   std::mutex mtx;
 	
 	QUEUE_DEFINE_TOTAL();
 
@@ -245,7 +244,7 @@ public:
       if(empty())
          return false;
          
-      boost::mutex::scoped_lock l(mtx);
+      std::lock_guard<std::mutex> l(mtx);
     
       if(empty())
          return false;
@@ -281,7 +280,7 @@ public:
       if(empty())
          return false;
       
-      boost::mutex::scoped_lock l(mtx);
+      std::lock_guard<std::mutex> l(mtx);
       
       if(empty())
          return false;
@@ -313,7 +312,7 @@ public:
       new_node->data = data;
       new_node->next = NULL;
       
-      boost::mutex::scoped_lock l(mtx);
+      std::lock_guard<std::mutex> l(mtx);
    
       push_node(new_node);
    }

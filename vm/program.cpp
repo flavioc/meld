@@ -2,7 +2,6 @@
 #include <fstream>
 #include <sys/stat.h>
 #include <iostream>
-#include <boost/static_assert.hpp>
 #include <dlfcn.h>
 
 #include "vm/program.hpp"
@@ -33,7 +32,7 @@ all* All;     // global variable that holds pointer to vm
 program* theProgram;
 
 // most integers in the byte-code have 4 bytes
-BOOST_STATIC_ASSERT(sizeof(uint_val) == 4);
+static_assert(sizeof(uint_val) == 4, "uint_val must be 4 bytes long.");
 
 static inline bool
 predicate_sorter(const predicate* p1, const predicate* p2)

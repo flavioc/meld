@@ -5,9 +5,6 @@
 #include "conf.hpp"
 
 #include <ostream>
-#ifdef COMPILE_MPI
-#include <boost/mpi.hpp>
-#endif
 #include <stdexcept>
 #include <vector>
 

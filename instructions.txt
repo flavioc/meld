@@ -3,10 +3,7 @@
      VM instructions
 ===============================
 
-;; To compile the virtual machine we first need to install a few packages, namely:
-
-- MPI (with MPICXX)
-- Boost (must include boost-thread, boost-system-mt, boost-date-time-mt, boost-regex-mt, boost-serialization-mt and boost-mpi-mt)
+;; To compile the virtual machine you only need to have a C++11 compatible compiler.
 
 ;; Use your operating system facilities to install such packages.
 

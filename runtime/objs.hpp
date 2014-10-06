@@ -9,10 +9,6 @@
 #include <stack>
 #include <list>
 
-#ifdef COMPILE_MPI
-#include <boost/mpi.hpp>
-#endif
-
 #include "utils/types.hpp"
 #include "utils/atomic.hpp"
 #include "utils/serialization.hpp"

@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <limits>
+#include <iomanip>
 
 #include "vm/tuple.hpp"
 #include "db/node.hpp"
@@ -17,7 +18,6 @@ using namespace vm;
 using namespace std;
 using namespace runtime;
 using namespace utils;
-using namespace boost;
 
 namespace vm
 {

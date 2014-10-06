@@ -5,7 +5,6 @@
 using namespace db;
 using namespace vm;
 using namespace std;
-using namespace boost;
 using namespace utils;
 
 namespace db

@@ -30,7 +30,7 @@
 #define COMPUTED_GOTOS
 
 #if defined(DEBUG_SENDS)
-static boost::mutex print_mtx;
+static std::mutex print_mtx;
 #endif
 
 using namespace vm;

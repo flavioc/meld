@@ -42,7 +42,7 @@ ifeq ($(JIT), true)
 endif
 
 WARNINGS = -Wall -Wextra -Werror
-C0X = -std=c++0x
+C0X = -std=c++11
 
 ifeq ($(INTERFACE),true)
 	LIBS += -lwebsocketpp -ljson_spirit
@@ -56,8 +56,7 @@ ifeq ($(SIMULATOR), true)
 endif
 
 CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) $(FLAGS) $(C0X) #-fno-gcse -fno-crossjumping
-LIBRARIES = -lm -lreadline -lboost_thread-mt -lboost_system-mt \
-				-lboost_date_time-mt -lboost_regex-mt -ldl $(LIBS)
+LIBRARIES = -lm -lreadline -ldl $(LIBS)
 
 CXX = g++
 

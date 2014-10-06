@@ -2,7 +2,6 @@
 #ifndef THREAD_THREADS_HPP
 #define THREAD_THREADS_HPP
 
-#include <boost/thread/barrier.hpp>
 #include <vector>
 
 #include "sched/base.hpp"

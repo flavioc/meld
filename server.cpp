@@ -4,13 +4,13 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <thread>
 #include <exception>
 #ifdef USE_UI
 #include <readline/readline.h>
 #include <readline/history.h>
 #endif
 #include <boost/algorithm/string.hpp>
-#include <boost/thread.hpp>
 
 #include "process/machine.hpp"
 #include "utils/utils.hpp"

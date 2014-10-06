@@ -2,11 +2,11 @@
 #ifndef DB_LINEAR_STORE_HPP
 #define DB_LINEAR_STORE_HPP
 
+#include <mutex>
 #include <list>
 #include <set>
 #include <iostream>
 #include <unordered_map>
-#include <boost/thread/mutex.hpp>
 
 #include "mem/base.hpp"
 #include "db/tuple.hpp"
@@ -30,7 +30,7 @@ struct linear_store
       utils::byte *data;
 
       vm::bitmap types;
-      boost::mutex internal;
+      std::mutex internal;
 
       hash_table *expand;
 

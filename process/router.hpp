@@ -7,9 +7,6 @@
 #include <vector>
 #include <list>
 #include <stdexcept>
-#ifdef COMPILE_MPI
-#include <boost/mpi.hpp>
-#endif
 
 #include "process/remote.hpp"
 #include "db/tuple.hpp"

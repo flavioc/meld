@@ -2,8 +2,9 @@
 #ifndef UTILS_TIME_HPP
 #define UTILS_TIME_HPP
 
+#include <sys/time.h>
+#include <chrono>
 #include <ostream>
-#include <boost/date_time.hpp>
 
 namespace utils
 {
@@ -12,8 +13,8 @@ class execution_time
 {
 private:
    
-   boost::posix_time::time_duration dur;
-   boost::posix_time::ptime before;
+   std::chrono::milliseconds dur;
+   std::chrono::time_point<std::chrono::steady_clock> before;
 
 public:
    
@@ -30,18 +31,18 @@ public:
       ~scope(void) { t.stop(); }
    };
    
-   void start(void) { before = boost::posix_time::microsec_clock::local_time(); }
+   void start(void) { before = std::chrono::steady_clock::now(); }
    
    void stop(void)
    {
-      dur += (boost::posix_time::microsec_clock::local_time() - before);
+      dur += std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - before);
    }
    
-   inline size_t milliseconds(void) const { return dur.total_milliseconds(); }
+   inline size_t milliseconds(void) const { return dur.count(); }
    
    void print(std::ostream& cout) const { cout << milliseconds() << " ms"; }
 
-	inline bool is_zero(void) const { return dur.total_milliseconds() == 0; }
+	inline bool is_zero(void) const { return milliseconds() == 0; }
 
    inline bool operator<(const execution_time& other) const
    {
@@ -63,7 +64,7 @@ public:
 		return *this;
 	}
    
-   explicit execution_time(void) {}
+   explicit execution_time(void): dur(0) {}
 
    execution_time(const execution_time& other): dur(other.dur) {}
    

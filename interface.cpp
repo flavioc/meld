@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <assert.h>
+#include <unistd.h>
 
 #include "interface.hpp"
 #include "process/router.hpp"
@@ -11,7 +12,9 @@
 #include "utils/time.hpp"
 #include "utils/fs.hpp"
 #include "process/machine.hpp"
+#ifdef USE_UI
 #include "ui/manager.hpp"
+#endif
 #include "vm/reader.hpp"
 
 using namespace process;

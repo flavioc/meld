@@ -1,12 +1,11 @@
 #include "conf.hpp"
 
+#include <mutex>
 #include <vector>
-#include <boost/thread/mutex.hpp>
 
 #include "sched/thread/assert.hpp"
 #include "vm/state.hpp"
 
-using namespace boost;
 using namespace std;
 using namespace vm;
 using namespace utils;

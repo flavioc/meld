@@ -7,12 +7,8 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <boost/thread.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/barrier.hpp>
-#ifdef COMPILE_MPI
-#include <boost/mpi.hpp>
-#endif
+#include <thread>
+#include <mutex>
 
 #include "db/database.hpp"
 #include "process/router.hpp"
@@ -36,7 +32,7 @@ private:
    
    router& rout;
    
-   boost::thread *alarm_thread;
+   std::thread *alarm_thread;
    statistics::slice_set slices;
 
 	void execute_const_code(void);
@@ -74,7 +70,7 @@ public:
    }
    
    void start(void);
-   void start(const vm::process_id);
+   void init_sched(const vm::process_id);
    
    explicit machine(const std::string&, router&, const size_t, const sched::scheduler_type, const vm::machine_arguments& args = vm::machine_arguments(), const std::string& data_file = std::string());
                

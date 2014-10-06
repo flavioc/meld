@@ -2,8 +2,6 @@
 #ifndef VM_BITMAP_HPP
 #define VM_BITMAP_HPP
 
-#include <boost/static_assert.hpp>
-
 #include "vm/defs.hpp"
 #include "utils/utils.hpp"
 #include "mem/allocator.hpp"
@@ -17,7 +15,8 @@ namespace vm
 
 struct bitmap {
 
-   //BOOST_STATIC_ASSERT(sizeof(BITMAP_TYPE) == sizeof(BITMAP_TYPE*));
+   static_assert(sizeof(BITMAP_TYPE) == sizeof(BITMAP_TYPE*),
+         "Pointer and bitmap type must have the same size");
 
    BITMAP_TYPE first;
    BITMAP_TYPE *rest;

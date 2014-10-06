@@ -5,7 +5,6 @@
 #include <iostream>
 #include <list>
 #include <stdexcept>
-#include <boost/thread/mutex.hpp>
 
 #include "conf.hpp"
 

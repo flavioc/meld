@@ -8,7 +8,6 @@
 #include "process/machine.hpp"
 
 using namespace std;
-using namespace boost;
 using namespace vm;
 using namespace process;
 using namespace db;

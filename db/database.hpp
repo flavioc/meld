@@ -2,14 +2,13 @@
 #ifndef DATABASE_HPP
 #define DATABASE_HPP
 
+#include <mutex>
 #include <map>
+#include <functional>
 #include <fstream>
 #include <ostream>
 #include <unordered_map>
 #include <stdexcept>
-#include <boost/function.hpp>
-#include <boost/static_assert.hpp>
-#include <boost/thread/mutex.hpp>
 
 #include "conf.hpp"
 #include "db/node.hpp"
@@ -34,7 +33,7 @@ public:
    typedef std::map<node::node_id, node*,
            std::less<node::node_id>,
            mem::allocator< std::pair<const node::node_id, node*> > > map_nodes;
-   typedef boost::function2<node*, node::node_id, node::node_id> create_node_fn;
+   typedef std::function<node* (node::node_id, node::node_id)> create_node_fn;
 
 private:
 
@@ -46,11 +45,12 @@ private:
    node::node_id max_node_id;
    node::node_id max_translated_id;
 
-   boost::mutex mtx;
+   std::mutex mtx;
    
 public:
 
-   BOOST_STATIC_ASSERT(sizeof(node::node_id) == sizeof(vm::node_val));
+   static_assert(sizeof(node::node_id) == sizeof(vm::node_val),
+         "node_id must have the same size as node_val.");
 
    static const size_t node_size = sizeof(node::node_id) * 2;
    size_t nodes_total;

@@ -2,9 +2,7 @@
 #ifndef UTILS_RANDOM_HPP
 #define UTILS_RANDOM_HPP
 
-#define BOOST_NO_RTTI
-#define BOOST_NO_TYPEID
-#include <boost/random.hpp>
+#include <random>
 #include <vector>
 #include <algorithm>
 
@@ -15,12 +13,12 @@ class randgen
 {
 private:
    
-   boost::mt19937 state;
+   std::mt19937 state;
    
 public:
    
    unsigned operator()(unsigned i) {
-      boost::uniform_int<> rng(0, i - 1);
+      std::uniform_int_distribution<unsigned> rng(0, i - 1);
       return rng(state);
    }
    

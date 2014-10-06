@@ -1,7 +1,7 @@
 #include <iostream>
 #include <signal.h>
+#include <unistd.h>
 
-#include "ui/manager.hpp"
 #include "process/machine.hpp"
 #include "vm/program.hpp"
 #include "vm/state.hpp"
@@ -13,6 +13,7 @@
 #include "interface.hpp"
 #ifdef USE_UI
 #include "sched/serial_ui.hpp"
+#include "ui/manager.hpp"
 #endif
 #ifdef USE_SIM
 #include "sched/sim.hpp"
@@ -24,7 +25,6 @@ using namespace process;
 using namespace db;
 using namespace std;
 using namespace vm;
-using namespace boost;
 using namespace sched;
 using namespace mem;
 using namespace utils;
@@ -190,7 +190,7 @@ machine::execute_const_code(void)
 }
 
 void
-machine::start(const process_id id)
+machine::init_sched(const process_id id)
 {
    // ensure own memory pool
    mem::ensure_pool();
@@ -225,7 +225,7 @@ machine::start(void)
    
    if(stat_enabled()) {
       // initiate alarm thread
-      alarm_thread = new boost::thread(bind(&machine::slice_function, this));
+      alarm_thread = new thread(bind(&machine::slice_function, this));
    }
 
    switch(sched_type) {
@@ -235,10 +235,11 @@ machine::start(void)
       default: break;
    }
    
-   boost::thread *threads[all->NUM_THREADS];
-   for(process_id i(1); i < all->NUM_THREADS; ++i)
-      threads[i] = new boost::thread(bind(&machine::start, this, i));
-   start(0);
+   thread *threads[all->NUM_THREADS];
+   for(process_id i(1); i < all->NUM_THREADS; ++i) {
+      threads[i] = new thread(&machine::init_sched, *this, i);
+   }
+   init_sched(0);
    
    for(size_t i(1); i < all->NUM_THREADS; ++i) {
       threads[i]->join();

@@ -1,6 +1,5 @@
 
 #include <cmath>
-#include <boost/algorithm/string.hpp>
 
 #include "runtime/objs.hpp"
 #include "external/lists.hpp"
@@ -8,7 +7,6 @@
 
 using namespace std;
 using namespace runtime;
-using namespace boost::algorithm;
 using namespace utils;
 
 namespace vm
@@ -280,15 +278,11 @@ str2intlist(EXTERNAL_ARG(str))
    stack_int_list st;
    const string s(str->get_content());
 
-   vector<string> vec;
-   split(vec, s, is_any_of(", "), token_compress_on);
-
-   for(vector<string>::const_iterator it(vec.begin()), end(vec.end());
-      it != end;
-      ++it)
-   {
+   istringstream f(s);
+   string part;
+   while(getline(f, part, ',')) {
       int_val i;
-      from_string(i, *it, std::dec);
+      from_string(i, part, std::dec);
       st.push(i);
    }
 

@@ -2,7 +2,7 @@
 #ifndef QUEUE_SAFE_COMPLEX_PQUEUE_HPP
 #define QUEUE_SAFE_COMPLEX_PQUEUE_HPP
 
-#include <boost/thread/mutex.hpp>
+#include <mutex>
 
 #include "queue/intrusive_implementation.hpp"
 #include "queue/heap_implementation.hpp"
@@ -17,7 +17,7 @@ private:
 	
 	typedef T* heap_object;
 
-	mutable boost::mutex mtx;
+	mutable std::mutex mtx;
 
    static const bool debug = false;
 
@@ -94,7 +94,7 @@ public:
 	
 	inline void insert(heap_object node, const double prio)
 	{
-      boost::mutex::scoped_lock l(mtx);
+      std::lock_guard<std::mutex> l(mtx);
 		do_insert(node, prio);
 	}
 
@@ -115,7 +115,7 @@ public:
 	
 	double min_value(void) const
 	{
-      boost::mutex::scoped_lock l(mtx);
+      std::lock_guard<std::mutex> l(mtx);
 
       if(empty())
          return 0.0;
@@ -125,14 +125,14 @@ public:
 	
 	heap_object pop(const queue_id_t new_state)
 	{
-      boost::mutex::scoped_lock l(mtx);
+      std::lock_guard<std::mutex> l(mtx);
 		return do_pop(new_state);
 	}
 
    heap_object pop_best(intrusive_safe_complex_pqueue<T>& other, const queue_id_t new_state)
    {
-      boost::mutex::scoped_lock l1(mtx);
-      boost::mutex::scoped_lock l2(other.mtx);
+      std::lock_guard<std::mutex> l1(mtx);
+      std::lock_guard<std::mutex> l2(other.mtx);
 
       if(empty()) {
          if(other.empty())
@@ -150,7 +150,7 @@ public:
 
 	inline bool remove(heap_object obj, const queue_id_t new_state)
 	{
-      boost::mutex::scoped_lock l(mtx);
+      std::lock_guard<std::mutex> l(mtx);
       if(__INTRUSIVE_QUEUE(obj) != queue_number)
          return false;
 		do_remove(obj, new_state);

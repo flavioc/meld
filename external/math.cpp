@@ -1,8 +1,6 @@
 
 #include <cmath>
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/uniform_real.hpp>
-#include <boost/random/variate_generator.hpp>
+#include <random>
 #include <ctime>
 
 #include "runtime/objs.hpp"
@@ -365,14 +363,12 @@ intpower(EXTERNAL_ARG(n1), EXTERNAL_ARG(n2))
    RETURN_INT(result);
 }
 
-static boost::mt19937 *generator = NULL;
-static boost::uniform_real<> *uni_dist = NULL;
-static boost::variate_generator<boost::mt19937&, boost::uniform_real<> > *de_uni = NULL;
+static std::mt19937 *generator = NULL;
+static std::uniform_real_distribution<double> *uni_dist = NULL;
 
 static void
 de_finish(void)
 {
-   delete de_uni;
    delete uni_dist;
    delete generator;
 }
@@ -380,9 +376,8 @@ de_finish(void)
 static bool
 de_init(void)
 {
-   generator = new boost::mt19937(std::time(0));
-   uni_dist = new boost::uniform_real<>(0, 1);
-   de_uni = new boost::variate_generator<boost::mt19937&, boost::uniform_real<> >(*generator, *uni_dist);
+   generator = new mt19937(std::time(0));
+   uni_dist = new uniform_real_distribution<>(0, 1);
    atexit(de_finish);
    return true;
 }
@@ -394,7 +389,7 @@ create_random_bm(int size_bitmask)
 {
    (void)de_start;
    int j;
-   double cur_random = de_uni->operator()();
+   double cur_random = uni_dist->operator()(*generator);
    double threshold = 0;
    for(j = 0; j < size_bitmask - 1; ++j) {
       threshold += pow(2.0, -1 * j - 1);

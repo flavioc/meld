@@ -1,13 +1,11 @@
 
 #include <iostream>
-#include <boost/thread/mutex.hpp>
 
 #include "process/router.hpp"
 #include "vm/state.hpp"
 #include "db/database.hpp"
 
 using namespace process;
-using namespace boost;
 using namespace vm;
 using namespace std;
 using namespace db;
@@ -16,8 +14,6 @@ using namespace sched;
 
 namespace process
 {
-   
-static boost::mutex mpi_mutex;
    
 void
 router::set_nodes_total(const size_t total)

@@ -284,7 +284,7 @@ manager::on_message(connection_ptr conn, message_ptr msg)
                   cl->th = NULL;
                }
 
-               boost::thread *th = new boost::thread(boost::bind(&ui::manager::start_file, this, file, cl, true));
+               std::thread *th = new std::thread(std::bind(&ui::manager::start_file, this, file, cl, true));
 
                cl->th = th;
             }
@@ -300,7 +300,7 @@ manager::on_message(connection_ptr conn, message_ptr msg)
                cl->th = NULL;
             }
 
-            boost::thread *th = new boost::thread(boost::bind(&ui::manager::start_file, this, file, cl, false));
+            std::thread *th = new std::thread(std::bind(&ui::manager::start_file, this, file, cl, false));
 
             cl->th = th;
 
