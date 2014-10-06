@@ -9,10 +9,10 @@
 #include <stdexcept>
 #include <boost/function.hpp>
 #include <boost/static_assert.hpp>
+#include <boost/thread/mutex.hpp>
 
 #include "conf.hpp"
 #include "db/node.hpp"
-#include "utils/spinlock.hpp"
 #include "vm/program.hpp"
 
 #ifdef USE_UI
@@ -46,7 +46,7 @@ private:
    node::node_id max_node_id;
    node::node_id max_translated_id;
 
-	utils::spinlock mtx;
+   boost::mutex mtx;
    
 public:
 

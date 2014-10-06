@@ -5,7 +5,6 @@
 #include <boost/thread/mutex.hpp>
 
 #include "conf.hpp"
-#include "utils/spinlock.hpp"
 #include "queue/intrusive_implementation.hpp"
 
 namespace queue

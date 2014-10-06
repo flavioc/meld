@@ -3,6 +3,7 @@
 #define QUEUE_SAFE_QUEUE_HPP
 
 #include <boost/static_assert.hpp>
+#include <boost/thread/mutex.hpp>
 
 #include "conf.hpp"
 #include "utils/atomic.hpp"
@@ -10,7 +11,6 @@
 #include "queue/unsafe_linear_queue.hpp"
 #include "queue/macros.hpp"
 #include "queue/iterators.hpp"
-#include "utils/spinlock.hpp"
 #include <iostream>
 
 namespace queue
@@ -215,7 +215,7 @@ private:
    volatile node *head;
    volatile node *tail;
 
-	utils::spinlock mtx;
+   boost::mutex mtx;
 	
 	QUEUE_DEFINE_TOTAL();
 
@@ -245,7 +245,7 @@ public:
       if(empty())
          return false;
          
-      utils::spinlock::scoped_lock l(mtx);
+      boost::mutex::scoped_lock l(mtx);
     
       if(empty())
          return false;
@@ -281,7 +281,7 @@ public:
       if(empty())
          return false;
       
-      utils::spinlock::scoped_lock l(mtx);
+      boost::mutex::scoped_lock l(mtx);
       
       if(empty())
          return false;
@@ -313,7 +313,7 @@ public:
       new_node->data = data;
       new_node->next = NULL;
       
-		utils::spinlock::scoped_lock l(mtx);
+      boost::mutex::scoped_lock l(mtx);
    
       push_node(new_node);
    }

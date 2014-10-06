@@ -9,7 +9,6 @@
 #include "vm/defs.hpp"
 #include "utils/macros.hpp"
 #include "utils/types.hpp"
-#include "utils/spinlock.hpp"
 #include "utils/atomic.hpp"
 #include "sched/base.hpp"
 #include "sched/thread/termination_barrier.hpp"
@@ -30,7 +29,7 @@ protected:
    static termination_barrier *term_barrier;
    static utils::tree_barrier *thread_barrier;
    
-	utils::spinlock lock;
+   boost::mutex lock;
 	
    static volatile size_t round_state;
    size_t thread_round_state;
@@ -55,7 +54,7 @@ protected:
    inline void set_active_if_inactive(void)
    {
       if(is_inactive()) {
-			utils::spinlock::scoped_lock l(lock);
+         boost::mutex::scoped_lock l(lock);
          if(is_inactive())
             set_active();
       }
@@ -90,7 +89,7 @@ public:
 
 #define BUSY_LOOP_MAKE_INACTIVE()         \
    if(is_active() && !has_work()) {       \
-      spinlock::scoped_lock l(lock);      \
+      boost::mutex::scoped_lock l(lock);  \
       if(!has_work()) {                   \
          if(is_active())                  \
             set_inactive();               \
@@ -103,16 +102,6 @@ public:
       assert(is_inactive());                    \
       return false;                             \
    }
-   
-#if 0
-#define MAKE_OTHER_ACTIVE(OTHER) \
-   if((OTHER)->is_inactive()) {   \
-      spinlock::scoped_lock l(OTHER->lock);              \
-      if((OTHER)->is_inactive() && (OTHER)->has_work())  \
-         (OTHER)->set_active();                          \
-   }
-#endif
-}
 
 #define START_ROUND()   {           \
    ins_round;                       \
@@ -154,5 +143,7 @@ public:
 }
 
 #define END_ROUND(COMPUTE_MORE_WORK) DO_END_ROUND(COMPUTE_MORE_WORK, );
+
+}
 
 #endif

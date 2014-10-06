@@ -6,6 +6,7 @@
 #include <set>
 #include <iostream>
 #include <unordered_map>
+#include <boost/thread/mutex.hpp>
 
 #include "mem/base.hpp"
 #include "db/tuple.hpp"
@@ -13,7 +14,6 @@
 #include "vm/bitmap.hpp"
 #include "utils/intrusive_list.hpp"
 #include "db/hash_table.hpp"
-#include "utils/spinlock.hpp"
 
 #define CREATE_HASHTABLE_THREADSHOLD 8
 #define ITEM_SIZE ((sizeof(hash_table) > sizeof(tuple_list) ? sizeof(hash_table) : sizeof(tuple_list)))
@@ -30,7 +30,7 @@ struct linear_store
       utils::byte *data;
 
       vm::bitmap types;
-      utils::spinlock internal;
+      boost::mutex internal;
 
       hash_table *expand;
 

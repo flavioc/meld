@@ -6,7 +6,6 @@
 #include "queue/intrusive.hpp"
 #include "queue/safe_simple_pqueue.hpp"
 #include "db/tuple.hpp"
-#include "utils/spinlock.hpp"
 #include "sched/base.hpp"
 #include "process/work.hpp"
 #include "vm/state.hpp"

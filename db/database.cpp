@@ -90,7 +90,8 @@ database::find_node(const node::node_id id) const
 node*
 database::create_node_id(const db::node::node_id id)
 {
-   utils::spinlock::scoped_lock l(mtx);
+   boost::mutex::scoped_lock l(mtx);
+
    if(max_node_id > 0) {
       assert(max_node_id < id);
       assert(max_translated_id < id);
@@ -122,7 +123,7 @@ database::create_node_iterator(database::map_nodes::iterator it)
 node*
 database::create_node(void)
 {
-   utils::spinlock::scoped_lock l(mtx);
+   boost::mutex::scoped_lock l(mtx);
 
 	if(nodes.empty()) {
 		max_node_id = 0;
