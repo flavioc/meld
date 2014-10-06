@@ -30,7 +30,6 @@ struct linear_store
       utils::byte *data;
 
       vm::bitmap types;
-      utils::mutex internal;
 
       hash_table *expand;
 

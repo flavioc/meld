@@ -741,7 +741,6 @@ state::run_node(db::node *no)
 	}
 
    node->running = true;
-   node->internal_lock();
 #ifdef DYNAMIC_INDEXING
    node->rounds++;
 #endif
@@ -864,7 +863,6 @@ state::run_node(db::node *no)
    if(node->rounds > 0 && node->rounds % 5 == 0)
       lstore->cleanup_index();
 #endif
-   node->internal_unlock();
    node->running = false;
 }
 

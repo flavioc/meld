@@ -135,10 +135,6 @@ public:
    inline void lock(void) { store.spin.lock(); }
    inline void unlock(void) { store.spin.unlock(); }
 
-   // locking for faster insertion of facts
-   inline void internal_lock(void) { linear.internal.lock(); }
-   inline void internal_unlock(void) { linear.internal.unlock(); }
-
    // return queue of the node.
    inline queue_id_t node_state(void) const {
       // node state is represented by the id of the queue.
