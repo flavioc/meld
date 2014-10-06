@@ -206,7 +206,7 @@ node::assert_end(void) const
 node::node(const node_id _id, const node_id _trans):
    INIT_DOUBLE_QUEUE_NODE(),
    id(_id), translation(_trans), owner(NULL), linear(),
-   store(), unprocessed_facts(false), running(false),
+   store(), unprocessed_facts(false),
    rounds(0), indexing_epoch(0)
 {
 }

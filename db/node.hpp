@@ -124,7 +124,6 @@ public:
    db::linear_store linear;
    vm::temporary_store store;
    bool unprocessed_facts;
-   std::atomic<bool> running;
 
 #ifdef DYNAMIC_INDEXING
    uint16_t rounds;

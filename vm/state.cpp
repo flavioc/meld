@@ -740,7 +740,6 @@ state::run_node(db::node *no)
       no->unlock();
 	}
 
-   node->running = true;
 #ifdef DYNAMIC_INDEXING
    node->rounds++;
 #endif
@@ -863,7 +862,6 @@ state::run_node(db::node *no)
    if(node->rounds > 0 && node->rounds % 5 == 0)
       lstore->cleanup_index();
 #endif
-   node->running = false;
 }
 
 state::state(sched::base *_sched):
