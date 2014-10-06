@@ -82,6 +82,7 @@ COMPILE = $(CXX) $(CXXFLAGS) $(OBJS)
 SRCS = utils/utils.cpp \
 		 	utils/types.cpp \
 			utils/fs.cpp \
+			utils/mutex.cpp \
 			 vm/program.cpp \
 			 vm/predicate.cpp \
 			 vm/types.cpp \

@@ -13,6 +13,8 @@
 #include "utils/random.hpp"
 #include "utils/circular_buffer.hpp"
 
+#define DIRECT_PRIORITIES
+
 namespace sched
 {
 
@@ -176,6 +178,7 @@ protected:
    }
 
    void move_node_to_new_owner(thread_intrusive_node *, threads_sched *);
+   void do_set_node_priority_other(thread_intrusive_node *, const double);
 
    virtual void killed_while_active(void);
 

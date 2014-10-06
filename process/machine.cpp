@@ -251,6 +251,9 @@ machine::start(void)
    cout << "Total Nodes: " << this->all->DATABASE->num_nodes() << endl;
    cout << "Bytes used: " << bytes_used << endl;
 #endif
+#ifdef LOCK_STATISTICS
+   utils::mutex::print_statistics();
+#endif
       
    if(alarm_thread) {
       kill(getpid(), SIGUSR1);

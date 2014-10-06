@@ -72,7 +72,6 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
    threads_sched *owner(dynamic_cast<threads_sched*>(tnode->get_owner()));
 
    if(owner == this) {
-      assert(!tnode->running);
       tnode->internal_lock();
       tnode->add_work_myself(tpl, pred, count, depth);
       tnode->internal_unlock();
@@ -511,7 +510,11 @@ threads_sched::add_node_priority(node *n, const double priority)
    if(other == this)
       do_set_node_priority(n, tn->get_priority_level() + priority);
    else
-      other->add_node_priority_other(n, priority);
+#ifdef DIRECT_PRIORITIES
+      do_set_node_priority_other(tn, tn->get_priority_level() + priority);
+#else
+      other->add_node_priority_other(tn, priority);
+#endif
    tn->unlock();
 #else
    threads_sched *other((threads_sched*)tn->get_owner());
@@ -547,7 +550,11 @@ threads_sched::set_node_priority(node *n, const double priority)
    if(other == this)
       do_set_node_priority(n, priority);
    else
+#ifdef DIRECT_PRIORITIES
+      set_node_priority_other(n, priority);
+#else
       other->set_node_priority_other(n, priority);
+#endif
    tn->unlock();
 #else
    threads_sched *other((threads_sched*)tn->get_owner());
@@ -563,6 +570,72 @@ is_higher_priority(thread_intrusive_node *tn, const double priority)
       return tn->get_priority_level() < priority;
    else
       return tn->get_priority_level() > priority;
+}
+
+void
+threads_sched::do_set_node_priority_other(thread_intrusive_node *node, const double priority)
+{
+   // we know that the owner of node is not this.
+   queue_id_t state(node->node_state());
+   threads_sched *owner(dynamic_cast<threads_sched*>(node->get_owner()));
+   bool activate_node(false);
+
+   switch(state) {
+      case STATE_STEALING:
+         // node is being stolen.
+         if(is_higher_priority(node, priority))
+            node->set_priority_level(priority);
+         return;
+      case NORMAL_QUEUE_MOVING:
+         if(owner->queues.moving.remove(node, STATE_PRIO_CHANGE)) {
+            owner->add_to_priority_queue(node);
+            activate_node = true;
+         }
+         break;
+      case NORMAL_QUEUE_STATIC:
+         if(owner->queues.stati.remove(node, STATE_PRIO_CHANGE)) {
+            owner->add_to_priority_queue(node);
+            activate_node = true;
+         }
+         break;
+      case PRIORITY_MOVING:
+         if(priority == 0) {
+            node->set_priority_level(0.0);
+            if(owner->prios.moving.remove(node, STATE_PRIO_CHANGE)) {
+               owner->queues.moving.push_tail(node);
+               activate_node = true;
+            }
+         } else if(is_higher_priority(node, priority)) {
+            node->set_priority_level(priority);
+            owner->prios.moving.move_node(node, priority);
+         }
+         break;
+      case PRIORITY_STATIC:
+         if(priority == 0) {
+            node->set_priority_level(0.0);
+            if(owner->prios.stati.remove(node, STATE_PRIO_CHANGE)) {
+               owner->queues.stati.push_tail(node);
+               activate_node = true;
+            }
+         } else if(is_higher_priority(node, priority)) {
+            node->set_priority_level(priority);
+            owner->prios.stati.move_node(node, priority);
+         }
+         break;
+      case STATE_WORKING:
+         // do nothing
+         break;
+      default: assert(false); break;
+   } 
+   if(activate_node) {
+      // we must reactivate node if it's not active
+      lock_guard<utils::mutex> l2(owner->lock);
+      
+      if(owner->is_inactive()) {
+         owner->set_active();
+         assert(owner->is_active());
+      }
+   }
 }
 
 void
@@ -585,15 +658,9 @@ threads_sched::do_set_node_priority(node *n, const double priority)
    if(tn->node_state() == STATE_STEALING) {
       // node is being stolen, let's simply set the level
       // and let the other thread do it's job
-      if(tn->get_priority_level() != priority) {
-         if(priority == 0.0)
-            tn->set_priority_level(0.0);
-         else {
-            // we check if new priority is bigger than the current priority
-            if(is_higher_priority(tn, priority))
-               tn->set_priority_level(priority);
-         }
-      }
+      if(is_higher_priority(tn, priority))
+         // we check if new priority is bigger than the current priority
+         tn->set_priority_level(priority);
       return;
    }
 
@@ -605,22 +672,12 @@ threads_sched::do_set_node_priority(node *n, const double priority)
          if(priority == 0.0) {
             tn->set_priority_level(0.0);
             //cout << "Remove from frio put into main\n";
-            if(tn->has_priority_level()) {
-               if(is_higher_priority(tn, priority)) {
-                  if(tn->node_state() == PRIORITY_MOVING)
-                     prios.moving.move_node(tn, priority);
-                  else {
-                     prios.stati.move_node(tn, priority);
-                  }
-               }
-            } else {
-               if(tn->node_state() == PRIORITY_MOVING)
-                  prios.moving.remove(tn, STATE_PRIO_CHANGE);
-               else {
-                  prios.stati.remove(tn, STATE_PRIO_CHANGE);
-               }
-               add_to_queue(tn);
+            if(tn->node_state() == PRIORITY_MOVING)
+               prios.moving.remove(tn, STATE_PRIO_CHANGE);
+            else {
+               prios.stati.remove(tn, STATE_PRIO_CHANGE);
             }
+            add_to_queue(tn);
          } else {
             // we check if new priority is bigger than the current priority
             if(is_higher_priority(tn, priority)) {
