@@ -22,11 +22,12 @@ struct temporary_store
    public:
 
       typedef utils::intrusive_list<vm::tuple> tuple_list;
-      typedef std::unordered_map<vm::predicate_id, tuple_list*, std::hash<vm::predicate_id>,
-              std::equal_to<vm::predicate_id>, mem::allocator< std::pair<const vm::predicate_id, tuple_list*> > > list_map;
 
       // incoming linear tuples
-      list_map incoming;
+      tuple_list *incoming;
+
+      typedef std::unordered_map<vm::predicate_id, tuple_list*, std::hash<vm::predicate_id>,
+              std::equal_to<vm::predicate_id>, mem::allocator< std::pair<const vm::predicate_id, tuple_list*> > > list_map;
 
       // incoming persistent tuples
       db::simple_tuple_list incoming_persistent_tuples;
@@ -57,19 +58,12 @@ struct temporary_store
 
       inline tuple_list* get_incoming(const vm::predicate_id p)
       {
-         assert(p < theProgram->num_predicates());
-         list_map::iterator it(incoming.find(p));
-         if(it == incoming.end())
-            return NULL;
-         return it->second;
+         return incoming + p;
       }
 
       inline void add_incoming(vm::tuple *tpl, vm::predicate *pred)
       {
          tuple_list *ls(get_incoming(pred->get_id()));
-
-         if(ls == NULL)
-            ls = create_incoming(pred->get_id());
 
          ls->push_back(tpl);
       }
@@ -102,14 +96,6 @@ struct temporary_store
          return ls;
       }
 
-      inline tuple_list* create_incoming(const vm::predicate_id p)
-      {
-         tuple_list *ls(mem::allocator<tuple_list>().allocate(1));
-         mem::allocator<tuple_list>().construct(ls);
-         incoming.insert(std::make_pair(p, ls));
-         return ls;
-      }
-
       inline void add_generated(vm::tuple *tpl, vm::predicate *pred)
       {
          tuple_list *ls(get_generated(pred->get_id()));
@@ -128,13 +114,18 @@ struct temporary_store
          persistent_tuples.push_back(stpl);
       }
 
+      explicit temporary_store(void)
+      {
+         incoming = mem::allocator<tuple_list>().allocate(theProgram->num_predicates());
+         for(size_t i(0); i < theProgram->num_predicates(); ++i)
+            mem::allocator<tuple_list>().construct(incoming + i);
+      }
+
       ~temporary_store(void)
       {
-         for(list_map::iterator it(incoming.begin()), end(incoming.end()); it != end; ++it) {
-            tuple_list *ls(it->second);
-            mem::allocator<tuple_list>().destroy(ls);
-            mem::allocator<tuple_list>().deallocate(ls, 1);
-         }
+         for(size_t i(0); i < theProgram->num_predicates(); ++i)
+            mem::allocator<tuple_list>().destroy(incoming + i);
+         mem::allocator<tuple_list>().deallocate(incoming, theProgram->num_predicates());
          for(list_map::iterator it(generated.begin()), end(generated.end()); it != end; ++it) {
             tuple_list *ls(it->second);
             mem::allocator<tuple_list>().destroy(ls);

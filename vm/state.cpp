@@ -316,12 +316,12 @@ state::process_action_tuples(void)
 void
 state::process_incoming_tuples(void)
 {
-   for(temporary_store::list_map::iterator it(store->incoming.begin()), end(store->incoming.end()); it != end; ++it) {
-      utils::intrusive_list<vm::tuple> *ls(it->second);
-      vm::predicate *pred(theProgram->get_predicate(it->first));
+   for(size_t i(0); i < theProgram->num_predicates(); ++i) {
+      utils::intrusive_list<vm::tuple> *ls(store->incoming + i);
       if(!ls->empty()) {
+         vm::predicate *pred(theProgram->get_predicate(i));
          store->register_tuple_fact(pred, ls->get_size());
-         lstore->increment_database(theProgram->get_predicate(it->first), ls, store->matcher);
+         lstore->increment_database(pred, ls, store->matcher);
       }
    }
    if(!store->incoming_persistent_tuples.empty())
