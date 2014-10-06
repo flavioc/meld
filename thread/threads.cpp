@@ -73,14 +73,20 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
 
    if(owner == this) {
       assert(!tnode->running);
+      tnode->internal_lock();
       tnode->add_work_myself(tpl, pred, count, depth);
+      tnode->internal_unlock();
 #ifdef INSTRUMENTATION
       sent_facts_same_thread++;
 #endif
       if(!tnode->active_node())
          add_to_queue(tnode);
    } else {
-      tnode->add_work_others(tpl, pred, count, depth);
+      if(tnode->try_internal_lock()) {
+         tnode->add_work_myself(tpl, pred, count, depth);
+         tnode->internal_unlock();
+      } else
+         tnode->add_work_others(tpl, pred, count, depth);
       if(!tnode->active_node())
          owner->add_to_queue(tnode);
 #ifdef INSTRUMENTATION

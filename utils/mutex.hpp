@@ -28,6 +28,7 @@ class mutex
 #ifdef USE_STD_MUTEX
       inline void lock(void) { mtx.lock(); }
       inline void unlock(void) { mtx.unlock(); }
+      inline bool try_lock(void) { return mtx.try_lock(); }
 #else
       inline void lock(void) { sem_wait(&s); }
       inline void unlock(void) { sem_post(&s); }

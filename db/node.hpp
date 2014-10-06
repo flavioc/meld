@@ -20,6 +20,7 @@
 #include "vm/defs.hpp"
 #include "vm/match.hpp"
 #include "utils/atomic.hpp"
+#include "utils/mutex.hpp"
 #include "vm/rule_matcher.hpp"
 #include "vm/all.hpp"
 #include "db/linear_store.hpp"
@@ -124,6 +125,8 @@ public:
    db::linear_store linear;
    vm::temporary_store store;
    bool unprocessed_facts;
+   utils::mutex main_mtx;
+   utils::mutex internal_mtx;
 
 #ifdef DYNAMIC_INDEXING
    uint16_t rounds;
@@ -131,8 +134,12 @@ public:
 #endif
 
    // overall locking for changing the state of the node
-   inline void lock(void) { store.spin.lock(); }
-   inline void unlock(void) { store.spin.unlock(); }
+   inline void lock(void) { main_mtx.lock(); }
+   inline void unlock(void) { main_mtx.unlock(); }
+
+   inline void internal_lock(void) { internal_mtx.lock(); }
+   inline bool try_internal_lock(void) { return internal_mtx.try_lock(); }
+   inline void internal_unlock(void) { internal_mtx.unlock(); }
 
    // return queue of the node.
    inline queue_id_t node_state(void) const {

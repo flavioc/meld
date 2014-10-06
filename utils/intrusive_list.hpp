@@ -155,6 +155,21 @@ struct intrusive_list
          assert(head->__intrusive_prev == NULL);
       }
 
+      inline T* pop_front(void)
+      {
+         if(head == NULL)
+            return NULL;
+
+         T *ret(head);
+         head = head->__intrusive_next;
+         if(head)
+            head->__intrusive_prev = NULL;
+         if(head == NULL)
+            tail = NULL;
+         size--;
+         return head;
+      }
+
       inline void push_back(T *n)
       {
          //std::cout << "push_back " << this << " " << *n << std::endl;

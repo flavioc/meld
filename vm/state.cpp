@@ -316,6 +316,14 @@ state::process_action_tuples(void)
 void
 state::process_incoming_tuples(void)
 {
+#ifdef UNIQUE_INCOMING_LIST
+   while(!store->incoming.empty()) {
+      vm::tuple *tpl(store->incoming.pop_front());
+      vm::predicate *pred(tpl->get_predicate());
+      store->register_tuple_fact(pred, 1);
+      lstore->add_fact(tpl, pred, store->matcher);
+   }
+#else
    for(size_t i(0); i < theProgram->num_predicates(); ++i) {
       utils::intrusive_list<vm::tuple> *ls(store->incoming + i);
       if(!ls->empty()) {
@@ -324,6 +332,7 @@ state::process_incoming_tuples(void)
          lstore->increment_database(pred, ls, store->matcher);
       }
    }
+#endif
    if(!store->incoming_persistent_tuples.empty())
       store->persistent_tuples.splice(store->persistent_tuples.end(), store->incoming_persistent_tuples);
 }
@@ -720,14 +729,14 @@ state::run_node(db::node *no)
    cout << "Node " << node->get_id() << " (is " << node->get_translated_id() << ")" << endl;
 #endif
 
-   store = &(no->store);
-   lstore = &(no->linear);
+   store = &(node->store);
+   lstore = &(node->linear);
 
 	{
 #ifdef CORE_STATISTICS
 		execution_time::scope s(stat.core_engine_time);
 #endif
-      no->lock();
+      node->lock();
       process_action_tuples();
 		process_incoming_tuples();
 #ifdef DYNAMIC_INDEXING
@@ -736,9 +745,11 @@ state::run_node(db::node *no)
          node->indexing_epoch = indexing_epoch;
       }
 #endif
-      no->unprocessed_facts = false;
-      no->unlock();
+      node->unprocessed_facts = false;
+      node->unlock();
 	}
+
+   node->internal_lock();
 
 #ifdef DYNAMIC_INDEXING
    node->rounds++;
@@ -787,10 +798,12 @@ state::run_node(db::node *no)
 #endif
       /* move from generated tuples to linear store */
       if(generated_facts) {
-         for(temporary_store::list_map::iterator it(store->generated.begin()), end(store->generated.end()); it != end; ++it) {
-            utils::intrusive_list<vm::tuple> *gen(it->second);
-            if(!gen->empty())
-               lstore->increment_database(theProgram->get_predicate(it->first), gen, store->matcher);
+         for(size_t i(0); i < theProgram->num_predicates(); ++i) {
+            utils::intrusive_list<vm::tuple> *gen(store->generated + i);
+            if(!gen->empty()) {
+               vm::predicate *pred(theProgram->get_predicate(i));
+               lstore->increment_database(pred, gen, store->matcher);
+            }
          }
       }
       if(!do_persistent_tuples()) {
@@ -862,6 +875,7 @@ state::run_node(db::node *no)
    if(node->rounds > 0 && node->rounds % 5 == 0)
       lstore->cleanup_index();
 #endif
+   node->internal_unlock();
 }
 
 state::state(sched::base *_sched):

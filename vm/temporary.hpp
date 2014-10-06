@@ -10,12 +10,13 @@
 #include "db/tuple.hpp"
 #include "vm/rule_matcher.hpp"
 #include "utils/atomic.hpp"
-#include "utils/mutex.hpp"
 #include "utils/intrusive_list.hpp"
 #include "vm/bitmap.hpp"
 
 namespace vm
 {
+
+//#define UNIQUE_INCOMING_LIST
 
 struct temporary_store
 {
@@ -24,10 +25,11 @@ struct temporary_store
       typedef utils::intrusive_list<vm::tuple> tuple_list;
 
       // incoming linear tuples
+#ifdef UNIQUE_INCOMING_LIST
+      tuple_list incoming;
+#else
       tuple_list *incoming;
-
-      typedef std::unordered_map<vm::predicate_id, tuple_list*, std::hash<vm::predicate_id>,
-              std::equal_to<vm::predicate_id>, mem::allocator< std::pair<const vm::predicate_id, tuple_list*> > > list_map;
+#endif
 
       // incoming persistent tuples
       db::simple_tuple_list incoming_persistent_tuples;
@@ -36,7 +38,7 @@ struct temporary_store
       db::simple_tuple_list incoming_action_tuples;
 
       // generated linear facts
-      list_map generated;
+      tuple_list *generated;
 
       // new action facts
       db::simple_tuple_list action_tuples;
@@ -44,28 +46,29 @@ struct temporary_store
       // queue of persistent tuples
       db::simple_tuple_list persistent_tuples;
 
-      utils::mutex spin;
       vm::rule_matcher matcher;
 
       inline tuple_list* get_generated(const vm::predicate_id p)
       {
-         assert(p < theProgram->num_predicates());
-         list_map::iterator it(generated.find(p));
-         if(it == generated.end())
-            return NULL;
-         return it->second;
+         return generated + p;
       }
 
+#ifndef UNIQUE_INCOMING_LIST
       inline tuple_list* get_incoming(const vm::predicate_id p)
       {
          return incoming + p;
       }
-
+#endif
       inline void add_incoming(vm::tuple *tpl, vm::predicate *pred)
       {
+#ifdef UNIQUE_INCOMING_LIST
+         (void)pred;
+         incoming.push_back(tpl);
+#else
          tuple_list *ls(get_incoming(pred->get_id()));
 
          ls->push_back(tpl);
+#endif
       }
 
       inline void register_fact(db::simple_tuple *stpl)
@@ -88,19 +91,9 @@ struct temporary_store
          matcher.deregister_tuple(pred, count);
       }
 
-      inline tuple_list* create_generated(const vm::predicate_id p)
-      {
-         tuple_list *ls(mem::allocator<tuple_list>().allocate(1));
-         mem::allocator<tuple_list>().construct(ls);
-         generated.insert(std::make_pair(p, ls));
-         return ls;
-      }
-
       inline void add_generated(vm::tuple *tpl, vm::predicate *pred)
       {
          tuple_list *ls(get_generated(pred->get_id()));
-         if(ls == NULL)
-            ls = create_generated(pred->get_id());
          ls->push_back(tpl);
       }
 
@@ -116,21 +109,26 @@ struct temporary_store
 
       explicit temporary_store(void)
       {
+#ifndef UNIQUE_INCOMING_LIST
          incoming = mem::allocator<tuple_list>().allocate(theProgram->num_predicates());
          for(size_t i(0); i < theProgram->num_predicates(); ++i)
             mem::allocator<tuple_list>().construct(incoming + i);
+#endif
+         generated = mem::allocator<tuple_list>().allocate(theProgram->num_predicates());
+         for(size_t i(0); i < theProgram->num_predicates(); ++i)
+            mem::allocator<tuple_list>().construct(generated + i);
       }
 
       ~temporary_store(void)
       {
+#ifndef UNIQUE_INCOMING_LIST
          for(size_t i(0); i < theProgram->num_predicates(); ++i)
             mem::allocator<tuple_list>().destroy(incoming + i);
          mem::allocator<tuple_list>().deallocate(incoming, theProgram->num_predicates());
-         for(list_map::iterator it(generated.begin()), end(generated.end()); it != end; ++it) {
-            tuple_list *ls(it->second);
-            mem::allocator<tuple_list>().destroy(ls);
-            mem::allocator<tuple_list>().deallocate(ls, 1);
-         }
+#endif
+         for(size_t i(0); i < theProgram->num_predicates(); ++i)
+            mem::allocator<tuple_list>().destroy(generated + i);
+         mem::allocator<tuple_list>().deallocate(generated, theProgram->num_predicates());
       }
 };
 
