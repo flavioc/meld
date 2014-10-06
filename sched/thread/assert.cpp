@@ -1,10 +1,10 @@
 #include "conf.hpp"
 
-#include <mutex>
 #include <vector>
 
 #include "sched/thread/assert.hpp"
 #include "vm/state.hpp"
+#include "utils/mutex.hpp"
 
 using namespace std;
 using namespace vm;
@@ -15,7 +15,7 @@ namespace sched
 
 #ifdef ASSERT_THREADS
 
-static mutex mtx;
+static utils::mutex mtx;
 static vector<size_t> total;
 static atomic<int> work(0);
 static bool assert_work_count(true);
@@ -23,7 +23,7 @@ static bool assert_work_count(true);
 void
 assert_thread_iteration(const size_t iteration)
 {
-   mutex::scoped_lock lock(mtx);
+   lock_guard<utils::mutex> l(mtx);
    
    total.push_back(iteration);
    

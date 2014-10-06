@@ -2,9 +2,8 @@
 #ifndef QUEUE_SAFE_DOUBLE_QUEUE_HPP
 #define QUEUE_SAFE_DOUBLE_QUEUE_HPP
 
-#include <mutex>
-
 #include "conf.hpp"
+#include "utils/mutex.hpp"
 #include "queue/intrusive_implementation.hpp"
 
 namespace queue
@@ -17,7 +16,7 @@ private:
 
 	QUEUE_DEFINE_INTRUSIVE_DOUBLE_DATA();
 
-   std::mutex mtx;
+   utils::mutex mtx;
 
 	QUEUE_DEFINE_INTRUSIVE_DOUBLE_OPS();
    
@@ -31,7 +30,7 @@ public:
       if(empty())
          return false;
       
-      std::lock_guard<std::mutex> l(mtx);
+      std::lock_guard<utils::mutex> l(mtx);
       
 		QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP_IF_NOT_EMPTY();
    }
@@ -41,7 +40,7 @@ public:
       if(empty())
          return false;
       
-      std::lock_guard<std::mutex> l(mtx);
+      std::lock_guard<utils::mutex> l(mtx);
       
 		QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP();
    }
@@ -51,21 +50,21 @@ public:
       if(empty())
          return false;
 
-      std::lock_guard<std::mutex> l(mtx);
+      std::lock_guard<utils::mutex> l(mtx);
 
       QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP_TAIL();
    }
    
    inline void push_tail(node_type data)
    {
-      std::lock_guard<std::mutex> l(mtx);
+      std::lock_guard<utils::mutex> l(mtx);
    
       push_tail_node(data);
    }
 
 	inline void push_head(node_type data)
 	{
-      std::lock_guard<std::mutex> l(mtx);
+      std::lock_guard<utils::mutex> l(mtx);
 		
 		push_head_node(data);
 	}
@@ -74,7 +73,7 @@ public:
    
    inline void move_up(node_type node)
    {
-      std::lock_guard<std::mutex> l(mtx);
+      std::lock_guard<utils::mutex> l(mtx);
 
       if(!in_queue(node))
          return;
@@ -84,7 +83,7 @@ public:
 
 	inline bool remove(node_type node, const queue_id_t new_state)
 	{
-      std::lock_guard<std::mutex> l(mtx);
+      std::lock_guard<utils::mutex> l(mtx);
 
       if(!in_queue(node))
          return false;

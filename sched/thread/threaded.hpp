@@ -2,7 +2,6 @@
 #ifndef SCHED_THREAD_THREADED_HPP
 #define SCHED_THREAD_THREADED_HPP
 
-#include <mutex>
 #include <vector>
 
 #include "vm/defs.hpp"
@@ -13,6 +12,7 @@
 #include "sched/thread/termination_barrier.hpp"
 #include "sched/thread/state.hpp"
 #include "utils/tree_barrier.hpp"
+#include "utils/mutex.hpp"
 
 namespace sched
 {
@@ -28,7 +28,7 @@ protected:
    static termination_barrier *term_barrier;
    static utils::tree_barrier *thread_barrier;
    
-   std::mutex lock;
+   utils::mutex lock;
 	
    static volatile size_t round_state;
    size_t thread_round_state;
@@ -53,7 +53,7 @@ protected:
    inline void set_active_if_inactive(void)
    {
       if(is_inactive()) {
-         std::lock_guard<std::mutex> l(lock);
+         std::lock_guard<utils::mutex> l(lock);
          if(is_inactive())
             set_active();
       }
@@ -88,7 +88,7 @@ public:
 
 #define BUSY_LOOP_MAKE_INACTIVE()         \
    if(is_active() && !has_work()) {       \
-      std::lock_guard<std::mutex> l(lock);  \
+      std::lock_guard<utils::mutex> l(lock);  \
       if(!has_work()) {                   \
          if(is_active())                  \
             set_inactive();               \

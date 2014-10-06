@@ -2,7 +2,6 @@
 #ifndef DATABASE_HPP
 #define DATABASE_HPP
 
-#include <mutex>
 #include <map>
 #include <functional>
 #include <fstream>
@@ -13,6 +12,7 @@
 #include "conf.hpp"
 #include "db/node.hpp"
 #include "vm/program.hpp"
+#include "utils/mutex.hpp"
 
 #ifdef USE_UI
 #include <json_spirit.h>
@@ -45,7 +45,7 @@ private:
    node::node_id max_node_id;
    node::node_id max_translated_id;
 
-   std::mutex mtx;
+   utils::mutex mtx;
    
 public:
 

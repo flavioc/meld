@@ -3,7 +3,6 @@
 #define VM_TEMPORARY_HPP
 
 #include <unordered_map>
-#include <mutex>
 
 #include "mem/base.hpp"
 #include "vm/program.hpp"
@@ -11,6 +10,7 @@
 #include "db/tuple.hpp"
 #include "vm/rule_matcher.hpp"
 #include "utils/atomic.hpp"
+#include "utils/mutex.hpp"
 #include "utils/intrusive_list.hpp"
 #include "vm/bitmap.hpp"
 
@@ -43,7 +43,7 @@ struct temporary_store
       // queue of persistent tuples
       db::simple_tuple_list persistent_tuples;
 
-      std::mutex spin;
+      utils::mutex spin;
       vm::rule_matcher matcher;
 
       inline tuple_list* get_generated(const vm::predicate_id p)

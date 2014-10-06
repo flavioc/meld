@@ -2,12 +2,12 @@
 #ifndef DB_LINEAR_STORE_HPP
 #define DB_LINEAR_STORE_HPP
 
-#include <mutex>
 #include <list>
 #include <set>
 #include <iostream>
 #include <unordered_map>
 
+#include "utils/mutex.hpp"
 #include "mem/base.hpp"
 #include "db/tuple.hpp"
 #include "vm/defs.hpp"
@@ -30,7 +30,7 @@ struct linear_store
       utils::byte *data;
 
       vm::bitmap types;
-      std::mutex internal;
+      utils::mutex internal;
 
       hash_table *expand;
 

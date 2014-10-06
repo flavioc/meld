@@ -11,6 +11,7 @@
 #include "vm/match.hpp"
 #include "db/tuple.hpp"
 #include "process/machine.hpp"
+#include "utils/mutex.hpp"
 #include "sched/nodes/thread_intrusive.hpp"
 #ifdef USE_UI
 #include "ui/manager.hpp"
@@ -30,7 +31,7 @@
 #define COMPUTED_GOTOS
 
 #if defined(DEBUG_SENDS)
-static std::mutex print_mtx;
+static utils::mutex print_mtx;
 #endif
 
 using namespace vm;

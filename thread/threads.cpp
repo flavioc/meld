@@ -101,7 +101,7 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
       sent_facts_other_thread++;
 #endif
 
-      lock_guard<mutex> l2(owner->lock);
+      lock_guard<utils::mutex> l2(owner->lock);
       
       if(owner->is_inactive())
       {
@@ -220,7 +220,7 @@ threads_sched::generate_aggs(void)
 void
 threads_sched::killed_while_active(void)
 {
-   lock_guard<mutex> l(lock);
+   lock_guard<utils::mutex> l(lock);
    if(is_active())
       set_inactive();
 }
@@ -782,7 +782,7 @@ threads_sched::move_node_to_new_owner(thread_intrusive_node *tn, threads_sched *
 {
    new_owner->add_to_queue(tn);
 
-   lock_guard<mutex> l2(new_owner->lock);
+   lock_guard<utils::mutex> l2(new_owner->lock);
    
    if(new_owner->is_inactive())
    {

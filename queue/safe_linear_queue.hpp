@@ -2,15 +2,15 @@
 #ifndef QUEUE_SAFE_QUEUE_HPP
 #define QUEUE_SAFE_QUEUE_HPP
 
-#include <mutex>
+#include <iostream>
 
 #include "conf.hpp"
 #include "utils/atomic.hpp"
+#include "utils/mutex.hpp"
 #include "queue/node.hpp"
 #include "queue/unsafe_linear_queue.hpp"
 #include "queue/macros.hpp"
 #include "queue/iterators.hpp"
-#include <iostream>
 
 namespace queue
 {
@@ -214,7 +214,7 @@ private:
    volatile node *head;
    volatile node *tail;
 
-   std::mutex mtx;
+   utils::mutex mtx;
 	
 	QUEUE_DEFINE_TOTAL();
 
@@ -244,7 +244,7 @@ public:
       if(empty())
          return false;
          
-      std::lock_guard<std::mutex> l(mtx);
+      std::lock_guard<utils::mutex> l(mtx);
     
       if(empty())
          return false;
@@ -280,7 +280,7 @@ public:
       if(empty())
          return false;
       
-      std::lock_guard<std::mutex> l(mtx);
+      std::lock_guard<utils::mutex> l(mtx);
       
       if(empty())
          return false;
@@ -312,7 +312,7 @@ public:
       new_node->data = data;
       new_node->next = NULL;
       
-      std::lock_guard<std::mutex> l(mtx);
+      std::lock_guard<utils::mutex> l(mtx);
    
       push_node(new_node);
    }

@@ -2,8 +2,9 @@
 #ifndef QUEUE_SAFE_GENERAL_PQUEUE_HPP
 #define QUEUE_SAFE_GENERAL_PQUEUE_HPP
 
-#include <mutex>
 #include <queue>
+
+#include "utils/mutex.hpp"
 
 namespace queue
 {
@@ -13,7 +14,7 @@ class general_pqueue
 {
 private:
 
-   mutable std::mutex delay_mtx;
+   mutable utils::mutex delay_mtx;
 
    struct queue_item {
       T item;
@@ -35,7 +36,7 @@ public:
    inline void push(T item, P priority)
    {
       queue_item qitem(item, priority);
-      std::lock_guard<std::mutex l(delay_mtx);
+      std::lock_guard<utils::mutex l(delay_mtx);
 
       data.push(qitem);
    }
@@ -52,13 +53,13 @@ public:
 
    inline P top_priority(void) const
    {
-      std::lock_guard<std::mutex l(delay_mtx);
+      std::lock_guard<utils::mutex l(delay_mtx);
       return data.top().priority;
    }
 
    inline T pop(void)
    {
-      std::lock_guard<std::mutex l(delay_mtx);
+      std::lock_guard<utils::mutex l(delay_mtx);
       return data.top().item;
    }
 };
