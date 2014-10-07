@@ -30,8 +30,6 @@ class trie_node: public mem::base
 {
 public:
 
-   MEM_METHODS(trie_node)
-
    trie_node *parent;
    trie_node *next;
    trie_node *prev;
@@ -117,8 +115,6 @@ private:
    
 public:
 
-   MEM_METHODS(trie_hash)
-   
    size_t count_refs(void) const;
    
    void insert_int(const vm::int_val&, trie_node *);
@@ -292,8 +288,6 @@ private:
    
 public:
 
-   MEM_METHODS(tuple_trie_leaf)
-   
 	inline vm::tuple *get_underlying_tuple(void) const { return tpl; }
 	
    virtual inline vm::ref_count get_count(void) const { return count; }
@@ -406,8 +400,6 @@ private:
    
 public:
 
-   MEM_METHODS(tuple_trie_iterator)
-   
    inline tuple_trie_leaf* get_leaf(void) const
    {
       return current_leaf;
@@ -592,8 +584,6 @@ public:
       }
    }
 
-   MEM_METHODS(tuple_trie)
-   
    typedef tuple_trie_iterator iterator;
    typedef tuple_trie_iterator const_iterator;
 
@@ -719,8 +709,6 @@ private:
    
 public:
 
-   MEM_METHODS(agg_trie_leaf)
-   
    inline void set_conf(agg_configuration* _conf) { conf = _conf; }
    
    inline agg_configuration *get_conf(void) const { return conf; }
@@ -754,8 +742,6 @@ private:
    
 public:
 
-   MEM_METHODS(agg_trie_iterator)
-   
    inline agg_configuration* operator*(void) const
    {
       assert(current_leaf != NULL);
@@ -805,8 +791,6 @@ private:
    
 public:
 
-   MEM_METHODS(agg_trie)
-   
    typedef agg_trie_iterator iterator;
    typedef agg_trie_iterator const_iterator;
    

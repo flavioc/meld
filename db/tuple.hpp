@@ -30,8 +30,6 @@ private:
 
 public:
 
-   MEM_METHODS(simple_tuple)
-
    inline vm::tuple* get_tuple(void) const { return data; }
    
    inline vm::strat_level get_strat_level(void) const { return pred->get_strat_level(); }

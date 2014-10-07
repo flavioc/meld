@@ -27,8 +27,6 @@ public:
    virtual ~base(void) {}
 };
 
-#define MEM_METHODS(TYPE)
-
 }
 
 #endif

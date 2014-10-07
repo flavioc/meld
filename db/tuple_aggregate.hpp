@@ -28,8 +28,6 @@ protected:
    
 public:
 
-   MEM_METHODS(tuple_aggregate)
-
    void print(std::ostream&) const;
 
    simple_tuple_list generate(void);

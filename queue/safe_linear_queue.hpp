@@ -15,15 +15,14 @@
 namespace queue
 {
   
-/* special node to use during lock-free operations */ 
+// special node to use during lock-free operations
 template <class T>
 class special_queue_node: public mem::base
 {
 public:
-   MEM_METHODS(special_queue_node<T>)
 
    T data;
-   utils::atomic_ref<special_queue_node*> next;
+   std::atomic<special_queue_node*> next;
 };
 
 // this queue ensures safety for multiple threads
@@ -38,8 +37,8 @@ private:
    
    static_assert(sizeof(special_node) == sizeof(node), "Nodes must have identical size.");
    
-   volatile node *head;
-   utils::atomic_ref<special_node*> tail;
+   node *head;
+   std::atomic<special_node*> tail;
 	
 	QUEUE_DEFINE_TOTAL();
    
@@ -51,18 +50,17 @@ private:
       assert(head != NULL);
       
       while (true) {
-         special_node *last(tail.get());
-         special_node *next(last->next.get());
+         special_node *last(tail.load());
+         special_node *next(last->next.load());
          
-         if(last == tail.get()) {
+         if(last == tail.load()) {
             if(next == NULL) {
-               if(last->next.compare_test_set(next, new_node)) {
-                  tail.compare_and_set(last, new_node);
+               if(last->next.compare_exchange_strong(next, new_node)) {
+                  tail.compare_exchange_strong(last, new_node);
                   return;
                }
-            } else {
-               tail.compare_and_set(last, next);
-            }
+            } else
+               tail.compare_exchange_strong(last, next);
          }
       }
    }
@@ -70,18 +68,17 @@ private:
    inline void splice_headtail(special_node* qhead, special_node* qtail)
    {
       while (true) {
-         special_node *last(tail.get());
-         special_node *next(last->next.get());
+         special_node *last(tail.load());
+         special_node *next(last->next.load());
          
-         if(last == tail.get()) {
+         if(last == tail.load()) {
             if(next == NULL) {
-               if(last->next.compare_test_set(next, qhead)) {
-                  tail.compare_and_set(last, qtail);
+               if(last->next.compare_exchange_strong(next, qhead)) {
+                  tail.compare_exchange_strong(last, qtail);
                   return;
                }
-            } else {
-               tail.compare_and_set(last, next);
-            }
+            } else
+               tail.compare_exchange_strong(last, next);
          }
       }
    }
@@ -92,7 +89,7 @@ public:
    
    inline bool empty(void) const
 	{
-		return head == reinterpret_cast<node*>(tail.get());
+		return head == reinterpret_cast<node*>(tail.load());
 	}
 	
 	QUEUE_DEFINE_LINEAR_CONST_ITERATOR_CLASS();

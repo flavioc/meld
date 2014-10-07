@@ -39,8 +39,6 @@ private:
 
 public:
 
-   MEM_METHODS(tuple)
-
    bool field_equal(type *, const tuple&, const field_num) const;
 
    bool equal(const tuple&, vm::predicate *) const;

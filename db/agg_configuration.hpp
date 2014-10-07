@@ -41,8 +41,6 @@ protected:
 
 public:
 
-   MEM_METHODS(agg_configuration)
-
    void print(std::ostream&, vm::predicate *) const;
 
    void generate(vm::predicate *, const vm::aggregate_type, const vm::field_num, simple_tuple_list&);

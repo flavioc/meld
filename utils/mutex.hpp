@@ -25,6 +25,8 @@ namespace utils
 extern std::atomic<uint64_t> lock_count;
 extern std::atomic<uint64_t> ok_locks;
 extern std::atomic<uint64_t> failed_locks;
+extern std::atomic<uint64_t> steal_locks;
+extern std::atomic
 #endif
 
 class mutex
