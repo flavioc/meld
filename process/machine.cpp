@@ -272,8 +272,8 @@ machine::start(void)
       count_set_priority += all->SCHEDS[i]->count_set_priority;
       count_add_priority += all->SCHEDS[i]->count_add_priority;
    }
-   cout << "derived, consumed, sent,addself, addother, stolen, setprio, addprio" << endl;
-   cout << facts_derived << ", " << facts_consumed << ", " << facts_sent <<
+   cerr << "derived, consumed, sent,addself, addother, stolen, setprio, addprio" << endl;
+   cerr << facts_derived << ", " << facts_consumed << ", " << facts_sent <<
       ", " << count_add_work_self << ", " << count_add_work_other << ", " <<
       count_stolen_nodes << ", " << count_set_priority << ", " <<
       count_add_priority << endl;
