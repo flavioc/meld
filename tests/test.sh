@@ -107,27 +107,11 @@ loop_sched ()
       return
    fi
 	run_test_n 1 1 ${SCHED}
-   if [ $NODES -gt 1 ]; then
-      run_test_n 2 1 ${SCHED}
-   fi
-	if [ $NODES -gt 2 ]; then
-		run_test_n 3 1 ${SCHED}
-	fi
-	if [ $NODES -gt 3 ]; then
-		run_test_n 4 1 ${SCHED}
-	fi
-	if [ $NODES -gt 4 ]; then
-		run_test_n 5 1 ${SCHED}
-	fi
-	if [ $NODES -gt 5 ]; then
-		run_test_n 6 1 ${SCHED}
-	fi
-	if [ $NODES -gt 6 ]; then
-		run_test_n 7 1 ${SCHED}
-	fi
-	if [ $NODES -gt 7 ]; then
-		run_test_n 8 1 ${SCHED}
-	fi
+   for th in `seq 2 16`; do
+      if [ $NODES -ge $th ]; then
+         run_test_n $th 1 ${SCHED}
+      fi
+   done
 }
 
 if [ "${TYPE}" = "thread" ]; then
