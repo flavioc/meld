@@ -22,15 +22,15 @@ serial:
 		bash serial.sh $$file $(RUNS); \
 	done
 
+THREAD_PROGRAMS = simple32 8queens-13 belief-propagation-200 \
+	greedy-graph-coloring-2000 min-max-tictactoe \
+	shortest-5000-all shortest-usairports500
+
 thread:
 	@rm -f $(RESULTS_FILE)
-	@bash threads_even.sh code/simple32.m th even 1 $(NPROCS) $(RUNS)
-	@bash threads_even.sh code/8queens-13.m th even 1 $(NPROCS) $(RUNS)
-	@bash threads_even.sh code/belief-propagation-400.m th even 1 $(NPROCS) $(RUNS)
-	@bash threads_even.sh code/greedy-graph-coloring-2000.m th even 1 $(NPROCS) $(RUNS)
-	@bash threads_even.sh code/min-max-tictactoe.m th even 1 $(NPROCS) $(RUNS)
-	@bash threads_even.sh code/shortest-5000-all.m th even 1 $(NPROCS) $(RUNS)
-	@bash threads_even.sh code/shortest-usairports500.m th even 1 $(NPROCS) $(RUNS)
+	@for test in $(THREAD_PROGRAMS); do \
+		bash threads_even.sh code/$$test.m th even 1 $(NPROCS) $(RUNS); \
+	done
 
 coord-shortest:
 	@rm -f $(RESULTS_FILE)
@@ -56,3 +56,4 @@ compiled:
 
 clean:
 	rm -f $(RESULTS_FILE)
+	rm -rf output

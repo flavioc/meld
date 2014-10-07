@@ -35,7 +35,7 @@ do_run ()
 {
 	NUM_THREADS="${1}"
 	TO_RUN="${EXEC} ${FILE} -c ${SCHEDULER}${NUM_THREADS} -- ${MELD_ARGS}"
-	time_run_n "${TO_RUN}" "$(basename ${FILE} .m) ${SCHEDULER}${NUM_THREADS}"
+	time_run_n "${TO_RUN}" "$(basename ${FILE} .m)" ${SCHEDULER} ${NUM_THREADS}
 }
 
 run_thread ()
