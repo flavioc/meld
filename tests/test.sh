@@ -3,7 +3,7 @@
 EXEC="../meld -d"
 TEST=${1}
 TYPE="${2}"
-FORCE_THREADS="${3}"
+RUNS="${3}"
 
 if test -z "${TEST}" -o -z "${TYPE}"; then
 	echo "Usage: test.sh <code file> <test type: th, thp, ...>"
@@ -28,6 +28,10 @@ run_diff ()
 		echo "Meld failed! See report"
 		exit 1
 	fi
+   if [ $RET -eq 139 ]; then
+      echo "Meld crashed. Please report to <flaviocruz@gmail.com>"
+      exit 1
+   fi
    failed_tests=""
    done=0
    for file in "${FILE}" "${FILE}2"; do
@@ -102,24 +106,21 @@ run_test_n ()
 loop_sched ()
 {
 	SCHED=${1}
-   if [ ! -z "$FORCE_THREADS" ]; then
-      run_test_n $FORCE_THREADS 1 ${SCHED}
-      return
-   fi
+   RUNS=${2}
 	run_test_n 1 1 ${SCHED}
    for th in `seq 2 16`; do
       if [ $NODES -ge $th ]; then
-         run_test_n $th 1 ${SCHED}
+         run_test_n $th ${RUNS} ${SCHED} ${RUNS}
       fi
    done
 }
 
 if [ "${TYPE}" = "thread" ]; then
-	loop_sched th
+	loop_sched th ${RUNS}
 	exit 0
 fi
 
 if [ "${TYPE}" = "serial" ]; then
-   run_serial_n th1 1
+   run_serial_n th1 ${RUNS}
 	exit 0
 fi
