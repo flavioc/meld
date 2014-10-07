@@ -67,6 +67,9 @@ CLANG = $(shell $(CXX) -v 2>&1 | grep LLVM)
 ifneq ($(CLANG), )
 	CFLAGS += -Qunused-arguments
 endif
+ifeq ($(CLANG), )
+	LIBRARIES += -latomic -lpthread
+endif
 
 ifeq ($(GCC_MINOR),2)
 	CFLAGS += -DTEMPLATE_OPTIMIZERS=1
