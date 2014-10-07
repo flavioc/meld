@@ -11,13 +11,10 @@
 #include <atomic>
 #endif
 
-#ifdef USE_STD_MUTEX
 #include <mutex>
-#endif
 #ifdef USE_SEMAPHORE
 #include <semaphore.h>
-#endif
-#ifdef USE_SPINLOCK
+#elif defined(USE_SPINLOCK)
 #include "utils/spinlock.hpp"
 #endif
 
