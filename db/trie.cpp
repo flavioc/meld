@@ -440,7 +440,8 @@ trie_hash::insert_uint(const uint_val& val, trie_node *node)
 void
 trie_hash::insert_float(const float_val& val, trie_node *node)
 {
-   const size_t bucket(hash_item(std::hash<float_val>()(val)));
+   const size_t v(std::hash<float_val>()(val)/10000);
+   const size_t bucket(hash_item(v));
    
    assert(bucket < num_buckets);
    
@@ -708,7 +709,7 @@ trie::check_insert(void *data, predicate *pred, const derivation_count many, con
             assert(parent->is_hashed());
          } else if (parent->is_hashed()) {
             trie_hash *hsh(parent->get_hash());
-            if(hsh->total > hsh->num_buckets * 2)
+            if(count > TRIE_HASH_LIST_THRESHOLD/2)
                hsh->expand();
          }
          

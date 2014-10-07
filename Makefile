@@ -141,6 +141,11 @@ OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
 all: $(TARGETS)
 
+.PHONY: clean
+clean:
+	find . -name '*.o' | xargs rm -f
+	rm -f meld predicates print server
+
 -include Makefile.externs
 Makefile.externs:	conf.mk
 	@echo "Remaking Makefile.externs"
@@ -165,9 +170,5 @@ simulator: $(OBJS) simulator.o
 depend:
 	makedepend -- $(CXXFLAGS) -- $(shell find . -name '*.cpp')
 
-.PHONY: clean
-clean:
-	find . -name '*.o' | xargs rm -f
-	rm -f meld predicates print server Makefile.externs
 # DO NOT DELETE
 
