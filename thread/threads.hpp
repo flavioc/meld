@@ -18,6 +18,7 @@
 namespace sched
 {
 
+#define STATE_IDLE queue_no_queue
 #define STATE_WORKING 0
 #define STATE_STEALING 1
 #define STATE_PRIO_CHANGE 2
@@ -63,11 +64,6 @@ protected:
       }
    } queues;
 
-   inline bool node_in_normal_queue(thread_intrusive_node *tn) const
-   {
-      return tn->node_state() == NORMAL_QUEUE_MOVING || tn->node_state() == NORMAL_QUEUE_STATIC;
-   }
-
 	typedef queue::intrusive_safe_complex_pqueue<thread_intrusive_node> priority_queue;
 
    struct Priorities {
@@ -92,11 +88,6 @@ protected:
       else
          prios.moving.insert(node, node->get_priority_level());
 	}
-
-   inline bool node_in_priority_queue(thread_intrusive_node *tn) const
-   {
-      return tn->node_state() == PRIORITY_MOVING || tn->node_state() == PRIORITY_STATIC;
-   }
 
    thread_intrusive_node *current_node;
 
