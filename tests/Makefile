@@ -5,8 +5,6 @@ VM = ../meld -d -f
 
 all: test-serial test-thread
 
-all: compiled
-
 test-serial:
 	@echo "====> Serial test"
 	@bash test_all.sh serial
