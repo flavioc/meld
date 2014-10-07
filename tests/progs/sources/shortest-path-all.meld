@@ -1,0 +1,22 @@
+// this computes all pairs shortest path for all nodes in the graph
+
+type linear path(node, node, int, int).
+
+priority @order @asc.
+priority @initial 1.0.
+
+const used = 1.
+const notused = 0.
+
+path(A, A, 0, 0).
+
+path(A, X, B, K), path(A, X, B, notused), K = used
+	-o path(A, X, B, K).
+
+path(A, U, B1, X), path(A, U, B2, Y), B1 <= B2
+   -o path(A, U, B1, X).
+
+path(A, X, D, notused)
+   -o path(A, X, D, used), {B, W | !edge(A, B, W) | path(B, X, D + W, notused), set-priority(B, float(D + W))}.
+
+
