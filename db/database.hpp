@@ -9,7 +9,6 @@
 #include <unordered_map>
 #include <stdexcept>
 
-#include "conf.hpp"
 #include "db/node.hpp"
 #include "vm/program.hpp"
 #include "utils/mutex.hpp"

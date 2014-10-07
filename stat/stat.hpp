@@ -4,8 +4,6 @@
 
 #include <string>
 
-#include "conf.hpp"
-
 namespace statistics
 {
 

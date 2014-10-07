@@ -2,7 +2,6 @@
 #ifndef QUEUE_INTRUSIVE_IMPLEMENTATION_HPP
 #define QUEUE_INTRUSIVE_IMPLEMENTATION_HPP
 
-#include "conf.hpp"
 #include "queue/macros.hpp"
 #include "queue/intrusive.hpp"
 

@@ -2,8 +2,6 @@
 #ifndef SCHED_TYPES_HPP
 #define SCHED_TYPES_HPP
 
-#include "conf.hpp"
-
 namespace sched
 {
    

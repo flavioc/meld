@@ -2,8 +2,6 @@
 #ifndef PROCESS_REMOTE_HPP
 #define PROCESS_REMOTE_HPP
 
-#include "conf.hpp"
-
 #include <ostream>
 #include <stdexcept>
 #include <vector>

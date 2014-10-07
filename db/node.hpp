@@ -2,8 +2,6 @@
 #ifndef NODE_HPP
 #define NODE_HPP
 
-#include "conf.hpp"
-
 #include <atomic>
 #include <list>
 #include <ostream>

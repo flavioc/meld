@@ -2,8 +2,6 @@
 #ifndef MEM_THREAD_HPP
 #define MEM_THREAD_HPP
 
-#include "conf.hpp"
-
 #include "mem/pool.hpp"
 
 namespace mem

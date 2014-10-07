@@ -2,7 +2,6 @@
 #ifndef VM_FUNCTION_HPP
 #define VM_FUNCTION_HPP
 
-#include "conf.hpp"
 #include "vm/defs.hpp"
 
 namespace vm

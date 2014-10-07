@@ -2,8 +2,6 @@
 #ifndef PROCESS_ROUTER_HPP
 #define PROCESS_ROUTER_HPP
 
-#include "conf.hpp"
-
 #include <vector>
 #include <list>
 #include <stdexcept>

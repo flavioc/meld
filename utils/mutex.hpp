@@ -5,7 +5,6 @@
 //#define USE_STD_MUTEX
 //#define USE_SEMAPHORE
 #define USE_SPINLOCK
-//#define LOCK_STATISTICS
 
 #ifdef LOCK_STATISTICS
 #include <atomic>

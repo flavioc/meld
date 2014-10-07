@@ -932,16 +932,8 @@ state::state(void):
 state::~state(void)
 {
 #ifdef CORE_STATISTICS
-	if(sched != NULL) {
+	if(sched != NULL)
       stat.print(cout);
-	}
-#endif
-#ifdef FACT_STATISTICS
-   if(sched != NULL) {
-      cout << "Facts derived: " << facts_derived << endl;
-      cout << "Facts consumed: " << facts_consumed << endl;
-      cout << "Facts sent: " << facts_sent << endl;
-   }
 #endif
    if(sched != NULL) {
       bitmap::destroy(rule_queue, theProgram->num_rules_next_uint());

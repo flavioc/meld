@@ -10,7 +10,6 @@
 #include <unordered_map>
 
 #include "mem/chunkgroup.hpp"
-#include "conf.hpp"
 
 namespace mem
 {

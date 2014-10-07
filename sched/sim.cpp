@@ -2,8 +2,6 @@
 #include <boost/asio.hpp>
 #include <string>
 
-#include "conf.hpp"
-
 #ifdef USE_SIM
 
 #include "sched/sim.hpp"

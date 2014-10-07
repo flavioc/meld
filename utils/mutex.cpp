@@ -24,10 +24,10 @@ void
 utils::mutex::print_statistics(void)
 {
 #ifdef LOCK_STATISTICS
-   cerr << "ok,failed,steal,internal,ready,sched,add,check,prio" << endl;
-   cerr << internal_ok_locks << "," << internal_failed_locks << "," <<
-      steal_locks << "," << internal_locks << "," << ready_lock << "," <<
-      sched_lock << "," << add_lock << "," << check_lock << "," <<
+   cerr << "ok, failed, steal, internal, ready, sched, add, check, prio" << endl;
+   cerr << internal_ok_locks << ", " << internal_failed_locks << ", " <<
+      steal_locks << ", " << internal_locks << ", " << ready_lock << ", " <<
+      sched_lock << ", " << add_lock << ", " << check_lock << ", " <<
       prio_lock << endl;
 #endif
 }

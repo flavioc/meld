@@ -1,8 +1,6 @@
 #ifndef VM_TUPLE_HPP
 #define VM_TUPLE_HPP
 
-#include "conf.hpp"
-
 #include <ostream>
 #include <list>
 

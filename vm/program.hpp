@@ -2,8 +2,6 @@
 #ifndef PROGRAM_HPP
 #define PROGRAM_HPP
 
-#include "conf.hpp"
-
 #include <string>
 #include <vector>
 #include <stdexcept>

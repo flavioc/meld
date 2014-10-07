@@ -2,8 +2,6 @@
 #ifndef QUEUE_INTRUSIVE_HPP
 #define QUEUE_INTRUSIVE_HPP
 
-#include "conf.hpp"
-
 typedef int32_t queue_id_t;
 #define queue_no_queue -1
 

@@ -1,5 +1,3 @@
-#include "conf.hpp"
-
 #include <vector>
 
 #include "sched/thread/assert.hpp"

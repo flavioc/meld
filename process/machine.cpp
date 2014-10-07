@@ -243,7 +243,6 @@ machine::start(void)
    
    for(size_t i(1); i < all->NUM_THREADS; ++i) {
       threads[i]->join();
-      delete threads[i];
    }
 
 #if 0
@@ -254,6 +253,34 @@ machine::start(void)
 #ifdef LOCK_STATISTICS
    utils::mutex::print_statistics();
 #endif
+#ifdef FACT_STATISTICS
+   uint64_t facts_derived(0);
+   uint64_t facts_consumed(0);
+   uint64_t facts_sent(0);
+   uint64_t count_add_work_self(0);
+   uint64_t count_add_work_other(0);
+   uint64_t count_stolen_nodes(0);
+   uint64_t count_set_priority(0);
+   uint64_t count_add_priority(0);
+   for(size_t i(0); i < all->NUM_THREADS; ++i) {
+      facts_derived += all->SCHEDS[i]->get_state().facts_derived;
+      facts_consumed += all->SCHEDS[i]->get_state().facts_consumed;
+      facts_sent += all->SCHEDS[i]->get_state().facts_sent;
+      count_add_work_self += all->SCHEDS[i]->count_add_work_self;
+      count_add_work_other += all->SCHEDS[i]->count_add_work_other;
+      count_stolen_nodes += all->SCHEDS[i]->count_stolen_nodes;
+      count_set_priority += all->SCHEDS[i]->count_set_priority;
+      count_add_priority += all->SCHEDS[i]->count_add_priority;
+   }
+   cout << "derived, consumed, sent,addself, addother, stolen, setprio, addprio" << endl;
+   cout << facts_derived << ", " << facts_consumed << ", " << facts_sent <<
+      ", " << count_add_work_self << ", " << count_add_work_other << ", " <<
+      count_stolen_nodes << ", " << count_set_priority << ", " <<
+      count_add_priority << endl;
+#endif
+
+   for(size_t i(1); i < all->NUM_THREADS; ++i)
+      delete threads[i];
       
    if(alarm_thread) {
       kill(getpid(), SIGUSR1);

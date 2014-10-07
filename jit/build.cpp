@@ -1,6 +1,4 @@
 
-#include "conf.hpp"
-
 #ifdef USE_JIT
 
 #include <jit/jit-dump.h>

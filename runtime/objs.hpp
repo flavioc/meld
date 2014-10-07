@@ -2,8 +2,6 @@
 #ifndef RUNTIME_OBJS_HPP
 #define RUNTIME_OBJS_HPP
 
-#include "conf.hpp"
-
 #include <iostream>
 #include <string>
 #include <stack>

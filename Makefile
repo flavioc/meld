@@ -35,6 +35,21 @@ endif
 ifeq ($(TASK_STEALING), true)
 	FLAGS += -DTASK_STEALING
 endif
+ifeq ($(LOCK_STATISTICS), true)
+	FLAGS += -DLOCK_STATISTICS
+endif
+ifeq ($(FACT_STATISTICS), true)
+	FLAGS += -DFACT_STATISTICS
+endif
+ifeq ($(INSTRUMENTATION), true)
+	FLAGS += -DINSTRUMENTATION
+endif
+ifeq ($(CORE_STATISTICS), true)
+	FLAGS += -DCORE_STATISTICS
+endif
+ifeq ($(MEMORY_STATISTICS), true)
+	FLAGS += -DMEMORY_STATISTICS
+endif
 
 ifeq ($(JIT), true)
 	FLAGS += -DUSE_JIT

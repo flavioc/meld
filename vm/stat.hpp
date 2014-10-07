@@ -7,7 +7,6 @@
 
 #include "vm/all.hpp"
 #include "utils/time.hpp"
-#include "conf.hpp"
 
 #ifdef CORE_STATISTICS
 namespace vm

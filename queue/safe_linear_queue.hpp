@@ -5,7 +5,6 @@
 #include <atomic>
 #include <iostream>
 
-#include "conf.hpp"
 #include "utils/mutex.hpp"
 #include "queue/node.hpp"
 #include "queue/unsafe_linear_queue.hpp"

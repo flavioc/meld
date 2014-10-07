@@ -2,8 +2,6 @@
 #ifndef PROCESS_MACHINE_HPP
 #define PROCESS_MACHINE_HPP
 
-#include "conf.hpp"
-
 #include <stdexcept>
 #include <string>
 #include <vector>

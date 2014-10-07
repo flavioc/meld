@@ -2,8 +2,6 @@
 #ifndef DB_TUPLE_HPP
 #define DB_TUPLE_HPP
 
-#include "conf.hpp"
-
 #include <vector>
 #include <ostream>
 #include <list>

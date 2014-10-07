@@ -2,8 +2,6 @@
 #ifndef QUEUE_MACROS_HPP
 #define QUEUE_MACROS_HPP
 
-#include "conf.hpp"
-
 #define QUEUE_INCREMENT_TOTAL() ++total
 #define QUEUE_INCREMENT_TOTAL_N(N) total += (N)
 #define QUEUE_DECREMENT_TOTAL() --total

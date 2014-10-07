@@ -7,8 +7,6 @@
 #include <list>
 #include <stdexcept>
 
-#include "conf.hpp"
-
 #include "db/tuple.hpp"
 #include "db/node.hpp"
 #include "db/database.hpp"
@@ -180,6 +178,16 @@ public:
       (void)sl;
 #endif
    }
+
+#ifdef FACT_STATISTICS
+   vm::state& get_state(void) { return state; }
+
+   uint64_t count_add_work_self = 0;
+   uint64_t count_add_work_other = 0;
+   uint64_t count_stolen_nodes = 0;
+   uint64_t count_set_priority = 0;
+   uint64_t count_add_priority = 0;
+#endif
 
    static std::atomic<bool> stop_flag;
 

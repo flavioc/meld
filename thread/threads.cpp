@@ -76,6 +76,9 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
    threads_sched *owner(dynamic_cast<threads_sched*>(tnode->get_owner()));
 
    if(owner == this) {
+#ifdef FACT_STATISTICS
+      count_add_work_self++;
+#endif
       tnode->internal_lock();
       LOCK_STAT(internal_locks);
       tnode->add_work_myself(tpl, pred, count, depth);
@@ -86,6 +89,9 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
       if(!tnode->active_node())
          add_to_queue(tnode);
    } else {
+#ifdef FACT_STATISTICS
+      count_add_work_other++;
+#endif
       if(tnode->try_internal_lock()) {
          LOCK_STAT(internal_ok_locks);
          tnode->add_work_myself(tpl, pred, count, depth);
@@ -145,6 +151,9 @@ threads_sched::go_steal_nodes(void)
 
          if(node == NULL)
             break;
+#ifdef FACT_STATISTICS
+         count_stolen_nodes++;
+#endif
 
          node->lock();
          LOCK_STAT(steal_locks);
@@ -507,6 +516,9 @@ threads_sched::add_node_priority(node *n, const double priority)
 {
    if(!scheduling_mechanism)
       return;
+#ifdef FACT_STATISTICS
+   count_add_priority++;
+#endif
 
 	thread_intrusive_node *tn((thread_intrusive_node*)n);
 
@@ -550,6 +562,10 @@ threads_sched::set_node_priority(node *n, const double priority)
       return;
 
    thread_intrusive_node *tn((thread_intrusive_node*)n);
+#ifdef FACT_STATISTICS
+   count_set_priority++;
+#endif
+
 //   cout << "Set node " << n->get_id() << " with prio " << priority << endl;
 #ifdef TASK_STEALING
    tn->lock();

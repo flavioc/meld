@@ -6,7 +6,6 @@
 #include <ostream>
 #include <iostream>
 
-#include "conf.hpp"
 #include "vm/tuple.hpp"
 #include "utils/intrusive_list.hpp"
 #include "mem/allocator.hpp"

@@ -2,7 +2,6 @@
 #ifndef MEM_CENTER_HPP
 #define MEM_CENTER_HPP
 
-#include "conf.hpp"
 #include "mem/stat.hpp"
 #include "mem/thread.hpp"
 

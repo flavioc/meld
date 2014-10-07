@@ -2,8 +2,6 @@
 #ifndef MEM_STAT_HPP
 #define MEM_STAT_HPP
 
-#include "conf.hpp"
-
 namespace mem
 {
 

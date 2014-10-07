@@ -5,7 +5,6 @@
 #include <limits>
 #include <unordered_set>
 
-#include "conf.hpp"
 #include "mem/center.hpp"
 #include "mem/thread.hpp"
 #include "mem/stat.hpp"

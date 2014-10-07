@@ -2,8 +2,6 @@
 #ifndef SCHED_SERIAL_UI_HPP
 #define SCHED_SERIAL_UI_HPP
 
-#include "conf.hpp"
-
 #include "sched/base.hpp"
 #include "sched/nodes/serial.hpp"
 #include "sched/serial.hpp"

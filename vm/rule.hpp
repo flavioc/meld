@@ -6,7 +6,6 @@
 #include <vector>
 #include <ostream>
 
-#include "conf.hpp"
 #include "vm/defs.hpp"
 #include "vm/predicate.hpp"
 #include "vm/bitmap.hpp"

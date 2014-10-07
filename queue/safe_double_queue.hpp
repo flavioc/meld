@@ -2,7 +2,6 @@
 #ifndef QUEUE_SAFE_DOUBLE_QUEUE_HPP
 #define QUEUE_SAFE_DOUBLE_QUEUE_HPP
 
-#include "conf.hpp"
 #include "utils/mutex.hpp"
 #include "queue/intrusive_implementation.hpp"
 
