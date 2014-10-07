@@ -304,25 +304,14 @@ public:
    }
 };
 
-// XXX: must use C++0X
+template <typename T>
+typedef bounded_pqueue<T, push_safe_linear_queue<T>, std::atomic<size_t>> safe_bounded_pqueue;
 
 template <typename T>
-struct safe_bounded_pqueue
-{
-   typedef bounded_pqueue<T, push_safe_linear_queue<T>, std::atomic<size_t>> type;
-};
+typedef bounded_pqueue<T, unsafe_linear_queue<T>, size_t> unsafe_bounded_pqueue;
 
 template <typename T>
-struct unsafe_bounded_pqueue
-{
-   typedef bounded_pqueue<T, unsafe_linear_queue<T>, size_t> type;
-};
-
-template <typename T>
-struct intrusive_unsafe_double_bounded_pqueue
-{
-	typedef bounded_pqueue<T, intrusive_unsafe_double_queue<T>, size_t> type;
-};
+typedef bounded_pqueue<T, intrusive_unsafe_double_queue<T>, size_t> intrusive_unsafe_double_bounded_pqueue;
 
 }
 
