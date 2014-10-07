@@ -3,10 +3,17 @@ VM = ../meld -d -f
 
 .PHONY: test clean
 
+all: test-serial test-thread
+
 all: compiled
 
-test:
-	@bash test_all.sh th 1
+test-serial:
+	@echo "====> Serial test"
+	@bash test_all.sh serial
+
+test-thread:
+	@echo "===> Thread test"
+	@bash test_all.sh thread
 
 code/%.m: FORCE
 	@bash test.sh $@ th1

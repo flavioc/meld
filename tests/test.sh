@@ -11,7 +11,7 @@ if test -z "${TEST}" -o -z "${TYPE}"; then
 fi
 
 FILE="files/$(basename $TEST .m).test"
-NODES=$(sh ./number_nodes.sh $TEST)
+NODES=$(python ./number_nodes.py $TEST)
 
 do_exit ()
 {
@@ -28,12 +28,27 @@ run_diff ()
 		echo "Meld failed! See report"
 		exit 1
 	fi
-	DIFF=`diff -u ${FILE} test.out`
-	if [ ! -z "${DIFF}" ]; then
-		diff -u ${FILE} test.out
-		echo "!!!!!! DIFFERENCES IN FILE ${TEST} ($TO_RUN)"
-      return 1
-	fi
+   failed_tests=""
+   done=0
+   for file in "${FILE}" "${FILE}2"; do
+      if [ ! -z $file ]; then
+         continue
+      fi
+      DIFF=`diff -u ${file} test.out`
+      if [ ! -z "${DIFF}" ]; then
+         failed_tests="$failed_tests $file"
+      else
+         done=1
+         break
+      fi
+   done
+   if [ $done -eq 0 ]; then 
+      for tst in $failed_tests; do
+         echo $tst
+         diff -u ${tst} test.out
+         echo "!!!!!! DIFFERENCES IN FILE ${TEST} ($TO_RUN)"
+      done
+   fi
 	rm test.out
    return 0
 }
@@ -115,12 +130,12 @@ loop_sched ()
 	fi
 }
 
-if [ "${TYPE}" = "all" ]; then
+if [ "${TYPE}" = "thread" ]; then
 	loop_sched th
 	exit 0
 fi
 
-if [ "${TYPE}" = "th" ]; then
+if [ "${TYPE}" = "serial" ]; then
    run_serial_n th1 1
 	exit 0
 fi

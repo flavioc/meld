@@ -1,5 +1,15 @@
 graph_coloring1
 graph_coloring2
 belief-propagation
+belief-propagation-structs
 pagerank-linear-async
 heat-transfer
+mfp
+a-star
+neural_network1
+stop-program
+set-priority1
+set-priority2
+set-default-priority1
+set-default-priority2
+mwst

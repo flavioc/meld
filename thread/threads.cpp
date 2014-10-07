@@ -303,7 +303,6 @@ threads_sched::busy_wait(void)
    set_active_if_inactive();
    ins_active;
    assert(is_active());
-   assert(has_work());
    
    return true;
 }
