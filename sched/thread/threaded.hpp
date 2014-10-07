@@ -54,6 +54,7 @@ protected:
    {
       if(is_inactive()) {
          std::lock_guard<utils::mutex> l(lock);
+         LOCK_STAT(sched_lock);
          if(is_inactive())
             set_active();
       }

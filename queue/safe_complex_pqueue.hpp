@@ -94,6 +94,7 @@ public:
 	inline void insert(heap_object node, const double prio)
 	{
       std::lock_guard<utils::mutex> l(mtx);
+      LOCK_STAT(ready_lock);
 		do_insert(node, prio);
 	}
 
@@ -115,6 +116,7 @@ public:
 	double min_value(void) const
 	{
       std::lock_guard<utils::mutex> l(mtx);
+      LOCK_STAT(ready_lock);
 
       if(empty())
          return 0.0;
@@ -125,6 +127,7 @@ public:
 	heap_object pop(const queue_id_t new_state)
 	{
       std::lock_guard<utils::mutex> l(mtx);
+      LOCK_STAT(ready_lock);
 		return do_pop(new_state);
 	}
 
@@ -132,6 +135,8 @@ public:
    {
       std::lock_guard<utils::mutex> l1(mtx);
       std::lock_guard<utils::mutex> l2(other.mtx);
+      LOCK_STAT(ready_lock);
+      LOCK_STAT(ready_lock);
 
       if(empty()) {
          if(other.empty())
@@ -150,6 +155,7 @@ public:
 	inline bool remove(heap_object obj, const queue_id_t new_state)
 	{
       std::lock_guard<utils::mutex> l(mtx);
+      LOCK_STAT(ready_lock);
       if(__INTRUSIVE_QUEUE(obj) != queue_number)
          return false;
 		do_remove(obj, new_state);

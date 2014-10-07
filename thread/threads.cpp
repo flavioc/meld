@@ -71,11 +71,13 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
    thread_intrusive_node *tnode(dynamic_cast<thread_intrusive_node*>(to));
 
    tnode->lock();
+   LOCK_STAT(add_lock);
    
    threads_sched *owner(dynamic_cast<threads_sched*>(tnode->get_owner()));
 
    if(owner == this) {
       tnode->internal_lock();
+      LOCK_STAT(internal_locks);
       tnode->add_work_myself(tpl, pred, count, depth);
       tnode->internal_unlock();
 #ifdef INSTRUMENTATION
@@ -85,10 +87,13 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
          add_to_queue(tnode);
    } else {
       if(tnode->try_internal_lock()) {
+         LOCK_STAT(internal_ok_locks);
          tnode->add_work_myself(tpl, pred, count, depth);
          tnode->internal_unlock();
-      } else
+      } else {
+         LOCK_STAT(internal_failed_locks);
          tnode->add_work_others(tpl, pred, count, depth);
+      }
       if(!tnode->active_node())
          owner->add_to_queue(tnode);
 #ifdef INSTRUMENTATION
@@ -96,6 +101,7 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
 #endif
 
       lock_guard<utils::mutex> l2(owner->lock);
+      LOCK_STAT(sched_lock);
       
       if(owner->is_inactive())
       {
@@ -106,14 +112,6 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
 
    tnode->unlock();
 }
-
-#ifdef COMPILE_MPI
-void
-threads_sched::new_work_remote(remote *, const node::node_id, message *)
-{
-   assert(false);
-}
-#endif
 
 #ifdef TASK_STEALING
 bool
@@ -149,6 +147,7 @@ threads_sched::go_steal_nodes(void)
             break;
 
          node->lock();
+         LOCK_STAT(steal_locks);
          if(node->node_state() != STATE_STEALING) {
             // node was put in the queue again, give up.
             node->unlock();
@@ -325,6 +324,7 @@ threads_sched::check_if_current_useless(void)
 {
    if(!current_node->unprocessed_facts) {
       current_node->lock();
+      LOCK_STAT(check_lock);
       
       if(!current_node->unprocessed_facts) {
          current_node->make_inactive();
@@ -512,6 +512,7 @@ threads_sched::add_node_priority(node *n, const double priority)
 
 #ifdef TASK_STEALING
    tn->lock();
+   LOCK_STAT(prio_lock);
    threads_sched *other((threads_sched*)tn->get_owner());
    if(other == this)
       do_set_node_priority(n, tn->get_priority_level() + priority);
@@ -552,6 +553,7 @@ threads_sched::set_node_priority(node *n, const double priority)
 //   cout << "Set node " << n->get_id() << " with prio " << priority << endl;
 #ifdef TASK_STEALING
    tn->lock();
+   LOCK_STAT(prio_lock);
    threads_sched *other((threads_sched*)tn->get_owner());
    if(other == this)
       do_set_node_priority(n, priority);

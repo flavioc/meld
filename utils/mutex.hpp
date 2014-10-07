@@ -22,11 +22,18 @@ namespace utils
 {
 
 #ifdef LOCK_STATISTICS
-extern std::atomic<uint64_t> lock_count;
-extern std::atomic<uint64_t> ok_locks;
-extern std::atomic<uint64_t> failed_locks;
+extern std::atomic<uint64_t> internal_ok_locks;
+extern std::atomic<uint64_t> internal_failed_locks;
 extern std::atomic<uint64_t> steal_locks;
-extern std::atomic
+extern std::atomic<uint64_t> internal_locks;
+extern std::atomic<uint64_t> ready_lock;
+extern std::atomic<uint64_t> sched_lock;
+extern std::atomic<uint64_t> add_lock;
+extern std::atomic<uint64_t> check_lock;
+extern std::atomic<uint64_t> prio_lock;
+#define LOCK_STAT(name) utils::name++
+#else
+#define LOCK_STAT(name)
 #endif
 
 class mutex
@@ -48,9 +55,6 @@ class mutex
       static void print_statistics(void);
 
       inline void lock(void) {
-#ifdef LOCK_STATISTICS
-         lock_count++;
-#endif
 #ifdef USE_STD_MUTEX
          mtx.lock();
 #elif defined(USE_SEMAPHORE)
@@ -75,12 +79,6 @@ class mutex
          const bool ret = (sem_trywait(&s) == 0);
 #elif defined(USE_SPINLOCK)
          const bool ret = lck.try_lock();
-#endif
-#ifdef LOCK_STATISTICS
-         if(ret)
-            ok_locks++;
-         else
-            failed_locks++;
 #endif
          return ret;
       }
