@@ -2,12 +2,12 @@
 #ifndef SCHED_THREAD_THREADED_HPP
 #define SCHED_THREAD_THREADED_HPP
 
+#include <atomic>
 #include <vector>
 
 #include "vm/defs.hpp"
 #include "utils/macros.hpp"
 #include "utils/types.hpp"
-#include "utils/atomic.hpp"
 #include "sched/base.hpp"
 #include "sched/thread/termination_barrier.hpp"
 #include "sched/thread/state.hpp"
@@ -30,9 +30,9 @@ protected:
    
    utils::mutex lock;
 	
-   static volatile size_t round_state;
+   static std::atomic<size_t> round_state;
    size_t thread_round_state;
-   static utils::atomic<size_t> total_in_agg;
+   static std::atomic<size_t> total_in_agg;
    
 #define threads_synchronize() thread_barrier->wait(get_id())
    

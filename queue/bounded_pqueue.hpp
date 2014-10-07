@@ -2,13 +2,13 @@
 #ifndef QUEUE_BOUNDED_PQUEUE_HPP
 #define QUEUE_BOUNDED_PQUEUE_HPP
 
+#include <atomic>
 #include <vector>
 
 #include "queue/safe_linear_queue.hpp"
 #include "queue/unsafe_linear_queue.hpp"
 #include "queue/unsafe_double_queue.hpp"
 #include "queue/simple_linear_pqueue.hpp"
-#include "utils/atomic.hpp"
 #include "utils/utils.hpp"
 #include "mem/allocator.hpp"
 
@@ -309,7 +309,7 @@ public:
 template <typename T>
 struct safe_bounded_pqueue
 {
-   typedef bounded_pqueue<T, push_safe_linear_queue<T>, utils::atomic<size_t> > type;
+   typedef bounded_pqueue<T, push_safe_linear_queue<T>, std::atomic<size_t>> type;
 };
 
 template <typename T>

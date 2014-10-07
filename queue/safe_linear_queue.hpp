@@ -2,10 +2,10 @@
 #ifndef QUEUE_SAFE_QUEUE_HPP
 #define QUEUE_SAFE_QUEUE_HPP
 
+#include <atomic>
 #include <iostream>
 
 #include "conf.hpp"
-#include "utils/atomic.hpp"
 #include "utils/mutex.hpp"
 #include "queue/node.hpp"
 #include "queue/unsafe_linear_queue.hpp"

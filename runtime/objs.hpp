@@ -10,7 +10,6 @@
 #include <list>
 
 #include "utils/types.hpp"
-#include "utils/atomic.hpp"
 #include "utils/serialization.hpp"
 #include "mem/base.hpp"
 #include "vm/types.hpp"

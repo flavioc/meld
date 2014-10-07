@@ -9,7 +9,6 @@
 #include "vm/predicate.hpp"
 #include "db/tuple.hpp"
 #include "vm/rule_matcher.hpp"
-#include "utils/atomic.hpp"
 #include "utils/intrusive_list.hpp"
 #include "vm/bitmap.hpp"
 

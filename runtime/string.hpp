@@ -12,7 +12,7 @@ public:
 	
 private:
 	
-	utils::atomic<vm::ref_count> refs;
+	std::atomic<vm::ref_count> refs;
 	std::string content;
 	
 public:

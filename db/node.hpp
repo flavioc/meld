@@ -19,7 +19,6 @@
 #include "db/trie.hpp"
 #include "vm/defs.hpp"
 #include "vm/match.hpp"
-#include "utils/atomic.hpp"
 #include "utils/mutex.hpp"
 #include "vm/rule_matcher.hpp"
 #include "vm/all.hpp"

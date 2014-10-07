@@ -1,13 +1,14 @@
 
-#include "utils/atomic.hpp"
-#include "mem/stat.hpp"
+#include <atomic>
 
-using namespace utils;
+#include "mem/stat.hpp"
 
 namespace mem
 {
    
 #ifdef MEMORY_STATISTICS
+
+using namespace std;
 
 static atomic<size_t> memory_in_use(0);
 static atomic<size_t> num_mallocs(0);

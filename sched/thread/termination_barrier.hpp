@@ -14,7 +14,7 @@ class termination_barrier
 {
 private:
    
-   utils::atomic<size_t> active_threads;
+   std::atomic<size_t> active_threads;
    
    std::atomic<bool> done;
    

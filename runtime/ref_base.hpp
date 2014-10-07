@@ -2,7 +2,8 @@
 #ifndef RUNTIME_REF_BASE_HPP
 #define RUNTIME_REF_BASE_HPP
 
-#include "utils/atomic.hpp"
+#include <atomic>
+
 #include "vm/defs.hpp"
 #include "mem/base.hpp"
 
@@ -13,7 +14,7 @@ namespace runtime
 struct ref_base
 {
 public:
-	utils::atomic<vm::ref_count> refs;
+	std::atomic<vm::ref_count> refs;
 };
 
 };

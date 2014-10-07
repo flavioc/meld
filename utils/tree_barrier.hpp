@@ -2,10 +2,10 @@
 #ifndef UTILS_TREE_BARRIER_HPP
 #define UTILS_TREE_BARRIER_HPP
 
-#include "utils/atomic.hpp"
-#include "utils/utils.hpp"
-
 #include <stdio.h>
+#include <atomic>
+
+#include "utils/utils.hpp"
 
 namespace utils
 {
@@ -21,7 +21,7 @@ private:
       tree_barrier *outer;
       inner_node *parent;
       size_t count;
-      utils::atomic<size_t> children_count;
+      std::atomic<size_t> children_count;
       bool thread_sense;
       const size_t id;
       

@@ -9,7 +9,7 @@ struct struct1
 {
    private:
 
-      utils::atomic<vm::ref_count> refs;
+      std::atomic<vm::ref_count> refs;
       vm::struct_type *typ;
 
       inline vm::tuple_field *get_fields(void) { return (vm::tuple_field*)(this + 1); }

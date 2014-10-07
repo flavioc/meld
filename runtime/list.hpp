@@ -16,7 +16,7 @@ public:
    
 private:
    
-   utils::atomic<vm::ref_count> refs;
+   std::atomic<vm::ref_count> refs;
    list_ptr tail;
    vm::tuple_field head;
    
