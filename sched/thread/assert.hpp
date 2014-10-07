@@ -2,6 +2,8 @@
 #ifndef SCHED_THREAD_ASSERT_HPP
 #define SCHED_THREAD_ASSERT_HPP
 
+#include <cstdlib>
+
 namespace sched
 {
 
