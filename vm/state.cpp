@@ -404,12 +404,10 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
          if(!deleter.is_valid()) {
             // do nothing... it does not exist
          } else if(deleter.to_delete()) { // to be removed
-            store->matcher.deregister_tuple(pred, -stpl->get_count());
          	setup(pred, node, stpl->get_count(), stpl->get_depth());
          	execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
             deleter.perform_delete(pred);
       	} else if(pred->is_cycle_pred()) {
-            store->matcher.deregister_tuple(pred, -stpl->get_count());
             depth_counter *dc(deleter.get_depth_counter());
             assert(dc != NULL);
 
@@ -423,9 +421,9 @@ state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
                }
             }
          } else {
-            store->matcher.deregister_tuple(pred, -stpl->get_count());
             vm::tuple::destroy(tpl, pred);
          }
+         store->matcher.set_count(pred, deleter.trie_size());
          delete stpl;
 		}
    }

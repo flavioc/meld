@@ -15,7 +15,6 @@ namespace db
 static const size_t STACK_EXTRA_SIZE(3);
 static const size_t TRIE_HASH_LIST_THRESHOLD(8);
 static const size_t TRIE_HASH_BASE_BUCKETS(64);
-static const size_t TRIE_HASH_MAX_NODES_PER_BUCKET(TRIE_HASH_LIST_THRESHOLD / 2);
 
 size_t
 trie_hash::count_refs(void) const
@@ -502,7 +501,7 @@ trie_hash::expand(void)
             case FIELD_INT: insert_int(FIELD_INT(next->data), next); break;
             case FIELD_FLOAT: insert_float(FIELD_FLOAT(next->data), next); break;
             case FIELD_NODE: insert_node(FIELD_NODE(next->data), next); break;
-            default: assert(false);
+            default: assert(false); break;
          }
          
          next = tmp;
@@ -707,9 +706,10 @@ trie::check_insert(void *data, predicate *pred, const derivation_count many, con
          if(count > TRIE_HASH_LIST_THRESHOLD && !parent->is_hashed()) {
             parent->convert_hash(typ);
             assert(parent->is_hashed());
-         } else if (parent->is_hashed() && count > TRIE_HASH_MAX_NODES_PER_BUCKET) {
-            assert(parent->is_hashed());
-            parent->get_hash()->expand();
+         } else if (parent->is_hashed()) {
+            trie_hash *hsh(parent->get_hash());
+            if(hsh->total > hsh->num_buckets * 2)
+               hsh->expand();
          }
          
          parent = parent->insert(field, typ, mstk);

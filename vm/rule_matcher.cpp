@@ -96,6 +96,22 @@ rule_matcher::deregister_tuple(predicate *pred, const derivation_count count)
 	return ret;
 }
 
+void
+rule_matcher::set_count(predicate *pred, const pred_count count)
+{
+   const vm::predicate_id id(pred->get_id());
+   if(predicate_count[id] == 0) {
+      if(count > 0) {
+         register_predicate_availability(pred);
+      }
+   } else {
+      // > 0
+      if(count == 0)
+         register_predicate_unavailability(pred);
+   }
+   predicate_count[id] = count;
+}
+
 rule_matcher::rule_matcher(void)
 {
    predicate_count = mem::allocator<pred_count>().allocate(theProgram->num_predicates());

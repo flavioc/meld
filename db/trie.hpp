@@ -113,7 +113,7 @@ private:
    size_t num_buckets;
    size_t total;
    
-   inline size_t hash_item(const size_t item) const { return item & (num_buckets-1); }
+   inline size_t hash_item(const size_t item) const { return item % num_buckets; }
    
 public:
 
@@ -517,6 +517,11 @@ public:
       inline depth_counter* get_depth_counter(void) const
       {
          return leaf->get_depth_counter();
+      }
+
+      inline size_t trie_size(void) const
+      {
+         return tr->size();
       }
 
       inline vm::ref_count delete_depths_above(const vm::depth_t depth)
