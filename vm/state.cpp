@@ -748,6 +748,7 @@ state::run_node(db::node *no)
 	}
 
    node->internal_lock();
+   LOCK_STAT(internal_locks);
 
 #ifdef DYNAMIC_INDEXING
    node->rounds++;
