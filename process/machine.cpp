@@ -300,6 +300,7 @@ machine::start(void)
    }
 
 #ifdef MEMORY_STATISTICS
+   cout << "Total memory allocated: " << get_total_memory() / 1024 << "KB" << endl;
    cout << "Total memory in use: " << get_memory_in_use() / 1024 << "KB" << endl;
    cout << "Malloc()'s called: " << get_num_mallocs() << endl;
 #else

@@ -14,15 +14,16 @@ void register_deallocation(const size_t, const size_t);
 
 size_t get_memory_in_use(void);
 
-void register_malloc(void);
+void register_malloc(const size_t);
 
 size_t get_num_mallocs(void);
+size_t get_total_memory(void);
 
 #else
 
 #define register_allocation(CNT, SIZE) /* do nothing */
 #define register_deallocation(CNT, SIZE) /* do nothing */
-#define register_malloc() /* do nothing */
+#define register_malloc(size) /* do nothing */
 
 #endif
 

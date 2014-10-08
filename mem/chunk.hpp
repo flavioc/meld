@@ -49,7 +49,7 @@ public:
       cur = bottom;
       top = bottom + total;
       
-      register_malloc();
+      register_malloc(total);
    }
    
    ~chunk(void)

@@ -11,6 +11,7 @@ namespace mem
 using namespace std;
 
 static atomic<size_t> memory_in_use(0);
+static atomic<size_t> total_memory(0);
 static atomic<size_t> num_mallocs(0);
 
 void
@@ -32,15 +33,22 @@ get_memory_in_use(void)
 }
 
 void
-register_malloc(void)
+register_malloc(const size_t size)
 {
    num_mallocs++;
+   total_memory += size;
 }
 
 size_t
 get_num_mallocs(void)
 {
    return num_mallocs;
+}
+
+size_t
+get_total_memory(void)
+{
+   return total_memory;
 }
 
 #endif
