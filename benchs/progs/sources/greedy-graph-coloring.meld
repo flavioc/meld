@@ -21,10 +21,6 @@ start(A) -o {B | !edge(A, B) | neighbor-color(A, B, invalid-color, 0)},
             color(A, randint(number-colors) + 1),
             update(A).
 
-new-neighbor-color(A, B, New),
-neighbor-color(A, B, Old, _)
-   -o neighbor-color(A, B, New, 1).
-
 select-best-color(A) -o [collect => L | B | neighbor-pick-color(A, B, L) |
             invalid-colors(A, intlistsort(intlistremoveduplicates(L)), 1)].
 
@@ -40,8 +36,12 @@ color(A, _)
    -o {B, Flag | to-select-color(A, B, C, Flag), Flag = 1 | neighbor-color(A, B, invalid-color, 0), update(B)},
       {B | !edge(A, B) | new-neighbor-color(B, A, C)},
       {B, NC, Flag | to-select-color(A, B, NC, Flag), NC <> C, Flag = 1 | neighbor-color(A, B, NC, 0)},
-      {B, NC, Flag | to-select-color(A, B, NC, Flag), Flag = 0 | neighbor-color(A, B, NC, 0)},
+      {B, NC, Flag | to-select-color(A, B, NC, Flag), NC <> C, Flag = 0 | neighbor-color(A, B, NC, 0)},
       color(A, C).
+
+new-neighbor-color(A, B, New),
+neighbor-color(A, B, Old, _)
+   -o neighbor-color(A, B, New, 1).
 
 update(A), update(A) -o update(A).
 
