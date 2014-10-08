@@ -481,7 +481,7 @@ trie_hash::expand(void)
    trie_node **old_buckets(buckets);
    
    num_buckets *= 2;
-   buckets = allocator<trie_node*>().allocate(num_buckets);
+   buckets = mem::allocator<trie_node*>().allocate(num_buckets);
    memset(buckets, 0, sizeof(trie_node*)*num_buckets);
    
    for(size_t i(0); i < old_num_buckets; ++i) {
@@ -509,20 +509,20 @@ trie_hash::expand(void)
       }
    }
    
-   allocator<trie_node*>().deallocate(old_buckets, old_num_buckets);
+   mem::allocator<trie_node*>().deallocate(old_buckets, old_num_buckets);
 }
 
 trie_hash::trie_hash(vm::type *_type, trie_node *):
    type(_type), total(0)
 {
-   buckets = allocator<trie_node*>().allocate(TRIE_HASH_BASE_BUCKETS);
+   buckets = mem::allocator<trie_node*>().allocate(TRIE_HASH_BASE_BUCKETS);
    num_buckets = TRIE_HASH_BASE_BUCKETS;
    memset(buckets, 0, sizeof(trie_node*)*num_buckets);
 }
 
 trie_hash::~trie_hash(void)
 {
-   allocator<trie_node*>().deallocate(buckets, num_buckets);
+   mem::allocator<trie_node*>().deallocate(buckets, num_buckets);
 }
 
 // deletes the node and also any upper nodes if they lead to this node alone
