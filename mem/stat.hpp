@@ -2,6 +2,8 @@
 #ifndef MEM_STAT_HPP
 #define MEM_STAT_HPP
 
+#include <cstdlib>
+
 namespace mem
 {
 

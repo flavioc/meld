@@ -30,7 +30,6 @@ help(void)
    cerr << "\t-n \t\tno dynamic scheduling" << endl;
    cerr << "\t-w \t\tdisable work stealing" << endl;
 	cerr << "\t-t \t\ttime execution" << endl;
-	cerr << "\t-m \t\tmemory statistics" << endl;
 	cerr << "\t-i <file>\tdump time statistics" << endl;
 	cerr << "\t-s \t\tshows database" << endl;
    cerr << "\t-d \t\tdump database (debug option)" << endl;
@@ -86,9 +85,6 @@ read_arguments(int argc, char **argv)
             break;
          case 't':
             time_execution = true;
-            break;
-         case 'm':
-            memory_statistics = true;
             break;
          case 'i':
             if(argc < 2)

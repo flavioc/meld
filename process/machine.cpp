@@ -299,14 +299,11 @@ machine::start(void)
          all->DATABASE->dump_db(cout);
    }
 
-   if(memory_statistics) {
 #ifdef MEMORY_STATISTICS
-      cout << "Total memory in use: " << get_memory_in_use() / 1024 << "KB" << endl;
-      cout << "Malloc()'s called: " << get_num_mallocs() << endl;
+   cout << "Total memory in use: " << get_memory_in_use() / 1024 << "KB" << endl;
+   cout << "Malloc()'s called: " << get_num_mallocs() << endl;
 #else
-      cout << "Memory statistics support was not compiled in" << endl;
 #endif
-   }
 }
 
 static inline database::create_node_fn
