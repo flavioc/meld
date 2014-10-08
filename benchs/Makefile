@@ -23,6 +23,7 @@ serial:
 	done
 
 THREAD_PROGRAMS = simple32 8queens-13 belief-propagation-200 \
+	new-heat-transfer-80 \
 	greedy-graph-coloring-2000 min-max-tictactoe \
 	shortest-5000-all shortest-usairports500
 

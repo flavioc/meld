@@ -15,6 +15,11 @@ time_run_n ()
 	DESC="${FILENAME} ${SCHEDULER}${NUM_THREADS}"
    OUTPUT_FILE="${FILENAME}_${SCHEDULER}${NUM_THREADS}"
 
+   if [ -f "args/${FILENAME}" ]; then
+      PROG_ARGS="$(head -n1 args/${FILENAME})"
+      CMD="$CMD -- ${PROG_ARGS}"
+   fi
+
    mkdir -p output
 	echo -n "${DESC}"
 
