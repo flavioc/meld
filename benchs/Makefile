@@ -26,7 +26,7 @@ export RESULTS_FILE=$(PWD)/results.csv
 GGC = greedy-graph-coloring-2000 greedy-graph-coloring-search_engines
 PAGERANK = pagerank-search_engines pagerank-5000
 HT = new-heat-transfer-80
-SHORTEST = shortest-5000-all shortest-usairports500
+SHORTEST = shortest-uspowergrid shortest-usairports500
 BP = belief-propagation-200
 QUEENS = 8queens-13 8queens-12
 SIMPLE = simple16 simple32 simple64
@@ -54,6 +54,8 @@ queens:
 	@bash $(SCRIPT) $(QUEENS)
 minmax:
 	@bash $(SCRIPT) $(MINMAX)
+shortest:
+	@bash $(SCRIPT) $(SHORTEST)
 
 coord-shortest:
 	@bash threads_even.sh code/shortest-1000.m th even 1 $(NPROCS) $(RUNS)
