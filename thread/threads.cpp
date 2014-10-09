@@ -483,23 +483,25 @@ threads_sched::add_node_priority_other(node *n, const double priority)
 #endif
 }
 
+static inline bool
+is_higher_priority(thread_intrusive_node *tn, const double priority)
+{
+   if(theProgram->is_priority_desc())
+      return tn->get_priority_level() < priority;
+   else
+      return tn->get_priority_level() > priority;
+}
+
 void
 threads_sched::set_node_priority_other(node *n, const double priority)
 {
 #ifdef SEND_OTHERS
    thread_intrusive_node *tn((thread_intrusive_node*)n);
 
-   if(tn->has_priority_level()) {
-      if(theProgram->is_priority_desc()) {
-         if(tn->get_priority_level() > priority)
-            // does not change
-            return;
-      } else {
-         if(tn->get_priority_level() < priority)
-            // does not change
-            return;
-      }
-   }
+   if(!is_higher_priority(tn, priority))
+      // does not change
+      return;
+
    // will potentially change
    threads_sched *other((threads_sched*)tn->get_owner());
    priority_add_item item;
@@ -587,15 +589,6 @@ threads_sched::set_node_priority(node *n, const double priority)
    if(other == this)
       do_set_node_priority(n, priority);
 #endif
-}
-
-static inline bool
-is_higher_priority(thread_intrusive_node *tn, const double priority)
-{
-   if(theProgram->is_priority_desc())
-      return tn->get_priority_level() < priority;
-   else
-      return tn->get_priority_level() > priority;
 }
 
 void
