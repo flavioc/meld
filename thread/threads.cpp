@@ -270,9 +270,11 @@ bool
 threads_sched::busy_wait(void)
 {
 #ifdef TASK_STEALING
-   if(!theProgram->is_static_priority() && go_steal_nodes()) {
-      ins_active;
-      return true;
+   if(!theProgram->is_static_priority()) {
+      if(work_stealing && go_steal_nodes()) {
+         ins_active;
+         return true;
+      }
    }
 #endif
 

@@ -9,6 +9,8 @@ all: test-serial test-thread
 full: ARGS = 3
 full: test-serial test-thread
 
+test: all
+
 test-serial:
 	@echo "====> Serial test"
 	@bash test_all.sh serial $(ARGS)

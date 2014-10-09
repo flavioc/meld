@@ -23,7 +23,11 @@ base::do_loop(void)
    db::node *node(NULL);
 
    while(true) {
-      while((node = get_work())) {
+      while(true) {
+         node = get_work();
+         if(node == NULL)
+            break;
+         assert(node != NULL);
          state.run_node(node);
          if(stop_flag) {
             killed_while_active();
