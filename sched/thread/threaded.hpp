@@ -12,6 +12,7 @@
 #include "sched/thread/termination_barrier.hpp"
 #include "sched/thread/state.hpp"
 #include "utils/tree_barrier.hpp"
+#include "utils/simple_barrier.hpp"
 #include "utils/mutex.hpp"
 
 namespace sched
@@ -26,7 +27,7 @@ private:
 protected:
    
    static termination_barrier *term_barrier;
-   static utils::tree_barrier *thread_barrier;
+   static utils::simple_barrier *thread_barrier;
    
    utils::mutex lock;
 	
