@@ -10,8 +10,6 @@ ifeq ($(OS),Darwin)
   NPROCS := $(shell sysctl hw.ncpu | awk '{print $$2}')
 endif # $(OS)
 
-export RESULTS_FILE=$(PWD)/results.csv
-
 all: compiled
 
 run:
@@ -22,19 +20,42 @@ serial:
 		bash serial.sh $$file $(RUNS); \
 	done
 
-THREAD_PROGRAMS = simple32 8queens-13 belief-propagation-200 \
-	pagerank-search_engines pagerank-5000 new-heat-transfer-80 \
-	greedy-graph-coloring-2000 min-max-tictactoe \
-	shortest-5000-all shortest-usairports500
+TYPE = even
+export RESULTS_FILE=$(PWD)/results.csv
+
+GGC = greedy-graph-coloring-2000 greedy-graph-coloring-search_engines
+PAGERANK = pagerank-search_engines pagerank-5000
+HT = new-heat-transfer-80
+SHORTEST = shortest-5000-all shortest-usairports500
+BP = belief-propagation-200
+QUEENS = 8queens-13 8queens-12
+SIMPLE = simple16 simple32 simple64
+MINMAX = min-max-tictactoe
+
+THREAD_PROGRAMS = $(SIMPLE) $(QUEENS) $(BP) \
+	$(GGC) $(PAGERANK) $(HT) $(MINMAX) $(SHORTEST)
+
+SCRIPT = run_series.sh th $(TYPE) 1 $(NPROCS) $(RUNS)
 
 thread:
-	@rm -f $(RESULTS_FILE)
-	@for test in $(THREAD_PROGRAMS); do \
-		bash threads_even.sh code/$$test.m th even 1 $(NPROCS) $(RUNS); \
-	done
+	@bash $(SCRIPT) $(THREAD_PROGRAMS)
+
+ggc:
+	@bash $(SCRIPT) $(GGC)
+pagerank:
+	@bash $(SCRIPT) $(PAGERANK)
+ht:
+	@bash $(SCRIPT) $(PAGERANK)
+simple:
+	@bash $(SCRIPT) $(SIMPLE)
+bp:
+	@bash $(SCRIPT) $(BP)
+queens:
+	@bash $(SCRIPT) $(QUEENS)
+minmax:
+	@bash $(SCRIPT) $(MINMAX)
 
 coord-shortest:
-	@rm -f $(RESULTS_FILE)
 	@bash threads_even.sh code/shortest-1000.m th even 1 $(NPROCS) $(RUNS)
 	@bash threads_even.sh code/shortest-1000.m thp even 1 $(NPROCS) $(RUNS)
 	@bash threads_even.sh code/shortest-1000-all.m th even 1 $(NPROCS) $(RUNS)
