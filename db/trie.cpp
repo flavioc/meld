@@ -234,6 +234,9 @@ trie_node::insert(const tuple_field& field, type *t, match_stack& mstk)
 {
    tuple_field f;
    trie_node *new_child;
+
+   // avoid warnings.
+   f.ptr_field = 0;
    
    switch(t->get_type()) {
          case FIELD_LIST: {
