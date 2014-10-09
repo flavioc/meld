@@ -16,8 +16,13 @@ time_run_n ()
    OUTPUT_FILE="${FILENAME}_${SCHEDULER}${NUM_THREADS}"
 
    if [ -f "args/${FILENAME}" ]; then
+      if [ `wc -l < args/${FILENAME}` -eq 2 ]; then
+         MELD_ARGS="$(tail -n1 args/${FILENAME})"
+      else
+         MELD_ARGS=""
+      fi
       PROG_ARGS="$(head -n1 args/${FILENAME})"
-      CMD="$CMD -- ${PROG_ARGS}"
+      CMD="${CMD} ${MELD_ARGS} -- ${PROG_ARGS}"
    fi
 
    mkdir -p output

@@ -45,7 +45,7 @@ ggc:
 pagerank:
 	@bash $(SCRIPT) $(PAGERANK)
 ht:
-	@bash $(SCRIPT) $(PAGERANK)
+	@bash $(SCRIPT) $(HT)
 simple:
 	@bash $(SCRIPT) $(SIMPLE)
 bp:
