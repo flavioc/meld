@@ -3,6 +3,7 @@
 
 #include "utils/utils.hpp"
 #include "db/trie.hpp"
+#include "db/node.hpp"
 #include "db/agg_configuration.hpp"
 
 using namespace vm;
@@ -371,38 +372,43 @@ trie_node::~trie_node(void)
 {
 }
 
+#define HASH_INT(VAL) (std::hash<int_val>()(VAL))
+#define HASH_UINT(VAL) (std::hash<uint_val>()(VAL))
+#define HASH_FLOAT(VAL) (std::hash<float_val>()(VAL)/10000)
+#ifdef USE_REAL_NODES
+#define HASH_NODE(VAL) (std::hash<node::node_id>()(((db::node*)VAL)->get_id()))
+#else
+#define HASH_NODE(VAL) (std::hash<node_val>()(VAL))
+#endif
+
 trie_node*
 trie_hash::get_int(const int_val& val) const
 {
-   const size_t bucket(hash_item(std::hash<int_val>()(val)));
-   return buckets[bucket];
+   return buckets[hash_item(HASH_INT(val))];
 }
 
 trie_node*
 trie_hash::get_float(const float_val& val) const
 {
-   const size_t bucket(hash_item(std::hash<float_val>()(val)));
-   return buckets[bucket];
+   return buckets[hash_item(HASH_FLOAT(val))];
 }
 
 trie_node*
 trie_hash::get_node(const node_val& val) const
 {
-   const size_t bucket(hash_item(std::hash<node_val>()(val)));
-   return buckets[bucket];
+   return buckets[hash_item(HASH_NODE(val))];
 }
 
 trie_node*
 trie_hash::get_uint(const uint_val& val) const
 {
-	const size_t bucket(hash_item(std::hash<uint_val>()(val)));
-	return buckets[bucket];
+   return buckets[hash_item(HASH_UINT(val))];
 }
 
 void
 trie_hash::insert_int(const int_val& val, trie_node *node)
 {
-   const size_t bucket(hash_item(std::hash<int_val>()(val)));
+   const size_t bucket(hash_item(HASH_INT(val)));
    
    assert(num_buckets > 0);
    assert(bucket < num_buckets);
@@ -421,7 +427,7 @@ trie_hash::insert_int(const int_val& val, trie_node *node)
 void
 trie_hash::insert_uint(const uint_val& val, trie_node *node)
 {
-	const size_t bucket(hash_item(std::hash<uint_val>()(val)));
+	const size_t bucket(hash_item(HASH_UINT(val)));
    
    assert(num_buckets > 0);
    assert(bucket < num_buckets);
@@ -440,8 +446,7 @@ trie_hash::insert_uint(const uint_val& val, trie_node *node)
 void
 trie_hash::insert_float(const float_val& val, trie_node *node)
 {
-   const size_t v(std::hash<float_val>()(val)/10000);
-   const size_t bucket(hash_item(v));
+   const size_t bucket(hash_item(HASH_FLOAT(val)));
    
    assert(bucket < num_buckets);
    
@@ -459,7 +464,7 @@ trie_hash::insert_float(const float_val& val, trie_node *node)
 void
 trie_hash::insert_node(const node_val& val, trie_node *node)
 {
-   const size_t bucket(hash_item(std::hash<node_val>()(val)));
+   const size_t bucket(hash_item(HASH_NODE(val)));
    
    assert(bucket < num_buckets);
    
