@@ -80,7 +80,9 @@ public:
    
    explicit database(const std::string&, create_node_fn);
    
-   ~database(void);
+   void wipeout(void);
+
+   ~database(void) {}
 };
 
 std::ostream& operator<<(std::ostream&, const database&);

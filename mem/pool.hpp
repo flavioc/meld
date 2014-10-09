@@ -7,7 +7,6 @@
 #include <assert.h>
 #include <cstdio>
 #include <cstring>
-#include <unordered_map>
 
 #include "mem/chunkgroup.hpp"
 
@@ -18,26 +17,96 @@ class pool
 {
 private:
    
-   static const size_t ATOM_SIZE = 4;
-   
-   std::unordered_map<size_t, chunkgroup*> chunks;
+   chunkgroup **chunk_table;
+   size_t size_table = 512; // default table size
+
+   // number of chunkgroups to allocate per page.
+   static const size_t NUM_CHUNK_PAGES = 64;
+
+   // available page for chunkgroups.
+   chunkgroup *available_groups;
+   chunkgroup *end_groups;
+
+   inline void create_new_chunkgroup_page(void)
+   {
+      const size_t size_groups(sizeof(chunkgroup)*NUM_CHUNK_PAGES);
+      available_groups = (chunkgroup*) new unsigned char[size_groups];
+      end_groups = available_groups + NUM_CHUNK_PAGES;
+   }
+
+   inline chunkgroup *new_chunkgroup(const size_t size)
+   {
+      if(available_groups == end_groups)
+         create_new_chunkgroup_page();
+      chunkgroup *next(available_groups);
+      available_groups++;
+      ::new((void *)next) chunkgroup(size);
+      return next;
+   }
+
+   inline void expand_chunk_table(void)
+   {
+      chunkgroup **old_table(chunk_table);
+      const size_t old_size(size_table);
+
+      size_table *= 2;
+      chunk_table = new chunkgroup*[size_table];
+      memset(chunk_table, 0, sizeof(chunkgroup*)*size_table);
+
+      for(size_t i(0); i < old_size; ++i) {
+         chunkgroup *bucket(old_table[i]);
+         while(bucket) {
+            chunkgroup *next(bucket->next);
+            const size_t new_index(bucket->size % size_table);
+            bucket->next = chunk_table[new_index];
+            chunk_table[new_index] = bucket;
+
+            bucket = next;
+         }
+      }
+
+      delete[] old_table;
+   }
+
+   inline chunkgroup *find_insert_chunkgroup(const size_t size)
+   {
+      // tries to find the chunkgroup, if not add it.
+      const size_t index(size % size_table);
+      
+      if(chunk_table[index] == NULL) {
+         chunkgroup *cg(new_chunkgroup(size));
+         chunk_table[index] = cg;
+         cg->next = NULL;
+         return cg;
+      } else {
+         chunkgroup *cg(chunk_table[index]);
+         size_t count(0);
+
+         while(cg) {
+            if(cg->size == size)
+               return cg;
+            count++;
+            cg = cg->next;
+         }
+
+         chunkgroup *ncg(new_chunkgroup(size));
+         ncg->next = chunk_table[index];
+         chunk_table[index] = ncg;
+
+         if(count > 8) // time to expand table
+         {
+            expand_chunk_table();
+         }
+         return ncg;
+      }
+   }
 
    inline chunkgroup *get_group(const size_t size)
    {
       assert(size > 0);
-        
-      auto it(chunks.find(size));
-
-      chunkgroup *grp;
-      if(it == chunks.end()) {
-         grp = new chunkgroup(size);
-         chunks[size] = grp;
-      } else
-         grp = it->second;
-         
-      assert(grp != NULL);
-      
-      return grp;
+      chunkgroup *cg(find_insert_chunkgroup(size));
+      assert(cg != NULL);
+      return cg;
    }
 
 public:
@@ -54,13 +123,9 @@ public:
    
    explicit pool(void)
    {
-      chunks.reserve(128);
-   }
-   
-   ~pool(void)
-   {
-      for(auto it(chunks.begin()); it != chunks.end(); ++it)
-         delete it->second;
+      create_new_chunkgroup_page();
+      chunk_table = new chunkgroup*[size_table];
+      memset(chunk_table, 0, sizeof(chunkgroup*)*size_table);
    }
 };
 

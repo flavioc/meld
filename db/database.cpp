@@ -68,10 +68,13 @@ database::database(const string& filename, create_node_fn _create_fn):
    }
 }
 
-database::~database(void)
+void
+database::wipeout(void)
 {
-   for(map_nodes::iterator it(nodes.begin()); it != nodes.end(); ++it)
+   for(map_nodes::iterator it(nodes.begin()); it != nodes.end(); ++it) {
+      it->second->wipeout();
       delete it->second;
+   }
 }
 
 node*

@@ -190,7 +190,10 @@ public:
    
    explicit node(const node_id, const node_id);
    
-   virtual ~node(void);
+   void wipeout(void);
+
+   // destructor does nothing, use wipeout if needed.
+   virtual ~node(void) {}
 };
 
 std::ostream& operator<<(std::ostream&, const node&);

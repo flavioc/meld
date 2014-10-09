@@ -213,7 +213,8 @@ node::node(const node_id _id, const node_id _trans):
 {
 }
 
-node::~node(void)
+void
+node::wipeout(void)
 {
    for(simple_tuple_map::iterator it(tuples.begin()), end(tuples.end()); it != end; it++) {
       tuple_trie *tr(it->second);

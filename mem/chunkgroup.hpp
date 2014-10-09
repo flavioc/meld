@@ -11,22 +11,27 @@ namespace mem
 
 class chunkgroup
 {
+public:
+   // next pointer used by mem/pool.
+   chunkgroup *next;
+   // size of each object.
+   const size_t size;
+   
 private:
 
    struct mem_node {
       struct mem_node *next;
    };
 
-   const size_t size;
    chunk *first_chunk;
    chunk *new_chunk; // chunk with readily usable objects
    mem_node *free_objs; // list of freed objects
    
-   static const size_t INITIAL_NUM_ELEMS = 64;
+   static const size_t INITIAL_NUM_ELEMS = 8;
    size_t num_elems_per_chunk;
 
 public:
-   
+
    inline void* allocate(void)
    {
       void *ret;
