@@ -27,7 +27,6 @@ private:
    chunk *new_chunk; // chunk with readily usable objects
    mem_node *free_objs; // list of freed objects
    
-   static const size_t INITIAL_NUM_ELEMS = 8;
    size_t num_elems_per_chunk;
 
 public:
@@ -75,7 +74,7 @@ public:
    explicit chunkgroup(const size_t _size):
       size(_size), first_chunk(NULL),
       new_chunk(NULL), free_objs(NULL),
-      num_elems_per_chunk(INITIAL_NUM_ELEMS)
+      num_elems_per_chunk(_size <= 128 ? 64 : 16)
    {
    }
    
