@@ -5,7 +5,7 @@ EXTRA_ASSERTS = false
 # may use 'pool' or 'malloc'
 ALLOCATOR = pool
 # Use 'true' for dynamic indexing of facts.
-INDEXING = false
+INDEXING = true
 # Make the virtual machine use the node pointers in predicate arguments
 # typed as 'node'. For multithreaded meld this will improve speed since
 # there's one less lookup.
