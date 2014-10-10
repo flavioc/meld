@@ -114,7 +114,7 @@ protected:
    size_t next_thread;
    size_t backoff;
    bool steal_flag;
-   thread_intrusive_node *steal_node(void);
+   size_t steal_nodes(thread_intrusive_node **, const size_t);
 
 #ifdef INSTRUMENTATION
    size_t stolen_total;

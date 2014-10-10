@@ -113,7 +113,7 @@ public:
 		HEAP_GET_POS(node) = i;
    }
 	
-	double min_value(void) const
+	inline double min_value(void) const
 	{
       std::lock_guard<utils::mutex> l(mtx);
       LOCK_STAT(ready_lock);
@@ -124,14 +124,27 @@ public:
 		return __INTRUSIVE_PRIORITY(heap.front());
 	}
 	
-	heap_object pop(const queue_id_t new_state)
+	inline heap_object pop(const queue_id_t new_state)
 	{
       std::lock_guard<utils::mutex> l(mtx);
       LOCK_STAT(ready_lock);
 		return do_pop(new_state);
 	}
 
-   heap_object pop_best(intrusive_safe_complex_pqueue<T>& other, const queue_id_t new_state)
+   inline size_t pop_half(heap_object *buffer, const size_t max, const queue_id_t new_state)
+   {
+      std::lock_guard<utils::mutex> l(mtx);
+      LOCK_STAT(ready_lock);
+
+      const size_t half(std::min(max, heap.size()/2));
+
+      for(size_t i(0); i < half; ++i)
+         buffer[i] = do_pop(new_state);
+
+      return half;
+   }
+
+   inline heap_object pop_best(intrusive_safe_complex_pqueue<T>& other, const queue_id_t new_state)
    {
       std::lock_guard<utils::mutex> l1(mtx);
       std::lock_guard<utils::mutex> l2(other.mtx);

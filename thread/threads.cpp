@@ -22,6 +22,9 @@ using namespace utils;
 #ifdef DIRECT_PRIORITIES
 #undef SEND_OTHERS
 #endif
+// node stealing strategies.
+#define STEAL_ONE
+//#define STEAL_HALF
 
 #ifdef PROFILE_QUEUE
 static atomic<size_t> prio_count(0);
@@ -128,10 +131,12 @@ threads_sched::go_steal_nodes(void)
 
    ins_sched;
    assert(is_active());
-
-   // roubar em ciclo
-   // verificar se o rand se inicializa com seeds diferentes
-   // tentar roubar mesmo que a fila so tenha 1 no
+#ifdef STEAL_ONE
+#define NODE_BUFFER_SIZE 1
+#elif defined(STEAL_HALF)
+#define NODE_BUFFER_SIZE 10
+#endif
+   thread_intrusive_node *node_buffer[NODE_BUFFER_SIZE];
 
    for(size_t i(0); i < All->NUM_THREADS; ++i) {
       size_t tid((next_thread + i) % All->NUM_THREADS);
@@ -142,18 +147,19 @@ threads_sched::go_steal_nodes(void)
 
       if(!target->is_active() || !target->has_work())
          continue;
-      size_t size = 1;
+      size_t stolen(target->steal_nodes(node_buffer, NODE_BUFFER_SIZE));
 
-      assert(size > 0);
-
-      while(size > 0) {
-         thread_intrusive_node *node(target->steal_node());
-
-         if(node == NULL)
-            break;
+      if(stolen == 0)
+         continue;
 #ifdef FACT_STATISTICS
-         count_stolen_nodes++;
+      count_stolen_nodes += stolen;
 #endif
+#ifdef INSTRUMENTATION
+      stolen_total += stolen;
+#endif
+
+      for(size_t i(0); i < stolen; ++i) {
+         thread_intrusive_node *node(node_buffer[i]);
 
          node->lock();
          LOCK_STAT(steal_locks);
@@ -177,39 +183,60 @@ threads_sched::go_steal_nodes(void)
          node->set_owner(this);
          add_to_queue(node);
          node->unlock();
-#ifdef INSTRUMENTATION
-         stolen_total++;
-#endif
-         --size;
       }
-      if(size == 0) {
-         // set the next thread to the current one
-         next_thread = tid;
-         return true;
-      }
+      // set the next thread to the current one
+      next_thread = tid;
+      return true;
    }
 
    return false;
 }
 
-thread_intrusive_node*
-threads_sched::steal_node(void)
+size_t
+threads_sched::steal_nodes(thread_intrusive_node **buffer, const size_t max)
 {
-   thread_intrusive_node *node(NULL);
    steal_flag = !steal_flag;
+   size_t stolen = 0;
 
+#ifdef STEAL_ONE
+   if(max == 0)
+      return 0;
+
+   thread_intrusive_node *node(NULL);
+   if(steal_flag) {
+      if(!queues.moving.empty()) {
+         if(queues.moving.pop_tail(node, STATE_STEALING)) {
+            buffer[stolen++] = node;
+         }
+      } else if(!prios.moving.empty()) {
+         node = prios.moving.pop(STATE_STEALING);
+         if(node)
+            buffer[stolen++] = node;
+      }
+   } else {
+      if(!prios.moving.empty()) {
+         node = prios.moving.pop(STATE_STEALING);
+         if(node)
+            buffer[stolen++] = node;
+      } else if(!queues.moving.empty()) {
+         if(queues.moving.pop_head(node, STATE_STEALING))
+            buffer[stolen++] = node;
+      }
+   }
+#elif defined(STEAL_HALF)
    if(steal_flag) {
       if(!queues.moving.empty())
-         queues.moving.pop_tail(node, STATE_STEALING);
+         stolen = queues.moving.pop_tail_half(buffer, max, STATE_STEALING);
       else if(!prios.moving.empty())
-         node = prios.moving.pop(STATE_STEALING);
+         stolen = prios.moving.pop_half(buffer, max, STATE_STEALING);
    } else {
       if(!prios.moving.empty())
-         node = prios.moving.pop(STATE_STEALING);
-      else if(!queues.moving.empty())
-         queues.moving.pop_head(node, STATE_STEALING);
+         stolen = prios.moving.pop_half(buffer, max, STATE_STEALING);
+      else
+         stolen = queues.moving.pop_tail_half(buffer, max, STATE_STEALING);
    }
-   return node;
+#endif
+   return stolen;
 }
 #endif
 

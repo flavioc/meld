@@ -24,37 +24,52 @@ public:
 	QUEUE_DEFINE_TOTAL_SIZE(); // size()
 	QUEUE_DEFINE_INTRUSIVE_DOUBLE_EMPTY(); // empty()
    
-   inline bool pop_if_not_empty(node_type& data, const queue_id_t new_state = queue_no_queue)
+   inline bool pop_if_not_empty(node_type& data, const queue_id_t new_state)
    {
-      if(empty())
-         return false;
-      
       std::lock_guard<utils::mutex> l(mtx);
       LOCK_STAT(ready_lock);
       
 		QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP_IF_NOT_EMPTY();
    }
    
-   inline bool pop_head(node_type& data, const queue_id_t new_state = queue_no_queue)
+   inline bool pop_head(node_type& data, const queue_id_t new_state)
    {
-      if(empty())
-         return false;
-      
       std::lock_guard<utils::mutex> l(mtx);
       LOCK_STAT(ready_lock);
       
 		QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP();
    }
 
-   inline bool pop_tail(node_type& data, const queue_id_t new_state = queue_no_queue)
+   inline bool pop_tail(node_type& data, const queue_id_t new_state)
    {
-      if(empty())
-         return false;
-
       std::lock_guard<utils::mutex> l(mtx);
+
       LOCK_STAT(ready_lock);
 
       QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP_TAIL();
+   }
+
+   inline size_t pop_tail_half(T **buffer, const size_t max, const queue_id_t new_state)
+   {
+      std::lock_guard<utils::mutex> l(mtx);
+
+      LOCK_STAT(ready_lock);
+
+      size_t half = std::min(max, total / 2);
+
+      if(half == 0)
+         return 0;
+
+      for(size_t i(0); i < half; ++i) {
+         buffer[i] = head;
+         __INTRUSIVE_QUEUE(head) = new_state;
+         head = (node_type)__INTRUSIVE_NEXT(head);
+      }
+      // head will not be NULL here.
+      assert(head != NULL);
+      __INTRUSIVE_PREV(head) = NULL;
+      total -= half;
+      return half;
    }
    
    inline void push_tail(node_type data)
