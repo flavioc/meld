@@ -717,6 +717,8 @@ trie::check_insert(void *data, predicate *pred, const derivation_count many, con
             assert(parent->is_hashed());
          } else if (parent->is_hashed()) {
             trie_hash *hsh(parent->get_hash());
+            if(count > hsh->total/2 && hsh->total > 5)
+               cerr << "Hash table " << hsh << " becoming too imbalanced\n";
             if(count > TRIE_HASH_LIST_THRESHOLD/2)
                hsh->expand();
          }
