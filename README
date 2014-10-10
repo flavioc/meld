@@ -1,19 +1,13 @@
 
 Dependencies:
-	- Boost
-		- MPI (optional)
-		- Threads
    - libreadline
-	- A compiler
-		G++ 4.4/4.2, maybe 4.6
-		LLVM/Clang also works
+	- A C++11 compatible compiler
 
 Installation:
-	- Run boostrap.sh: sh ./bootstrap.sh
 	- Type make: make
 
 Execution:
-	./meld -f bytecodefile -c scheduler
+	./meld -f bytecodefile -c thX
 	Use ./meld -h for help
 
 Directories:
