@@ -19,12 +19,9 @@ $ cd meld
 $ make
 
 ;; To run a program
-$ ./meld -f <byte code file> -c sched
+$ ./meld -f <byte code file> -c thX
 
-;; Where sched is either sl, th or thp
-;; Both tl and tlp need the number of threads, thus to use 4 threads with tl you do:
-$ ./meld -f file.m -c tl4
-
+;; Where X is the number of threads.
 ;; To measure execution time, add -t to the command line.
 ;; To see the final contents of the database, add -d or -s
 
