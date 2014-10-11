@@ -52,7 +52,7 @@ build-next-plays(A, Previous, [0 | Xs], NextPlayer, X, RootPlayer, Descendants, 
          build-next-plays(A, intlistappend(Previous, [0]), Xs, NextPlayer, X + 1, RootPlayer, Descendants + 1, Play),
          depth(A, Depth),
          depth(B, Depth + 1),
-         (if Depth >= 3 then set-priority(B, 1), set-static(B) otherwise 1 end),
+         (if Depth >= 4 then set-priority(B, 1), set-static(B) otherwise 1 end),
          back(B, A)).
 build-next-plays(A, Previous, [C | Xs], NextPlayer, X, RootPlayer, Descendants, Play), C <> 0
    -o build-next-plays(A, intlistappend(Previous, [C]), Xs, NextPlayer, X + 1, RootPlayer, Descendants, Play).
