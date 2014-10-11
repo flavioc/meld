@@ -476,12 +476,10 @@ threads_sched::set_next_node(void)
    
    while (current_node == NULL) {   
       if(scheduling_mechanism) {
-         if(!prios.moving.empty()) {
-            current_node = prios.moving.pop_best(prios.stati, STATE_WORKING);
-            if(current_node) {
-    //     cout << "Got node " << current_node->get_id() << " with prio " << current_node->get_priority_level() << endl;
-               break;
-            }
+         current_node = prios.moving.pop_best(prios.stati, STATE_WORKING);
+         if(current_node) {
+            //     cout << "Got node " << current_node->get_id() << " with prio " << current_node->get_priority_level() << endl;
+            break;
          }
       }
 
