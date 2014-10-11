@@ -72,7 +72,7 @@ private:
       assert(tstate == THREAD_INACTIVE);
       tstate = THREAD_ACTIVE;
 #ifdef TASK_STEALING
-      steal_states[get_id()].store(1, std::memory_order_relaxed);
+      steal_states[get_id()].store(1, std::memory_order_release);
 #endif
       term_barrier->is_active();
    }
@@ -82,7 +82,7 @@ private:
       assert(tstate == THREAD_ACTIVE);
       tstate = THREAD_INACTIVE;
 #ifdef TASK_STEALING
-      steal_states[get_id()].store(0, std::memory_order_relaxed);
+      steal_states[get_id()].store(0, std::memory_order_release);
 #endif
       term_barrier->is_inactive();
    }

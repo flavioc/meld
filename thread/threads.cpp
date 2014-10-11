@@ -211,10 +211,16 @@ threads_sched::go_steal_nodes(void)
 #define NODE_BUFFER_SIZE 10
 #endif
    thread_intrusive_node *node_buffer[NODE_BUFFER_SIZE];
+   int state_buffer[All->NUM_THREADS];
+
+   memcpy(state_buffer, steal_states, sizeof(int) * All->NUM_THREADS);
 
    for(size_t i(0); i < All->NUM_THREADS; ++i) {
       size_t tid((next_thread + i) % All->NUM_THREADS);
       if(tid == get_id())
+         continue;
+
+      if(state_buffer[tid] == 0)
          continue;
 
       threads_sched *target((threads_sched*)All->SCHEDS[tid]);
