@@ -5,7 +5,6 @@
 #include "db/database.hpp"
 #include "db/tuple.hpp"
 #include "process/remote.hpp"
-#include "sched/thread/assert.hpp"
 #include "vm/state.hpp"
 #include "sched/common.hpp"
 #include "interface.hpp"
@@ -22,9 +21,10 @@ using namespace utils;
 #ifdef DIRECT_PRIORITIES
 #undef SEND_OTHERS
 #endif
+
 // node stealing strategies.
-#define STEAL_ONE
-//#define STEAL_HALF
+//#define STEAL_ONE
+#define STEAL_HALF
 
 #ifdef PROFILE_QUEUE
 static atomic<size_t> prio_count(0);
@@ -37,15 +37,90 @@ static atomic<size_t> prio_nodes_compared(0);
 static atomic<size_t> prio_nodes_changed(0);
 #endif
 
+#define BUSY_LOOP_MAKE_INACTIVE()         \
+   if(is_active() && !has_work()) {       \
+      std::lock_guard<utils::mutex> l(lock);  \
+      if(!has_work()) {                   \
+         if(is_active())                  \
+            set_inactive();               \
+      } else                              \
+         break;                           \
+   }
+
+#define BUSY_LOOP_CHECK_TERMINATION_THREADS()   \
+   if(all_threads_finished() || stop_flag) {    \
+      assert(is_inactive());                    \
+      return false;                             \
+   }
+
+#define START_ROUND()   {           \
+   ins_round;                       \
+   assert(is_inactive());           \
+   generate_aggs();                 \
+}
+
+#define GET_NEXT(x) ((x) == 1 ? 2 : 1)
+#define DO_END_ROUND(COMPUTE_MORE_WORK, IF_TRUE) {       \
+   assert(total_in_agg > 0);                             \
+   total_in_agg--;                                       \
+   if(leader_thread()) {                                 \
+      while(total_in_agg != 0) {}                        \
+      bool more_work(false);                             \
+      COMPUTE_MORE_WORK                                  \
+      if(more_work) {                                    \
+         reset_barrier();                                \
+         total_in_agg = All->NUM_THREADS;                \
+         round_state = GET_NEXT(round_state);            \
+         IF_TRUE                                         \
+         return true;                                    \
+      } else {                                           \
+         round_state = 0;                                \
+         return false;                                   \
+      }                                                  \
+   } else {                                              \
+      const size_t supos(GET_NEXT(thread_round_state));  \
+      while(round_state == thread_round_state) {}        \
+      if(round_state == supos) {                         \
+         thread_round_state = supos;                     \
+         assert(thread_round_state == round_state);      \
+         IF_TRUE                                         \
+         return true;                                    \
+      } else                                             \
+         return false;                                   \
+   }                                                     \
+}
+
+#define END_ROUND(COMPUTE_MORE_WORK) DO_END_ROUND(COMPUTE_MORE_WORK, );
+
 namespace sched
 {
 
+tree_barrier* threads_sched::thread_barrier(NULL);
+termination_barrier* threads_sched::term_barrier(NULL);
+std::atomic<size_t> threads_sched::total_in_agg(0);
+std::atomic<size_t> threads_sched::round_state(1);
+#ifdef TASK_STEALING
+std::atomic<int> *threads_sched::steal_states(NULL);
+#endif
+
+void
+threads_sched::init_barriers(const size_t num_threads)
+{
+   thread_barrier = new tree_barrier(num_threads);
+   term_barrier = new termination_barrier(num_threads);
+   total_in_agg = num_threads;
+#ifdef TASK_STEALING
+   steal_states = new std::atomic<int>[num_threads];
+   for(size_t i(0); i < num_threads; ++i)
+      steal_states[i] = 1;
+#endif
+}
+   
 void
 threads_sched::assert_end(void) const
 {
    assert(is_inactive());
    assert(all_threads_finished());
-   assert_thread_end_iteration();
    assert_static_nodes_end(id);
 }
 
@@ -55,7 +130,6 @@ threads_sched::assert_end_iteration(void) const
    assert(!has_work());
    assert(is_inactive());
    assert(all_threads_finished());
-   assert_thread_end_iteration();
    assert_static_nodes_end_iteration(id);
 }
 
@@ -235,6 +309,8 @@ threads_sched::steal_nodes(thread_intrusive_node **buffer, const size_t max)
       else
          stolen = queues.moving.pop_tail_half(buffer, max, STATE_STEALING);
    }
+#else
+#error "Must select a way to steal nodes."
 #endif
    return stolen;
 }
@@ -982,6 +1058,8 @@ threads_sched::write_slice(statistics::slice& sl)
 
 threads_sched::threads_sched(const vm::process_id _id):
    base(_id),
+   tstate(THREAD_ACTIVE),
+   thread_round_state(1),
    current_node(NULL)
 #ifdef TASK_STEALING
    , rand(time(NULL) + _id * 10)
@@ -1005,6 +1083,7 @@ threads_sched::threads_sched(const vm::process_id _id):
 
 threads_sched::~threads_sched(void)
 {
+   assert(tstate == THREAD_INACTIVE);
 }
    
 }

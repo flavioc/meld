@@ -6,12 +6,13 @@
 
 #include "sched/base.hpp"
 #include "queue/safe_linear_queue.hpp"
-#include "sched/thread/threaded.hpp"
 #include "sched/nodes/thread_intrusive.hpp"
+#include "thread/termination_barrier.hpp"
 #include "queue/safe_complex_pqueue.hpp"
 #include "queue/safe_double_queue.hpp"
 #include "utils/random.hpp"
 #include "utils/circular_buffer.hpp"
+#include "utils/tree_barrier.hpp"
 
 #define DIRECT_PRIORITIES
 
@@ -40,9 +41,74 @@ typedef struct {
    db::node *target;
 } priority_add_item;
 
-class threads_sched: public sched::base,
-                    public sched::threaded
+class threads_sched: public sched::base
 {
+private:
+   // thread state
+   enum thread_state {
+      THREAD_ACTIVE,
+      THREAD_INACTIVE
+   };
+
+   std::atomic<thread_state> tstate;
+
+   static termination_barrier *term_barrier;
+   static utils::tree_barrier *thread_barrier;
+#ifdef TASK_STEALING
+   static std::atomic<int> *steal_states;
+#endif
+   
+   utils::mutex lock;
+	
+   static std::atomic<size_t> round_state;
+   static std::atomic<size_t> total_in_agg;
+
+   size_t thread_round_state;
+   
+#define threads_synchronize() thread_barrier->wait(get_id())
+
+   inline void set_active(void)
+   {
+      assert(tstate == THREAD_INACTIVE);
+      tstate = THREAD_ACTIVE;
+#ifdef TASK_STEALING
+      steal_states[get_id()].store(1, std::memory_order_relaxed);
+#endif
+      term_barrier->is_active();
+   }
+   
+   inline void set_inactive(void)
+   {
+      assert(tstate == THREAD_ACTIVE);
+      tstate = THREAD_INACTIVE;
+#ifdef TASK_STEALING
+      steal_states[get_id()].store(0, std::memory_order_relaxed);
+#endif
+      term_barrier->is_inactive();
+   }
+   
+   inline void set_active_if_inactive(void)
+   {
+      if(is_inactive()) {
+         std::lock_guard<utils::mutex> l(lock);
+         LOCK_STAT(sched_lock);
+         if(is_inactive())
+            set_active();
+      }
+   }
+   
+   static inline size_t num_active(void) { return term_barrier->num_active(); }
+   
+   inline bool is_inactive(void) const { return tstate == THREAD_INACTIVE; }
+   inline bool is_active(void) const { return tstate == THREAD_ACTIVE; }
+   
+   static inline void reset_barrier(void) { term_barrier->reset(); }
+   
+   inline bool all_threads_finished(void) const
+   {
+      return term_barrier->all_finished();
+   }
+   
 protected:
    
    typedef queue::intrusive_safe_double_queue<thread_intrusive_node> node_queue;
@@ -207,6 +273,8 @@ public:
    }
    
    virtual void write_slice(statistics::slice&);
+
+   static void init_barriers(const size_t);
    
    explicit threads_sched(const vm::process_id);
    

@@ -24,7 +24,7 @@ ifeq ($(ALLOCATOR), pool)
 	FLAGS += -DPOOL_ALLOCATOR
 endif
 ifeq ($(EXTRA_ASSERTS), true)
-	FLAGS += -DASSERT_THREADS -DALLOCATOR_ASSERT -DTRIE_MATCHING_ASSERT
+	FLAGS += -DALLOCATOR_ASSERT -DTRIE_MATCHING_ASSERT
 endif
 ifeq ($(INDEXING), true)
 	FLAGS += -DDYNAMIC_INDEXING
@@ -128,8 +128,6 @@ SRCS = utils/utils.cpp \
 			 sched/base.cpp \
 			 sched/common.cpp \
 			 thread/threads.cpp \
-			 sched/thread/threaded.cpp \
-			 sched/thread/assert.cpp \
 			 external/math.cpp \
 			 external/lists.cpp \
 			 external/utils.cpp \
