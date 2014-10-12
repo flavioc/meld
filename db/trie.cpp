@@ -377,7 +377,7 @@ trie_node::~trie_node(void)
 
 #define HASH_INT(VAL) (std::hash<int_val>()(VAL))
 #define HASH_UINT(VAL) (std::hash<uint_val>()(VAL))
-#define HASH_FLOAT(VAL) (std::hash<float_val>()(VAL)/10000)
+#define HASH_FLOAT(VAL) (std::hash<float_val>()(VAL)/1000)
 #ifdef USE_REAL_NODES
 #define HASH_NODE(VAL) (std::hash<node::node_id>()(((db::node*)VAL)->get_id()))
 #else
@@ -718,7 +718,7 @@ trie::check_insert(void *data, predicate *pred, const derivation_count many, con
          } else if (parent->is_hashed()) {
             trie_hash *hsh(parent->get_hash());
             if(count > hsh->total/2 && hsh->total > 5)
-               cerr << "Hash table " << hsh << " becoming too imbalanced\n";
+               cerr << "Hash table " << hsh << " becoming too imbalanced (" << pred->get_name() << "/" << typ->string() << ")\n";
             if(count > TRIE_HASH_LIST_THRESHOLD/2)
                hsh->expand();
          }
