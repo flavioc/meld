@@ -125,8 +125,6 @@ private:
    void destructor(vm::predicate*);
 };
 
-typedef std::list<tuple*, mem::allocator<vm::tuple*> > tuple_list;
-
 }
 
 #endif
