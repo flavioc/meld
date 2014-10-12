@@ -23,9 +23,6 @@ class trie_hash;
 class trie_leaf;
 class tuple_trie_leaf;
 
-typedef std::list<simple_tuple*, mem::allocator<simple_tuple*> > simple_tuple_list;
-typedef std::vector<tuple_trie_leaf*, mem::allocator<tuple_trie_leaf*> > tuple_vector;
-
 class trie_node: public mem::base
 {
 public:

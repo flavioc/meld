@@ -85,7 +85,7 @@ node::end_iteration(void)
       
       simple_tuple_list ls(agg->generate());
       
-      ret.insert(ret.end(), ls.begin(), ls.end());
+      ret.splice_back(ls);
    }
    
    return ret;

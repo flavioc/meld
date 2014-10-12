@@ -145,7 +145,7 @@ state::search_for_negative_tuple_partial_agg(db::simple_tuple *stpl)
 
    assert(!stpl->is_aggregate());
 
-   for(db::simple_tuple_list::iterator it(store->persistent_tuples.begin()),
+   for(auto it(store->persistent_tuples.begin()),
          end(store->persistent_tuples.end());
          it != end; ++it)
    {
@@ -173,7 +173,7 @@ state::search_for_negative_tuple_normal(db::simple_tuple *stpl)
    assert(!pred1->is_aggregate_pred());
    assert(!stpl->is_aggregate());
 
-   for(db::simple_tuple_list::iterator it(store->persistent_tuples.begin()),
+   for(auto it(store->persistent_tuples.begin()),
          end(store->persistent_tuples.end());
          it != end; ++it)
    {
@@ -197,8 +197,7 @@ state::search_for_negative_tuple_full_agg(db::simple_tuple *stpl)
    vm::tuple *tpl(stpl->get_tuple());
    vm::predicate *pred1(stpl->get_predicate());
 
-   for(db::simple_tuple_list::iterator it(store->persistent_tuples.begin()),
-         end(store->persistent_tuples.end());
+   for(auto it(store->persistent_tuples.begin()), end(store->persistent_tuples.end());
          it != end; ++it)
    {
       db::simple_tuple *stpl2(*it);
@@ -232,11 +231,9 @@ state::do_persistent_tuples(void)
          return false;
       }
 #endif
-      db::simple_tuple *stpl(store->persistent_tuples.front());
+      db::simple_tuple *stpl(store->persistent_tuples.pop_front());
       vm::predicate *pred(stpl->get_predicate());
       vm::tuple *tpl(stpl->get_tuple());
-
-      store->persistent_tuples.pop_front();
 
       if(pred->is_persistent_pred()) {
          // XXX crashes when calling wipeout below
@@ -298,11 +295,9 @@ state::do_persistent_tuples(void)
 void
 state::process_action_tuples(void)
 {
-   store->action_tuples.splice(store->action_tuples.end(), store->incoming_action_tuples);
-   for(db::simple_tuple_list::iterator it(store->action_tuples.begin()),
-         end(store->action_tuples.end());
-         it != end;
-         ++it)
+   store->action_tuples.splice_back(store->incoming_action_tuples);
+   for(auto it(store->action_tuples.begin()), end(store->action_tuples.end());
+         it != end; ++it)
    {
       db::simple_tuple *stpl(*it);
       vm::tuple *tpl(stpl->get_tuple());
@@ -334,7 +329,7 @@ state::process_incoming_tuples(void)
    }
 #endif
    if(!store->incoming_persistent_tuples.empty())
-      store->persistent_tuples.splice(store->persistent_tuples.end(), store->incoming_persistent_tuples);
+      store->persistent_tuples.splice_back(store->incoming_persistent_tuples);
 }
 
 void

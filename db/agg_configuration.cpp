@@ -363,16 +363,6 @@ agg_configuration::generate(predicate *pred, const aggregate_type typ, const fie
    vm::depth_t depth(0);
    vm::tuple* generated(do_generate(pred, typ, field, depth));
    
-#if 0
-   if(generated) {
-      cout << "Generated from ";
-         cout << *generated << " " << depth;
-      cout << endl;
-      vals.dump(cout);
-      cout << endl;
-   }
-#endif
-
    changed = false;
 
    if(corresponds == NULL) {
@@ -383,18 +373,22 @@ agg_configuration::generate(predicate *pred, const aggregate_type typ, const fie
       }
    } else if (generated == NULL) {
       if(corresponds != NULL) {
-         cont.push_back(simple_tuple::remove_new(corresponds, pred, last_depth));
+         cont.push_back(simple_tuple::remove_new(corresponds->copy(pred), pred, last_depth));
          last_depth = 0;
       }
    } else {
       if(!(corresponds->equal(*generated, pred))) {
-         cont.push_back(simple_tuple::remove_new(corresponds, pred, last_depth));
+         cont.push_back(simple_tuple::remove_new(corresponds->copy(pred), pred, last_depth));
          cont.push_back(simple_tuple::create_new(generated, pred, depth));
          last_depth = depth;
       }
    }
 
-   corresponds = generated;
+   if(generated) {
+      if(corresponds)
+         vm::tuple::destroy(corresponds, pred);
+      corresponds = generated->copy(pred);
+   }
 }
 
 void

@@ -8,10 +8,74 @@ namespace utils
 {
 
 #define DECLARE_LIST_INTRUSIVE(TYPE)      \
-   TYPE *__intrusive_next;                \
-   TYPE *__intrusive_prev
+   void *__intrusive_next;                \
+   void *__intrusive_prev
 
 template <class T>
+class identity_intrusive_next
+{
+   public:
+
+      inline T *operator()(T *x)
+      {
+         return (T*)(x->__intrusive_next);
+      }
+
+      inline void set(T *x, T *val)
+      {
+         x->__intrusive_next = val;
+      }
+};
+
+template <class T>
+class identity_intrusive_prev
+{
+   public:
+
+      inline T *operator()(T *x)
+      {
+         return (T*)(x->__intrusive_prev);
+      }
+
+      inline void set(T *x, T *val)
+      {
+         x->__intrusive_prev = val;
+      }
+};
+
+template <class T>
+class indirect_intrusive_next
+{
+   public:
+
+      inline T *operator()(T *x)
+      {
+         return (T*)(x->data->__intrusive_next);
+      }
+
+      inline void set(T *x, T *val)
+      {
+         x->data->__intrusive_next = val;
+      }
+};
+
+template <class T>
+class indirect_intrusive_prev
+{
+   public:
+
+      inline T *operator()(T *x)
+      {
+         return (T*)(x->data->__intrusive_prev);
+      }
+
+      inline void set(T *x, T *val)
+      {
+         x->data->__intrusive_prev = val;
+      }
+};
+
+template <class T, class Next = identity_intrusive_next<T>, class Prev = identity_intrusive_prev<T> >
 struct intrusive_list
 {
    private:
@@ -42,13 +106,13 @@ struct intrusive_list
 
             inline iterator& operator++(void)
             {
-               current = current->__intrusive_next;
+               current = Next()(current);
                return *this;
             }
 
             inline iterator operator++(int)
             {
-               current = current->__intrusive_next;
+               current = Next()(current);
                return *this;
             }
 
@@ -75,15 +139,13 @@ struct intrusive_list
             T* prev(NULL);
             assert(tail);
             while(p) {
-               assert(p->__intrusive_prev == prev);
+               assert(Prev()(p) == prev);
                prev = p;
-               p = p->__intrusive_next;
-               if(p == NULL) {
-                  assert(prev == tail);
-               }
+               p = Next()(p);
                assert(p != prev);
-               assert(prev->__intrusive_next == p);
+               assert(Next()(prev) == p);
             }
+            assert(prev == tail);
          }
 #endif
       }
@@ -92,36 +154,36 @@ struct intrusive_list
       {
          T* obj(*it);
          //std::cout << "erase " << this << " " << *obj << std::endl;
-         iterator it2(it.current->__intrusive_next);
+         iterator it2(Next()(it.current));
          assert(size > 0);
          if(obj == head) {
-            head = head->__intrusive_next;
-            assert(obj->__intrusive_prev == NULL);
+            head = Next()(head);
+            assert(Prev()(obj) == NULL);
             if(obj == tail) {
                tail = NULL;
                assert(size == 1);
                assert(head == NULL);
-               assert(obj->__intrusive_next == NULL);
+               assert(Next()(obj) == NULL);
             } else {
-               head->__intrusive_prev = NULL;
-               assert(tail->__intrusive_next == NULL);
-               assert(head->__intrusive_prev == NULL);
+               Prev().set(head, NULL);
+               assert(Next()(tail) == NULL);
+               assert(Prev()(head) == NULL);
             }
          } else {
             assert(size > 1);
-            T* prev(obj->__intrusive_prev);
-            T* next(obj->__intrusive_next);
+            T* prev(Prev()(obj));
+            T* next(Next()(obj));
 
             assert(prev);
-            prev->__intrusive_next = next;
+            Next().set(prev, next);
             if(next)
-               next->__intrusive_prev = prev;
+               Prev().set(next, prev);
             else {
                tail = prev;
                assert(next == NULL);
             }
-            assert(tail->__intrusive_next == NULL);
-            assert(head->__intrusive_prev == NULL);
+            assert(Next()(tail) == NULL);
+            assert(Prev()(head) == NULL);
          }
          size--;
          assertl();
@@ -139,20 +201,20 @@ struct intrusive_list
             assert(size == 0);
             assert(tail == NULL);
             head = tail = n;
-            n->__intrusive_next = NULL;
+            Next().set(n, NULL);
          } else {
             assert(head && tail);
             assert(size > 0);
-            head->__intrusive_prev = n;
-            n->__intrusive_next = head;
+            Prev().set(head, n);
+            Next().set(n, head);
             head = n;
          }
-         n->__intrusive_prev = NULL;
+         Prev().set(n, NULL);
          size++;
          assertl();
          assert(n == head);
-         assert(tail->__intrusive_next == NULL);
-         assert(head->__intrusive_prev == NULL);
+         assert(Next()(tail) == NULL);
+         assert(Prev()(head) == NULL);
       }
 
       inline T* pop_front(void)
@@ -161,37 +223,37 @@ struct intrusive_list
             return NULL;
 
          T *ret(head);
-         head = head->__intrusive_next;
+         head = Next()(head);
          if(head)
-            head->__intrusive_prev = NULL;
-         if(head == NULL)
+            Prev().set(head, NULL);
+         else
             tail = NULL;
          size--;
-         return head;
+         return ret;
       }
 
       inline void push_back(T *n)
       {
-         //std::cout << "push_back " << this << " " << *n << std::endl;
          assertl();
          if(head == NULL) {
             assert(size == 0);
             assert(tail == NULL);
             head = tail = n;
-            n->__intrusive_prev = NULL;
+            Prev().set(n, NULL);
          } else {
             assert(tail);
             assert(size > 0);
-            tail->__intrusive_next = n;
-            n->__intrusive_prev = tail;
+            Next().set(tail, n);
+            Prev().set(n, tail);
+            assert(Prev()(tail) != tail);
             tail = n;
             assert(tail != head);
          }
-         tail->__intrusive_next = NULL;
+         Next().set(tail, NULL);
          size++;
          assert(n == tail);
-         assert(tail->__intrusive_next == NULL);
-         assert(head->__intrusive_prev == NULL);
+         assert(Next()(tail) == NULL);
+         assert(Prev()(head) == NULL);
          assertl();
       }
 
@@ -202,21 +264,21 @@ struct intrusive_list
             assert(head == NULL);
             head = ls.head;
             tail = ls.tail;
-            assert(!tail || tail->__intrusive_next == NULL);
-            assert(!head || head->__intrusive_prev == NULL);
+            assert(!tail || Next()(tail) == NULL);
+            assert(!head || Prev()(head) == NULL);
          } else {
             assert(head);
-            head->__intrusive_prev = ls.tail;
+            Prev().set(head, ls.tail);
             if(ls.tail) {
-               ls.tail->__intrusive_next = head;
+               Next().set(ls.tail, head);
                assert(ls.head);
                head = ls.head;
             } else {
                assert(ls.head == NULL);
-               assert(head->__intrusive_prev == NULL);
+               assert(Prev()(head) == NULL);
             }
-            assert(tail->__intrusive_next == NULL);
-            assert(head->__intrusive_prev == NULL);
+            assert(Next()(tail) == NULL);
+            assert(Prev()(head) == NULL);
          }
          size += ls.size;
          ls.clear();
@@ -227,25 +289,26 @@ struct intrusive_list
       {
          //std::cout << "splice " << this << " " << &ls << std::endl;
          ls.assertl();
+         assertl();
          if(head == NULL) {
             assert(tail == NULL);
             head = ls.head;
             tail = ls.tail;
-            assert(!tail || tail->__intrusive_next == NULL);
-            assert(!head || head->__intrusive_prev == NULL);
+            assert(!tail || Next()(tail) == NULL);
+            assert(!head || Prev()(head) == NULL);
          } else {
             assert(tail);
-            tail->__intrusive_next = ls.head;
+            Next().set(tail, ls.head);
             if(ls.head) {
-               ls.head->__intrusive_prev = tail;
+               Prev().set(ls.head, tail);
                assert(ls.tail);
                tail = ls.tail;
             } else {
                assert(ls.tail == NULL);
-               assert(tail->__intrusive_next == NULL);
+               assert(Next()(tail) == NULL);
             }
-            assert(tail->__intrusive_next == NULL);
-            assert(head->__intrusive_prev == NULL);
+            assert(Next()(tail) == NULL);
+            assert(Prev()(head) == NULL);
          }
          size += ls.size;
          ls.clear();
@@ -254,7 +317,7 @@ struct intrusive_list
 
       inline void dump(std::ostream& out, const vm::predicate *pred) const
       {
-         for(T *tpl(head); tpl != NULL; tpl = tpl->__intrusive_next) {
+         for(T *tpl(head); tpl != NULL; tpl = Next()(tpl)) {
             out << "\t"; tpl->print(out, pred); out << "\n";
          }
       }

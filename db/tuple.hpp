@@ -16,15 +16,17 @@
 namespace db
 {
    
-class simple_tuple: public mem::base
+struct simple_tuple: public mem::base
 {
+public:
+   vm::tuple *data;
+
 private:
    vm::predicate *pred;
-   vm::tuple *data;
    vm::derivation_count count;
    vm::depth_t depth;
    // if tuple is a final aggregate
-   bool is_final_aggregate;
+   bool is_final_aggregate = false;
 
 public:
 
@@ -65,12 +67,10 @@ public:
    static void wipeout(simple_tuple *stpl) { vm::tuple::destroy(stpl->get_tuple(), stpl->get_predicate()); delete stpl; }
 
    explicit simple_tuple(vm::tuple *_tuple, vm::predicate *_pred, const vm::derivation_count _count, const vm::depth_t _depth = 0):
-      pred(_pred), data(_tuple), count(_count), depth(_depth),
-      is_final_aggregate(false)
+      data(_tuple), pred(_pred), count(_count), depth(_depth)
    {}
 
-   explicit simple_tuple(void): // for serialization purposes
-      is_final_aggregate(false)
+   explicit simple_tuple(void) // for serialization purposes
    {
    }
 
@@ -79,9 +79,8 @@ public:
 
 std::ostream& operator<<(std::ostream&, const simple_tuple&);
 
-// XXX remove this, use intrusive_list...
-typedef std::list<simple_tuple*, mem::allocator<simple_tuple*> > simple_tuple_list;
-typedef std::vector<simple_tuple*, mem::allocator<simple_tuple*> > simple_tuple_vector;
+typedef utils::intrusive_list<simple_tuple, utils::indirect_intrusive_next<simple_tuple>,
+        utils::indirect_intrusive_prev<simple_tuple> > simple_tuple_list;
 
 }
 
