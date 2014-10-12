@@ -171,6 +171,7 @@ public:
    void process_action_tuples(void);
    void process_incoming_tuples(void);
 	void run_node(db::node *);
+   bool sync(void);
    void setup(vm::predicate *, db::node*, const vm::derivation_count, const vm::depth_t);
    void cleanup(void);
 

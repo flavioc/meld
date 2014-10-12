@@ -875,13 +875,22 @@ state::run_node(db::node *no)
       lstore->cleanup_index();
 #endif
    node->internal_unlock();
+   sync();
+}
+
+bool
+state::sync(void)
+{
+   bool ret(false);
    // send all facts to nodes.
    for(auto it(facts_to_send.begin()), end(facts_to_send.end()); it != end; ++it) {
       tuple_array& ls(it->second);
       db::node *target((db::node*)it->first);
       sched->new_work_list(node, target, ls);
+      ret = true;
    }
    facts_to_send.clear();
+   return ret;
 }
 
 state::state(sched::base *_sched):
