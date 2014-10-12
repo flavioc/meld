@@ -5,7 +5,6 @@
 #include <dlfcn.h>
 
 #include "vm/program.hpp"
-#include "db/tuple.hpp"
 #include "vm/instr.hpp"
 #include "db/database.hpp"
 #include "utils/types.hpp"

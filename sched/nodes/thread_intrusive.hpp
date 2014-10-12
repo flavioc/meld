@@ -5,9 +5,7 @@
 #include "mem/base.hpp"
 #include "queue/intrusive.hpp"
 #include "queue/safe_simple_pqueue.hpp"
-#include "db/tuple.hpp"
 #include "sched/base.hpp"
-#include "process/work.hpp"
 #include "vm/state.hpp"
 
 namespace sched

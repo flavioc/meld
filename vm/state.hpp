@@ -43,9 +43,9 @@ private:
    vm::bitmap rule_queue;
 	
    void purge_runtime_objects(void);
-   db::simple_tuple* search_for_negative_tuple_partial_agg(db::simple_tuple *);
-   db::simple_tuple* search_for_negative_tuple_full_agg(db::simple_tuple *);
-   db::simple_tuple* search_for_negative_tuple_normal(db::simple_tuple *);
+   full_tuple* search_for_negative_tuple_partial_agg(full_tuple *);
+   full_tuple* search_for_negative_tuple_full_agg(full_tuple *);
+   full_tuple* search_for_negative_tuple_normal(full_tuple *);
 
    void indexing_state_machine(db::node *);
 
@@ -161,9 +161,9 @@ public:
 	bool add_fact_to_node(vm::tuple *, vm::predicate *, const vm::derivation_count count = 1, const vm::depth_t depth = 0);
 	
 	void mark_active_rules(void);
-   void add_to_aggregate(db::simple_tuple *);
+   void add_to_aggregate(full_tuple *);
    bool do_persistent_tuples(void);
-   void process_persistent_tuple(db::simple_tuple *, vm::tuple *);
+   void process_persistent_tuple(full_tuple *, vm::tuple *);
 	void process_consumed_local_tuples(void);
 #ifdef USE_SIM
    bool check_instruction_limit(void) const;

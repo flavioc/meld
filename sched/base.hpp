@@ -7,13 +7,12 @@
 #include <list>
 #include <stdexcept>
 
-#include "db/tuple.hpp"
+#include "vm/full_tuple.hpp"
 #include "db/node.hpp"
 #include "db/database.hpp"
 #include "vm/state.hpp"
 #include "utils/macros.hpp"
 #include "stat/slice.hpp"
-#include "process/work.hpp"
 #include "stat/stat.hpp"
 #include "vm/state.hpp"
 #include "vm/temporary.hpp"
@@ -64,14 +63,12 @@ protected:
    
    inline void node_iteration(db::node *node)
    {
-      db::simple_tuple_list ls(node->end_iteration());
+      vm::full_tuple_list ls(node->end_iteration());
 
-      for(db::simple_tuple_list::iterator it(ls.begin());
-         it != ls.end();
-         ++it)
-      {
-         new_work_agg(node, *it);
-      }
+      // XXX
+      // need to do new_work_list
+      // XXX
+      (void)ls;
    }
 
    inline void setup_node(db::node *node)
@@ -107,13 +104,6 @@ public:
       return node;
    }
    
-   // a new aggregate is to be inserted into the work queue
-   inline void new_work_agg(db::node *node, db::simple_tuple *stpl)
-   {
-      process::work work(node, stpl, process::mods::LOCAL_TUPLE | process::mods::FORCE_AGGREGATE);
-      new_agg(work);
-   }
-   
    // new work to a certain node
    virtual void new_work(db::node *from, db::node *to, vm::tuple*, vm::predicate *, const vm::ref_count, const vm::depth_t) = 0;
    // list of work to be sent
@@ -124,9 +114,6 @@ public:
       assert(false);
    }
 
-   // new aggregate
-   virtual void new_agg(process::work&) = 0;
-   
    // ACTIONS
    virtual void set_node_priority(db::node *, const double) { }
 	virtual void add_node_priority(db::node *, const double) { }
@@ -135,9 +122,6 @@ public:
    virtual void set_node_static(db::node *) { }
    virtual void set_node_moving(db::node *) { }
    virtual void set_node_affinity(db::node *, db::node *) { }
-
-	// GATHER QUEUE FACTS FROM NODE
-   virtual void gather_next_tuples(db::node *, db::simple_tuple_list&) { }
 
    virtual void init(const size_t) = 0;
    virtual void end(void) = 0;

@@ -9,7 +9,7 @@
 #include "vm/exec.hpp"
 #include "vm/tuple.hpp"
 #include "vm/match.hpp"
-#include "db/tuple.hpp"
+#include "vm/full_tuple.hpp"
 #include "process/machine.hpp"
 #include "utils/mutex.hpp"
 #include "sched/nodes/thread_intrusive.hpp"
@@ -131,7 +131,7 @@ execute_add_persistent0(tuple *tpl, predicate *pred, state& state)
 #endif
 
    assert(pred->is_persistent_pred() || pred->is_reused_pred());
-   simple_tuple *stuple(new simple_tuple(tpl, pred, state.count, state.depth));
+   full_tuple *stuple(new full_tuple(tpl, pred, state.count, state.depth));
    state.store->persistent_tuples.push_back(stuple);
    state.persistent_facts_generated++;
 }
@@ -256,7 +256,7 @@ execute_send(const pcounter& pc, state& state)
             it = state.facts_to_send.find(node);
          }
          arr = &(it->second);
-         tuple_info info = {pred, tuple, state.count, state.depth};
+         full_tuple info(tuple, pred, state.count, state.depth);
          arr->push_back(info);
       }
    }
@@ -1278,7 +1278,7 @@ execute_remove(pcounter pc, state& state)
    if(state.count > 0) {
       state.store->deregister_tuple_fact(pred, state.count);
       if(pred->is_reused_pred())
-         state.store->persistent_tuples.push_back(new simple_tuple(tpl, pred, -1, state.depth));
+         state.store->persistent_tuples.push_back(new full_tuple(tpl, pred, -1, state.depth));
       state.linear_facts_consumed++;
 #ifdef INSTRUMENTATION
       state.instr_facts_consumed++;

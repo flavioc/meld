@@ -6,7 +6,7 @@
 
 #include "mem/base.hpp"
 #include "vm/defs.hpp"
-#include "db/tuple.hpp"
+#include "vm/full_tuple.hpp"
 #include "db/trie.hpp"
 #include "db/agg_configuration.hpp"
 
@@ -30,7 +30,7 @@ public:
 
    void print(std::ostream&) const;
 
-   simple_tuple_list generate(void);
+   vm::full_tuple_list generate(void);
 
    agg_configuration* add_to_set(vm::tuple *, vm::predicate *, const vm::derivation_count, const vm::depth_t);
    

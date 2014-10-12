@@ -11,7 +11,7 @@
 
 #include "vm/tuple.hpp"
 #include "vm/predicate.hpp"
-#include "db/tuple.hpp"
+#include "vm/full_tuple.hpp"
 #include "db/tuple_aggregate.hpp"
 #include "mem/allocator.hpp"
 #include "db/trie.hpp"
@@ -54,7 +54,7 @@ private:
                std::hash<vm::predicate_id>,
                std::equal_to<vm::predicate_id>,
                mem::allocator<std::pair<const vm::predicate_id,
-                                 tuple_trie*> > > simple_tuple_map;
+                                 tuple_trie*> > > pers_tuple_map;
                                  
    typedef std::unordered_map<vm::predicate_id, tuple_aggregate*,
                std::hash<vm::predicate_id>,
@@ -63,7 +63,7 @@ private:
                                  tuple_aggregate*> > > aggregate_map;
 	
 	// tuple database
-   simple_tuple_map tuples;
+   pers_tuple_map tuples;
    
    // sets of tuple aggregates
    aggregate_map aggs;
@@ -96,7 +96,7 @@ public:
          const vm::derivation_count, const vm::depth_t);
    db::agg_configuration* remove_agg_tuple(vm::tuple*, vm::predicate *,
          const vm::derivation_count, const vm::depth_t);
-   simple_tuple_list end_iteration(void);
+   vm::full_tuple_list end_iteration(void);
    
    void delete_by_index(vm::predicate*, const vm::match&);
    void delete_by_leaf(vm::predicate*, tuple_trie_leaf*, const vm::depth_t);
@@ -162,9 +162,9 @@ public:
          const vm::ref_count count, const vm::depth_t depth)
    {
       if(pred->is_action_pred())
-         store.add_action_fact(new simple_tuple(tpl, pred, count, depth));
+         store.add_action_fact(new vm::full_tuple(tpl, pred, count, depth));
       else if(pred->is_persistent_pred() || pred->is_reused_pred()) {
-         simple_tuple *stpl(new simple_tuple(tpl, pred, count, depth));
+         vm::full_tuple *stpl(new vm::full_tuple(tpl, pred, count, depth));
          store.add_persistent_fact(stpl);
          store.register_fact(stpl);
       } else
@@ -183,8 +183,8 @@ public:
    {
       unprocessed_facts = true;
       for(auto it(arr.begin()), end(arr.end()); it != end; ++it) {
-         vm::tuple_info info(*it);
-         inner_add_work_myself(info.tpl, info.pred, info.count, info.depth);
+         vm::full_tuple info(*it);
+         inner_add_work_myself(info.get_tuple(), info.get_predicate(), info.get_count(), info.get_depth());
       }
    }
 
@@ -192,10 +192,10 @@ public:
          const vm::ref_count count, const vm::depth_t depth)
    {
       if(pred->is_action_pred()) {
-         simple_tuple *stpl(new simple_tuple(tpl, pred, count, depth));
+         vm::full_tuple *stpl(new vm::full_tuple(tpl, pred, count, depth));
          store.incoming_action_tuples.push_back(stpl);
       } else if(pred->is_persistent_pred() || pred->is_reused_pred()) {
-         simple_tuple *stpl(new simple_tuple(tpl, pred, count, depth));
+         vm::full_tuple *stpl(new vm::full_tuple(tpl, pred, count, depth));
          store.incoming_persistent_tuples.push_back(stpl);
       } else
          store.add_incoming(tpl, pred);
@@ -213,8 +213,8 @@ public:
    {
       unprocessed_facts = true;
       for(auto it(arr.begin()), end(arr.end()); it != end; ++it) {
-         vm::tuple_info info(*it);
-         inner_add_work_others(info.tpl, info.pred, info.count, info.depth);
+         vm::full_tuple info(*it);
+         inner_add_work_others(info.get_tuple(), info.get_predicate(), info.get_count(), info.get_depth());
       }
    }
    

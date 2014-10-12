@@ -21,7 +21,7 @@ namespace db
 tuple_trie*
 node::get_storage(predicate* pred)
 {
-   simple_tuple_map::iterator it(tuples.find(pred->get_id()));
+   auto it(tuples.find(pred->get_id()));
    
    if(it == tuples.end()) {
       //cout << "New trie for " << *pred << endl;
@@ -71,11 +71,11 @@ node::remove_agg_tuple(vm::tuple *tuple, vm::predicate *pred, const derivation_c
    return add_agg_tuple(tuple, pred, -many, depth);
 }
 
-simple_tuple_list
+full_tuple_list
 node::end_iteration(void)
 {
    // generate possible aggregates
-   simple_tuple_list ret;
+   full_tuple_list ret;
    
    for(aggregate_map::iterator it(aggs.begin());
       it != aggs.end();
@@ -83,7 +83,9 @@ node::end_iteration(void)
    {
       tuple_aggregate *agg(it->second);
       
-      simple_tuple_list ls(agg->generate());
+      full_tuple_list ls(agg->generate());
+      for(auto jt(ls.begin()), end(ls.end()); jt != end; ++jt)
+         (*jt)->set_as_aggregate();
       
       ret.splice_back(ls);
    }
@@ -94,7 +96,7 @@ node::end_iteration(void)
 tuple_trie::tuple_search_iterator
 node::match_predicate(const predicate_id id) const
 {
-   simple_tuple_map::const_iterator it(tuples.find(id));
+   pers_tuple_map::const_iterator it(tuples.find(id));
    
    if(it == tuples.end())
       return tuple_trie::tuple_search_iterator();
@@ -107,7 +109,7 @@ node::match_predicate(const predicate_id id) const
 tuple_trie::tuple_search_iterator
 node::match_predicate(const predicate_id id, const match* m) const
 {
-   simple_tuple_map::const_iterator it(tuples.find(id));
+   pers_tuple_map::const_iterator it(tuples.find(id));
    
    if(it == tuples.end())
       return tuple_trie::tuple_search_iterator();
@@ -137,7 +139,7 @@ node::delete_by_leaf(predicate *pred, tuple_trie_leaf *leaf, const depth_t depth
 void
 node::assert_tries(void)
 {
-   for(simple_tuple_map::iterator it(tuples.begin()), end(tuples.end()); it != end; ++it) {
+   for(auto it(tuples.begin()), end(tuples.end()); it != end; ++it) {
       tuple_trie *tr(it->second);
       tr->assert_used();
    }
@@ -163,7 +165,7 @@ node::count_total(const predicate_id id) const
 {
    predicate *pred(theProgram->get_predicate(id));
    if(pred->is_persistent_pred()) {
-      simple_tuple_map::const_iterator it(tuples.find(id));
+      auto it(tuples.find(id));
    
       if(it == tuples.end())
          return 0;
@@ -216,7 +218,7 @@ node::node(const node_id _id, const node_id _trans):
 void
 node::wipeout(void)
 {
-   for(simple_tuple_map::iterator it(tuples.begin()), end(tuples.end()); it != end; it++) {
+   for(auto it(tuples.begin()), end(tuples.end()); it != end; it++) {
       tuple_trie *tr(it->second);
       predicate *pred(theProgram->get_predicate(it->first));
       tr->wipeout(pred);
@@ -236,7 +238,7 @@ node::dump(ostream& cout) const
 
       vector<string> vec;
       if(pred->is_persistent_pred()) {
-         simple_tuple_map::const_iterator it(tuples.find(pred->get_id()));
+         auto it(tuples.find(pred->get_id()));
          tuple_trie *tr = NULL;
          if(it != tuples.end())
             tr = it->second;
@@ -287,7 +289,7 @@ node::print(ostream& cout) const
 
       vector<string> vec;
       if(pred->is_persistent_pred()) {
-         simple_tuple_map::const_iterator it(tuples.find(pred->get_id()));
+         auto it(tuples.find(pred->get_id()));
          tuple_trie *tr = NULL;
          if(it != tuples.end())
             tr = it->second;

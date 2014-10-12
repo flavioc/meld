@@ -11,7 +11,7 @@
 #include "mem/base.hpp"
 #include "vm/tuple.hpp"
 #include "vm/defs.hpp"
-#include "db/tuple.hpp"
+#include "vm/full_tuple.hpp"
 #include "vm/predicate.hpp"
 #include "vm/match.hpp"
 #include "vm/types.hpp"
@@ -368,7 +368,7 @@ public:
    
    virtual inline bool to_delete(void) const { return count == 0; }
    
-   explicit tuple_trie_leaf(simple_tuple *_tpl):
+   explicit tuple_trie_leaf(vm::full_tuple *_tpl):
       trie_leaf(),
       tpl(_tpl->get_tuple()),
       count(0),
@@ -562,7 +562,7 @@ private:
 
    virtual trie_leaf* create_leaf(void *data, vm::predicate *pred, const vm::ref_count many, const vm::depth_t depth)
    {
-      return new tuple_trie_leaf(new simple_tuple((vm::tuple*)data, pred, many, depth));
+      return new tuple_trie_leaf(new vm::full_tuple((vm::tuple*)data, pred, many, depth));
    }
    
    trie_node* check_insert(vm::tuple *, vm::predicate *, const vm::derivation_count, const vm::depth_t, bool&);

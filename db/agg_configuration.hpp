@@ -5,7 +5,7 @@
 #include <ostream>
 
 #include "mem/base.hpp"
-#include "db/tuple.hpp"
+#include "vm/full_tuple.hpp"
 #include "vm/defs.hpp"
 #include "vm/types.hpp"
 #include "db/trie.hpp"
@@ -43,7 +43,7 @@ public:
 
    void print(std::ostream&, vm::predicate *) const;
 
-   void generate(vm::predicate *, const vm::aggregate_type, const vm::field_num, simple_tuple_list&);
+   void generate(vm::predicate *, const vm::aggregate_type, const vm::field_num, vm::full_tuple_list&);
 
    bool test(vm::predicate *, vm::tuple *, const vm::field_num) const;
 

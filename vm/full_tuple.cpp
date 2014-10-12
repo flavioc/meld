@@ -1,26 +1,24 @@
 #include <assert.h>
 
-#include "db/tuple.hpp"
+#include "vm/full_tuple.hpp"
 
-using namespace db;
-using namespace vm;
 using namespace std;
 using namespace utils;
 
-namespace db
+namespace vm
 {
 
 void
-simple_tuple::pack(byte *buf, const size_t buf_size, int *pos) const
+full_tuple::pack(byte *buf, const size_t buf_size, int *pos) const
 {
    utils::pack<derivation_count>((void*)&count, 1, buf, buf_size, pos);
    utils::pack<depth_t>((void*)&depth, 1, buf, buf_size, pos);
    
-   data->pack(pred, buf, buf_size, pos);
+   data->pack(get_predicate(), buf, buf_size, pos);
 }
 
-simple_tuple*
-simple_tuple::unpack(vm::predicate *pred, byte *buf, const size_t buf_size, int *pos, vm::program *prog)
+full_tuple*
+full_tuple::unpack(vm::predicate *pred, byte *buf, const size_t buf_size, int *pos, vm::program *prog)
 {
    derivation_count count;
    depth_t depth;
@@ -30,18 +28,18 @@ simple_tuple::unpack(vm::predicate *pred, byte *buf, const size_t buf_size, int 
    
    vm::tuple *tpl(vm::tuple::unpack(buf, buf_size, pos, prog));
    
-   return new simple_tuple(tpl, pred, count, depth);
+   return new full_tuple(tpl, pred, count, depth);
 }
 
-simple_tuple::~simple_tuple(void)
+full_tuple::~full_tuple(void)
 {
-   // simple_tuple is not allowed to delete tuples
+   // full_tuple is not allowed to delete tuples
 }
 
 void
-simple_tuple::print(ostream& cout) const
+full_tuple::print(ostream& cout) const
 {
-   data->print(cout, pred);
+   data->print(cout, get_predicate());
 	
 	if(count > 1)
 		cout << "@" << count;
@@ -49,7 +47,7 @@ simple_tuple::print(ostream& cout) const
       cout << "@" << count;
 }
 
-ostream& operator<<(ostream& cout, const simple_tuple& tuple)
+ostream& operator<<(ostream& cout, const full_tuple& tuple)
 {
    tuple.print(cout);
    return cout;

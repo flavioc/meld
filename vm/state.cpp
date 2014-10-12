@@ -131,14 +131,14 @@ state::add_fact_to_node(vm::tuple *tpl, vm::predicate *pred, const vm::derivatio
 }
 
 static inline bool
-tuple_for_assertion(db::simple_tuple *stpl)
+tuple_for_assertion(full_tuple *stpl)
 {
    return (stpl->get_predicate()->is_aggregate_pred() && stpl->is_aggregate())
       || !stpl->get_predicate()->is_aggregate_pred();
 }
 
-db::simple_tuple*
-state::search_for_negative_tuple_partial_agg(db::simple_tuple *stpl)
+full_tuple*
+state::search_for_negative_tuple_partial_agg(full_tuple *stpl)
 {
    vm::tuple *tpl(stpl->get_tuple());
    vm::predicate *pred(stpl->get_predicate());
@@ -149,7 +149,7 @@ state::search_for_negative_tuple_partial_agg(db::simple_tuple *stpl)
          end(store->persistent_tuples.end());
          it != end; ++it)
    {
-      db::simple_tuple *stpl2(*it);
+      full_tuple *stpl2(*it);
       vm::tuple *tpl2(stpl2->get_tuple());
       vm::predicate *pred2(stpl2->get_predicate());
 
@@ -164,8 +164,8 @@ state::search_for_negative_tuple_partial_agg(db::simple_tuple *stpl)
    return NULL;
 }
 
-db::simple_tuple*
-state::search_for_negative_tuple_normal(db::simple_tuple *stpl)
+full_tuple*
+state::search_for_negative_tuple_normal(full_tuple *stpl)
 {
    vm::tuple *tpl(stpl->get_tuple());
    vm::predicate *pred1(stpl->get_predicate());
@@ -177,7 +177,7 @@ state::search_for_negative_tuple_normal(db::simple_tuple *stpl)
          end(store->persistent_tuples.end());
          it != end; ++it)
    {
-      db::simple_tuple *stpl2(*it);
+      full_tuple *stpl2(*it);
       vm::tuple *tpl2(stpl2->get_tuple());
       vm::predicate* pred2(stpl2->get_predicate());
 
@@ -191,8 +191,8 @@ state::search_for_negative_tuple_normal(db::simple_tuple *stpl)
    return NULL;
 }
 
-db::simple_tuple*
-state::search_for_negative_tuple_full_agg(db::simple_tuple *stpl)
+full_tuple*
+state::search_for_negative_tuple_full_agg(full_tuple *stpl)
 {
    vm::tuple *tpl(stpl->get_tuple());
    vm::predicate *pred1(stpl->get_predicate());
@@ -200,7 +200,7 @@ state::search_for_negative_tuple_full_agg(db::simple_tuple *stpl)
    for(auto it(store->persistent_tuples.begin()), end(store->persistent_tuples.end());
          it != end; ++it)
    {
-      db::simple_tuple *stpl2(*it);
+      full_tuple *stpl2(*it);
       vm::tuple *tpl2(stpl2->get_tuple());
       vm::predicate *pred2(stpl2->get_predicate());
 
@@ -231,26 +231,26 @@ state::do_persistent_tuples(void)
          return false;
       }
 #endif
-      db::simple_tuple *stpl(store->persistent_tuples.pop_front());
+      full_tuple *stpl(store->persistent_tuples.pop_front());
       vm::predicate *pred(stpl->get_predicate());
       vm::tuple *tpl(stpl->get_tuple());
 
       if(pred->is_persistent_pred()) {
          // XXX crashes when calling wipeout below
          if(stpl->get_count() == 1 && (pred->is_aggregate_pred() && !stpl->is_aggregate())) {
-            db::simple_tuple *stpl2(search_for_negative_tuple_partial_agg(stpl));
+            full_tuple *stpl2(search_for_negative_tuple_partial_agg(stpl));
             if(stpl2) {
                assert(stpl != stpl2);
                //assert(stpl2->get_tuple() != stpl->get_tuple());
                //assert(stpl2->get_predicate() == stpl->get_predicate());
-               //simple_tuple::wipeout(stpl);
-               //simple_tuple::wipeout(stpl2);
+               //full_tuple::wipeout(stpl);
+               //full_tuple::wipeout(stpl2);
                continue;
             }
          }
 
          if(stpl->get_count() == 1 && (pred->is_aggregate_pred() && stpl->is_aggregate())) {
-            db::simple_tuple *stpl2(search_for_negative_tuple_full_agg(stpl));
+            full_tuple *stpl2(search_for_negative_tuple_full_agg(stpl));
             if(stpl2) {
                assert(stpl != stpl2);
                /*if(stpl2->get_tuple() == stpl->get_tuple()) {
@@ -258,17 +258,17 @@ state::do_persistent_tuples(void)
                }
                assert(stpl2->get_tuple() != stpl->get_tuple());
                assert(stpl2->get_predicate() == stpl->get_predicate());*/
-               //simple_tuple::wipeout(stpl);
-               //simple_tuple::wipeout(stpl2);
+               //full_tuple::wipeout(stpl);
+               //full_tuple::wipeout(stpl2);
                continue;
             }
          }
 
          if(stpl->get_count() == 1 && !pred->is_aggregate_pred()) {
-            db::simple_tuple *stpl2(search_for_negative_tuple_normal(stpl));
+            full_tuple *stpl2(search_for_negative_tuple_normal(stpl));
             if(stpl2) {
-               //simple_tuple::wipeout(stpl);
-               //simple_tuple::wipeout(stpl2);
+               //full_tuple::wipeout(stpl);
+               //full_tuple::wipeout(stpl2);
                continue;
             }
          }
@@ -299,7 +299,7 @@ state::process_action_tuples(void)
    for(auto it(store->action_tuples.begin()), end(store->action_tuples.end());
          it != end; ++it)
    {
-      db::simple_tuple *stpl(*it);
+      full_tuple *stpl(*it);
       vm::tuple *tpl(stpl->get_tuple());
       vm::predicate *pred(stpl->get_predicate());
       All->MACHINE->run_action(sched, node, tpl, pred);
@@ -333,7 +333,7 @@ state::process_incoming_tuples(void)
 }
 
 void
-state::add_to_aggregate(db::simple_tuple *stpl)
+state::add_to_aggregate(full_tuple *stpl)
 {
    vm::tuple *tpl(stpl->get_tuple());
    predicate *pred(stpl->get_predicate());
@@ -346,19 +346,19 @@ state::add_to_aggregate(db::simple_tuple *stpl)
       agg = node->add_agg_tuple(tpl, stpl->get_predicate(), count, stpl->get_depth());
    }
 
-   simple_tuple_list list;
+   full_tuple_list list;
 
    agg->generate(pred, pred->get_aggregate_type(), pred->get_aggregate_field(), list);
 
-   for(simple_tuple_list::iterator it(list.begin()); it != list.end(); ++it) {
-      simple_tuple *stpl(*it);
+   for(full_tuple_list::iterator it(list.begin()); it != list.end(); ++it) {
+      full_tuple *stpl(*it);
       stpl->set_as_aggregate();
       store->persistent_tuples.push_back(stpl);
    }
 }
 
 void
-state::process_persistent_tuple(db::simple_tuple *stpl, vm::tuple *tpl)
+state::process_persistent_tuple(full_tuple *stpl, vm::tuple *tpl)
 {
    predicate *pred(stpl->get_predicate());
 
@@ -784,7 +784,7 @@ state::run_node(db::node *no)
 #ifdef USE_SIM
       if(sim_instr_use && !check_instruction_limit()) {
          // gather new tuples
-         db::simple_tuple_list new_tuples;
+         full_tuple_list new_tuples;
          sched::sim_node *snode(dynamic_cast<sched::sim_node*>(node));
          snode->get_tuples_until_timestamp(new_tuples, sim_instr_limit);
          local_tuples.splice(local_tuples.end(), new_tuples);
@@ -815,11 +815,10 @@ state::run_node(db::node *no)
 #if 0
    // push remaining tuples into node
    for(size_t i(0); i < theProgram->num_predicates(); ++i) {
-      db::simple_tuple_list *ls(store->get_list(i));
-      for(db::simple_tuple_list::iterator it(ls->begin()), end(ls->end());
-         it != end; ++it)
+      full_tuple_list *ls(store->get_list(i));
+      for(auto it(ls->begin()), end(ls->end()); it != end; ++it)
       {
-         simple_tuple *stpl(*it);
+         full_tuple *stpl(*it);
          vm::tuple *tpl(stpl->get_tuple());
 		
          if(stpl->can_be_consumed()) {
@@ -835,7 +834,7 @@ state::run_node(db::node *no)
                delete stpl;
             }
          } else {
-            db::simple_tuple::wipeout(stpl);
+            full_tuple::wipeout(stpl);
          }
       }
       ls->clear();
@@ -849,11 +848,11 @@ state::run_node(db::node *no)
 #ifdef USE_SIM
    // store any remaining persistent tuples
    sched::sim_node *snode(dynamic_cast<sched::sim_node*>(node));
-   for(simple_tuple_list::iterator it(store->persistent_tuples->begin()), end(store->persistent_tuples->end());
+   for(auto it(store->persistent_tuples->begin()), end(store->persistent_tuples->end());
          it != end; ++it)
    {
       assert(aborted);
-      db::simple_tuple *stpl(*it);
+      full_tuple *stpl(*it);
       snode->pending.push(stpl);
    }
 #endif

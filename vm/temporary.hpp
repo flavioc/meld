@@ -7,7 +7,7 @@
 #include "mem/base.hpp"
 #include "vm/program.hpp"
 #include "vm/predicate.hpp"
-#include "db/tuple.hpp"
+#include "vm/full_tuple.hpp"
 #include "vm/rule_matcher.hpp"
 #include "utils/intrusive_list.hpp"
 #include "vm/bitmap.hpp"
@@ -31,19 +31,19 @@ struct temporary_store
 #endif
 
       // incoming persistent tuples
-      db::simple_tuple_list incoming_persistent_tuples;
+      full_tuple_list incoming_persistent_tuples;
 
       // incoming action tuples
-      db::simple_tuple_list incoming_action_tuples;
+      full_tuple_list incoming_action_tuples;
 
       // generated linear facts
       tuple_list *generated;
 
       // new action facts
-      db::simple_tuple_list action_tuples;
+      full_tuple_list action_tuples;
 
       // queue of persistent tuples
-      db::simple_tuple_list persistent_tuples;
+      full_tuple_list persistent_tuples;
 
       vm::rule_matcher matcher;
 
@@ -70,7 +70,7 @@ struct temporary_store
 #endif
       }
 
-      inline void register_fact(db::simple_tuple *stpl)
+      inline void register_fact(full_tuple *stpl)
       {
          register_tuple_fact(stpl->get_predicate(), stpl->get_count());
       }
@@ -80,7 +80,7 @@ struct temporary_store
          matcher.register_tuple(pred, count);
       }
 
-      inline void deregister_fact(db::simple_tuple *stpl)
+      inline void deregister_fact(full_tuple *stpl)
       {
          deregister_tuple_fact(stpl->get_predicate(), stpl->get_count());
       }
@@ -96,12 +96,12 @@ struct temporary_store
          ls->push_back(tpl);
       }
 
-      inline void add_action_fact(db::simple_tuple *stpl)
+      inline void add_action_fact(full_tuple *stpl)
       {
          action_tuples.push_back(stpl);
       }
 
-      inline void add_persistent_fact(db::simple_tuple *stpl)
+      inline void add_persistent_fact(full_tuple *stpl)
       {
          persistent_tuples.push_back(stpl);
       }

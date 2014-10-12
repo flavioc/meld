@@ -358,7 +358,7 @@ agg_configuration::do_generate(predicate *pred, const aggregate_type typ, const 
 
 void
 agg_configuration::generate(predicate *pred, const aggregate_type typ, const field_num field,
-   simple_tuple_list& cont)
+   full_tuple_list& cont)
 {
    vm::depth_t depth(0);
    vm::tuple* generated(do_generate(pred, typ, field, depth));
@@ -368,18 +368,18 @@ agg_configuration::generate(predicate *pred, const aggregate_type typ, const fie
    if(corresponds == NULL) {
       // new
       if(generated != NULL) {
-         cont.push_back(simple_tuple::create_new(generated, pred, depth));
+         cont.push_back(full_tuple::create_new(generated, pred, depth));
          last_depth = depth;
       }
    } else if (generated == NULL) {
       if(corresponds != NULL) {
-         cont.push_back(simple_tuple::remove_new(corresponds->copy(pred), pred, last_depth));
+         cont.push_back(full_tuple::remove_new(corresponds->copy(pred), pred, last_depth));
          last_depth = 0;
       }
    } else {
       if(!(corresponds->equal(*generated, pred))) {
-         cont.push_back(simple_tuple::remove_new(corresponds->copy(pred), pred, last_depth));
-         cont.push_back(simple_tuple::create_new(generated, pred, depth));
+         cont.push_back(full_tuple::remove_new(corresponds->copy(pred), pred, last_depth));
+         cont.push_back(full_tuple::create_new(generated, pred, depth));
          last_depth = depth;
       }
    }

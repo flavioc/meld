@@ -9,7 +9,6 @@
 
 #include "utils/mutex.hpp"
 #include "mem/base.hpp"
-#include "db/tuple.hpp"
 #include "vm/defs.hpp"
 #include "vm/bitmap.hpp"
 #include "utils/intrusive_list.hpp"

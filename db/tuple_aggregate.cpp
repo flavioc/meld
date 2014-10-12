@@ -41,12 +41,12 @@ tuple_aggregate::add_to_set(vm::tuple *tpl, vm::predicate *pred, const derivatio
    return conf;
 }
 
-simple_tuple_list
+full_tuple_list
 tuple_aggregate::generate(void)
 {
    const aggregate_type typ(pred->get_aggregate_type());
    const field_num field(pred->get_aggregate_field());
-   simple_tuple_list ls;
+   full_tuple_list ls;
    
    for(agg_trie::iterator it(vals.begin());
       it != vals.end(); )

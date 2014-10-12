@@ -107,13 +107,13 @@ SRCS = utils/utils.cpp \
 			 vm/instr.cpp \
 			 vm/state.cpp \
 			 vm/tuple.cpp \
+			 vm/full_tuple.cpp \
 			 vm/exec.cpp \
 			 vm/external.cpp \
 			 vm/rule.cpp \
 			 vm/rule_matcher.cpp \
 			 vm/stat.cpp \
 			 db/node.cpp \
-			 db/tuple.cpp \
 			 db/agg_configuration.cpp \
 			 db/tuple_aggregate.cpp \
 			 db/database.cpp \

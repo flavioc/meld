@@ -10,7 +10,6 @@
 
 #include "db/database.hpp"
 #include "process/router.hpp"
-#include "db/tuple.hpp"
 #include "db/node.hpp"
 #include "sched/types.hpp"
 #include "stat/slice_set.hpp"

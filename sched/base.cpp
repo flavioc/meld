@@ -2,8 +2,6 @@
 #include <algorithm>
 
 #include "sched/base.hpp"
-#include "process/work.hpp"
-#include "db/tuple.hpp"
 #include "vm/exec.hpp"
 #include "process/machine.hpp"
 

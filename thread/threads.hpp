@@ -253,7 +253,6 @@ public:
    
    virtual void init(const size_t);
    
-   virtual void new_agg(process::work&);
    virtual void new_work(db::node *, db::node *, vm::tuple *, vm::predicate *, const vm::ref_count, const vm::depth_t);
    virtual void new_work_list(db::node *, db::node *, vm::tuple_array&);
 #ifdef COMPILE_MPI

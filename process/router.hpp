@@ -7,7 +7,6 @@
 #include <stdexcept>
 
 #include "process/remote.hpp"
-#include "db/tuple.hpp"
 #include "db/node.hpp"
 #include "vm/defs.hpp"
 #include "utils/time.hpp"

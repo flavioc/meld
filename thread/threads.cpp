@@ -3,7 +3,6 @@
 
 #include "thread/threads.hpp"
 #include "db/database.hpp"
-#include "db/tuple.hpp"
 #include "process/remote.hpp"
 #include "vm/state.hpp"
 #include "sched/common.hpp"
@@ -131,12 +130,6 @@ threads_sched::assert_end_iteration(void) const
    assert(is_inactive());
    assert(all_threads_finished());
    assert_static_nodes_end_iteration(id);
-}
-
-void
-threads_sched::new_agg(work&)
-{
-   assert(false);
 }
 
 void
