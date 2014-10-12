@@ -79,6 +79,7 @@ public:
 
 std::ostream& operator<<(std::ostream&, const simple_tuple&);
 
+// XXX remove this, use intrusive_list...
 typedef std::list<simple_tuple*, mem::allocator<simple_tuple*> > simple_tuple_list;
 typedef std::vector<simple_tuple*, mem::allocator<simple_tuple*> > simple_tuple_vector;
 

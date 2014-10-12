@@ -140,6 +140,65 @@ threads_sched::new_agg(work&)
 }
 
 void
+threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
+{
+   assert(is_active());
+   (void)from;
+
+   thread_intrusive_node *tnode(dynamic_cast<thread_intrusive_node*>(to));
+   tnode->lock();
+   LOCK_STAT(add_lock);
+   
+   threads_sched *owner(dynamic_cast<threads_sched*>(tnode->get_owner()));
+
+   if(owner == this) {
+#ifdef FACT_STATISTICS
+      count_add_work_self++;
+#endif
+      tnode->internal_lock();
+      LOCK_STAT(internal_locks);
+      tnode->add_work_myself(arr);
+      tnode->internal_unlock();
+#ifdef INSTRUMENTATION
+      sent_facts_same_thread++;
+#endif
+      if(!tnode->active_node())
+         add_to_queue(tnode);
+   } else {
+#ifdef FACT_STATISTICS
+      count_add_work_other++;
+#endif
+      if(tnode->try_internal_lock()) {
+         LOCK_STAT(internal_ok_locks);
+         tnode->add_work_myself(arr);
+#ifdef INSTRUMENTATION
+         sent_facts_other_thread_now++;
+#endif
+         tnode->internal_unlock();
+      } else {
+         LOCK_STAT(internal_failed_locks);
+         tnode->add_work_others(arr);
+#ifdef INSTRUMENTATION
+      sent_facts_other_thread++;
+#endif
+      }
+      if(!tnode->active_node())
+         owner->add_to_queue(tnode);
+
+      lock_guard<utils::mutex> l2(owner->lock);
+      LOCK_STAT(sched_lock);
+      
+      if(owner->is_inactive())
+      {
+         owner->set_active();
+         assert(owner->is_active());
+      }
+   }
+
+   tnode->unlock();
+}
+
+void
 threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pred, const ref_count count, const depth_t depth)
 {
    assert(is_active());

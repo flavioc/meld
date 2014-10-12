@@ -114,8 +114,10 @@ public:
       new_agg(work);
    }
    
-   // work to be sent to the same thread
-   virtual void new_work(db::node *, db::node *, vm::tuple*, vm::predicate *, const vm::ref_count, const vm::depth_t) = 0;
+   // new work to a certain node
+   virtual void new_work(db::node *from, db::node *to, vm::tuple*, vm::predicate *, const vm::ref_count, const vm::depth_t) = 0;
+   // list of work to be sent
+   virtual void new_work_list(db::node *from, db::node *to, vm::tuple_array&) = 0;
    // delayed work to be sent to the target thread
    virtual void new_work_delay(db::node *, db::node *, vm::tuple*, vm::predicate *, const vm::ref_count, const vm::depth_t, const vm::uint_val)
    {

@@ -62,6 +62,11 @@ public:
    bool is_linear;
 	utils::randgen randgen;
    size_t current_rule;
+   typedef std::unordered_map<const db::node*, tuple_array,
+           std::hash<const db::node*>,
+           std::equal_to<const db::node*>,
+           mem::allocator<std::pair<const db::node* const, tuple_array> > > map_sends;
+   map_sends facts_to_send;
 #ifdef DEBUG_MODE
 	bool print_instrs;
 #endif

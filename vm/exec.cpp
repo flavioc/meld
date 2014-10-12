@@ -248,8 +248,17 @@ execute_send(const pcounter& pc, state& state)
 #endif
       if(pred->is_action_pred())
          All->MACHINE->run_action(state.sched, node, tuple, pred);
-      else 
-         state.sched->new_work(state.node, node, tuple, pred, state.count, state.depth);
+      else {
+         auto it(state.facts_to_send.find(node));
+         tuple_array *arr;
+         if(it == state.facts_to_send.end()) {
+            state.facts_to_send.insert(make_pair(node, tuple_array()));
+            it = state.facts_to_send.find(node);
+         }
+         arr = &(it->second);
+         tuple_info info = {pred, tuple, state.count, state.depth};
+         arr->push_back(info);
+      }
    }
 }
 

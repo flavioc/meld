@@ -158,11 +158,9 @@ public:
       linear.add_fact(tpl, pred, store.matcher);
    }
 
-   inline void add_work_myself(vm::tuple *tpl, vm::predicate *pred,
+   inline void inner_add_work_myself(vm::tuple *tpl, vm::predicate *pred,
          const vm::ref_count count, const vm::depth_t depth)
    {
-      unprocessed_facts = true;
-
       if(pred->is_action_pred())
          store.add_action_fact(new simple_tuple(tpl, pred, count, depth));
       else if(pred->is_persistent_pred() || pred->is_reused_pred()) {
@@ -173,11 +171,26 @@ public:
          add_linear_fact(tpl, pred);
    }
 
-   inline void add_work_others(vm::tuple *tpl, vm::predicate *pred,
+   inline void add_work_myself(vm::tuple *tpl, vm::predicate *pred,
          const vm::ref_count count, const vm::depth_t depth)
    {
       unprocessed_facts = true;
 
+      inner_add_work_myself(tpl, pred, count, depth);
+   }
+
+   inline void add_work_myself(vm::tuple_array& arr)
+   {
+      unprocessed_facts = true;
+      for(auto it(arr.begin()), end(arr.end()); it != end; ++it) {
+         vm::tuple_info info(*it);
+         inner_add_work_myself(info.tpl, info.pred, info.count, info.depth);
+      }
+   }
+
+   inline void inner_add_work_others(vm::tuple *tpl, vm::predicate *pred,
+         const vm::ref_count count, const vm::depth_t depth)
+   {
       if(pred->is_action_pred()) {
          simple_tuple *stpl(new simple_tuple(tpl, pred, count, depth));
          store.incoming_action_tuples.push_back(stpl);
@@ -186,6 +199,23 @@ public:
          store.incoming_persistent_tuples.push_back(stpl);
       } else
          store.add_incoming(tpl, pred);
+   }
+
+   inline void add_work_others(vm::tuple *tpl, vm::predicate *pred,
+         const vm::ref_count count, const vm::depth_t depth)
+   {
+      unprocessed_facts = true;
+
+      inner_add_work_others(tpl, pred, count, depth);
+   }
+
+   inline void add_work_others(vm::tuple_array& arr)
+   {
+      unprocessed_facts = true;
+      for(auto it(arr.begin()), end(arr.end()); it != end; ++it) {
+         vm::tuple_info info(*it);
+         inner_add_work_others(info.tpl, info.pred, info.count, info.depth);
+      }
    }
    
    explicit node(const node_id, const node_id);

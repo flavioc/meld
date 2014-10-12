@@ -2,7 +2,7 @@
 #define VM_TUPLE_HPP
 
 #include <ostream>
-#include <list>
+#include <vector>
 
 #ifdef COMPILE_MPI
 #include <mpi.h>
@@ -124,6 +124,14 @@ private:
 
    void destructor(vm::predicate*);
 };
+
+struct tuple_info {
+   vm::predicate *pred;
+   vm::tuple *tpl;
+   vm::derivation_count count;
+   vm::depth_t depth;
+};
+typedef std::vector<tuple_info, mem::allocator<tuple_info>> tuple_array;
 
 }
 
