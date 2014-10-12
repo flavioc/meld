@@ -46,8 +46,8 @@ class threads_sched: public sched::base
 private:
    // thread state
    enum thread_state {
-      THREAD_ACTIVE,
-      THREAD_INACTIVE
+      THREAD_ACTIVE = 0,
+      THREAD_INACTIVE = 1
    };
 
    std::atomic<thread_state> tstate;
@@ -63,7 +63,7 @@ private:
    static std::atomic<size_t> round_state;
    static std::atomic<size_t> total_in_agg;
 
-   size_t thread_round_state;
+   size_t thread_round_state = 1;
    
 #define threads_synchronize() thread_barrier->wait(get_id())
 
@@ -183,7 +183,7 @@ protected:
    size_t steal_nodes(thread_intrusive_node **, const size_t);
 
 #ifdef INSTRUMENTATION
-   size_t stolen_total;
+   size_t stolen_total = 0;
 #endif
 
    void clear_steal_requests(void);
@@ -191,9 +191,13 @@ protected:
 #endif
 
 #ifdef INSTRUMENTATION
-   size_t sent_facts_same_thread;
-   size_t sent_facts_other_thread;
-   size_t sent_facts_other_thread_now;
+   std::atomic<size_t> sent_facts_same_thread;
+   std::atomic<size_t> sent_facts_other_thread;
+   std::atomic<size_t> sent_facts_other_thread_now;
+   // SET PRIORITY executed on nodes of the current thread.
+   std::atomic<size_t> priority_nodes_thread;
+   // SET PRIORITY executed on nodes of other threads.
+   std::atomic<size_t> priority_nodes_others;
 #endif
 
 #ifndef DIRECT_PRIORITIES

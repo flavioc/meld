@@ -1,0 +1,8 @@
+To run all multithreaded benchmarks, run:
+   make thread
+
+To benchmark some specific program, run:
+   make <program>
+
+To instrumentalize execution:
+   make INSTRUMENT=yes <target>

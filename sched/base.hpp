@@ -38,7 +38,7 @@ protected:
    vm::state state;
    
 #ifdef INSTRUMENTATION
-   mutable statistics::sched_state ins_state;
+   mutable std::atomic<statistics::sched_state> ins_state;
    
 #define ins_active ins_state = statistics::NOW_ACTIVE
 #define ins_idle ins_state = statistics::NOW_IDLE
@@ -124,10 +124,6 @@ public:
 
    // new aggregate
    virtual void new_agg(process::work&) = 0;
-#ifdef COMPILE_MPI
-   // work to be sent to a MPI process
-   virtual void new_work_remote(process::remote *, const db::node::node_id, sched::message *) = 0;
-#endif
    
    // ACTIONS
    virtual void set_node_priority(db::node *, const double) { }

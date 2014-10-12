@@ -22,12 +22,13 @@ class spinlock
       }
 
       inline void unlock(void) {
-         locked.store(false);
+         locked.store(false, std::memory_order_release);
       }
 
       inline bool try_lock(void) {
          bool expected(false);
-         return locked.compare_exchange_strong(expected, true);
+         return locked.compare_exchange_strong(expected, true, std::memory_order_acquire,
+               std::memory_order_relaxed);
       }
 
       explicit spinlock(void): locked(false) {}

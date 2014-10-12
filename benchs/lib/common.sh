@@ -1,5 +1,6 @@
 
 EXEC="../meld -t -f"
+INSTRUMENT_DIR=$PWD/instrumentation_files
 
 time_run ()
 {

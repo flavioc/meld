@@ -172,16 +172,19 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
       if(tnode->try_internal_lock()) {
          LOCK_STAT(internal_ok_locks);
          tnode->add_work_myself(tpl, pred, count, depth);
+#ifdef INSTRUMENTATION
+         sent_facts_other_thread_now++;
+#endif
          tnode->internal_unlock();
       } else {
          LOCK_STAT(internal_failed_locks);
          tnode->add_work_others(tpl, pred, count, depth);
-      }
-      if(!tnode->active_node())
-         owner->add_to_queue(tnode);
 #ifdef INSTRUMENTATION
       sent_facts_other_thread++;
 #endif
+      }
+      if(!tnode->active_node())
+         owner->add_to_queue(tnode);
 
       lock_guard<utils::mutex> l2(owner->lock);
       LOCK_STAT(sched_lock);
@@ -1048,6 +1051,8 @@ threads_sched::write_slice(statistics::slice& sl)
    sl.sent_facts_same_thread = sent_facts_same_thread;
    sl.sent_facts_other_thread = sent_facts_other_thread;
    sl.sent_facts_other_thread_now = sent_facts_other_thread_now;
+   sl.priority_nodes_thread = priority_nodes_thread;
+   sl.priority_nodes_others = priority_nodes_others;
    sent_facts_same_thread = 0;
    sent_facts_other_thread = 0;
    sent_facts_other_thread_now = 0;
@@ -1063,24 +1068,22 @@ threads_sched::write_slice(statistics::slice& sl)
 threads_sched::threads_sched(const vm::process_id _id):
    base(_id),
    tstate(THREAD_ACTIVE),
-   thread_round_state(1),
    current_node(NULL)
 #ifdef TASK_STEALING
    , rand(time(NULL) + _id * 10)
    , next_thread(rand(All->NUM_THREADS))
    , backoff(STEALING_ROUND_MAX)
 #endif
+#ifndef DIRECT_PRIORITIES
+   , priority_buffer(std::min(PRIORITY_BUFFER_SIZE,
+                     vm::All->DATABASE->num_nodes() / vm::All->NUM_THREADS))
+#endif
 #ifdef INSTRUMENTATION
    , sent_facts_same_thread(0)
    , sent_facts_other_thread(0)
    , sent_facts_other_thread_now(0)
-#ifdef TASK_STEALING
-   , stolen_total(0)
-#endif
-#endif
-#ifndef DIRECT_PRIORITIES
-   , priority_buffer(std::min(PRIORITY_BUFFER_SIZE,
-                     vm::All->DATABASE->num_nodes() / vm::All->NUM_THREADS))
+   , priority_nodes_thread(0)
+   , priority_nodes_others(0)
 #endif
 {
 }

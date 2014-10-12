@@ -76,6 +76,9 @@ execute_alloc(const pcounter& pc, state& state)
 #ifdef FACT_STATISTICS
    state.facts_derived++;
 #endif
+#ifdef INSTRUMENTATION
+      state.instr_facts_derived++;
+#endif
 }
 
 static inline void
@@ -83,9 +86,6 @@ execute_add_linear0(tuple *tuple, predicate *pred, state& state)
 {
    state.node->add_linear_fact(tuple, pred);
    state.linear_facts_generated++;
-#ifdef INSTRUMENTATION
-   state.instr_facts_derived++;
-#endif
 }
 
 static inline void
@@ -134,9 +134,6 @@ execute_add_persistent0(tuple *tpl, predicate *pred, state& state)
    simple_tuple *stuple(new simple_tuple(tpl, pred, state.count, state.depth));
    state.store->persistent_tuples.push_back(stuple);
    state.persistent_facts_generated++;
-#ifdef INSTRUMENTATION
-   state.instr_facts_derived++;
-#endif
 }
 
 static inline void
@@ -179,9 +176,6 @@ execute_enqueue_linear0(tuple *tuple, predicate *pred, state& state)
    state.store->register_tuple_fact(pred, 1);
    state.generated_facts = true;
    state.linear_facts_generated++;
-#ifdef INSTRUMENTATION
-   state.instr_facts_derived++;
-#endif
 }
 
 static inline void
@@ -247,10 +241,15 @@ execute_send(const pcounter& pc, state& state)
          execute_enqueue_linear0(tuple, pred, state);
       }
    } else {
-      All->MACHINE->route(state.node, state.sched, (node::node_id)dest_val, tuple, pred, state.count, state.depth);
-#ifdef INSTRUMENTATION
-      state.instr_facts_derived++;
+#ifdef USE_REAL_NODES
+      db::node *node((db::node*)dest_val);
+#else
+      db::node *node(this->all->DATABASE->find_node(dest_val));
 #endif
+      if(pred->is_action_pred())
+         All->MACHINE->run_action(state.sched, node, tuple, pred);
+      else 
+         state.sched->new_work(state.node, node, tuple, pred, state.count, state.depth);
    }
 }
 
@@ -285,7 +284,12 @@ execute_send_delay(const pcounter& pc, state& state)
          LOG_TUPLE_SEND(state.node, All->DATABASE->find_node((node::node_id)dest_val), tuple);
       }
 #endif
-      All->MACHINE->route(state.node, state.sched, (node::node_id)dest_val, tuple, pred, state.count, state.depth, send_delay_time(pc));
+#ifdef USE_REAL_NODES
+      db::node *node((db::node*)dest_val);
+#else
+      db::node *node(this->all->DATABASE->find_node((node::node_id)dest_val));
+#endif
+      state.sched->new_work_delay(state.node, node, tuple, pred, state.count, state.depth, send_delay_time(pc));
    }
 }
 

@@ -121,10 +121,6 @@ slice_set::write(const string& file, const scheduler_type type, vm::all *all) co
    write_sent_facts_same_thread(file, all);
    write_sent_facts_other_thread(file, all);
    write_sent_facts_other_thread_now(file, all);
-#if 0
-   if(is_priority_sched(type))
-      write_priority_queue(file, all);
-#endif
 }
    
 void

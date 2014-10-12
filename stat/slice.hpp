@@ -23,6 +23,8 @@ public:
    size_t sent_facts_same_thread;
    size_t sent_facts_other_thread;
    size_t sent_facts_other_thread_now;
+   size_t priority_nodes_thread;
+   size_t priority_nodes_others;
    
    void print_state(utils::csv_line&) const;
    void print_derived_facts(utils::csv_line&) const;

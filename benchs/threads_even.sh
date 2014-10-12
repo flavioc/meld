@@ -30,11 +30,19 @@ if [ ! -r "${FILE}" ]; then
 fi
 
 source $PWD/lib/common.sh
+if [ -z $RESULTS_FILE ]; then
+   RESULTS_FILE=/dev/null
+fi
 
 do_run ()
 {
 	NUM_THREADS="${1}"
 	TO_RUN="${EXEC} ${FILE} -c ${SCHEDULER}${NUM_THREADS}"
+   if [ ! -z "$INSTRUMENT" ]; then
+      dir="$INSTRUMENT_DIR/$(basename $FILE .m)/$NUM_THREADS"
+      mkdir -p $dir
+      TO_RUN="$TO_RUN -i $dir/data"
+   fi
 	time_run_n "${TO_RUN}" "$(basename ${FILE} .m)" ${SCHEDULER} ${NUM_THREADS}
 }
 
