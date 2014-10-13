@@ -194,6 +194,8 @@ public:
       for(auto it(ls.begin()), end(ls.end()); it != end;) {
          vm::full_tuple *x(*it);
          vm::predicate *pred(x->get_predicate());
+         // need to be careful to not mangle the pointer
+         it++;
 
          if(pred->is_action_pred())
             store.add_action_fact(x);
@@ -204,8 +206,6 @@ public:
             add_linear_fact(x->get_tuple(), pred);
             delete x;
          }
-
-         it++;
       }
    }
 
