@@ -28,12 +28,11 @@ PAGERANK = pagerank-search_engines pagerank-5000
 HT = new-heat-transfer-80
 SHORTEST = shortest-uspowergrid shortest-usairports500
 BP = belief-propagation-200
-QUEENS = 8queens-13 8queens-12
+QUEENS = 8queens-13
 SIMPLE = simple16 simple32 simple64
 MINMAX = min-max-tictactoe
 
-THREAD_PROGRAMS = $(SIMPLE) $(QUEENS) $(BP) \
-	$(GGC) $(PAGERANK) $(HT) $(MINMAX) $(SHORTEST)
+THREAD_PROGRAMS = $(QUEENS) $(GGC) $(PAGERANK) $(HT) $(MINMAX) $(SHORTEST)
 
 SCRIPT = run_series.sh th $(TYPE) 1 $(NPROCS) $(RUNS)
 
