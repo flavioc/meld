@@ -1,5 +1,6 @@
 #include <iostream>
 #include <climits>
+#include <thread>
 
 #include "thread/threads.hpp"
 #include "db/database.hpp"
@@ -36,78 +37,27 @@ static atomic<size_t> prio_nodes_compared(0);
 static atomic<size_t> prio_nodes_changed(0);
 #endif
 
-#define BUSY_LOOP_MAKE_INACTIVE()         \
-   if(is_active() && !has_work()) {       \
-      std::lock_guard<utils::mutex> l(lock);  \
-      if(!has_work()) {                   \
-         if(is_active())                  \
-            set_inactive();               \
-      } else                              \
-         break;                           \
-   }
-
-#define BUSY_LOOP_CHECK_TERMINATION_THREADS()   \
-   if(all_threads_finished() || stop_flag) {    \
-      assert(is_inactive());                    \
-      return false;                             \
-   }
-
-#define START_ROUND()   {           \
-   ins_round;                       \
-   assert(is_inactive());           \
-   generate_aggs();                 \
-}
-
-#define GET_NEXT(x) ((x) == 1 ? 2 : 1)
-#define DO_END_ROUND(COMPUTE_MORE_WORK, IF_TRUE) {       \
-   assert(total_in_agg > 0);                             \
-   total_in_agg--;                                       \
-   if(leader_thread()) {                                 \
-      while(total_in_agg != 0) {}                        \
-      bool more_work(false);                             \
-      COMPUTE_MORE_WORK                                  \
-      if(more_work) {                                    \
-         reset_barrier();                                \
-         total_in_agg = All->NUM_THREADS;                \
-         round_state = GET_NEXT(round_state);            \
-         IF_TRUE                                         \
-         return true;                                    \
-      } else {                                           \
-         round_state = 0;                                \
-         return false;                                   \
-      }                                                  \
-   } else {                                              \
-      const size_t supos(GET_NEXT(thread_round_state));  \
-      while(round_state == thread_round_state) {}        \
-      if(round_state == supos) {                         \
-         thread_round_state = supos;                     \
-         assert(thread_round_state == round_state);      \
-         IF_TRUE                                         \
-         return true;                                    \
-      } else                                             \
-         return false;                                   \
-   }                                                     \
-}
-
-#define END_ROUND(COMPUTE_MORE_WORK) DO_END_ROUND(COMPUTE_MORE_WORK, );
-
 namespace sched
 {
 
 tree_barrier* threads_sched::thread_barrier(NULL);
 termination_barrier* threads_sched::term_barrier(NULL);
-std::atomic<size_t> threads_sched::total_in_agg(0);
-std::atomic<size_t> threads_sched::round_state(1);
 #ifdef TASK_STEALING
 std::atomic<int> *threads_sched::steal_states(NULL);
 #endif
+
+#ifdef INSTRUMENTATION
+#define NODE_LOCK(NODE) do { if((NODE)->try_lock()) { node_lock_ok++; } else {node_lock_fail++; (NODE)->lock(); } while(false)
+#else
+#define NODE_LOCK(NODE) ((NODE)->lock())
+#endif
+#define NODE_UNLOCK(NODE) ((NODE)->unlock())
 
 void
 threads_sched::init_barriers(const size_t num_threads)
 {
    thread_barrier = new tree_barrier(num_threads);
    term_barrier = new termination_barrier(num_threads);
-   total_in_agg = num_threads;
 #ifdef TASK_STEALING
    steal_states = new std::atomic<int>[num_threads];
    for(size_t i(0); i < num_threads; ++i)
@@ -124,22 +74,15 @@ threads_sched::assert_end(void) const
 }
 
 void
-threads_sched::assert_end_iteration(void) const
-{
-   assert(!has_work());
-   assert(is_inactive());
-   assert(all_threads_finished());
-   assert_static_nodes_end_iteration(id);
-}
-
-void
 threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
 {
    assert(is_active());
    (void)from;
 
    thread_intrusive_node *tnode(dynamic_cast<thread_intrusive_node*>(to));
-   tnode->lock();
+
+   NODE_LOCK(tnode);
+
    LOCK_STAT(add_lock);
    
    threads_sched *owner(dynamic_cast<threads_sched*>(tnode->get_owner()));
@@ -177,18 +120,11 @@ threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
       }
       if(!tnode->active_node()) {
          owner->add_to_queue(tnode);
-         lock_guard<utils::mutex> l2(owner->lock);
-         LOCK_STAT(sched_lock);
-      
-         if(owner->is_inactive())
-         {
-            owner->set_active();
-            assert(owner->is_active());
-         }
+         owner->activate_thread();
       }
    }
 
-   tnode->unlock();
+   NODE_UNLOCK(tnode);
 }
 
 void
@@ -199,7 +135,8 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
    
    thread_intrusive_node *tnode(dynamic_cast<thread_intrusive_node*>(to));
 
-   tnode->lock();
+   NODE_LOCK(tnode);
+
    LOCK_STAT(add_lock);
    
    threads_sched *owner(dynamic_cast<threads_sched*>(tnode->get_owner()));
@@ -237,18 +174,11 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
       }
       if(!tnode->active_node()) {
          owner->add_to_queue(tnode);
-         lock_guard<utils::mutex> l2(owner->lock);
-         LOCK_STAT(sched_lock);
-         
-         if(owner->is_inactive())
-         {
-            owner->set_active();
-            assert(owner->is_active());
-         }
+         owner->activate_thread();
       }
    }
 
-   tnode->unlock();
+   NODE_UNLOCK(tnode);
 }
 
 #ifdef TASK_STEALING
@@ -296,18 +226,18 @@ threads_sched::go_steal_nodes(void)
       for(size_t i(0); i < stolen; ++i) {
          thread_intrusive_node *node(node_buffer[i]);
 
-         node->lock();
+         NODE_LOCK(node);
          LOCK_STAT(steal_locks);
          if(node->node_state() != STATE_STEALING) {
             // node was put in the queue again, give up.
-            node->unlock();
+            NODE_UNLOCK(node);
             continue;
          }
          if(node->is_static()) {
             if(node->get_owner() != target) {
                // set-affinity was used and the node was changed to another scheduler
                move_node_to_new_owner(node, dynamic_cast<threads_sched*>(node->get_owner()));
-               node->unlock();
+               NODE_UNLOCK(node);
                continue;
             } else {
                // meanwhile the node is now set as static.
@@ -317,7 +247,7 @@ threads_sched::go_steal_nodes(void)
          }
          node->set_owner(this);
          add_to_queue(node);
-         node->unlock();
+         NODE_UNLOCK(node);
       }
       // set the next thread to the current one
       next_thread = tid;
@@ -412,7 +342,7 @@ threads_sched::check_priority_buffer(void)
       if(tn->get_owner() != this)
          continue;
 #ifdef TASK_STEALING
-      tn->lock();
+      NODE_LOCK(tn);
 		if(tn->get_owner() == this) {
          switch(typ) {
             case ADD_PRIORITY:
@@ -423,7 +353,7 @@ threads_sched::check_priority_buffer(void)
                break;
          }
       }
-      tn->unlock();
+      NODE_UNLOCK(tn);
 #endif
    }
 #endif
@@ -467,9 +397,18 @@ threads_sched::busy_wait(void)
          }
       }
 #endif
+      if(is_active() && !has_work()) {
+         std::lock_guard<utils::mutex> l(lock);
+         if(!has_work() && is_active())
+            set_inactive();
+      } else
+         break;
       ins_idle;
-      BUSY_LOOP_MAKE_INACTIVE()
-      BUSY_LOOP_CHECK_TERMINATION_THREADS()
+      if(all_threads_finished() || stop_flag) {
+         assert(is_inactive());
+         return false;
+      }
+      std::this_thread::yield();
    }
    
    // since queue pushing and state setting are done in
@@ -482,23 +421,10 @@ threads_sched::busy_wait(void)
 }
 
 bool
-threads_sched::terminate_iteration(void)
-{
-   START_ROUND();
-   
-   if(has_work())
-      set_active();
-   
-   END_ROUND(
-      more_work = num_active() > 0;
-   );
-}
-
-bool
 threads_sched::check_if_current_useless(void)
 {
    if(!current_node->unprocessed_facts) {
-      current_node->lock();
+      NODE_LOCK(current_node);
       LOCK_STAT(check_lock);
       
       if(!current_node->unprocessed_facts) {
@@ -508,11 +434,11 @@ threads_sched::check_if_current_useless(void)
             current_node->set_owner(current_node->get_static());
          }
          current_node->set_priority_level(0.0);
-         current_node->unlock();
+         NODE_UNLOCK(current_node);
          current_node = NULL;
          return true;
       }
-      current_node->unlock();
+      NODE_UNLOCK(current_node);
    }
    
    assert(current_node->unprocessed_facts);
@@ -615,12 +541,12 @@ threads_sched::schedule_next(node *n)
 
 #ifdef TASK_STEALING
    thread_intrusive_node *tn((thread_intrusive_node*)n);
-   tn->lock();
+   NODE_LOCK(tn);
    threads_sched *other((threads_sched*)tn->get_owner());
    if(other == this)
       do_set_node_priority(n, prio);
 
-   tn->unlock();
+   NODE_UNLOCK(tn);
 #else
    do_set_node_priority(n, prio);
 #endif
@@ -689,7 +615,7 @@ threads_sched::add_node_priority(node *n, const double priority)
 	thread_intrusive_node *tn((thread_intrusive_node*)n);
 
 #ifdef TASK_STEALING
-   tn->lock();
+   NODE_LOCK(tn);
    LOCK_STAT(prio_lock);
    threads_sched *other((threads_sched*)tn->get_owner());
    if(other == this)
@@ -700,7 +626,7 @@ threads_sched::add_node_priority(node *n, const double priority)
 #else
       other->add_node_priority_other(tn, priority);
 #endif
-   tn->unlock();
+   NODE_UNLOCK(tn);
 #else
    threads_sched *other((threads_sched*)tn->get_owner());
    if(other == this) {
@@ -734,7 +660,7 @@ threads_sched::set_node_priority(node *n, const double priority)
 
 //   cout << "Set node " << n->get_id() << " with prio " << priority << endl;
 #ifdef TASK_STEALING
-   tn->lock();
+   NODE_LOCK(tn);
    LOCK_STAT(prio_lock);
    threads_sched *other((threads_sched*)tn->get_owner());
    if(other == this)
@@ -745,7 +671,7 @@ threads_sched::set_node_priority(node *n, const double priority)
 #else
       other->set_node_priority_other(n, priority);
 #endif
-   tn->unlock();
+   NODE_UNLOCK(tn);
 #else
    threads_sched *other((threads_sched*)tn->get_owner());
    if(other == this)
@@ -950,7 +876,7 @@ threads_sched::set_node_static(db::node *n)
    if(tn->is_static())
       return;
 
-   tn->lock();
+   NODE_LOCK(tn);
    tn->set_static(this);
    switch(tn->node_state()) {
       case STATE_STEALING:
@@ -975,7 +901,7 @@ threads_sched::set_node_static(db::node *n)
          break;
       default: assert(false); break;
    }
-   tn->unlock();
+   NODE_UNLOCK(tn);
 }
 
 void
@@ -995,7 +921,7 @@ threads_sched::set_node_moving(db::node *n)
    if(tn->is_moving())
       return;
 
-   tn->lock();
+   NODE_LOCK(tn);
    tn->set_moving();
    switch(tn->node_state()) {
       case STATE_STEALING:
@@ -1020,7 +946,7 @@ threads_sched::set_node_moving(db::node *n)
          break;
       default: assert(false); break;
    }
-   tn->unlock();
+   NODE_UNLOCK(tn);
 }
 
 void
@@ -1049,10 +975,10 @@ threads_sched::set_node_affinity(db::node *node, db::node *affinity)
       return;
    }
 
-   tn->lock();
+   NODE_LOCK(tn);
    tn->set_static(new_owner);
    if(tn->get_owner() == new_owner) {
-      tn->unlock();
+      NODE_UNLOCK(tn);
       return;
    }
 
@@ -1097,7 +1023,7 @@ threads_sched::set_node_affinity(db::node *node, db::node *affinity)
       default: assert(false); break; 
    }
 
-   tn->unlock();
+   NODE_UNLOCK(tn);
 }
 
 void
@@ -1145,6 +1071,8 @@ threads_sched::threads_sched(const vm::process_id _id):
    , sent_facts_other_thread_now(0)
    , priority_nodes_thread(0)
    , priority_nodes_others(0)
+   , node_lock_fail(0)
+   , node_lock_ok(0)
 #endif
 {
 }

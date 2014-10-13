@@ -60,11 +60,6 @@ private:
    
    utils::mutex lock;
 	
-   static std::atomic<size_t> round_state;
-   static std::atomic<size_t> total_in_agg;
-
-   size_t thread_round_state = 1;
-   
 #define threads_synchronize() thread_barrier->wait(get_id())
 
    inline void set_active(void)
@@ -86,15 +81,23 @@ private:
 #endif
       term_barrier->is_inactive();
    }
+
+   inline void activate_thread(void)
+   {
+      std::lock_guard<utils::mutex> l2(lock);
+      LOCK_STAT(sched_lock);
+
+      if(is_inactive())
+      {
+         set_active();
+         assert(is_active());
+      }
+   }
    
    inline void set_active_if_inactive(void)
    {
-      if(is_inactive()) {
-         std::lock_guard<utils::mutex> l(lock);
-         LOCK_STAT(sched_lock);
-         if(is_inactive())
-            set_active();
-      }
+      if(is_inactive())
+         activate_thread();
    }
    
    static inline size_t num_active(void) { return term_barrier->num_active(); }
@@ -198,6 +201,10 @@ protected:
    std::atomic<size_t> priority_nodes_thread;
    // SET PRIORITY executed on nodes of other threads.
    std::atomic<size_t> priority_nodes_others;
+   // when locking nodes, how often did the lock fail.
+   std::atomic<size_t> node_lock_fail;
+   // when locking nodes, how often did the lock succeed.
+   std::atomic<size_t> node_lock_ok;
 #endif
 
 #ifndef DIRECT_PRIORITIES
@@ -215,7 +222,6 @@ protected:
 #endif
 
    virtual void assert_end(void) const;
-   virtual void assert_end_iteration(void) const;
    bool set_next_node(void);
    virtual bool check_if_current_useless();
    void make_active(void);
@@ -261,7 +267,6 @@ public:
    
    virtual db::node* get_work(void);
    virtual void end(void);
-   virtual bool terminate_iteration(void);
 
    virtual void set_node_static(db::node *);
    virtual void set_node_moving(db::node *);

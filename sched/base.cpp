@@ -21,29 +21,19 @@ base::do_loop(void)
    db::node *node(NULL);
 
    while(true) {
-      while(true) {
-         node = get_work();
-         if(node == NULL)
-            break;
-         assert(node != NULL);
-         state.run_node(node);
-         if(stop_flag) {
-            killed_while_active();
-            return;
-         }
-      }
+      node = get_work();
+      if(node == NULL)
+         break;
+      assert(node != NULL);
+      state.run_node(node);
       if(stop_flag) {
          killed_while_active();
          return;
       }
-
-      assert_end_iteration();
-
-      // cout << id << " -------- END ITERATION ---------" << endl;
-
-      // false from end_iteration ends program
-      if(!end_iteration())
-         return;
+   }
+   if(stop_flag) {
+      killed_while_active();
+      return;
    }
 }
 	

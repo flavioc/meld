@@ -132,6 +132,7 @@ public:
 
    // overall locking for changing the state of the node
    inline void lock(void) { main_mtx.lock(); }
+   inline bool try_lock(void) { return main_mtx.try_lock(); }
    inline void unlock(void) { main_mtx.unlock(); }
 
    inline void internal_lock(void) { internal_mtx.lock(); }

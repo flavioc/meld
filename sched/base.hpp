@@ -33,7 +33,6 @@ protected:
    
    const vm::process_id id;
    
-   size_t iteration;
    vm::state state;
    
 #ifdef INSTRUMENTATION
@@ -59,7 +58,6 @@ protected:
    void do_tuple_add(db::node *, vm::tuple *, const vm::derivation_count);
    
    virtual void killed_while_active(void) { };
-   virtual bool terminate_iteration(void) = 0;
    
    inline void node_iteration(db::node *node)
    {
@@ -125,18 +123,9 @@ public:
    virtual db::node *get_work(void) = 0;
    
    virtual void assert_end(void) const = 0;
-   virtual void assert_end_iteration(void) const = 0;
-   
-   inline bool end_iteration(void)
-   {
-      ++iteration;
-      return terminate_iteration();
-   }
    
    inline vm::process_id get_id(void) const { return id; }
    
-   inline size_t num_iterations(void) const { return iteration; }
-
 	void start(void);
    void loop(void);
    
@@ -171,7 +160,6 @@ public:
 
    explicit base(const vm::process_id _id):
       id(_id),
-      iteration(0),
       state(this)
 #ifdef INSTRUMENTATION
       , ins_state(statistics::NOW_ACTIVE)
