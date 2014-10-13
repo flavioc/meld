@@ -128,6 +128,18 @@ slice_set::write_bytes_used(const string& file, vm::all *all) const
 }
 
 void
+slice_set::write_node_lock_ok(const string& file, vm::all *all) const
+{
+   write_general(file + ".node_lock_ok", "nodelockok", &slice::print_node_lock_ok, all);
+}
+
+void
+slice_set::write_node_lock_fail(const string& file, vm::all *all) const
+{
+   write_general(file + ".node_lock_fail", "nodelockfail", &slice::print_node_lock_fail, all);
+}
+
+void
 slice_set::write(const string& file, const scheduler_type type, vm::all *all) const
 {
    (void)type;
@@ -142,6 +154,8 @@ slice_set::write(const string& file, const scheduler_type type, vm::all *all) co
    write_priority_nodes_thread(file, all);
    write_priority_nodes_others(file, all);
    write_bytes_used(file, all);
+   write_node_lock_ok(file, all);
+   write_node_lock_fail(file, all);
 }
    
 void

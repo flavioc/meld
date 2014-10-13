@@ -42,6 +42,8 @@ private:
    void write_priority_nodes_thread(const std::string&, vm::all *) const;
    void write_priority_nodes_others(const std::string&, vm::all *) const;
    void write_bytes_used(const std::string&, vm::all *) const;
+   void write_node_lock_ok(const std::string&, vm::all *) const;
+   void write_node_lock_fail(const std::string&, vm::all *) const;
    
    typedef  void (slice::*print_fn)(utils::csv_line&) const;
    

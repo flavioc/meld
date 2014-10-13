@@ -15,11 +15,6 @@ all: compiled
 run:
 	@bash run.sh
 
-serial:
-	@for file in `ls code/*.m`; do \
-		bash serial.sh $$file $(RUNS); \
-	done
-
 TYPE = even
 export RESULTS_FILE=$(PWD)/results.csv
 
@@ -76,6 +71,9 @@ compiled:
 	@mkdir -p code
 	@meld-compile-directory progs code
 	@rm -f code/*.ast code/*.code
+
+plots:
+	@bash ../scripts/plots/plot_instrumentation.sh instrumentation_files
 
 clean:
 	rm -f $(RESULTS_FILE)

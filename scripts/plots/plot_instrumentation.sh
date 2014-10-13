@@ -3,6 +3,7 @@
 # Constructs plots for a complete instrumentation directory.
 
 DIR="${1}"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 if [ -z "${DIR}" ]; then
    echo "Usage: plot_instrumentation.sh <dir>"
@@ -24,7 +25,7 @@ for test in ${DIR}/*; do
          ncpu=$(basename $cpu)
          if [ -f "$cpu/data.state" ]; then
             echo "<li><a href=\"$tbase/$ncpu/index.html\">$ncpu threads</a></li>" >> $DIR/index.html
-            bash plot_dir.sh ${cpu} $tbase $ncpu
+            bash $SCRIPT_DIR/plot_dir.sh ${cpu} $tbase $ncpu
          fi
       done
       echo "</ul></li>" >> $DIR/index.html

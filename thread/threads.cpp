@@ -47,7 +47,7 @@ std::atomic<int> *threads_sched::steal_states(NULL);
 #endif
 
 #ifdef INSTRUMENTATION
-#define NODE_LOCK(NODE) do { if((NODE)->try_lock()) { node_lock_ok++; } else {node_lock_fail++; (NODE)->lock(); } while(false)
+#define NODE_LOCK(NODE) do { if((NODE)->try_lock()) { node_lock_ok++; } else { node_lock_fail++; (NODE)->lock();} } while(false)
 #else
 #define NODE_LOCK(NODE) ((NODE)->lock())
 #endif
@@ -1045,6 +1045,10 @@ threads_sched::write_slice(statistics::slice& sl)
    sl.priority_nodes_thread = priority_nodes_thread;
    sl.priority_nodes_others = priority_nodes_others;
    sl.bytes_used = All->THREAD_POOLS[get_id()]->bytes_in_use;
+   sl.node_lock_ok = node_lock_ok;
+   sl.node_lock_fail = node_lock_fail;
+   node_lock_fail = 0;
+   node_lock_ok = 0;
    sent_facts_same_thread = 0;
    sent_facts_other_thread = 0;
    sent_facts_other_thread_now = 0;

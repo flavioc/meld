@@ -27,6 +27,8 @@ public:
    size_t priority_nodes_thread = 0;
    size_t priority_nodes_others = 0;
    size_t bytes_used = 0;
+   size_t node_lock_ok = 0;
+   size_t node_lock_fail = 0;
    
    void print_state(utils::csv_line&) const;
    void print_derived_facts(utils::csv_line&) const;
@@ -41,6 +43,14 @@ public:
    void print_bytes_used(utils::csv_line& csv) const
    {
       csv << utils::to_string<size_t>(bytes_used);
+   }
+   void print_node_lock_ok(utils::csv_line& csv) const
+   {
+      csv << utils::to_string<size_t>(node_lock_ok);
+   }
+   void print_node_lock_fail(utils::csv_line& csv) const
+   {
+      csv << utils::to_string<size_t>(node_lock_fail);
    }
 };
 

@@ -1,10 +1,12 @@
 #!/bin/bash
 
-. ./common.sh
-. ./lines.sh
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-BIGGER=`python ./find_max_value.py ${FILE}`
-TOTAL=`python ./find_total_value.py ${FILE}`
+. $SCRIPT_DIR/common.sh
+. $SCRIPT_DIR/lines.sh
+
+BIGGER=`python $SCRIPT_DIR/find_max_value.py ${FILE}`
+TOTAL=`python $SCRIPT_DIR/find_total_value.py ${FILE}`
 
 if [ $BIGGER -eq 0 ]; then
    echo "No quantities for ${FILE}"
@@ -29,7 +31,7 @@ fi
 
 gnuplot <<EOF
 set output "$FILE.png"
-load 'base.plt'
+load '$SCRIPT_DIR/base.plt'
 set terminal png size $WIDTH,$HEIGHT
 set xrange [0:$MAXX]
 set ylabel "Max: $BIGGER \n Total: $TOTAL"

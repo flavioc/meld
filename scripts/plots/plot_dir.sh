@@ -8,6 +8,8 @@ PROG="${2}"
 CPU="${3}"
 HTML="$DIR/index.html"
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 if [ -z "${DIR}" ]; then
 	echo "Usage: plot_dir.sh <directory with files>"
 	exit 1
@@ -21,7 +23,6 @@ plot_part ()
 
    if [[ $SCRIPT == *.py ]]; then
       INTER="python"
-      echo "Python!"
    else
       INTER="bash"
    fi
@@ -36,14 +37,16 @@ plot_part ()
 		exit 1
 	fi
 
-	CMD="${INTER} ${SCRIPT} ${FILE}"
-	echo -n "Processing ${FILE}..."
-	$CMD
-   if [ $? -eq 0 ]; then
-      echo "<h2>$TITLE</h2><img src=\"$FILE.png\" />" >> $HTML
-      echo "done."
-   else
-      echo "fail."
+   if [[ ! -f $FILE.png ||  $FILE -nt $FILE.png ]]; then
+      CMD="${INTER} $SCRIPT_DIR/${SCRIPT} ${FILE}"
+      echo -n "Processing ${FILE}..."
+      $CMD
+      if [ $? -eq 0 ]; then
+         echo "<h2>$TITLE</h2><img src=\"$(basename $FILE).png\" />" >> $HTML
+         echo "done."
+      else
+         echo "fail."
+      fi
    fi
 }
 
@@ -64,6 +67,8 @@ echo "<html><head><title>$PROG - $CPU threads</title></head><body>" > $HTML
 
 plot_part "${DIR}/data.state" "active_inactive.py" "State"
 plot_part "${DIR}/data.bytes_used" "plot_quantity.sh" "Bytes Used"
+plot_part "${DIR}/data.node_lock_ok" "plot_quantity.sh" "Node Locks (First Ok)"
+plot_part "${DIR}/data.node_lock_fail" "plot_quantity.sh" "Node Locks (First Failed)"
 plot_part "${DIR}/data.derived_facts" "plot_quantity.sh" "Derived Facts"
 plot_part "${DIR}/data.consumed_facts" "plot_quantity.sh" "Consumed Facts"
 plot_part "${DIR}/data.rules_run" "plot_quantity.sh" "Rules Run"
