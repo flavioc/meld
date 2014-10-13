@@ -84,10 +84,10 @@ node::end_iteration(void)
       tuple_aggregate *agg(it->second);
       
       full_tuple_list ls(agg->generate());
-      for(auto jt(ls.begin()), end(ls.end()); jt != end; ++jt)
+      for(auto jt(ls.begin()), end(ls.end()); jt != end; ++jt) {
          (*jt)->set_as_aggregate();
-      
-      ret.splice_back(ls);
+         ret.push_back(*jt);
+      }
    }
    
    return ret;

@@ -188,6 +188,27 @@ public:
       }
    }
 
+   inline void add_work_myself(vm::full_tuple_list& ls)
+   {
+      unprocessed_facts = true;
+      for(auto it(ls.begin()), end(ls.end()); it != end;) {
+         vm::full_tuple *x(*it);
+         vm::predicate *pred(x->get_predicate());
+
+         if(pred->is_action_pred())
+            store.add_action_fact(x);
+         else if(pred->is_persistent_pred() || pred->is_reused_pred()) {
+            store.add_persistent_fact(x);
+            store.register_fact(x);
+         } else {
+            add_linear_fact(x->get_tuple(), pred);
+            delete x;
+         }
+
+         it++;
+      }
+   }
+
    inline void inner_add_work_others(vm::tuple *tpl, vm::predicate *pred,
          const vm::ref_count count, const vm::depth_t depth)
    {

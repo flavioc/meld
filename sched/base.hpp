@@ -64,11 +64,7 @@ protected:
    inline void node_iteration(db::node *node)
    {
       vm::full_tuple_list ls(node->end_iteration());
-
-      // XXX
-      // need to do new_work_list
-      // XXX
-      (void)ls;
+      node->add_work_myself(ls);
    }
 
    inline void setup_node(db::node *node)
