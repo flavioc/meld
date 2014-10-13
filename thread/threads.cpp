@@ -235,16 +235,16 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
       sent_facts_other_thread++;
 #endif
       }
-      if(!tnode->active_node())
+      if(!tnode->active_node()) {
          owner->add_to_queue(tnode);
-
-      lock_guard<utils::mutex> l2(owner->lock);
-      LOCK_STAT(sched_lock);
-      
-      if(owner->is_inactive())
-      {
-         owner->set_active();
-         assert(owner->is_active());
+         lock_guard<utils::mutex> l2(owner->lock);
+         LOCK_STAT(sched_lock);
+         
+         if(owner->is_inactive())
+         {
+            owner->set_active();
+            assert(owner->is_active());
+         }
       }
    }
 
