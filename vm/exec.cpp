@@ -249,6 +249,7 @@ execute_send(const pcounter& pc, state& state)
       if(pred->is_action_pred())
          All->MACHINE->run_action(state.sched, node, tuple, pred);
       else {
+#ifdef FACT_BUFFERING
          auto it(state.facts_to_send.find(node));
          tuple_array *arr;
          if(it == state.facts_to_send.end()) {
@@ -258,6 +259,9 @@ execute_send(const pcounter& pc, state& state)
          arr = &(it->second);
          full_tuple info(tuple, pred, state.count, state.depth);
          arr->push_back(info);
+#else
+         state.sched->new_work(state.node, node, tuple, pred, state.count, state.depth);
+#endif
       }
    }
 }

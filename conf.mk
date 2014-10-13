@@ -21,3 +21,5 @@ INSTRUMENTATION = false
 CORE_STATISTICS = false
 # activate this to collect statistics on memory use
 MEMORY_STATISTICS = false
+# activate fact buffering (only send facts after the node has completed running)
+FACT_BUFFERING = false

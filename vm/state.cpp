@@ -876,6 +876,7 @@ bool
 state::sync(void)
 {
    bool ret(false);
+#ifdef FACT_BUFFERING
    // send all facts to nodes.
    for(auto it(facts_to_send.begin()), end(facts_to_send.end()); it != end; ++it) {
       tuple_array& ls(it->second);
@@ -884,6 +885,7 @@ state::sync(void)
       ret = true;
    }
    facts_to_send.clear();
+#endif
    return ret;
 }
 

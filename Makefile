@@ -50,6 +50,9 @@ endif
 ifeq ($(MEMORY_STATISTICS), true)
 	FLAGS += -DMEMORY_STATISTICS
 endif
+ifeq ($(FACT_BUFFERING), true)
+	FLAGS += -DFACT_BUFFERING
+endif
 
 ifeq ($(JIT), true)
 	FLAGS += -DUSE_JIT
