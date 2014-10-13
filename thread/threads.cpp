@@ -172,19 +172,19 @@ threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
          LOCK_STAT(internal_failed_locks);
          tnode->add_work_others(arr);
 #ifdef INSTRUMENTATION
-      sent_facts_other_thread++;
+         sent_facts_other_thread++;
 #endif
       }
-      if(!tnode->active_node())
+      if(!tnode->active_node()) {
          owner->add_to_queue(tnode);
-
-      lock_guard<utils::mutex> l2(owner->lock);
-      LOCK_STAT(sched_lock);
+         lock_guard<utils::mutex> l2(owner->lock);
+         LOCK_STAT(sched_lock);
       
-      if(owner->is_inactive())
-      {
-         owner->set_active();
-         assert(owner->is_active());
+         if(owner->is_inactive())
+         {
+            owner->set_active();
+            assert(owner->is_active());
+         }
       }
    }
 
