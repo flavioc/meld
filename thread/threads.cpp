@@ -399,10 +399,11 @@ threads_sched::busy_wait(void)
 #endif
       if(is_active() && !has_work()) {
          std::lock_guard<utils::mutex> l(lock);
-         if(!has_work() && is_active())
-            set_inactive();
-      } else
-         break;
+         if(!has_work()) {
+            if(is_active())
+               set_inactive();
+         } else break;
+      }
       ins_idle;
       if(all_threads_finished() || stop_flag) {
          assert(is_inactive());
