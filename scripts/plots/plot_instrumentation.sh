@@ -14,24 +14,20 @@ if [ ! -d "${DIR}" ]; then
    exit 1
 fi
 
+echo "<html><head><title>Instrumentation</title></head><body><ol>" > $DIR/index.html
+
 for test in ${DIR}/*; do
    if [ -d "${test}" ]; then
-      for sched in ${test}/*; do
-         if [ -d "${sched}" ]; then
-            for cpu in ${sched}/*; do
-               echo "$cpu/data.state"
-               if [ -f "$cpu/data.state" ]; then
-                  bash plot_dir.sh ${cpu}
-               fi
-               for stealing in ${cpu}/*; do
-                  if [ -d "$stealing" ]; then
-                     if [ -f "$stealing/data.state" ]; then
-                        bash plot_dir.sh ${stealing}
-                     fi
-                  fi
-               done
-            done
+      tbase=$(basename $test)
+      echo "<li>$tbase<ul>" >> $DIR/index.html
+      for cpu in ${test}/*; do
+         ncpu=$(basename $cpu)
+         if [ -f "$cpu/data.state" ]; then
+            echo "<li><a href=\"$tbase/$ncpu/index.html\">$ncpu threads</a></li>" >> $DIR/index.html
+            bash plot_dir.sh ${cpu} $tbase $ncpu
          fi
       done
+      echo "</ul></li>" >> $DIR/index.html
    fi
 done
+echo "</ol></body></html>" >> $DIR/index.html

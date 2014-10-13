@@ -34,7 +34,7 @@ for line in lines:
 				maxqueue = v
 timetotal = len(lines)
 
-WIDTH = min(400, 1 * timetotal)
+WIDTH = min(800, max(400, 1 * timetotal))
 HEIGHT = 64 * numcolumns
 surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, WIDTH, HEIGHT)
 ctx = cairo.Context(surface)

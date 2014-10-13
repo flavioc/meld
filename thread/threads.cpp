@@ -756,6 +756,9 @@ threads_sched::set_node_priority(node *n, const double priority)
 void
 threads_sched::do_set_node_priority_other(thread_intrusive_node *node, const double priority)
 {
+#ifdef INSTRUMENTATION
+   priority_nodes_others++;
+#endif
    // we know that the owner of node is not this.
    queue_id_t state(node->node_state());
    threads_sched *owner(dynamic_cast<threads_sched*>(node->get_owner()));
@@ -830,6 +833,9 @@ threads_sched::do_set_node_priority(node *n, const double priority)
 #endif
    if(priority < 0)
       return;
+#ifdef INSTRUMENTATION
+   priority_nodes_thread++;
+#endif
 
    if(current_node == tn) {
       tn->set_priority_level(priority);
@@ -1105,9 +1111,12 @@ threads_sched::write_slice(statistics::slice& sl)
    sl.sent_facts_other_thread_now = sent_facts_other_thread_now;
    sl.priority_nodes_thread = priority_nodes_thread;
    sl.priority_nodes_others = priority_nodes_others;
+   sl.bytes_used = All->THREAD_POOLS[get_id()]->bytes_in_use;
    sent_facts_same_thread = 0;
    sent_facts_other_thread = 0;
    sent_facts_other_thread_now = 0;
+   priority_nodes_thread = 0;
+   priority_nodes_others = 0;
 #ifdef TASK_STEALING
    sl.stolen_nodes = stolen_total;
    stolen_total = 0;

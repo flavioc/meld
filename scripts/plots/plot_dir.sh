@@ -4,6 +4,9 @@
 #
 
 DIR="${1}"
+PROG="${2}"
+CPU="${3}"
+HTML="$DIR/index.html"
 
 if [ -z "${DIR}" ]; then
 	echo "Usage: plot_dir.sh <directory with files>"
@@ -14,9 +17,12 @@ plot_part ()
 {
 	FILE="${1}"
 	SCRIPT="${2}"
-   INTER="${3}"
+   TITLE="${3}"
 
-   if [ -z "${INTER}" ]; then
+   if [[ $SCRIPT == *.py ]]; then
+      INTER="python"
+      echo "Python!"
+   else
       INTER="bash"
    fi
 
@@ -31,27 +37,41 @@ plot_part ()
 	fi
 
 	CMD="${INTER} ${SCRIPT} ${FILE}"
-	echo -n "${SCRIPT} ${FILE}..."
+	echo -n "Processing ${FILE}..."
 	$CMD
-	echo "done."
+   if [ $? -eq 0 ]; then
+      echo "<h2>$TITLE</h2><img src=\"$FILE.png\" />" >> $HTML
+      echo "done."
+   else
+      echo "fail."
+   fi
 }
 
 try_plot_part ()
 {
 	FILE="${1}"
 	SCRIPT="${2}"
+   TITLE="${3}"
 
 	if [ -f "${FILE}" ]; then
-		plot_part "${FILE}" "${SCRIPT}"
+		plot_part "${FILE}" "${SCRIPT}" "${TITLE}"
 	else
 		echo "${FILE} does not exist"
 	fi
 }
 
-plot_part "${DIR}/data.state" "active_inactive.py" "python"
-plot_part "${DIR}/data.work_queue" "plot_quantity.sh"
-plot_part "${DIR}/data.processed_facts" "plot_quantity.sh"
-plot_part "${DIR}/data.sent_facts" "plot_quantity.sh"
-try_plot_part "${DIR}/data.steal_requests" "plot_quantity.sh"
-try_plot_part "${DIR}/data.stolen_nodes" "plot_quantity.sh"
-try_plot_part "${DIR}/data.priority_queue" "plot_quantity.sh"
+echo "<html><head><title>$PROG - $CPU threads</title></head><body>" > $HTML
+
+plot_part "${DIR}/data.state" "active_inactive.py" "State"
+plot_part "${DIR}/data.bytes_used" "plot_quantity.sh" "Bytes Used"
+plot_part "${DIR}/data.derived_facts" "plot_quantity.sh" "Derived Facts"
+plot_part "${DIR}/data.consumed_facts" "plot_quantity.sh" "Consumed Facts"
+plot_part "${DIR}/data.rules_run" "plot_quantity.sh" "Rules Run"
+plot_part "${DIR}/data.sent_facts_same_thread" "plot_quantity.sh" "Sent Facts (in same thread)"
+plot_part "${DIR}/data.sent_facts_other_thread" "plot_quantity.sh" "Sent Facts (to other thread)"
+plot_part "${DIR}/data.sent_facts_other_thread_now" "plot_quantity.sh" "Sent Facts (to other thread now, indexing included)"
+try_plot_part "${DIR}/data.stolen_nodes" "plot_quantity.sh" "Stolen Nodes"
+try_plot_part "${DIR}/data.priority_nodes_thread" "plot_quantity.sh" "Set Priority (in same thread)"
+try_plot_part "${DIR}/data.priority_nodes_others" "plot_quantity.sh" "Set Priority (in another thread)"
+
+echo "</body></html>" >> $HTML

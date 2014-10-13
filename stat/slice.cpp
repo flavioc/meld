@@ -72,4 +72,16 @@ slice::print_sent_facts_other_thread_now(csv_line& csv) const
    csv << to_string<size_t>(sent_facts_other_thread_now);
 }
 
+void
+slice::print_priority_nodes_thread(csv_line& csv) const
+{
+   csv << to_string<size_t>(priority_nodes_thread);
+}
+
+void
+slice::print_priority_nodes_others(csv_line& csv) const
+{
+   csv << to_string<size_t>(priority_nodes_others);
+}
+
 }

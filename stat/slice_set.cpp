@@ -110,6 +110,24 @@ slice_set::write_sent_facts_other_thread_now(const string& file, vm::all *all) c
 }
 
 void
+slice_set::write_priority_nodes_thread(const string& file, vm::all *all) const
+{
+   write_general(file + ".priority_nodes_thread", "prioritynodesthread", &slice::print_priority_nodes_thread, all);
+}
+
+void
+slice_set::write_priority_nodes_others(const string& file, vm::all *all) const
+{
+   write_general(file + ".priority_nodes_others", "prioritynodesothers", &slice::print_priority_nodes_others, all);
+}
+
+void
+slice_set::write_bytes_used(const string& file, vm::all *all) const
+{
+   write_general(file + ".bytes_used", "bytesused", &slice::print_bytes_used, all);
+}
+
+void
 slice_set::write(const string& file, const scheduler_type type, vm::all *all) const
 {
    (void)type;
@@ -121,6 +139,9 @@ slice_set::write(const string& file, const scheduler_type type, vm::all *all) co
    write_sent_facts_same_thread(file, all);
    write_sent_facts_other_thread(file, all);
    write_sent_facts_other_thread_now(file, all);
+   write_priority_nodes_thread(file, all);
+   write_priority_nodes_others(file, all);
+   write_bytes_used(file, all);
 }
    
 void

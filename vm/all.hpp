@@ -44,6 +44,9 @@ class all
    std::vector<sched::base*> SCHEDS;
 	machine_arguments ARGS;
    std::vector<runtime::rstring::ptr> ARGUMENTS;
+#ifdef INSTRUMENTATION
+   std::vector<mem::pool*> THREAD_POOLS;
+#endif
 
    inline void set_const(const const_id& id, const tuple_field d) { consts[id] = d; }
 

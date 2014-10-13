@@ -110,15 +110,28 @@ private:
    }
 
 public:
+
+#ifdef INSTRUMENTATION
+   size_t bytes_in_use = 0;
+#endif
+
    
    inline void* allocate(const size_t size)
    {
-      return get_group(size)->allocate();
+      chunkgroup *grp(get_group(size));
+#ifdef INSTRUMENTATION
+      bytes_in_use += size;
+#endif
+      return grp->allocate();
    }
    
    inline void deallocate(void *ptr, const size_t size)
    {
-      return get_group(size)->deallocate(ptr);
+      chunkgroup *grp(get_group(size));
+#ifdef INSTRUMENTATION
+      bytes_in_use -= size;
+#endif
+      return grp->deallocate(ptr);
    }
    
    explicit pool(void)

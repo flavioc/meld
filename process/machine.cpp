@@ -194,6 +194,9 @@ machine::init_sched(const process_id id)
 {
    // ensure own memory pool
    mem::ensure_pool();
+#ifdef INSTRUMENTATION
+   All->THREAD_POOLS[id] = mem::mem_pool;
+#endif
 
    switch(sched_type) {
       case SCHED_THREADS:
@@ -222,6 +225,9 @@ machine::start(void)
 	execute_const_code();
 	
    deactivate_signals();
+#ifdef INSTRUMENTATION
+   all->THREAD_POOLS.resize(all->NUM_THREADS, NULL);
+#endif
    
    if(stat_enabled()) {
       // initiate alarm thread

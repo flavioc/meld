@@ -39,6 +39,9 @@ private:
    void write_sent_facts_same_thread(const std::string&, vm::all *) const;
    void write_sent_facts_other_thread(const std::string&, vm::all *) const;
    void write_sent_facts_other_thread_now(const std::string&, vm::all *) const;
+   void write_priority_nodes_thread(const std::string&, vm::all *) const;
+   void write_priority_nodes_others(const std::string&, vm::all *) const;
+   void write_bytes_used(const std::string&, vm::all *) const;
    
    typedef  void (slice::*print_fn)(utils::csv_line&) const;
    

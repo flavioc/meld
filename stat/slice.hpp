@@ -6,6 +6,7 @@
 
 #include "stat/stat.hpp"
 #include "utils/csv_line.hpp"
+#include "utils/utils.hpp"
 
 namespace statistics
 {
@@ -25,6 +26,7 @@ public:
    size_t sent_facts_other_thread_now = 0;
    size_t priority_nodes_thread = 0;
    size_t priority_nodes_others = 0;
+   size_t bytes_used = 0;
    
    void print_state(utils::csv_line&) const;
    void print_derived_facts(utils::csv_line&) const;
@@ -36,6 +38,10 @@ public:
    void print_sent_facts_other_thread_now(utils::csv_line&) const;
    void print_priority_nodes_thread(utils::csv_line&) const;
    void print_priority_nodes_others(utils::csv_line&) const;
+   void print_bytes_used(utils::csv_line& csv) const
+   {
+      csv << utils::to_string<size_t>(bytes_used);
+   }
 };
 
 }
