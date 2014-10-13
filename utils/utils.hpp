@@ -11,6 +11,8 @@ namespace utils
 
 #define true_likely(x)      __builtin_expect(!!(x), 1)
 #define false_likely(x)    __builtin_expect(!!(x), 0)
+#define BITMAP_TYPE uint64_t
+#define BITMAP_BITS (sizeof(BITMAP_TYPE) * 8)
 
 size_t number_cpus(void);
 
@@ -80,6 +82,15 @@ T power(const T base, const T exp)
 size_t random_unsigned(const size_t);
 
 void write_strings(const std::vector<std::string>&, std::ostream&, const size_t);
+
+inline size_t next_multiple_of_uint(const size_t v)
+{
+   size_t ret(v / BITMAP_BITS);
+   if(v % BITMAP_BITS > 0)
+      ret++;
+   return ret;
+}
+
 
 }
 

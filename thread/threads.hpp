@@ -13,6 +13,7 @@
 #include "utils/random.hpp"
 #include "utils/circular_buffer.hpp"
 #include "utils/tree_barrier.hpp"
+#include "vm/bitmap.hpp"
 
 #define DIRECT_PRIORITIES
 
@@ -159,6 +160,7 @@ protected:
 	}
 
    thread_intrusive_node *current_node;
+   vm::bitmap comm_threads; // threads we may need to communicate with
 
    inline bool pop_node_from_queues(void)
    {

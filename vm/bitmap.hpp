@@ -7,9 +7,6 @@
 #include "mem/allocator.hpp"
 #include <iostream>
 
-#define BITMAP_TYPE uint64_t
-#define BITMAP_BITS (sizeof(BITMAP_TYPE) * 8)
-
 namespace vm
 {
 

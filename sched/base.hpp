@@ -32,6 +32,8 @@ class base
 protected:
    
    const vm::process_id id;
+
+   char __padding_state[128];
    
    vm::state state;
    

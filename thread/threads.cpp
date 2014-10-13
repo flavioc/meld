@@ -120,7 +120,7 @@ threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
       }
       if(!tnode->active_node()) {
          owner->add_to_queue(tnode);
-         owner->activate_thread();
+         comm_threads.set_bit(owner->get_id());
       }
    }
 
@@ -174,7 +174,7 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
       }
       if(!tnode->active_node()) {
          owner->add_to_queue(tnode);
-         owner->activate_thread();
+         comm_threads.set_bit(owner->get_id());
       }
    }
 
@@ -469,6 +469,12 @@ threads_sched::set_next_node(void)
          break;
       }
       if(!has_work()) {
+         for(auto it(comm_threads.begin(All->NUM_THREADS)); !it.end(); ++it) {
+            const size_t id(*it);
+            threads_sched *target(dynamic_cast<threads_sched*>(All->SCHEDS[id]));
+            target->activate_thread();
+         }
+         comm_threads.clear(All->NUM_THREADS_NEXT_UINT);
          if(!busy_wait())
             return false;
       }
@@ -1075,10 +1081,12 @@ threads_sched::threads_sched(const vm::process_id _id):
    , node_lock_ok(0)
 #endif
 {
+   bitmap::create(comm_threads, All->NUM_THREADS_NEXT_UINT);
 }
 
 threads_sched::~threads_sched(void)
 {
+   bitmap::destroy(comm_threads, All->NUM_THREADS_NEXT_UINT);
    assert(tstate == THREAD_INACTIVE);
 }
    

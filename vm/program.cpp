@@ -8,6 +8,7 @@
 #include "vm/instr.hpp"
 #include "db/database.hpp"
 #include "utils/types.hpp"
+#include "utils/utils.hpp"
 #include "vm/state.hpp"
 #include "vm/reader.hpp"
 #include "vm/external.hpp"
@@ -37,15 +38,6 @@ static inline bool
 predicate_sorter(const predicate* p1, const predicate* p2)
 {
 	return p1->get_name() < p2->get_name();
-}
-
-static inline size_t
-next_multiple_of_uint(const size_t v)
-{
-   size_t ret(v / BITMAP_BITS);
-   if(v % BITMAP_BITS > 0)
-      ret++;
-   return ret;
 }
 
 static inline ptr_val 

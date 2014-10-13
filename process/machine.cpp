@@ -375,6 +375,7 @@ machine::machine(const string& file, router& _rout, const size_t th,
    this->all->set_arguments(margs);
    this->all->DATABASE = new database(added_data_file ? data_file : filename, get_creation_function(_sched_type));
    this->all->NUM_THREADS = th;
+   this->all->NUM_THREADS_NEXT_UINT = next_multiple_of_uint(th);
    this->all->MACHINE = this;
    this->all->SCHEDS.resize(th, NULL);
 }

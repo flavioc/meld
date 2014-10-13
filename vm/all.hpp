@@ -40,6 +40,7 @@ class all
    process::machine *MACHINE;
    process::router *ROUTER;
    size_t NUM_THREADS;
+   size_t NUM_THREADS_NEXT_UINT;
    size_t NUM_NODES_PER_PROCESS;
    std::vector<sched::base*> SCHEDS;
 	machine_arguments ARGS;
