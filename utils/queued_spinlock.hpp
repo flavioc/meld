@@ -20,7 +20,7 @@ struct qsl_entry
 static inline void *xchg_64(void *ptr, void *x)
 {
    __asm__ __volatile__("xchgq %0,%1"
-         :"=r" ((unsigned long long) x)
+         :"=r" (x)
          :"m" (*(volatile long long *)ptr), "0" ((unsigned long long) x)
          :"memory");
 
