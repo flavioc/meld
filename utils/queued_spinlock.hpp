@@ -3,20 +3,29 @@
 #define UTILS_QUEUED_SPINLOCK_HPP
 
 #include <iostream>
+#include <atomic>
 
 namespace utils
 {
 
 struct qsl_entry
 {
-
    // next processor in the queue that is waiting to enter section
-   std::atomic<qsl_entry*> next;
+   qsl_entry *next;
 
    // indicates whether the access to section has been granted to processor
-   std::atomic<long long> state;
-
+   uint64_t state;
 };
+
+static inline void *xchg_64(void *ptr, void *x)
+{
+   __asm__ __volatile__("xchgq %0,%1"
+         :"=r" ((unsigned long long) x)
+         :"m" (*(volatile long long *)ptr), "0" ((unsigned long long) x)
+         :"memory");
+
+   return x;
+}
 
 class qspinlock
 {
@@ -26,36 +35,43 @@ class qspinlock
    public:
 
 #define cpu_relax() asm volatile("pause\n": : :"memory")
+#define barrier() asm volatile("": : :"memory")
+#define cmpxchg(P, O, N) __sync_val_compare_and_swap((P), (O), (N))
       inline void lock(qsl_entry *ent)
       {
+         qsl_entry *stail;
+
          ent->next = NULL;
-         ent->state = 1;
-         qsl_entry *old(__sync_lock_test_and_set(&tail, ent));
-         if(old == NULL)
+         ent->state = 0;
+         stail = (qsl_entry*)xchg_64((void*)&tail, (void*)ent);
+         if(!stail)
             return;
-         old->next = ent;
-         while(ent->state.load() == 1) {
-            cpu_relax();
-         }
+         stail->next = ent;
+         barrier();
+         while(!ent->state) cpu_relax();
+         return;
       }
 
       inline bool try_lock(qsl_entry *ent)
       {
-         if(tail == NULL) {
-            lock(ent);
-            return true;
-         }
+         qsl_entry *stail;
+
+         ent->next = NULL;
+         ent->state = 0;
+         stail = cmpxchg(&tail, NULL, ent);
+         if(!stail) return true;
          return false;
       }
 
-      inline void unlock(qsl_entry *entry)
+      inline void unlock(qsl_entry *ent)
       {
-         if(__sync_val_compare_and_swap(&tail, entry, NULL) == entry)
-            return;
-         while(entry->next == NULL) {
-            cpu_relax();
+         if(!ent->next) {
+            if(cmpxchg(&tail, ent, NULL) == ent)
+               return;
+
+            while(!ent->next) cpu_relax();
          }
-         entry->next.load()->state = 0;
+         ent->next->state = 1;
       }
 
       explicit qspinlock(void): tail(NULL) {}
