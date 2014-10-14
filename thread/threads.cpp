@@ -378,9 +378,8 @@ threads_sched::busy_wait(void)
    
    while(!has_work()) {
 #ifdef TASK_STEALING
-#define STEALING_ROUND_MAX 10
-#define BACKOFF_INCREASE_FACTOR 4
-#define BACKOFF_DECREASE_FACTOR 2
+#define STEALING_ROUND_MIN 16
+#define STEALING_ROUND_MAX 4096
       if(!theProgram->is_static_priority() && work_stealing) {
          count++;
          if(count == backoff) {
@@ -388,12 +387,10 @@ threads_sched::busy_wait(void)
             set_active_if_inactive();
             if(go_steal_nodes()) {
                ins_active;
-               backoff = max(backoff / BACKOFF_DECREASE_FACTOR, (size_t)STEALING_ROUND_MAX);
+               backoff = max(backoff >> 1, (size_t)STEALING_ROUND_MIN);
                return true;
-            } else {
-               if(backoff < UINT_MAX/BACKOFF_INCREASE_FACTOR)
-                  backoff *= BACKOFF_INCREASE_FACTOR;
-            }
+            } else
+               backoff = min((size_t)STEALING_ROUND_MAX, backoff << 1);
          }
       }
 #endif
@@ -409,6 +406,7 @@ threads_sched::busy_wait(void)
          assert(is_inactive());
          return false;
       }
+      cpu_relax();
       std::this_thread::yield();
    }
    
@@ -1070,7 +1068,7 @@ threads_sched::threads_sched(const vm::process_id _id):
 #ifdef TASK_STEALING
    , rand(time(NULL) + _id * 10)
    , next_thread(rand(All->NUM_THREADS))
-   , backoff(STEALING_ROUND_MAX)
+   , backoff(STEALING_ROUND_MIN)
 #endif
 #ifndef DIRECT_PRIORITIES
    , priority_buffer(std::min(PRIORITY_BUFFER_SIZE,
