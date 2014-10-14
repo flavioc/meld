@@ -85,7 +85,10 @@ private:
 
    inline void activate_thread(void)
    {
-      std::lock_guard<utils::mutex> l2(lock);
+      LOCK_STACK(owner_lock);
+
+      lock.lock(LOCK_STACK_USE(owner_lock));
+
       LOCK_STAT(sched_lock);
 
       if(is_inactive())
@@ -93,6 +96,8 @@ private:
          set_active();
          assert(is_active());
       }
+
+      lock.unlock(LOCK_STACK_USE(owner_lock));
    }
    
    inline void set_active_if_inactive(void)

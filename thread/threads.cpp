@@ -47,11 +47,11 @@ std::atomic<int> *threads_sched::steal_states(NULL);
 #endif
 
 #ifdef INSTRUMENTATION
-#define NODE_LOCK(NODE) do { if((NODE)->try_lock()) { node_lock_ok++; } else { node_lock_fail++; (NODE)->lock();} } while(false)
+#define NODE_LOCK(NODE, ARG) do { if((NODE)->try_lock(LOCK_STACK_USE(ARG))) { node_lock_ok++; } else { node_lock_fail++; (NODE)->lock(LOCK_STACK_USE(ARG));} } while(false)
 #else
-#define NODE_LOCK(NODE) ((NODE)->lock())
+#define NODE_LOCK(NODE, ARG) ((NODE)->lock(LOCK_STACK_USE(ARG)))
 #endif
-#define NODE_UNLOCK(NODE) ((NODE)->unlock())
+#define NODE_UNLOCK(NODE, ARG) ((NODE)->unlock(LOCK_STACK_USE(ARG)))
 
 void
 threads_sched::init_barriers(const size_t num_threads)
@@ -80,21 +80,23 @@ threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
    (void)from;
 
    thread_intrusive_node *tnode(dynamic_cast<thread_intrusive_node*>(to));
+   LOCK_STACK(nodelock);
 
-   NODE_LOCK(tnode);
+   NODE_LOCK(tnode, nodelock);
 
    LOCK_STAT(add_lock);
    
    threads_sched *owner(dynamic_cast<threads_sched*>(tnode->get_owner()));
 
+   LOCK_STACK(internallock);
    if(owner == this) {
 #ifdef FACT_STATISTICS
       count_add_work_self++;
 #endif
-      tnode->internal_lock();
+      tnode->internal_lock(LOCK_STACK_USE(internallock));
       LOCK_STAT(internal_locks);
       tnode->add_work_myself(arr);
-      tnode->internal_unlock();
+      tnode->internal_unlock(LOCK_STACK_USE(internallock));
 #ifdef INSTRUMENTATION
       sent_facts_same_thread++;
 #endif
@@ -104,13 +106,13 @@ threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
 #ifdef FACT_STATISTICS
       count_add_work_other++;
 #endif
-      if(tnode->try_internal_lock()) {
+      if(tnode->try_internal_lock(LOCK_STACK_USE(internallock))) {
          LOCK_STAT(internal_ok_locks);
          tnode->add_work_myself(arr);
 #ifdef INSTRUMENTATION
          sent_facts_other_thread_now++;
 #endif
-         tnode->internal_unlock();
+         tnode->internal_unlock(LOCK_STACK_USE(internallock));
       } else {
          LOCK_STAT(internal_failed_locks);
          tnode->add_work_others(arr);
@@ -124,7 +126,7 @@ threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
       }
    }
 
-   NODE_UNLOCK(tnode);
+   NODE_UNLOCK(tnode, nodelock);
 }
 
 void
@@ -135,20 +137,22 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
    
    thread_intrusive_node *tnode(dynamic_cast<thread_intrusive_node*>(to));
 
-   NODE_LOCK(tnode);
+   LOCK_STACK(nodelock);
+   NODE_LOCK(tnode, nodelock);
 
    LOCK_STAT(add_lock);
    
    threads_sched *owner(dynamic_cast<threads_sched*>(tnode->get_owner()));
+   LOCK_STACK(internallock);
 
    if(owner == this) {
 #ifdef FACT_STATISTICS
       count_add_work_self++;
 #endif
-      tnode->internal_lock();
+      tnode->internal_lock(LOCK_STACK_USE(internallock));
       LOCK_STAT(internal_locks);
       tnode->add_work_myself(tpl, pred, count, depth);
-      tnode->internal_unlock();
+      tnode->internal_unlock(LOCK_STACK_USE(internallock));
 #ifdef INSTRUMENTATION
       sent_facts_same_thread++;
 #endif
@@ -158,13 +162,13 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
 #ifdef FACT_STATISTICS
       count_add_work_other++;
 #endif
-      if(tnode->try_internal_lock()) {
+      if(tnode->try_internal_lock(LOCK_STACK_USE(internallock))) {
          LOCK_STAT(internal_ok_locks);
          tnode->add_work_myself(tpl, pred, count, depth);
 #ifdef INSTRUMENTATION
          sent_facts_other_thread_now++;
 #endif
-         tnode->internal_unlock();
+         tnode->internal_unlock(LOCK_STACK_USE(internallock));
       } else {
          LOCK_STAT(internal_failed_locks);
          tnode->add_work_others(tpl, pred, count, depth);
@@ -178,7 +182,7 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
       }
    }
 
-   NODE_UNLOCK(tnode);
+   NODE_UNLOCK(tnode, nodelock);
 }
 
 #ifdef TASK_STEALING
@@ -226,18 +230,19 @@ threads_sched::go_steal_nodes(void)
       for(size_t i(0); i < stolen; ++i) {
          thread_intrusive_node *node(node_buffer[i]);
 
-         NODE_LOCK(node);
+         LOCK_STACK(nodelock);
+         NODE_LOCK(node, nodelock);
          LOCK_STAT(steal_locks);
          if(node->node_state() != STATE_STEALING) {
             // node was put in the queue again, give up.
-            NODE_UNLOCK(node);
+            NODE_UNLOCK(node, nodelock);
             continue;
          }
          if(node->is_static()) {
             if(node->get_owner() != target) {
                // set-affinity was used and the node was changed to another scheduler
                move_node_to_new_owner(node, dynamic_cast<threads_sched*>(node->get_owner()));
-               NODE_UNLOCK(node);
+               NODE_UNLOCK(node, nodelock);
                continue;
             } else {
                // meanwhile the node is now set as static.
@@ -247,7 +252,7 @@ threads_sched::go_steal_nodes(void)
          }
          node->set_owner(this);
          add_to_queue(node);
-         NODE_UNLOCK(node);
+         NODE_UNLOCK(node, nodelock);
       }
       // set the next thread to the current one
       next_thread = tid;
@@ -316,7 +321,7 @@ threads_sched::generate_aggs(void)
 void
 threads_sched::killed_while_active(void)
 {
-   lock_guard<utils::mutex> l(lock);
+   utils::lock_guard l(lock);
    if(is_active())
       set_inactive();
 }
@@ -395,7 +400,7 @@ threads_sched::busy_wait(void)
       }
 #endif
       if(is_active() && !has_work()) {
-         std::lock_guard<utils::mutex> l(lock);
+         utils::lock_guard l(lock);
          if(!has_work()) {
             if(is_active())
                set_inactive();
@@ -423,7 +428,8 @@ bool
 threads_sched::check_if_current_useless(void)
 {
    if(!current_node->unprocessed_facts) {
-      NODE_LOCK(current_node);
+      LOCK_STACK(curlock);
+      NODE_LOCK(current_node, curlock);
       LOCK_STAT(check_lock);
       
       if(!current_node->unprocessed_facts) {
@@ -433,11 +439,11 @@ threads_sched::check_if_current_useless(void)
             current_node->set_owner(current_node->get_static());
          }
          current_node->set_priority_level(0.0);
-         NODE_UNLOCK(current_node);
+         NODE_UNLOCK(current_node, curlock);
          current_node = NULL;
          return true;
       }
-      NODE_UNLOCK(current_node);
+      NODE_UNLOCK(current_node, curlock);
    }
    
    assert(current_node->unprocessed_facts);
@@ -546,12 +552,13 @@ threads_sched::schedule_next(node *n)
 
 #ifdef TASK_STEALING
    thread_intrusive_node *tn((thread_intrusive_node*)n);
-   NODE_LOCK(tn);
+   LOCK_STACK(nodelock);
+   NODE_LOCK(tn, nodelock);
    threads_sched *other((threads_sched*)tn->get_owner());
    if(other == this)
       do_set_node_priority(n, prio);
 
-   NODE_UNLOCK(tn);
+   NODE_UNLOCK(tn, nodelock);
 #else
    do_set_node_priority(n, prio);
 #endif
@@ -620,7 +627,8 @@ threads_sched::add_node_priority(node *n, const double priority)
 	thread_intrusive_node *tn((thread_intrusive_node*)n);
 
 #ifdef TASK_STEALING
-   NODE_LOCK(tn);
+   LOCK_STACK(nodelock);
+   NODE_LOCK(tn, nodelock);
    LOCK_STAT(prio_lock);
    threads_sched *other((threads_sched*)tn->get_owner());
    if(other == this)
@@ -631,7 +639,7 @@ threads_sched::add_node_priority(node *n, const double priority)
 #else
       other->add_node_priority_other(tn, priority);
 #endif
-   NODE_UNLOCK(tn);
+   NODE_UNLOCK(tn, nodelock);
 #else
    threads_sched *other((threads_sched*)tn->get_owner());
    if(other == this) {
@@ -665,7 +673,8 @@ threads_sched::set_node_priority(node *n, const double priority)
 
 //   cout << "Set node " << n->get_id() << " with prio " << priority << endl;
 #ifdef TASK_STEALING
-   NODE_LOCK(tn);
+   LOCK_STACK(nodelock);
+   NODE_LOCK(tn, nodelock);
    LOCK_STAT(prio_lock);
    threads_sched *other((threads_sched*)tn->get_owner());
    if(other == this)
@@ -676,7 +685,7 @@ threads_sched::set_node_priority(node *n, const double priority)
 #else
       other->set_node_priority_other(n, priority);
 #endif
-   NODE_UNLOCK(tn);
+   NODE_UNLOCK(tn, nodelock);
 #else
    threads_sched *other((threads_sched*)tn->get_owner());
    if(other == this)
@@ -744,7 +753,7 @@ threads_sched::do_set_node_priority_other(thread_intrusive_node *node, const dou
    } 
    if(activate_node) {
       // we must reactivate node if it's not active
-      lock_guard<utils::mutex> l2(owner->lock);
+      utils::lock_guard l2(owner->lock);
       
       if(owner->is_inactive()) {
          owner->set_active();
@@ -881,7 +890,8 @@ threads_sched::set_node_static(db::node *n)
    if(tn->is_static())
       return;
 
-   NODE_LOCK(tn);
+   LOCK_STACK(nodelock);
+   NODE_LOCK(tn, nodelock);
    tn->set_static(this);
    switch(tn->node_state()) {
       case STATE_STEALING:
@@ -906,7 +916,7 @@ threads_sched::set_node_static(db::node *n)
          break;
       default: assert(false); break;
    }
-   NODE_UNLOCK(tn);
+   NODE_UNLOCK(tn, nodelock);
 }
 
 void
@@ -926,7 +936,8 @@ threads_sched::set_node_moving(db::node *n)
    if(tn->is_moving())
       return;
 
-   NODE_LOCK(tn);
+   LOCK_STACK(nodelock);
+   NODE_LOCK(tn, nodelock);
    tn->set_moving();
    switch(tn->node_state()) {
       case STATE_STEALING:
@@ -951,7 +962,7 @@ threads_sched::set_node_moving(db::node *n)
          break;
       default: assert(false); break;
    }
-   NODE_UNLOCK(tn);
+   NODE_UNLOCK(tn, nodelock);
 }
 
 void
@@ -959,7 +970,7 @@ threads_sched::move_node_to_new_owner(thread_intrusive_node *tn, threads_sched *
 {
    new_owner->add_to_queue(tn);
 
-   lock_guard<utils::mutex> l2(new_owner->lock);
+   utils::lock_guard l2(new_owner->lock);
    
    if(new_owner->is_inactive())
    {
@@ -980,10 +991,11 @@ threads_sched::set_node_affinity(db::node *node, db::node *affinity)
       return;
    }
 
-   NODE_LOCK(tn);
+   LOCK_STACK(nodelock);
+   NODE_LOCK(tn, nodelock);
    tn->set_static(new_owner);
    if(tn->get_owner() == new_owner) {
-      NODE_UNLOCK(tn);
+      NODE_UNLOCK(tn, nodelock);
       return;
    }
 
@@ -1028,7 +1040,7 @@ threads_sched::set_node_affinity(db::node *node, db::node *affinity)
       default: assert(false); break; 
    }
 
-   NODE_UNLOCK(tn);
+   NODE_UNLOCK(tn, nodelock);
 }
 
 void

@@ -7,6 +7,7 @@
 #include "utils/fs.hpp"
 #include "process/router.hpp"
 #include "vm/state.hpp"
+#include "utils/queued_spinlock.hpp"
 
 #include "interface.hpp"
 

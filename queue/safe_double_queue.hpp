@@ -26,7 +26,7 @@ public:
    
    inline bool pop_if_not_empty(node_type& data, const queue_id_t new_state)
    {
-      std::lock_guard<utils::mutex> l(mtx);
+      utils::lock_guard l(mtx);
       LOCK_STAT(ready_lock);
       
 		QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP_IF_NOT_EMPTY();
@@ -34,7 +34,7 @@ public:
    
    inline bool pop_head(node_type& data, const queue_id_t new_state)
    {
-      std::lock_guard<utils::mutex> l(mtx);
+      utils::lock_guard l(mtx);
       LOCK_STAT(ready_lock);
       
 		QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP();
@@ -42,7 +42,7 @@ public:
 
    inline bool pop_tail(node_type& data, const queue_id_t new_state)
    {
-      std::lock_guard<utils::mutex> l(mtx);
+      utils::lock_guard l(mtx);
 
       LOCK_STAT(ready_lock);
 
@@ -51,7 +51,7 @@ public:
 
    inline size_t pop_tail_half(T **buffer, const size_t max, const queue_id_t new_state)
    {
-      std::lock_guard<utils::mutex> l(mtx);
+      utils::lock_guard l(mtx);
 
       LOCK_STAT(ready_lock);
 
@@ -74,7 +74,7 @@ public:
    
    inline void push_tail(node_type data)
    {
-      std::lock_guard<utils::mutex> l(mtx);
+      utils::lock_guard l(mtx);
       LOCK_STAT(ready_lock);
    
       push_tail_node(data);
@@ -82,7 +82,7 @@ public:
 
 	inline void push_head(node_type data)
 	{
-      std::lock_guard<utils::mutex> l(mtx);
+      utils::lock_guard l(mtx);
       LOCK_STAT(ready_lock);
 		
 		push_head_node(data);
@@ -92,7 +92,7 @@ public:
    
    inline void move_up(node_type node)
    {
-      std::lock_guard<utils::mutex> l(mtx);
+      utils::lock_guard l(mtx);
       LOCK_STAT(ready_lock);
 
       if(!in_queue(node))
@@ -103,7 +103,7 @@ public:
 
 	inline bool remove(node_type node, const queue_id_t new_state)
 	{
-      std::lock_guard<utils::mutex> l(mtx);
+      utils::lock_guard l(mtx);
       LOCK_STAT(ready_lock);
 
       if(!in_queue(node))

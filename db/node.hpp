@@ -131,13 +131,13 @@ public:
 #endif
 
    // overall locking for changing the state of the node
-   inline void lock(void) { main_mtx.lock(); }
-   inline bool try_lock(void) { return main_mtx.try_lock(); }
-   inline void unlock(void) { main_mtx.unlock(); }
+   inline void lock(LOCK_ARGUMENT) { main_mtx.lock(LOCK_ARGUMENT_NAME); }
+   inline bool try_lock(LOCK_ARGUMENT) { return main_mtx.try_lock(LOCK_ARGUMENT_NAME); }
+   inline void unlock(LOCK_ARGUMENT) { main_mtx.unlock(LOCK_ARGUMENT_NAME); }
 
-   inline void internal_lock(void) { internal_mtx.lock(); }
-   inline bool try_internal_lock(void) { return internal_mtx.try_lock(); }
-   inline void internal_unlock(void) { internal_mtx.unlock(); }
+   inline void internal_lock(LOCK_ARGUMENT) { internal_mtx.lock(LOCK_ARGUMENT_NAME); }
+   inline bool try_internal_lock(LOCK_ARGUMENT) { return internal_mtx.try_lock(LOCK_ARGUMENT_NAME); }
+   inline void internal_unlock(LOCK_ARGUMENT) { internal_mtx.unlock(LOCK_ARGUMENT_NAME); }
 
    // return queue of the node.
    inline queue_id_t node_state(void) const {

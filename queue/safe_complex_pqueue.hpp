@@ -93,7 +93,7 @@ public:
 	
 	inline void insert(heap_object node, const double prio)
 	{
-      std::lock_guard<utils::mutex> l(mtx);
+      utils::lock_guard l(mtx);
       LOCK_STAT(ready_lock);
 		do_insert(node, prio);
 	}
@@ -115,7 +115,7 @@ public:
 	
 	inline double min_value(void) const
 	{
-      std::lock_guard<utils::mutex> l(mtx);
+      utils::lock_guard l(mtx);
       LOCK_STAT(ready_lock);
 
       if(empty())
@@ -126,14 +126,14 @@ public:
 	
 	inline heap_object pop(const queue_id_t new_state)
 	{
-      std::lock_guard<utils::mutex> l(mtx);
+      utils::lock_guard l(mtx);
       LOCK_STAT(ready_lock);
 		return do_pop(new_state);
 	}
 
    inline size_t pop_half(heap_object *buffer, const size_t max, const queue_id_t new_state)
    {
-      std::lock_guard<utils::mutex> l(mtx);
+      utils::lock_guard l(mtx);
       LOCK_STAT(ready_lock);
 
       const size_t half(std::min(max, heap.size()/2));
@@ -146,8 +146,8 @@ public:
 
    inline heap_object pop_best(intrusive_safe_complex_pqueue<T>& other, const queue_id_t new_state)
    {
-      std::lock_guard<utils::mutex> l1(mtx);
-      std::lock_guard<utils::mutex> l2(other.mtx);
+      utils::lock_guard l1(mtx);
+      utils::lock_guard l2(other.mtx);
       LOCK_STAT(ready_lock);
       LOCK_STAT(ready_lock);
 
@@ -167,7 +167,7 @@ public:
 
 	inline bool remove(heap_object obj, const queue_id_t new_state)
 	{
-      std::lock_guard<utils::mutex> l(mtx);
+      utils::lock_guard l(mtx);
       LOCK_STAT(ready_lock);
       if(__INTRUSIVE_QUEUE(obj) != queue_number)
          return false;
