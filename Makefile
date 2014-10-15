@@ -53,6 +53,18 @@ endif
 ifeq ($(FACT_BUFFERING), true)
 	FLAGS += -DFACT_BUFFERING
 endif
+ifeq ($(LOCK_ALGORITHM), mutex)
+	FLAGS += -DUSE_STD_MUTEX
+endif
+ifeq ($(LOCK_ALGORITHM), semaphore)
+	FLAGS += -DUSE_SEMAPHORE
+endif
+ifeq ($(LOCK_ALGORITHM), ticket)
+	FLAGS += -DUSE_SPINLOCK
+endif
+ifeq ($(LOCK_ALGORITHM), queued)
+	FLAGS += -DUSE_QUEUED_SPINLOCK
+endif
 
 ifeq ($(JIT), true)
 	FLAGS += -DUSE_JIT

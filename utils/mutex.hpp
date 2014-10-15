@@ -2,11 +2,6 @@
 #ifndef UTILS_MUTEX_HPP
 #define UTILS_MUTEX_HPP
 
-//#define USE_STD_MUTEX
-//#define USE_SEMAPHORE
-//#define USE_SPINLOCK
-#define USE_QUEUED_SPINLOCK
-
 #ifdef LOCK_STATISTICS
 #include <atomic>
 #endif

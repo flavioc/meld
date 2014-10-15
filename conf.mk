@@ -4,6 +4,12 @@ JIT = false
 EXTRA_ASSERTS = false
 # may use 'pool' or 'malloc'
 ALLOCATOR = pool
+# spinlock algorithm:
+# mutex: use std mutex objects.
+# semaphore: use system semaphores.
+# ticket: use ticket spinlock.
+# queued: use MCS queued spin lock.
+LOCK_ALGORITHM = ticket
 # Use 'true' for dynamic indexing of facts.
 INDEXING = false
 # Make the virtual machine use the node pointers in predicate arguments
