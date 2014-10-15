@@ -551,6 +551,8 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
             predicate_id pid(predicate_get(p, 0));
             predicate *pred(prog->get_predicate(pid));
             print_tab(tabcount+1);
+            if(pred->is_persistent_pred())
+               cout << "!";
             cout << pred->get_name() << "(";
 
             p++;
