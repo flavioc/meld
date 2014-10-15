@@ -18,7 +18,7 @@ class circular_buffer: public mem::base
    private:
 
       const uint32_t total_size;
-      std::atomic<T> buffer[MAX_SIZE];
+      T buffer[MAX_SIZE];
       std::atomic<uint64_t> start_length;
 
       inline uint32_t start(const uint64_t sl) const
@@ -90,7 +90,7 @@ class circular_buffer: public mem::base
 
       explicit circular_buffer(const uint32_t size): total_size(size), start_length(0)
       {
-         memset(buffer, 0, sizeof(buffer) * total_size);
+         memset(buffer, 0, sizeof(buffer));
       }
 };
 

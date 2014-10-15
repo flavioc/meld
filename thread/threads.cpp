@@ -347,7 +347,8 @@ threads_sched::check_priority_buffer(void)
       if(tn->get_owner() != this)
          continue;
 #ifdef TASK_STEALING
-      NODE_LOCK(tn);
+      LOCK_STACK(nodelock);
+      NODE_LOCK(tn, nodelock);
 		if(tn->get_owner() == this) {
          switch(typ) {
             case ADD_PRIORITY:
@@ -358,7 +359,7 @@ threads_sched::check_priority_buffer(void)
                break;
          }
       }
-      NODE_UNLOCK(tn);
+      NODE_UNLOCK(tn, nodelock);
 #endif
    }
 #endif
@@ -607,6 +608,7 @@ threads_sched::set_node_priority_other(node *n, const double priority)
    priority_add_item item;
    item.typ = SET_PRIORITY;
    item.val = priority;
+   item.target = tn;
 
    other->priority_buffer.add(item);
 #else
