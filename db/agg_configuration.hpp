@@ -43,7 +43,11 @@ public:
 
    void print(std::ostream&, vm::predicate *) const;
 
-   void generate(vm::predicate *, const vm::aggregate_type, const vm::field_num, vm::full_tuple_list&);
+   void generate(vm::predicate *, const vm::aggregate_type, const vm::field_num, vm::full_tuple_list&
+#ifdef GC_NODES
+         , vm::candidate_gc_nodes&
+#endif
+         );
 
    bool test(vm::predicate *, vm::tuple *, const vm::field_num) const;
 
@@ -51,7 +55,11 @@ public:
    inline bool is_empty(void) const { return vals.empty(); }
    inline size_t size(void) const { return vals.size(); }
 
-   virtual void add_to_set(vm::tuple *, vm::predicate *, const vm::derivation_count, const vm::depth_t);
+   virtual void add_to_set(vm::tuple *, vm::predicate *, const vm::derivation_count, const vm::depth_t
+#ifdef GC_NODES
+         , vm::candidate_gc_nodes&
+#endif
+         );
    
    bool matches_first_int_arg(vm::predicate *, const vm::int_val) const;
 
@@ -62,8 +70,16 @@ public:
       assert(!changed);
    }
 
-   inline void wipeout(vm::predicate *pred) {
+   inline void wipeout(vm::predicate *pred
+#ifdef GC_NODES
+         , vm::candidate_gc_nodes& gc_nodes
+#endif
+         ) {
+#ifdef GC_NODES
+      vals.wipeout(pred, gc_nodes);
+#else
       vals.wipeout(pred);
+#endif
    }
 };
 }

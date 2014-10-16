@@ -64,6 +64,9 @@ public:
    node::node_id max_id(void) const { return max_node_id; }
    node::node_id static_max_id(void) const { return original_max_node_id; }
    
+#ifdef GC_NODES
+   void delete_node(node*);
+#endif
    node* find_node(const node::node_id) const;
    node* create_node(void);
    node* create_node_id(const node::node_id);
@@ -80,7 +83,11 @@ public:
    
    explicit database(const std::string&, create_node_fn);
    
+#ifdef GC_NODES
+   void wipeout(vm::candidate_gc_nodes&);
+#else
    void wipeout(void);
+#endif
 
    ~database(void) {}
 };

@@ -160,7 +160,11 @@ public:
    {
    }
 
+#ifdef GC_NODES
+   virtual void destroy(vm::predicate *, vm::candidate_gc_nodes&) {}
+#else
    virtual void destroy(vm::predicate*) { }
+#endif
 };
 
 class depth_counter: public mem::base
@@ -381,11 +385,19 @@ public:
       add_new(_tpl->get_depth(), _tpl->get_count());
    }
 
+#ifdef GC_NODES
+   virtual void destroy(vm::predicate *pred, vm::candidate_gc_nodes& gc_nodes)
+#else
    virtual void destroy(vm::predicate *pred)
+#endif
    {
       if(depths)
          delete depths;
-      vm::tuple::destroy(tpl, pred);
+      vm::tuple::destroy(tpl, pred
+#ifdef GC_NODES
+            , gc_nodes
+#endif
+            );
    }
 };
 
@@ -471,13 +483,25 @@ protected:
          || (root->child != NULL && first_leaf != NULL && last_leaf != NULL));
    }
    
-   void commit_delete(trie_node *, vm::predicate *, const vm::ref_count);
-   size_t delete_branch(trie_node *, vm::predicate *);
+   void commit_delete(trie_node *, vm::predicate *, const vm::ref_count
+#ifdef GC_NODES
+         , vm::candidate_gc_nodes&
+#endif
+         );
+   size_t delete_branch(trie_node *, vm::predicate *
+#ifdef GC_NODES
+         , vm::candidate_gc_nodes&
+#endif
+         );
    void delete_path(trie_node *);
    void sanity_check(void) const;
    
    virtual trie_leaf* create_leaf(void *data, vm::predicate*, const vm::ref_count many, const vm::depth_t depth) = 0;
-   void inner_delete_by_leaf(trie_leaf *, vm::predicate *, const vm::derivation_count, const vm::depth_t);
+   void inner_delete_by_leaf(trie_leaf *, vm::predicate *, const vm::derivation_count, const vm::depth_t
+#ifdef GC_NODES
+         , vm::candidate_gc_nodes&
+#endif
+         );
    
    trie_node *check_insert(void *, vm::predicate *, const vm::derivation_count, const vm::depth_t, vm::match_stack&, bool&);
    
@@ -498,9 +522,17 @@ public:
       inline bool to_delete(void) const { return to_del; }
       inline bool is_valid(void) const { return tr != NULL && leaf != NULL; }
 
-      void perform_delete(vm::predicate *pred)
+      void perform_delete(vm::predicate *pred
+#ifdef GC_NODES
+            , vm::candidate_gc_nodes& gc_nodes
+#endif
+            )
       {
-         tr->commit_delete(tr_node, pred, many);
+         tr->commit_delete(tr_node, pred, many
+#ifdef GC_NODES
+               , gc_nodes
+#endif
+               );
       }
 
       inline depth_counter* get_depth_counter(void) const
@@ -541,9 +573,21 @@ public:
    inline size_t size(void) const { return number_of_references; }
    
    // if second argument is 0, the leaf is ensured to be deleted
-   void delete_by_leaf(trie_leaf *, vm::predicate *, const vm::depth_t);
-   void delete_by_index(vm::predicate *, const vm::match&);
-   void wipeout(vm::predicate *);
+   void delete_by_leaf(trie_leaf *, vm::predicate *, const vm::depth_t
+#ifdef GC_NODES
+         , vm::candidate_gc_nodes&
+#endif
+         );
+   void delete_by_index(vm::predicate *, const vm::match&
+#ifdef GC_NODES
+         , vm::candidate_gc_nodes&
+#endif
+         );
+   void wipeout(vm::predicate *
+#ifdef GC_NODES
+         , vm::candidate_gc_nodes&
+#endif
+         );
    
    explicit trie(void);
 };
@@ -801,7 +845,11 @@ public:
    inline iterator begin(void) { return iterator((agg_trie_leaf*)first_leaf); }
    inline iterator end(void) { return iterator(); }
    
-   iterator erase(iterator& it, vm::predicate *);
+   iterator erase(iterator& it, vm::predicate *
+#ifdef GC_NODES
+         , vm::candidate_gc_nodes&
+#endif
+         );
    
    explicit agg_trie(void) {}
    

@@ -36,7 +36,9 @@ namespace db {
 class node: public mem::base
 {
 public:
-   
+
+	std::atomic<vm::ref_count> refs;
+
    typedef vm::node_val node_id;
    
    typedef trie::delete_info delete_info;
@@ -93,13 +95,33 @@ public:
          const vm::derivation_count, const vm::depth_t);
    
    db::agg_configuration* add_agg_tuple(vm::tuple*, vm::predicate *,
-         const vm::derivation_count, const vm::depth_t);
+         const vm::derivation_count, const vm::depth_t
+#ifdef GC_NODES
+         , vm::candidate_gc_nodes&
+#endif
+         );
    db::agg_configuration* remove_agg_tuple(vm::tuple*, vm::predicate *,
-         const vm::derivation_count, const vm::depth_t);
-   vm::full_tuple_list end_iteration(void);
+         const vm::derivation_count, const vm::depth_t
+#ifdef GC_NODES
+         , vm::candidate_gc_nodes&
+#endif
+         );
+   vm::full_tuple_list end_iteration(
+#ifdef GC_NODES
+         vm::candidate_gc_nodes&
+#endif
+         );
    
-   void delete_by_index(vm::predicate*, const vm::match&);
-   void delete_by_leaf(vm::predicate*, tuple_trie_leaf*, const vm::depth_t);
+   void delete_by_index(vm::predicate*, const vm::match&
+#ifdef GC_NODES
+         , vm::candidate_gc_nodes&
+#endif
+         );
+   void delete_by_leaf(vm::predicate*, tuple_trie_leaf*, const vm::depth_t
+#ifdef GC_NODES
+         , vm::candidate_gc_nodes&
+#endif
+         );
    void delete_all(const vm::predicate*);
    
    virtual void assert_end(void) const;
@@ -110,6 +132,10 @@ public:
    
    size_t count_total(const vm::predicate_id) const;
    size_t count_total_all(void) const;
+   inline bool garbage_collect(void) const
+   {
+      return refs == 0 && store.matcher.is_empty();
+   }
    
    void print(std::ostream&) const;
    void dump(std::ostream&) const;
@@ -242,7 +268,11 @@ public:
    
    explicit node(const node_id, const node_id);
    
+#ifdef GC_NODES
+   void wipeout(vm::candidate_gc_nodes&);
+#else
    void wipeout(void);
+#endif
 
    // destructor does nothing, use wipeout if needed.
    virtual ~node(void) {}

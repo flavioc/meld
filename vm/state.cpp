@@ -302,7 +302,11 @@ state::process_action_tuples(void)
       full_tuple *stpl(*it);
       vm::tuple *tpl(stpl->get_tuple());
       vm::predicate *pred(stpl->get_predicate());
-      All->MACHINE->run_action(sched, node, tpl, pred);
+      All->MACHINE->run_action(sched, node, tpl, pred
+#ifdef GC_NODES
+            , gc_nodes
+#endif
+            );
       delete stpl;
    }
    store->action_tuples.clear();
@@ -341,14 +345,26 @@ state::add_to_aggregate(full_tuple *stpl)
    agg_configuration *agg(NULL);
 
    if(count < 0) {
-      agg = node->remove_agg_tuple(tpl, stpl->get_predicate(), -count, stpl->get_depth());
+      agg = node->remove_agg_tuple(tpl, stpl->get_predicate(), -count, stpl->get_depth()
+#ifdef GC_NODES
+            , gc_nodes
+#endif
+            );
    } else {
-      agg = node->add_agg_tuple(tpl, stpl->get_predicate(), count, stpl->get_depth());
+      agg = node->add_agg_tuple(tpl, stpl->get_predicate(), count, stpl->get_depth()
+#ifdef GC_NODES
+            , gc_nodes
+#endif
+            );
    }
 
    full_tuple_list list;
 
-   agg->generate(pred, pred->get_aggregate_type(), pred->get_aggregate_field(), list);
+   agg->generate(pred, pred->get_aggregate_type(), pred->get_aggregate_field(), list
+#ifdef GC_NODES
+         , gc_nodes
+#endif
+         );
 
    for(full_tuple_list::iterator it(list.begin()); it != list.end(); ++it) {
       full_tuple *stpl(*it);
@@ -383,7 +399,11 @@ state::process_persistent_tuple(full_tuple *stpl, vm::tuple *tpl)
          store->matcher.register_tuple(pred, stpl->get_count(), is_new);
 
          if(!is_new) {
-            vm::tuple::destroy(tpl, pred);
+            vm::tuple::destroy(tpl, pred
+#ifdef GC_NODES
+                  , gc_nodes
+#endif
+                  );
          }
       }
 
@@ -401,7 +421,11 @@ state::process_persistent_tuple(full_tuple *stpl, vm::tuple *tpl)
          } else if(deleter.to_delete()) { // to be removed
          	setup(pred, node, stpl->get_count(), stpl->get_depth());
          	execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
+#ifdef GC_NODES
+            deleter.perform_delete(pred, gc_nodes);
+#else
             deleter.perform_delete(pred);
+#endif
       	} else if(pred->is_cycle_pred()) {
             depth_counter *dc(deleter.get_depth_counter());
             assert(dc != NULL);
@@ -412,11 +436,19 @@ state::process_persistent_tuple(full_tuple *stpl, vm::tuple *tpl)
                if(deleter.to_delete()) {
                   setup(pred, node, stpl->get_count(), stpl->get_depth());
                   execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
+#ifdef GC_NODES
+                  deleter.perform_delete(pred, gc_nodes);
+#else
                   deleter.perform_delete(pred);
+#endif
                }
             }
          } else {
-            vm::tuple::destroy(tpl, pred);
+            vm::tuple::destroy(tpl, pred
+#ifdef GC_NODES
+                  , gc_nodes
+#endif
+                  );
          }
          store->matcher.set_count(pred, deleter.trie_size());
          delete stpl;
@@ -872,6 +904,14 @@ state::run_node(db::node *no)
 #endif
    node->internal_unlock(LOCK_STACK_USE(internal_lock_data));
    sync();
+#ifdef GC_NODES
+   // these nodes are sure to be no longer in use.
+   for(auto it(gc_nodes.begin()); it != gc_nodes.end(); ++it) {
+      db::node *n((db::node*)*it);
+      All->DATABASE->delete_node(n);
+   }
+   gc_nodes.clear();
+#endif
 }
 
 bool

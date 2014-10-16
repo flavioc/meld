@@ -63,7 +63,11 @@ protected:
    
    inline void node_iteration(db::node *node)
    {
+#ifdef GC_NODES
+      vm::full_tuple_list ls(node->end_iteration(state.gc_nodes));
+#else
       vm::full_tuple_list ls(node->end_iteration());
+#endif
       node->add_work_myself(ls);
    }
 

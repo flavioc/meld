@@ -1,7 +1,4 @@
 RELEASE = true
-INTERFACE = false
-JIT = false
-EXTRA_ASSERTS = false
 # may use 'pool' or 'malloc'
 ALLOCATOR = pool
 # spinlock algorithm:
@@ -16,7 +13,10 @@ INDEXING = false
 # typed as 'node'. For multithreaded meld this will improve speed since
 # there's one less lookup.
 USE_ADDRESSES = true
+# allow threads to steal nodes from each other.
 TASK_STEALING = true
+# enable node collection if the node is no longer referenced anywhere.
+GC_NODES = true
 
 # statistics flags.
 FACT_STATISTICS = false
@@ -29,3 +29,8 @@ CORE_STATISTICS = false
 MEMORY_STATISTICS = false
 # activate fact buffering (only send facts after the node has completed running)
 FACT_BUFFERING = true
+
+
+INTERFACE = false
+JIT = false
+EXTRA_ASSERTS = false

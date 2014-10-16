@@ -2,7 +2,7 @@
 #define VM_TUPLE_HPP
 
 #include <ostream>
-#include <vector>
+#include <unordered_set>
 
 #ifdef COMPILE_MPI
 #include <mpi.h>
@@ -21,6 +21,11 @@
 
 namespace vm
 {
+
+#ifdef GC_NODES
+typedef std::unordered_set<vm::node_val, std::hash<vm::node_val>, std::equal_to<vm::node_val>,
+        mem::allocator<vm::node_val>> candidate_gc_nodes;
+#endif
 
 struct tuple
 {
@@ -44,11 +49,11 @@ public:
 #define define_set(NAME, TYPE, VAL) \
    inline void set_ ## NAME (const field_num& field, TYPE val) { VAL; }
 
+   void set_node(const field_num& field, const node_val& val);
    define_set(bool, const bool_val&, SET_FIELD_BOOL(getfp()[field], val));
    define_set(int, const int_val&, SET_FIELD_INT(getfp()[field], val));
    define_set(float, const float_val&, SET_FIELD_FLOAT(getfp()[field], val));
    define_set(ptr, const ptr_val&, SET_FIELD_PTR(getfp()[field], val));
-   define_set(node, const node_val&, SET_FIELD_NODE(getfp()[field], val));
 	define_set(string, const runtime::rstring::ptr, SET_FIELD_STRING(getfp()[field], val); val->inc_refs());
    define_set(cons, runtime::cons*, SET_FIELD_CONS(getfp()[field], val); runtime::cons::inc_refs(val));
    define_set(struct, runtime::struct1*, SET_FIELD_STRUCT(getfp()[field], val); val->inc_refs());
@@ -107,9 +112,18 @@ public:
       return ptr;
    }
 
-   inline static void destroy(tuple *tpl, vm::predicate *pred) {
+   inline static void destroy(tuple *tpl, vm::predicate *pred
+#ifdef GC_NODES
+         , candidate_gc_nodes& gc_nodes
+#endif
+         )
+   {
       const size_t size(sizeof(vm::tuple) + sizeof(tuple_field) * pred->num_fields());
-      tpl->destructor(pred);
+      tpl->destructor(pred
+#ifdef GC_NODES
+            , gc_nodes
+#endif
+            );
       mem::allocator<utils::byte>().deallocate((utils::byte*)tpl, size);
    }
    
@@ -122,7 +136,11 @@ private:
       memset(getfp(), 0, sizeof(tuple_field) * pred->num_fields());
    }
 
+#ifdef GC_NODES
+   void destructor(vm::predicate*, candidate_gc_nodes&);
+#else
    void destructor(vm::predicate*);
+#endif
 };
 
 }

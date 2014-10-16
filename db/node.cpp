@@ -50,7 +50,11 @@ node::delete_tuple(vm::tuple *tuple, vm::predicate *pred, const derivation_count
 }
 
 agg_configuration*
-node::add_agg_tuple(vm::tuple *tuple, predicate *pred, const derivation_count many, const depth_t depth)
+node::add_agg_tuple(vm::tuple *tuple, predicate *pred, const derivation_count many, const depth_t depth
+#ifdef GC_NODES
+      , candidate_gc_nodes& gc_nodes
+#endif
+      )
 {
    predicate_id pred_id(pred->get_id());
    aggregate_map::iterator it(aggs.find(pred_id));
@@ -62,17 +66,33 @@ node::add_agg_tuple(vm::tuple *tuple, predicate *pred, const derivation_count ma
    } else
       agg = it->second;
 
-   return agg->add_to_set(tuple, pred, many, depth);
+   return agg->add_to_set(tuple, pred, many, depth
+#ifdef GC_NODES
+         , gc_nodes
+#endif
+         );
 }
 
 agg_configuration*
-node::remove_agg_tuple(vm::tuple *tuple, vm::predicate *pred, const derivation_count many, const depth_t depth)
+node::remove_agg_tuple(vm::tuple *tuple, vm::predicate *pred, const derivation_count many, const depth_t depth
+#ifdef GC_NODES
+      , candidate_gc_nodes& gc_nodes
+#endif
+      )
 {
-   return add_agg_tuple(tuple, pred, -many, depth);
+   return add_agg_tuple(tuple, pred, -many, depth
+#ifdef GC_NODES
+         , gc_nodes
+#endif
+         );
 }
 
 full_tuple_list
-node::end_iteration(void)
+node::end_iteration(
+#ifdef GC_NODES
+      candidate_gc_nodes& gc_nodes
+#endif
+      )
 {
    // generate possible aggregates
    full_tuple_list ret;
@@ -83,7 +103,11 @@ node::end_iteration(void)
    {
       tuple_aggregate *agg(it->second);
       
+#ifdef GC_NODES
+      full_tuple_list ls(agg->generate(gc_nodes));
+#else
       full_tuple_list ls(agg->generate());
+#endif
       for(auto jt(ls.begin()), end(ls.end()); jt != end; ++jt) {
          (*jt)->set_as_aggregate();
          ret.push_back(*jt);
@@ -129,11 +153,19 @@ node::delete_all(const predicate*)
 }
 
 void
-node::delete_by_leaf(predicate *pred, tuple_trie_leaf *leaf, const depth_t depth)
+node::delete_by_leaf(predicate *pred, tuple_trie_leaf *leaf, const depth_t depth
+#ifdef GC_NODES
+      , candidate_gc_nodes& gc_nodes
+#endif
+      )
 {
    tuple_trie *tr(get_storage(pred));
 
-   tr->delete_by_leaf(leaf, pred, depth);
+   tr->delete_by_leaf(leaf, pred, depth
+#ifdef GC_NODES
+         , gc_nodes
+#endif
+         );
 }
 
 void
@@ -146,17 +178,29 @@ node::assert_tries(void)
 }
 
 void
-node::delete_by_index(predicate *pred, const match& m)
+node::delete_by_index(predicate *pred, const match& m
+#ifdef GC_NODES
+      , candidate_gc_nodes& gc_nodes
+#endif
+      )
 {
    tuple_trie *tr(get_storage(pred));
    
-   tr->delete_by_index(pred, m);
+   tr->delete_by_index(pred, m
+#ifdef GC_NODES
+         , gc_nodes
+#endif
+         );
    
    aggregate_map::iterator it(aggs.find(pred->get_id()));
    
    if(it != aggs.end()) {
       tuple_aggregate *agg(it->second);
+#ifdef GC_NODES
+      agg->delete_by_index(m, gc_nodes);
+#else
       agg->delete_by_index(m);
+#endif
    }
 }
 
@@ -206,6 +250,9 @@ node::assert_end(void) const
 }
 
 node::node(const node_id _id, const node_id _trans):
+#ifdef GC_NODES
+   refs(0),
+#endif
    INIT_DOUBLE_QUEUE_NODE(),
    id(_id), translation(_trans), owner(NULL), linear(),
    store(), unprocessed_facts(false)
@@ -216,16 +263,36 @@ node::node(const node_id _id, const node_id _trans):
 }
 
 void
+#ifdef GC_NODES
+node::wipeout(candidate_gc_nodes& gc_nodes)
+#else
 node::wipeout(void)
+#endif
 {
+#ifdef GC_NODES
+   linear.destroy(gc_nodes);
+#else
+   linear.destroy();
+#endif
    for(auto it(tuples.begin()), end(tuples.end()); it != end; it++) {
       tuple_trie *tr(it->second);
       predicate *pred(theProgram->get_predicate(it->first));
+#ifdef GC_NODES
+      tr->wipeout(pred, gc_nodes);
+#else
       tr->wipeout(pred);
+#endif
       delete it->second;
    }
-   for(aggregate_map::iterator it(aggs.begin()), end(aggs.end()); it != end; it++)
-      delete it->second;
+   for(aggregate_map::iterator it(aggs.begin()), end(aggs.end()); it != end; it++) {
+      tuple_aggregate *agg(it->second);
+#ifdef GC_NODES
+      agg->wipeout(gc_nodes);
+#else
+      agg->wipeout();
+#endif
+      delete agg;
+   }
 }
 
 void

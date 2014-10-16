@@ -9,7 +9,11 @@ namespace db
 {
 
 void
-agg_configuration::add_to_set(vm::tuple *tpl, vm::predicate *pred, const derivation_count many, const depth_t depth)
+agg_configuration::add_to_set(vm::tuple *tpl, vm::predicate *pred, const derivation_count many, const depth_t depth
+#ifdef GC_NODES
+      , candidate_gc_nodes& gc_nodes
+#endif
+      )
 {
    assert(many != 0);
    //assert(many > 0 || (many < 0 && !vals.empty()));
@@ -24,7 +28,11 @@ agg_configuration::add_to_set(vm::tuple *tpl, vm::predicate *pred, const derivat
       
       if(!vals.insert_tuple(tpl, pred, many, depth)) {
          // repeated tuple
-         vm::tuple::destroy(tpl, pred);
+         vm::tuple::destroy(tpl, pred
+#ifdef GC_NODES
+               , gc_nodes
+#endif
+               );
       }
 
       assert(vals.size() == start_size + many);
@@ -34,7 +42,11 @@ agg_configuration::add_to_set(vm::tuple *tpl, vm::predicate *pred, const derivat
       if(!deleter.is_valid()) {
          changed = false;
       } else if(deleter.to_delete()) {
+#ifdef GC_NODES
+         deleter.perform_delete(pred, gc_nodes);
+#else
          deleter.perform_delete(pred);
+#endif
       } else if(pred->is_cycle_pred()) {
          depth_counter *dc(deleter.get_depth_counter());
          assert(dc != NULL);
@@ -46,13 +58,21 @@ agg_configuration::add_to_set(vm::tuple *tpl, vm::predicate *pred, const derivat
             vm::ref_count deleted(deleter.delete_depths_above(depth));
             (void)deleted;
             if(deleter.to_delete()) {
+#ifdef GC_NODES
+               deleter.perform_delete(pred, gc_nodes);
+#else
                deleter.perform_delete(pred);
+#endif
             }
             assert(vals.size() == old_size-deleted);
          }
       }
       
-      vm::tuple::destroy(tpl, pred);
+      vm::tuple::destroy(tpl, pred
+#ifdef GC_NODES
+            , gc_nodes
+#endif
+            );
    }
 }
 
@@ -358,7 +378,11 @@ agg_configuration::do_generate(predicate *pred, const aggregate_type typ, const 
 
 void
 agg_configuration::generate(predicate *pred, const aggregate_type typ, const field_num field,
-   full_tuple_list& cont)
+   full_tuple_list& cont
+#ifdef GC_NODES
+   , candidate_gc_nodes& gc_nodes
+#endif
+   )
 {
    vm::depth_t depth(0);
    vm::tuple* generated(do_generate(pred, typ, field, depth));
@@ -386,7 +410,11 @@ agg_configuration::generate(predicate *pred, const aggregate_type typ, const fie
 
    if(generated) {
       if(corresponds)
-         vm::tuple::destroy(corresponds, pred);
+         vm::tuple::destroy(corresponds, pred
+#ifdef GC_NODES
+               , gc_nodes
+#endif
+               );
       corresponds = generated->copy(pred);
    }
 }

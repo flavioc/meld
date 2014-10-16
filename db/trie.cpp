@@ -590,7 +590,11 @@ trie::delete_path(trie_node *node)
 
 // deletes everything below the 'node'
 size_t
-trie::delete_branch(trie_node *node, predicate *pred)
+trie::delete_branch(trie_node *node, predicate *pred
+#ifdef GC_NODES
+      , candidate_gc_nodes& gc_nodes
+#endif
+      )
 {
    size_t count;
    
@@ -609,7 +613,11 @@ trie::delete_branch(trie_node *node, predicate *pred)
       
       count = leaf->get_count();
       
+#ifdef GC_NODES
+      leaf->destroy(pred, gc_nodes);
+#else
       leaf->destroy(pred);
+#endif
       delete leaf;
       node->child = NULL;
       
@@ -630,7 +638,11 @@ trie::delete_branch(trie_node *node, predicate *pred)
             while(next != NULL) {
                trie_node *tmp(next->next);
 
+#ifdef GC_NODES
+               count += delete_branch(next, pred, gc_nodes);
+#else
                count += delete_branch(next, pred);
+#endif
                delete next;
 
                next = tmp;
@@ -641,7 +653,11 @@ trie::delete_branch(trie_node *node, predicate *pred)
       while(next != NULL) {
          trie_node *tmp(next->get_next());
          
+#ifdef GC_NODES
+         count += delete_branch(next, pred, gc_nodes);
+#else
          count += delete_branch(next, pred);
+#endif
          delete next;
          
          next = tmp;
@@ -789,13 +805,21 @@ trie::check_insert(void *data, predicate *pred, const derivation_count many, con
 }
 
 void
-trie::commit_delete(trie_node *node, predicate *pred, const ref_count many)
+trie::commit_delete(trie_node *node, predicate *pred, const ref_count many
+#ifdef GC_NODES
+      , candidate_gc_nodes& gc_nodes
+#endif
+      )
 {
    assert(node->is_leaf());
 
    number_of_references -= many;
    assert(number_of_references >= 0);
-   inner_delete_by_leaf(node->get_leaf(), pred, 0, 0);
+   inner_delete_by_leaf(node->get_leaf(), pred, 0, 0
+#ifdef GC_NODES
+         , gc_nodes
+#endif
+         );
 #if 0
    if(!(number_of_references == 0 || (number_of_references > 0 && first_leaf != NULL))) {
       cout << " =========== > " << number_of_references << endl;
@@ -806,18 +830,30 @@ trie::commit_delete(trie_node *node, predicate *pred, const ref_count many)
 }
 
 void
-trie::delete_by_leaf(trie_leaf *leaf, predicate *pred, const depth_t depth)
+trie::delete_by_leaf(trie_leaf *leaf, predicate *pred, const depth_t depth
+#ifdef GC_NODES
+      , candidate_gc_nodes& gc_nodes
+#endif
+      )
 {
    sanity_check();
    --number_of_references;
    assert(number_of_references >= 0);
-   inner_delete_by_leaf(leaf, pred, 1, depth);
+   inner_delete_by_leaf(leaf, pred, 1, depth
+#ifdef GC_NODES
+         , gc_nodes
+#endif
+         );
    sanity_check();
 }
 
 // we assume that number_of_references was decrement previous to this
 void
-trie::inner_delete_by_leaf(trie_leaf *leaf, predicate *pred, const derivation_count count, const depth_t depth)
+trie::inner_delete_by_leaf(trie_leaf *leaf, predicate *pred, const derivation_count count, const depth_t depth
+#ifdef GC_NODES
+      , candidate_gc_nodes& gc_nodes
+#endif
+      )
 {
    if(count != 0) {
       assert(count > 0);
@@ -856,7 +892,11 @@ trie::inner_delete_by_leaf(trie_leaf *leaf, predicate *pred, const derivation_co
    
    //cout << this << " Total " << total << " root " << root << " node " << node << endl;
    
+#ifdef GC_NODES
+   leaf->destroy(pred, gc_nodes);
+#else
    leaf->destroy(pred);
+#endif
    delete leaf;
    node->child = NULL;
    delete_path(node);
@@ -866,7 +906,11 @@ trie::inner_delete_by_leaf(trie_leaf *leaf, predicate *pred, const derivation_co
 }
 
 void
-trie::delete_by_index(predicate *pred, const match& m)
+trie::delete_by_index(predicate *pred, const match& m
+#ifdef GC_NODES
+      , candidate_gc_nodes& gc_nodes
+#endif
+      )
 {
    basic_invariants();
    
@@ -906,7 +950,11 @@ trie::delete_by_index(predicate *pred, const match& m)
    assert(node != NULL);
 
    // update number of tuples in this trie
-   number_of_references -= delete_branch(node, pred);
+   number_of_references -= delete_branch(node, pred
+#ifdef GC_NODES
+         , gc_nodes
+#endif
+         );
    assert(number_of_references >= 0);
    delete_path(node);
    
@@ -914,9 +962,17 @@ trie::delete_by_index(predicate *pred, const match& m)
 }
 
 void
-trie::wipeout(predicate *pred)
+trie::wipeout(predicate *pred
+#ifdef GC_NODES
+      , candidate_gc_nodes& gc_nodes
+#endif
+      )
 {
-   delete_branch(root, pred);
+   delete_branch(root, pred
+#ifdef GC_NODES
+         , gc_nodes
+#endif
+         );
    delete root;
    number_of_references = 0;
 }
@@ -1393,14 +1449,22 @@ agg_trie::find_configuration(vm::tuple *tpl, vm::predicate *pred)
 }
 
 agg_trie_iterator
-agg_trie::erase(agg_trie_iterator& it, predicate *pred)
+agg_trie::erase(agg_trie_iterator& it, predicate *pred
+#ifdef GC_NODES
+      , candidate_gc_nodes& gc_nodes
+#endif
+      )
 {
    agg_trie_leaf *leaf(it.current_leaf);
    agg_trie_leaf *next_leaf((agg_trie_leaf*)leaf->next);
    trie_node *node(leaf->node);
    
    leaf->set_zero_refs();
-   commit_delete(node, pred, 1);
+   commit_delete(node, pred, 1
+#ifdef GC_NODES
+         , gc_nodes
+#endif
+         );
    
    return agg_trie_iterator(next_leaf);
 }

@@ -30,16 +30,34 @@ public:
 
    void print(std::ostream&) const;
 
-   vm::full_tuple_list generate(void);
+   vm::full_tuple_list generate(
+#ifdef GC_NODES
+         vm::candidate_gc_nodes&
+#endif
+         );
 
-   agg_configuration* add_to_set(vm::tuple *, vm::predicate *, const vm::derivation_count, const vm::depth_t);
+   agg_configuration* add_to_set(vm::tuple *, vm::predicate *, const vm::derivation_count, const vm::depth_t
+#ifdef GC_NODES
+         , vm::candidate_gc_nodes&
+#endif
+         );
    
    bool no_changes(void) const;
    inline bool empty(void) const { return vals.empty(); }
    
-   void delete_by_index(const vm::match&);
+   void delete_by_index(const vm::match&
+#ifdef GC_NODES
+         , vm::candidate_gc_nodes&
+#endif
+         );
 
    explicit tuple_aggregate(vm::predicate *_pred): pred(_pred) {}
+
+   void wipeout(
+#ifdef GC_NODES
+         vm::candidate_gc_nodes&
+#endif
+         );
 
    ~tuple_aggregate(void);
 };

@@ -37,6 +37,9 @@ public:
    // force a count of predicates
    void set_count(predicate *, const pred_count);
 
+   // check if the counters are totally empty.
+   bool is_empty(void) const;
+
    inline pred_count get_count(const vm::predicate_id id) const
    {
       return predicate_count[id];

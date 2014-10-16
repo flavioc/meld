@@ -69,13 +69,43 @@ database::database(const string& filename, create_node_fn _create_fn):
 }
 
 void
-database::wipeout(void)
+database::wipeout(
+#ifdef GC_NODES
+      candidate_gc_nodes& gc_nodes
+#endif
+      )
 {
    for(map_nodes::iterator it(nodes.begin()); it != nodes.end(); ++it) {
+#ifdef GC_NODES
+      it->second->wipeout(gc_nodes);
+#else
       it->second->wipeout();
+#endif
       delete it->second;
    }
 }
+
+#ifdef GC_NODES
+void
+database::delete_node(node *n)
+{
+   LOCK_STACK(dblock);
+   mtx.lock(LOCK_STACK_USE(dblock));
+
+   const size_t erased1(nodes.erase(n->get_id()));
+   const size_t erased2(translation.erase(n->get_id()));
+
+   assert(erased1 == 1);
+   assert(erased2 == 1);
+
+   mtx.unlock(LOCK_STACK_USE(dblock));
+
+   candidate_gc_nodes gc_nodes;
+   n->wipeout(gc_nodes);
+   assert(gc_nodes.empty());
+   delete n;
+}
+#endif
 
 node*
 database::find_node(const node::node_id id) const

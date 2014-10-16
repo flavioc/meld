@@ -65,6 +65,9 @@ endif
 ifeq ($(LOCK_ALGORITHM), queued)
 	FLAGS += -DUSE_QUEUED_SPINLOCK
 endif
+ifeq ($(GC_NODES), true)
+	FLAGS += -DGC_NODES
+endif
 
 ifeq ($(JIT), true)
 	FLAGS += -DUSE_JIT
@@ -85,7 +88,7 @@ ifeq ($(SIMULATOR), true)
 	FLAGS += -DUSE_SIM
 endif
 
-CFLAGS = $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) $(FLAGS) $(C0X) #-fno-gcse -fno-crossjumping
+CFLAGS = -std=c++11 -fno-rtti $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) $(FLAGS) #-fno-gcse -fno-crossjumping
 LIBRARIES = -lm -lreadline -ldl $(LIBS)
 
 CXX = g++

@@ -79,14 +79,14 @@ threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
    assert(is_active());
    (void)from;
 
-   thread_intrusive_node *tnode(dynamic_cast<thread_intrusive_node*>(to));
+   thread_intrusive_node *tnode(static_cast<thread_intrusive_node*>(to));
    LOCK_STACK(nodelock);
 
    NODE_LOCK(tnode, nodelock);
 
    LOCK_STAT(add_lock);
    
-   threads_sched *owner(dynamic_cast<threads_sched*>(tnode->get_owner()));
+   threads_sched *owner(static_cast<threads_sched*>(tnode->get_owner()));
 
    LOCK_STACK(internallock);
    if(owner == this) {
@@ -135,14 +135,14 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
    assert(is_active());
    (void)from;
    
-   thread_intrusive_node *tnode(dynamic_cast<thread_intrusive_node*>(to));
+   thread_intrusive_node *tnode(static_cast<thread_intrusive_node*>(to));
 
    LOCK_STACK(nodelock);
    NODE_LOCK(tnode, nodelock);
 
    LOCK_STAT(add_lock);
    
-   threads_sched *owner(dynamic_cast<threads_sched*>(tnode->get_owner()));
+   threads_sched *owner(static_cast<threads_sched*>(tnode->get_owner()));
    LOCK_STACK(internallock);
 
    if(owner == this) {
@@ -241,7 +241,7 @@ threads_sched::go_steal_nodes(void)
          if(node->is_static()) {
             if(node->get_owner() != target) {
                // set-affinity was used and the node was changed to another scheduler
-               move_node_to_new_owner(node, dynamic_cast<threads_sched*>(node->get_owner()));
+               move_node_to_new_owner(node, static_cast<threads_sched*>(node->get_owner()));
                NODE_UNLOCK(node, nodelock);
                continue;
             } else {
@@ -441,6 +441,10 @@ threads_sched::check_if_current_useless(void)
          }
          current_node->set_priority_level(0.0);
          NODE_UNLOCK(current_node, curlock);
+#ifdef GC_NODES
+         if(current_node->garbage_collect())
+            All->DATABASE->delete_node(current_node);
+#endif
          current_node = NULL;
          return true;
       }
@@ -477,7 +481,7 @@ threads_sched::set_next_node(void)
       if(!has_work()) {
          for(auto it(comm_threads.begin(All->NUM_THREADS)); !it.end(); ++it) {
             const size_t id(*it);
-            threads_sched *target(dynamic_cast<threads_sched*>(All->SCHEDS[id]));
+            threads_sched *target(static_cast<threads_sched*>(All->SCHEDS[id]));
             target->activate_thread();
          }
          comm_threads.clear(All->NUM_THREADS_NEXT_UINT);
@@ -703,7 +707,7 @@ threads_sched::do_set_node_priority_other(thread_intrusive_node *node, const dou
 #endif
    // we know that the owner of node is not this.
    queue_id_t state(node->node_state());
-   threads_sched *owner(dynamic_cast<threads_sched*>(node->get_owner()));
+   threads_sched *owner(static_cast<threads_sched*>(node->get_owner()));
    bool activate_node(false);
 
    switch(state) {
@@ -858,14 +862,14 @@ threads_sched::init(const size_t)
    if(initial == 0.0 || !scheduling_mechanism) {
       for(; it != end; ++it)
       {
-         thread_intrusive_node *cur_node(dynamic_cast<thread_intrusive_node*>(init_node(it)));
+         thread_intrusive_node *cur_node(static_cast<thread_intrusive_node*>(init_node(it)));
       	queues.moving.push_tail(cur_node);
       }
    } else {
       prios.moving.start_initial_insert(remote::self->find_owned_nodes(id));
 
       for(size_t i(0); it != end; ++it, ++i) {
-         thread_intrusive_node *cur_node(dynamic_cast<thread_intrusive_node*>(init_node(it)));
+         thread_intrusive_node *cur_node(static_cast<thread_intrusive_node*>(init_node(it)));
 
          cur_node->set_priority_level(initial);
          prios.moving.initial_fast_insert(cur_node, initial, i);
@@ -883,7 +887,7 @@ threads_sched::set_node_static(db::node *n)
 
    //cout << "Static " << n->get_id() << endl;
 
-   thread_intrusive_node *tn(dynamic_cast<thread_intrusive_node*>(n));
+   thread_intrusive_node *tn(static_cast<thread_intrusive_node*>(n));
    if(n == current_node) {
       tn->set_static(this);
       return;
@@ -929,7 +933,7 @@ threads_sched::set_node_moving(db::node *n)
 
 //   cout << "Moving " << n->get_id() << endl;
 
-   thread_intrusive_node *tn(dynamic_cast<thread_intrusive_node*>(n));
+   thread_intrusive_node *tn(static_cast<thread_intrusive_node*>(n));
    if(n == current_node) {
       tn->set_moving();
       return;
@@ -984,8 +988,8 @@ threads_sched::move_node_to_new_owner(thread_intrusive_node *tn, threads_sched *
 void
 threads_sched::set_node_affinity(db::node *node, db::node *affinity)
 {
-   threads_sched *new_owner(dynamic_cast<threads_sched*>(affinity->get_owner()));
-   thread_intrusive_node *tn(dynamic_cast<thread_intrusive_node*>(node));
+   threads_sched *new_owner(static_cast<threads_sched*>(affinity->get_owner()));
+   thread_intrusive_node *tn(static_cast<thread_intrusive_node*>(node));
 
    if(tn == current_node) {
       // we will change the owner field once we are done with the node.

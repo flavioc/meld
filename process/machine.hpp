@@ -45,7 +45,11 @@ public:
    
    bool same_place(const db::node::node_id, const db::node::node_id) const;
    
-   void run_action(sched::base *, db::node *, vm::tuple *, vm::predicate *);
+   void run_action(sched::base *, db::node *, vm::tuple *, vm::predicate *
+#ifdef GC_NODES
+         , vm::candidate_gc_nodes&
+#endif
+         );
    
    void start(void);
    void init_sched(const vm::process_id);

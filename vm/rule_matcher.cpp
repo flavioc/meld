@@ -112,6 +112,16 @@ rule_matcher::set_count(predicate *pred, const pred_count count)
    predicate_count[id] = count;
 }
 
+bool
+rule_matcher::is_empty(void) const
+{
+   for(size_t i(0); i < theProgram->num_predicates(); ++i) {
+      if(predicate_count[i])
+         return false;
+   }
+   return true;
+}
+
 rule_matcher::rule_matcher(void)
 {
    predicate_count = mem::allocator<pred_count>().allocate(theProgram->num_predicates());

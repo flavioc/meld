@@ -92,6 +92,9 @@ public:
    temporary_store *store;
    db::linear_store *lstore;
    vm::counter *match_counter;
+#ifdef GC_NODES
+   candidate_gc_nodes gc_nodes;
+#endif
 #ifdef CORE_STATISTICS
    core_statistics stat;
 #endif

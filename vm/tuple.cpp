@@ -298,20 +298,44 @@ tuple::dump_json(const vm::predicate *pred) const
 #endif
 
 void
-tuple::destructor(predicate *pred)
+tuple::destructor(predicate *pred
+#ifdef GC_NODES
+      , candidate_gc_nodes& gc_nodes
+#endif
+      )
 {
    for(field_num i = 0; i < pred->num_fields(); ++i) {
       switch(pred->get_field_type(i)->get_type()) {
          case FIELD_LIST: cons::dec_refs(get_cons(i)); break;
          case FIELD_STRING: get_string(i)->dec_refs(); break;
          case FIELD_STRUCT: get_struct(i)->dec_refs(); break;
+         case FIELD_NODE:
+#ifdef GC_NODES
+            {
+               db::node *n((db::node*)get_node(i));
+               n->refs--;
+               if(n->garbage_collect())
+                  gc_nodes.insert(get_node(i));
+            }
+#endif
+            break;
          case FIELD_BOOL:
          case FIELD_INT:
          case FIELD_FLOAT:
-         case FIELD_NODE: break;
+            break;
          default: assert(false); break;
       }
    }
+}
+
+void
+tuple::set_node(const field_num& field, const node_val& val)
+{
+   db::node *n((db::node*)val);
+
+   n->refs++;
+
+   SET_FIELD_NODE(getfp()[field], val);
 }
 
 size_t
@@ -419,32 +443,6 @@ tuple::unpack(byte *buf, const size_t buf_size, int *pos, vm::program *prog)
    
    return ret;
    
-}
-
-void
-tuple::copy_runtime(const vm::predicate *pred)
-{
-   for(field_num i(0); i < pred->num_fields(); ++i) {
-      switch(pred->get_field_type(i)->get_type()) {
-         case FIELD_LIST: {
-               cons *old(get_cons(i));
-               cons *ne(cons::copy(old));
-
-               cons::dec_refs(old);
-               set_cons(i, ne);
-            }
-            break;
-         case FIELD_STRING: {
-               rstring::ptr old(get_string(i));
-               rstring::ptr ne(old->copy());
-
-               old->dec_refs();
-               set_string(i, ne);
-            }
-            break;
-         default: break;
-      }
-   }
 }
 
 }

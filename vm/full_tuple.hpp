@@ -60,7 +60,18 @@ public:
 
    static full_tuple* remove_new(vm::tuple *tuple, vm::predicate *pred, const vm::depth_t depth) { return new full_tuple(tuple, pred, -1, depth); }
    
-   static void wipeout(full_tuple *stpl) { vm::tuple::destroy(stpl->get_tuple(), stpl->get_predicate()); delete stpl; }
+#ifdef GC_NODES
+   static void wipeout(full_tuple *stpl, candidate_gc_nodes& gc_nodes) {
+#else
+   static void wipeout(full_tuple *stpl) {
+#endif
+      vm::tuple::destroy(stpl->get_tuple(), stpl->get_predicate()
+#ifdef GC_NODES
+            , gc_nodes
+#endif
+      );
+      delete stpl;
+   }
 
    explicit full_tuple(vm::tuple *_tuple, vm::predicate *_pred, const vm::derivation_count _count, const vm::depth_t _depth = 0):
       data(_tuple), pred(_pred), count(_count), depth(_depth)

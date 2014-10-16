@@ -49,7 +49,11 @@ machine::same_place(const node::node_id id1, const node::node_id id2) const
 }
 
 void
-machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, vm::predicate *pred)
+machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, vm::predicate *pred
+#ifdef GC_NODES
+      , candidate_gc_nodes& gc_nodes
+#endif
+      )
 {
 	const predicate_id pid(pred->get_id());
 	
@@ -110,7 +114,11 @@ machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, vm::predicat
       break;
    }
 
-   vm::tuple::destroy(tpl, pred);
+   vm::tuple::destroy(tpl, pred
+#ifdef GC_NODES
+         , gc_nodes
+#endif
+         );
 }
 
 void

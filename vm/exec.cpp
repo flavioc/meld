@@ -150,9 +150,17 @@ execute_run_action0(tuple *tpl, predicate *pred, state& state)
 {
    assert(pred->is_action_pred());
    if(state.count > 0)
-      All->MACHINE->run_action(state.sched, state.node, tpl, pred);
+      All->MACHINE->run_action(state.sched, state.node, tpl, pred
+#ifdef GC_NODES
+            , state.gc_nodes
+#endif
+            );
    else
-      vm::tuple::destroy(tpl, pred);
+      vm::tuple::destroy(tpl, pred
+#ifdef GC_NODES
+            , state.gc_nodes
+#endif
+            );
 }
 
 static inline void
@@ -196,7 +204,11 @@ execute_send(const pcounter& pc, state& state)
    tuple *tuple(state.get_tuple(msg));
 
    if(state.count < 0 && pred->is_linear_pred() && !pred->is_reused_pred()) {
-      vm::tuple::destroy(tuple, pred);
+      vm::tuple::destroy(tuple, pred
+#ifdef GC_NODES
+            , state.gc_nodes
+#endif
+            );
       return;
    }
 
@@ -247,7 +259,11 @@ execute_send(const pcounter& pc, state& state)
       db::node *node(this->all->DATABASE->find_node(dest_val));
 #endif
       if(pred->is_action_pred())
-         All->MACHINE->run_action(state.sched, node, tuple, pred);
+         All->MACHINE->run_action(state.sched, node, tuple, pred
+#ifdef GC_NODES
+               , state.gc_nodes
+#endif
+               );
       else {
 #ifdef FACT_BUFFERING
          auto it(state.facts_to_send.find(node));
@@ -822,7 +838,11 @@ execute_olinear_iter(const reg_num reg, match* m, const pcounter pc, const pcoun
       if(TO_FINISH(ret)) {
          utils::intrusive_list<vm::tuple>::iterator it(p.iterator);
          local_tuples->erase(it);
-         vm::tuple::destroy(match_tuple, pred);
+         vm::tuple::destroy(match_tuple, pred
+#ifdef GC_NODES
+               , state.gc_nodes
+#endif
+               );
          if(ret == RETURN_LINEAR)
             return RETURN_LINEAR;
          if(ret == RETURN_DERIVED && old_is_linear)
@@ -1039,7 +1059,11 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
             }
          } else {
             it = local_tuples->erase(it);
-            vm::tuple::destroy(match_tuple, pred);
+            vm::tuple::destroy(match_tuple, pred
+#ifdef GC_NODES
+                  , state.gc_nodes
+#endif
+                  );
             next_iter = false;
          }
       }
@@ -1768,9 +1792,11 @@ execute_new_axioms(pcounter pc, state& state)
             case FIELD_STRUCT:
                tpl->set_struct(i, FIELD_STRUCT(field));
                break;
+            case FIELD_NODE:
+               tpl->set_node(i, FIELD_NODE(field));
+               break;
             case FIELD_INT:
             case FIELD_FLOAT:
-            case FIELD_NODE:
                tpl->set_field(i, field);
                break;
             case FIELD_STRING:
