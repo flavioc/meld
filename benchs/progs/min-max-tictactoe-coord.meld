@@ -79,7 +79,8 @@ count-points(A, [X | Xs], RootPlayer, Points, Play), X <> RootPlayer
 score(A, Score, BestPlay),
 back(A, B),
 depth(A, Depth)
-   -o new-score(B, Score, BestPlay).
+   -o new-score(B, Score, BestPlay),
+      schedule-next(B).
 
 new-score(A, Score, Play),
 minimize(A, N, Current, BestPlay),

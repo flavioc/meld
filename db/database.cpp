@@ -94,6 +94,8 @@ database::delete_node(node *n)
 
    const size_t erased1(nodes.erase(n->get_id()));
    const size_t erased2(translation.erase(n->get_id()));
+   (void)erased1;
+   (void)erased2;
 
    assert(erased1 == 1);
    assert(erased2 == 1);
