@@ -16,7 +16,7 @@ ifeq ($(RELEASE), true)
 	DEBUG =
 	OPTIMIZATIONS = -O3 -DNDEBUG
 else
-	DEBUG = -g
+	DEBUG = -g -DNDEBUG
 	PROFILING = -pg
 	OPTIMIZATIONS = -O0
 endif
@@ -74,7 +74,7 @@ ifeq ($(JIT), true)
 	LIBS += -L/usr/local/lib/x86_64 -ljit
 endif
 
-WARNINGS = -Wall -Wextra -Werror
+WARNINGS = -Wall -Wextra
 C0X = -std=c++11
 
 ifeq ($(INTERFACE),true)
@@ -89,7 +89,7 @@ ifeq ($(SIMULATOR), true)
 endif
 
 CFLAGS = -std=c++11 -fno-rtti $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) $(FLAGS) #-fno-gcse -fno-crossjumping
-LIBRARIES = -lm -lreadline -ldl $(LIBS)
+LIBRARIES = -L /usr/lib/gcc/x86_64-redhat-linux/4.8.3/ -lm -lreadline -ldl $(LIBS) -pthread
 
 CXX = g++
 
@@ -101,7 +101,7 @@ ifneq ($(CLANG), )
 	CFLAGS += -Qunused-arguments
 endif
 ifeq ($(CLANG), )
-	LIBRARIES += -latomic -lpthread
+	LIBRARIES += -lpthread
 endif
 
 ifeq ($(GCC_MINOR),2)

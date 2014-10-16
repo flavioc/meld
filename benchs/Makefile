@@ -25,7 +25,7 @@ SHORTEST = shortest-uspowergrid shortest-usairports500
 BP = belief-propagation-200
 QUEENS = 8queens-13
 SIMPLE = simple16 simple32 simple64
-MINMAX = min-max-tictactoe
+MINMAX = min-max-tictactoe-big
 
 THREAD_PROGRAMS = $(QUEENS) $(GGC) $(PAGERANK) $(HT) $(MINMAX) $(SHORTEST)
 
