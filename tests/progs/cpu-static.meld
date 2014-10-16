@@ -1,0 +1,17 @@
+
+type linear a(node, int).
+type linear b(node, int).
+type linear c(node, int).
+
+a(@1, 0).
+
+a(A, N)
+   -o set-static(A), b(A, N).
+
+b(A, N),
+cpu-static(A) = 1
+   -o c(A, N + 1).
+
+b(A, N),
+cpu-static(A) = 0
+   -o c(A, N + 2).

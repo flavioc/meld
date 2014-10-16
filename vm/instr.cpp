@@ -935,6 +935,9 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          cout << "MVSTACKFIELD " << stack_string(pcounter_stack(pc + instr_size)) << " TO " <<
             field_string(pc + instr_size + stack_val_size) << endl;
          break;
+      case CPU_STATIC_INSTR:
+         cout << "CPU STATIC OF " << reg_string(pcounter_reg(pc + instr_size)) << " TO " << reg_string(pcounter_reg(pc + instr_size + reg_val_size)) << endl;
+         break;
 		default:
          throw malformed_instr_error("unknown instruction code");
 	}

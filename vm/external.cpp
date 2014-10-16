@@ -199,6 +199,7 @@ init_external_functions(void)
    register_external_function(EXTERNAL2(residualstruct, f, st, st));
    register_external_function(EXTERNAL2(dividestruct, st, st, st));
    register_external_function(EXTERNAL2(convolvestruct, st, st, st));
+   register_external_function(EXTERNAL1(cpu_static, i, n));
 
    atexit(cleanup_externals);
 

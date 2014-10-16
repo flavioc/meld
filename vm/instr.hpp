@@ -168,6 +168,7 @@ const size_t SET_MOVINGH_BASE    = instr_size;
 const size_t SET_MOVING_BASE     = instr_size + reg_val_size;
 const size_t SET_AFFINITYH_BASE  = instr_size + reg_val_size;
 const size_t SET_AFFINITY_BASE   = instr_size + reg_val_size + reg_val_size;
+const size_t CPU_STATIC_BASE     = instr_size + 2 * reg_val_size;
 const size_t STOP_PROG_BASE      = instr_size;
 const size_t CPU_ID_BASE         = instr_size + 2 * reg_val_size;
 const size_t NODE_PRIORITY_BASE  = instr_size + 2 * reg_val_size;
@@ -318,6 +319,7 @@ enum instr_type {
    SET_MOVING_INSTR     =  0xA8,
    SET_AFFINITYH_INSTR  =  0xA9,
    SET_AFFINITY_INSTR   =  0xAA,
+   CPU_STATIC_INSTR     =  0xAB,
    RETURN_LINEAR_INSTR  =  0xD0,
    RETURN_DERIVED_INSTR =  0xF0
 };
@@ -957,6 +959,9 @@ advance(const pcounter pc)
 
       case SET_AFFINITY_INSTR:
          return pc + SET_AFFINITY_BASE;
+
+      case CPU_STATIC_INSTR:
+         return pc + CPU_STATIC_BASE;
 
       default:
          return pc;

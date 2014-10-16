@@ -6,7 +6,7 @@
 
 #include "sched/base.hpp"
 #include "queue/safe_linear_queue.hpp"
-#include "sched/nodes/thread_intrusive.hpp"
+#include "thread/node.hpp"
 #include "thread/termination_barrier.hpp"
 #include "queue/safe_complex_pqueue.hpp"
 #include "queue/safe_double_queue.hpp"
@@ -228,6 +228,30 @@ protected:
    void check_priority_buffer(void);
 #endif
 
+   // number of static nodes owned by this thread.
+   std::atomic<uint64_t> static_nodes;
+
+   inline void make_node_static(thread_intrusive_node *tn, threads_sched *target)
+   {
+      threads_sched *old(static_cast<threads_sched*>(tn->get_static()));
+
+      if(old != NULL)
+         old->static_nodes--;
+
+      target->static_nodes++;
+      tn->set_static(target);
+   }
+
+   inline void make_node_moving(thread_intrusive_node *tn)
+   {
+      threads_sched *old(static_cast<threads_sched*>(tn->get_static()));
+
+      if(old != NULL)
+         old->static_nodes--;
+
+      tn->set_moving();
+   }
+
    virtual void assert_end(void) const;
    bool set_next_node(void);
    virtual bool check_if_current_useless();
@@ -282,6 +306,8 @@ public:
    virtual void set_node_priority(db::node *, const double);
 	virtual void add_node_priority(db::node *, const double);
    virtual void schedule_next(db::node *);
+
+   inline uint64_t num_static_nodes(void) const { return static_nodes; }
    
    static db::node *create_node(const db::node::node_id id, const db::node::node_id trans)
    {

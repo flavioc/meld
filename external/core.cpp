@@ -46,13 +46,35 @@ cpu_id(EXTERNAL_ARG(id))
    n = (node*)id;
 #else
    n = All->DATABASE->find_node(id);
-   assert(n != NULL);
 #endif
+   assert(n != NULL);
 
    if(n)
       ret = n->get_owner()->get_id();
    else
       ret = 0;
+
+   RETURN_INT(ret);
+}
+
+argument
+cpu_static(EXTERNAL_ARG(id))
+{
+   int_val ret(0);
+   DECLARE_NODE(id);
+   
+   node *n(NULL);
+#ifdef USE_REAL_NODES
+   n = (node*)id;
+#else
+   n = All->DATABASE->find_node(id);
+#endif
+   assert(n != NULL);
+
+   thread_intrusive_node *tn(static_cast<thread_intrusive_node*>(n));
+   threads_sched *owner(static_cast<threads_sched*>(tn->get_owner()));
+
+   ret = owner->num_static_nodes();
 
    RETURN_INT(ret);
 }

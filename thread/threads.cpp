@@ -247,7 +247,7 @@ threads_sched::go_steal_nodes(void)
             } else {
                // meanwhile the node is now set as static.
                // set ourselves as the static scheduler
-               node->set_static(this);
+               make_node_static(node, this);
             }
          }
          node->set_owner(this);
@@ -889,7 +889,7 @@ threads_sched::set_node_static(db::node *n)
 
    thread_intrusive_node *tn(static_cast<thread_intrusive_node*>(n));
    if(n == current_node) {
-      tn->set_static(this);
+      make_node_static(tn, this);
       return;
    }
 
@@ -898,7 +898,7 @@ threads_sched::set_node_static(db::node *n)
 
    LOCK_STACK(nodelock);
    NODE_LOCK(tn, nodelock);
-   tn->set_static(this);
+   make_node_static(tn, this);
    switch(tn->node_state()) {
       case STATE_STEALING:
          // node was stolen but the thief does not
@@ -935,7 +935,7 @@ threads_sched::set_node_moving(db::node *n)
 
    thread_intrusive_node *tn(static_cast<thread_intrusive_node*>(n));
    if(n == current_node) {
-      tn->set_moving();
+      make_node_moving(tn);
       return;
    }
 
@@ -944,7 +944,7 @@ threads_sched::set_node_moving(db::node *n)
 
    LOCK_STACK(nodelock);
    NODE_LOCK(tn, nodelock);
-   tn->set_moving();
+   make_node_moving(tn);
    switch(tn->node_state()) {
       case STATE_STEALING:
          // node was stolen but the thief does not
@@ -993,13 +993,13 @@ threads_sched::set_node_affinity(db::node *node, db::node *affinity)
 
    if(tn == current_node) {
       // we will change the owner field once we are done with the node.
-      tn->set_static(new_owner);
+      make_node_static(tn, new_owner);
       return;
    }
 
    LOCK_STACK(nodelock);
    NODE_LOCK(tn, nodelock);
-   tn->set_static(new_owner);
+   make_node_static(tn, new_owner);
    if(tn->get_owner() == new_owner) {
       NODE_UNLOCK(tn, nodelock);
       return;
@@ -1088,10 +1088,6 @@ threads_sched::threads_sched(const vm::process_id _id):
    , next_thread(rand(All->NUM_THREADS))
    , backoff(STEALING_ROUND_MIN)
 #endif
-#ifndef DIRECT_PRIORITIES
-   , priority_buffer(std::min(PRIORITY_BUFFER_SIZE,
-                     vm::All->DATABASE->num_nodes() / vm::All->NUM_THREADS))
-#endif
 #ifdef INSTRUMENTATION
    , sent_facts_same_thread(0)
    , sent_facts_other_thread(0)
@@ -1101,6 +1097,11 @@ threads_sched::threads_sched(const vm::process_id _id):
    , node_lock_fail(0)
    , node_lock_ok(0)
 #endif
+#ifndef DIRECT_PRIORITIES
+   , priority_buffer(std::min(PRIORITY_BUFFER_SIZE,
+                     vm::All->DATABASE->num_nodes() / vm::All->NUM_THREADS))
+#endif
+   , static_nodes(0)
 {
    bitmap::create(comm_threads, All->NUM_THREADS_NEXT_UINT);
 }

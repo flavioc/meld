@@ -12,7 +12,8 @@
 #include "vm/full_tuple.hpp"
 #include "process/machine.hpp"
 #include "utils/mutex.hpp"
-#include "sched/nodes/thread_intrusive.hpp"
+#include "thread/node.hpp"
+#include "thread/threads.hpp"
 #ifdef USE_UI
 #include "ui/manager.hpp"
 #endif
@@ -1635,7 +1636,24 @@ execute_cpu_id(pcounter& pc, state& state)
    db::node *node(All->DATABASE->find_node(nodeval));
 #endif
 
-   state.set_int(dest_reg, node->get_owner()->get_id());
+   sched::base *owner(node->get_owner());
+   state.set_int(dest_reg, owner->get_id());
+}
+
+static inline void
+execute_cpu_static(pcounter& pc, state& state)
+{
+   const reg_num node_reg(pcounter_reg(pc + instr_size));
+   const reg_num dest_reg(pcounter_reg(pc + instr_size + reg_val_size));
+   const node_val nodeval(state.get_node(node_reg));
+#ifdef USE_REAL_NODES
+   db::node *node((db::node*)nodeval);
+#else
+   db::node *node(All->DATABASE->find_node(nodeval));
+#endif
+   sched::threads_sched *owner(static_cast<sched::threads_sched*>(node->get_owner()));
+
+   state.set_int(dest_reg, owner->num_static_nodes());
 }
 
 static inline void
@@ -3683,6 +3701,12 @@ eval_loop:
          CASE(NODE_PRIORITY_INSTR)
             JUMP(node_priority, NODE_PRIORITY_BASE)
             execute_node_priority(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(CPU_STATIC_INSTR)
+            JUMP(cpu_static, CPU_STATIC_BASE)
+            execute_cpu_static(pc, state);
             ADVANCE()
          ENDOP()
 

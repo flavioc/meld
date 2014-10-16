@@ -1,6 +1,6 @@
 
-#ifndef SCHED_NODES_THREAD_INTRUSIVE_HPP
-#define SCHED_NODES_THREAD_INTRUSIVE_HPP
+#ifndef THREAD_NODE_HPP
+#define THREAD_NODE_HPP
 
 #include "mem/base.hpp"
 #include "queue/intrusive.hpp"
@@ -38,8 +38,8 @@ public:
       return default_priority_level != 0.0 || priority_level != 0.0;
    }
 
-   inline void set_static(sched::base *b) { static_node = b; }
    inline sched::base* get_static(void) const { return static_node; }
+   inline void set_static(sched::base *b) { static_node = b; }
    inline void set_moving(void) { static_node = NULL; }
    inline bool is_static(void) const { return static_node != NULL; }
    inline bool is_moving(void) const { return static_node == NULL; }
