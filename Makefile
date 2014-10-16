@@ -24,7 +24,7 @@ ifeq ($(ALLOCATOR), pool)
 	FLAGS += -DPOOL_ALLOCATOR
 endif
 ifeq ($(EXTRA_ASSERTS), true)
-	FLAGS += -DALLOCATOR_ASSERT -DTRIE_MATCHING_ASSERT
+	FLAGS += -DTRIE_MATCHING_ASSERT
 endif
 ifeq ($(INDEXING), true)
 	FLAGS += -DDYNAMIC_INDEXING
@@ -69,13 +69,7 @@ ifeq ($(GC_NODES), true)
 	FLAGS += -DGC_NODES
 endif
 
-ifeq ($(JIT), true)
-	FLAGS += -DUSE_JIT
-	LIBS += -L/usr/local/lib/x86_64 -ljit
-endif
-
 WARNINGS = -Wall -Wextra
-C0X = -std=c++11
 
 ifeq ($(INTERFACE),true)
 	LIBS += -lwebsocketpp -ljson_spirit
@@ -88,7 +82,9 @@ ifeq ($(SIMULATOR), true)
 	FLAGS += -DUSE_SIM
 endif
 
-CFLAGS = -std=c++11 -fno-rtti $(ARCH) $(PROFILING) $(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) $(INCLUDE_DIRS) $(FLAGS) #-fno-gcse -fno-crossjumping
+CFLAGS = -std=c++11 -fno-rtti $(ARCH) $(PROFILING) \
+			$(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) \
+			$(INCLUDE_DIRS) $(FLAGS) #-fno-gcse -fno-crossjumping
 LIBRARIES = -L /usr/lib/gcc/x86_64-redhat-linux/4.8.3/ -lm -lreadline -ldl $(LIBS) -pthread
 
 CXX = g++
@@ -104,13 +100,6 @@ ifeq ($(CLANG), )
 	LIBRARIES += -lpthread
 endif
 
-ifeq ($(GCC_MINOR),2)
-	CFLAGS += -DTEMPLATE_OPTIMIZERS=1
-endif
-ifeq ($(GCC_MINOR),4)
-	CFLAGS += $(C0X)
-endif
-
 CXXFLAGS = $(CFLAGS)
 LDFLAGS = $(PROFILING) $(LIBRARY_DIRS) $(LIBRARIES)
 COMPILE = $(CXX) $(CXXFLAGS) $(OBJS)
@@ -119,45 +108,45 @@ SRCS = utils/utils.cpp \
 		 	utils/types.cpp \
 			utils/fs.cpp \
 			utils/mutex.cpp \
-			 vm/program.cpp \
-			 vm/predicate.cpp \
-			 vm/types.cpp \
-			 vm/instr.cpp \
-			 vm/state.cpp \
-			 vm/tuple.cpp \
-			 vm/full_tuple.cpp \
-			 vm/exec.cpp \
-			 vm/external.cpp \
-			 vm/rule.cpp \
-			 vm/rule_matcher.cpp \
-			 vm/stat.cpp \
-			 db/node.cpp \
-			 db/agg_configuration.cpp \
-			 db/tuple_aggregate.cpp \
-			 db/database.cpp \
-			 db/trie.cpp \
-			 db/hash_table.cpp \
-			 process/machine.cpp \
-			 process/remote.cpp \
-			 process/router.cpp \
-			 mem/thread.cpp \
-			 mem/center.cpp \
-			 mem/stat.cpp \
-			 sched/base.cpp \
-			 sched/common.cpp \
-			 thread/threads.cpp \
-			 external/math.cpp \
-			 external/lists.cpp \
-			 external/utils.cpp \
-			 external/strings.cpp \
-			 external/others.cpp \
-			 external/core.cpp \
-			 external/structs.cpp \
-			 stat/stat.cpp \
-			 stat/slice.cpp \
-			 stat/slice_set.cpp \
-			 jit/build.cpp \
-			 interface.cpp
+			vm/program.cpp \
+			vm/predicate.cpp \
+			vm/types.cpp \
+			vm/instr.cpp \
+			vm/state.cpp \
+			vm/tuple.cpp \
+			vm/full_tuple.cpp \
+			vm/exec.cpp \
+			vm/external.cpp \
+			vm/rule.cpp \
+			vm/rule_matcher.cpp \
+			vm/stat.cpp \
+			db/node.cpp \
+			db/agg_configuration.cpp \
+			db/tuple_aggregate.cpp \
+			db/database.cpp \
+			db/trie.cpp \
+			db/hash_table.cpp \
+			process/machine.cpp \
+			process/remote.cpp \
+			process/router.cpp \
+			mem/thread.cpp \
+			mem/center.cpp \
+			mem/stat.cpp \
+			sched/base.cpp \
+			sched/common.cpp \
+			thread/threads.cpp \
+			external/math.cpp \
+			external/lists.cpp \
+			external/utils.cpp \
+			external/strings.cpp \
+			external/others.cpp \
+			external/core.cpp \
+			external/structs.cpp \
+			stat/stat.cpp \
+			stat/slice.cpp \
+			stat/slice_set.cpp \
+			jit/build.cpp \
+			interface.cpp
 
 ifeq ($(SIMULATOR), true)
 	SRCS += sched/sim.cpp

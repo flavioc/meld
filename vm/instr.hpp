@@ -548,11 +548,7 @@ enum instr_argument_type {
 template <instr_argument_type type>
 static inline size_t arg_size(const instr_val v);
 
-#ifdef TEMPLATE_OPTIMIZERS
-#define STATIC_INLINE static inline
-#else
-#define STATIC_INLINE
-#endif
+#define STATIC_INLINE inline
 
 template <>
 STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING>(const instr_val v)
