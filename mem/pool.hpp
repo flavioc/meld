@@ -109,16 +109,20 @@ private:
       return cg;
    }
 
+   inline size_t make_size(const size_t size)
+   {
+      return std::max(sizeof(intptr_t), size);
+   }
+
 public:
 
 #ifdef INSTRUMENTATION
    size_t bytes_in_use = 0;
 #endif
-
    
    inline void* allocate(const size_t size)
    {
-      chunkgroup *grp(get_group(size));
+      chunkgroup *grp(get_group(make_size(size)));
 #ifdef INSTRUMENTATION
       bytes_in_use += size;
 #endif
@@ -127,7 +131,7 @@ public:
    
    inline void deallocate(void *ptr, const size_t size)
    {
-      chunkgroup *grp(get_group(size));
+      chunkgroup *grp(get_group(make_size(size)));
 #ifdef INSTRUMENTATION
       bytes_in_use -= size;
 #endif

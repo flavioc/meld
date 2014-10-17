@@ -36,8 +36,9 @@ namespace db {
 class node: public mem::base
 {
 public:
-
+#ifdef GC_NODES
 	std::atomic<vm::ref_count> refs;
+#endif
 
    typedef vm::node_val node_id;
    
