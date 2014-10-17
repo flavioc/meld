@@ -135,7 +135,11 @@ public:
    size_t count_total_all(void) const;
    inline bool garbage_collect(void) const
    {
+#ifdef GC_NODES
       return refs == 0 && store.matcher.is_empty();
+#else
+      return false;
+#endif
    }
    
    void print(std::ostream&) const;

@@ -331,9 +331,10 @@ tuple::destructor(predicate *pred
 void
 tuple::set_node(const field_num& field, const node_val& val)
 {
+#ifdef GC_NODES
    db::node *n((db::node*)val);
-
    n->refs++;
+#endif
 
    SET_FIELD_NODE(getfp()[field], val);
 }
