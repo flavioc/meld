@@ -137,6 +137,8 @@ database::create_node_id(const db::node::node_id id)
    max_translated_id = id;
 
    node *ret(create_fn(max_node_id, max_translated_id));
+
+   assert(ret->is_empty());
    
    translation[max_node_id] = max_translated_id;
    nodes[max_node_id] = ret;

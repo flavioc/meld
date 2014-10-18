@@ -93,6 +93,10 @@ public:
 #ifdef USE_REAL_NODES
       vm::theProgram->fix_node_address(node);
 #endif
+#ifdef GC_NODES
+      // initial nodes never get deleted.
+      node->refs++;
+#endif
       setup_node(node);
       return node;
    }
