@@ -1,0 +1,15 @@
+
+type linear generate(node, int, int).
+type linear back(node, node).
+
+const children = 6.
+const depth = 10.
+
+generate(@0, children, depth).
+
+generate(A, Children, 0) -o 1.
+generate(A, 0, Depth) -o 1.
+generate(A, Children, Depth)
+   -o exists B. (generate(B, children, Depth - 1),
+                 set-default-priority(B, 1.0),
+                 generate(A, Children - 1, Depth)).
