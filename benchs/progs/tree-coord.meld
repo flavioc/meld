@@ -10,7 +10,7 @@ generate(@0, children, depth).
 generate(A, Children, 0) -o 1.
 generate(A, 0, Depth) -o 1.
 generate(A, Children, Depth)
-   -o exists B. (generate(B, children, Depth - 1),
+   -o exists B. (set-default-priority(B, float(8 - Depth)),
+                 generate(B, children, Depth - 1),
                  (if Depth <= 7 then set-static(B) otherwise 1 end),
-                 set-default-priority(B, float(8 - Depth)),
                  generate(A, Children - 1, Depth)).
