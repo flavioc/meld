@@ -12,5 +12,5 @@ generate(A, 0, Depth) -o 1.
 generate(A, Children, Depth)
    -o exists B. (generate(B, children, Depth - 1),
                  (if Depth <= 7 then set-static(B) otherwise 1 end),
-                 set-default-priority(B, 1.0),
+                 set-default-priority(B, float(8 - Depth)),
                  generate(A, Children - 1, Depth)).
