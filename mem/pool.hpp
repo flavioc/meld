@@ -117,28 +117,33 @@ private:
 public:
 
 #ifdef INSTRUMENTATION
-   size_t bytes_in_use = 0;
+   std::atomic<int64_t> bytes_in_use;
 #endif
    
    inline void* allocate(const size_t size)
    {
-      chunkgroup *grp(get_group(make_size(size)));
+      const size_t new_size(make_size(size));
+      chunkgroup *grp(get_group(new_size));
 #ifdef INSTRUMENTATION
-      bytes_in_use += size;
+      bytes_in_use += new_size;
 #endif
       return grp->allocate();
    }
    
    inline void deallocate(void *ptr, const size_t size)
    {
-      chunkgroup *grp(get_group(make_size(size)));
+      const size_t new_size(make_size(size));
+      chunkgroup *grp(get_group(new_size));
 #ifdef INSTRUMENTATION
-      bytes_in_use -= size;
+      bytes_in_use -= new_size;
 #endif
       return grp->deallocate(ptr);
    }
    
    explicit pool(void)
+#ifdef INSTRUMENTATION
+      : bytes_in_use(0)
+#endif
    {
       create_new_chunkgroup_page();
       chunk_table = new chunkgroup*[size_table];

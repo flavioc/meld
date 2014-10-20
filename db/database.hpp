@@ -63,6 +63,10 @@ public:
    size_t num_nodes(void) const { return nodes.size(); }
    node::node_id max_id(void) const { return max_node_id; }
    node::node_id static_max_id(void) const { return original_max_node_id; }
+   inline bool is_initial_node(const db::node *n) const
+   {
+      return n->get_id() <= original_max_node_id;
+   }
    
 #ifdef GC_NODES
    void delete_node(node*);

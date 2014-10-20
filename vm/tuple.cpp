@@ -5,6 +5,7 @@
 #include <iomanip>
 
 #include "vm/tuple.hpp"
+#include "db/database.hpp"
 #include "db/node.hpp"
 #include "utils/utils.hpp"
 #include "vm/state.hpp"
@@ -313,9 +314,11 @@ tuple::destructor(predicate *pred
 #ifdef GC_NODES
             {
                db::node *n((db::node*)get_node(i));
-               n->refs--;
-               if(n->garbage_collect())
-                  gc_nodes.insert(get_node(i));
+               if(!All->DATABASE->is_initial_node(n)) {
+                  n->refs--;
+                  if(n->garbage_collect())
+                     gc_nodes.insert(get_node(i));
+               }
             }
 #endif
             break;
@@ -333,7 +336,8 @@ tuple::set_node(const field_num& field, const node_val& val)
 {
 #ifdef GC_NODES
    db::node *n((db::node*)val);
-   n->refs++;
+   if(!All->DATABASE->is_initial_node(n))
+      n->refs++;
 #endif
 
    SET_FIELD_NODE(getfp()[field], val);
