@@ -3,7 +3,7 @@ type linear generate(node, int, int).
 type linear back(node, node).
 
 const children = 6.
-const depth = 7.
+const depth = 8.
 
 generate(@0, children, depth).
 
