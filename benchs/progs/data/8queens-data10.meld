@@ -479,70 +479,60 @@ set-default-priority(@97, 3.0).
 !left(@97, @87).
 !right(@97, @97).
 !coord(@8, 8, 0).
-set-cpu(@8, 0 % @cpus).
 set-default-priority(@8, 2.0).
 !down-right(@8, @29).
 !down-left(@8, @8).
 !left(@8, @8).
 !right(@8, @18).
 !coord(@18, 8, 1).
-set-cpu(@18, 1 % @cpus).
 set-default-priority(@18, 2.0).
 !down-right(@18, @39).
 !down-left(@18, @18).
 !left(@18, @8).
 !right(@18, @28).
 !coord(@28, 8, 2).
-set-cpu(@28, 2 % @cpus).
 set-default-priority(@28, 2.0).
 !down-right(@28, @49).
 !down-left(@28, @9).
 !left(@28, @18).
 !right(@28, @38).
 !coord(@38, 8, 3).
-set-cpu(@38, 3 % @cpus).
 set-default-priority(@38, 2.0).
 !down-right(@38, @59).
 !down-left(@38, @19).
 !left(@38, @28).
 !right(@38, @48).
 !coord(@48, 8, 4).
-set-cpu(@48, 4 % @cpus).
 set-default-priority(@48, 2.0).
 !down-right(@48, @69).
 !down-left(@48, @29).
 !left(@48, @38).
 !right(@48, @58).
 !coord(@58, 8, 5).
-set-cpu(@58, 5 % @cpus).
 set-default-priority(@58, 2.0).
 !down-right(@58, @79).
 !down-left(@58, @39).
 !left(@58, @48).
 !right(@58, @68).
 !coord(@68, 8, 6).
-set-cpu(@68, 6 % @cpus).
 set-default-priority(@68, 2.0).
 !down-right(@68, @89).
 !down-left(@68, @49).
 !left(@68, @58).
 !right(@68, @78).
 !coord(@78, 8, 7).
-set-cpu(@78, 7 % @cpus).
 set-default-priority(@78, 2.0).
 !down-right(@78, @99).
 !down-left(@78, @59).
 !left(@78, @68).
 !right(@78, @88).
 !coord(@88, 8, 8).
-set-cpu(@88, 8 % @cpus).
 set-default-priority(@88, 2.0).
 !down-right(@88, @88).
 !down-left(@88, @69).
 !left(@88, @78).
 !right(@88, @98).
 !coord(@98, 8, 9).
-set-cpu(@98, 9 % @cpus).
 set-default-priority(@98, 2.0).
 !down-right(@98, @98).
 !down-left(@98, @79).

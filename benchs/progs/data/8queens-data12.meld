@@ -719,84 +719,72 @@ set-default-priority(@141, 3.0).
 !left(@141, @129).
 !right(@141, @141).
 !coord(@10, 10, 0).
-set-cpu(@10, 0 % @cpus).
 set-default-priority(@10, 2.0).
 !down-right(@10, @35).
 !down-left(@10, @10).
 !left(@10, @10).
 !right(@10, @22).
 !coord(@22, 10, 1).
-set-cpu(@22, 1 % @cpus).
 set-default-priority(@22, 2.0).
 !down-right(@22, @47).
 !down-left(@22, @22).
 !left(@22, @10).
 !right(@22, @34).
 !coord(@34, 10, 2).
-set-cpu(@34, 2 % @cpus).
 set-default-priority(@34, 2.0).
 !down-right(@34, @59).
 !down-left(@34, @11).
 !left(@34, @22).
 !right(@34, @46).
 !coord(@46, 10, 3).
-set-cpu(@46, 3 % @cpus).
 set-default-priority(@46, 2.0).
 !down-right(@46, @71).
 !down-left(@46, @23).
 !left(@46, @34).
 !right(@46, @58).
 !coord(@58, 10, 4).
-set-cpu(@58, 4 % @cpus).
 set-default-priority(@58, 2.0).
 !down-right(@58, @83).
 !down-left(@58, @35).
 !left(@58, @46).
 !right(@58, @70).
 !coord(@70, 10, 5).
-set-cpu(@70, 5 % @cpus).
 set-default-priority(@70, 2.0).
 !down-right(@70, @95).
 !down-left(@70, @47).
 !left(@70, @58).
 !right(@70, @82).
 !coord(@82, 10, 6).
-set-cpu(@82, 6 % @cpus).
 set-default-priority(@82, 2.0).
 !down-right(@82, @107).
 !down-left(@82, @59).
 !left(@82, @70).
 !right(@82, @94).
 !coord(@94, 10, 7).
-set-cpu(@94, 7 % @cpus).
 set-default-priority(@94, 2.0).
 !down-right(@94, @119).
 !down-left(@94, @71).
 !left(@94, @82).
 !right(@94, @106).
 !coord(@106, 10, 8).
-set-cpu(@106, 8 % @cpus).
 set-default-priority(@106, 2.0).
 !down-right(@106, @131).
 !down-left(@106, @83).
 !left(@106, @94).
 !right(@106, @118).
 !coord(@118, 10, 9).
-set-cpu(@118, 9 % @cpus).
 set-default-priority(@118, 2.0).
 !down-right(@118, @143).
 !down-left(@118, @95).
 !left(@118, @106).
 !right(@118, @130).
 !coord(@130, 10, 10).
-set-cpu(@130, 10 % @cpus).
 set-default-priority(@130, 2.0).
 !down-right(@130, @130).
 !down-left(@130, @107).
 !left(@130, @118).
 !right(@130, @142).
 !coord(@142, 10, 11).
-set-cpu(@142, 11 % @cpus).
 set-default-priority(@142, 2.0).
 !down-right(@142, @142).
 !down-left(@142, @119).
