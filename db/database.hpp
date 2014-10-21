@@ -65,7 +65,6 @@ public:
    
    void add_node_set(map_nodes& set)
    {
-      std::cout << set.size() << "\n";
       for(auto it(set.begin()), end(set.end()); it != end; ++it)
          nodes[it->first] = it->second;
    }
