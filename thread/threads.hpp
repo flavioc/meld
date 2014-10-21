@@ -124,7 +124,6 @@ protected:
    struct Queues {
       node_queue moving;
       node_queue stati;
-      bool use_static;
 
       inline bool has_work(void) const
       {
@@ -133,8 +132,7 @@ protected:
 
       explicit Queues(void):
          moving(NORMAL_QUEUE_MOVING),
-         stati(NORMAL_QUEUE_STATIC),
-         use_static(false)
+         stati(NORMAL_QUEUE_STATIC)
       {
       }
    } queues;
@@ -169,20 +167,9 @@ protected:
 
    inline bool pop_node_from_queues(void)
    {
-      queues.use_static = !queues.use_static;
-      if(queues.use_static) {
-         if(queues.stati.pop_head(current_node, STATE_WORKING))
-            return true;
-         if(queues.moving.pop_head(current_node, STATE_WORKING))
-            return true;
-      } else {
-         if(queues.moving.pop_head(current_node, STATE_WORKING))
-            return true;
-         if(queues.stati.pop_head(current_node, STATE_WORKING))
-            return true;
-      }
-     
-      return false;
+      if(queues.stati.pop_head(current_node, STATE_WORKING))
+         return true;
+      return queues.moving.pop_head(current_node, STATE_WORKING);
    }
 
 #ifdef TASK_STEALING
