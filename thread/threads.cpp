@@ -443,7 +443,7 @@ threads_sched::check_if_current_useless(void)
          NODE_UNLOCK(current_node, curlock);
 #ifdef GC_NODES
          if(current_node->garbage_collect())
-            All->DATABASE->delete_node(current_node);
+            delete_node(current_node);
 #endif
          current_node = NULL;
          return true;

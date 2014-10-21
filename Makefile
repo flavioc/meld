@@ -133,6 +133,7 @@ SRCS = utils/utils.cpp \
 			mem/center.cpp \
 			mem/stat.cpp \
 			sched/base.cpp \
+			sched/ids.cpp \
 			sched/common.cpp \
 			thread/threads.cpp \
 			external/math.cpp \

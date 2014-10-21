@@ -287,7 +287,7 @@ protected:
    void set_node_priority_other(db::node *, const double);
    
 public:
-   
+
    virtual void init(const size_t);
    
    virtual void new_work(db::node *, db::node *, vm::tuple *, vm::predicate *, const vm::ref_count, const vm::depth_t);
@@ -308,7 +308,7 @@ public:
    virtual void schedule_next(db::node *);
 
    inline uint64_t num_static_nodes(void) const { return static_nodes; }
-   
+
    static db::node *create_node(const db::node::node_id id, const db::node::node_id trans)
    {
       return new thread_intrusive_node(id, trans);

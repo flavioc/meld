@@ -25,10 +25,6 @@ class database
 {
 public:
    
-   typedef std::unordered_map<node::node_id, node::node_id,
-           std::hash<node::node_id>,
-           std::equal_to<node::node_id>,
-           mem::allocator< std::pair<const node::node_id, node::node_id> > > map_translate;
    typedef std::map<node::node_id, node*,
            std::less<node::node_id>,
            mem::allocator< std::pair<const node::node_id, node*> > > map_nodes;
@@ -39,7 +35,6 @@ private:
    create_node_fn create_fn;
    
    map_nodes nodes;
-   map_translate translation;
    node::node_id original_max_node_id;
    node::node_id max_node_id;
    node::node_id max_translated_id;
@@ -68,11 +63,18 @@ public:
       return n->get_id() <= original_max_node_id;
    }
    
-#ifdef GC_NODES
-   void delete_node(node*);
-#endif
+   void add_node_set(map_nodes& set)
+   {
+      std::cout << set.size() << "\n";
+      for(auto it(set.begin()), end(set.end()); it != end; ++it)
+         nodes[it->first] = it->second;
+   }
+
    node* find_node(const node::node_id) const;
-   node* create_node(void);
+   inline node* create_node(const node::node_id id, const node::node_id trans) {
+      return create_fn(id, trans);
+   }
+   std::pair<node::node_id, node::node_id> allocate_ids(const size_t);
    node* create_node_id(const node::node_id);
    node* create_node_iterator(map_nodes::iterator);
    

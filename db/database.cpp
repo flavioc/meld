@@ -48,8 +48,7 @@ database::database(const string& filename, create_node_fn _create_fn):
       fp.read((char*)&user_id, sizeof(node::node_id));
       
       // nodes themselves are created by each thread in sched/init_node.
-      translation[fake_id] = user_id;
-      nodes[fake_id] = NULL;
+      nodes[fake_id] = (db::node*)user_id;
 
       if(fake_id > max_node_id)
          max_node_id = fake_id;
@@ -85,30 +84,6 @@ database::wipeout(
    }
 }
 
-#ifdef GC_NODES
-void
-database::delete_node(node *n)
-{
-   LOCK_STACK(dblock);
-   mtx.lock(LOCK_STACK_USE(dblock));
-
-   const size_t erased1(nodes.erase(n->get_id()));
-   const size_t erased2(translation.erase(n->get_id()));
-   (void)erased1;
-   (void)erased2;
-
-   assert(erased1 == 1);
-   assert(erased2 == 1);
-
-   mtx.unlock(LOCK_STACK_USE(dblock));
-
-   candidate_gc_nodes gc_nodes;
-   n->wipeout(gc_nodes);
-   assert(gc_nodes.empty());
-   delete n;
-}
-#endif
-
 node*
 database::find_node(const node::node_id id) const
 {
@@ -140,7 +115,6 @@ database::create_node_id(const db::node::node_id id)
 
    assert(ret->is_empty());
    
-   translation[max_node_id] = max_translated_id;
    nodes[max_node_id] = ret;
    nodes_total++;
    mtx.unlock(LOCK_STACK_USE(dblock));
@@ -151,32 +125,20 @@ database::create_node_id(const db::node::node_id id)
 node*
 database::create_node_iterator(database::map_nodes::iterator it)
 {
-   map_translate::const_iterator tr(translation.find(it->first));
-   if(tr == translation.end())
-      return NULL;
-
-   it->second = create_fn(it->first, tr->second);
-   return it->second;
+   return create_fn(it->first, (node::node_id)it->first);
 }
 
-node*
-database::create_node(void)
+pair<node::node_id, node::node_id>
+database::allocate_ids(const size_t size)
 {
    LOCK_STACK(dblock);
    mtx.lock(LOCK_STACK_USE(dblock));
 
-	if(nodes.empty()) {
-		max_node_id = 0;
-		max_translated_id = 0;
-	} else {
-   	++max_node_id;
-   	++max_translated_id;
-	}
-	
-   node *ret(create_fn(max_node_id, max_translated_id));
-   
-   translation[max_node_id] = max_translated_id;
-   nodes[max_node_id] = ret;
+   pair<node::node_id, node::node_id> ret(
+         make_pair(max_node_id + 1, max_translated_id + 1));
+
+   max_node_id += size;
+   max_translated_id += size;
    mtx.unlock(LOCK_STACK_USE(dblock));
 
    return ret;

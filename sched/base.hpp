@@ -17,6 +17,7 @@
 #include "vm/state.hpp"
 #include "vm/temporary.hpp"
 #include "mem/thread.hpp"
+#include "sched/ids.hpp"
 
 namespace process {
    class remote;
@@ -36,6 +37,8 @@ protected:
    char __padding_state[128];
    
    vm::state state;
+
+   ids node_handler;
    
 #ifdef INSTRUMENTATION
    mutable std::atomic<statistics::sched_state> ins_state;
@@ -101,13 +104,28 @@ public:
       return node;
    }
 
-   db::node* create_node(void)
+   inline db::node* create_node(void)
    {
-      db::node *node(vm::All->DATABASE->create_node());
+      db::node *node(node_handler.create_node());
       setup_node(node);
       return node;
    }
-   
+
+   inline void delete_node(db::node *node)
+   {
+      node_handler.delete_node(node);
+   }
+
+   inline void merge_new_nodes(base& b)
+   {
+      node_handler.merge(b.node_handler);
+   }
+
+   inline void commit_nodes(void)
+   {
+      node_handler.commit();
+   }
+
    // new work to a certain node
    virtual void new_work(db::node *from, db::node *to, vm::tuple*, vm::predicate *, const vm::ref_count, const vm::depth_t) = 0;
    // list of work to be sent

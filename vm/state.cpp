@@ -908,7 +908,7 @@ state::run_node(db::node *no)
    // these nodes are sure to be no longer in use.
    for(auto it(gc_nodes.begin()); it != gc_nodes.end(); ++it) {
       db::node *n((db::node*)*it);
-      All->DATABASE->delete_node(n);
+      sched->delete_node(n);
    }
    gc_nodes.clear();
 #endif
