@@ -1,0 +1,8 @@
+
+type linear a(node, int).
+type linear b(node, int).
+
+set-cpu(@0, @cpus - 1).
+a(@0, 1).
+
+a(A, N) -o b(A, N).
