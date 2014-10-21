@@ -1657,6 +1657,15 @@ execute_cpu_static(pcounter& pc, state& state)
 }
 
 static inline void
+execute_set_cpu_here(pcounter& pc, state& state)
+{
+   const reg_num cpu_reg(pcounter_reg(pc + instr_size));
+   const int_val cpu(state.get_int(cpu_reg));
+
+   state.sched->set_node_cpu(state.node, cpu);
+}
+
+static inline void
 execute_node_priority(pcounter& pc, state& state)
 {
    const reg_num node_reg(pcounter_reg(pc + instr_size));
@@ -2162,6 +2171,14 @@ execute_mvworldreg(pcounter& pc, state& state)
    const reg_num reg(pcounter_reg(pc + instr_size));
 
    state.set_int(reg, All->DATABASE->nodes_total);
+}
+
+static inline void
+execute_mvcpusreg(pcounter& pc, state& state)
+{
+   const reg_num reg(pcounter_reg(pc + instr_size));
+
+   state.set_int(reg, All->NUM_THREADS);
 }
 
 static inline pcounter
@@ -3707,6 +3724,18 @@ eval_loop:
          CASE(CPU_STATIC_INSTR)
             JUMP(cpu_static, CPU_STATIC_BASE)
             execute_cpu_static(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(MVCPUSREG_INSTR)
+            JUMP(mvcpusreg, MVCPUSREG_BASE)
+            execute_mvcpusreg(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(SET_CPUH_INSTR)
+            JUMP(set_cpuh, SET_CPUH_BASE)
+            execute_set_cpu_here(pc, state);
             ADVANCE()
          ENDOP()
 

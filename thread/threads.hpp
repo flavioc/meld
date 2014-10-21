@@ -285,6 +285,7 @@ protected:
    void do_set_node_priority(db::node *, const double);
    void add_node_priority_other(db::node *, const double);
    void set_node_priority_other(db::node *, const double);
+   void set_node_owner(db::node *, threads_sched *);
    
 public:
 
@@ -299,6 +300,7 @@ public:
    virtual db::node* get_work(void);
    virtual void end(void);
 
+   virtual void set_node_cpu(db::node *, const vm::int_val);
    virtual void set_node_static(db::node *);
    virtual void set_node_moving(db::node *);
    virtual void set_node_affinity(db::node *, db::node *);

@@ -938,6 +938,12 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
       case CPU_STATIC_INSTR:
          cout << "CPU STATIC OF " << reg_string(pcounter_reg(pc + instr_size)) << " TO " << reg_string(pcounter_reg(pc + instr_size + reg_val_size)) << endl;
          break;
+      case MVCPUSREG_INSTR:
+         cout << "MOVE CPUS TO " << reg_string(pcounter_reg(pc + instr_size)) << endl;
+         break;
+      case SET_CPUH_INSTR:
+         cout << "SET CPU TO " << reg_string(pcounter_reg(pc + instr_size)) << endl;
+         break;
 		default:
          throw malformed_instr_error("unknown instruction code");
 	}

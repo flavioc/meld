@@ -986,9 +986,19 @@ threads_sched::move_node_to_new_owner(thread_intrusive_node *tn, threads_sched *
 }
 
 void
-threads_sched::set_node_affinity(db::node *node, db::node *affinity)
+threads_sched::set_node_cpu(db::node *node, const int_val val)
 {
-   threads_sched *new_owner(static_cast<threads_sched*>(affinity->get_owner()));
+   if(val >= All->NUM_THREADS)
+      return;
+
+   threads_sched *new_owner(static_cast<threads_sched*>(All->SCHEDS[val]));
+
+   set_node_owner(node, new_owner);
+}
+
+void
+threads_sched::set_node_owner(db::node *node, threads_sched *new_owner)
+{
    thread_intrusive_node *tn(static_cast<thread_intrusive_node*>(node));
 
    if(tn == current_node) {
@@ -1047,6 +1057,13 @@ threads_sched::set_node_affinity(db::node *node, db::node *affinity)
    }
 
    NODE_UNLOCK(tn, nodelock);
+}
+
+void
+threads_sched::set_node_affinity(db::node *node, db::node *affinity)
+{
+   threads_sched *new_owner(static_cast<threads_sched*>(affinity->get_owner()));
+   set_node_owner(node, new_owner);
 }
 
 void

@@ -144,6 +144,7 @@ public:
    virtual void set_node_static(db::node *) { }
    virtual void set_node_moving(db::node *) { }
    virtual void set_node_affinity(db::node *, db::node *) { }
+   virtual void set_node_cpu(db::node *, const vm::int_val) { }
 
    virtual void init(const size_t) = 0;
    virtual void end(void) = 0;
