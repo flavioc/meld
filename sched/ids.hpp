@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#define ALLOCATED_IDS 1024
+
 namespace sched
 {
 
@@ -23,6 +25,8 @@ class ids
       std::unordered_set<db::node::node_id, std::hash<db::node::node_id>,
          std::equal_to<db::node::node_id>, mem::allocator<db::node::node_id>>
             removed_nodes;
+
+      size_t next_allocation;
 
       void allocate_more_ids(void);
 

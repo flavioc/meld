@@ -4,8 +4,6 @@
 #include "db/database.hpp"
 #include "sched/ids.hpp"
 
-#define ALLOCATED_IDS 1000
-
 using namespace std;
 using namespace db;
 using namespace vm;
@@ -65,8 +63,10 @@ ids::delete_node(node *n)
 node*
 ids::create_node(void)
 {
-   if(next_available_id == end_available_id)
+   if(next_available_id == end_available_id) {
+      next_allocation *= 2;
       allocate_more_ids();
+   }
 
    node *n(All->DATABASE->create_node(next_available_id, next_translated_id));
 
@@ -80,13 +80,14 @@ ids::create_node(void)
 void
 ids::allocate_more_ids(void)
 {
-   pair<node::node_id, node::node_id> p(All->DATABASE->allocate_ids(ALLOCATED_IDS));
+   pair<node::node_id, node::node_id> p(All->DATABASE->allocate_ids(next_allocation));
    next_available_id = p.first;
    next_translated_id = p.second;
-   end_available_id = next_available_id + ALLOCATED_IDS;
+   end_available_id = next_available_id + next_allocation;
 }
 
-ids::ids(void)
+ids::ids(void):
+   next_allocation(ALLOCATED_IDS)
 {
    allocate_more_ids();
 }

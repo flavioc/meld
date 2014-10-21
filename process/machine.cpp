@@ -258,10 +258,12 @@ machine::start(void)
    for(size_t i(1); i < all->NUM_THREADS; ++i)
       threads[i]->join();
 
+#ifdef GC_NODES
    // join dynamic node information
    for(size_t i(1); i < all->NUM_THREADS; ++i)
       all->SCHEDS[0]->merge_new_nodes(*(all->SCHEDS[i]));
    all->SCHEDS[0]->commit_nodes();
+#endif
 
 #if 0
    cout << "Total Facts: " << this->all->DATABASE->total_facts() << endl;
