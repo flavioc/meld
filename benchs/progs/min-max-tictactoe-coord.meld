@@ -50,7 +50,7 @@ depth(A, Depth),
 build-next-plays(A, Previous, [0 | Xs], NextPlayer, X, RootPlayer, Descendants, Play)
    -o exists B. (
          set-default-priority(B, float(Depth + 1)),
-         (if Depth >= 2 then set-static(B) otherwise 1 end),
+         (if Depth >= 4 then set-static(B) otherwise 1 end),
          play(B, intlistappend(Previous, [NextPlayer | Xs]), if NextPlayer = 1 then 2 else 1 end, X, RootPlayer),
          build-next-plays(A, intlistappend(Previous, [0]), Xs, NextPlayer, X + 1, RootPlayer, Descendants + 1, Play),
          depth(A, Depth),
