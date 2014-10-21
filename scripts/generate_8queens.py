@@ -71,6 +71,8 @@ for x in range(0, side):
 	for y in range(0, side):
 		id = x * side + y
 		print "!coord(@" + str(map_node(id)) + ", " + str(x) + ", " + str(y) + ")."
+		if x == side - 1:
+			print "set-cpu(@" + str(map_node(id)) + ", " + str(y) + " % @cpus)."
 
 		# generate down right
 		if y >= side - 2:
