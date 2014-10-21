@@ -2,6 +2,7 @@
 #ifndef MEM_POOL_HPP
 #define MEM_POOL_HPP
 
+#include <atomic>
 #include <vector>
 #include <iostream>
 #include <assert.h>

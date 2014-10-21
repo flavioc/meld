@@ -125,7 +125,8 @@ database::create_node_id(const db::node::node_id id)
 node*
 database::create_node_iterator(database::map_nodes::iterator it)
 {
-   return create_fn(it->first, (node::node_id)it->first);
+   it->second = create_fn(it->first, (node::node_id)it->first);
+   return it->second;
 }
 
 pair<node::node_id, node::node_id>
