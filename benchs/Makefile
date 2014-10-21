@@ -83,6 +83,11 @@ update-queens:
 	touch progs/8queens-11.meld
 	touch progs/8queens-12.meld
 	touch progs/8queens-13.meld
+	git add progs/data/8queens-data9.meld
+	git add progs/data/8queens-data10.meld
+	git add progs/data/8queens-data11.meld
+	git add progs/data/8queens-data12.meld
+	git add progs/data/8queens-data13.meld
 
 plots:
 	@bash ../scripts/plots/plot_instrumentation.sh instrumentation_files
