@@ -1,858 +1,732 @@
 !coord(@0, 0, 0).
-!down-right(@0, @27).
+!down-right(@0, @25).
 !down-left(@0, @0).
 !left(@0, @0).
-!right(@0, @13).
-!coord(@13, 0, 1).
-!down-right(@13, @40).
-!down-left(@13, @13).
-!left(@13, @0).
-!right(@13, @26).
-!coord(@26, 0, 2).
-!down-right(@26, @53).
-!down-left(@26, @1).
-!left(@26, @13).
-!right(@26, @39).
-!coord(@39, 0, 3).
-!down-right(@39, @66).
-!down-left(@39, @14).
-!left(@39, @26).
-!right(@39, @52).
-!coord(@52, 0, 4).
-!down-right(@52, @79).
-!down-left(@52, @27).
-!left(@52, @39).
-!right(@52, @65).
-!coord(@65, 0, 5).
-!down-right(@65, @92).
-!down-left(@65, @40).
-!left(@65, @52).
-!right(@65, @78).
-!coord(@78, 0, 6).
-!down-right(@78, @105).
-!down-left(@78, @53).
-!left(@78, @65).
-!right(@78, @91).
-!coord(@91, 0, 7).
-!down-right(@91, @118).
-!down-left(@91, @66).
-!left(@91, @78).
-!right(@91, @104).
-!coord(@104, 0, 8).
-!down-right(@104, @131).
-!down-left(@104, @79).
-!left(@104, @91).
-!right(@104, @117).
-!coord(@117, 0, 9).
-!down-right(@117, @144).
-!down-left(@117, @92).
-!left(@117, @104).
-!right(@117, @130).
-!coord(@130, 0, 10).
-!down-right(@130, @157).
-!down-left(@130, @105).
-!left(@130, @117).
-!right(@130, @143).
-!coord(@143, 0, 11).
-!down-right(@143, @143).
-!down-left(@143, @118).
-!left(@143, @130).
-!right(@143, @156).
-!coord(@156, 0, 12).
-!down-right(@156, @156).
-!down-left(@156, @131).
-!left(@156, @143).
-!right(@156, @156).
+!right(@0, @12).
+!coord(@12, 0, 1).
+!down-right(@12, @37).
+!down-left(@12, @12).
+!left(@12, @0).
+!right(@12, @24).
+!coord(@24, 0, 2).
+!down-right(@24, @49).
+!down-left(@24, @1).
+!left(@24, @12).
+!right(@24, @36).
+!coord(@36, 0, 3).
+!down-right(@36, @61).
+!down-left(@36, @13).
+!left(@36, @24).
+!right(@36, @48).
+!coord(@48, 0, 4).
+!down-right(@48, @73).
+!down-left(@48, @25).
+!left(@48, @36).
+!right(@48, @60).
+!coord(@60, 0, 5).
+!down-right(@60, @85).
+!down-left(@60, @37).
+!left(@60, @48).
+!right(@60, @72).
+!coord(@72, 0, 6).
+!down-right(@72, @97).
+!down-left(@72, @49).
+!left(@72, @60).
+!right(@72, @84).
+!coord(@84, 0, 7).
+!down-right(@84, @109).
+!down-left(@84, @61).
+!left(@84, @72).
+!right(@84, @96).
+!coord(@96, 0, 8).
+!down-right(@96, @121).
+!down-left(@96, @73).
+!left(@96, @84).
+!right(@96, @108).
+!coord(@108, 0, 9).
+!down-right(@108, @133).
+!down-left(@108, @85).
+!left(@108, @96).
+!right(@108, @120).
+!coord(@120, 0, 10).
+!down-right(@120, @120).
+!down-left(@120, @97).
+!left(@120, @108).
+!right(@120, @132).
+!coord(@132, 0, 11).
+!down-right(@132, @132).
+!down-left(@132, @109).
+!left(@132, @120).
+!right(@132, @132).
 !coord(@1, 1, 0).
-!down-right(@1, @28).
+!down-right(@1, @26).
 !down-left(@1, @1).
 !left(@1, @1).
-!right(@1, @14).
-!coord(@14, 1, 1).
-!down-right(@14, @41).
-!down-left(@14, @14).
-!left(@14, @1).
-!right(@14, @27).
-!coord(@27, 1, 2).
-!down-right(@27, @54).
-!down-left(@27, @2).
-!left(@27, @14).
-!right(@27, @40).
-!coord(@40, 1, 3).
-!down-right(@40, @67).
-!down-left(@40, @15).
-!left(@40, @27).
-!right(@40, @53).
-!coord(@53, 1, 4).
-!down-right(@53, @80).
-!down-left(@53, @28).
-!left(@53, @40).
-!right(@53, @66).
-!coord(@66, 1, 5).
-!down-right(@66, @93).
-!down-left(@66, @41).
-!left(@66, @53).
-!right(@66, @79).
-!coord(@79, 1, 6).
-!down-right(@79, @106).
-!down-left(@79, @54).
-!left(@79, @66).
-!right(@79, @92).
-!coord(@92, 1, 7).
-!down-right(@92, @119).
-!down-left(@92, @67).
-!left(@92, @79).
-!right(@92, @105).
-!coord(@105, 1, 8).
-!down-right(@105, @132).
-!down-left(@105, @80).
-!left(@105, @92).
-!right(@105, @118).
-!coord(@118, 1, 9).
-!down-right(@118, @145).
-!down-left(@118, @93).
-!left(@118, @105).
-!right(@118, @131).
-!coord(@131, 1, 10).
-!down-right(@131, @158).
-!down-left(@131, @106).
-!left(@131, @118).
-!right(@131, @144).
-!coord(@144, 1, 11).
-!down-right(@144, @144).
-!down-left(@144, @119).
-!left(@144, @131).
-!right(@144, @157).
-!coord(@157, 1, 12).
-!down-right(@157, @157).
-!down-left(@157, @132).
-!left(@157, @144).
-!right(@157, @157).
+!right(@1, @13).
+!coord(@13, 1, 1).
+!down-right(@13, @38).
+!down-left(@13, @13).
+!left(@13, @1).
+!right(@13, @25).
+!coord(@25, 1, 2).
+!down-right(@25, @50).
+!down-left(@25, @2).
+!left(@25, @13).
+!right(@25, @37).
+!coord(@37, 1, 3).
+!down-right(@37, @62).
+!down-left(@37, @14).
+!left(@37, @25).
+!right(@37, @49).
+!coord(@49, 1, 4).
+!down-right(@49, @74).
+!down-left(@49, @26).
+!left(@49, @37).
+!right(@49, @61).
+!coord(@61, 1, 5).
+!down-right(@61, @86).
+!down-left(@61, @38).
+!left(@61, @49).
+!right(@61, @73).
+!coord(@73, 1, 6).
+!down-right(@73, @98).
+!down-left(@73, @50).
+!left(@73, @61).
+!right(@73, @85).
+!coord(@85, 1, 7).
+!down-right(@85, @110).
+!down-left(@85, @62).
+!left(@85, @73).
+!right(@85, @97).
+!coord(@97, 1, 8).
+!down-right(@97, @122).
+!down-left(@97, @74).
+!left(@97, @85).
+!right(@97, @109).
+!coord(@109, 1, 9).
+!down-right(@109, @134).
+!down-left(@109, @86).
+!left(@109, @97).
+!right(@109, @121).
+!coord(@121, 1, 10).
+!down-right(@121, @121).
+!down-left(@121, @98).
+!left(@121, @109).
+!right(@121, @133).
+!coord(@133, 1, 11).
+!down-right(@133, @133).
+!down-left(@133, @110).
+!left(@133, @121).
+!right(@133, @133).
 !coord(@2, 2, 0).
-!down-right(@2, @29).
+!down-right(@2, @27).
 !down-left(@2, @2).
 !left(@2, @2).
-!right(@2, @15).
-!coord(@15, 2, 1).
-!down-right(@15, @42).
-!down-left(@15, @15).
-!left(@15, @2).
-!right(@15, @28).
-!coord(@28, 2, 2).
-!down-right(@28, @55).
-!down-left(@28, @3).
-!left(@28, @15).
-!right(@28, @41).
-!coord(@41, 2, 3).
-!down-right(@41, @68).
-!down-left(@41, @16).
-!left(@41, @28).
-!right(@41, @54).
-!coord(@54, 2, 4).
-!down-right(@54, @81).
-!down-left(@54, @29).
-!left(@54, @41).
-!right(@54, @67).
-!coord(@67, 2, 5).
-!down-right(@67, @94).
-!down-left(@67, @42).
-!left(@67, @54).
-!right(@67, @80).
-!coord(@80, 2, 6).
-!down-right(@80, @107).
-!down-left(@80, @55).
-!left(@80, @67).
-!right(@80, @93).
-!coord(@93, 2, 7).
-!down-right(@93, @120).
-!down-left(@93, @68).
-!left(@93, @80).
-!right(@93, @106).
-!coord(@106, 2, 8).
-!down-right(@106, @133).
-!down-left(@106, @81).
-!left(@106, @93).
-!right(@106, @119).
-!coord(@119, 2, 9).
-!down-right(@119, @146).
-!down-left(@119, @94).
-!left(@119, @106).
-!right(@119, @132).
-!coord(@132, 2, 10).
-!down-right(@132, @159).
-!down-left(@132, @107).
-!left(@132, @119).
-!right(@132, @145).
-!coord(@145, 2, 11).
-!down-right(@145, @145).
-!down-left(@145, @120).
-!left(@145, @132).
-!right(@145, @158).
-!coord(@158, 2, 12).
-!down-right(@158, @158).
-!down-left(@158, @133).
-!left(@158, @145).
-!right(@158, @158).
+!right(@2, @14).
+!coord(@14, 2, 1).
+!down-right(@14, @39).
+!down-left(@14, @14).
+!left(@14, @2).
+!right(@14, @26).
+!coord(@26, 2, 2).
+!down-right(@26, @51).
+!down-left(@26, @3).
+!left(@26, @14).
+!right(@26, @38).
+!coord(@38, 2, 3).
+!down-right(@38, @63).
+!down-left(@38, @15).
+!left(@38, @26).
+!right(@38, @50).
+!coord(@50, 2, 4).
+!down-right(@50, @75).
+!down-left(@50, @27).
+!left(@50, @38).
+!right(@50, @62).
+!coord(@62, 2, 5).
+!down-right(@62, @87).
+!down-left(@62, @39).
+!left(@62, @50).
+!right(@62, @74).
+!coord(@74, 2, 6).
+!down-right(@74, @99).
+!down-left(@74, @51).
+!left(@74, @62).
+!right(@74, @86).
+!coord(@86, 2, 7).
+!down-right(@86, @111).
+!down-left(@86, @63).
+!left(@86, @74).
+!right(@86, @98).
+!coord(@98, 2, 8).
+!down-right(@98, @123).
+!down-left(@98, @75).
+!left(@98, @86).
+!right(@98, @110).
+!coord(@110, 2, 9).
+!down-right(@110, @135).
+!down-left(@110, @87).
+!left(@110, @98).
+!right(@110, @122).
+!coord(@122, 2, 10).
+!down-right(@122, @122).
+!down-left(@122, @99).
+!left(@122, @110).
+!right(@122, @134).
+!coord(@134, 2, 11).
+!down-right(@134, @134).
+!down-left(@134, @111).
+!left(@134, @122).
+!right(@134, @134).
 !coord(@3, 3, 0).
-!down-right(@3, @30).
+!down-right(@3, @28).
 !down-left(@3, @3).
 !left(@3, @3).
-!right(@3, @16).
-!coord(@16, 3, 1).
-!down-right(@16, @43).
-!down-left(@16, @16).
-!left(@16, @3).
-!right(@16, @29).
-!coord(@29, 3, 2).
-!down-right(@29, @56).
-!down-left(@29, @4).
-!left(@29, @16).
-!right(@29, @42).
-!coord(@42, 3, 3).
-!down-right(@42, @69).
-!down-left(@42, @17).
-!left(@42, @29).
-!right(@42, @55).
-!coord(@55, 3, 4).
-!down-right(@55, @82).
-!down-left(@55, @30).
-!left(@55, @42).
-!right(@55, @68).
-!coord(@68, 3, 5).
-!down-right(@68, @95).
-!down-left(@68, @43).
-!left(@68, @55).
-!right(@68, @81).
-!coord(@81, 3, 6).
-!down-right(@81, @108).
-!down-left(@81, @56).
-!left(@81, @68).
-!right(@81, @94).
-!coord(@94, 3, 7).
-!down-right(@94, @121).
-!down-left(@94, @69).
-!left(@94, @81).
-!right(@94, @107).
-!coord(@107, 3, 8).
-!down-right(@107, @134).
-!down-left(@107, @82).
-!left(@107, @94).
-!right(@107, @120).
-!coord(@120, 3, 9).
-!down-right(@120, @147).
-!down-left(@120, @95).
-!left(@120, @107).
-!right(@120, @133).
-!coord(@133, 3, 10).
-!down-right(@133, @160).
-!down-left(@133, @108).
-!left(@133, @120).
-!right(@133, @146).
-!coord(@146, 3, 11).
-!down-right(@146, @146).
-!down-left(@146, @121).
-!left(@146, @133).
-!right(@146, @159).
-!coord(@159, 3, 12).
-!down-right(@159, @159).
-!down-left(@159, @134).
-!left(@159, @146).
-!right(@159, @159).
+!right(@3, @15).
+!coord(@15, 3, 1).
+!down-right(@15, @40).
+!down-left(@15, @15).
+!left(@15, @3).
+!right(@15, @27).
+!coord(@27, 3, 2).
+!down-right(@27, @52).
+!down-left(@27, @4).
+!left(@27, @15).
+!right(@27, @39).
+!coord(@39, 3, 3).
+!down-right(@39, @64).
+!down-left(@39, @16).
+!left(@39, @27).
+!right(@39, @51).
+!coord(@51, 3, 4).
+!down-right(@51, @76).
+!down-left(@51, @28).
+!left(@51, @39).
+!right(@51, @63).
+!coord(@63, 3, 5).
+!down-right(@63, @88).
+!down-left(@63, @40).
+!left(@63, @51).
+!right(@63, @75).
+!coord(@75, 3, 6).
+!down-right(@75, @100).
+!down-left(@75, @52).
+!left(@75, @63).
+!right(@75, @87).
+!coord(@87, 3, 7).
+!down-right(@87, @112).
+!down-left(@87, @64).
+!left(@87, @75).
+!right(@87, @99).
+!coord(@99, 3, 8).
+!down-right(@99, @124).
+!down-left(@99, @76).
+!left(@99, @87).
+!right(@99, @111).
+!coord(@111, 3, 9).
+!down-right(@111, @136).
+!down-left(@111, @88).
+!left(@111, @99).
+!right(@111, @123).
+!coord(@123, 3, 10).
+!down-right(@123, @123).
+!down-left(@123, @100).
+!left(@123, @111).
+!right(@123, @135).
+!coord(@135, 3, 11).
+!down-right(@135, @135).
+!down-left(@135, @112).
+!left(@135, @123).
+!right(@135, @135).
 !coord(@4, 4, 0).
-!down-right(@4, @31).
+!down-right(@4, @29).
 !down-left(@4, @4).
 !left(@4, @4).
-!right(@4, @17).
-!coord(@17, 4, 1).
-!down-right(@17, @44).
-!down-left(@17, @17).
-!left(@17, @4).
-!right(@17, @30).
-!coord(@30, 4, 2).
-!down-right(@30, @57).
-!down-left(@30, @5).
-!left(@30, @17).
-!right(@30, @43).
-!coord(@43, 4, 3).
-!down-right(@43, @70).
-!down-left(@43, @18).
-!left(@43, @30).
-!right(@43, @56).
-!coord(@56, 4, 4).
-!down-right(@56, @83).
-!down-left(@56, @31).
-!left(@56, @43).
-!right(@56, @69).
-!coord(@69, 4, 5).
-!down-right(@69, @96).
-!down-left(@69, @44).
-!left(@69, @56).
-!right(@69, @82).
-!coord(@82, 4, 6).
-!down-right(@82, @109).
-!down-left(@82, @57).
-!left(@82, @69).
-!right(@82, @95).
-!coord(@95, 4, 7).
-!down-right(@95, @122).
-!down-left(@95, @70).
-!left(@95, @82).
-!right(@95, @108).
-!coord(@108, 4, 8).
-!down-right(@108, @135).
-!down-left(@108, @83).
-!left(@108, @95).
-!right(@108, @121).
-!coord(@121, 4, 9).
-!down-right(@121, @148).
-!down-left(@121, @96).
-!left(@121, @108).
-!right(@121, @134).
-!coord(@134, 4, 10).
-!down-right(@134, @161).
-!down-left(@134, @109).
-!left(@134, @121).
-!right(@134, @147).
-!coord(@147, 4, 11).
-!down-right(@147, @147).
-!down-left(@147, @122).
-!left(@147, @134).
-!right(@147, @160).
-!coord(@160, 4, 12).
-!down-right(@160, @160).
-!down-left(@160, @135).
-!left(@160, @147).
-!right(@160, @160).
+!right(@4, @16).
+!coord(@16, 4, 1).
+!down-right(@16, @41).
+!down-left(@16, @16).
+!left(@16, @4).
+!right(@16, @28).
+!coord(@28, 4, 2).
+!down-right(@28, @53).
+!down-left(@28, @5).
+!left(@28, @16).
+!right(@28, @40).
+!coord(@40, 4, 3).
+!down-right(@40, @65).
+!down-left(@40, @17).
+!left(@40, @28).
+!right(@40, @52).
+!coord(@52, 4, 4).
+!down-right(@52, @77).
+!down-left(@52, @29).
+!left(@52, @40).
+!right(@52, @64).
+!coord(@64, 4, 5).
+!down-right(@64, @89).
+!down-left(@64, @41).
+!left(@64, @52).
+!right(@64, @76).
+!coord(@76, 4, 6).
+!down-right(@76, @101).
+!down-left(@76, @53).
+!left(@76, @64).
+!right(@76, @88).
+!coord(@88, 4, 7).
+!down-right(@88, @113).
+!down-left(@88, @65).
+!left(@88, @76).
+!right(@88, @100).
+!coord(@100, 4, 8).
+!down-right(@100, @125).
+!down-left(@100, @77).
+!left(@100, @88).
+!right(@100, @112).
+!coord(@112, 4, 9).
+!down-right(@112, @137).
+!down-left(@112, @89).
+!left(@112, @100).
+!right(@112, @124).
+!coord(@124, 4, 10).
+!down-right(@124, @124).
+!down-left(@124, @101).
+!left(@124, @112).
+!right(@124, @136).
+!coord(@136, 4, 11).
+!down-right(@136, @136).
+!down-left(@136, @113).
+!left(@136, @124).
+!right(@136, @136).
 !coord(@5, 5, 0).
-!down-right(@5, @32).
+!down-right(@5, @30).
 !down-left(@5, @5).
 !left(@5, @5).
-!right(@5, @18).
-!coord(@18, 5, 1).
-!down-right(@18, @45).
-!down-left(@18, @18).
-!left(@18, @5).
-!right(@18, @31).
-!coord(@31, 5, 2).
-!down-right(@31, @58).
-!down-left(@31, @6).
-!left(@31, @18).
-!right(@31, @44).
-!coord(@44, 5, 3).
-!down-right(@44, @71).
-!down-left(@44, @19).
-!left(@44, @31).
-!right(@44, @57).
-!coord(@57, 5, 4).
-!down-right(@57, @84).
-!down-left(@57, @32).
-!left(@57, @44).
-!right(@57, @70).
-!coord(@70, 5, 5).
-!down-right(@70, @97).
-!down-left(@70, @45).
-!left(@70, @57).
-!right(@70, @83).
-!coord(@83, 5, 6).
-!down-right(@83, @110).
-!down-left(@83, @58).
-!left(@83, @70).
-!right(@83, @96).
-!coord(@96, 5, 7).
-!down-right(@96, @123).
-!down-left(@96, @71).
-!left(@96, @83).
-!right(@96, @109).
-!coord(@109, 5, 8).
-!down-right(@109, @136).
-!down-left(@109, @84).
-!left(@109, @96).
-!right(@109, @122).
-!coord(@122, 5, 9).
-!down-right(@122, @149).
-!down-left(@122, @97).
-!left(@122, @109).
-!right(@122, @135).
-!coord(@135, 5, 10).
-!down-right(@135, @162).
-!down-left(@135, @110).
-!left(@135, @122).
-!right(@135, @148).
-!coord(@148, 5, 11).
-!down-right(@148, @148).
-!down-left(@148, @123).
-!left(@148, @135).
-!right(@148, @161).
-!coord(@161, 5, 12).
-!down-right(@161, @161).
-!down-left(@161, @136).
-!left(@161, @148).
-!right(@161, @161).
+!right(@5, @17).
+!coord(@17, 5, 1).
+!down-right(@17, @42).
+!down-left(@17, @17).
+!left(@17, @5).
+!right(@17, @29).
+!coord(@29, 5, 2).
+!down-right(@29, @54).
+!down-left(@29, @6).
+!left(@29, @17).
+!right(@29, @41).
+!coord(@41, 5, 3).
+!down-right(@41, @66).
+!down-left(@41, @18).
+!left(@41, @29).
+!right(@41, @53).
+!coord(@53, 5, 4).
+!down-right(@53, @78).
+!down-left(@53, @30).
+!left(@53, @41).
+!right(@53, @65).
+!coord(@65, 5, 5).
+!down-right(@65, @90).
+!down-left(@65, @42).
+!left(@65, @53).
+!right(@65, @77).
+!coord(@77, 5, 6).
+!down-right(@77, @102).
+!down-left(@77, @54).
+!left(@77, @65).
+!right(@77, @89).
+!coord(@89, 5, 7).
+!down-right(@89, @114).
+!down-left(@89, @66).
+!left(@89, @77).
+!right(@89, @101).
+!coord(@101, 5, 8).
+!down-right(@101, @126).
+!down-left(@101, @78).
+!left(@101, @89).
+!right(@101, @113).
+!coord(@113, 5, 9).
+!down-right(@113, @138).
+!down-left(@113, @90).
+!left(@113, @101).
+!right(@113, @125).
+!coord(@125, 5, 10).
+!down-right(@125, @125).
+!down-left(@125, @102).
+!left(@125, @113).
+!right(@125, @137).
+!coord(@137, 5, 11).
+!down-right(@137, @137).
+!down-left(@137, @114).
+!left(@137, @125).
+!right(@137, @137).
 !coord(@6, 6, 0).
-!down-right(@6, @33).
+!down-right(@6, @31).
 !down-left(@6, @6).
 !left(@6, @6).
-!right(@6, @19).
-!coord(@19, 6, 1).
-!down-right(@19, @46).
-!down-left(@19, @19).
-!left(@19, @6).
-!right(@19, @32).
-!coord(@32, 6, 2).
-!down-right(@32, @59).
-!down-left(@32, @7).
-!left(@32, @19).
-!right(@32, @45).
-!coord(@45, 6, 3).
-!down-right(@45, @72).
-!down-left(@45, @20).
-!left(@45, @32).
-!right(@45, @58).
-!coord(@58, 6, 4).
-!down-right(@58, @85).
-!down-left(@58, @33).
-!left(@58, @45).
-!right(@58, @71).
-!coord(@71, 6, 5).
-!down-right(@71, @98).
-!down-left(@71, @46).
-!left(@71, @58).
-!right(@71, @84).
-!coord(@84, 6, 6).
-!down-right(@84, @111).
-!down-left(@84, @59).
-!left(@84, @71).
-!right(@84, @97).
-!coord(@97, 6, 7).
-!down-right(@97, @124).
-!down-left(@97, @72).
-!left(@97, @84).
-!right(@97, @110).
-!coord(@110, 6, 8).
-!down-right(@110, @137).
-!down-left(@110, @85).
-!left(@110, @97).
-!right(@110, @123).
-!coord(@123, 6, 9).
-!down-right(@123, @150).
-!down-left(@123, @98).
-!left(@123, @110).
-!right(@123, @136).
-!coord(@136, 6, 10).
-!down-right(@136, @163).
-!down-left(@136, @111).
-!left(@136, @123).
-!right(@136, @149).
-!coord(@149, 6, 11).
-!down-right(@149, @149).
-!down-left(@149, @124).
-!left(@149, @136).
-!right(@149, @162).
-!coord(@162, 6, 12).
-!down-right(@162, @162).
-!down-left(@162, @137).
-!left(@162, @149).
-!right(@162, @162).
+!right(@6, @18).
+!coord(@18, 6, 1).
+!down-right(@18, @43).
+!down-left(@18, @18).
+!left(@18, @6).
+!right(@18, @30).
+!coord(@30, 6, 2).
+!down-right(@30, @55).
+!down-left(@30, @7).
+!left(@30, @18).
+!right(@30, @42).
+!coord(@42, 6, 3).
+!down-right(@42, @67).
+!down-left(@42, @19).
+!left(@42, @30).
+!right(@42, @54).
+!coord(@54, 6, 4).
+!down-right(@54, @79).
+!down-left(@54, @31).
+!left(@54, @42).
+!right(@54, @66).
+!coord(@66, 6, 5).
+!down-right(@66, @91).
+!down-left(@66, @43).
+!left(@66, @54).
+!right(@66, @78).
+!coord(@78, 6, 6).
+!down-right(@78, @103).
+!down-left(@78, @55).
+!left(@78, @66).
+!right(@78, @90).
+!coord(@90, 6, 7).
+!down-right(@90, @115).
+!down-left(@90, @67).
+!left(@90, @78).
+!right(@90, @102).
+!coord(@102, 6, 8).
+!down-right(@102, @127).
+!down-left(@102, @79).
+!left(@102, @90).
+!right(@102, @114).
+!coord(@114, 6, 9).
+!down-right(@114, @139).
+!down-left(@114, @91).
+!left(@114, @102).
+!right(@114, @126).
+!coord(@126, 6, 10).
+!down-right(@126, @126).
+!down-left(@126, @103).
+!left(@126, @114).
+!right(@126, @138).
+!coord(@138, 6, 11).
+!down-right(@138, @138).
+!down-left(@138, @115).
+!left(@138, @126).
+!right(@138, @138).
 !coord(@7, 7, 0).
-!down-right(@7, @34).
+!down-right(@7, @32).
 !down-left(@7, @7).
 !left(@7, @7).
-!right(@7, @20).
-!coord(@20, 7, 1).
-!down-right(@20, @47).
-!down-left(@20, @20).
-!left(@20, @7).
-!right(@20, @33).
-!coord(@33, 7, 2).
-!down-right(@33, @60).
-!down-left(@33, @8).
-!left(@33, @20).
-!right(@33, @46).
-!coord(@46, 7, 3).
-!down-right(@46, @73).
-!down-left(@46, @21).
-!left(@46, @33).
-!right(@46, @59).
-!coord(@59, 7, 4).
-!down-right(@59, @86).
-!down-left(@59, @34).
-!left(@59, @46).
-!right(@59, @72).
-!coord(@72, 7, 5).
-!down-right(@72, @99).
-!down-left(@72, @47).
-!left(@72, @59).
-!right(@72, @85).
-!coord(@85, 7, 6).
-!down-right(@85, @112).
-!down-left(@85, @60).
-!left(@85, @72).
-!right(@85, @98).
-!coord(@98, 7, 7).
-!down-right(@98, @125).
-!down-left(@98, @73).
-!left(@98, @85).
-!right(@98, @111).
-!coord(@111, 7, 8).
-!down-right(@111, @138).
-!down-left(@111, @86).
-!left(@111, @98).
-!right(@111, @124).
-!coord(@124, 7, 9).
-!down-right(@124, @151).
-!down-left(@124, @99).
-!left(@124, @111).
-!right(@124, @137).
-!coord(@137, 7, 10).
-!down-right(@137, @164).
-!down-left(@137, @112).
-!left(@137, @124).
-!right(@137, @150).
-!coord(@150, 7, 11).
-!down-right(@150, @150).
-!down-left(@150, @125).
-!left(@150, @137).
-!right(@150, @163).
-!coord(@163, 7, 12).
-!down-right(@163, @163).
-!down-left(@163, @138).
-!left(@163, @150).
-!right(@163, @163).
+!right(@7, @19).
+!coord(@19, 7, 1).
+!down-right(@19, @44).
+!down-left(@19, @19).
+!left(@19, @7).
+!right(@19, @31).
+!coord(@31, 7, 2).
+!down-right(@31, @56).
+!down-left(@31, @8).
+!left(@31, @19).
+!right(@31, @43).
+!coord(@43, 7, 3).
+!down-right(@43, @68).
+!down-left(@43, @20).
+!left(@43, @31).
+!right(@43, @55).
+!coord(@55, 7, 4).
+!down-right(@55, @80).
+!down-left(@55, @32).
+!left(@55, @43).
+!right(@55, @67).
+!coord(@67, 7, 5).
+!down-right(@67, @92).
+!down-left(@67, @44).
+!left(@67, @55).
+!right(@67, @79).
+!coord(@79, 7, 6).
+!down-right(@79, @104).
+!down-left(@79, @56).
+!left(@79, @67).
+!right(@79, @91).
+!coord(@91, 7, 7).
+!down-right(@91, @116).
+!down-left(@91, @68).
+!left(@91, @79).
+!right(@91, @103).
+!coord(@103, 7, 8).
+!down-right(@103, @128).
+!down-left(@103, @80).
+!left(@103, @91).
+!right(@103, @115).
+!coord(@115, 7, 9).
+!down-right(@115, @140).
+!down-left(@115, @92).
+!left(@115, @103).
+!right(@115, @127).
+!coord(@127, 7, 10).
+!down-right(@127, @127).
+!down-left(@127, @104).
+!left(@127, @115).
+!right(@127, @139).
+!coord(@139, 7, 11).
+!down-right(@139, @139).
+!down-left(@139, @116).
+!left(@139, @127).
+!right(@139, @139).
 !coord(@8, 8, 0).
-!down-right(@8, @35).
+!down-right(@8, @33).
 !down-left(@8, @8).
 !left(@8, @8).
-!right(@8, @21).
-!coord(@21, 8, 1).
-!down-right(@21, @48).
-!down-left(@21, @21).
-!left(@21, @8).
-!right(@21, @34).
-!coord(@34, 8, 2).
-!down-right(@34, @61).
-!down-left(@34, @9).
-!left(@34, @21).
-!right(@34, @47).
-!coord(@47, 8, 3).
-!down-right(@47, @74).
-!down-left(@47, @22).
-!left(@47, @34).
-!right(@47, @60).
-!coord(@60, 8, 4).
-!down-right(@60, @87).
-!down-left(@60, @35).
-!left(@60, @47).
-!right(@60, @73).
-!coord(@73, 8, 5).
-!down-right(@73, @100).
-!down-left(@73, @48).
-!left(@73, @60).
-!right(@73, @86).
-!coord(@86, 8, 6).
-!down-right(@86, @113).
-!down-left(@86, @61).
-!left(@86, @73).
-!right(@86, @99).
-!coord(@99, 8, 7).
-!down-right(@99, @126).
-!down-left(@99, @74).
-!left(@99, @86).
-!right(@99, @112).
-!coord(@112, 8, 8).
-!down-right(@112, @139).
-!down-left(@112, @87).
-!left(@112, @99).
-!right(@112, @125).
-!coord(@125, 8, 9).
-!down-right(@125, @152).
-!down-left(@125, @100).
-!left(@125, @112).
-!right(@125, @138).
-!coord(@138, 8, 10).
-!down-right(@138, @165).
-!down-left(@138, @113).
-!left(@138, @125).
-!right(@138, @151).
-!coord(@151, 8, 11).
-!down-right(@151, @151).
-!down-left(@151, @126).
-!left(@151, @138).
-!right(@151, @164).
-!coord(@164, 8, 12).
-!down-right(@164, @164).
-!down-left(@164, @139).
-!left(@164, @151).
-!right(@164, @164).
+!right(@8, @20).
+!coord(@20, 8, 1).
+!down-right(@20, @45).
+!down-left(@20, @20).
+!left(@20, @8).
+!right(@20, @32).
+!coord(@32, 8, 2).
+!down-right(@32, @57).
+!down-left(@32, @9).
+!left(@32, @20).
+!right(@32, @44).
+!coord(@44, 8, 3).
+!down-right(@44, @69).
+!down-left(@44, @21).
+!left(@44, @32).
+!right(@44, @56).
+!coord(@56, 8, 4).
+!down-right(@56, @81).
+!down-left(@56, @33).
+!left(@56, @44).
+!right(@56, @68).
+!coord(@68, 8, 5).
+!down-right(@68, @93).
+!down-left(@68, @45).
+!left(@68, @56).
+!right(@68, @80).
+!coord(@80, 8, 6).
+!down-right(@80, @105).
+!down-left(@80, @57).
+!left(@80, @68).
+!right(@80, @92).
+!coord(@92, 8, 7).
+!down-right(@92, @117).
+!down-left(@92, @69).
+!left(@92, @80).
+!right(@92, @104).
+!coord(@104, 8, 8).
+!down-right(@104, @129).
+!down-left(@104, @81).
+!left(@104, @92).
+!right(@104, @116).
+!coord(@116, 8, 9).
+!down-right(@116, @141).
+!down-left(@116, @93).
+!left(@116, @104).
+!right(@116, @128).
+!coord(@128, 8, 10).
+!down-right(@128, @128).
+!down-left(@128, @105).
+!left(@128, @116).
+!right(@128, @140).
+!coord(@140, 8, 11).
+!down-right(@140, @140).
+!down-left(@140, @117).
+!left(@140, @128).
+!right(@140, @140).
 !coord(@9, 9, 0).
-!down-right(@9, @36).
+!down-right(@9, @34).
 !down-left(@9, @9).
 !left(@9, @9).
-!right(@9, @22).
-!coord(@22, 9, 1).
-!down-right(@22, @49).
-!down-left(@22, @22).
-!left(@22, @9).
-!right(@22, @35).
-!coord(@35, 9, 2).
-!down-right(@35, @62).
-!down-left(@35, @10).
-!left(@35, @22).
-!right(@35, @48).
-!coord(@48, 9, 3).
-!down-right(@48, @75).
-!down-left(@48, @23).
-!left(@48, @35).
-!right(@48, @61).
-!coord(@61, 9, 4).
-!down-right(@61, @88).
-!down-left(@61, @36).
-!left(@61, @48).
-!right(@61, @74).
-!coord(@74, 9, 5).
-!down-right(@74, @101).
-!down-left(@74, @49).
-!left(@74, @61).
-!right(@74, @87).
-!coord(@87, 9, 6).
-!down-right(@87, @114).
-!down-left(@87, @62).
-!left(@87, @74).
-!right(@87, @100).
-!coord(@100, 9, 7).
-!down-right(@100, @127).
-!down-left(@100, @75).
-!left(@100, @87).
-!right(@100, @113).
-!coord(@113, 9, 8).
-!down-right(@113, @140).
-!down-left(@113, @88).
-!left(@113, @100).
-!right(@113, @126).
-!coord(@126, 9, 9).
-!down-right(@126, @153).
-!down-left(@126, @101).
-!left(@126, @113).
-!right(@126, @139).
-!coord(@139, 9, 10).
-!down-right(@139, @166).
-!down-left(@139, @114).
-!left(@139, @126).
-!right(@139, @152).
-!coord(@152, 9, 11).
-!down-right(@152, @152).
-!down-left(@152, @127).
-!left(@152, @139).
-!right(@152, @165).
-!coord(@165, 9, 12).
-!down-right(@165, @165).
-!down-left(@165, @140).
-!left(@165, @152).
-!right(@165, @165).
+!right(@9, @21).
+!coord(@21, 9, 1).
+!down-right(@21, @46).
+!down-left(@21, @21).
+!left(@21, @9).
+!right(@21, @33).
+!coord(@33, 9, 2).
+!down-right(@33, @58).
+!down-left(@33, @10).
+!left(@33, @21).
+!right(@33, @45).
+!coord(@45, 9, 3).
+!down-right(@45, @70).
+!down-left(@45, @22).
+!left(@45, @33).
+!right(@45, @57).
+!coord(@57, 9, 4).
+!down-right(@57, @82).
+!down-left(@57, @34).
+!left(@57, @45).
+!right(@57, @69).
+!coord(@69, 9, 5).
+!down-right(@69, @94).
+!down-left(@69, @46).
+!left(@69, @57).
+!right(@69, @81).
+!coord(@81, 9, 6).
+!down-right(@81, @106).
+!down-left(@81, @58).
+!left(@81, @69).
+!right(@81, @93).
+!coord(@93, 9, 7).
+!down-right(@93, @118).
+!down-left(@93, @70).
+!left(@93, @81).
+!right(@93, @105).
+!coord(@105, 9, 8).
+!down-right(@105, @130).
+!down-left(@105, @82).
+!left(@105, @93).
+!right(@105, @117).
+!coord(@117, 9, 9).
+!down-right(@117, @142).
+!down-left(@117, @94).
+!left(@117, @105).
+!right(@117, @129).
+!coord(@129, 9, 10).
+!down-right(@129, @129).
+!down-left(@129, @106).
+!left(@129, @117).
+!right(@129, @141).
+!coord(@141, 9, 11).
+!down-right(@141, @141).
+!down-left(@141, @118).
+!left(@141, @129).
+!right(@141, @141).
 !coord(@10, 10, 0).
-!down-right(@10, @37).
+!down-right(@10, @35).
 !down-left(@10, @10).
 !left(@10, @10).
-!right(@10, @23).
-!coord(@23, 10, 1).
-!down-right(@23, @50).
-!down-left(@23, @23).
-!left(@23, @10).
-!right(@23, @36).
-!coord(@36, 10, 2).
-!down-right(@36, @63).
-!down-left(@36, @11).
-!left(@36, @23).
-!right(@36, @49).
-!coord(@49, 10, 3).
-!down-right(@49, @76).
-!down-left(@49, @24).
-!left(@49, @36).
-!right(@49, @62).
-!coord(@62, 10, 4).
-!down-right(@62, @89).
-!down-left(@62, @37).
-!left(@62, @49).
-!right(@62, @75).
-!coord(@75, 10, 5).
-!down-right(@75, @102).
-!down-left(@75, @50).
-!left(@75, @62).
-!right(@75, @88).
-!coord(@88, 10, 6).
-!down-right(@88, @115).
-!down-left(@88, @63).
-!left(@88, @75).
-!right(@88, @101).
-!coord(@101, 10, 7).
-!down-right(@101, @128).
-!down-left(@101, @76).
-!left(@101, @88).
-!right(@101, @114).
-!coord(@114, 10, 8).
-!down-right(@114, @141).
-!down-left(@114, @89).
-!left(@114, @101).
-!right(@114, @127).
-!coord(@127, 10, 9).
-!down-right(@127, @154).
-!down-left(@127, @102).
-!left(@127, @114).
-!right(@127, @140).
-!coord(@140, 10, 10).
-!down-right(@140, @167).
-!down-left(@140, @115).
-!left(@140, @127).
-!right(@140, @153).
-!coord(@153, 10, 11).
-!down-right(@153, @153).
-!down-left(@153, @128).
-!left(@153, @140).
-!right(@153, @166).
-!coord(@166, 10, 12).
-!down-right(@166, @166).
-!down-left(@166, @141).
-!left(@166, @153).
-!right(@166, @166).
+!right(@10, @22).
+!coord(@22, 10, 1).
+!down-right(@22, @47).
+!down-left(@22, @22).
+!left(@22, @10).
+!right(@22, @34).
+!coord(@34, 10, 2).
+!down-right(@34, @59).
+!down-left(@34, @11).
+!left(@34, @22).
+!right(@34, @46).
+!coord(@46, 10, 3).
+!down-right(@46, @71).
+!down-left(@46, @23).
+!left(@46, @34).
+!right(@46, @58).
+!coord(@58, 10, 4).
+!down-right(@58, @83).
+!down-left(@58, @35).
+!left(@58, @46).
+!right(@58, @70).
+!coord(@70, 10, 5).
+!down-right(@70, @95).
+!down-left(@70, @47).
+!left(@70, @58).
+!right(@70, @82).
+!coord(@82, 10, 6).
+!down-right(@82, @107).
+!down-left(@82, @59).
+!left(@82, @70).
+!right(@82, @94).
+!coord(@94, 10, 7).
+!down-right(@94, @119).
+!down-left(@94, @71).
+!left(@94, @82).
+!right(@94, @106).
+!coord(@106, 10, 8).
+!down-right(@106, @131).
+!down-left(@106, @83).
+!left(@106, @94).
+!right(@106, @118).
+!coord(@118, 10, 9).
+!down-right(@118, @143).
+!down-left(@118, @95).
+!left(@118, @106).
+!right(@118, @130).
+!coord(@130, 10, 10).
+!down-right(@130, @130).
+!down-left(@130, @107).
+!left(@130, @118).
+!right(@130, @142).
+!coord(@142, 10, 11).
+!down-right(@142, @142).
+!down-left(@142, @119).
+!left(@142, @130).
+!right(@142, @142).
 !coord(@11, 11, 0).
-!down-right(@11, @38).
+set-cpu(@11, 0 % @cpus).
+!down-right(@11, @11).
 !down-left(@11, @11).
 !left(@11, @11).
-!right(@11, @24).
-!coord(@24, 11, 1).
-!down-right(@24, @51).
-!down-left(@24, @24).
-!left(@24, @11).
-!right(@24, @37).
-!coord(@37, 11, 2).
-!down-right(@37, @64).
-!down-left(@37, @12).
-!left(@37, @24).
-!right(@37, @50).
-!coord(@50, 11, 3).
-!down-right(@50, @77).
-!down-left(@50, @25).
-!left(@50, @37).
-!right(@50, @63).
-!coord(@63, 11, 4).
-!down-right(@63, @90).
-!down-left(@63, @38).
-!left(@63, @50).
-!right(@63, @76).
-!coord(@76, 11, 5).
-!down-right(@76, @103).
-!down-left(@76, @51).
-!left(@76, @63).
-!right(@76, @89).
-!coord(@89, 11, 6).
-!down-right(@89, @116).
-!down-left(@89, @64).
-!left(@89, @76).
-!right(@89, @102).
-!coord(@102, 11, 7).
-!down-right(@102, @129).
-!down-left(@102, @77).
-!left(@102, @89).
-!right(@102, @115).
-!coord(@115, 11, 8).
-!down-right(@115, @142).
-!down-left(@115, @90).
-!left(@115, @102).
-!right(@115, @128).
-!coord(@128, 11, 9).
-!down-right(@128, @155).
-!down-left(@128, @103).
-!left(@128, @115).
-!right(@128, @141).
-!coord(@141, 11, 10).
-!down-right(@141, @168).
-!down-left(@141, @116).
-!left(@141, @128).
-!right(@141, @154).
-!coord(@154, 11, 11).
-!down-right(@154, @154).
-!down-left(@154, @129).
-!left(@154, @141).
-!right(@154, @167).
-!coord(@167, 11, 12).
-!down-right(@167, @167).
-!down-left(@167, @142).
-!left(@167, @154).
-!right(@167, @167).
-!coord(@12, 12, 0).
-set-cpu(@12, 0 % @cpus).
-!down-right(@12, @12).
-!down-left(@12, @12).
-!left(@12, @12).
-!right(@12, @25).
-!coord(@25, 12, 1).
-set-cpu(@25, 1 % @cpus).
-!down-right(@25, @25).
-!down-left(@25, @25).
-!left(@25, @12).
-!right(@25, @38).
-!coord(@38, 12, 2).
-set-cpu(@38, 2 % @cpus).
-!down-right(@38, @38).
-!down-left(@38, @38).
-!left(@38, @25).
-!right(@38, @51).
-!coord(@51, 12, 3).
-set-cpu(@51, 3 % @cpus).
-!down-right(@51, @51).
-!down-left(@51, @51).
-!left(@51, @38).
-!right(@51, @64).
-!coord(@64, 12, 4).
-set-cpu(@64, 4 % @cpus).
-!down-right(@64, @64).
-!down-left(@64, @64).
-!left(@64, @51).
-!right(@64, @77).
-!coord(@77, 12, 5).
-set-cpu(@77, 5 % @cpus).
-!down-right(@77, @77).
-!down-left(@77, @77).
-!left(@77, @64).
-!right(@77, @90).
-!coord(@90, 12, 6).
-set-cpu(@90, 6 % @cpus).
-!down-right(@90, @90).
-!down-left(@90, @90).
-!left(@90, @77).
-!right(@90, @103).
-!coord(@103, 12, 7).
-set-cpu(@103, 7 % @cpus).
-!down-right(@103, @103).
-!down-left(@103, @103).
-!left(@103, @90).
-!right(@103, @116).
-!coord(@116, 12, 8).
-set-cpu(@116, 8 % @cpus).
-!down-right(@116, @116).
-!down-left(@116, @116).
-!left(@116, @103).
-!right(@116, @129).
-!coord(@129, 12, 9).
-set-cpu(@129, 9 % @cpus).
-!down-right(@129, @129).
-!down-left(@129, @129).
-!left(@129, @116).
-!right(@129, @142).
-!coord(@142, 12, 10).
-set-cpu(@142, 10 % @cpus).
-!down-right(@142, @142).
-!down-left(@142, @142).
-!left(@142, @129).
-!right(@142, @155).
-!coord(@155, 12, 11).
-set-cpu(@155, 11 % @cpus).
-!down-right(@155, @155).
-!down-left(@155, @155).
-!left(@155, @142).
-!right(@155, @168).
-!coord(@168, 12, 12).
-set-cpu(@168, 12 % @cpus).
-!down-right(@168, @168).
-!down-left(@168, @168).
-!left(@168, @155).
-!right(@168, @168).
+!right(@11, @23).
+!coord(@23, 11, 1).
+set-cpu(@23, 1 % @cpus).
+!down-right(@23, @23).
+!down-left(@23, @23).
+!left(@23, @11).
+!right(@23, @35).
+!coord(@35, 11, 2).
+set-cpu(@35, 2 % @cpus).
+!down-right(@35, @35).
+!down-left(@35, @35).
+!left(@35, @23).
+!right(@35, @47).
+!coord(@47, 11, 3).
+set-cpu(@47, 3 % @cpus).
+!down-right(@47, @47).
+!down-left(@47, @47).
+!left(@47, @35).
+!right(@47, @59).
+!coord(@59, 11, 4).
+set-cpu(@59, 4 % @cpus).
+!down-right(@59, @59).
+!down-left(@59, @59).
+!left(@59, @47).
+!right(@59, @71).
+!coord(@71, 11, 5).
+set-cpu(@71, 5 % @cpus).
+!down-right(@71, @71).
+!down-left(@71, @71).
+!left(@71, @59).
+!right(@71, @83).
+!coord(@83, 11, 6).
+set-cpu(@83, 6 % @cpus).
+!down-right(@83, @83).
+!down-left(@83, @83).
+!left(@83, @71).
+!right(@83, @95).
+!coord(@95, 11, 7).
+set-cpu(@95, 7 % @cpus).
+!down-right(@95, @95).
+!down-left(@95, @95).
+!left(@95, @83).
+!right(@95, @107).
+!coord(@107, 11, 8).
+set-cpu(@107, 8 % @cpus).
+!down-right(@107, @107).
+!down-left(@107, @107).
+!left(@107, @95).
+!right(@107, @119).
+!coord(@119, 11, 9).
+set-cpu(@119, 9 % @cpus).
+!down-right(@119, @119).
+!down-left(@119, @119).
+!left(@119, @107).
+!right(@119, @131).
+!coord(@131, 11, 10).
+set-cpu(@131, 10 % @cpus).
+!down-right(@131, @131).
+!down-left(@131, @131).
+!left(@131, @119).
+!right(@131, @143).
+!coord(@143, 11, 11).
+set-cpu(@143, 11 % @cpus).
+!down-right(@143, @143).
+!down-left(@143, @143).
+!left(@143, @131).
+!right(@143, @143).
