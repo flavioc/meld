@@ -1,11 +1,8 @@
 #!/bin/bash
 WHAT="$1"
 RUNS="$2"
-EXCEPT_LIST="non_deterministic.exclude" #"$2"
 
-if [ "$WHAT" == "sl" ]; then
-   EXCEPT_LIST=""
-fi
+EXCEPT_LIST="non_deterministic.exclude"
 
 if [ -z $RUNS ]; then
    RUNS=1
@@ -24,13 +21,16 @@ not_excluded () {
    [[ -z `grep "^$1$" $EXCEPT_LIST` ]]
 }
 
-if [ -z "$EXCEPT_LIST" ]; then
+if [ $WHAT = "serial" ]; then
+   # We run all tests.
    for file in `ls code/*.m`; do
       if ! run_test $file $RUNS; then
          exit 1
       fi
    done
 else
+   # We exclude tests that will give different results depending
+   # on thread scheduling.
    for file in `ls code/*.m`; do
       if not_excluded `basename $file .m`; then
          if ! run_test $file $RUNS; then
