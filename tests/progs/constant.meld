@@ -1,0 +1,6 @@
+
+type linear a(node, int).
+
+const x = 1.
+
+a(@0, x).
