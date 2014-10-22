@@ -1,0 +1,10 @@
+0
+colored(1)
+!edge(@1)
+!edge(@2)
+1
+!edge(@2)
+fail()
+2
+colored(2)
+!edge(@0)

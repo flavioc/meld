@@ -9,3 +9,5 @@ predicates
 server
 simulator
 *.swp
+*.pyc
+test.out

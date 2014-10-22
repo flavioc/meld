@@ -2207,6 +2207,16 @@ execute_mvstackreg(pcounter& pc, state& state)
 }
 
 static inline void
+execute_mvstackfield(pcounter& pc, state& state)
+{
+   const offset_num off(pcounter_stack(pc + instr_size));
+   const field_num field(val_field_num(pc + instr_size + reg_val_size));
+   tuple *tuple(get_tuple_field(state, pc + instr_size + reg_val_size));
+
+   tuple->set_field(field, *state.stack.get_stack_at(off));
+}
+
+static inline void
 execute_mvregstack(pcounter& pc, state& state)
 {
    const reg_num reg(pcounter_reg(pc + instr_size));
@@ -3736,6 +3746,12 @@ eval_loop:
          CASE(SET_CPUH_INSTR)
             JUMP(set_cpuh, SET_CPUH_BASE)
             execute_set_cpu_here(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(MVSTACKFIELD_INSTR)
+            JUMP(mvstackfield, MVSTACKFIELD_BASE)
+            execute_mvstackfield(pc, state);
             ADVANCE()
          ENDOP()
 
