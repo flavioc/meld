@@ -3816,20 +3816,10 @@ execute_rule(const rule_id rule_id, state& state)
    state.instr_rules_run++;
 #endif
    
-   //   state.node->print(cout);
-   //   All->DATABASE->print_db(cout);
-	
 	vm::rule *rule(theProgram->get_rule(rule_id));
 
    state.running_rule = true;
-#ifdef USE_JIT
-   if(rule_id > 0)
-      jit::compile_bytecode(rule->get_bytecode(), rule->get_codesize(), state);
-   else
-#endif
-   {
-      do_execute(rule->get_bytecode(), state, 0, NULL, NULL);
-   }
+   do_execute(rule->get_bytecode(), state, 0, NULL, NULL);
 
 #ifdef CORE_STATISTICS
    if(state.stat.stat_rules_activated == 0)

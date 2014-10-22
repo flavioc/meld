@@ -146,7 +146,6 @@ SRCS = utils/utils.cpp \
 			stat/stat.cpp \
 			stat/slice.cpp \
 			stat/slice_set.cpp \
-			jit/build.cpp \
 			interface.cpp
 
 ifeq ($(SIMULATOR), true)
