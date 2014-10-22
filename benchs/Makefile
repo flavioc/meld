@@ -89,6 +89,9 @@ update-queens:
 	git add progs/data/8queens-data12.meld
 	git add progs/data/8queens-data13.meld
 
+update-quicksort:
+	sed -e "s/down(@0, .*/down(@0, `python ../scripts/generate_list.py 70000`)./g" -i "" progs/quicksort.meld
+
 plots:
 	@bash ../scripts/plots/plot_instrumentation.sh instrumentation_files
 
