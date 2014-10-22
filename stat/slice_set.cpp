@@ -4,7 +4,7 @@
 
 #include "stat/slice_set.hpp"
 #include "vm/state.hpp"
-#include "process/machine.hpp"
+#include "machine.hpp"
 #include "stat/stat.hpp"
 #include "utils/macros.hpp"
 

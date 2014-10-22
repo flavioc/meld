@@ -17,8 +17,8 @@ void assert_static_nodes_end(const vm::process_id);
 #endif
 
 #define iterate_static_nodes(ID)                                                       \
-   const node::node_id first(remote::self->find_first_node(ID));                       \
-   const node::node_id final(remote::self->find_last_node(ID));                        \
+   const node::node_id first(All->MACHINE->find_first_node(ID));                       \
+   const node::node_id final(All->MACHINE->find_last_node(ID));                        \
    database::map_nodes::iterator it(vm::All->DATABASE->get_node_iterator(first));    \
    database::map_nodes::iterator end(vm::All->DATABASE->get_node_iterator(final));   \
    for(; it != end; ++it)                                                              \

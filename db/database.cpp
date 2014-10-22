@@ -1,7 +1,6 @@
 
 #include "vm/defs.hpp"
 #include "db/database.hpp"
-#include "process/router.hpp"
 #include "vm/state.hpp"
 
 using namespace db;
@@ -31,19 +30,13 @@ database::database(const string& filename, create_node_fn _create_fn):
    
    nodes_total = num_nodes;
    
-   All->ROUTER->set_nodes_total(nodes_total); // can throw database_error
+   if(nodes_total == 0)
+      throw database_error("The program has no nodes to run.");
    
-   const size_t nodes_to_skip(remote::self->get_nodes_base());
-   
-   if(nodes_to_skip > 0)
-      fp.seekg(node_size * nodes_to_skip, ios_base::cur);
-   
-   size_t nodes_to_read = remote::self->get_total_nodes();
-
    max_node_id = 0;
    max_translated_id = 0;
       
-   for(size_t i(0); i < nodes_to_read; ++i) {
+   for(size_t i(0); i < nodes_total; ++i) {
       fp.read((char*)&fake_id, sizeof(node::node_id));
       fp.read((char*)&user_id, sizeof(node::node_id));
       
@@ -57,14 +50,6 @@ database::database(const string& filename, create_node_fn _create_fn):
    }
    
    original_max_node_id = max_node_id;
-   
-   if(!remote::i_am_last_one()) {
-      const size_t nodes_left(nodes_total - (nodes_to_skip + nodes_to_read));
-      
-      if(nodes_left > 0)
-         fp.seekg(node_size * nodes_left, ios_base::cur);
-      //remote::rout(cout) << "skip last " << nodes_left << " nodes" << endl;
-   }
 }
 
 void

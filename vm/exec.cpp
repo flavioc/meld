@@ -10,7 +10,7 @@
 #include "vm/tuple.hpp"
 #include "vm/match.hpp"
 #include "vm/full_tuple.hpp"
-#include "process/machine.hpp"
+#include "machine.hpp"
 #include "utils/mutex.hpp"
 #include "thread/node.hpp"
 #include "thread/threads.hpp"

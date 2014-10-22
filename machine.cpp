@@ -2,7 +2,7 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include "process/machine.hpp"
+#include "machine.hpp"
 #include "vm/program.hpp"
 #include "vm/state.hpp"
 #include "vm/exec.hpp"
@@ -33,21 +33,6 @@ using namespace statistics;
 namespace process
 {
    
-bool
-machine::same_place(const node::node_id id1, const node::node_id id2) const
-{
-   if(id1 == id2)
-      return true;
-   
-   remote *rem1(rout.find_remote(id1));
-   remote *rem2(rout.find_remote(id2));
-   
-   if(rem1 != rem2)
-      return false;
-   
-   return rem1->find_proc_owner(id1) == rem1->find_proc_owner(id2);
-}
-
 void
 machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, vm::predicate *pred
 #ifdef GC_NODES
@@ -148,6 +133,7 @@ machine::set_timer(void)
    setitimer(ITIMER_REAL, &t, 0);
 }
 
+#ifdef INSTRUMENTATION
 void
 machine::slice_function(void)
 {
@@ -185,6 +171,7 @@ machine::slice_function(void)
       }
    }
 }
+#endif
 
 void
 machine::execute_const_code(void)
@@ -235,12 +222,11 @@ machine::start(void)
    deactivate_signals();
 #ifdef INSTRUMENTATION
    all->THREAD_POOLS.resize(all->NUM_THREADS, NULL);
-#endif
    
-   if(stat_enabled()) {
+   if(stat_enabled())
       // initiate alarm thread
       alarm_thread = new thread(bind(&machine::slice_function, this));
-   }
+#endif
 
    switch(sched_type) {
       case SCHED_THREADS:
@@ -302,6 +288,7 @@ machine::start(void)
    for(size_t i(1); i < all->NUM_THREADS; ++i)
       delete threads[i];
       
+#ifdef INSTRUMENTATION
    if(alarm_thread) {
       kill(getpid(), SIGUSR1);
       alarm_thread->join();
@@ -309,6 +296,7 @@ machine::start(void)
       alarm_thread = NULL;
       slices.write(get_stat_file(), sched_type, all);
    }
+#endif
 
    const bool will_print(show_database || dump_database);
 
@@ -348,14 +336,15 @@ get_creation_function(const scheduler_type sched_type)
    throw machine_error("unknown scheduler type");
 }
 
-machine::machine(const string& file, router& _rout, const size_t th,
+machine::machine(const string& file, const size_t th,
 		const scheduler_type _sched_type, const machine_arguments& margs, const string& data_file):
    all(new vm::all()),
    filename(file),
-   sched_type(_sched_type),
-   rout(_rout),
-   alarm_thread(NULL),
-   slices(th)
+   sched_type(_sched_type)
+#ifdef INSTRUMENTATION
+   , alarm_thread(NULL)
+   , slices(th)
+#endif
 {
    mem::ensure_pool();
 
@@ -381,8 +370,6 @@ machine::machine(const string& file, router& _rout, const size_t th,
       }
    }
 
-   this->all->ROUTER = &_rout;
-
    if(margs.size() < this->all->PROGRAM->num_args_needed())
       throw machine_error(string("this program requires ") + utils::to_string(all->PROGRAM->num_args_needed()) + " arguments");
 
@@ -392,6 +379,10 @@ machine::machine(const string& file, router& _rout, const size_t th,
    this->all->NUM_THREADS_NEXT_UINT = next_multiple_of_uint(th);
    this->all->MACHINE = this;
    this->all->SCHEDS.resize(th, NULL);
+
+    nodes_per_thread = total_nodes() / num_threads;
+    if(nodes_per_thread * num_threads < total_nodes())
+       nodes_per_thread++;
 }
 
 machine::~machine(void)
@@ -405,8 +396,10 @@ machine::~machine(void)
 
    delete this->all->PROGRAM;
       
+#ifdef INSTRUMENTATION
    if(alarm_thread)
       delete alarm_thread;
+#endif
 }
 
 }

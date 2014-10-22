@@ -3,7 +3,7 @@
 
 #include "sched/base.hpp"
 #include "vm/exec.hpp"
-#include "process/machine.hpp"
+#include "machine.hpp"
 
 using namespace std;
 using namespace vm;

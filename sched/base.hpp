@@ -19,10 +19,6 @@
 #include "mem/thread.hpp"
 #include "sched/ids.hpp"
 
-namespace process {
-   class remote;
-}
-
 namespace sched
 {
 

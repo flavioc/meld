@@ -2,7 +2,7 @@
 #include <queue>
 
 #include "vm/state.hpp"
-#include "process/machine.hpp"
+#include "machine.hpp"
 #include "vm/exec.hpp"
 #ifdef USE_SIM
 #include "sched/nodes/sim.hpp"

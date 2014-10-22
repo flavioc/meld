@@ -4,10 +4,10 @@
 
 #include "thread/threads.hpp"
 #include "db/database.hpp"
-#include "process/remote.hpp"
 #include "vm/state.hpp"
 #include "sched/common.hpp"
 #include "interface.hpp"
+#include "machine.hpp"
 
 using namespace std;
 using namespace process;
@@ -524,8 +524,8 @@ threads_sched::end(void)
 	size_t total_prioritized(0);
 	size_t total_nonprioritized(0);
 	
-   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(remote::self->find_first_node(id)));
-   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(remote::self->find_last_node(id)));
+   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(All->MACHINE->find_first_node(id)));
+   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(All->MACHINE->find_last_node(id)));
    
    for(; it != end; ++it)
    {
@@ -855,8 +855,8 @@ threads_sched::init(const size_t)
       prios.stati.set_type(HEAP_ASC);
    }
 
-   database::map_nodes::iterator it(All->DATABASE->get_node_iterator(remote::self->find_first_node(id)));
-   database::map_nodes::iterator end(All->DATABASE->get_node_iterator(remote::self->find_last_node(id)));
+   database::map_nodes::iterator it(All->DATABASE->get_node_iterator(All->MACHINE->find_first_node(id)));
+   database::map_nodes::iterator end(All->DATABASE->get_node_iterator(All->MACHINE->find_last_node(id)));
    const double initial(theProgram->get_initial_priority());
 
    if(initial == 0.0 || !scheduling_mechanism) {
@@ -866,7 +866,7 @@ threads_sched::init(const size_t)
       	queues.moving.push_tail(cur_node);
       }
    } else {
-      prios.moving.start_initial_insert(remote::self->find_owned_nodes(id));
+      prios.moving.start_initial_insert(All->MACHINE->find_owned_nodes(id));
 
       for(size_t i(0); it != end; ++it, ++i) {
          thread_intrusive_node *cur_node(static_cast<thread_intrusive_node*>(init_node(it)));

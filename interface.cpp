@@ -7,11 +7,10 @@
 #include <unistd.h>
 
 #include "interface.hpp"
-#include "process/router.hpp"
 #include "stat/stat.hpp"
 #include "utils/time.hpp"
 #include "utils/fs.hpp"
-#include "process/machine.hpp"
+#include "machine.hpp"
 #ifdef USE_UI
 #include "ui/manager.hpp"
 #endif
@@ -112,7 +111,6 @@ void
 help_schedulers(void)
 {
 	cerr << "\t-c <scheduler>\tselect scheduling type" << endl;
-	cerr << "\t\t\tui serial scheduler + ui" << endl;
    cerr << "\t\t\tthX multithreaded scheduler with task stealing" << endl;
 }
 
@@ -126,6 +124,8 @@ run_program(int argc, char **argv, const char *program, const vm::machine_argume
 {
 	assert(utils::file_exists(string(program)));
 	assert(num_threads > 0);
+   (void)argc;
+   (void)argv;
 
 	try {
       double start_time(0.0);
@@ -144,8 +144,7 @@ run_program(int argc, char **argv, const char *program, const vm::machine_argume
          }
       }
 
-      router rout(num_threads, argc, argv, is_mpi_sched(sched_type));
-      machine mac(program, rout, num_threads, sched_type, margs, data_file == NULL ? string("") : string(data_file));
+      machine mac(program, num_threads, sched_type, margs, data_file == NULL ? string("") : string(data_file));
 
 #ifdef USE_UI
       if(ui::man != NULL) {

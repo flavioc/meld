@@ -115,9 +115,6 @@ SRCS = utils/utils.cpp \
 			db/database.cpp \
 			db/trie.cpp \
 			db/hash_table.cpp \
-			process/machine.cpp \
-			process/remote.cpp \
-			process/router.cpp \
 			mem/thread.cpp \
 			mem/center.cpp \
 			mem/stat.cpp \
@@ -135,6 +132,7 @@ SRCS = utils/utils.cpp \
 			stat/stat.cpp \
 			stat/slice.cpp \
 			stat/slice_set.cpp \
+			machine.cpp \
 			interface.cpp
 
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
