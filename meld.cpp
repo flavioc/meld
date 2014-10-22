@@ -2,12 +2,10 @@
 #include <iostream>
 #include <vector>
 
-#include "process/machine.hpp"
+#include "machine.hpp"
 #include "utils/utils.hpp"
 #include "utils/fs.hpp"
-#include "process/router.hpp"
 #include "vm/state.hpp"
-#include "utils/queued_spinlock.hpp"
 
 #include "interface.hpp"
 
@@ -70,9 +68,6 @@ read_arguments(int argc, char **argv)
          }
          break;
          case 'c': {
-            if (sched_type != SCHED_UNKNOWN)
-               help();
-            
             parse_sched(argv[1]);
             argc--;
             argv++;
@@ -123,21 +118,12 @@ read_arguments(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
+   num_threads = 1;
+
    vm::machine_arguments margs(read_arguments(argc, argv));
 
-   if(sched_type == SCHED_UNKNOWN) {
-      sched_type = SCHED_THREADS;
-      num_threads = 1;
-   }
-
-   if(program == NULL && sched_type == SCHED_UNKNOWN) {
-      cerr << "Error: please provide scheduler type and a program to run" << endl;
-      return EXIT_FAILURE;
-   } else if(program == NULL && sched_type != SCHED_UNKNOWN) {
+   if(program == NULL) {
 		cerr << "Error: please provide a program to run" << endl;
-      return EXIT_FAILURE;
-   } else if(program != NULL && sched_type == SCHED_UNKNOWN) {
-		cerr << "Error: please pick a scheduler to use" << endl;
       return EXIT_FAILURE;
    }
    

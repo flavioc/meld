@@ -193,23 +193,7 @@ machine::init_sched(const process_id id)
    All->THREAD_POOLS[id] = mem::mem_pool;
 #endif
 
-   switch(sched_type) {
-      case SCHED_THREADS:
-         all->SCHEDS[id] = dynamic_cast<sched::base*>(new sched::threads_sched(id));
-         break;
-#ifdef USE_UI
-      case SCHED_SERIAL_UI:
-         all->SCHEDS[id] = dynamic_cast<sched::base*>(new sched::serial_ui_local());
-         break;
-#endif
-#ifdef USE_SIM
-      case SCHED_SIM:
-         all->SCHEDS[id] = dynamic_cast<sched::base*>(new sched::sim_sched());
-         break;
-#endif
-      case SCHED_UNKNOWN: assert(false); break;
-   }
-
+   all->SCHEDS[id] = dynamic_cast<sched::base*>(new sched::threads_sched(id));
    all->SCHEDS[id]->loop();
 }
 
@@ -228,12 +212,7 @@ machine::start(void)
       alarm_thread = new thread(bind(&machine::slice_function, this));
 #endif
 
-   switch(sched_type) {
-      case SCHED_THREADS:
-         sched::threads_sched::init_barriers(all->NUM_THREADS);
-         break;
-      default: break;
-   }
+   sched::threads_sched::init_barriers(all->NUM_THREADS);
    
    thread *threads[all->NUM_THREADS];
    for(process_id i(1); i < all->NUM_THREADS; ++i) {
@@ -294,7 +273,7 @@ machine::start(void)
       alarm_thread->join();
       delete alarm_thread;
       alarm_thread = NULL;
-      slices.write(get_stat_file(), sched_type, all);
+      slices.write(get_stat_file(), all);
    }
 #endif
 
@@ -316,31 +295,15 @@ machine::start(void)
 }
 
 static inline database::create_node_fn
-get_creation_function(const scheduler_type sched_type)
+get_creation_function(void)
 {
-   switch(sched_type) {
-      case SCHED_THREADS:
-         return database::create_node_fn(sched::threads_sched::create_node);
-#ifdef USE_UI
-		case SCHED_SERIAL_UI:
-			return database::create_node_fn(sched::serial_ui_local::create_node);
-#endif
-#ifdef USE_SIM
-		case SCHED_SIM:
-			return database::create_node_fn(sched::sim_sched::create_node);
-#endif
-      case SCHED_UNKNOWN:
-         return NULL;
-   }
-   
-   throw machine_error("unknown scheduler type");
+   return database::create_node_fn(sched::threads_sched::create_node);
 }
 
 machine::machine(const string& file, const size_t th,
-		const scheduler_type _sched_type, const machine_arguments& margs, const string& data_file):
+		const machine_arguments& margs, const string& data_file):
    all(new vm::all()),
-   filename(file),
-   sched_type(_sched_type)
+   filename(file)
 #ifdef INSTRUMENTATION
    , alarm_thread(NULL)
    , slices(th)
@@ -374,7 +337,7 @@ machine::machine(const string& file, const size_t th,
       throw machine_error(string("this program requires ") + utils::to_string(all->PROGRAM->num_args_needed()) + " arguments");
 
    this->all->set_arguments(margs);
-   this->all->DATABASE = new database(added_data_file ? data_file : filename, get_creation_function(_sched_type));
+   this->all->DATABASE = new database(added_data_file ? data_file : filename, get_creation_function());
    this->all->NUM_THREADS = th;
    this->all->NUM_THREADS_NEXT_UINT = next_multiple_of_uint(th);
    this->all->MACHINE = this;

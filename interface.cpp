@@ -22,7 +22,6 @@ using namespace std;
 using namespace utils;
 using namespace vm;
 
-scheduler_type sched_type = SCHED_UNKNOWN;
 size_t num_threads = 0;
 bool show_database = false;
 bool dump_database = false;
@@ -37,17 +36,15 @@ num_cpus_available(void)
 }
 
 static inline bool
-match_mpi(const char *name, char *arg, const scheduler_type type)
+match_mpi(const char *name, char *arg)
 {
    const size_t len(strlen(name));
 
    if(strlen(arg) == len && strncmp(name, arg, len) == 0) {
-      sched_type = type;
       arg += len;
       num_threads = num_cpus_available();
       return true;
    } else if(strlen(arg) > len && strncmp(name, arg, len) == 0) {
-      sched_type = type;
       arg += len;
       num_threads = (size_t)atoi(arg);
       return true;
@@ -57,26 +54,10 @@ match_mpi(const char *name, char *arg, const scheduler_type type)
 }
 
 static inline bool
-match_threads(const char *name, char *arg, const scheduler_type type)
+match_threads(const char *name, char *arg)
 {
-   return match_mpi(name, arg, type);
+   return match_mpi(name, arg);
 }
-
-#ifdef USE_UI
-static inline bool
-match_serial(const char *name, char *arg, const scheduler_type type)
-{
-   const size_t len(strlen(name));
-   
-   if(strlen(arg) == len && strncmp(name, arg, len) == 0) {
-      sched_type = type;
-      num_threads = 1;
-      return true;
-   }
-   
-   return false;
-}
-#endif
 
 static inline bool
 fail_sched(char* sched)
@@ -95,10 +76,7 @@ parse_sched(char *sched)
       fail_sched(sched);
    
    // attempt to parse the scheduler string
-   match_threads("th", sched, SCHED_THREADS) ||
-#ifdef USE_UI
-		match_serial("ui", sched, SCHED_SERIAL_UI) ||
-#endif
+   match_threads("th", sched) ||
       fail_sched(sched);
 
 	if (num_threads == 0) {
@@ -133,18 +111,10 @@ run_program(int argc, char **argv, const char *program, const vm::machine_argume
 
       (void)start_time;
       
-      if(time_execution) {
-#ifdef COMPILE_MPI
-         if(is_mpi_sched(sched_type))
-            start_time = MPI_Wtime();
-         else
-#endif
-         {
-            tm.start();
-         }
-      }
+      if(time_execution)
+         tm.start();
 
-      machine mac(program, num_threads, sched_type, margs, data_file == NULL ? string("") : string(data_file));
+      machine mac(program, num_threads, margs, data_file == NULL ? string("") : string(data_file));
 
 #ifdef USE_UI
       if(ui::man != NULL) {
@@ -155,22 +125,10 @@ run_program(int argc, char **argv, const char *program, const vm::machine_argume
       mac.start();
 
       if(time_execution) {
-#ifdef COMPILE_MPI
-         if(is_mpi_sched(sched_type)) {
-            double total_time(MPI_Wtime() - start_time);
-            size_t ms = static_cast<size_t>(total_time * 1000);
-            
-            if(remote::self->get_rank() == 0)
-               cout << "Time: " << ms << " ms" << endl;
-         }
-         else
-#endif
-         {
-            tm.stop();
-            size_t ms = tm.milliseconds();
-            
-            cout << "Time: " << ms << " ms" << endl;
-         }
+         tm.stop();
+         size_t ms = tm.milliseconds();
+
+         cout << "Time: " << ms << " ms" << endl;
       }
 
 	} catch(machine_error& err) {

@@ -10,7 +10,6 @@
 #include "mem/allocator.hpp"
 #include "stat/slice.hpp"
 #include "vm/defs.hpp"
-#include "sched/types.hpp"
 #include "vm/all.hpp"
 
 namespace statistics
@@ -51,7 +50,7 @@ private:
    
 public:
    
-   void write(const std::string&, const sched::scheduler_type, vm::all *) const;
+   void write(const std::string&, vm::all *) const;
    
    void beat(vm::all *);
    

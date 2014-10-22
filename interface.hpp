@@ -2,10 +2,8 @@
 #ifndef INTERFACE_HPP
 #define INTERFACE_HPP
 
-#include "sched/types.hpp"
 #include "vm/state.hpp"
 
-extern sched::scheduler_type sched_type;
 extern size_t num_threads;
 extern bool show_database;
 extern bool dump_database;

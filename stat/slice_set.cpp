@@ -140,9 +140,8 @@ slice_set::write_node_lock_fail(const string& file, vm::all *all) const
 }
 
 void
-slice_set::write(const string& file, const scheduler_type type, vm::all *all) const
+slice_set::write(const string& file, vm::all *all) const
 {
-   (void)type;
    write_state(file, all);
    write_derived_facts(file, all);
    write_consumed_facts(file, all);

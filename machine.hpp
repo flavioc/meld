@@ -10,7 +10,6 @@
 
 #include "db/database.hpp"
 #include "db/node.hpp"
-#include "sched/types.hpp"
 #include "stat/slice_set.hpp"
 #include "vm/state.hpp"
 #include "sched/base.hpp"
@@ -24,7 +23,6 @@ private:
    
    vm::all *all;
    const std::string filename;
-   const sched::scheduler_type sched_type;
 
    size_t nodes_per_thread;
    
@@ -60,8 +58,6 @@ public:
       return find_last_node(id) - find_first_node(id);
    }
    
-   sched::scheduler_type get_sched_type(void) const { return sched_type; }
-   
    vm::all *get_all(void) const { return this->all; }
    
    void run_action(sched::base *, db::node *, vm::tuple *, vm::predicate *
@@ -73,7 +69,9 @@ public:
    void start(void);
    void init_sched(const vm::process_id);
    
-   explicit machine(const std::string&, const size_t, const sched::scheduler_type, const vm::machine_arguments& args = vm::machine_arguments(), const std::string& data_file = std::string());
+   explicit machine(const std::string&, const size_t,
+         const vm::machine_arguments& args = vm::machine_arguments(),
+         const std::string& data_file = std::string());
                
    ~machine(void);
 };
