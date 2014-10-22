@@ -55,13 +55,16 @@ elem(A, L, R, left, M),
 test-and-send(A, N),
 iterations(A, I),
 M <= N
-   -o elem(A, L, R, right, M), switch(R), iterations(A, I + 1).
+   -o elem(A, L, R, right, M),
+      switch(R), iterations(A, I + 1).
 /* ... in this case, we must switch */
 elem(A, L, R, left, M),
 test-and-send(A, N),
 iterations(A, I),
 M > N
-   -o elem(A, L, R, right, N), change(R, M), iterations(A, I + 1).
+   -o change(R, M),
+      elem(A, L, R, right, N),
+      iterations(A, I + 1).
 
 /* elem on the right must switch to left, no number change */
 elem(A, L, R, waiting, N),
