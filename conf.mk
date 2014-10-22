@@ -30,5 +30,5 @@ MEMORY_STATISTICS = false
 # activate fact buffering (only send facts after the node has completed running)
 FACT_BUFFERING = true
 
-INTERFACE = false
+# activate extra assertions.
 EXTRA_ASSERTS = false

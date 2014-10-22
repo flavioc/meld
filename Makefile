@@ -71,17 +71,6 @@ endif
 
 WARNINGS = -Wall -Wextra
 
-ifeq ($(INTERFACE),true)
-	LIBS += -lwebsocketpp -ljson_spirit
-	FLAGS += -DUSE_UI=1
-	TARGETS += server
-endif
-
-ifeq ($(SIMULATOR), true)
-	TARGETS += simulator
-	FLAGS += -DUSE_SIM
-endif
-
 CFLAGS = -std=c++11 -fno-rtti $(ARCH) $(PROFILING) \
 			$(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) \
 			$(INCLUDE_DIRS) $(FLAGS) #-fno-gcse -fno-crossjumping
@@ -148,15 +137,6 @@ SRCS = utils/utils.cpp \
 			stat/slice_set.cpp \
 			interface.cpp
 
-ifeq ($(SIMULATOR), true)
-	SRCS += sched/sim.cpp
-endif
-ifeq ($(INTERFACE), true)
-	SRCS += sched/serial_ui.cpp \
-			  ui/manager.cpp \
-			  ui/client.cpp
-endif
-
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
 all: $(TARGETS)
@@ -178,14 +158,6 @@ meld: $(OBJS) meld.o
 
 print: $(OBJS) print.o
 	$(COMPILE) print.o -o print $(LDFLAGS)
-
-ifeq ($(INTERFACE),true)
-server: $(OBJS) server.o
-	$(COMPILE) server.o -o server $(LDFLAGS)
-endif
-
-simulator: $(OBJS) simulator.o
-	$(COMPILE) simulator.o -o simulator $(LDFLAGS)
 
 depend:
 	makedepend -- $(CXXFLAGS) -- $(shell find . -name '*.cpp')
