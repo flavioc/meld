@@ -11,3 +11,7 @@ simulator
 *.swp
 *.pyc
 test.out
+benchs/instrumentation_files/*
+benchs/instrumentation_files*
+benchs/output*
+benchs/results.csv
