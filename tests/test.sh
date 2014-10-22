@@ -10,8 +10,17 @@ if test -z "${TEST}" -o -z "${TYPE}"; then
 	exit 1
 fi
 
+dynamic_test () {
+   [[ ! -z `grep "^$1$" "dynamic.include"` ]]
+}
+
 FILE="files/$(basename $TEST .m).test"
 NODES=$(python ./number_nodes.py $TEST)
+
+if dynamic_test $(basename $TEST .m); then
+   # We can actually use more than 1 thread.
+   NODES=64
+fi
 
 do_exit ()
 {
@@ -94,10 +103,12 @@ run_test_n ()
 	NTHREADS=${1}
 	TIMES=${2}
 	SCHED=${3}
-	echo "Running ${TEST} ${TIMES} times with ${NTHREADS} threads (SCHED: ${SCHED})..."
+	echo -n "Running ${TEST} ${TIMES} times with ${NTHREADS} threads (SCHED: ${SCHED})..."
 	for((I=1; I <= ${TIMES}; I++)); do
 		do_test ${NTHREADS} ${SCHED}
 	done
+   echo " OK!"
+   return 0
 }
 
 [ -f "${TEST}" ] || do_exit "Test code ${TEST} not found"
@@ -107,10 +118,10 @@ loop_sched ()
 {
 	SCHED=${1}
    RUNS=${2}
-	run_test_n 1 1 ${SCHED}
+   # run_test_n 1 ${RUNS} ${SCHED}
    for th in `seq 2 16`; do
       if [ $NODES -ge $th ]; then
-         run_test_n $th ${RUNS} ${SCHED} ${RUNS}
+         run_test_n $th ${RUNS} ${SCHED}
       fi
    done
 }
