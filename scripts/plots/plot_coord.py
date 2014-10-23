@@ -10,7 +10,7 @@ from numpy import nanmax
 from lib import name2title, experiment_set, experiment
 
 if len(sys.argv) != 3:
-  print "Usage: plot_results.py <filename> <output_prefix>"
+  print "Usage: plot_coord.py <filename> <output_prefix>"
   sys.exit(1)
 
 filename = sys.argv[1]
@@ -33,5 +33,10 @@ with open(filename, "r") as fp:
       expset.add_experiment(name, threads, time)
 
 for exp_name in expset.experiment_names():
+   if exp_name.endswith("-coord"):
+      continue
+   coord = expset.get_experiment(exp_name + "-coord")
+   if not coord:
+      continue
    exp = expset.get_experiment(exp_name)
-   exp.create_speedup(prefix)
+   exp.create_coord(prefix, coord)
