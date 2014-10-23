@@ -994,13 +994,6 @@ state::~state(void)
       bitmap::destroy(rule_queue, theProgram->num_rules_next_uint());
       assert(rule_queue.empty(theProgram->num_rules_next_uint()));
    }
-   for(map_match::iterator it(matches.begin()), end(matches.end()); it != end; ++it) {
-      match *obj(it->second);
-      const size_t mem(obj->mem_size());
-      utils::byte *mdata((utils::byte*)obj);
-      obj->destroy();
-      mem::allocator<utils::byte>().deallocate(mdata, mem);
-   }
    if(match_counter) {
       //cout << "==================================\n";
       //match_counter->print(theProgram->get_total_arguments());

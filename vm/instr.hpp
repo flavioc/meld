@@ -434,7 +434,7 @@ inline reg_num float_dest(pcounter pc) { return pcounter_reg(pc + instr_size + r
 typedef pcounter iter_match;
 
 inline ptr_val iter_match_object(pcounter pc) { return pcounter_ptr(pc + instr_size); }
-inline void iter_match_object_set(pcounter pc, ptr_val v) { *(ptr_val*)(pc + instr_size) = v; }
+inline ptr_val* iter_match_object_pos(pcounter pc) { return (ptr_val*)(pc + instr_size); }
 inline predicate_id iter_predicate(pcounter pc) { return predicate_get(pc, instr_size + ptr_size); }
 inline reg_num iter_reg(pcounter pc) { return pcounter_reg(pc + instr_size + ptr_size + predicate_size); }
 inline bool iter_constant_match(const pcounter pc) { return pcounter_bool(pc + instr_size + ptr_size + predicate_size + reg_val_size); }

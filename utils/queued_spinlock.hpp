@@ -5,6 +5,8 @@
 #include <iostream>
 #include <atomic>
 
+#include "utils/utils.hpp"
+
 namespace utils
 {
 
@@ -36,7 +38,6 @@ class qspinlock
 
 #define cpu_relax() asm volatile("pause\n": : :"memory")
 #define barrier() asm volatile("": : :"memory")
-#define cmpxchg(P, O, N) __sync_val_compare_and_swap((P), (O), (N))
       inline void lock(qsl_entry *ent)
       {
          qsl_entry *stail;

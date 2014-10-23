@@ -6,7 +6,7 @@
 #include "utils/utils.hpp"
 #include "utils/fs.hpp"
 #include "vm/state.hpp"
-
+#include "vm/exec.hpp"
 #include "interface.hpp"
 
 using namespace utils;
@@ -136,6 +136,9 @@ main(int argc, char **argv)
       run_program(argc, argv, program, margs, data_file);
    } catch(vm::load_file_error& err) {
       cerr << "File error: " << err.what() << endl;
+      exit(EXIT_FAILURE);
+   } catch(vm::vm_exec_error& err) {
+      cerr << "Internal error: " << err.what() << endl;
       exit(EXIT_FAILURE);
    } catch(machine_error& err) {
       cerr << "VM error: " << err.what() << endl;

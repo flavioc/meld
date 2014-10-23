@@ -5,6 +5,8 @@
 #include <cstring>
 #include <stdint.h>
 
+#define PADDING_SIZE 64
+
 namespace vm {
 
 typedef unsigned short field_num;

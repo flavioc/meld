@@ -11,6 +11,7 @@ namespace utils
 
 #define true_likely(x)      __builtin_expect(!!(x), 1)
 #define false_likely(x)    __builtin_expect(!!(x), 0)
+#define cmpxchg(P, O, N) __sync_val_compare_and_swap((P), (O), (N))
 #define BITMAP_TYPE uint64_t
 #define BITMAP_BITS (sizeof(BITMAP_TYPE) * 8)
 

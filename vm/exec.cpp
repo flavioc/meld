@@ -688,17 +688,34 @@ retrieve_match_object(state& state, pcounter pc, const predicate *pred, const si
 {
    match *mobj(NULL);
    const size_t matches = iter_matches_size(pc, base);
+#define MATCH_OBJECT_SIZE 256
+
    if(matches > 0) {
-      vm::state::map_match::iterator it(state.matches.find(pc));
-      if(it == state.matches.end()) {
-         const size_t var_size = count_variable_match_elements(pc + base, pred, matches);
-         const size_t mem = match::mem_size(pred, var_size);
-         mobj = (match*)mem::allocator<utils::byte>().allocate(mem);
-         mobj->init(pred, var_size);
-         build_match_object(mobj, pc + base, pred, state, matches);
-         state.matches[pc] = mobj;
-      } else
-         mobj = it->second;
+      utils::byte *m((utils::byte*)iter_match_object(pc));
+
+      if(m == NULL) {
+         const size_t var_size(count_variable_match_elements(pc + base, pred, matches));
+         const size_t mem(match::mem_size(pred, var_size));
+         if(mem > MATCH_OBJECT_SIZE)
+            throw vm_exec_error("Match object is too large.");
+         m = (utils::byte*)mem::allocator<utils::byte>().allocate(MATCH_OBJECT_SIZE * All->NUM_THREADS);
+         for(size_t i(0); i < All->NUM_THREADS; ++i) {
+            match *obj((match*)(m + i * MATCH_OBJECT_SIZE));
+            obj->init(pred, var_size);
+            build_match_object(obj, pc + base, pred, state, matches);
+         }
+         ptr_val *pos(iter_match_object_pos(pc));
+         ptr_val old(cmpxchg(pos, (ptr_val)NULL, (ptr_val)m));
+
+         if(old != (ptr_val)NULL) {
+            // somebody already set this.
+            mem::allocator<utils::byte>().deallocate(m, MATCH_OBJECT_SIZE * All->NUM_THREADS);
+            m = (utils::byte*)old;
+         }
+      }
+      m += state.sched->get_id() * MATCH_OBJECT_SIZE;
+      mobj = (match*)m;
+
       if(!iter_constant_match(pc)) {
          for(size_t i(0); i < mobj->var_size; ++i) {
             variable_match_template& tmp(mobj->get_variable_match(i));
