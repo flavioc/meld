@@ -16,3 +16,5 @@ benchs/instrumentation_files*
 benchs/output*
 benchs/results.csv
 /count.sh
+gmon.out
+/*.m
