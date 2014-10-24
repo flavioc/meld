@@ -24,7 +24,7 @@ namespace sched
 
 extern pthread_key_t sched_key;
 
-class base
+class base: public mem::base
 {
 protected:
    
