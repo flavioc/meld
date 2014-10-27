@@ -49,10 +49,14 @@ private:
 
 		const heap_object min(heap.front());
 		
-		heap[0] = heap.back();
-		HEAP_GET_POS(heap[0]) = 0;
-		heap.pop_back();
-		heapifydown(0);
+      if(heap.size() > 1) {
+         heap[0] = heap.back();
+         HEAP_GET_POS(heap[0]) = 0;
+         heap.pop_back();
+         heapifydown(0);
+      } else {
+         heap.pop_back();
+      }
 		
       assert(__INTRUSIVE_QUEUE(min) == queue_number);
 		__INTRUSIVE_QUEUE(min) = new_state;
@@ -177,6 +181,8 @@ public:
 	
 	void move_node(heap_object node, const double new_prio)
 	{
+      utils::lock_guard l(mtx);
+      LOCK_STAT(ready_lock);
       if(__INTRUSIVE_QUEUE(node) != queue_number)
          return; // not in the queue
 		do_remove(node, queue_number);
