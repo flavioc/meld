@@ -17,6 +17,24 @@
 
 #define DIRECT_PRIORITIES
 
+//#define DEBUG_PRIORITIES
+//#define PROFILE_QUEUE
+#define SEND_OTHERS
+#ifdef DIRECT_PRIORITIES
+#undef SEND_OTHERS
+#endif
+
+// node stealing strategies.
+//#define STEAL_ONE
+#define STEAL_HALF
+
+#ifdef INSTRUMENTATION
+#define NODE_LOCK(NODE, ARG) do { if((NODE)->try_lock(LOCK_STACK_USE(ARG))) { node_lock_ok++; } else { node_lock_fail++; (NODE)->lock(LOCK_STACK_USE(ARG));} } while(false)
+#else
+#define NODE_LOCK(NODE, ARG) ((NODE)->lock(LOCK_STACK_USE(ARG)))
+#endif
+#define NODE_UNLOCK(NODE, ARG) ((NODE)->unlock(LOCK_STACK_USE(ARG)))
+
 namespace sched
 {
 

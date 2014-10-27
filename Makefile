@@ -122,6 +122,7 @@ SRCS = utils/utils.cpp \
 			sched/ids.cpp \
 			sched/common.cpp \
 			thread/threads.cpp \
+			thread/coord.cpp \
 			external/math.cpp \
 			external/lists.cpp \
 			external/utils.cpp \
