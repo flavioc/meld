@@ -593,8 +593,12 @@ is_higher_priority(thread_intrusive_node *tn, const double priority)
 {
    if(theProgram->is_priority_desc())
       return tn->get_priority_level() < priority;
-   else
-      return tn->get_priority_level() > priority;
+   else {
+      const double old(tn->get_priority_level());
+      if(old == 0)
+         return priority > 0;
+      return old > priority;
+   }
 }
 
 void
