@@ -26,6 +26,9 @@ BP = belief-propagation-200
 QUEENS = 8queens-13
 SIMPLE = simple16 simple32 simple64
 MINMAX = min-max-tictactoe-big
+COORD_SHORTEST = shortest-usairports500-coord shortest-uspowergrid-coord \
+					  shortest-celegans-coord shortest-1000-all-coord \
+					  shortest-oclinks-coord
 
 THREAD_PROGRAMS = $(QUEENS) $(GGC) $(PAGERANK) $(HT) $(MINMAX) $(SHORTEST)
 
@@ -50,22 +53,8 @@ minmax:
 	@bash $(SCRIPT) $(MINMAX)
 shortest:
 	@bash $(SCRIPT) $(SHORTEST)
-
 coord-shortest:
-	@bash threads_even.sh code/shortest-1000.m th even 1 $(NPROCS) $(RUNS)
-	@bash threads_even.sh code/shortest-1000.m thp even 1 $(NPROCS) $(RUNS)
-	@bash threads_even.sh code/shortest-1000-all.m th even 1 $(NPROCS) $(RUNS)
-	@bash threads_even.sh code/shortest-1000-all.m thp even 1 $(NPROCS) $(RUNS)
-	@bash threads_even.sh code/shortest-celegans.m th even 1 $(NPROCS) $(RUNS)
-	@bash threads_even.sh code/shortest-celegans.m thp even 1 $(NPROCS) $(RUNS)
-	@bash threads_even.sh code/shortest-cross-parker.m th even 1 $(NPROCS) $(RUNS)
-	@bash threads_even.sh code/shortest-cross-parker.m thp even 1 $(NPROCS) $(RUNS)
-	@bash threads_even.sh code/shortest-oclinks.m th even 1 $(NPROCS) $(RUNS)
-	@bash threads_even.sh code/shortest-oclinks.m thp even 1 $(NPROCS) $(RUNS)
-	@bash threads_even.sh code/shortest-usairports500.m th even 1 $(NPROCS) $(RUNS)
-	@bash threads_even.sh code/shortest-usairports500.m thp even 1 $(NPROCS) $(RUNS)
-	@bash threads_even.sh code/shortest-uspowergrid.m th even 1 $(NPROCS) $(RUNS)
-	@bash threads_even.sh code/shortest-uspowergrid.m thp even 1 $(NPROCS) $(RUNS)
+	@bash $(SCRIPT) $(COORD_SHORTEST)
 
 compiled:
 	@mkdir -p code
