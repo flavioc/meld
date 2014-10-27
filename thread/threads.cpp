@@ -603,10 +603,6 @@ threads_sched::set_node_priority_other(node *n, const double priority)
 #ifdef SEND_OTHERS
    thread_intrusive_node *tn((thread_intrusive_node*)n);
 
-   if(!is_higher_priority(tn, priority))
-      // does not change
-      return;
-
    // will potentially change
    threads_sched *other((threads_sched*)tn->get_owner());
    priority_add_item item;
@@ -682,17 +678,23 @@ threads_sched::set_node_priority(node *n, const double priority)
    LOCK_STACK(nodelock);
    NODE_LOCK(tn, nodelock);
    LOCK_STAT(prio_lock);
+   if(!is_higher_priority(tn, priority) && priority != 0) {
+      NODE_UNLOCK(tn, nodelock);
+      return;
+   }
    threads_sched *other((threads_sched*)tn->get_owner());
    if(other == this)
       do_set_node_priority(n, priority);
    else
 #ifdef DIRECT_PRIORITIES
-      set_node_priority_other(n, priority);
+      do_set_node_priority_other(tn, priority);
 #else
       other->set_node_priority_other(n, priority);
 #endif
    NODE_UNLOCK(tn, nodelock);
 #else
+   if(!is_higher_priority(tn, priority) && priority != 0)
+      return;
    threads_sched *other((threads_sched*)tn->get_owner());
    if(other == this)
       do_set_node_priority(n, priority);
