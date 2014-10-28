@@ -14,6 +14,9 @@ def name2title(name):
             'greedy-graph-coloring-search_engines': "Greedy Graph Coloring (Search Engines)",
             'shortest-uspowergrid': "Shortest Distance (US Power Grid)",
             'shortest-usairports500': "Shortest Distance (US 500 Airports)",
+            'shortest-celegans': "Shortest Distance (Celegans)",
+            'shortest-1000': "Shortest Distance (1000)",
+            'shortest-oclinks': "Shortest Distance (OCLinks)",
             '8queens-13': "13 Queens",
             'tree': "Tree",
             'tree-coord': "Tree (coordinated)",
@@ -95,8 +98,9 @@ class experiment(object):
    def linear_speedup(self):
       return self.x_axis()
 
-   def max_speedup(self):
-      base = self.times[1]
+   def max_speedup(self, base=None):
+      if not base:
+         base = self.times[1]
       m = max(float(base)/float(x) for th, x in self.times.iteritems() if th <= max_threads)
       if m <= 16:
          return 16
@@ -117,8 +121,10 @@ class experiment(object):
       ax.set_ylabel('Speedup', fontsize=ylabelfontsize)
       ax.set_xlabel('Threads', fontsize=ylabelfontsize)
       max_value_threads = max(x for x in self.times.keys() if x <= max_threads)
+      mspeedup = max(self.max_speedup(), coordinated.max_speedup(self.get_time(1)))
+      print mspeedup
       ax.set_xlim([0, max_value_threads])
-      ax.set_ylim([0, self.max_speedup()])
+      ax.set_ylim([0, mspeedup])
 
       cmap = plt.get_cmap('gray')
 
@@ -198,7 +204,10 @@ class experiment(object):
 
    def __init__(self, name):
       self.name = name
-      self.title = name2title(name)
+      if name.endswith("-coord"):
+         self.title = name2title(name[:-len("-coord")])
+      else:
+         self.title = name2title(name)
       self.times = {}
 
 
