@@ -27,10 +27,10 @@ QUEENS = 8queens-13
 SIMPLE = simple16 simple32 simple64
 MINMAX = min-max-tictactoe-big
 SHORTEST = shortest-usairports500 shortest-uspowergrid \
-			  shortest-celegans shortest-1000-all \
+			  shortest-celegans shortest-1000 \
 			  shortest-oclinks
 COORD_SHORTEST = shortest-usairports500-coord shortest-uspowergrid-coord \
-					  shortest-celegans-coord shortest-1000-all-coord \
+					  shortest-celegans-coord shortest-1000-coord \
 					  shortest-oclinks-coord
 
 THREAD_PROGRAMS = $(QUEENS) $(GGC) $(PAGERANK) $(HT) $(MINMAX) $(SHORTEST)
