@@ -4,6 +4,7 @@
 
 using namespace db;
 using namespace vm;
+using namespace std;
 
 namespace sched
 {
