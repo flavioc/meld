@@ -5,7 +5,8 @@
 typedef int32_t queue_id_t;
 #define queue_no_queue -1
 
-static_assert(sizeof(double) == sizeof(intptr_t), "Double and intptr_t must have the same size.");
+static_assert(sizeof(double) == sizeof(intptr_t), "double and intptr_t must have the same size.");
+static_assert(sizeof(double) == sizeof(int64_t), "uint64_t and intptr_t must have the same size.");
 
 // we put fields for the double queue and priority together in order to save space.
 #define DECLARE_DOUBLE_QUEUE_NODE(TYPE)   \
