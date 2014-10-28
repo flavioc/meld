@@ -21,11 +21,14 @@ export RESULTS_FILE=$(PWD)/results.csv
 GGC = greedy-graph-coloring-2000 greedy-graph-coloring-search_engines
 PAGERANK = pagerank-search_engines pagerank-5000
 HT = new-heat-transfer-80
-SHORTEST = shortest-uspowergrid shortest-usairports500
+HT_COORD = new-heat-transfer-80-coord
 BP = belief-propagation-200
 QUEENS = 8queens-13
 SIMPLE = simple16 simple32 simple64
 MINMAX = min-max-tictactoe-big
+SHORTEST = shortest-usairports500 shortest-uspowergrid \
+			  shortest-celegans shortest-1000-all \
+			  shortest-oclinks
 COORD_SHORTEST = shortest-usairports500-coord shortest-uspowergrid-coord \
 					  shortest-celegans-coord shortest-1000-all-coord \
 					  shortest-oclinks-coord
@@ -43,6 +46,8 @@ pagerank:
 	@bash $(SCRIPT) $(PAGERANK)
 ht:
 	@bash $(SCRIPT) $(HT)
+coord-ht:
+	@bash $(SCRIPT) $(HT_COORD)
 simple:
 	@bash $(SCRIPT) $(SIMPLE)
 bp:
