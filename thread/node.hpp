@@ -13,8 +13,6 @@ namespace sched
 
 class thread_intrusive_node: public db::node
 {
-	DEFINE_PRIORITY_NODE(thread_intrusive_node);
-	
 private:
 
    // marker that indicates if the node should not be stolen.
@@ -46,7 +44,6 @@ public:
 
    explicit thread_intrusive_node(const db::node::node_id _id, const db::node::node_id _trans):
 		db::node(_id, _trans),
-      INIT_PRIORITY_NODE(),
       static_node(NULL),
       default_priority_level(0.0),
       priority_level(0.0)

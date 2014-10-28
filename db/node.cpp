@@ -253,7 +253,6 @@ node::node(const node_id _id, const node_id _trans):
 #ifdef GC_NODES
    refs(0),
 #endif
-   INIT_DOUBLE_QUEUE_NODE(),
    id(_id), translation(_trans), owner(NULL), linear(),
    store(), unprocessed_facts(false)
 #ifdef DYNAMIC_INDEXING
