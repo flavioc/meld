@@ -143,7 +143,7 @@ all: $(TARGETS)
 .PHONY: clean
 clean:
 	find . -name '*.o' | xargs rm -f
-	rm -f meld predicates print server
+	rm -f meld print
 
 -include Makefile.externs
 Makefile.externs:	conf.mk
