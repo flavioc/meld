@@ -23,6 +23,8 @@ type linear missing-gradients(node, int).
 
 const lrate = 0.01.
 
+set-default-priority(@3, 1.0).
+
 !input(A),
 activated(A, Id, V),
 start(A, Id)
