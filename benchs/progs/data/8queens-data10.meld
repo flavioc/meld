@@ -449,61 +449,51 @@
 !left(@98, @88).
 !right(@98, @98).
 !coord(@9, 9, 0).
-set-cpu(@9, 0 % @cpus).
 !down-right(@9, @9).
 !down-left(@9, @9).
 !left(@9, @9).
 !right(@9, @19).
 !coord(@19, 9, 1).
-set-cpu(@19, 1 % @cpus).
 !down-right(@19, @19).
 !down-left(@19, @19).
 !left(@19, @9).
 !right(@19, @29).
 !coord(@29, 9, 2).
-set-cpu(@29, 2 % @cpus).
 !down-right(@29, @29).
 !down-left(@29, @29).
 !left(@29, @19).
 !right(@29, @39).
 !coord(@39, 9, 3).
-set-cpu(@39, 3 % @cpus).
 !down-right(@39, @39).
 !down-left(@39, @39).
 !left(@39, @29).
 !right(@39, @49).
 !coord(@49, 9, 4).
-set-cpu(@49, 4 % @cpus).
 !down-right(@49, @49).
 !down-left(@49, @49).
 !left(@49, @39).
 !right(@49, @59).
 !coord(@59, 9, 5).
-set-cpu(@59, 5 % @cpus).
 !down-right(@59, @59).
 !down-left(@59, @59).
 !left(@59, @49).
 !right(@59, @69).
 !coord(@69, 9, 6).
-set-cpu(@69, 6 % @cpus).
 !down-right(@69, @69).
 !down-left(@69, @69).
 !left(@69, @59).
 !right(@69, @79).
 !coord(@79, 9, 7).
-set-cpu(@79, 7 % @cpus).
 !down-right(@79, @79).
 !down-left(@79, @79).
 !left(@79, @69).
 !right(@79, @89).
 !coord(@89, 9, 8).
-set-cpu(@89, 8 % @cpus).
 !down-right(@89, @89).
 !down-left(@89, @89).
 !left(@89, @79).
 !right(@89, @99).
 !coord(@99, 9, 9).
-set-cpu(@99, 9 % @cpus).
 !down-right(@99, @99).
 !down-left(@99, @99).
 !left(@99, @89).
