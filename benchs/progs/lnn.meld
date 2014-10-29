@@ -26,7 +26,9 @@ type linear missing-gradients(node, int).
 const lrate = 0.01.
 
 //set-cpu(@0, 0 % @cpus).  set-cpu(@1, 1 % @cpus).  set-cpu(@2, 2 % @cpus).  set-cpu(@3, 3 % @cpus).  set-cpu(@4, 4 % @cpus).  set-cpu(@5, 5 % @cpus).  set-cpu(@6, 6 % @cpus).  set-cpu(@7, 7 % @cpus).  set-cpu(@8, 8 % @cpus).  set-cpu(@9, 9 % @cpus).  set-cpu(@10, 10 % @cpus).  set-cpu(@11, 11 % @cpus).  set-cpu(@12, 12 % @cpus).  set-cpu(@13, 13 % @cpus).  set-cpu(@14, 14 % @cpus).  set-cpu(@15, 15 % @cpus).  set-cpu(@16, 16 % @cpus).  set-cpu(@17, 17 % @cpus).  set-cpu(@18, 18 % @cpus).  set-cpu(@19, 19 % @cpus).  set-cpu(@20, 20 % @cpus).  set-cpu(@21, 21 % @cpus).  set-cpu(@22, 22 % @cpus).  set-cpu(@23, 23 % @cpus).  set-cpu(@24, 24 % @cpus).  set-cpu(@25, 25 % @cpus).  set-cpu(@26, 26 % @cpus).
-set-default-priority(@3, 5.0).
+!output(A) -o set-default-priority(A, 1.0).
+!hidden(A) -o set-default-priority(A, 2.0).
+!input(A) -o set-default-priority(A, 3.0).
 
 !input(A),
 activated(A, Id, V),
