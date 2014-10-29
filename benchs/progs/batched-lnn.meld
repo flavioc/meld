@@ -1,0 +1,137 @@
+/* Training of a three-layer neural network. */
+include #data/batched-nn-data.meld
+   
+type route link(node, node).
+type route back-link(node, node).
+type linear weight(node, int, node, float).
+type linear backup-weight(node, int, node, float).
+type linear coiso(node, int).
+type input(node).
+type hidden(node).
+type output(node).
+type totalinput(node, int).
+type totaloutput(node, int).
+type linear delta(node, node, float).
+type linear update-weights(node, int).
+type linear activated(node, int, float).
+type linear oldactivated(node, int, float).
+type linear expected(node, int, float).
+type linear receive(node, int, float).
+type linear toreceive(node, int, int, float).
+type linear start(node, int).
+type linear derive-sends(node, int, int).
+type linear derive-toreceive(node, int, int).
+type linear wait-for(node, int, int).
+type linear outgrad(node, node, int, float).
+type linear hiddengrad(node, int, node, float).
+type linear missing-gradients(node, int, int).
+
+//priority @cluster @random.
+
+const lrate = 0.01.
+const batches = 10.
+
+set-cpu(@0, 0 % @cpus).  set-cpu(@1, 1 % @cpus).  set-cpu(@2, 2 % @cpus).  set-cpu(@3, 3 % @cpus).  set-cpu(@4, 4 % @cpus).  set-cpu(@5, 5 % @cpus).  set-cpu(@6, 6 % @cpus).  set-cpu(@7, 7 % @cpus).  set-cpu(@8, 8 % @cpus).  set-cpu(@9, 9 % @cpus).  set-cpu(@10, 10 % @cpus).  set-cpu(@11, 11 % @cpus).  set-cpu(@12, 12 % @cpus).  set-cpu(@13, 13 % @cpus).  set-cpu(@14, 14 % @cpus).  set-cpu(@15, 15 % @cpus).  set-cpu(@16, 16 % @cpus).  set-cpu(@17, 17 % @cpus).  set-cpu(@18, 18 % @cpus).  set-cpu(@19, 19 % @cpus).  set-cpu(@20, 20 % @cpus).  set-cpu(@21, 21 % @cpus).  set-cpu(@22, 22 % @cpus).  set-cpu(@23, 23 % @cpus).  set-cpu(@24, 24 % @cpus).  set-cpu(@25, 25 % @cpus).  set-cpu(@26, 26 % @cpus).
+//!output(A) -o set-default-priority(A, 1.0).
+//!hidden(A) -o set-default-priority(A, 2.0).
+//!input(A) -o set-default-priority(A, 3.0).
+!output(A) -o set-default-priority(A, 3).
+
+!input(A) -o {B, Id, W | weight(A, Id, B, W) | weight(A, Id, B, W), delta(A, B, 0.0)}.
+!hidden(A) -o {B, Id, W | weight(A, Id, B, W) | weight(A, Id, B, W), delta(A, B, 0.0)}.
+
+wait-for(A, 0, Id) -o update-weights(A, Id).
+
+update-weights(A, NewId)
+   -o {B, Delta, W, Id | weight(A, Id, B, W), delta(A, B, Delta) |
+         weight(A, Id, B, W + Delta),
+         delta(A, B, 0.0)},
+      start(A, NewId).
+
+!input(A),
+start(A, Id)
+   -o derive-sends(A, Id, Id + batches),
+      wait-for(A, batches, Id + batches).
+
+derive-sends(A, Id1, Id1) -o 1.
+derive-sends(A, Id1, Id2),
+activated(A, Id1, V),
+Id1 < Id2,
+!totaloutput(A, T)
+   -o {B, W, Idx | !link(A, B), weight(A, Idx, B, W) | receive(B, Id1, V * W), weight(A, Idx, B, W)},
+      oldactivated(A, Id1, V),
+      missing-gradients(A, Id1, T),
+      derive-sends(A, Id1 + 1, Id2).
+
+!hidden(A),
+start(A, Id)
+   -o derive-toreceive(A, Id, Id + batches),
+      wait-for(A, batches, Id + batches).
+!output(A),
+start(A, Id)
+   -o derive-toreceive(A, Id, Id + batches),
+      wait-for(A, batches, Id + batches).
+
+derive-toreceive(A, Id1, Id1) -o 1.
+derive-toreceive(A, Id1, Id2),
+!totalinput(A, T),
+Id1 < Id2
+   -o toreceive(A, T, Id1, 0.0),
+      derive-toreceive(A, Id1 + 1, Id2).
+
+!hidden(A) -o coiso(A, 0).
+
+coiso(A, 1) -o {B, Idx, W | backup-weight(A, Idx, B, W) | weight(A, Idx, B, W)},
+               coiso(A, 0).
+
+activated(A, Id, V),
+!hidden(A),
+coiso(A, 0)
+	-o {B, W, Idx | !link(A, B), weight(A, Idx, B, W) | receive(B, Id, V * W), backup-weight(A, Idx, B, W)}, oldactivated(A, Id, V), coiso(A, 1).
+
+toreceive(A, 0, Id, Acc)
+   -o activated(A, Id, sigmoid(Acc)).
+
+receive(A, Id, V),
+toreceive(A, T, Id, Acc),
+T > 0
+   -o toreceive(A, T - 1, Id, Acc + V).
+
+// compare output
+!output(A),
+expected(A, Id, E),
+activated(A, Id, G),
+wait-for(A, T, IdO)
+	-o {B | !back-link(A, B) | outgrad(B, A, Id, G * (1.0 - G) * (E - G))},
+      wait-for(A, T - 1, IdO).
+
+!hidden(A),
+!link(A, B),
+outgrad(A, B, Id, G),
+oldactivated(A, Id, V),
+wait-for(A, T, IdO),
+weight(A, Idx, B, W),
+delta(A, B, Delta)
+	-o {C | !back-link(A, C) | hiddengrad(C, Id, A, V * (1.0 - V) * (V * W))},
+      delta(A, B, Delta + lrate * V * G),
+		weight(A, Idx, B, W),
+      wait-for(A, T - 1, IdO).
+
+!input(A),
+missing-gradients(A, Id, 0),
+oldactivated(A, Id, _),
+wait-for(A, T, IdO)
+	-o wait-for(A, T - 1, IdO).
+
+!input(A),
+!link(A, B),
+missing-gradients(A, Id, T),
+oldactivated(A, Id, V),
+hiddengrad(A, Id, B, G),
+weight(A, Idx, B, W),
+delta(A, B, Delta)
+	-o oldactivated(A, Id, V),
+      weight(A, Idx, B, W),
+      delta(A, B, Delta + lrate * V * G),
+		missing-gradients(A, Id, T - 1).
+
