@@ -21,6 +21,8 @@ type linear oldweight(node, int, node, float).
 type linear hiddengrad(node, node, float).
 type linear missing-gradients(node, int).
 
+priority @cluster @random.
+
 const lrate = 0.01.
 
 set-static(@3).
