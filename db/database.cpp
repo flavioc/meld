@@ -98,8 +98,6 @@ database::create_node_id(const db::node::node_id id)
 
    node *ret(create_fn(max_node_id, max_translated_id));
 
-   assert(ret->is_empty());
-   
    nodes[max_node_id] = ret;
    nodes_total++;
    mtx.unlock(LOCK_STACK_USE(dblock));

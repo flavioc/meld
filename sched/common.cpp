@@ -3,10 +3,10 @@
 #include "db/database.hpp"
 #include "vm/state.hpp"
 #include "sched/base.hpp"
+#include "machine.hpp"
 
 using namespace vm;
 using namespace db;
-using namespace process;
 
 namespace sched
 {
