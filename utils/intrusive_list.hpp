@@ -186,7 +186,7 @@ struct intrusive_list
             assert(Prev()(head) == NULL);
          }
          size--;
-         assertl();
+         //assertl();
          return it2;
       }
 
@@ -211,7 +211,7 @@ struct intrusive_list
          }
          Prev().set(n, NULL);
          size++;
-         assertl();
+         //assertl();
          assert(n == head);
          assert(Next()(tail) == NULL);
          assert(Prev()(head) == NULL);
@@ -234,7 +234,7 @@ struct intrusive_list
 
       inline void push_back(T *n)
       {
-         assertl();
+         //assertl();
          if(head == NULL) {
             assert(size == 0);
             assert(tail == NULL);
@@ -254,12 +254,12 @@ struct intrusive_list
          assert(n == tail);
          assert(Next()(tail) == NULL);
          assert(Prev()(head) == NULL);
-         assertl();
+         //assertl();
       }
 
       inline void splice_front(intrusive_list& ls)
       {
-         assertl();
+         //assertl();
          if(tail == NULL) {
             assert(head == NULL);
             head = ls.head;
@@ -282,14 +282,14 @@ struct intrusive_list
          }
          size += ls.size;
          ls.clear();
-         assertl();
+         //assertl();
       }
 
       inline void splice_back(intrusive_list& ls)
       {
          //std::cout << "splice " << this << " " << &ls << std::endl;
-         ls.assertl();
-         assertl();
+         //ls.assertl();
+         //assertl();
          if(head == NULL) {
             assert(tail == NULL);
             head = ls.head;
@@ -312,7 +312,7 @@ struct intrusive_list
          }
          size += ls.size;
          ls.clear();
-         assertl();
+         //assertl();
       }
 
       inline void dump(std::ostream& out, const vm::predicate *pred) const
@@ -327,13 +327,13 @@ struct intrusive_list
          size = 0;
          head = NULL;
          tail = NULL;
-         assertl();
+         //assertl();
       }
 
       explicit intrusive_list(void):
          head(NULL), tail(NULL), size(0)
       {
-         assertl();
+         //assertl();
       }
 };
 
