@@ -17,7 +17,7 @@ ifeq ($(RELEASE), true)
 	DEBUG = -DNDEBUG
 	OPTIMIZATIONS = -O3
 else
-	DEBUG =
+	DEBUG = -g
 	OPTIMIZATIONS = -O0
 endif
 ifeq ($(ALLOCATOR), pool)

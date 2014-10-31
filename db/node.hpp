@@ -136,7 +136,7 @@ public:
    inline bool garbage_collect(void) const
    {
 #ifdef GC_NODES
-      return refs == 0 && store.matcher.is_empty();
+      return refs == 0 && store.matcher.is_empty() && !unprocessed_facts;
 #else
       return false;
 #endif

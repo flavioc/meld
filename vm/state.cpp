@@ -905,10 +905,13 @@ state::run_node(db::node *no)
    node->internal_unlock(LOCK_STACK_USE(internal_lock_data));
    sync();
 #ifdef GC_NODES
-   // these nodes are sure to be no longer in use.
    for(auto it(gc_nodes.begin()); it != gc_nodes.end(); ++it) {
       db::node *n((db::node*)*it);
-      sched->delete_node(n);
+      n->lock();
+      // need to lock node since it may have pending facts
+      if(n->garbage_collect())
+         sched->delete_node(n);
+      n->unlock();
    }
    gc_nodes.clear();
 #endif
