@@ -23,6 +23,7 @@ PAGERANK = pagerank-search_engines pagerank-5000
 HT = new-heat-transfer-80
 HT_COORD = new-heat-transfer-80-coord
 BP = belief-propagation-200
+SPLASH_BP = splash-bp-400
 QUEENS = 8queens-13
 SIMPLE = simple16 simple32 simple64
 MINMAX = min-max-tictactoe-big
@@ -52,6 +53,8 @@ simple:
 	@bash $(SCRIPT) $(SIMPLE)
 bp:
 	@bash $(SCRIPT) $(BP)
+splash-bp:
+	@bash $(SCRIPT) $(SPLASH_BP)
 queens:
 	@bash $(SCRIPT) $(QUEENS)
 minmax:
