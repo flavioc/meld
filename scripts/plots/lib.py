@@ -107,6 +107,38 @@ class experiment(object):
       else:
          return math.ceil(m) + 2
 
+   def get_improvement(self, reg):
+      return [None] + [float(reg.get_time(th))/float(c) for th, c in self.times.iteritems() if th <= max_threads]
+
+   def create_coord_improv(self, prefix, coordinated):
+      fig = plt.figure()
+      ax = fig.add_subplot(111)
+
+      names = ('Improvement')
+      formats = ('f4')
+      titlefontsize = 22
+      ylabelfontsize = 20
+      ax.set_title(self.title, fontsize=titlefontsize)
+      ax.yaxis.tick_right()
+      ax.yaxis.set_label_position("right")
+      ax.set_ylabel('Improvement', fontsize=ylabelfontsize)
+      ax.set_xlabel('Threads', fontsize=ylabelfontsize)
+      max_value_threads = max(x for x in self.times.keys() if x <= max_threads)
+      improvs = coordinated.get_improvement(self)
+      ax.set_xlim([0, max_value_threads])
+      ax.set_ylim([0, math.ceil(max(improvs))])
+
+      cmap = plt.get_cmap('gray')
+
+      ax.plot(self.x_axis(), improvs,
+         label='Coordination', linestyle='--', marker='^', color=cmap(0.1))
+# ax.legend([reg, coord], ["Regular", "Coordinated"], loc=2, fontsize=20, markerscale=2)
+
+      setup_lines(ax, cmap)
+
+      name = prefix + self.name + ".png"
+      plt.savefig(name)
+
    def create_coord(self, prefix, coordinated):
       fig = plt.figure()
       ax = fig.add_subplot(111)
