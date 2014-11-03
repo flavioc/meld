@@ -24,10 +24,17 @@ def name2title(name):
             'min-max-tictactoe-coord': "MiniMax (coordinated)",
             'belief-propagation-200': "Belief Propagation (200x200)",
             'belief-propagation-400': "Belief Propagation (400x400)",
+            'splash-bp-400': "Belief Propagation (400x400 with Splashes)",
+            'graphlab': "GraphLab Belief Propagation (400x400)",
             'pagerank-5000': "PageRank (5000 nodes)",
             'pagerank-search_engines': "PageRank (Search Engines)",
             'new-heat-transfer-80': "Heat Transfer (80x80)"}
    return table[name]
+
+def coordinated_program(name):
+   if name == 'belief-propagation-400':
+      return 'splash-bp-400'
+   return name + '-coord'
 
 class experiment_set(object):
    def add_experiment(self, name, threads, time):
@@ -88,7 +95,10 @@ class experiment(object):
       return float(self.times[nthreads])
 
    def x_axis(self):
-      return [0] + [key for key in self.times.keys() if key <= max_threads]
+      return [0] + self.x_axis1()
+
+   def x_axis1(self):
+      return [key for key in self.times.keys() if key <= max_threads]
 
    def speedup_data(self, base=None):
       if not base:
@@ -108,7 +118,7 @@ class experiment(object):
          return math.ceil(m) + 2
 
    def get_improvement(self, reg):
-      return [None] + [float(reg.get_time(th))/float(c) for th, c in self.times.iteritems() if th <= max_threads]
+      return [float(reg.get_time(th))/float(c) for th, c in self.times.iteritems() if th <= max_threads]
 
    def create_coord_improv(self, prefix, coordinated):
       fig = plt.figure()
@@ -125,12 +135,12 @@ class experiment(object):
       ax.set_xlabel('Threads', fontsize=ylabelfontsize)
       max_value_threads = max(x for x in self.times.keys() if x <= max_threads)
       improvs = coordinated.get_improvement(self)
-      ax.set_xlim([0, max_value_threads])
+      ax.set_xlim([1, max_value_threads])
       ax.set_ylim([0, math.ceil(max(improvs))])
 
       cmap = plt.get_cmap('gray')
 
-      ax.plot(self.x_axis(), improvs,
+      ax.plot(self.x_axis1(), improvs,
          label='Coordination', linestyle='--', marker='^', color=cmap(0.1))
 # ax.legend([reg, coord], ["Regular", "Coordinated"], loc=2, fontsize=20, markerscale=2)
 
@@ -196,6 +206,71 @@ class experiment(object):
          label='Speedup', linestyle='--', marker='^', color=cmap(0.1))
       ax.plot(self.x_axis(), self.linear_speedup(),
         label='Linear', linestyle='-', color=cmap(0.2))
+
+      setup_lines(ax, cmap)
+
+      name = prefix + self.name + ".png"
+      plt.savefig(name)
+
+   def create_comparison_coord_system(self, prefix, coord, system, coord_system, system_name='GraphLab'):
+      fig = plt.figure()
+      ax = fig.add_subplot(111)
+
+      names = ('Speedup')
+      formats = ('f4')
+      titlefontsize = 22
+      ylabelfontsize = 20
+      ax.set_title("Coordination Improvement", fontsize=titlefontsize)
+      ax.yaxis.tick_right()
+      ax.yaxis.set_label_position("right")
+      ax.set_ylabel('Improvement', fontsize=ylabelfontsize)
+      ax.set_xlabel('Threads', fontsize=ylabelfontsize)
+      max_value_threads = max(x for x in self.times.keys() if x <= max_threads)
+      improv_lm = coord.get_improvement(self)
+      improv_system = coord_system.get_improvement(system)
+      ax.set_xlim([1, max_value_threads])
+      ax.set_ylim([0, math.ceil(max(max(improv_lm), max(improv_system))) + 1])
+
+      cmap = plt.get_cmap('gray')
+
+      lm, = ax.plot(self.x_axis1(), improv_lm,
+         label='LM Improvement', linestyle='--', marker='^', color=cmap(0.1))
+      other, = ax.plot(self.x_axis1(), improv_system,
+         label=system_name + ' Improvement', linestyle='--', marker='+', color=cmap(0.6))
+      ax.legend([lm, other], ["LM", system_name], loc=2, fontsize=20, markerscale=2)
+
+      setup_lines(ax, cmap)
+
+      name = prefix + "improve_" + self.name + ".png"
+      plt.savefig(name)
+
+
+   def create_speedup_compare_systems(self, prefix, system, system_name='GraphLab'):
+      fig = plt.figure()
+      ax = fig.add_subplot(111)
+
+      names = ('Speedup')
+      formats = ('f4')
+      titlefontsize = 22
+      ylabelfontsize = 20
+      ax.set_title(self.title, fontsize=titlefontsize)
+      ax.yaxis.tick_right()
+      ax.yaxis.set_label_position("right")
+      ax.set_ylabel('Speedup', fontsize=ylabelfontsize)
+      ax.set_xlabel('Threads', fontsize=ylabelfontsize)
+      max_value_threads = max(x for x in self.times.keys() if x <= max_threads)
+      ax.set_xlim([0, max_value_threads])
+      ax.set_ylim([0, max(self.max_speedup(), system.max_speedup())])
+
+      cmap = plt.get_cmap('gray')
+
+      lm, = ax.plot(self.x_axis(), self.speedup_data(),
+         label='LM Speedup', linestyle='--', marker='^', color=cmap(0.1))
+      other, = ax.plot(self.x_axis(), system.speedup_data(),
+         label=system_name + ' Speedup', linestyle='--', marker='+', color=cmap(0.6))
+      ax.plot(self.x_axis(), self.linear_speedup(),
+        label='Linear', linestyle='-', color=cmap(0.2))
+      ax.legend([lm, other], ["LM", system_name], loc=2, fontsize=20, markerscale=2)
 
       setup_lines(ax, cmap)
 
