@@ -4,11 +4,12 @@ belief-propagation
 belief-propagation-structs
 pagerank-linear-async
 heat-transfer
-mfp
-a-star
 stop-program
 set-priority1
 set-priority2
 set-default-priority1
 set-default-priority2
+a-star
 mwst
+mfp
+splash-bp-10
