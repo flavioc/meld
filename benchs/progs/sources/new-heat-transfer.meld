@@ -37,7 +37,7 @@ heat(A, H),
 
 new-heat(A, New, Old),
 Diff = if (New - Old > 0.0) then (New - Old) else (Old - New) end
-   -o {B, W | !edge(A, B, W) | new-neighbor-heat(B, A, New), (if Diff > epsilon then update(B) otherwise 1 end), (if Diff > delta then set-priority(B, Diff) otherwise 1 end)},
+   -o {B, W | !edge(A, B, W) | new-neighbor-heat(B, A, New), (if Diff > epsilon then update(B) otherwise 1 end), (if Diff > delta then add-priority(B, Diff) otherwise 1 end)},
       heat(A, New).
 
 new-neighbor-heat(A, B, Heat),
