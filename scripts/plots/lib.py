@@ -164,19 +164,21 @@ class experiment(object):
       ax.set_xlabel('Threads', fontsize=ylabelfontsize)
       max_value_threads = max(x for x in self.times.keys() if x <= max_threads)
       mspeedup = max(self.max_speedup(), coordinated.max_speedup(self.get_time(1)))
-      print mspeedup
       ax.set_xlim([0, max_value_threads])
       ax.set_ylim([0, mspeedup])
 
       cmap = plt.get_cmap('gray')
 
       reg, = ax.plot(self.x_axis(), self.speedup_data(),
-         label='Speedup (Regular)', linestyle='--', marker='^', color=cmap(0.1))
-      coord, = ax.plot(self.x_axis(), coordinated.speedup_data(self.get_time(1)),
-         label='Speedup (Coordinated)', linestyle='--', marker='o', color=cmap(0.4))
+         linestyle='--', marker='^', color=cmap(0.1))
+      coordcoord, = ax.plot(self.x_axis(), coordinated.speedup_data(),
+         linestyle='--', marker='+', color=cmap(0.4))
+      coordreg, = ax.plot(self.x_axis(), coordinated.speedup_data(self.get_time(1)),
+         linestyle='--', marker='o', color=cmap(0.4))
       ax.plot(self.x_axis(), self.linear_speedup(),
         label='Linear', linestyle='-', color=cmap(0.2))
-      ax.legend([reg, coord], ["Regular", "Coordinated"], loc=2, fontsize=20, markerscale=2)
+      ax.legend([reg, coordcoord, coordreg], ["Regular/Regular",
+            "Coordinated/Coordinated", "Coordinated/Regular"], loc=2, fontsize=20, markerscale=2)
 
       setup_lines(ax, cmap)
 

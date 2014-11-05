@@ -7,7 +7,7 @@ import matplotlib as mpl
 import numpy as np
 from matplotlib import rcParams
 from numpy import nanmax
-from lib import name2title, experiment_set, experiment
+from lib import name2title, experiment_set, experiment, coordinated_program
 
 if len(sys.argv) != 3:
   print "Usage: plot_coord.py <filename> <output_prefix>"
@@ -35,7 +35,7 @@ with open(filename, "r") as fp:
 for exp_name in expset.experiment_names():
    if exp_name.endswith("-coord"):
       continue
-   coord = expset.get_experiment(exp_name + "-coord")
+   coord = expset.get_experiment(coordinated_program(exp_name))
    if not coord:
       continue
    exp = expset.get_experiment(exp_name)
