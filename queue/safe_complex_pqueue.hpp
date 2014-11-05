@@ -148,7 +148,8 @@ public:
       size_t level(2);
       for(size_t i(1); i < heap.size(); ) {
          for(size_t j(0); j < level/2; ++j) {
-            heap_object obj(heap[i + j]);
+            const size_t idx = std::min(heap.size()-1, i + j);
+            heap_object obj(heap[idx]);
             do_remove(obj, new_state);
             buffer[got++] = obj;
             if(got == half)
