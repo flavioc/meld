@@ -62,11 +62,12 @@ class experiment_set(object):
 
       fig, ax = plt.subplots()
 
-      otherRect = ax.bar(ind, [1] * n, width, color='r')
+      cmap = plt.get_cmap('gray')
+      otherRect = ax.bar(ind, [1] * n, width, color=cmap(0.2))
       timesNew = list(x.get_time(threads) for x in self.experiments.values())
       timesOld = list(x.get_time(threads) for x in other.experiments.values())
 
-      thisRect = ax.bar(ind + width, map(truediv, timesNew, timesOld), width, color='y')
+      thisRect = ax.bar(ind + width, map(truediv, timesNew, timesOld), width, color=cmap(0.7))
 
       ax.set_ylabel('Relative Execution')
       title = 'Comparison (' + str(threads) + ' thread'
@@ -75,7 +76,7 @@ class experiment_set(object):
       title += ')'
       ax.set_title(title)
       ax.set_xticks(ind+width)
-      ax.set_xticklabels(list(name2title(x) for x in self.experiments.keys()), rotation=45, fontsize=8, ha='right')
+      ax.set_xticklabels(list(name2title(x) for x in self.experiments.keys()), rotation=45, fontsize=10, ha='right')
       ax.legend((otherRect[0], thisRect[0]), ('Old', 'New'))
       ax.set_ylim([0, 1.5])
 
@@ -214,7 +215,7 @@ class experiment(object):
       name = prefix + self.name + ".png"
       plt.savefig(name)
 
-   def create_comparison_coord_system(self, prefix, coord, system, coord_system, system_name='GraphLab'):
+   def create_comparison_coord_system(self, prefix, coord, system, coord_system, system_name='GraphLab', title=None):
       fig = plt.figure()
       ax = fig.add_subplot(111)
 
@@ -222,7 +223,9 @@ class experiment(object):
       formats = ('f4')
       titlefontsize = 22
       ylabelfontsize = 20
-      ax.set_title("Coordination Improvement", fontsize=titlefontsize)
+      if not title:
+         title = "Coordination Improvement"
+      ax.set_title(title, fontsize=titlefontsize)
       ax.yaxis.tick_right()
       ax.yaxis.set_label_position("right")
       ax.set_ylabel('Improvement', fontsize=ylabelfontsize)
@@ -247,7 +250,7 @@ class experiment(object):
       plt.savefig(name)
 
 
-   def create_speedup_compare_systems(self, prefix, system, system_name='GraphLab'):
+   def create_speedup_compare_systems(self, prefix, system, system_name='GraphLab', title=None):
       fig = plt.figure()
       ax = fig.add_subplot(111)
 
@@ -255,7 +258,9 @@ class experiment(object):
       formats = ('f4')
       titlefontsize = 22
       ylabelfontsize = 20
-      ax.set_title(self.title, fontsize=titlefontsize)
+      if not title:
+         title = self.title
+      ax.set_title(title, fontsize=titlefontsize)
       ax.yaxis.tick_right()
       ax.yaxis.set_label_position("right")
       ax.set_ylabel('Speedup', fontsize=ylabelfontsize)

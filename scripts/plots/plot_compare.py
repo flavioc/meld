@@ -4,8 +4,8 @@ import sys
 import math
 from lib import name2title, experiment_set, experiment
 
-if len(sys.argv) != 3:
-  print "Usage: plot_compare.py <filename> <output_prefix>"
+if len(sys.argv) < 3:
+  print "Usage: plot_compare.py <filename> <output_prefix> [--global-only]"
   sys.exit(1)
 
 filename = sys.argv[1]
@@ -32,11 +32,12 @@ with open(filename, "r") as fp:
          threads = int(spec[1:])
          old.add_experiment(name, threads, time)
 
-# Generate the speedup graphs.
-for exp_name in new.experiment_names():
-   newexp = new.get_experiment(exp_name)
-   oldexp = old.get_experiment(exp_name)
-   newexp.create_speedup_compare(prefix, oldexp)
+if len(sys.argv) == 3:
+   # Generate the speedup graphs.
+   for exp_name in new.experiment_names():
+      newexp = new.get_experiment(exp_name)
+      oldexp = old.get_experiment(exp_name)
+      newexp.create_speedup_compare(prefix, oldexp)
 
 # Generate the histogram.
 new.create_histogram_compare(prefix, old, 1)

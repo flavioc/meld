@@ -43,11 +43,16 @@ for exp_name in expset.experiment_names():
    other = expset.get_experiment(othersystem)
    if not other:
       continue
-   lm.create_speedup_compare_systems(prefix, other, 'GraphLab')
+   title = None
+   if exp_name == 'belief-propagation-400':
+      title = 'LBP (400x400)'
+   if exp_name == 'splash-bp-400':
+      title = 'SBP (400x400)'
+   lm.create_speedup_compare_systems(prefix, other, 'GraphLab', title=title)
    coord_lm = expset.get_experiment(coordinated_program(exp_name))
    if not coord_lm:
       continue
    coord_other = expset.get_experiment(coordinated_program(othersystem))
    if not coord_other:
       continue
-   lm.create_comparison_coord_system(prefix, other, coord_lm, coord_other, 'GraphLab')
+   lm.create_comparison_coord_system(prefix, other, coord_lm, coord_other, 'GraphLab', title="SBP/LBP (400x400)")
