@@ -141,11 +141,25 @@ public:
       LOCK_STAT(ready_lock);
 
       const size_t half(std::min(max, heap.size()/2));
+      size_t got(0);
+      if(got == half)
+         return half;
 
-      for(size_t i(0); i < half; ++i)
-         buffer[i] = do_pop(new_state);
+      size_t level(2);
+      for(size_t i(1); i < heap.size(); ) {
+         for(size_t j(0); j < level/2; ++j) {
+            const size_t idx = std::min(heap.size()-1, i + j);
+            heap_object obj(heap[idx]);
+            do_remove(obj, new_state);
+            buffer[got++] = obj;
+            if(got == half)
+               return half;
+         }
+         i += level;
+         level <<= 1;
+      }
 
-      return half;
+      return got;
    }
 
    inline heap_object pop_best(intrusive_safe_complex_pqueue<T>& other, const queue_id_t new_state)
