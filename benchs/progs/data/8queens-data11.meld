@@ -1,725 +1,725 @@
 !coord(@0, 0, 0).
-set-default-priority(@0, 11).
+set-default-priority(@0, 11.0).
 !down-right(@0, @23).
 !down-left(@0, @0).
 !left(@0, @0).
 !right(@0, @11).
 !coord(@11, 0, 1).
-set-default-priority(@11, 11).
+set-default-priority(@11, 11.0).
 !down-right(@11, @34).
 !down-left(@11, @11).
 !left(@11, @0).
 !right(@11, @22).
 !coord(@22, 0, 2).
-set-default-priority(@22, 11).
+set-default-priority(@22, 11.0).
 !down-right(@22, @45).
 !down-left(@22, @1).
 !left(@22, @11).
 !right(@22, @33).
 !coord(@33, 0, 3).
-set-default-priority(@33, 11).
+set-default-priority(@33, 11.0).
 !down-right(@33, @56).
 !down-left(@33, @12).
 !left(@33, @22).
 !right(@33, @44).
 !coord(@44, 0, 4).
-set-default-priority(@44, 11).
+set-default-priority(@44, 11.0).
 !down-right(@44, @67).
 !down-left(@44, @23).
 !left(@44, @33).
 !right(@44, @55).
 !coord(@55, 0, 5).
-set-default-priority(@55, 11).
+set-default-priority(@55, 11.0).
 !down-right(@55, @78).
 !down-left(@55, @34).
 !left(@55, @44).
 !right(@55, @66).
 !coord(@66, 0, 6).
-set-default-priority(@66, 11).
+set-default-priority(@66, 11.0).
 !down-right(@66, @89).
 !down-left(@66, @45).
 !left(@66, @55).
 !right(@66, @77).
 !coord(@77, 0, 7).
-set-default-priority(@77, 11).
+set-default-priority(@77, 11.0).
 !down-right(@77, @100).
 !down-left(@77, @56).
 !left(@77, @66).
 !right(@77, @88).
 !coord(@88, 0, 8).
-set-default-priority(@88, 11).
+set-default-priority(@88, 11.0).
 !down-right(@88, @111).
 !down-left(@88, @67).
 !left(@88, @77).
 !right(@88, @99).
 !coord(@99, 0, 9).
-set-default-priority(@99, 11).
+set-default-priority(@99, 11.0).
 !down-right(@99, @99).
 !down-left(@99, @78).
 !left(@99, @88).
 !right(@99, @110).
 !coord(@110, 0, 10).
-set-default-priority(@110, 11).
+set-default-priority(@110, 11.0).
 !down-right(@110, @110).
 !down-left(@110, @89).
 !left(@110, @99).
 !right(@110, @110).
 !coord(@1, 1, 0).
-set-default-priority(@1, 10).
+set-default-priority(@1, 10.0).
 !down-right(@1, @24).
 !down-left(@1, @1).
 !left(@1, @1).
 !right(@1, @12).
 !coord(@12, 1, 1).
-set-default-priority(@12, 10).
+set-default-priority(@12, 10.0).
 !down-right(@12, @35).
 !down-left(@12, @12).
 !left(@12, @1).
 !right(@12, @23).
 !coord(@23, 1, 2).
-set-default-priority(@23, 10).
+set-default-priority(@23, 10.0).
 !down-right(@23, @46).
 !down-left(@23, @2).
 !left(@23, @12).
 !right(@23, @34).
 !coord(@34, 1, 3).
-set-default-priority(@34, 10).
+set-default-priority(@34, 10.0).
 !down-right(@34, @57).
 !down-left(@34, @13).
 !left(@34, @23).
 !right(@34, @45).
 !coord(@45, 1, 4).
-set-default-priority(@45, 10).
+set-default-priority(@45, 10.0).
 !down-right(@45, @68).
 !down-left(@45, @24).
 !left(@45, @34).
 !right(@45, @56).
 !coord(@56, 1, 5).
-set-default-priority(@56, 10).
+set-default-priority(@56, 10.0).
 !down-right(@56, @79).
 !down-left(@56, @35).
 !left(@56, @45).
 !right(@56, @67).
 !coord(@67, 1, 6).
-set-default-priority(@67, 10).
+set-default-priority(@67, 10.0).
 !down-right(@67, @90).
 !down-left(@67, @46).
 !left(@67, @56).
 !right(@67, @78).
 !coord(@78, 1, 7).
-set-default-priority(@78, 10).
+set-default-priority(@78, 10.0).
 !down-right(@78, @101).
 !down-left(@78, @57).
 !left(@78, @67).
 !right(@78, @89).
 !coord(@89, 1, 8).
-set-default-priority(@89, 10).
+set-default-priority(@89, 10.0).
 !down-right(@89, @112).
 !down-left(@89, @68).
 !left(@89, @78).
 !right(@89, @100).
 !coord(@100, 1, 9).
-set-default-priority(@100, 10).
+set-default-priority(@100, 10.0).
 !down-right(@100, @100).
 !down-left(@100, @79).
 !left(@100, @89).
 !right(@100, @111).
 !coord(@111, 1, 10).
-set-default-priority(@111, 10).
+set-default-priority(@111, 10.0).
 !down-right(@111, @111).
 !down-left(@111, @90).
 !left(@111, @100).
 !right(@111, @111).
 !coord(@2, 2, 0).
-set-default-priority(@2, 9).
+set-default-priority(@2, 9.0).
 !down-right(@2, @25).
 !down-left(@2, @2).
 !left(@2, @2).
 !right(@2, @13).
 !coord(@13, 2, 1).
-set-default-priority(@13, 9).
+set-default-priority(@13, 9.0).
 !down-right(@13, @36).
 !down-left(@13, @13).
 !left(@13, @2).
 !right(@13, @24).
 !coord(@24, 2, 2).
-set-default-priority(@24, 9).
+set-default-priority(@24, 9.0).
 !down-right(@24, @47).
 !down-left(@24, @3).
 !left(@24, @13).
 !right(@24, @35).
 !coord(@35, 2, 3).
-set-default-priority(@35, 9).
+set-default-priority(@35, 9.0).
 !down-right(@35, @58).
 !down-left(@35, @14).
 !left(@35, @24).
 !right(@35, @46).
 !coord(@46, 2, 4).
-set-default-priority(@46, 9).
+set-default-priority(@46, 9.0).
 !down-right(@46, @69).
 !down-left(@46, @25).
 !left(@46, @35).
 !right(@46, @57).
 !coord(@57, 2, 5).
-set-default-priority(@57, 9).
+set-default-priority(@57, 9.0).
 !down-right(@57, @80).
 !down-left(@57, @36).
 !left(@57, @46).
 !right(@57, @68).
 !coord(@68, 2, 6).
-set-default-priority(@68, 9).
+set-default-priority(@68, 9.0).
 !down-right(@68, @91).
 !down-left(@68, @47).
 !left(@68, @57).
 !right(@68, @79).
 !coord(@79, 2, 7).
-set-default-priority(@79, 9).
+set-default-priority(@79, 9.0).
 !down-right(@79, @102).
 !down-left(@79, @58).
 !left(@79, @68).
 !right(@79, @90).
 !coord(@90, 2, 8).
-set-default-priority(@90, 9).
+set-default-priority(@90, 9.0).
 !down-right(@90, @113).
 !down-left(@90, @69).
 !left(@90, @79).
 !right(@90, @101).
 !coord(@101, 2, 9).
-set-default-priority(@101, 9).
+set-default-priority(@101, 9.0).
 !down-right(@101, @101).
 !down-left(@101, @80).
 !left(@101, @90).
 !right(@101, @112).
 !coord(@112, 2, 10).
-set-default-priority(@112, 9).
+set-default-priority(@112, 9.0).
 !down-right(@112, @112).
 !down-left(@112, @91).
 !left(@112, @101).
 !right(@112, @112).
 !coord(@3, 3, 0).
-set-default-priority(@3, 8).
+set-default-priority(@3, 8.0).
 !down-right(@3, @26).
 !down-left(@3, @3).
 !left(@3, @3).
 !right(@3, @14).
 !coord(@14, 3, 1).
-set-default-priority(@14, 8).
+set-default-priority(@14, 8.0).
 !down-right(@14, @37).
 !down-left(@14, @14).
 !left(@14, @3).
 !right(@14, @25).
 !coord(@25, 3, 2).
-set-default-priority(@25, 8).
+set-default-priority(@25, 8.0).
 !down-right(@25, @48).
 !down-left(@25, @4).
 !left(@25, @14).
 !right(@25, @36).
 !coord(@36, 3, 3).
-set-default-priority(@36, 8).
+set-default-priority(@36, 8.0).
 !down-right(@36, @59).
 !down-left(@36, @15).
 !left(@36, @25).
 !right(@36, @47).
 !coord(@47, 3, 4).
-set-default-priority(@47, 8).
+set-default-priority(@47, 8.0).
 !down-right(@47, @70).
 !down-left(@47, @26).
 !left(@47, @36).
 !right(@47, @58).
 !coord(@58, 3, 5).
-set-default-priority(@58, 8).
+set-default-priority(@58, 8.0).
 !down-right(@58, @81).
 !down-left(@58, @37).
 !left(@58, @47).
 !right(@58, @69).
 !coord(@69, 3, 6).
-set-default-priority(@69, 8).
+set-default-priority(@69, 8.0).
 !down-right(@69, @92).
 !down-left(@69, @48).
 !left(@69, @58).
 !right(@69, @80).
 !coord(@80, 3, 7).
-set-default-priority(@80, 8).
+set-default-priority(@80, 8.0).
 !down-right(@80, @103).
 !down-left(@80, @59).
 !left(@80, @69).
 !right(@80, @91).
 !coord(@91, 3, 8).
-set-default-priority(@91, 8).
+set-default-priority(@91, 8.0).
 !down-right(@91, @114).
 !down-left(@91, @70).
 !left(@91, @80).
 !right(@91, @102).
 !coord(@102, 3, 9).
-set-default-priority(@102, 8).
+set-default-priority(@102, 8.0).
 !down-right(@102, @102).
 !down-left(@102, @81).
 !left(@102, @91).
 !right(@102, @113).
 !coord(@113, 3, 10).
-set-default-priority(@113, 8).
+set-default-priority(@113, 8.0).
 !down-right(@113, @113).
 !down-left(@113, @92).
 !left(@113, @102).
 !right(@113, @113).
 !coord(@4, 4, 0).
-set-default-priority(@4, 7).
+set-default-priority(@4, 7.0).
 !down-right(@4, @27).
 !down-left(@4, @4).
 !left(@4, @4).
 !right(@4, @15).
 !coord(@15, 4, 1).
-set-default-priority(@15, 7).
+set-default-priority(@15, 7.0).
 !down-right(@15, @38).
 !down-left(@15, @15).
 !left(@15, @4).
 !right(@15, @26).
 !coord(@26, 4, 2).
-set-default-priority(@26, 7).
+set-default-priority(@26, 7.0).
 !down-right(@26, @49).
 !down-left(@26, @5).
 !left(@26, @15).
 !right(@26, @37).
 !coord(@37, 4, 3).
-set-default-priority(@37, 7).
+set-default-priority(@37, 7.0).
 !down-right(@37, @60).
 !down-left(@37, @16).
 !left(@37, @26).
 !right(@37, @48).
 !coord(@48, 4, 4).
-set-default-priority(@48, 7).
+set-default-priority(@48, 7.0).
 !down-right(@48, @71).
 !down-left(@48, @27).
 !left(@48, @37).
 !right(@48, @59).
 !coord(@59, 4, 5).
-set-default-priority(@59, 7).
+set-default-priority(@59, 7.0).
 !down-right(@59, @82).
 !down-left(@59, @38).
 !left(@59, @48).
 !right(@59, @70).
 !coord(@70, 4, 6).
-set-default-priority(@70, 7).
+set-default-priority(@70, 7.0).
 !down-right(@70, @93).
 !down-left(@70, @49).
 !left(@70, @59).
 !right(@70, @81).
 !coord(@81, 4, 7).
-set-default-priority(@81, 7).
+set-default-priority(@81, 7.0).
 !down-right(@81, @104).
 !down-left(@81, @60).
 !left(@81, @70).
 !right(@81, @92).
 !coord(@92, 4, 8).
-set-default-priority(@92, 7).
+set-default-priority(@92, 7.0).
 !down-right(@92, @115).
 !down-left(@92, @71).
 !left(@92, @81).
 !right(@92, @103).
 !coord(@103, 4, 9).
-set-default-priority(@103, 7).
+set-default-priority(@103, 7.0).
 !down-right(@103, @103).
 !down-left(@103, @82).
 !left(@103, @92).
 !right(@103, @114).
 !coord(@114, 4, 10).
-set-default-priority(@114, 7).
+set-default-priority(@114, 7.0).
 !down-right(@114, @114).
 !down-left(@114, @93).
 !left(@114, @103).
 !right(@114, @114).
 !coord(@5, 5, 0).
-set-default-priority(@5, 6).
+set-default-priority(@5, 6.0).
 !down-right(@5, @28).
 !down-left(@5, @5).
 !left(@5, @5).
 !right(@5, @16).
 !coord(@16, 5, 1).
-set-default-priority(@16, 6).
+set-default-priority(@16, 6.0).
 !down-right(@16, @39).
 !down-left(@16, @16).
 !left(@16, @5).
 !right(@16, @27).
 !coord(@27, 5, 2).
-set-default-priority(@27, 6).
+set-default-priority(@27, 6.0).
 !down-right(@27, @50).
 !down-left(@27, @6).
 !left(@27, @16).
 !right(@27, @38).
 !coord(@38, 5, 3).
-set-default-priority(@38, 6).
+set-default-priority(@38, 6.0).
 !down-right(@38, @61).
 !down-left(@38, @17).
 !left(@38, @27).
 !right(@38, @49).
 !coord(@49, 5, 4).
-set-default-priority(@49, 6).
+set-default-priority(@49, 6.0).
 !down-right(@49, @72).
 !down-left(@49, @28).
 !left(@49, @38).
 !right(@49, @60).
 !coord(@60, 5, 5).
-set-default-priority(@60, 6).
+set-default-priority(@60, 6.0).
 !down-right(@60, @83).
 !down-left(@60, @39).
 !left(@60, @49).
 !right(@60, @71).
 !coord(@71, 5, 6).
-set-default-priority(@71, 6).
+set-default-priority(@71, 6.0).
 !down-right(@71, @94).
 !down-left(@71, @50).
 !left(@71, @60).
 !right(@71, @82).
 !coord(@82, 5, 7).
-set-default-priority(@82, 6).
+set-default-priority(@82, 6.0).
 !down-right(@82, @105).
 !down-left(@82, @61).
 !left(@82, @71).
 !right(@82, @93).
 !coord(@93, 5, 8).
-set-default-priority(@93, 6).
+set-default-priority(@93, 6.0).
 !down-right(@93, @116).
 !down-left(@93, @72).
 !left(@93, @82).
 !right(@93, @104).
 !coord(@104, 5, 9).
-set-default-priority(@104, 6).
+set-default-priority(@104, 6.0).
 !down-right(@104, @104).
 !down-left(@104, @83).
 !left(@104, @93).
 !right(@104, @115).
 !coord(@115, 5, 10).
-set-default-priority(@115, 6).
+set-default-priority(@115, 6.0).
 !down-right(@115, @115).
 !down-left(@115, @94).
 !left(@115, @104).
 !right(@115, @115).
 !coord(@6, 6, 0).
-set-default-priority(@6, 5).
+set-default-priority(@6, 5.0).
 !down-right(@6, @29).
 !down-left(@6, @6).
 !left(@6, @6).
 !right(@6, @17).
 !coord(@17, 6, 1).
-set-default-priority(@17, 5).
+set-default-priority(@17, 5.0).
 !down-right(@17, @40).
 !down-left(@17, @17).
 !left(@17, @6).
 !right(@17, @28).
 !coord(@28, 6, 2).
-set-default-priority(@28, 5).
+set-default-priority(@28, 5.0).
 !down-right(@28, @51).
 !down-left(@28, @7).
 !left(@28, @17).
 !right(@28, @39).
 !coord(@39, 6, 3).
-set-default-priority(@39, 5).
+set-default-priority(@39, 5.0).
 !down-right(@39, @62).
 !down-left(@39, @18).
 !left(@39, @28).
 !right(@39, @50).
 !coord(@50, 6, 4).
-set-default-priority(@50, 5).
+set-default-priority(@50, 5.0).
 !down-right(@50, @73).
 !down-left(@50, @29).
 !left(@50, @39).
 !right(@50, @61).
 !coord(@61, 6, 5).
-set-default-priority(@61, 5).
+set-default-priority(@61, 5.0).
 !down-right(@61, @84).
 !down-left(@61, @40).
 !left(@61, @50).
 !right(@61, @72).
 !coord(@72, 6, 6).
-set-default-priority(@72, 5).
+set-default-priority(@72, 5.0).
 !down-right(@72, @95).
 !down-left(@72, @51).
 !left(@72, @61).
 !right(@72, @83).
 !coord(@83, 6, 7).
-set-default-priority(@83, 5).
+set-default-priority(@83, 5.0).
 !down-right(@83, @106).
 !down-left(@83, @62).
 !left(@83, @72).
 !right(@83, @94).
 !coord(@94, 6, 8).
-set-default-priority(@94, 5).
+set-default-priority(@94, 5.0).
 !down-right(@94, @117).
 !down-left(@94, @73).
 !left(@94, @83).
 !right(@94, @105).
 !coord(@105, 6, 9).
-set-default-priority(@105, 5).
+set-default-priority(@105, 5.0).
 !down-right(@105, @105).
 !down-left(@105, @84).
 !left(@105, @94).
 !right(@105, @116).
 !coord(@116, 6, 10).
-set-default-priority(@116, 5).
+set-default-priority(@116, 5.0).
 !down-right(@116, @116).
 !down-left(@116, @95).
 !left(@116, @105).
 !right(@116, @116).
 !coord(@7, 7, 0).
-set-default-priority(@7, 4).
+set-default-priority(@7, 4.0).
 !down-right(@7, @30).
 !down-left(@7, @7).
 !left(@7, @7).
 !right(@7, @18).
 !coord(@18, 7, 1).
-set-default-priority(@18, 4).
+set-default-priority(@18, 4.0).
 !down-right(@18, @41).
 !down-left(@18, @18).
 !left(@18, @7).
 !right(@18, @29).
 !coord(@29, 7, 2).
-set-default-priority(@29, 4).
+set-default-priority(@29, 4.0).
 !down-right(@29, @52).
 !down-left(@29, @8).
 !left(@29, @18).
 !right(@29, @40).
 !coord(@40, 7, 3).
-set-default-priority(@40, 4).
+set-default-priority(@40, 4.0).
 !down-right(@40, @63).
 !down-left(@40, @19).
 !left(@40, @29).
 !right(@40, @51).
 !coord(@51, 7, 4).
-set-default-priority(@51, 4).
+set-default-priority(@51, 4.0).
 !down-right(@51, @74).
 !down-left(@51, @30).
 !left(@51, @40).
 !right(@51, @62).
 !coord(@62, 7, 5).
-set-default-priority(@62, 4).
+set-default-priority(@62, 4.0).
 !down-right(@62, @85).
 !down-left(@62, @41).
 !left(@62, @51).
 !right(@62, @73).
 !coord(@73, 7, 6).
-set-default-priority(@73, 4).
+set-default-priority(@73, 4.0).
 !down-right(@73, @96).
 !down-left(@73, @52).
 !left(@73, @62).
 !right(@73, @84).
 !coord(@84, 7, 7).
-set-default-priority(@84, 4).
+set-default-priority(@84, 4.0).
 !down-right(@84, @107).
 !down-left(@84, @63).
 !left(@84, @73).
 !right(@84, @95).
 !coord(@95, 7, 8).
-set-default-priority(@95, 4).
+set-default-priority(@95, 4.0).
 !down-right(@95, @118).
 !down-left(@95, @74).
 !left(@95, @84).
 !right(@95, @106).
 !coord(@106, 7, 9).
-set-default-priority(@106, 4).
+set-default-priority(@106, 4.0).
 !down-right(@106, @106).
 !down-left(@106, @85).
 !left(@106, @95).
 !right(@106, @117).
 !coord(@117, 7, 10).
-set-default-priority(@117, 4).
+set-default-priority(@117, 4.0).
 !down-right(@117, @117).
 !down-left(@117, @96).
 !left(@117, @106).
 !right(@117, @117).
 !coord(@8, 8, 0).
-set-default-priority(@8, 3).
+set-default-priority(@8, 3.0).
 !down-right(@8, @31).
 !down-left(@8, @8).
 !left(@8, @8).
 !right(@8, @19).
 !coord(@19, 8, 1).
-set-default-priority(@19, 3).
+set-default-priority(@19, 3.0).
 !down-right(@19, @42).
 !down-left(@19, @19).
 !left(@19, @8).
 !right(@19, @30).
 !coord(@30, 8, 2).
-set-default-priority(@30, 3).
+set-default-priority(@30, 3.0).
 !down-right(@30, @53).
 !down-left(@30, @9).
 !left(@30, @19).
 !right(@30, @41).
 !coord(@41, 8, 3).
-set-default-priority(@41, 3).
+set-default-priority(@41, 3.0).
 !down-right(@41, @64).
 !down-left(@41, @20).
 !left(@41, @30).
 !right(@41, @52).
 !coord(@52, 8, 4).
-set-default-priority(@52, 3).
+set-default-priority(@52, 3.0).
 !down-right(@52, @75).
 !down-left(@52, @31).
 !left(@52, @41).
 !right(@52, @63).
 !coord(@63, 8, 5).
-set-default-priority(@63, 3).
+set-default-priority(@63, 3.0).
 !down-right(@63, @86).
 !down-left(@63, @42).
 !left(@63, @52).
 !right(@63, @74).
 !coord(@74, 8, 6).
-set-default-priority(@74, 3).
+set-default-priority(@74, 3.0).
 !down-right(@74, @97).
 !down-left(@74, @53).
 !left(@74, @63).
 !right(@74, @85).
 !coord(@85, 8, 7).
-set-default-priority(@85, 3).
+set-default-priority(@85, 3.0).
 !down-right(@85, @108).
 !down-left(@85, @64).
 !left(@85, @74).
 !right(@85, @96).
 !coord(@96, 8, 8).
-set-default-priority(@96, 3).
+set-default-priority(@96, 3.0).
 !down-right(@96, @119).
 !down-left(@96, @75).
 !left(@96, @85).
 !right(@96, @107).
 !coord(@107, 8, 9).
-set-default-priority(@107, 3).
+set-default-priority(@107, 3.0).
 !down-right(@107, @107).
 !down-left(@107, @86).
 !left(@107, @96).
 !right(@107, @118).
 !coord(@118, 8, 10).
-set-default-priority(@118, 3).
+set-default-priority(@118, 3.0).
 !down-right(@118, @118).
 !down-left(@118, @97).
 !left(@118, @107).
 !right(@118, @118).
 !coord(@9, 9, 0).
-set-default-priority(@9, 2).
+set-default-priority(@9, 2.0).
 !down-right(@9, @32).
 !down-left(@9, @9).
 !left(@9, @9).
 !right(@9, @20).
 !coord(@20, 9, 1).
-set-default-priority(@20, 2).
+set-default-priority(@20, 2.0).
 !down-right(@20, @43).
 !down-left(@20, @20).
 !left(@20, @9).
 !right(@20, @31).
 !coord(@31, 9, 2).
-set-default-priority(@31, 2).
+set-default-priority(@31, 2.0).
 !down-right(@31, @54).
 !down-left(@31, @10).
 !left(@31, @20).
 !right(@31, @42).
 !coord(@42, 9, 3).
-set-default-priority(@42, 2).
+set-default-priority(@42, 2.0).
 !down-right(@42, @65).
 !down-left(@42, @21).
 !left(@42, @31).
 !right(@42, @53).
 !coord(@53, 9, 4).
-set-default-priority(@53, 2).
+set-default-priority(@53, 2.0).
 !down-right(@53, @76).
 !down-left(@53, @32).
 !left(@53, @42).
 !right(@53, @64).
 !coord(@64, 9, 5).
-set-default-priority(@64, 2).
+set-default-priority(@64, 2.0).
 !down-right(@64, @87).
 !down-left(@64, @43).
 !left(@64, @53).
 !right(@64, @75).
 !coord(@75, 9, 6).
-set-default-priority(@75, 2).
+set-default-priority(@75, 2.0).
 !down-right(@75, @98).
 !down-left(@75, @54).
 !left(@75, @64).
 !right(@75, @86).
 !coord(@86, 9, 7).
-set-default-priority(@86, 2).
+set-default-priority(@86, 2.0).
 !down-right(@86, @109).
 !down-left(@86, @65).
 !left(@86, @75).
 !right(@86, @97).
 !coord(@97, 9, 8).
-set-default-priority(@97, 2).
+set-default-priority(@97, 2.0).
 !down-right(@97, @120).
 !down-left(@97, @76).
 !left(@97, @86).
 !right(@97, @108).
 !coord(@108, 9, 9).
-set-default-priority(@108, 2).
+set-default-priority(@108, 2.0).
 !down-right(@108, @108).
 !down-left(@108, @87).
 !left(@108, @97).
 !right(@108, @119).
 !coord(@119, 9, 10).
-set-default-priority(@119, 2).
+set-default-priority(@119, 2.0).
 !down-right(@119, @119).
 !down-left(@119, @98).
 !left(@119, @108).
 !right(@119, @119).
 !coord(@10, 10, 0).
-set-default-priority(@10, 1).
+set-default-priority(@10, 1.0).
 !down-right(@10, @10).
 !down-left(@10, @10).
 !left(@10, @10).
 !right(@10, @21).
 !coord(@21, 10, 1).
-set-default-priority(@21, 1).
+set-default-priority(@21, 1.0).
 !down-right(@21, @21).
 !down-left(@21, @21).
 !left(@21, @10).
 !right(@21, @32).
 !coord(@32, 10, 2).
-set-default-priority(@32, 1).
+set-default-priority(@32, 1.0).
 !down-right(@32, @32).
 !down-left(@32, @32).
 !left(@32, @21).
 !right(@32, @43).
 !coord(@43, 10, 3).
-set-default-priority(@43, 1).
+set-default-priority(@43, 1.0).
 !down-right(@43, @43).
 !down-left(@43, @43).
 !left(@43, @32).
 !right(@43, @54).
 !coord(@54, 10, 4).
-set-default-priority(@54, 1).
+set-default-priority(@54, 1.0).
 !down-right(@54, @54).
 !down-left(@54, @54).
 !left(@54, @43).
 !right(@54, @65).
 !coord(@65, 10, 5).
-set-default-priority(@65, 1).
+set-default-priority(@65, 1.0).
 !down-right(@65, @65).
 !down-left(@65, @65).
 !left(@65, @54).
 !right(@65, @76).
 !coord(@76, 10, 6).
-set-default-priority(@76, 1).
+set-default-priority(@76, 1.0).
 !down-right(@76, @76).
 !down-left(@76, @76).
 !left(@76, @65).
 !right(@76, @87).
 !coord(@87, 10, 7).
-set-default-priority(@87, 1).
+set-default-priority(@87, 1.0).
 !down-right(@87, @87).
 !down-left(@87, @87).
 !left(@87, @76).
 !right(@87, @98).
 !coord(@98, 10, 8).
-set-default-priority(@98, 1).
+set-default-priority(@98, 1.0).
 !down-right(@98, @98).
 !down-left(@98, @98).
 !left(@98, @87).
 !right(@98, @109).
 !coord(@109, 10, 9).
-set-default-priority(@109, 1).
+set-default-priority(@109, 1.0).
 !down-right(@109, @109).
 !down-left(@109, @109).
 !left(@109, @98).
 !right(@109, @120).
 !coord(@120, 10, 10).
-set-default-priority(@120, 1).
+set-default-priority(@120, 1.0).
 !down-right(@120, @120).
 !down-left(@120, @120).
 !left(@120, @109).
