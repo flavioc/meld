@@ -29,6 +29,7 @@ def name2title(name):
             'graphlab': "GraphLab Belief Propagation (400x400)",
             'pagerank-5000': "PageRank (5000 nodes)",
             'pagerank-search_engines': "PageRank (Search Engines)",
+            'new-heat-transfer-120': "Heat Transfer (120x120)",
             'new-heat-transfer-80': "Heat Transfer (80x80)"}
    return table[name]
 

@@ -944,6 +944,14 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
       case SET_CPUH_INSTR:
          cout << "SET CPU TO " << reg_string(pcounter_reg(pc + instr_size)) << endl;
          break;
+      case IS_STATIC_INSTR:
+         cout << "IS STATIC " << reg_string(pcounter_reg(pc + instr_size)) << " TO " <<
+            reg_string(pcounter_reg(pc + instr_size + reg_val_size)) << endl;
+         break;
+      case IS_MOVING_INSTR:
+         cout << "IS MOVING " << reg_string(pcounter_reg(pc + instr_size)) << " TO " <<
+            reg_string(pcounter_reg(pc + instr_size + reg_val_size)) << endl;
+         break;
 		default:
          throw malformed_instr_error("unknown instruction code");
 	}

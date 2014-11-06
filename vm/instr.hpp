@@ -171,6 +171,8 @@ const size_t SET_AFFINITY_BASE   = instr_size + reg_val_size + reg_val_size;
 const size_t CPU_STATIC_BASE     = instr_size + 2 * reg_val_size;
 const size_t MVCPUSREG_BASE      = instr_size + reg_val_size;
 const size_t SET_CPUH_BASE       = instr_size + reg_val_size;
+const size_t IS_STATIC_BASE      = instr_size + 2 * reg_val_size;
+const size_t IS_MOVING_BASE      = instr_size + 2 * reg_val_size;
 const size_t STOP_PROG_BASE      = instr_size;
 const size_t CPU_ID_BASE         = instr_size + 2 * reg_val_size;
 const size_t NODE_PRIORITY_BASE  = instr_size + 2 * reg_val_size;
@@ -324,6 +326,8 @@ enum instr_type {
    CPU_STATIC_INSTR     =  0xAB,
    MVCPUSREG_INSTR      =  0xAC,
    SET_CPUH_INSTR       =  0xAD,
+   IS_STATIC_INSTR      =  0xAE,
+   IS_MOVING_INSTR      =  0xAF,
    RETURN_LINEAR_INSTR  =  0xD0,
    RETURN_DERIVED_INSTR =  0xF0
 };
@@ -972,6 +976,12 @@ advance(const pcounter pc)
 
       case SET_CPUH_INSTR:
          return pc + SET_CPUH_BASE;
+
+      case IS_STATIC_INSTR:
+         return pc + IS_STATIC_BASE;
+
+      case IS_MOVING_INSTR:
+         return pc + IS_MOVING_BASE;
 
       default:
          return pc;

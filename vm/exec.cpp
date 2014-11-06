@@ -1674,6 +1674,38 @@ execute_cpu_static(pcounter& pc, state& state)
 }
 
 static inline void
+execute_is_static(pcounter& pc, state& state)
+{
+   const reg_num node_reg(pcounter_reg(pc + instr_size));
+   const reg_num dest_reg(pcounter_reg(pc + instr_size + reg_val_size));
+   const node_val nodeval(state.get_node(node_reg));
+#ifdef USE_REAL_NODES
+   db::node *node((db::node*)nodeval);
+#else
+   db::node *node(All->DATABASE->find_node(nodeval));
+#endif
+   sched::thread_intrusive_node *tn((sched::thread_intrusive_node *)node);
+
+   state.set_int(dest_reg, tn->is_static() ? 1 : 0);
+}
+
+static inline void
+execute_is_moving(pcounter& pc, state& state)
+{
+   const reg_num node_reg(pcounter_reg(pc + instr_size));
+   const reg_num dest_reg(pcounter_reg(pc + instr_size + reg_val_size));
+   const node_val nodeval(state.get_node(node_reg));
+#ifdef USE_REAL_NODES
+   db::node *node((db::node*)nodeval);
+#else
+   db::node *node(All->DATABASE->find_node(nodeval));
+#endif
+   sched::thread_intrusive_node *tn((sched::thread_intrusive_node *)node);
+
+   state.set_int(dest_reg, tn->is_static() ? 0 : 1);
+}
+
+static inline void
 execute_set_cpu_here(pcounter& pc, state& state)
 {
    const reg_num cpu_reg(pcounter_reg(pc + instr_size));
@@ -3769,6 +3801,18 @@ eval_loop:
          CASE(MVSTACKFIELD_INSTR)
             JUMP(mvstackfield, MVSTACKFIELD_BASE)
             execute_mvstackfield(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(IS_STATIC_INSTR)
+            JUMP(is_static, IS_STATIC_BASE)
+            execute_is_static(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(IS_MOVING_INSTR)
+            JUMP(is_moving, IS_MOVING_BASE)
+            execute_is_moving(pc, state);
             ADVANCE()
          ENDOP()
 

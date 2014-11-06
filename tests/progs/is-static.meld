@@ -1,0 +1,7 @@
+
+type linear a(node, int).
+
+a(@1, 1).
+
+a(A, 1), true = is-static(A)
+   -o 1.
