@@ -8,17 +8,19 @@ from lib import write_dedgew, write_edgew
 
 WRITE_COORDS = False
 ONE_PER_THREAD = True
+WRITE_HEADER = False
 
 if len(sys.argv) < 8:
 	print "Usage: generate_heat_grid.py <side> <outer side> <outer weight> <inner weight> <transition weight> <inside heat> <outside heat> [threads]"
 	sys.exit(1)
 	
-print 'type inbound(node, int).'
-print 'type route edge(node, node, float).'
-if WRITE_COORDS:
-	print 'type coord(node, int, int).'
-print 'type inner(node).'
-print 'type linear heat(node, float).'
+if WRITE_HEADER:
+   print 'type inbound(node, int).'
+   print 'type route edge(node, node, float).'
+   if WRITE_COORDS:
+      print 'type coord(node, int, int).'
+   print 'type inner(node).'
+   print 'type linear heat(node, float).'
 
 side = int(sys.argv[1])
 outerside = int(sys.argv[2])

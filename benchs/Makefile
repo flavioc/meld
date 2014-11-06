@@ -89,6 +89,14 @@ update-queens:
 update-quicksort:
 	sed -e "s/down(@0, .*/down(@0, `python ../scripts/generate_list.py 70000`)./g" -i "" progs/quicksort.meld
 
+update-ht:
+	python ../scripts/generate_heat_grid.py 80 28 0.8 1.0 1.0 100.0 5.0 > progs/data/heat-transfer-80.meld
+	git add progs/data/heat-transfer-80.meld
+	touch progs/new-heat-transfer-80.meld
+	python ../scripts/generate_heat_grid.py 120 42 0.8 1.0 1.0 100.0 5.0 > progs/data/heat-transfer-120.meld
+	git add progs/data/heat-transfer-120.meld
+	touch progs/new-heat-transfer-120.meld
+
 plots:
 	@bash ../scripts/plots/plot_instrumentation.sh instrumentation_files
 

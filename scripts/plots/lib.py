@@ -18,6 +18,7 @@ def name2title(name):
             'shortest-1000': "Shortest Distance (1000)",
             'shortest-oclinks': "Shortest Distance (OCLinks)",
             '8queens-13': "13 Queens",
+            '13queens': "13 Queens",
             'tree': "Tree",
             'tree-coord': "Tree (coordinated)",
             'min-max-tictactoe': "MiniMax",
@@ -173,7 +174,7 @@ class experiment(object):
       reg, = ax.plot(self.x_axis(), self.speedup_data(),
          linestyle='--', marker='^', color=cmap(0.1))
       coordcoord, = ax.plot(self.x_axis(), coordinated.speedup_data(),
-         linestyle='--', marker='+', color=cmap(0.4))
+         linestyle='--', marker='s', color=cmap(0.4))
       coordreg, = ax.plot(self.x_axis(), coordinated.speedup_data(self.get_time(1)),
          linestyle='--', marker='o', color=cmap(0.4))
       ax.plot(self.x_axis(), self.linear_speedup(),
