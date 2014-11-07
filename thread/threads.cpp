@@ -601,7 +601,7 @@ threads_sched::threads_sched(const vm::process_id _id):
    tstate(THREAD_ACTIVE),
    current_node(NULL)
 #ifdef TASK_STEALING
-   , rand(time(NULL) + _id * 10)
+   , rand(_id * 1000)
    , next_thread(rand(All->NUM_THREADS))
    , backoff(STEALING_ROUND_MIN)
 #endif

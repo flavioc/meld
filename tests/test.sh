@@ -14,12 +14,19 @@ dynamic_test () {
    [[ ! -z `grep "^$1$" "dynamic.include"` ]]
 }
 
+to_exclude () {
+   [[ ! -z `grep "^$1$" "blacklist.exclude"` ]]
+}
+
 FILE="files/$(basename $TEST .m).test"
 NODES=$(python ./number_nodes.py $TEST)
 
 if dynamic_test $(basename $TEST .m); then
    # We can actually use more than 1 thread.
    NODES=64
+fi
+if to_exclude $(basename $TEST .m); then
+   exit 0
 fi
 
 do_exit ()

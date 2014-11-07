@@ -376,7 +376,7 @@ de_finish(void)
 static bool
 de_init(void)
 {
-   generator = new mt19937(std::time(0));
+   generator = new mt19937((std::time_t)0);
    uni_dist = new uniform_real_distribution<>(0, 1);
    atexit(de_finish);
    return true;
