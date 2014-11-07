@@ -485,52 +485,6 @@ threads_sched::end(void)
 }
 
 void
-threads_sched::schedule_next(node *n)
-{
-   static const double add = 100.0;
-   double prio(0.0);
-
-   if(!prios.moving.empty())
-      prio = prios.moving.min_value();
-   if(!prios.stati.empty())
-      prio = max(prio, prios.stati.min_value());
-
-   prio += add;
-
-#ifdef TASK_STEALING
-   thread_intrusive_node *tn((thread_intrusive_node*)n);
-   LOCK_STACK(nodelock);
-   NODE_LOCK(tn, nodelock);
-   threads_sched *other((threads_sched*)tn->get_owner());
-   if(other == this)
-      do_set_node_priority(n, prio);
-
-   NODE_UNLOCK(tn, nodelock);
-#else
-   do_set_node_priority(n, prio);
-#endif
-}
-
-void
-threads_sched::add_node_priority_other(node *n, const double priority)
-{
-#ifdef SEND_OTHERS
-   thread_intrusive_node *tn((thread_intrusive_node*)n);
-   threads_sched *other((threads_sched*)tn->get_owner());
-
-   priority_add_item item;
-   item.typ = ADD_PRIORITY;
-   item.val = priority;
-   item.target = n;
-
-   other->priority_buffer.add(item);
-#else
-   (void)n;
-   (void)priority;
-#endif
-}
-
-void
 threads_sched::init(const size_t)
 {
    // normal priorities

@@ -10,6 +10,8 @@ using namespace vm;
 using namespace utils;
 
 namespace vm {
+
+bool USING_MEM_ADDRESSES = true;
    
 namespace instr {
 
@@ -243,10 +245,11 @@ print_axiom_data(pcounter& p, type *t, bool in_list = false)
          break;
       case FIELD_NODE:
 #ifdef USE_REAL_NODES
-         cout << "@" << ((db::node*)pcounter_node(p))->get_id();
-#else
-         cout << "@" << pcounter_node(p);
+         if(USING_MEM_ADDRESSES)
+            cout << "@" << ((db::node*)pcounter_node(p))->get_id();
+         else
 #endif
+            cout << "@" << pcounter_node(p);
          pcounter_move_node(&p);
          break;
       case FIELD_LIST: {

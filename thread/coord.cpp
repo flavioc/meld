@@ -22,6 +22,60 @@ is_higher_priority(thread_intrusive_node *tn, const double priority)
    }
 }
 
+void
+threads_sched::schedule_next(node *n)
+{
+   static const double add = 100.0;
+   double prio(0.0);
+
+   if(!prios.moving.empty())
+      prio = prios.moving.min_value();
+   if(theProgram->is_priority_desc()) {
+      if(!prios.stati.empty())
+         prio = max(prio, prios.stati.min_value());
+
+      prio += add;
+   } else {
+      if(!prios.stati.empty())
+         prio = min(prio, prios.stati.min_value());
+
+      prio -= add;
+   }
+
+#ifdef TASK_STEALING
+   thread_intrusive_node *tn((thread_intrusive_node*)n);
+   LOCK_STACK(nodelock);
+   NODE_LOCK(tn, nodelock);
+   threads_sched *other((threads_sched*)tn->get_owner());
+   if(other == this)
+      do_set_node_priority(n, prio);
+
+   NODE_UNLOCK(tn, nodelock);
+#else
+   do_set_node_priority(n, prio);
+#endif
+}
+
+void
+threads_sched::add_node_priority_other(node *n, const double priority)
+{
+#ifdef SEND_OTHERS
+   thread_intrusive_node *tn((thread_intrusive_node*)n);
+   threads_sched *other((threads_sched*)tn->get_owner());
+
+   priority_add_item item;
+   item.typ = ADD_PRIORITY;
+   item.val = priority;
+   item.target = n;
+
+   other->priority_buffer.add(item);
+#else
+   (void)n;
+   (void)priority;
+#endif
+}
+
+
 #ifndef DIRECT_PRIORITIES
 void
 threads_sched::check_priority_buffer(void)
@@ -324,11 +378,14 @@ threads_sched::set_node_static(db::node *n)
       return;
    }
 
-   if(tn->is_static())
-      return;
-
    LOCK_STACK(nodelock);
    NODE_LOCK(tn, nodelock);
+
+   if(tn->is_static()) {
+      NODE_UNLOCK(tn, nodelock);
+      return;
+   }
+
    make_node_static(tn, this);
    switch(tn->node_state()) {
       case STATE_STEALING:
@@ -370,11 +427,13 @@ threads_sched::set_node_moving(db::node *n)
       return;
    }
 
-   if(tn->is_moving())
-      return;
-
    LOCK_STACK(nodelock);
    NODE_LOCK(tn, nodelock);
+   if(tn->is_moving()) {
+      NODE_UNLOCK(tn, nodelock);
+      return;
+   }
+
    make_node_moving(tn);
    switch(tn->node_state()) {
       case STATE_STEALING:
