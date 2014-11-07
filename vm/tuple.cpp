@@ -315,6 +315,8 @@ tuple::destructor(predicate *pred
             {
                db::node *n((db::node*)get_node(i));
                if(!All->DATABASE->is_initial_node(n)) {
+                  //cout << "Decrement " << n->get_id() << endl;
+                  assert(n->refs > 0);
                   n->refs--;
                   if(n->garbage_collect())
                      gc_nodes.insert(get_node(i));
@@ -336,11 +338,51 @@ tuple::set_node(const field_num& field, const node_val& val)
 {
 #ifdef GC_NODES
    db::node *n((db::node*)val);
-   if(!All->DATABASE->is_initial_node(n))
+   if(!All->DATABASE->is_initial_node(n)) {
+      //cout << "Increment " << n->get_id() << endl;
       n->refs++;
+   }
 #endif
 
    SET_FIELD_NODE(getfp()[field], val);
+}
+
+void
+tuple::set_field_ref(const field_num& field, const tuple_field& f, const predicate *pred
+#ifdef GC_NODES
+      , candidate_gc_nodes& gc_nodes
+#endif
+      )
+{
+   const tuple_field old(get_field(field));
+   set_field(field, f);
+   const type *typ(pred->get_field_type(field));
+   const field_type ftype(typ->get_type());
+   switch(ftype) {
+      case FIELD_NODE:
+#ifdef GC_NODES
+         {
+            db::node *old_node((db::node*)FIELD_NODE(old));
+            db::node *new_node((db::node*)FIELD_NODE(f));
+            if(new_node && !All->DATABASE->is_initial_node(new_node)) {
+               //cout << "Increment " << new_node->get_id() << endl;
+               new_node->refs++;
+            }
+            if(old_node && !All->DATABASE->is_initial_node(old_node)) {
+                  //cout << "Decrement " << old_node->get_id() << endl;
+                  old_node->refs--;
+                  if(old_node->garbage_collect())
+                     gc_nodes.insert(get_node(field));
+            }
+         }
+#endif
+         break;
+      default:
+         do_increment_runtime(f);
+         do_decrement_runtime(old, typ);
+         break;
+   }
+
 }
 
 size_t

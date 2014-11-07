@@ -60,6 +60,11 @@ public:
 
    inline void set_nil(const field_num& field) { SET_FIELD_CONS(getfp()[field], runtime::cons::null_list()); }
    inline void set_field(const field_num& field, const tuple_field& f) { getfp()[field] = f; }
+   void set_field_ref(const field_num&, const tuple_field&, const predicate*
+#ifdef GC_NODES
+         , candidate_gc_nodes& gc_nodes
+#endif
+         );
 #undef define_set
 
    size_t get_storage_size(vm::predicate *) const;

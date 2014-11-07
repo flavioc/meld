@@ -2024,11 +2024,12 @@ execute_mvfieldfieldr(pcounter pc, state& state)
    predicate *pred_to(state.preds[val_field_reg(pc + instr_size + field_size)]);
    const field_num from(val_field_num(pc + instr_size));
    const field_num to(val_field_num(pc + instr_size + field_size));
-   const tuple_field old(tuple_to->get_field(to));
-   tuple_to->set_field(to, tuple_from->get_field(from));
 
-   do_increment_runtime(tuple_to->get_field(to));
-   do_decrement_runtime(old, pred_to->get_field_type(to));
+   tuple_to->set_field_ref(to, tuple_from->get_field(from), pred_to
+#ifdef GC_NODES
+            , state.gc_nodes
+#endif
+         );
 }
 
 static inline void
@@ -2080,14 +2081,13 @@ execute_mvregfieldr(pcounter& pc, state& state)
    tuple *tuple(get_tuple_field(state, pc + instr_size + reg_val_size));
    const field_num field(val_field_num(pc + instr_size + reg_val_size));
 
-   const tuple_field old(tuple->get_field(field));
-
-   tuple->set_field(field, state.get_reg(reg));
+   tuple->set_field_ref(field, state.get_reg(reg), pred
+#ifdef GC_NODES
+         , state.gc_nodes
+#endif
+         );
 
    assert(reference_type(pred->get_field_type(field)->get_type()));
-
-   do_increment_runtime(tuple->get_field(field));
-   do_decrement_runtime(old, pred->get_field_type(field));
 }
 
 static inline void
