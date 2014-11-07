@@ -1,10 +1,8 @@
-bp1
 all_pairs1
+bp1
 dfs
 ends-near
 heat-transfer
-linear-shortest-path-cycle
-linear-shortest-path-single
 neural_network1
 pagerank1
 pagerank2
