@@ -257,7 +257,7 @@ execute_send(const pcounter& pc, state& state)
 #ifdef USE_REAL_NODES
       db::node *node((db::node*)dest_val);
 #else
-      db::node *node(this->all->DATABASE->find_node(dest_val));
+      db::node *node(All->DATABASE->find_node(dest_val));
 #endif
       if(pred->is_action_pred())
          All->MACHINE->run_action(state.sched, node, tuple, pred
@@ -317,7 +317,7 @@ execute_send_delay(const pcounter& pc, state& state)
 #ifdef USE_REAL_NODES
       db::node *node((db::node*)dest_val);
 #else
-      db::node *node(this->all->DATABASE->find_node((node::node_id)dest_val));
+      db::node *node(All->DATABASE->find_node((node::node_id)dest_val));
 #endif
       state.sched->new_work_delay(state.node, node, tuple, pred, state.count, state.depth, send_delay_time(pc));
    }

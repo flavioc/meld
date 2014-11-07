@@ -3,6 +3,7 @@
 #include "vm/instr.hpp"
 #include "vm/program.hpp"
 #include "utils/utils.hpp"
+#include "db/node.hpp"
 
 using namespace std;
 using namespace vm;
@@ -241,7 +242,11 @@ print_axiom_data(pcounter& p, type *t, bool in_list = false)
          pcounter_move_float(&p);
          break;
       case FIELD_NODE:
+#ifdef USE_REAL_NODES
+         cout << "@" << ((db::node*)pcounter_node(p))->get_id();
+#else
          cout << "@" << pcounter_node(p);
+#endif
          pcounter_move_node(&p);
          break;
       case FIELD_LIST: {
