@@ -110,7 +110,7 @@ threads_sched::add_node_priority(node *n, const double priority)
 #else
    threads_sched *other((threads_sched*)tn->get_owner());
    if(other == this) {
-      const double old_prio(tn->get_float_priority_level());
+      const double old_prio(tn->get_priority_level());
       set_node_priority(n, old_prio + priority);
    }
 #endif
