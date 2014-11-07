@@ -4,6 +4,7 @@
 
 #include "vm/program.hpp"
 #include "mem/thread.hpp"
+#include "vm/instr.hpp"
 
 using namespace vm;
 using namespace process;
@@ -22,6 +23,8 @@ main(int argc, char **argv)
    try {
       mem::ensure_pool();
       program prog(file);
+
+      vm::USING_MEM_ADDRESSES = false;
       if(argc == 2)
          prog.print_bytecode(cout);
       if(argc == 3) {

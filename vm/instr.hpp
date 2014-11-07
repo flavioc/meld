@@ -12,6 +12,9 @@
 
 namespace vm {
 
+// if using mem addresses for nodes.
+extern bool USING_MEM_ADDRESSES;
+
 typedef unsigned char instr_val;
 typedef unsigned char reg_num;
 typedef unsigned char offset_num;
