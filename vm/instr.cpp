@@ -765,6 +765,9 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
       case BOOLOR_INSTR:
          cout << operation_string(pc, "BOOL OR") << endl;
          break;
+      case BOOLAND_INSTR:
+         cout << operation_string(pc, "BOOL AND") << endl;
+         break;
       case INTLESSEREQUAL_INSTR:
          cout << operation_string(pc, "INT LESSER EQUAL") << endl;
          break;

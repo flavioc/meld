@@ -2363,6 +2363,12 @@ execute_boolor(pcounter& pc, state& state)
 }
 
 static inline void
+execute_booland(pcounter& pc, state& state)
+{
+   DO_OPERATION(set_bool, get_bool, &&);
+}
+
+static inline void
 execute_intlesserequal(pcounter& pc, state& state)
 {
    DO_OPERATION(set_bool, get_int, <=);
@@ -3813,6 +3819,12 @@ eval_loop:
          CASE(IS_MOVING_INSTR)
             JUMP(is_moving, IS_MOVING_BASE)
             execute_is_moving(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(BOOLAND_INSTR)
+            JUMP(booland, operation_size)
+            execute_booland(pc, state);
             ADVANCE()
          ENDOP()
 

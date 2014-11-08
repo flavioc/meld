@@ -331,6 +331,7 @@ enum instr_type {
    SET_CPUH_INSTR       =  0xAD,
    IS_STATIC_INSTR      =  0xAE,
    IS_MOVING_INSTR      =  0xAF,
+   BOOLAND_INSTR        =  0xB0,
    RETURN_LINEAR_INSTR  =  0xD0,
    RETURN_DERIVED_INSTR =  0xF0
 };
@@ -857,6 +858,7 @@ advance(const pcounter pc)
       case FLOATGREATER_INSTR:
       case FLOATGREATEREQUAL_INSTR:
       case BOOLOR_INSTR:
+      case BOOLAND_INSTR:
       case BOOLEQUAL_INSTR:
       case BOOLNOTEQUAL_INSTR:
          return pc + operation_size;

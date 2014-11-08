@@ -24,8 +24,10 @@ with open(filename, "r") as fp:
       line = line.rstrip("\n")
       if line == "":
          continue
+      if line.startswith("#"):
+         continue
       vec = line.split(" ")
-      if len(vec) < 5:
+      if len(vec) < 3:
          continue
       name = vec[0]
       threads = int(vec[1][2:])
