@@ -392,30 +392,27 @@ agg_configuration::generate(predicate *pred, const aggregate_type typ, const fie
    if(corresponds == NULL) {
       // new
       if(generated != NULL) {
-         cont.push_back(full_tuple::create_new(generated, pred, depth));
+         cont.push_back(full_tuple::create_new(generated->copy(pred), pred, depth));
          last_depth = depth;
+         corresponds = generated;
       }
    } else if (generated == NULL) {
       if(corresponds != NULL) {
          cont.push_back(full_tuple::remove_new(corresponds->copy(pred), pred, last_depth));
          last_depth = 0;
-      }
-   } else {
-      if(!(corresponds->equal(*generated, pred))) {
-         cont.push_back(full_tuple::remove_new(corresponds->copy(pred), pred, last_depth));
-         cont.push_back(full_tuple::create_new(generated, pred, depth));
-         last_depth = depth;
-      }
-   }
-
-   if(generated) {
-      if(corresponds)
          vm::tuple::destroy(corresponds, pred
 #ifdef GC_NODES
                , gc_nodes
 #endif
                );
-      corresponds = generated->copy(pred);
+      }
+   } else {
+      if(!(corresponds->equal(*generated, pred))) {
+         cont.push_back(full_tuple::remove_new(corresponds, pred, last_depth));
+         cont.push_back(full_tuple::create_new(generated->copy(pred), pred, depth));
+         last_depth = depth;
+         corresponds = generated;
+      }
    }
 }
 

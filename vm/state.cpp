@@ -366,8 +366,10 @@ state::add_to_aggregate(full_tuple *stpl)
 #endif
          );
 
-   for(full_tuple_list::iterator it(list.begin()); it != list.end(); ++it) {
+   for(full_tuple_list::iterator it(list.begin()); it != list.end();) {
       full_tuple *stpl(*it);
+      it++;
+
       stpl->set_as_aggregate();
       store->persistent_tuples.push_back(stpl);
    }
