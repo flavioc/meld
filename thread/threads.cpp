@@ -64,21 +64,18 @@ threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
    thread_intrusive_node *tnode(static_cast<thread_intrusive_node*>(to));
    LOCK_STACK(nodelock);
 
-   NODE_LOCK(tnode, nodelock);
-
-   LOCK_STAT(add_lock);
+   NODE_LOCK(tnode, nodelock, node_lock);
    
    threads_sched *owner(static_cast<threads_sched*>(tnode->get_owner()));
 
-   LOCK_STACK(internallock);
    if(owner == this) {
 #ifdef FACT_STATISTICS
       count_add_work_self++;
 #endif
-      tnode->internal_lock(LOCK_STACK_USE(internallock));
-      LOCK_STAT(internal_locks);
-      tnode->add_work_myself(arr);
-      tnode->internal_unlock(LOCK_STACK_USE(internallock));
+      {
+         MUTEX_LOCK_GUARD(tnode->database_lock, database_lock);
+         tnode->add_work_myself(arr);
+      }
 #ifdef INSTRUMENTATION
       sent_facts_same_thread++;
 #endif
@@ -88,15 +85,16 @@ threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
 #ifdef FACT_STATISTICS
       count_add_work_other++;
 #endif
-      if(tnode->try_internal_lock(LOCK_STACK_USE(internallock))) {
-         LOCK_STAT(internal_ok_locks);
+      LOCK_STACK(databaselock);
+      if(tnode->database_lock.try_lock1(LOCK_STACK_USE(databaselock))) {
+         LOCKING_STAT(database_lock_ok);
          tnode->add_work_myself(arr);
 #ifdef INSTRUMENTATION
          sent_facts_other_thread_now++;
 #endif
-         tnode->internal_unlock(LOCK_STACK_USE(internallock));
+         MUTEX_UNLOCK(tnode->database_lock, databaselock);
       } else {
-         LOCK_STAT(internal_failed_locks);
+         LOCKING_STAT(database_lock_fail);
          tnode->add_work_others(arr);
 #ifdef INSTRUMENTATION
          sent_facts_other_thread++;
@@ -120,21 +118,17 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
    thread_intrusive_node *tnode(static_cast<thread_intrusive_node*>(to));
 
    LOCK_STACK(nodelock);
-   NODE_LOCK(tnode, nodelock);
-
-   LOCK_STAT(add_lock);
+   NODE_LOCK(tnode, nodelock, node_lock);
    
    threads_sched *owner(static_cast<threads_sched*>(tnode->get_owner()));
-   LOCK_STACK(internallock);
-
    if(owner == this) {
 #ifdef FACT_STATISTICS
       count_add_work_self++;
 #endif
-      tnode->internal_lock(LOCK_STACK_USE(internallock));
-      LOCK_STAT(internal_locks);
-      tnode->add_work_myself(tpl, pred, count, depth);
-      tnode->internal_unlock(LOCK_STACK_USE(internallock));
+      {
+         MUTEX_LOCK_GUARD(tnode->database_lock, database_lock);
+         tnode->add_work_myself(tpl, pred, count, depth);
+      }
 #ifdef INSTRUMENTATION
       sent_facts_same_thread++;
 #endif
@@ -144,15 +138,17 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
 #ifdef FACT_STATISTICS
       count_add_work_other++;
 #endif
-      if(tnode->try_internal_lock(LOCK_STACK_USE(internallock))) {
-         LOCK_STAT(internal_ok_locks);
+      LOCK_STACK(databaselock);
+
+      if(tnode->database_lock.try_lock1(LOCK_STACK_USE(databaselock))) {
+         LOCKING_STAT(database_lock_ok);
          tnode->add_work_myself(tpl, pred, count, depth);
 #ifdef INSTRUMENTATION
          sent_facts_other_thread_now++;
 #endif
-         tnode->internal_unlock(LOCK_STACK_USE(internallock));
+         MUTEX_UNLOCK(tnode->database_lock, databaselock);
       } else {
-         LOCK_STAT(internal_failed_locks);
+         LOCKING_STAT(database_lock_fail);
          tnode->add_work_others(tpl, pred, count, depth);
 #ifdef INSTRUMENTATION
       sent_facts_other_thread++;
@@ -213,8 +209,7 @@ threads_sched::go_steal_nodes(void)
          thread_intrusive_node *node(node_buffer[i]);
 
          LOCK_STACK(nodelock);
-         NODE_LOCK(node, nodelock);
-         LOCK_STAT(steal_locks);
+         NODE_LOCK(node, nodelock, node_lock);
          if(node->node_state() != STATE_STEALING) {
             // node was put in the queue again, give up.
             NODE_UNLOCK(node, nodelock);
@@ -303,7 +298,7 @@ threads_sched::generate_aggs(void)
 void
 threads_sched::killed_while_active(void)
 {
-   utils::lock_guard l(lock);
+   MUTEX_LOCK_GUARD(lock, thread_lock);
    if(is_active())
       set_inactive();
 }
@@ -343,7 +338,7 @@ threads_sched::busy_wait(void)
       }
 #endif
       if(is_active() && !has_work()) {
-         utils::lock_guard l(lock);
+         MUTEX_LOCK_GUARD(lock, thread_lock);
          if(!has_work()) {
             if(is_active())
                set_inactive();
@@ -372,8 +367,7 @@ threads_sched::check_if_current_useless(void)
 {
    if(!current_node->unprocessed_facts) {
       LOCK_STACK(curlock);
-      NODE_LOCK(current_node, curlock);
-      LOCK_STAT(check_lock);
+      NODE_LOCK(current_node, curlock, node_lock);
       
       if(!current_node->unprocessed_facts) {
          current_node->make_inactive();

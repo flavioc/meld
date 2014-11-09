@@ -241,10 +241,10 @@ class experiment(object):
       cmap = plt.get_cmap('gray')
 
       lm, = ax.plot(self.x_axis1(), improv_lm,
-         label='LM Improvement', linestyle='--', marker='^', color=cmap(0.1))
+         label='CLM Improvement', linestyle='--', marker='^', color=cmap(0.1))
       other, = ax.plot(self.x_axis1(), improv_system,
          label=system_name + ' Improvement', linestyle='--', marker='+', color=cmap(0.6))
-      ax.legend([lm, other], ["LM", system_name], loc=2, fontsize=20, markerscale=2)
+      ax.legend([lm, other], ["CLM", system_name], loc=2, fontsize=20, markerscale=2)
 
       setup_lines(ax, cmap)
 
@@ -279,7 +279,7 @@ class experiment(object):
          label=system_name + ' Speedup', linestyle='--', marker='+', color=cmap(0.6))
       ax.plot(self.x_axis(), self.linear_speedup(),
         label='Linear', linestyle='-', color=cmap(0.2))
-      ax.legend([lm, other], ["LM", system_name], loc=2, fontsize=20, markerscale=2)
+      ax.legend([lm, other], ["CLM", system_name], loc=2, fontsize=20, markerscale=2)
 
       setup_lines(ax, cmap)
 

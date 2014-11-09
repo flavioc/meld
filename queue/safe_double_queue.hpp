@@ -26,34 +26,28 @@ public:
    
    inline bool pop_if_not_empty(node_type& data, const queue_id_t new_state)
    {
-      utils::lock_guard l(mtx);
-      LOCK_STAT(ready_lock);
+      MUTEX_LOCK_GUARD(mtx, normal_lock);
       
 		QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP_IF_NOT_EMPTY();
    }
    
    inline bool pop_head(node_type& data, const queue_id_t new_state)
    {
-      utils::lock_guard l(mtx);
-      LOCK_STAT(ready_lock);
+      MUTEX_LOCK_GUARD(mtx, normal_lock);
       
 		QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP();
    }
 
    inline bool pop_tail(node_type& data, const queue_id_t new_state)
    {
-      utils::lock_guard l(mtx);
-
-      LOCK_STAT(ready_lock);
+      MUTEX_LOCK_GUARD(mtx, normal_lock);
 
       QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP_TAIL();
    }
 
    inline size_t pop_tail_half(T **buffer, const size_t max, const queue_id_t new_state)
    {
-      utils::lock_guard l(mtx);
-
-      LOCK_STAT(ready_lock);
+      MUTEX_LOCK_GUARD(mtx, normal_lock);
 
       size_t half = std::min(max, total / 2);
 
@@ -72,18 +66,16 @@ public:
       return half;
    }
    
-   inline void push_tail(node_type data)
+   inline void push_tail(node_type data LOCKING_STAT_FLAG)
    {
-      utils::lock_guard l(mtx);
-      LOCK_STAT(ready_lock);
+      MUTEX_LOCK_GUARD_FLAG(mtx, normal_lock, coord_normal_lock);
    
       push_tail_node(data);
    }
 
 	inline void push_head(node_type data)
 	{
-      utils::lock_guard l(mtx);
-      LOCK_STAT(ready_lock);
+      MUTEX_LOCK_GUARD(mtx, normal_lock);
 		
 		push_head_node(data);
 	}
@@ -92,8 +84,7 @@ public:
    
    inline void move_up(node_type node)
    {
-      utils::lock_guard l(mtx);
-      LOCK_STAT(ready_lock);
+      MUTEX_LOCK_GUARD(mtx, normal_lock);
 
       if(!in_queue(node))
          return;
@@ -101,10 +92,9 @@ public:
 		QUEUE_DEFINE_INTRUSIVE_MOVE_UP();
    }
 
-	inline bool remove(node_type node, const queue_id_t new_state)
+	inline bool remove(node_type node, const queue_id_t new_state LOCKING_STAT_FLAG)
 	{
-      utils::lock_guard l(mtx);
-      LOCK_STAT(ready_lock);
+      MUTEX_LOCK_GUARD_FLAG(mtx, normal_lock, coord_normal_lock);
 
       if(!in_queue(node))
          return false;

@@ -5,15 +5,20 @@
 
 #ifdef LOCK_STATISTICS
 namespace utils {
-std::atomic<uint64_t> internal_ok_locks;
-std::atomic<uint64_t> internal_failed_locks;
-std::atomic<uint64_t> steal_locks;
-std::atomic<uint64_t> internal_locks;
-std::atomic<uint64_t> ready_lock;
-std::atomic<uint64_t> sched_lock;
-std::atomic<uint64_t> add_lock;
-std::atomic<uint64_t> check_lock;
-std::atomic<uint64_t> prio_lock;
+std::atomic<uint64_t> main_db_lock_ok, main_db_lock_fail;
+std::atomic<uint64_t> node_lock_ok, node_lock_fail;
+std::atomic<uint64_t> thread_lock_ok, thread_lock_fail;
+std::atomic<uint64_t> database_lock_ok, database_lock_fail;
+std::atomic<uint64_t> normal_lock_ok, normal_lock_fail;
+std::atomic<uint64_t> coord_normal_lock_ok, coord_normal_lock_fail;
+std::atomic<uint64_t> priority_lock_ok, priority_lock_fail;
+std::atomic<uint64_t> coord_priority_lock_ok, coord_priority_lock_fail;
+std::atomic<uint64_t> schedule_next_lock_ok, schedule_next_lock_fail;
+std::atomic<uint64_t> add_priority_lock_ok, add_priority_lock_fail;
+std::atomic<uint64_t> set_priority_lock_ok, set_priority_lock_fail;
+std::atomic<uint64_t> set_moving_lock_ok, set_moving_lock_fail;
+std::atomic<uint64_t> set_static_lock_ok, set_static_lock_fail;
+std::atomic<uint64_t> set_affinity_lock_ok, set_affinity_lock_fail;
 }
 #endif
 
@@ -24,10 +29,20 @@ void
 utils::mutex::print_statistics(void)
 {
 #ifdef LOCK_STATISTICS
-   cerr << "ok, failed, steal, internal, ready, sched, add, check, prio" << endl;
-   cerr << internal_ok_locks << ", " << internal_failed_locks << ", " <<
-      steal_locks << ", " << internal_locks << ", " << ready_lock << ", " <<
-      sched_lock << ", " << add_lock << ", " << check_lock << ", " <<
-      prio_lock << endl;
+#define SHOW(NAME) cerr << #NAME ": " << NAME ## _fail << "\t/\t" << (NAME ## _ok + NAME ## _fail) << endl
+   SHOW(main_db_lock);
+   SHOW(node_lock);
+   SHOW(thread_lock);
+   SHOW(database_lock);
+   SHOW(normal_lock);
+   SHOW(coord_normal_lock);
+   SHOW(priority_lock);
+   SHOW(coord_priority_lock);
+   SHOW(schedule_next_lock);
+   SHOW(add_priority_lock);
+   SHOW(set_priority_lock);
+   SHOW(set_moving_lock);
+   SHOW(set_static_lock);
+   SHOW(set_affinity_lock);
 #endif
 }

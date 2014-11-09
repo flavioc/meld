@@ -85,8 +85,7 @@ database::find_node(const node::node_id id) const
 node*
 database::create_node_id(const db::node::node_id id)
 {
-   LOCK_STACK(dblock);
-   mtx.lock(LOCK_STACK_USE(dblock));
+   MUTEX_LOCK_GUARD(mtx, main_db_lock);
 
    if(max_node_id > 0) {
       assert(max_node_id < id);
@@ -100,7 +99,6 @@ database::create_node_id(const db::node::node_id id)
 
    nodes[max_node_id] = ret;
    nodes_total++;
-   mtx.unlock(LOCK_STACK_USE(dblock));
 
    return ret;
 }
@@ -115,15 +113,13 @@ database::create_node_iterator(database::map_nodes::iterator it)
 pair<node::node_id, node::node_id>
 database::allocate_ids(const size_t size)
 {
-   LOCK_STACK(dblock);
-   mtx.lock(LOCK_STACK_USE(dblock));
+   MUTEX_LOCK_GUARD(mtx, main_db_lock);
 
    pair<node::node_id, node::node_id> ret(
          make_pair(max_node_id + 1, max_translated_id + 1));
 
    max_node_id += size;
    max_translated_id += size;
-   mtx.unlock(LOCK_STACK_USE(dblock));
 
    return ret;
 }

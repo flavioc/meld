@@ -762,7 +762,7 @@ state::run_node(db::node *no)
 		execution_time::scope s(stat.core_engine_time);
 #endif
       LOCK_STACK(node_lock);
-      node->lock(LOCK_STACK_USE(node_lock));
+      MUTEX_LOCK(node->main_lock, node_lock, node_lock);
       process_action_tuples();
 		process_incoming_tuples();
 #ifdef DYNAMIC_INDEXING
@@ -772,12 +772,11 @@ state::run_node(db::node *no)
       }
 #endif
       node->unprocessed_facts = false;
-      node->unlock(LOCK_STACK_USE(node_lock));
+      MUTEX_UNLOCK(node->main_lock, node_lock);
 	}
 
    LOCK_STACK(internal_lock_data);
-   node->internal_lock(LOCK_STACK_USE(internal_lock_data));
-   LOCK_STAT(internal_locks);
+   MUTEX_LOCK(node->database_lock, internal_lock_data, database_lock);
 
 #ifdef DYNAMIC_INDEXING
    node->rounds++;
@@ -902,16 +901,15 @@ state::run_node(db::node *no)
    if(node->rounds > 0 && node->rounds % 5 == 0)
       lstore->cleanup_index();
 #endif
-   node->internal_unlock(LOCK_STACK_USE(internal_lock_data));
+   MUTEX_UNLOCK(node->database_lock, internal_lock_data);
    sync();
 #ifdef GC_NODES
    for(auto it(gc_nodes.begin()); it != gc_nodes.end(); ++it) {
       db::node *n((db::node*)*it);
-      n->lock();
+      MUTEX_LOCK_GUARD(n->main_lock, node_lock);
       // need to lock node since it may have pending facts
       if(n->garbage_collect())
          sched->delete_node(n);
-      n->unlock();
    }
    gc_nodes.clear();
 #endif

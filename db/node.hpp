@@ -153,22 +153,13 @@ public:
    db::linear_store linear;
    vm::temporary_store store;
    bool unprocessed_facts;
-   utils::mutex main_mtx;
-   utils::mutex internal_mtx;
+   utils::mutex main_lock;
+   utils::mutex database_lock;
 
 #ifdef DYNAMIC_INDEXING
    uint16_t rounds;
    vm::deterministic_timestamp indexing_epoch;
 #endif
-
-   // overall locking for changing the state of the node
-   inline void lock(LOCK_ARGUMENT) { main_mtx.lock(LOCK_ARGUMENT_NAME); }
-   inline bool try_lock(LOCK_ARGUMENT) { return main_mtx.try_lock(LOCK_ARGUMENT_NAME); }
-   inline void unlock(LOCK_ARGUMENT) { main_mtx.unlock(LOCK_ARGUMENT_NAME); }
-
-   inline void internal_lock(LOCK_ARGUMENT) { internal_mtx.lock(LOCK_ARGUMENT_NAME); }
-   inline bool try_internal_lock(LOCK_ARGUMENT) { return internal_mtx.try_lock(LOCK_ARGUMENT_NAME); }
-   inline void internal_unlock(LOCK_ARGUMENT) { internal_mtx.unlock(LOCK_ARGUMENT_NAME); }
 
    // return queue of the node.
    inline queue_id_t node_state(void) const {

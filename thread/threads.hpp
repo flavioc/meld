@@ -28,12 +28,8 @@
 //#define STEAL_ONE
 #define STEAL_HALF
 
-#ifdef INSTRUMENTATION
-#define NODE_LOCK(NODE, ARG) do { if((NODE)->try_lock(LOCK_STACK_USE(ARG))) { node_lock_ok++; } else { node_lock_fail++; (NODE)->lock(LOCK_STACK_USE(ARG));} } while(false)
-#else
-#define NODE_LOCK(NODE, ARG) ((NODE)->lock(LOCK_STACK_USE(ARG)))
-#endif
-#define NODE_UNLOCK(NODE, ARG) ((NODE)->unlock(LOCK_STACK_USE(ARG)))
+#define NODE_LOCK(NODE, ARG, STAT) MUTEX_LOCK((NODE)->main_lock, ARG, STAT)
+#define NODE_UNLOCK(NODE, ARG) MUTEX_UNLOCK((NODE)->main_lock, ARG)
 
 namespace sched
 {
@@ -103,19 +99,13 @@ private:
 
    inline void activate_thread(void)
    {
-      LOCK_STACK(owner_lock);
-
-      lock.lock(LOCK_STACK_USE(owner_lock));
-
-      LOCK_STAT(sched_lock);
+      MUTEX_LOCK_GUARD(lock, thread_lock);
 
       if(is_inactive())
       {
          set_active();
          assert(is_active());
       }
-
-      lock.unlock(LOCK_STACK_USE(owner_lock));
    }
    
    inline void set_active_if_inactive(void)
@@ -213,10 +203,6 @@ protected:
    std::atomic<size_t> priority_nodes_thread;
    // SET PRIORITY executed on nodes of other threads.
    std::atomic<size_t> priority_nodes_others;
-   // when locking nodes, how often did the lock fail.
-   std::atomic<size_t> node_lock_fail;
-   // when locking nodes, how often did the lock succeed.
-   std::atomic<size_t> node_lock_ok;
 #endif
 
 #ifndef DIRECT_PRIORITIES

@@ -45,7 +45,7 @@ threads_sched::schedule_next(node *n)
 #ifdef TASK_STEALING
    thread_intrusive_node *tn((thread_intrusive_node*)n);
    LOCK_STACK(nodelock);
-   NODE_LOCK(tn, nodelock);
+   NODE_LOCK(tn, nodelock, schedule_next_lock);
    threads_sched *other((threads_sched*)tn->get_owner());
    if(other == this)
       do_set_node_priority(n, prio);
@@ -149,8 +149,7 @@ threads_sched::add_node_priority(node *n, const double priority)
 
 #ifdef TASK_STEALING
    LOCK_STACK(nodelock);
-   NODE_LOCK(tn, nodelock);
-   LOCK_STAT(prio_lock);
+   NODE_LOCK(tn, nodelock, add_priority_lock);
    threads_sched *other((threads_sched*)tn->get_owner());
    if(other == this)
       do_set_node_priority(n, tn->get_priority_level() + priority);
@@ -195,8 +194,7 @@ threads_sched::set_node_priority(node *n, const double priority)
 //   cout << "Set node " << n->get_id() << " with prio " << priority << endl;
 #ifdef TASK_STEALING
    LOCK_STACK(nodelock);
-   NODE_LOCK(tn, nodelock);
-   LOCK_STAT(prio_lock);
+   NODE_LOCK(tn, nodelock, set_priority_lock);
    if(!is_higher_priority(tn, priority) && priority != 0) {
       NODE_UNLOCK(tn, nodelock);
       return;
@@ -238,39 +236,39 @@ threads_sched::do_set_node_priority_other(thread_intrusive_node *node, const dou
             node->set_priority_level(priority);
          return;
       case NORMAL_QUEUE_MOVING:
-         if(owner->queues.moving.remove(node, STATE_PRIO_CHANGE)) {
-            owner->add_to_priority_queue(node);
+         if(owner->queues.moving.remove(node, STATE_PRIO_CHANGE LOCKING_STAT_FLAG_FALSE)) {
+            owner->prios.moving.insert(node, node->get_priority_level() LOCKING_STAT_FLAG_FALSE);
             activate_node = true;
          }
          break;
       case NORMAL_QUEUE_STATIC:
-         if(owner->queues.stati.remove(node, STATE_PRIO_CHANGE)) {
-            owner->add_to_priority_queue(node);
+         if(owner->queues.stati.remove(node, STATE_PRIO_CHANGE LOCKING_STAT_FLAG_FALSE)) {
+            owner->prios.stati.insert(node, node->get_priority_level() LOCKING_STAT_FLAG_FALSE);
             activate_node = true;
          }
          break;
       case PRIORITY_MOVING:
          if(priority == 0) {
             node->set_priority_level(0.0);
-            if(owner->prios.moving.remove(node, STATE_PRIO_CHANGE)) {
-               owner->queues.moving.push_tail(node);
+            if(owner->prios.moving.remove(node, STATE_PRIO_CHANGE LOCKING_STAT_FLAG_FALSE)) {
+               owner->queues.moving.push_tail(node LOCKING_STAT_FLAG_FALSE);
                activate_node = true;
             }
          } else if(is_higher_priority(node, priority)) {
             node->set_priority_level(priority);
-            owner->prios.moving.move_node(node, priority);
+            owner->prios.moving.move_node(node, priority LOCKING_STAT_FLAG_FALSE);
          }
          break;
       case PRIORITY_STATIC:
          if(priority == 0) {
             node->set_priority_level(0.0);
-            if(owner->prios.stati.remove(node, STATE_PRIO_CHANGE)) {
-               owner->queues.stati.push_tail(node);
+            if(owner->prios.stati.remove(node, STATE_PRIO_CHANGE LOCKING_STAT_FLAG_FALSE)) {
+               owner->queues.stati.push_tail(node LOCKING_STAT_FLAG_FALSE);
                activate_node = true;
             }
          } else if(is_higher_priority(node, priority)) {
             node->set_priority_level(priority);
-            owner->prios.stati.move_node(node, priority);
+            owner->prios.stati.move_node(node, priority LOCKING_STAT_FLAG_FALSE);
          }
          break;
       case STATE_WORKING:
@@ -280,8 +278,8 @@ threads_sched::do_set_node_priority_other(thread_intrusive_node *node, const dou
    } 
    if(activate_node) {
       // we must reactivate node if it's not active
-      utils::lock_guard l2(owner->lock);
-      
+      MUTEX_LOCK_GUARD(owner->lock, thread_lock);
+
       if(owner->is_inactive()) {
          owner->set_active();
          assert(owner->is_active());
@@ -320,34 +318,34 @@ threads_sched::do_set_node_priority(node *n, const double priority)
       case PRIORITY_MOVING:
          if(priority == 0.0) {
             tn->set_priority_level(0.0);
-            if(prios.moving.remove(tn, STATE_PRIO_CHANGE))
-               add_to_queue(tn);
+            if(prios.moving.remove(tn, STATE_PRIO_CHANGE LOCKING_STAT_FLAG_FALSE))
+               queues.moving.push_tail(tn LOCKING_STAT_FLAG_FALSE);
          } else if(is_higher_priority(tn, priority)) {
             // we check if new priority is bigger than the current priority
             tn->set_priority_level(priority);
-            prios.moving.move_node(tn, priority);
+            prios.moving.move_node(tn, priority LOCKING_STAT_FLAG_FALSE);
          }
          break;
       case PRIORITY_STATIC:
          if(priority == 0.0) {
             tn->set_priority_level(0.0);
             if(prios.stati.remove(tn, STATE_PRIO_CHANGE))
-               add_to_queue(tn);
+               queues.stati.push_tail(tn LOCKING_STAT_FLAG_FALSE);
          } else if(is_higher_priority(tn, priority)) {
             // we check if new priority is bigger than the current priority
             tn->set_priority_level(priority);
-            prios.stati.move_node(tn, priority);
+            prios.stati.move_node(tn, priority LOCKING_STAT_FLAG_FALSE);
          }
          break;
       case NORMAL_QUEUE_MOVING:
          tn->set_priority_level(priority);
-         if(queues.moving.remove(tn, STATE_PRIO_CHANGE))
-            add_to_priority_queue(tn);
+         if(queues.moving.remove(tn, STATE_PRIO_CHANGE LOCKING_STAT_FLAG_FALSE))
+            prios.moving.insert(tn, tn->get_priority_level());
          break;
       case NORMAL_QUEUE_STATIC:
          tn->set_priority_level(priority);
          if(queues.stati.remove(tn, STATE_PRIO_CHANGE))
-            add_to_priority_queue(tn);
+            prios.stati.insert(tn, tn->get_priority_level());
          break;
       case STATE_WORKING:
          if(is_higher_priority(tn, priority))
@@ -379,7 +377,7 @@ threads_sched::set_node_static(db::node *n)
    }
 
    LOCK_STACK(nodelock);
-   NODE_LOCK(tn, nodelock);
+   NODE_LOCK(tn, nodelock, set_static_lock);
 
    if(tn->is_static()) {
       NODE_UNLOCK(tn, nodelock);
@@ -395,12 +393,12 @@ threads_sched::set_node_static(db::node *n)
          // thief knows that he needs to do something.
          break;
       case NORMAL_QUEUE_MOVING:
-         if(queues.moving.remove(tn, STATE_STATIC_CHANGE))
-            queues.stati.push_tail(tn);
+         if(queues.moving.remove(tn, STATE_STATIC_CHANGE LOCKING_STAT_FLAG_FALSE))
+            queues.stati.push_tail(tn LOCKING_STAT_FLAG_FALSE);
          break;
       case PRIORITY_MOVING:
-         if(prios.moving.remove(tn, STATE_STATIC_CHANGE))
-            prios.stati.insert(tn, tn->get_priority_level());
+         if(prios.moving.remove(tn, STATE_STATIC_CHANGE LOCKING_STAT_FLAG_FALSE))
+            prios.stati.insert(tn, tn->get_priority_level() LOCKING_STAT_FLAG_FALSE);
          break;
       case NORMAL_QUEUE_STATIC:
       case PRIORITY_STATIC:
@@ -428,7 +426,7 @@ threads_sched::set_node_moving(db::node *n)
    }
 
    LOCK_STACK(nodelock);
-   NODE_LOCK(tn, nodelock);
+   NODE_LOCK(tn, nodelock, set_moving_lock);
    if(tn->is_moving()) {
       NODE_UNLOCK(tn, nodelock);
       return;
@@ -443,12 +441,12 @@ threads_sched::set_node_moving(db::node *n)
          // thief knows that he needs to do something.
          break;
       case NORMAL_QUEUE_STATIC:
-         if(queues.stati.remove(tn, STATE_STATIC_CHANGE))
-            queues.moving.push_tail(tn);
+         if(queues.stati.remove(tn, STATE_STATIC_CHANGE LOCKING_STAT_FLAG_FALSE))
+            queues.moving.push_tail(tn LOCKING_STAT_FLAG_FALSE);
          break;
       case PRIORITY_STATIC:
-         if(prios.stati.remove(tn, STATE_STATIC_CHANGE))
-            prios.moving.insert(tn, tn->get_priority_level());
+         if(prios.stati.remove(tn, STATE_STATIC_CHANGE LOCKING_STAT_FLAG_FALSE))
+            prios.moving.insert(tn, tn->get_priority_level() LOCKING_STAT_FLAG_FALSE);
          break;
       case NORMAL_QUEUE_MOVING:
       case PRIORITY_MOVING:
@@ -466,7 +464,7 @@ threads_sched::move_node_to_new_owner(thread_intrusive_node *tn, threads_sched *
 {
    new_owner->add_to_queue(tn);
 
-   utils::lock_guard l2(new_owner->lock);
+   MUTEX_LOCK_GUARD(new_owner->lock, thread_lock);
    
    if(new_owner->is_inactive())
    {
@@ -501,7 +499,7 @@ threads_sched::set_node_owner(db::node *node, threads_sched *new_owner)
    }
 
    LOCK_STACK(nodelock);
-   NODE_LOCK(tn, nodelock);
+   NODE_LOCK(tn, nodelock, set_affinity_lock);
    make_node_static(tn, new_owner);
    if(tn->get_owner() == new_owner) {
       NODE_UNLOCK(tn, nodelock);
@@ -515,25 +513,25 @@ threads_sched::set_node_owner(db::node *node, threads_sched *new_owner)
          tn->set_owner(new_owner);
          break;
       case NORMAL_QUEUE_STATIC:
-         if(queues.stati.remove(tn, STATE_AFFINITY_CHANGE)) {
+         if(queues.stati.remove(tn, STATE_AFFINITY_CHANGE LOCKING_STAT_FLAG_FALSE)) {
             tn->set_owner(new_owner);
             move_node_to_new_owner(tn, new_owner);
          }
          break;
       case NORMAL_QUEUE_MOVING:
-         if(queues.moving.remove(tn, STATE_AFFINITY_CHANGE)) {
+         if(queues.moving.remove(tn, STATE_AFFINITY_CHANGE LOCKING_STAT_FLAG_FALSE)) {
             tn->set_owner(new_owner);
             move_node_to_new_owner(tn, new_owner);
          }
          break;
       case PRIORITY_MOVING:
-         if(prios.moving.remove(tn, STATE_AFFINITY_CHANGE)) {
+         if(prios.moving.remove(tn, STATE_AFFINITY_CHANGE LOCKING_STAT_FLAG_FALSE)) {
             tn->set_owner(new_owner);
             move_node_to_new_owner(tn, new_owner);
          }
          break;
       case PRIORITY_STATIC:
-         if(prios.stati.remove(tn, STATE_AFFINITY_CHANGE)) {
+         if(prios.stati.remove(tn, STATE_AFFINITY_CHANGE LOCKING_STAT_FLAG_FALSE)) {
             tn->set_owner(new_owner);
             move_node_to_new_owner(tn, new_owner);
          }

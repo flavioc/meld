@@ -8,7 +8,7 @@ priority @cluster @static.
 const used = 1.
 const notused = 0.
 
-node2int(A) % 5 = 0 -o set-priority(A, 0.1), path(A, A, 0, 0).
+node2int(A) % 5 = 0 -o path(A, A, 0, 0).
 
 path(A, X, B, K), path(A, X, B, notused), K = used
 	-o path(A, X, B, K).
