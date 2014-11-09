@@ -931,6 +931,13 @@ state::sync(void)
    }
    facts_to_send.clear();
 #endif
+#ifdef COORDINATION_BUFFERING
+   for(auto it(set_priorities.begin()), end(set_priorities.end()); it != end; ++it) {
+      db::node *target((db::node*)it->first);
+      sched->set_node_priority(target, it->second);
+   }
+   set_priorities.clear();
+#endif
    return ret;
 }
 

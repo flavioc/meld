@@ -10,7 +10,7 @@ namespace sched
 {
 
 static inline bool
-is_higher_priority(thread_intrusive_node *tn, const double priority)
+is_higher_priority(thread_intrusive_node *tn, const priority_t priority)
 {
    if(theProgram->is_priority_desc())
       return tn->get_priority_level() < priority;

@@ -53,6 +53,9 @@ endif
 ifeq ($(FACT_BUFFERING), true)
 	FLAGS += -DFACT_BUFFERING
 endif
+ifeq ($(COORDINATION_BUFFERING), true)
+	FLAGS += -DCOORDINATION_BUFFERING
+endif
 ifeq ($(LOCK_ALGORITHM), mutex)
 	FLAGS += -DUSE_STD_MUTEX
 endif

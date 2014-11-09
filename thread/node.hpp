@@ -19,19 +19,19 @@ private:
    // when not NULL it indicates which scheduler it needs to be on.
    sched::base *static_node;
 	
-   double default_priority_level;
-   double priority_level;
+   vm::priority_t default_priority_level;
+   vm::priority_t priority_level;
 	
 public:
 
-	inline double get_priority_level(void) {
+	inline vm::priority_t get_priority_level(void) {
       if(priority_level == 0)
          return default_priority_level;
       return priority_level;
    }
 
-	inline void set_priority_level(const double level) { priority_level = level; }
-   inline void set_default_priority_level(const double level) { default_priority_level = level; }
+	inline void set_priority_level(const vm::priority_t level) { priority_level = level; }
+   inline void set_default_priority_level(const vm::priority_t level) { default_priority_level = level; }
 	inline bool has_priority_level(void) const {
       return default_priority_level != 0.0 || priority_level != 0.0;
    }

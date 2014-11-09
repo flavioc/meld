@@ -62,11 +62,20 @@ public:
    bool is_linear;
 	utils::randgen randgen;
    size_t current_rule;
+#ifdef FACT_BUFFERING
    typedef std::unordered_map<const db::node*, tuple_array,
            std::hash<const db::node*>,
            std::equal_to<const db::node*>,
            mem::allocator<std::pair<const db::node* const, tuple_array> > > map_sends;
    map_sends facts_to_send;
+#endif
+#ifdef COORDINATION_BUFFERING
+   typedef std::unordered_map<const db::node*, vm::priority_t,
+           std::hash<const db::node*>,
+           std::equal_to<const db::node*>,
+           mem::allocator<std::pair<const db::node* const, vm::priority_t>>> map_set_priority;
+   map_set_priority set_priorities;
+#endif
 #ifdef DEBUG_MODE
 	bool print_instrs;
 #endif

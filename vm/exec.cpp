@@ -14,6 +14,7 @@
 #include "utils/mutex.hpp"
 #include "thread/node.hpp"
 #include "thread/threads.hpp"
+#include "vm/priority.hpp"
 #ifdef USE_UI
 #include "ui/manager.hpp"
 #endif
@@ -1507,13 +1508,27 @@ execute_set_priority(pcounter& pc, state& state)
 {
    const reg_num prio_reg(pcounter_reg(pc + instr_size));
    const reg_num node_reg(pcounter_reg(pc + instr_size + reg_val_size));
-   const float_val prio(state.get_float(prio_reg));
+   const priority_t prio(state.get_float(prio_reg));
    const node_val node(state.get_node(node_reg));
 
 #ifdef USE_REAL_NODES
-   state.sched->set_node_priority((db::node*)node, prio);
+   db::node *n((db::node*)node);
 #else
-   state.sched->set_node_priority(All->DATABASE->find_node(node), prio);
+   db::node *n(All->DATABASE->find_node(node));
+#endif
+
+#ifdef COORDINATION_BUFFERING
+   auto it(state.set_priorities.find(n));
+
+   if(it == state.set_priorities.end())
+      state.set_priorities[n] = prio;
+   else {
+      const priority_t current(it->second);
+      if(higher_priority(prio, current))
+         it->second = prio;
+   }
+#else
+   state.sched->set_node_priority(n, prio);
 #endif
 }
 

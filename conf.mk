@@ -29,6 +29,8 @@ CORE_STATISTICS = false
 MEMORY_STATISTICS = false
 # activate fact buffering (only send facts after the node has completed running)
 FACT_BUFFERING = true
+# activate buffering for coordination.
+COORDINATION_BUFFERING = false
 
 # activate extra assertions.
 EXTRA_ASSERTS = false
