@@ -71,6 +71,7 @@ for x in range(0, side):
 	for y in range(0, side):
 		id = x * side + y
 		print "!coord(@" + str(map_node(id)) + ", " + str(x) + ", " + str(y) + ")."
+		print "set-default-priority(@" + str(map_node(id)) + ", " + str(x + 1) + ".0)."
 #		if x >= side - 1:
 #	print "set-cpu(@" + str(map_node(id)) + ", " + str(y) + " % @cpus)."
 

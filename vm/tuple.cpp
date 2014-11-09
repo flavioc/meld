@@ -377,10 +377,13 @@ tuple::set_field_ref(const field_num& field, const tuple_field& f, const predica
          }
 #endif
          break;
-      default:
+      case FIELD_LIST:
+      case FIELD_STRING:
+      case FIELD_STRUCT:
          do_increment_runtime(f);
          do_decrement_runtime(old, typ);
          break;
+      default: assert(false); break;
    }
 
 }

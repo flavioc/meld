@@ -152,6 +152,44 @@ class experiment(object):
       name = prefix + self.name + ".png"
       plt.savefig(name)
 
+   def create_ht(self, coord, localonly):
+      fig = plt.figure()
+      ax = fig.add_subplot(111)
+
+      names = ('Speedup')
+      formats = ('f4')
+      titlefontsize = 22
+      ylabelfontsize = 20
+      ax.set_title(self.title, fontsize=titlefontsize)
+      ax.yaxis.tick_right()
+      ax.yaxis.set_label_position("right")
+      ax.set_ylabel('Speedup', fontsize=ylabelfontsize)
+      ax.set_xlabel('Threads', fontsize=ylabelfontsize)
+      max_value_threads = max(x for x in self.times.keys() if x <= max_threads)
+      mspeedup = max(self.max_speedup(), localonly.max_speedup(self.get_time(1)))
+      ax.set_xlim([0, max_value_threads])
+      ax.set_ylim([0, mspeedup])
+
+      cmap = plt.get_cmap('gray')
+
+      reg, = ax.plot(self.x_axis(), self.speedup_data(),
+         linestyle='--', marker='^', color=cmap(0.1))
+      coordcoord, = ax.plot(self.x_axis(), coord.speedup_data(),
+         linestyle='--', marker='s', color=cmap(0.4))
+      coordreg, = ax.plot(self.x_axis(), coord.speedup_data(self.get_time(1)),
+         linestyle='--', marker='o', color=cmap(0.4))
+      loreg, = ax.plot(self.x_axis(), localonly.speedup_data(self.get_time(1)),
+         linestyle='--', marker='D', color=cmap(0.4))
+      ax.plot(self.x_axis(), self.linear_speedup(),
+        label='Linear', linestyle='-', color=cmap(0.2))
+      ax.legend([reg, coordcoord, coordreg, loreg], ["Regular/Regular",
+            "Coordinated/Coordinated", "Coordinated/Regular", "Local-Only/Regular"], loc=2, fontsize=18, markerscale=2)
+
+      setup_lines(ax, cmap)
+
+      name = self.name + ".png"
+      plt.savefig(name)
+
    def create_coord(self, prefix, coordinated):
       fig = plt.figure()
       ax = fig.add_subplot(111)
@@ -320,10 +358,13 @@ class experiment(object):
 
    def __init__(self, name):
       self.name = name
-      if name.endswith("-coord"):
-         self.title = name2title(name[:-len("-coord")])
-      else:
-         self.title = name2title(name)
+      try:
+         if name.endswith("-coord"):
+            self.title = name2title(name[:-len("-coord")])
+         else:
+            self.title = name2title(name)
+      except KeyError:
+         self.title = "(Not found)"
       self.times = {}
 
 

@@ -222,17 +222,18 @@ execute_send(const pcounter& pc, state& state)
 
    assert(msg != dest);
 #ifdef DEBUG_SENDS
-   print_mtx.lock();
-   ostringstream ss;
-   node_val print_val(dest_val);
+   {
+      MUTEX_LOCK_GUARD(print_mtx, print_lock);
+      ostringstream ss;
+      node_val print_val(dest_val);
 #ifdef USE_REAL_NODES
-   print_val = ((db::node*)print_val)->get_id();
+      print_val = ((db::node*)print_val)->get_id();
 #endif
-   ss << "\t";
-   tuple->print(ss, pred);
-   ss << " " << state.count << " -> " << print_val << " (" << state.depth << ")" << endl;
-   cout << ss.str();
-   print_mtx.unlock();
+      ss << "\t";
+      tuple->print(ss, pred);
+      ss << " " << state.count << " -> " << print_val << " (" << state.depth << ")" << endl;
+      cout << ss.str();
+   }
 #endif
 #ifdef USE_UI
    if(state::UI) {
