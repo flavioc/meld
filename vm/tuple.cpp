@@ -348,14 +348,14 @@ tuple::set_node(const field_num& field, const node_val& val)
 }
 
 void
-tuple::set_field_ref(const field_num& field, const tuple_field& f, const predicate *pred
+tuple::set_field_ref(const field_num& field, const tuple_field& newval, const predicate *pred
 #ifdef GC_NODES
       , candidate_gc_nodes& gc_nodes
 #endif
       )
 {
    const tuple_field old(get_field(field));
-   set_field(field, f);
+   set_field(field, newval);
    const type *typ(pred->get_field_type(field));
    const field_type ftype(typ->get_type());
    switch(ftype) {
@@ -363,7 +363,7 @@ tuple::set_field_ref(const field_num& field, const tuple_field& f, const predica
 #ifdef GC_NODES
          {
             db::node *old_node((db::node*)FIELD_NODE(old));
-            db::node *new_node((db::node*)FIELD_NODE(f));
+            db::node *new_node((db::node*)FIELD_NODE(newval));
             if(new_node && !All->DATABASE->is_initial_node(new_node)) {
                //cout << "Increment " << new_node->get_id() << endl;
                new_node->refs++;
@@ -380,7 +380,7 @@ tuple::set_field_ref(const field_num& field, const tuple_field& f, const predica
       case FIELD_LIST:
       case FIELD_STRING:
       case FIELD_STRUCT:
-         do_increment_runtime(f);
+         do_increment_runtime(newval);
          do_decrement_runtime(old, typ);
          break;
       default: assert(false); break;
