@@ -1510,6 +1510,9 @@ execute_set_priority(pcounter& pc, state& state)
    const reg_num node_reg(pcounter_reg(pc + instr_size + reg_val_size));
    const priority_t prio(state.get_float(prio_reg));
    const node_val node(state.get_node(node_reg));
+   
+   if(!scheduling_mechanism)
+      return;
 
 #ifdef USE_REAL_NODES
    db::node *n((db::node*)node);
