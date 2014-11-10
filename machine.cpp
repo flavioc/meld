@@ -237,6 +237,7 @@ machine::start(void)
 #endif
 #ifdef LOCK_STATISTICS
    utils::mutex::print_statistics();
+   ((sched::threads_sched*)all->SCHEDS[0])->print_average_priority_size();
 #endif
 #ifdef FACT_STATISTICS
    uint64_t facts_derived(0);

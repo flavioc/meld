@@ -150,6 +150,9 @@ protected:
    struct Priorities {
       priority_queue moving;
       priority_queue stati;
+#ifdef LOCK_STATISTICS
+      std::vector<size_t, mem::allocator<size_t> > averages;
+#endif
 
       inline bool has_work(void) const {
          return !moving.empty() || !stati.empty();
@@ -301,6 +304,9 @@ public:
    virtual void schedule_next(db::node *);
 
    inline uint64_t num_static_nodes(void) const { return static_nodes; }
+#ifdef LOCK_STATISTICS
+   void print_average_priority_size(void) const;
+#endif
 
    static db::node *create_node(const db::node::node_id id, const db::node::node_id trans)
    {
