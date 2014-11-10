@@ -56,6 +56,7 @@ private:
          heapifydown(0);
       } else {
          heap.pop_back();
+         LOG_HEAP_OPERATION();
       }
 		
       assert(__INTRUSIVE_QUEUE(min) == queue_number);
@@ -87,6 +88,9 @@ private:
 				heapifydown(index);
 			}
 		}
+      else {
+         LOG_HEAP_OPERATION();
+      }
 	}
 
 public:

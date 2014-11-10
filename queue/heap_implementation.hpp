@@ -63,11 +63,18 @@ typedef enum {
 			out << it->data << " (" << it->val << ") ";			\
 		}																		\
 	}
+
+#ifdef LOCK_STATISTICS
+#define LOG_HEAP_OPERATION() utils::heap_operations++
+#else
+#define LOG_HEAP_OPERATION()
+#endif
 	
 #define HEAP_DEFINE_HEAPIFYUP											\
 	bool heapifyup(int index)											\
 	{																			\
 		bool moved(false);												\
+      LOG_HEAP_OPERATION();                                 \
 		while((index > 0) && (parent(index) >= 0) &&				\
 			(!HEAP_COMPARE(HEAP_GET_PRIORITY(heap[parent(index)]), HEAP_GET_PRIORITY(heap[index]))))	\
 		{																		\
@@ -75,6 +82,7 @@ typedef enum {
 																				\
 			HEAP_SET_INDEX(parent(index), heap[index]);			\
 			HEAP_SET_INDEX(index, obj);								\
+         LOG_HEAP_OPERATION();                              \
 			index = parent(index);										\
 			moved = true;													\
 		}																		\
@@ -100,6 +108,7 @@ typedef enum {
 		const int r = right(index);									\
 		const bool hasleft = (l >= 0);								\
 		const bool hasright = (r >= 0);								\
+      LOG_HEAP_OPERATION();                                 \
 																				\
 		if(!hasleft && !hasright)										\
 			return;															\

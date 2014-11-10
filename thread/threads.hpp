@@ -150,9 +150,6 @@ protected:
    struct Priorities {
       priority_queue moving;
       priority_queue stati;
-#ifdef LOCK_STATISTICS
-      std::vector<size_t, mem::allocator<size_t> > averages;
-#endif
 
       inline bool has_work(void) const {
          return !moving.empty() || !stati.empty();

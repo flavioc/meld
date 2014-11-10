@@ -52,6 +52,7 @@ extern std::atomic<uint64_t> set_priority_lock_ok, set_priority_lock_fail;
 extern std::atomic<uint64_t> set_moving_lock_ok, set_moving_lock_fail;
 extern std::atomic<uint64_t> set_static_lock_ok, set_static_lock_fail;
 extern std::atomic<uint64_t> set_affinity_lock_ok, set_affinity_lock_fail;
+extern std::atomic<uint64_t> heap_operations;
 #endif
 
 class mutex

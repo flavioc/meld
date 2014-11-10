@@ -403,9 +403,6 @@ threads_sched::set_next_node(void)
    
    while (current_node == NULL) {   
       if(scheduling_mechanism) {
-#ifdef LOCK_STATISTICS
-         prios.averages.push_back(prios.stati.size() + prios.moving.size());
-#endif
          current_node = prios.moving.pop_best(prios.stati, STATE_WORKING);
          if(current_node) {
             //     cout << "Got node " << current_node->get_id() << " with prio " << current_node->get_priority_level() << endl;
@@ -546,24 +543,6 @@ threads_sched::write_slice(statistics::slice& sl)
    (void)sl;
 #endif
 }
-
-#ifdef LOCK_STATISTICS
-void
-threads_sched::print_average_priority_size(void) const
-{
-   uint64_t total(0);
-   uint64_t count(0);
-   for(size_t i(0); i < All->NUM_THREADS; ++i) {
-      threads_sched *x((threads_sched*)All->SCHEDS[i]);
-      for(size_t j(0); j < x->prios.averages.size(); ++j) {
-         total += x->prios.averages[j];
-         count++;
-      }
-   }
-   double res = (double)total / (double)count;
-   cerr << "average_priority: " << res << endl;
-}
-#endif
 
 threads_sched::threads_sched(const vm::process_id _id):
    base(_id),
