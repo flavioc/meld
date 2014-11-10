@@ -42,10 +42,11 @@ Diff = if (New - Old > 0.0) then (New - Old) else (Old - New) end
       heat(A, New).
 
 new-neighbor-heat(A, B, Heat),
+!edge(A, B, W),
 wait(A, T),
 T > 0
    -o wait(A, T - 1),
-      neighbor-heat(A, B, Heat).
+      neighbor-heat(A, B, W * Heat).
 
 wait(A, 0)
    -o update(A).
