@@ -27,8 +27,9 @@ start(A), heat(A, H), !inbound(A, T) -o {B, W | !edge(A, B, W) | new-neighbor-he
                                         heat(A, H).
 
 new-neighbor-heat(A, B, Heat),
-neighbor-heat(A, B, OldHeat)
-   -o neighbor-heat(A, B, Heat).
+neighbor-heat(A, B, OldHeat),
+!edge(A, B, W)
+   -o neighbor-heat(A, B, Heat * W).
 
 sum-heats(A),
 heat(A, H),
