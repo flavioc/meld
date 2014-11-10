@@ -27,9 +27,8 @@ start(A), heat(A, H), !inbound(A, T) -o {B, W | !edge(A, B, W) | new-neighbor-he
                                         heat(A, H).
 
 new-neighbor-heat(A, B, Heat),
-neighbor-heat(A, B, OldHeat),
-!edge(A, B, W)
-   -o neighbor-heat(A, B, Heat * W).
+neighbor-heat(A, B, OldHeat)
+   -o neighbor-heat(A, B, Heat).
 
 sum-heats(A),
 heat(A, H),
@@ -42,11 +41,10 @@ Diff = if (New - Old > 0.0) then (New - Old) else (Old - New) end
       heat(A, New).
 
 new-neighbor-heat(A, B, Heat),
-!edge(A, B, W),
 wait(A, T),
 T > 0
    -o wait(A, T - 1),
-      neighbor-heat(A, B, W * Heat).
+      neighbor-heat(A, B, Heat).
 
 wait(A, 0)
    -o update(A).
