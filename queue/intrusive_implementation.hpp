@@ -30,6 +30,7 @@
 #define QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP_IF_NOT_EMPTY() 	\
 	if(empty())																\
       return false;														\
+   LOG_NORMAL_OPERATION();                                  \
       																		\
    assert(!empty());														\
    																			\
@@ -53,6 +54,7 @@
 	if(empty())																	\
    	return false;															\
    																				\
+   LOG_NORMAL_OPERATION();                                     \
    assert(!empty());															\
    																				\
    data = head;																\
@@ -75,6 +77,7 @@
 #define QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP_TAIL()               \
    if(empty())                                                 \
       return false;                                            \
+   LOG_NORMAL_OPERATION();                                     \
    assert(!empty());                                           \
    data = tail;                                                \
    tail = (node_type)__INTRUSIVE_PREV(tail);                   \
@@ -93,6 +96,7 @@
 	inline void push_head_node(node_type new_node)	            \
 	{																            \
 		QUEUE_INCREMENT_TOTAL();							            \
+      LOG_NORMAL_OPERATION();                                  \
 																	            \
       assert(__INTRUSIVE_QUEUE(new_node) != queue_number);     \
 		__INTRUSIVE_QUEUE(new_node) = queue_number;			      \
@@ -113,6 +117,7 @@
    inline void push_tail_node(node_type new_node)	            \
    {																            \
 		QUEUE_INCREMENT_TOTAL();							            \
+      LOG_NORMAL_OPERATION();                                  \
 																	            \
       if(!head)												            \
          head = new_node;									            \
@@ -136,6 +141,7 @@
 #define QUEUE_DEFINE_INTRUSIVE_MOVE_UP()		{		\
 	if(!in_queue(node))										\
 		return;													\
+   LOG_NORMAL_OPERATION();                         \
 																	\
    node_type prev(__INTRUSIVE_PREV(node));			\
       															\
@@ -168,6 +174,7 @@
 #define QUEUE_DEFINE_INTRUSIVE_REMOVE(ITEM)		{	      \
 	node_type prev((node_type)__INTRUSIVE_PREV(ITEM));		\
 	node_type next((node_type)__INTRUSIVE_NEXT(ITEM));		\
+   LOG_NORMAL_OPERATION();                               \
 																	      \
 	if(head == ITEM)											      \
 		head = next;											      \

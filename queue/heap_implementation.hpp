@@ -64,12 +64,6 @@ typedef enum {
 		}																		\
 	}
 
-#ifdef LOCK_STATISTICS
-#define LOG_HEAP_OPERATION() utils::_stat->heap_operations++
-#else
-#define LOG_HEAP_OPERATION()
-#endif
-	
 #define HEAP_DEFINE_HEAPIFYUP											\
 	bool heapifyup(int index)											\
 	{																			\

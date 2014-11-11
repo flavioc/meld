@@ -57,6 +57,7 @@ public:
       for(size_t i(0); i < half; ++i) {
          buffer[i] = head;
          __INTRUSIVE_QUEUE(head) = new_state;
+         LOG_NORMAL_OPERATION();
          head = (node_type)__INTRUSIVE_NEXT(head);
       }
       // head will not be NULL here.
