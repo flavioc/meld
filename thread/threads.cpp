@@ -279,7 +279,7 @@ threads_sched::steal_nodes(thread_intrusive_node **buffer, const size_t max)
    } else {
       if(!prios.moving.empty())
          stolen = prios.moving.pop_half(buffer, max, STATE_STEALING);
-      else
+      else if(!queues.moving.empty())
          stolen = queues.moving.pop_tail_half(buffer, max, STATE_STEALING);
    }
 #else
