@@ -5,32 +5,37 @@
 
 #ifdef LOCK_STATISTICS
 namespace utils {
-std::atomic<uint64_t> main_db_lock_ok(0), main_db_lock_fail(0);
-std::atomic<uint64_t> node_lock_ok(0), node_lock_fail(0);
-std::atomic<uint64_t> thread_lock_ok(0), thread_lock_fail(0);
-std::atomic<uint64_t> database_lock_ok(0), database_lock_fail(0);
-std::atomic<uint64_t> normal_lock_ok(0), normal_lock_fail(0);
-std::atomic<uint64_t> coord_normal_lock_ok(0), coord_normal_lock_fail(0);
-std::atomic<uint64_t> priority_lock_ok(0), priority_lock_fail(0);
-std::atomic<uint64_t> coord_priority_lock_ok(0), coord_priority_lock_fail(0);
-std::atomic<uint64_t> schedule_next_lock_ok(0), schedule_next_lock_fail(0);
-std::atomic<uint64_t> add_priority_lock_ok(0), add_priority_lock_fail(0);
-std::atomic<uint64_t> set_priority_lock_ok(0), set_priority_lock_fail(0);
-std::atomic<uint64_t> set_moving_lock_ok(0), set_moving_lock_fail(0);
-std::atomic<uint64_t> set_static_lock_ok(0), set_static_lock_fail(0);
-std::atomic<uint64_t> set_affinity_lock_ok(0), set_affinity_lock_fail(0);
-std::atomic<uint64_t> heap_operations(0);
+
+__thread lock_stat *_stat;
+std::vector<lock_stat*> all_stats;
 }
 #endif
 
 using std::cerr;
 using std::endl;
 
-void
-utils::mutex::print_statistics(void)
-{
 #ifdef LOCK_STATISTICS
-#define SHOW(NAME) cerr << #NAME ": " << NAME ## _fail << "\t/\t" << (NAME ## _ok + NAME ## _fail) << endl
+   utils::lock_stat *
+utils::mutex::merge_stats(void)
+{
+   lock_stat *ret(new lock_stat());
+   uint64_t *x((uint64_t*)ret);
+
+   for(size_t i(0); i < all_stats.size(); ++i) {
+      lock_stat *o(all_stats[i]);
+      uint64_t *y((uint64_t*)o);
+
+      for(size_t j(0); j < sizeof(lock_stat)/sizeof(uint64_t); ++j) {
+         *(x +j) = *(x + j) + *(y + j);
+      }
+   }
+   return ret;
+}
+
+void
+utils::mutex::print_statistics(lock_stat* _stat)
+{
+#define SHOW(NAME) cerr << #NAME ": " << _stat->NAME ## _fail << "\t/\t" << (_stat->NAME ## _ok + _stat->NAME ## _fail) << endl
    SHOW(main_db_lock);
    SHOW(node_lock);
    SHOW(thread_lock);
@@ -45,6 +50,6 @@ utils::mutex::print_statistics(void)
    SHOW(set_moving_lock);
    SHOW(set_static_lock);
    SHOW(set_affinity_lock);
-   cerr << "heap_operations: " << heap_operations << endl;
-#endif
+   cerr << "heap_operations: " << _stat->heap_operations << endl;
 }
+#endif

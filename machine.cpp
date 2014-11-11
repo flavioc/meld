@@ -192,6 +192,10 @@ machine::init_sched(const process_id id)
 #ifdef INSTRUMENTATION
    All->THREAD_POOLS[id] = mem::mem_pool;
 #endif
+#ifdef LOCK_STATISTICS
+   utils::all_stats[id] = new utils::lock_stat();
+   utils::_stat = utils::all_stats[id];
+#endif
 
    all->SCHEDS[id] = dynamic_cast<sched::base*>(new sched::threads_sched(id));
    all->SCHEDS[id]->loop();
@@ -213,6 +217,9 @@ machine::start(void)
 #endif
 
    sched::threads_sched::init_barriers(all->NUM_THREADS);
+#ifdef LOCK_STATISTICS
+   utils::all_stats.resize(all->NUM_THREADS, NULL);
+#endif
    
    thread *threads[all->NUM_THREADS];
    for(process_id i(1); i < all->NUM_THREADS; ++i) {
@@ -236,7 +243,8 @@ machine::start(void)
    cout << "Bytes used: " << bytes_used << endl;
 #endif
 #ifdef LOCK_STATISTICS
-   utils::mutex::print_statistics();
+   utils::lock_stat *mstat(utils::mutex::merge_stats());
+   utils::mutex::print_statistics(mstat);
 #endif
 #ifdef FACT_STATISTICS
    uint64_t facts_derived(0);

@@ -26,8 +26,8 @@
 #endif
 
 #ifdef LOCK_STATISTICS
-#define MUTEX_LOCK(LCK, ARG, STAT) do { if((LCK).try_lock1(LOCK_STACK_USE(ARG))) { utils::STAT ## _ok++; } else { utils::STAT ## _fail++; (LCK).lock1(LOCK_STACK_USE(ARG)); }} while(false)
-#define LOCKING_STAT(NAME) utils::NAME++
+#define MUTEX_LOCK(LCK, ARG, STAT) do { if((LCK).try_lock1(LOCK_STACK_USE(ARG))) { utils::_stat->STAT ## _ok++; } else { utils::_stat->STAT ## _fail++; (LCK).lock1(LOCK_STACK_USE(ARG)); }} while(false)
+#define LOCKING_STAT(NAME) utils::_stat->NAME++
 #else
 #define MUTEX_LOCK(LCK, ARG, STAT) ((LCK).lock1(LOCK_STACK_USE(ARG)))
 #define LOCKING_STAT(NAME)
@@ -38,21 +38,46 @@ namespace utils
 {
 
 #ifdef LOCK_STATISTICS
-extern std::atomic<uint64_t> main_db_lock_ok, main_db_lock_fail;
-extern std::atomic<uint64_t> node_lock_ok, node_lock_fail;
-extern std::atomic<uint64_t> thread_lock_ok, thread_lock_fail;
-extern std::atomic<uint64_t> database_lock_ok, database_lock_fail;
-extern std::atomic<uint64_t> normal_lock_ok, normal_lock_fail;
-extern std::atomic<uint64_t> coord_normal_lock_ok, coord_normal_lock_fail;
-extern std::atomic<uint64_t> priority_lock_ok, priority_lock_fail;
-extern std::atomic<uint64_t> coord_priority_lock_ok, coord_priority_lock_fail;
-extern std::atomic<uint64_t> schedule_next_lock_ok, schedule_next_lock_fail;
-extern std::atomic<uint64_t> add_priority_lock_ok, add_priority_lock_fail;
-extern std::atomic<uint64_t> set_priority_lock_ok, set_priority_lock_fail;
-extern std::atomic<uint64_t> set_moving_lock_ok, set_moving_lock_fail;
-extern std::atomic<uint64_t> set_static_lock_ok, set_static_lock_fail;
-extern std::atomic<uint64_t> set_affinity_lock_ok, set_affinity_lock_fail;
-extern std::atomic<uint64_t> heap_operations;
+struct lock_stat {
+   public:
+   uint64_t main_db_lock_ok, main_db_lock_fail;
+   uint64_t node_lock_ok, node_lock_fail;
+   uint64_t thread_lock_ok, thread_lock_fail;
+   uint64_t database_lock_ok, database_lock_fail;
+   uint64_t normal_lock_ok, normal_lock_fail;
+   uint64_t coord_normal_lock_ok, coord_normal_lock_fail;
+   uint64_t priority_lock_ok, priority_lock_fail;
+   uint64_t coord_priority_lock_ok, coord_priority_lock_fail;
+   uint64_t schedule_next_lock_ok, schedule_next_lock_fail;
+   uint64_t add_priority_lock_ok, add_priority_lock_fail;
+   uint64_t set_priority_lock_ok, set_priority_lock_fail;
+   uint64_t set_moving_lock_ok, set_moving_lock_fail;
+   uint64_t set_static_lock_ok, set_static_lock_fail;
+   uint64_t set_affinity_lock_ok, set_affinity_lock_fail;
+   uint64_t heap_operations;
+
+   explicit lock_stat(void): 
+   main_db_lock_ok(0), main_db_lock_fail(0),
+   node_lock_ok(0), node_lock_fail(0),
+   thread_lock_ok(0), thread_lock_fail(0),
+   database_lock_ok(0), database_lock_fail(0),
+   normal_lock_ok(0), normal_lock_fail(0),
+   coord_normal_lock_ok(0), coord_normal_lock_fail(0),
+   priority_lock_ok(0), priority_lock_fail(0),
+   coord_priority_lock_ok(0), coord_priority_lock_fail(0),
+   schedule_next_lock_ok(0), schedule_next_lock_fail(0),
+   add_priority_lock_ok(0), add_priority_lock_fail(0),
+   set_priority_lock_ok(0), set_priority_lock_fail(0),
+   set_moving_lock_ok(0), set_moving_lock_fail(0),
+   set_static_lock_ok(0), set_static_lock_fail(0),
+   set_affinity_lock_ok(0), set_affinity_lock_fail(0),
+   heap_operations(0)
+   {
+   }
+};
+
+extern __thread lock_stat *_stat;
+extern std::vector<lock_stat*> all_stats;
 #endif
 
 class mutex
@@ -74,7 +99,10 @@ class mutex
 
    public:
 
-      static void print_statistics(void);
+#ifdef LOCK_STATISTICS
+      static lock_stat* merge_stats(void);
+      static void print_statistics(lock_stat*);
+#endif
 
       inline void lock1(LOCK_ARGUMENT) {
 #ifdef USE_STD_MUTEX
@@ -132,9 +160,9 @@ class lock_guard1
 };
 
 #ifdef LOCK_STATISTICS
-#define MUTEX_LOCK_GUARD_NAME(NAME, LCK, STAT) utils::lock_guard1 NAME(LCK); do { if((LCK).try_lock1(LOCK_STACK_USE((NAME).data))) { utils::STAT ## _ok++; } else { utils::STAT ## _fail++; (LCK).lock1(LOCK_STACK_USE((NAME).data)); }} while(false)
+#define MUTEX_LOCK_GUARD_NAME(NAME, LCK, STAT) utils::lock_guard1 NAME(LCK); do { if((LCK).try_lock1(LOCK_STACK_USE((NAME).data))) { utils::_stat->STAT ## _ok++; } else { utils::_stat->STAT ## _fail++; (LCK).lock1(LOCK_STACK_USE((NAME).data)); }} while(false)
 #define MUTEX_LOCK_GUARD(LCK, STAT) MUTEX_LOCK_GUARD_NAME(l1, LCK, STAT)
-#define MUTEX_LOCK_GUARD_FLAG(LCK, STAT1, STAT2) utils::lock_guard1 l1(LCK); do { if((LCK.try_lock1(LOCK_STACK_USE(l1.data)))) { if(lock_stat_use1) utils::STAT1 ## _ok++; else utils::STAT2 ## _ok++;} else { if(lock_stat_use1) utils::STAT1 ## _fail++; else utils::STAT2 ## _fail++; (LCK).lock1(LOCK_STACK_USE(l1.data)); }} while(false)
+#define MUTEX_LOCK_GUARD_FLAG(LCK, STAT1, STAT2) utils::lock_guard1 l1(LCK); do { if((LCK.try_lock1(LOCK_STACK_USE(l1.data)))) { if(lock_stat_use1) utils::_stat->STAT1 ## _ok++; else utils::_stat->STAT2 ## _ok++;} else { if(lock_stat_use1) utils::_stat->STAT1 ## _fail++; else utils::_stat->STAT2 ## _fail++; (LCK).lock1(LOCK_STACK_USE(l1.data)); }} while(false)
 #define LOCKING_STAT_FLAG , bool lock_stat_use1 = true
 #define LOCKING_STAT_FLAG_FALSE , false
 #else

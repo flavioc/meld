@@ -65,7 +65,7 @@ typedef enum {
 	}
 
 #ifdef LOCK_STATISTICS
-#define LOG_HEAP_OPERATION() utils::heap_operations++
+#define LOG_HEAP_OPERATION() utils::_stat->heap_operations++
 #else
 #define LOG_HEAP_OPERATION()
 #endif
