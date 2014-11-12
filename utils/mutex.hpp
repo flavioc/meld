@@ -36,9 +36,11 @@
 #ifdef LOCK_STATISTICS
 #define LOG_HEAP_OPERATION() utils::_stat->heap_operations++
 #define LOG_NORMAL_OPERATION() utils::_stat->normal_operations++
+#define LOG_NEW_FACT() utils::_stat->facts_derived++
 #else
 #define LOG_HEAP_OPERATION()
 #define LOG_NORMAL_OPERATION()
+#define LOG_NEW_FACT()
 #endif
 
 namespace utils
@@ -62,6 +64,7 @@ struct lock_stat {
    uint64_t set_static_lock_ok, set_static_lock_fail;
    uint64_t set_affinity_lock_ok, set_affinity_lock_fail;
    uint64_t heap_operations, normal_operations;
+   uint64_t facts_derived;
 
    explicit lock_stat(void): 
    main_db_lock_ok(0), main_db_lock_fail(0),
@@ -78,7 +81,8 @@ struct lock_stat {
    set_moving_lock_ok(0), set_moving_lock_fail(0),
    set_static_lock_ok(0), set_static_lock_fail(0),
    set_affinity_lock_ok(0), set_affinity_lock_fail(0),
-   heap_operations(0), normal_operations(0)
+   heap_operations(0), normal_operations(0),
+   facts_derived(0)
    {
    }
 };

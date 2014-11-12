@@ -17,6 +17,7 @@
 #include "runtime/objs.hpp"
 #include "mem/allocator.hpp"
 #include "utils/types.hpp"
+#include "utils/mutex.hpp"
 #include "utils/intrusive_list.hpp"
 
 namespace vm
@@ -112,6 +113,7 @@ public:
 
    inline static tuple* create(const predicate* pred) {
       const size_t size(sizeof(vm::tuple) + sizeof(tuple_field) * pred->num_fields());
+      LOG_NEW_FACT();
       vm::tuple *ptr((vm::tuple*)mem::center::allocate(size, 1));
       ptr->init(pred);
       return ptr;

@@ -52,5 +52,6 @@ utils::mutex::print_statistics(lock_stat* _stat)
    SHOW(set_affinity_lock);
    cerr << "heap_operations: " << _stat->heap_operations << endl;
    cerr << "normal_operations: " << _stat->normal_operations << endl;
+   cerr << "facts_derived: " << _stat->facts_derived << endl;
 }
 #endif
