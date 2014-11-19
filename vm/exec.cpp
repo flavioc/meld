@@ -12,7 +12,6 @@
 #include "vm/full_tuple.hpp"
 #include "machine.hpp"
 #include "utils/mutex.hpp"
-#include "thread/node.hpp"
 #include "thread/threads.hpp"
 #include "vm/priority.hpp"
 #ifdef USE_UI
@@ -1703,9 +1702,8 @@ execute_is_static(pcounter& pc, state& state)
 #else
    db::node *node(All->DATABASE->find_node(nodeval));
 #endif
-   sched::thread_intrusive_node *tn((sched::thread_intrusive_node *)node);
 
-   state.set_int(dest_reg, tn->is_static() ? 1 : 0);
+   state.set_int(dest_reg, node->is_static() ? 1 : 0);
 }
 
 static inline void
@@ -1719,9 +1717,7 @@ execute_is_moving(pcounter& pc, state& state)
 #else
    db::node *node(All->DATABASE->find_node(nodeval));
 #endif
-   sched::thread_intrusive_node *tn((sched::thread_intrusive_node *)node);
-
-   state.set_int(dest_reg, tn->is_static() ? 0 : 1);
+   state.set_int(dest_reg, node->is_static() ? 0 : 1);
 }
 
 static inline void
@@ -1745,8 +1741,7 @@ execute_node_priority(pcounter& pc, state& state)
    db::node *node(All->DATABASE->find_node(nodeval));
 #endif
 
-   sched::thread_intrusive_node *tn((sched::thread_intrusive_node *)node);
-   state.set_float(dest_reg, tn->get_priority_level());
+   state.set_float(dest_reg, node->get_priority_level());
 }
 
 static inline void
@@ -1984,7 +1979,7 @@ execute_struct_valrfr(pcounter& pc, state& state)
    const field_num field(val_field_num(pc + instr_size + count_size + reg_val_size));
    struct1 *s(state.get_struct(src));
    tuple->set_field(field, s->get_data(idx));
-   do_increment_runtime(tuple->get_field(field));
+   do_increment_runtime(tuple->get_field(field), FIELD_STRUCT);
 }
 
 static inline void
@@ -2008,7 +2003,7 @@ execute_struct_valffr(pcounter& pc, state& state)
 
    dst->set_field(field_dst, src->get_field(field_src));
 
-   do_increment_runtime(dst->get_field(field_dst));
+   do_increment_runtime(dst->get_field(field_dst), FIELD_STRUCT);
 }
 
 static inline void
@@ -2127,8 +2122,8 @@ execute_mvregconst(pcounter& pc, state& state)
 {
    const const_id id(pcounter_const_id(pc + instr_size + reg_val_size));
    All->set_const(id, state.get_reg(pcounter_reg(pc + instr_size)));
-   if(reference_type(theProgram->get_const_type(id)->get_type()))
-      do_increment_runtime(All->get_const(id));
+   const field_type ftype(theProgram->get_const_type(id)->get_type());
+   increment_runtime_data(All->get_const(id), ftype);
 }
 
 static inline void
@@ -2146,10 +2141,11 @@ execute_mvconstfieldr(pcounter& pc, state& state)
 {
    const const_id id(pcounter_const_id(pc + instr_size));
    const field_num field(val_field_num(pc + instr_size + const_id_size));
+   predicate *pred(state.preds[val_field_reg(pc + instr_size + const_id_size)]);
    tuple *tuple(get_tuple_field(state, pc + instr_size + const_id_size));
 
    tuple->set_field(field, All->get_const(id));
-   do_increment_runtime(tuple->get_field(field));
+   do_increment_runtime(tuple->get_field(field), pred->get_field_type(field)->get_type());
 }
 
 static inline void
@@ -2535,7 +2531,7 @@ execute_headffr(pcounter& pc, state& state)
    runtime::cons *l(tsrc->get_cons(src));
 
    tdst->set_field(dst, l->get_head());
-   do_increment_runtime(tdst->get_field(dst));
+   do_increment_runtime(tdst->get_field(dst), FIELD_LIST);
 }
 
 static inline void
@@ -2561,7 +2557,7 @@ execute_headrfr(pcounter& pc, state& state)
 
    tdst->set_field(dst, l->get_head());
 
-   do_increment_runtime(tdst->get_field(dst));
+   do_increment_runtime(tdst->get_field(dst), FIELD_LIST);
 }
 
 static inline void

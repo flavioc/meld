@@ -12,8 +12,8 @@ using namespace utils;
 namespace db
 {
    
-database::database(const string& filename, create_node_fn _create_fn):
-   create_fn(_create_fn), nodes_total(0)
+database::database(const string& filename):
+   nodes_total(0)
 {
    int_val num_nodes;
    node::node_id fake_id;
@@ -60,13 +60,13 @@ database::wipeout(
       )
 {
    deleting = true;
-   for(map_nodes::iterator it(nodes.begin()); it != nodes.end(); ++it) {
+   for(auto it(nodes.begin()); it != nodes.end(); ++it) {
+      db::node *n(it->second);
 #ifdef GC_NODES
-      it->second->wipeout(gc_nodes);
+      n->wipeout(gc_nodes);
 #else
-      it->second->wipeout();
+      n->wipeout();
 #endif
-      delete it->second;
    }
 }
 
@@ -96,7 +96,7 @@ database::create_node_id(const db::node::node_id id)
    max_node_id = id;
    max_translated_id = id;
 
-   node *ret(create_fn(max_node_id, max_translated_id));
+   node *ret(node::create(max_node_id, max_translated_id));
 
    nodes[max_node_id] = ret;
    nodes_total++;
@@ -107,7 +107,7 @@ database::create_node_id(const db::node::node_id id)
 node*
 database::create_node_iterator(database::map_nodes::iterator it)
 {
-   it->second = create_fn(it->first, (node::node_id)it->second);
+   it->second = node::create(it->first, (node::node_id)it->second);
    return it->second;
 }
 

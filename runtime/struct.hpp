@@ -28,19 +28,35 @@ struct struct1
 
       inline size_t get_size(void) const { return typ->get_size(); }
       
-      inline void dec_refs(void)
+      inline void dec_refs(
+#ifdef GC_NODES
+            vm::candidate_gc_nodes& gc_nodes
+#endif
+            )
       {
          assert(refs > 0);
          refs--;
          if(zero_refs())
+#ifdef GC_NODES
+            destroy(gc_nodes);
+#else
             destroy();
+#endif
       }
 
-      inline void destroy(void)
+      inline void destroy(
+#ifdef GC_NODES
+            vm::candidate_gc_nodes& gc_nodes
+#endif
+            )
       {
          assert(zero_refs());
          for(size_t i(0); i < get_size(); ++i) {
-            decrement_runtime_data(get_data(i), typ->get_type(i));
+            decrement_runtime_data(get_data(i), typ->get_type(i)->get_type()
+#ifdef GC_NODES
+                  , gc_nodes
+#endif
+                  );
          }
          remove(this);
       }
@@ -48,7 +64,7 @@ struct struct1
       inline void set_data(const size_t i, const vm::tuple_field& data)
       {
          *get_ptr(i) = data;
-         increment_runtime_data(get_data(i), typ->get_type(i));
+         increment_runtime_data(get_data(i), typ->get_type(i)->get_type());
       }
 
       inline vm::tuple_field get_data(const size_t i) const

@@ -5,7 +5,6 @@
 #include "thread/threads.hpp"
 #include "db/database.hpp"
 #include "vm/state.hpp"
-#include "sched/common.hpp"
 #include "interface.hpp"
 #include "machine.hpp"
 
@@ -52,7 +51,6 @@ threads_sched::assert_end(void) const
 {
    assert(is_inactive());
    assert(all_threads_finished());
-   assert_static_nodes_end(id);
 }
 
 void
@@ -61,52 +59,51 @@ threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
    assert(is_active());
    (void)from;
 
-   thread_intrusive_node *tnode(static_cast<thread_intrusive_node*>(to));
    LOCK_STACK(nodelock);
 
-   NODE_LOCK(tnode, nodelock, node_lock);
+   NODE_LOCK(to, nodelock, node_lock);
    
-   threads_sched *owner(static_cast<threads_sched*>(tnode->get_owner()));
+   threads_sched *owner(static_cast<threads_sched*>(to->get_owner()));
 
    if(owner == this) {
 #ifdef FACT_STATISTICS
       count_add_work_self++;
 #endif
       {
-         MUTEX_LOCK_GUARD(tnode->database_lock, database_lock);
-         tnode->add_work_myself(arr);
+         MUTEX_LOCK_GUARD(to->database_lock, database_lock);
+         to->add_work_myself(arr);
       }
 #ifdef INSTRUMENTATION
       sent_facts_same_thread++;
 #endif
-      if(!tnode->active_node())
-         add_to_queue(tnode);
+      if(!to->active_node())
+         add_to_queue(to);
    } else {
 #ifdef FACT_STATISTICS
       count_add_work_other++;
 #endif
       LOCK_STACK(databaselock);
-      if(tnode->database_lock.try_lock1(LOCK_STACK_USE(databaselock))) {
+      if(to->database_lock.try_lock1(LOCK_STACK_USE(databaselock))) {
          LOCKING_STAT(database_lock_ok);
-         tnode->add_work_myself(arr);
+         to->add_work_myself(arr);
 #ifdef INSTRUMENTATION
          sent_facts_other_thread_now++;
 #endif
-         MUTEX_UNLOCK(tnode->database_lock, databaselock);
+         MUTEX_UNLOCK(to->database_lock, databaselock);
       } else {
          LOCKING_STAT(database_lock_fail);
-         tnode->add_work_others(arr);
+         to->add_work_others(arr);
 #ifdef INSTRUMENTATION
          sent_facts_other_thread++;
 #endif
       }
-      if(!tnode->active_node()) {
-         owner->add_to_queue(tnode);
+      if(!to->active_node()) {
+         owner->add_to_queue(to);
          comm_threads.set_bit(owner->get_id());
       }
    }
 
-   NODE_UNLOCK(tnode, nodelock);
+   NODE_UNLOCK(to, nodelock);
 }
 
 void
@@ -115,52 +112,50 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
    assert(is_active());
    (void)from;
    
-   thread_intrusive_node *tnode(static_cast<thread_intrusive_node*>(to));
-
    LOCK_STACK(nodelock);
-   NODE_LOCK(tnode, nodelock, node_lock);
+   NODE_LOCK(to, nodelock, node_lock);
    
-   threads_sched *owner(static_cast<threads_sched*>(tnode->get_owner()));
+   threads_sched *owner(static_cast<threads_sched*>(to->get_owner()));
    if(owner == this) {
 #ifdef FACT_STATISTICS
       count_add_work_self++;
 #endif
       {
-         MUTEX_LOCK_GUARD(tnode->database_lock, database_lock);
-         tnode->add_work_myself(tpl, pred, count, depth);
+         MUTEX_LOCK_GUARD(to->database_lock, database_lock);
+         to->add_work_myself(tpl, pred, count, depth);
       }
 #ifdef INSTRUMENTATION
       sent_facts_same_thread++;
 #endif
-      if(!tnode->active_node())
-         add_to_queue(tnode);
+      if(!to->active_node())
+         add_to_queue(to);
    } else {
 #ifdef FACT_STATISTICS
       count_add_work_other++;
 #endif
       LOCK_STACK(databaselock);
 
-      if(tnode->database_lock.try_lock1(LOCK_STACK_USE(databaselock))) {
+      if(to->database_lock.try_lock1(LOCK_STACK_USE(databaselock))) {
          LOCKING_STAT(database_lock_ok);
-         tnode->add_work_myself(tpl, pred, count, depth);
+         to->add_work_myself(tpl, pred, count, depth);
 #ifdef INSTRUMENTATION
          sent_facts_other_thread_now++;
 #endif
-         MUTEX_UNLOCK(tnode->database_lock, databaselock);
+         MUTEX_UNLOCK(to->database_lock, databaselock);
       } else {
          LOCKING_STAT(database_lock_fail);
-         tnode->add_work_others(tpl, pred, count, depth);
+         to->add_work_others(tpl, pred, count, depth);
 #ifdef INSTRUMENTATION
       sent_facts_other_thread++;
 #endif
       }
-      if(!tnode->active_node()) {
-         owner->add_to_queue(tnode);
+      if(!to->active_node()) {
+         owner->add_to_queue(to);
          comm_threads.set_bit(owner->get_id());
       }
    }
 
-   NODE_UNLOCK(tnode, nodelock);
+   NODE_UNLOCK(to, nodelock);
 }
 
 #ifdef TASK_STEALING
@@ -177,7 +172,7 @@ threads_sched::go_steal_nodes(void)
 #elif defined(STEAL_HALF)
 #define NODE_BUFFER_SIZE 10
 #endif
-   thread_intrusive_node *node_buffer[NODE_BUFFER_SIZE];
+   db::node *node_buffer[NODE_BUFFER_SIZE];
    int state_buffer[All->NUM_THREADS];
 
    memcpy(state_buffer, steal_states, sizeof(int) * All->NUM_THREADS);
@@ -206,7 +201,7 @@ threads_sched::go_steal_nodes(void)
 #endif
 
       for(size_t i(0); i < stolen; ++i) {
-         thread_intrusive_node *node(node_buffer[i]);
+         db::node *node(node_buffer[i]);
 
          LOCK_STACK(nodelock);
          NODE_LOCK(node, nodelock, node_lock);
@@ -240,7 +235,7 @@ threads_sched::go_steal_nodes(void)
 }
 
 size_t
-threads_sched::steal_nodes(thread_intrusive_node **buffer, const size_t max)
+threads_sched::steal_nodes(db::node **buffer, const size_t max)
 {
    steal_flag = !steal_flag;
    size_t stolen = 0;
@@ -249,7 +244,7 @@ threads_sched::steal_nodes(thread_intrusive_node **buffer, const size_t max)
    if(max == 0)
       return 0;
 
-   thread_intrusive_node *node(NULL);
+   db::node *node(NULL);
    if(steal_flag) {
       if(!queues.moving.empty()) {
          if(queues.moving.pop_tail(node, STATE_STEALING)) {
@@ -288,12 +283,6 @@ threads_sched::steal_nodes(thread_intrusive_node **buffer, const size_t max)
    return stolen;
 }
 #endif
-
-void
-threads_sched::generate_aggs(void)
-{
-   iterate_static_nodes(id);
-}
 
 void
 threads_sched::killed_while_active(void)
@@ -465,7 +454,7 @@ threads_sched::end(void)
    
    for(; it != end; ++it)
    {
-      thread_intrusive_node *cur_node((thread_intrusive_node*)it->second);
+      db::node *cur_node(it->second);
 		
 		if(cur_node->has_been_prioritized)
 			++total_prioritized;
@@ -497,14 +486,14 @@ threads_sched::init(const size_t)
    if(initial == 0.0 || !scheduling_mechanism) {
       for(; it != end; ++it)
       {
-         thread_intrusive_node *cur_node(static_cast<thread_intrusive_node*>(init_node(it)));
+         db::node *cur_node(init_node(it));
       	queues.moving.push_tail(cur_node);
       }
    } else {
       prios.moving.start_initial_insert(All->MACHINE->find_owned_nodes(id));
 
       for(size_t i(0); it != end; ++it, ++i) {
-         thread_intrusive_node *cur_node(static_cast<thread_intrusive_node*>(init_node(it)));
+         db::node *cur_node(init_node(it));
 
          cur_node->set_priority_level(initial);
          prios.moving.initial_fast_insert(cur_node, initial, i);

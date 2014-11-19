@@ -41,12 +41,20 @@ public:
       refs++;
    }
    
-   inline void dec_refs(void)
+   inline void dec_refs(
+#ifdef GC_NODES
+         vm::candidate_gc_nodes& gc_nodes
+#endif
+         )
 	 {
       assert(refs > 0);
       refs--;
       if(zero_refs())
+#ifdef GC_NODES
+         destroy(gc_nodes);
+#else
          destroy();
+#endif
    }
 
    static inline bool has_refs(list_ptr ls)
@@ -58,12 +66,24 @@ public:
    
    inline bool zero_refs(void) const { return refs == 0; }
    
-   inline void destroy(void)
+   inline void destroy(
+#ifdef GC_NODES
+         vm::candidate_gc_nodes& gc_nodes
+#endif
+         )
    {
       assert(zero_refs());
       if(!is_null(get_tail()))
-         get_tail()->dec_refs();
-      decrement_runtime_data(get_head(), type->get_subtype());
+         get_tail()->dec_refs(
+#ifdef GC_NODES
+               gc_nodes
+#endif
+               );
+      decrement_runtime_data(get_head(), type->get_subtype()->get_type()
+#ifdef GC_NODES
+            , gc_nodes
+#endif
+            );
       remove(this);
    }
    
@@ -88,10 +108,18 @@ public:
    
    static inline bool is_null(cons const * ls) { return ls == null_list(); }
    
-   static inline void dec_refs(list_ptr ls)
+   static inline void dec_refs(list_ptr ls
+#ifdef GC_NODES
+         , vm::candidate_gc_nodes& gc_nodes
+#endif
+         )
 	 {
       if(!is_null(ls))
-         ls->dec_refs();
+         ls->dec_refs(
+#ifdef GC_NODES
+               gc_nodes
+#endif
+               );
    }
    
    static inline void inc_refs(list_ptr ls)
@@ -251,7 +279,7 @@ public:
       c->head = _head;
       c->type = _type;
       c->set_tail(_tail);
-      increment_runtime_data(c->head, c->type->get_subtype());
+      increment_runtime_data(c->head, c->type->get_subtype()->get_type());
       return c;
    }
 

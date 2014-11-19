@@ -26,6 +26,7 @@ inline bool reference_type(const field_type typ)
       case FIELD_LIST:
       case FIELD_STRUCT:
       case FIELD_STRING:
+      case FIELD_NODE:
          return true;
       default:
          return false;
@@ -40,11 +41,9 @@ class type
    private:
 
       field_type ftype;
-      bool ref;
 
    public:
 
-      inline bool is_ref(void) const { return ref; }
       inline field_type get_type(void) const { return ftype; }
 
       inline size_t size(void) const
@@ -64,7 +63,6 @@ class type
 
       explicit type(const field_type _ftype): ftype(_ftype)
       {
-         ref = reference_type(ftype);
       }
 
       virtual ~type(void) { }

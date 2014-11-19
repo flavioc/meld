@@ -47,12 +47,19 @@ state::purge_runtime_objects(void)
    for(list<TYPE*>::iterator it(free_ ## TYPE.begin()); it != free_ ## TYPE .end(); ++it) {  \
       TYPE *x(*it);                                                                          \
       assert(x != NULL);                                                                     \
+      x->dec_refs(gc_nodes);                                                                 \
+   }                                                                                         \
+   free_ ## TYPE .clear()
+#define PURGE_OBJ_SIMPLE(TYPE)                                                               \
+   for(list<TYPE*>::iterator it(free_ ## TYPE.begin()); it != free_ ## TYPE .end(); ++it) {  \
+      TYPE *x(*it);                                                                          \
+      assert(x != NULL);                                                                     \
       x->dec_refs();                                                                         \
    }                                                                                         \
    free_ ## TYPE .clear()
 
    PURGE_OBJ(cons);
-	PURGE_OBJ(rstring);
+	PURGE_OBJ_SIMPLE(rstring);
    PURGE_OBJ(struct1);
 	
 #undef PURGE_OBJ

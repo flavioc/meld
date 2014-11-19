@@ -33,12 +33,10 @@ namespace process { class process; class machine; }
 
 namespace db {
 
-class node: public mem::base
+struct node
 {
 public:
-#ifdef GC_NODES
 	std::atomic<vm::ref_count> refs;
-#endif
 
    typedef vm::node_val node_id;
    
@@ -79,6 +77,13 @@ private:
    friend class process::machine;
    
    sched::base *owner;
+
+   // marker that indicates if the node should not be stolen.
+   // when not NULL it indicates which scheduler it needs to be on.
+   sched::base *static_node = NULL;
+	
+   vm::priority_t default_priority_level = 0.0;
+   vm::priority_t priority_level = 0.0;
    
 public:
 
@@ -125,8 +130,7 @@ public:
          );
    void delete_all(const vm::predicate*);
    
-   virtual void assert_end(void) const;
-   virtual void assert_end_iteration(void) const {}
+   void assert_end(void) const;
    
    db::tuple_trie::tuple_search_iterator match_predicate(const vm::predicate_id) const;
   	db::tuple_trie::tuple_search_iterator match_predicate(const vm::predicate_id, const vm::match*) const;
@@ -141,7 +145,25 @@ public:
       return false;
 #endif
    }
-   
+
+	inline vm::priority_t get_priority_level(void) {
+      if(priority_level == 0)
+         return default_priority_level;
+      return priority_level;
+   }
+
+	inline void set_priority_level(const vm::priority_t level) { priority_level = level; }
+   inline void set_default_priority_level(const vm::priority_t level) { default_priority_level = level; }
+	inline bool has_priority_level(void) const {
+      return default_priority_level != 0.0 || priority_level != 0.0;
+   }
+
+   inline sched::base* get_static(void) const { return static_node; }
+   inline void set_static(sched::base *b) { static_node = b; }
+   inline void set_moving(void) { static_node = NULL; }
+   inline bool is_static(void) const { return static_node != NULL; }
+   inline bool is_moving(void) const { return static_node == NULL; }
+
    void print(std::ostream&) const;
    void dump(std::ostream&) const;
 #ifdef USE_UI
@@ -270,8 +292,10 @@ public:
    void wipeout(void);
 #endif
 
-   // destructor does nothing, use wipeout if needed.
-   virtual ~node(void) {
+   static node *create(const node_id id, const node_id translate) {
+      node *p(mem::allocator<node>().allocate(1));
+      mem::allocator<node>().construct(p, id, translate);
+      return p;
    }
 };
 

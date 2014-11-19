@@ -56,7 +56,6 @@ ids::delete_node(node *n)
    candidate_gc_nodes gc_nodes;
    n->wipeout(gc_nodes);
    assert(gc_nodes.empty());
-   delete n;
 #endif
 }
 
@@ -68,7 +67,7 @@ ids::create_node(void)
       allocate_more_ids();
    }
 
-   node *n(All->DATABASE->create_node(next_available_id, next_translated_id));
+   node *n(node::create(next_available_id, next_translated_id));
 
    added_nodes[next_available_id] = n;
    next_available_id++;

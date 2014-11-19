@@ -302,12 +302,6 @@ machine::start(void)
 #endif
 }
 
-static inline database::create_node_fn
-get_creation_function(void)
-{
-   return database::create_node_fn(sched::threads_sched::create_node);
-}
-
 machine::machine(const string& file, const size_t th,
 		const machine_arguments& margs, const string& data_file):
    all(new vm::all()),
@@ -345,7 +339,7 @@ machine::machine(const string& file, const size_t th,
       throw machine_error(string("this program requires ") + utils::to_string(all->PROGRAM->num_args_needed()) + " arguments");
 
    this->all->set_arguments(margs);
-   this->all->DATABASE = new database(added_data_file ? data_file : filename, get_creation_function());
+   this->all->DATABASE = new database(added_data_file ? data_file : filename);
    this->all->NUM_THREADS = th;
    this->all->NUM_THREADS_NEXT_UINT = next_multiple_of_uint(th);
    this->all->MACHINE = this;

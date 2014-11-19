@@ -292,6 +292,7 @@ node::wipeout(void)
 #endif
       delete agg;
    }
+   mem::allocator<node>().deallocate(this, 1);
 }
 
 void

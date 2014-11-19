@@ -124,9 +124,9 @@ SRCS = utils/utils.cpp \
 			mem/thread.cpp \
 			mem/center.cpp \
 			mem/stat.cpp \
+			runtime/objs.cpp \
 			sched/base.cpp \
 			sched/ids.cpp \
-			sched/common.cpp \
 			thread/threads.cpp \
 			thread/coord.cpp \
 			external/math.cpp \

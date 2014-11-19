@@ -307,9 +307,9 @@ tuple::destructor(predicate *pred
 {
    for(field_num i = 0; i < pred->num_fields(); ++i) {
       switch(pred->get_field_type(i)->get_type()) {
-         case FIELD_LIST: cons::dec_refs(get_cons(i)); break;
+         case FIELD_LIST: cons::dec_refs(get_cons(i), gc_nodes); break;
          case FIELD_STRING: get_string(i)->dec_refs(); break;
-         case FIELD_STRUCT: get_struct(i)->dec_refs(); break;
+         case FIELD_STRUCT: get_struct(i)->dec_refs(gc_nodes); break;
          case FIELD_NODE:
 #ifdef GC_NODES
             {
@@ -354,38 +354,16 @@ tuple::set_field_ref(const field_num& field, const tuple_field& newval, const pr
 #endif
       )
 {
-   const tuple_field old(get_field(field));
+   const tuple_field oldval(get_field(field));
    set_field(field, newval);
    const type *typ(pred->get_field_type(field));
    const field_type ftype(typ->get_type());
-   switch(ftype) {
-      case FIELD_NODE:
+   do_increment_runtime(newval, ftype);
+   runtime::do_decrement_runtime(oldval, ftype
 #ifdef GC_NODES
-         {
-            db::node *old_node((db::node*)FIELD_NODE(old));
-            db::node *new_node((db::node*)FIELD_NODE(newval));
-            if(new_node && !All->DATABASE->is_initial_node(new_node)) {
-               //cout << "Increment " << new_node->get_id() << endl;
-               new_node->refs++;
-            }
-            if(old_node && !All->DATABASE->is_initial_node(old_node)) {
-                  //cout << "Decrement " << old_node->get_id() << endl;
-                  old_node->refs--;
-                  if(old_node->garbage_collect())
-                     gc_nodes.insert(get_node(field));
-            }
-         }
+         , gc_nodes
 #endif
-         break;
-      case FIELD_LIST:
-      case FIELD_STRING:
-      case FIELD_STRUCT:
-         do_increment_runtime(newval);
-         do_decrement_runtime(old, typ);
-         break;
-      default: assert(false); break;
-   }
-
+         );
 }
 
 size_t

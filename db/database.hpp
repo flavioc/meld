@@ -28,12 +28,9 @@ public:
    typedef std::map<node::node_id, node*,
            std::less<node::node_id>,
            mem::allocator< std::pair<const node::node_id, node*> > > map_nodes;
-   typedef std::function<node* (node::node_id, node::node_id)> create_node_fn;
 
 private:
 
-   create_node_fn create_fn;
-   
    map_nodes nodes;
    node::node_id original_max_node_id;
    node::node_id max_node_id;
@@ -61,6 +58,7 @@ public:
    size_t num_nodes(void) const { return nodes.size(); }
    node::node_id max_id(void) const { return max_node_id; }
    node::node_id static_max_id(void) const { return original_max_node_id; }
+   inline bool is_deleting(void) const { return deleting; }
    inline bool is_initial_node(const db::node *n) const
    {
       if(deleting)
@@ -75,9 +73,6 @@ public:
    }
 
    node* find_node(const node::node_id) const;
-   inline node* create_node(const node::node_id id, const node::node_id trans) {
-      return create_fn(id, trans);
-   }
    std::pair<node::node_id, node::node_id> allocate_ids(const size_t);
    node* create_node_id(const node::node_id);
    node* create_node_iterator(map_nodes::iterator);
@@ -91,7 +86,7 @@ public:
    
    void print(std::ostream&) const;
    
-   explicit database(const std::string&, create_node_fn);
+   explicit database(const std::string&);
    
 #ifdef GC_NODES
    void wipeout(vm::candidate_gc_nodes&);

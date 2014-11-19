@@ -6,7 +6,6 @@
 
 #include "sched/base.hpp"
 #include "queue/safe_linear_queue.hpp"
-#include "thread/node.hpp"
 #include "thread/termination_barrier.hpp"
 #include "queue/safe_complex_pqueue.hpp"
 #include "queue/safe_double_queue.hpp"
@@ -128,7 +127,7 @@ private:
    
 protected:
    
-   typedef queue::intrusive_safe_double_queue<thread_intrusive_node> node_queue;
+   typedef queue::intrusive_safe_double_queue<db::node> node_queue;
    struct Queues {
       node_queue moving;
       node_queue stati;
@@ -145,7 +144,7 @@ protected:
       }
    } queues;
 
-	typedef queue::intrusive_safe_complex_pqueue<thread_intrusive_node> priority_queue;
+	typedef queue::intrusive_safe_complex_pqueue<db::node> priority_queue;
 
    struct Priorities {
       priority_queue moving;
@@ -162,7 +161,7 @@ protected:
       }
    } prios;
 
-	inline void add_to_priority_queue(thread_intrusive_node *node)
+	inline void add_to_priority_queue(db::node *node)
 	{
       if(node->is_static())
          prios.stati.insert(node, node->get_priority_level());
@@ -170,7 +169,7 @@ protected:
          prios.moving.insert(node, node->get_priority_level());
 	}
 
-   thread_intrusive_node *current_node;
+   db::node *current_node;
    vm::bitmap comm_threads; // threads we may need to communicate with
 
    inline bool pop_node_from_queues(void)
@@ -185,7 +184,7 @@ protected:
    size_t next_thread;
    size_t backoff;
    bool steal_flag;
-   size_t steal_nodes(thread_intrusive_node **, const size_t);
+   size_t steal_nodes(db::node **, const size_t);
 
 #ifdef INSTRUMENTATION
    size_t stolen_total = 0;
@@ -222,7 +221,7 @@ protected:
    // number of static nodes owned by this thread.
    std::atomic<uint64_t> static_nodes;
 
-   inline void make_node_static(thread_intrusive_node *tn, threads_sched *target)
+   inline void make_node_static(db::node *tn, threads_sched *target)
    {
       threads_sched *old(static_cast<threads_sched*>(tn->get_static()));
 
@@ -233,7 +232,7 @@ protected:
       tn->set_static(target);
    }
 
-   inline void make_node_moving(thread_intrusive_node *tn)
+   inline void make_node_moving(db::node *tn)
    {
       threads_sched *old(static_cast<threads_sched*>(tn->get_static()));
 
@@ -248,10 +247,9 @@ protected:
    virtual bool check_if_current_useless();
    void make_active(void);
    void make_inactive(void);
-   virtual void generate_aggs(void);
    virtual bool busy_wait(void);
    
-   void add_to_queue(thread_intrusive_node *node)
+   void add_to_queue(db::node *node)
    {
 		if(node->has_priority_level())
 			add_to_priority_queue(node);
@@ -268,8 +266,8 @@ protected:
       return queues.has_work() || prios.has_work();
    }
 
-   void move_node_to_new_owner(thread_intrusive_node *, threads_sched *);
-   void do_set_node_priority_other(thread_intrusive_node *, const double);
+   void move_node_to_new_owner(db::node *, threads_sched *);
+   void do_set_node_priority_other(db::node *, const double);
 
    virtual void killed_while_active(void);
 
@@ -305,11 +303,6 @@ public:
    void print_average_priority_size(void) const;
 #endif
 
-   static db::node *create_node(const db::node::node_id id, const db::node::node_id trans)
-   {
-      return new thread_intrusive_node(id, trans);
-   }
-   
    virtual void write_slice(statistics::slice&);
 
    static void init_barriers(const size_t);

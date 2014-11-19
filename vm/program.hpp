@@ -28,7 +28,7 @@ namespace process {
 
 namespace db {
    class database;
-   class node;
+   struct node;
 }
 
 namespace vm {
