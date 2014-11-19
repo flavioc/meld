@@ -59,6 +59,7 @@ database::wipeout(
 #endif
       )
 {
+   deleting = true;
    for(map_nodes::iterator it(nodes.begin()); it != nodes.end(); ++it) {
 #ifdef GC_NODES
       it->second->wipeout(gc_nodes);

@@ -40,6 +40,9 @@ private:
    node::node_id max_translated_id;
 
    utils::mutex mtx;
+   // marks the database object as being deleted
+   // needed because tuples may need to reference other nodes that were already deleted.
+   bool deleting = false;
    
 public:
 
@@ -60,6 +63,8 @@ public:
    node::node_id static_max_id(void) const { return original_max_node_id; }
    inline bool is_initial_node(const db::node *n) const
    {
+      if(deleting)
+         return true;
       return n->get_id() <= original_max_node_id;
    }
    
@@ -94,7 +99,16 @@ public:
    void wipeout(void);
 #endif
 
-   ~database(void) {}
+   ~database(void) {
+#ifdef FREE_OBJS
+#ifdef GC_NODES
+      vm::candidate_gc_nodes nodes;
+      wipeout(nodes);
+#else
+      wipeout();
+#endif
+#endif
+   }
 };
 
 std::ostream& operator<<(std::ostream&, const database&);

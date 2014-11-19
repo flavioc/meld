@@ -142,6 +142,11 @@ tuple_aggregate::wipeout(
 #endif
             );
    }
+   vals.wipeout(pred
+#ifdef GC_NODES
+         , gc_nodes
+#endif
+         );
 }
 
 void

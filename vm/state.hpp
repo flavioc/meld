@@ -20,8 +20,6 @@
 #include "db/linear_store.hpp"
 #include "vm/counter.hpp"
 
-#define USE_TEMPORARY_STORE
-
 // forward declaration
 namespace sched {
 	class base;
@@ -96,6 +94,8 @@ public:
    temporary_store *store;
    db::linear_store *lstore;
    vm::counter *match_counter;
+   std::unordered_set<utils::byte*, std::hash<utils::byte*>,
+      std::equal_to<utils::byte*>, mem::allocator<utils::byte*>> allocated_match_objects;
 #ifdef GC_NODES
    candidate_gc_nodes gc_nodes;
 #endif

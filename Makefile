@@ -20,11 +20,14 @@ else
 	DEBUG = -g
 	OPTIMIZATIONS = -O0
 endif
+ifeq ($(FREE_OBJS), true)
+	FLAGS += -DFREE_OBJS
+endif
 ifeq ($(ALLOCATOR), pool)
 	FLAGS += -DPOOL_ALLOCATOR
 endif
 ifeq ($(EXTRA_ASSERTS), true)
-	FLAGS += -DTRIE_MATCHING_ASSERT
+	FLAGS += -DTRIE_MATCHING_ASSERT -DMEMORY_ASSERT
 endif
 ifeq ($(INDEXING), true)
 	FLAGS += -DDYNAMIC_INDEXING

@@ -34,3 +34,6 @@ COORDINATION_BUFFERING = false
 
 # activate extra assertions.
 EXTRA_ASSERTS = false
+
+# Free all memory used.
+FREE_OBJS = true

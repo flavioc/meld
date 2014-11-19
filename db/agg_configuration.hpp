@@ -80,6 +80,14 @@ public:
 #else
       vals.wipeout(pred);
 #endif
+      if(corresponds) {
+         vm::tuple::destroy(corresponds, pred
+#ifdef GC_NODES
+               , gc_nodes
+#endif
+               );
+         corresponds = NULL;
+      }
    }
 };
 }

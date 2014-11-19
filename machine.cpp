@@ -358,13 +358,13 @@ machine::machine(const string& file, const size_t th,
 
 machine::~machine(void)
 {
+   for(process_id i(0); i != all->NUM_THREADS; ++i)
+      delete all->SCHEDS[i];
+
    // when deleting database, we need to access the program,
    // so we must delete this in correct order
    delete this->all->DATABASE;
    
-   for(process_id i(0); i != all->NUM_THREADS; ++i)
-      delete all->SCHEDS[i];
-
    delete this->all->PROGRAM;
       
 #ifdef INSTRUMENTATION

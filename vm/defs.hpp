@@ -73,6 +73,8 @@ typedef union {
 
 static const size_t NUM_REGS = 32;
 
+#define MATCH_OBJECT_SIZE 256
+
 }
 
 #endif

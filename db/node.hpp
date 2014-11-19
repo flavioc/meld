@@ -271,7 +271,8 @@ public:
 #endif
 
    // destructor does nothing, use wipeout if needed.
-   virtual ~node(void) {}
+   virtual ~node(void) {
+   }
 };
 
 std::ostream& operator<<(std::ostream&, const node&);

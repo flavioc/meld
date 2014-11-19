@@ -372,17 +372,17 @@ public:
    
    virtual inline bool to_delete(void) const { return count == 0; }
    
-   explicit tuple_trie_leaf(vm::full_tuple *_tpl):
+   explicit tuple_trie_leaf(vm::tuple *_tpl, vm::predicate *pred, const vm::ref_count count, const vm::depth_t depth):
       trie_leaf(),
-      tpl(_tpl->get_tuple()),
+      tpl(_tpl),
       count(0),
       used(0)
    {
-      if(_tpl->get_predicate()->is_cycle_pred())
+      if(pred->is_cycle_pred())
          depths = new depth_counter();
       else
          depths = NULL;
-      add_new(_tpl->get_depth(), _tpl->get_count());
+      add_new(depth, count);
    }
 
 #ifdef GC_NODES
@@ -583,7 +583,7 @@ public:
          , vm::candidate_gc_nodes&
 #endif
          );
-   void wipeout(vm::predicate *
+   virtual void wipeout(vm::predicate *
 #ifdef GC_NODES
          , vm::candidate_gc_nodes&
 #endif
@@ -606,7 +606,7 @@ private:
 
    virtual trie_leaf* create_leaf(void *data, vm::predicate *pred, const vm::ref_count many, const vm::depth_t depth)
    {
-      return new tuple_trie_leaf(new vm::full_tuple((vm::tuple*)data, pred, many, depth));
+      return new tuple_trie_leaf((vm::tuple*)data, pred, many, depth);
    }
    
    trie_node* check_insert(vm::tuple *, vm::predicate *, const vm::derivation_count, const vm::depth_t, bool&);

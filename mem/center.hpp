@@ -18,21 +18,22 @@ class center
 
       static void* allocate(size_t cnt, size_t sz)
       {
-         register_allocation(cnt, sz);
 #ifdef TRACK_MEMORY
          bytes_used += cnt * sz;
 #endif
          
 #ifdef POOL_ALLOCATOR
-         return mem_pool->allocate(cnt * sz);
+         void *p(mem_pool->allocate(cnt * sz));
 #else
-         return ::operator new(cnt * sz);
+         void *p(::operator new(cnt * sz));
 #endif
+         register_allocation(p, cnt, sz);
+         return p;
       }
 
       static void deallocate(void *p, size_t cnt, size_t sz)
       {
-         register_deallocation(cnt, sz);
+         register_deallocation(p, cnt, sz);
 #ifdef TRACK_MEMORY
          bytes_used -= cnt * sz;
 #endif

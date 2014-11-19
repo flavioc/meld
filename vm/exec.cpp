@@ -23,10 +23,10 @@
 #endif
 
 #if 0
-#define DEBUG_INSTRS
 #define DEBUG_RULES
 #define DEBUG_SENDS
 #define DEBUG_REMOVE
+#define DEBUG_INSTRS
 #define DEBUG_ITERS
 #endif
 
@@ -690,7 +690,6 @@ retrieve_match_object(state& state, pcounter pc, const predicate *pred, const si
 {
    match *mobj(NULL);
    const size_t matches = iter_matches_size(pc, base);
-#define MATCH_OBJECT_SIZE 256
 
    if(matches > 0) {
       utils::byte *m((utils::byte*)iter_match_object(pc));
@@ -713,7 +712,8 @@ retrieve_match_object(state& state, pcounter pc, const predicate *pred, const si
             // somebody already set this.
             mem::allocator<utils::byte>().deallocate(m, MATCH_OBJECT_SIZE * All->NUM_THREADS);
             m = (utils::byte*)old;
-         }
+         } else
+            state.allocated_match_objects.insert(m);
       }
       m += state.sched->get_id() * MATCH_OBJECT_SIZE;
       mobj = (match*)m;
@@ -3898,7 +3898,6 @@ void
 execute_rule(const rule_id rule_id, state& state)
 {
 #ifdef DEBUG_RULES
-   cout << "================> NODE " << state.node->get_id() << " ===============\n";
 	cout << "Running rule " << theProgram->get_rule(rule_id)->get_string() << endl;
 #endif
 #ifdef CORE_STATISTICS

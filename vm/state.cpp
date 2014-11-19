@@ -236,15 +236,22 @@ state::do_persistent_tuples(void)
       vm::tuple *tpl(stpl->get_tuple());
 
       if(pred->is_persistent_pred()) {
-         // XXX crashes when calling wipeout below
          if(stpl->get_count() == 1 && (pred->is_aggregate_pred() && !stpl->is_aggregate())) {
             full_tuple *stpl2(search_for_negative_tuple_partial_agg(stpl));
             if(stpl2) {
                assert(stpl != stpl2);
-               //assert(stpl2->get_tuple() != stpl->get_tuple());
-               //assert(stpl2->get_predicate() == stpl->get_predicate());
-               //full_tuple::wipeout(stpl);
-               //full_tuple::wipeout(stpl2);
+               assert(stpl2->get_tuple() != stpl->get_tuple());
+               assert(stpl2->get_predicate() == stpl->get_predicate());
+               full_tuple::wipeout(stpl
+#ifdef GC_NODES
+                     , gc_nodes
+#endif
+                     );
+               full_tuple::wipeout(stpl2
+#ifdef GC_NODES
+                     , gc_nodes
+#endif
+                     );
                continue;
             }
          }
@@ -253,13 +260,18 @@ state::do_persistent_tuples(void)
             full_tuple *stpl2(search_for_negative_tuple_full_agg(stpl));
             if(stpl2) {
                assert(stpl != stpl2);
-               /*if(stpl2->get_tuple() == stpl->get_tuple()) {
-                  cout << "fail " << *(stpl2->get_tuple()) << endl;
-               }
                assert(stpl2->get_tuple() != stpl->get_tuple());
-               assert(stpl2->get_predicate() == stpl->get_predicate());*/
-               //full_tuple::wipeout(stpl);
-               //full_tuple::wipeout(stpl2);
+               assert(stpl2->get_predicate() == stpl->get_predicate());
+               full_tuple::wipeout(stpl
+#ifdef GC_NODES
+                     , gc_nodes
+#endif
+                     );
+               full_tuple::wipeout(stpl2
+#ifdef GC_NODES
+                     , gc_nodes
+#endif
+                     );
                continue;
             }
          }
@@ -267,8 +279,16 @@ state::do_persistent_tuples(void)
          if(stpl->get_count() == 1 && !pred->is_aggregate_pred()) {
             full_tuple *stpl2(search_for_negative_tuple_normal(stpl));
             if(stpl2) {
-               //full_tuple::wipeout(stpl);
-               //full_tuple::wipeout(stpl2);
+               full_tuple::wipeout(stpl
+#ifdef GC_NODES
+                     , gc_nodes
+#endif
+                     );
+               full_tuple::wipeout(stpl2
+#ifdef GC_NODES
+                     , gc_nodes
+#endif
+                     );
                continue;
             }
          }
@@ -414,7 +434,6 @@ state::process_persistent_tuple(full_tuple *stpl, vm::tuple *tpl)
 		if(pred->is_reused_pred()) {
 			setup(pred, node, stpl->get_count(), stpl->get_depth());
 			execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
-         delete stpl;
 		} else {
       	node::delete_info deleter(node->delete_tuple(tpl, pred, -stpl->get_count(), stpl->get_depth()));
 
@@ -445,16 +464,14 @@ state::process_persistent_tuple(full_tuple *stpl, vm::tuple *tpl)
 #endif
                }
             }
-         } else {
-            vm::tuple::destroy(tpl, pred
-#ifdef GC_NODES
-                  , gc_nodes
-#endif
-                  );
          }
          store->matcher.set_count(pred, deleter.trie_size());
-         delete stpl;
-		}
+      }
+      vm::full_tuple::wipeout(stpl
+#ifdef GC_NODES
+            , gc_nodes
+#endif
+         );
    }
 }
 
@@ -753,7 +770,7 @@ state::run_node(db::node *no)
 
 	node = no;
 #ifdef DEBUG_RULES
-   cout << "Node " << node->get_id() << " (is " << node->get_translated_id() << ")" << endl;
+   cout << "================> NODE " << node->get_id() << " ===============\n";
 #endif
 
    store = &(node->store);
@@ -1009,6 +1026,8 @@ state::~state(void)
       //match_counter->print(theProgram->get_total_arguments());
       delete_counter(match_counter, theProgram->get_total_arguments());
    }
+   for(auto it(allocated_match_objects.begin()), end(allocated_match_objects.end()); it != end; ++it)
+      mem::allocator<utils::byte>().deallocate(*it, MATCH_OBJECT_SIZE * All->NUM_THREADS);
 }
 
 }

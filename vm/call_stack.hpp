@@ -77,7 +77,10 @@ class call_stack
       {
       }
 
-
+      ~call_stack(void)
+      {
+         mem::allocator<tuple_field>().deallocate(vec, capacity);
+      }
 };
 
 }

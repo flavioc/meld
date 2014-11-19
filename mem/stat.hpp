@@ -9,8 +9,8 @@ namespace mem
 
 #ifdef MEMORY_STATISTICS
 
-void register_allocation(const size_t, const size_t);
-void register_deallocation(const size_t, const size_t);
+void register_allocation(void *, const size_t, const size_t);
+void register_deallocation(void *, const size_t, const size_t);
 
 size_t get_memory_in_use(void);
 
@@ -21,8 +21,8 @@ size_t get_total_memory(void);
 
 #else
 
-#define register_allocation(CNT, SIZE) /* do nothing */
-#define register_deallocation(CNT, SIZE) /* do nothing */
+#define register_allocation(P, CNT, SIZE) /* do nothing */
+#define register_deallocation(P, CNT, SIZE) /* do nothing */
 #define register_malloc(size) /* do nothing */
 
 #endif

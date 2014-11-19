@@ -384,6 +384,9 @@ agg_configuration::generate(predicate *pred, const aggregate_type typ, const fie
 #endif
    )
 {
+#ifdef GC_NODES
+   (void)gc_nodes;
+#endif
    vm::depth_t depth(0);
    vm::tuple* generated(do_generate(pred, typ, field, depth));
    
@@ -398,13 +401,10 @@ agg_configuration::generate(predicate *pred, const aggregate_type typ, const fie
       }
    } else if (generated == NULL) {
       if(corresponds != NULL) {
-         cont.push_back(full_tuple::remove_new(corresponds->copy(pred), pred, last_depth));
+         // the user of corresponds will delete it.
+         cont.push_back(full_tuple::remove_new(corresponds, pred, last_depth));
          last_depth = 0;
-         vm::tuple::destroy(corresponds, pred
-#ifdef GC_NODES
-               , gc_nodes
-#endif
-               );
+         corresponds = NULL;
       }
    } else {
       if(!(corresponds->equal(*generated, pred))) {
