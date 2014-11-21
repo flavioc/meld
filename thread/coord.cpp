@@ -334,6 +334,10 @@ threads_sched::do_set_node_priority_other(db::node *node, const priority_t prior
          if(node->set_temporary_priority_if(priority))
             owner->prios.stati.move_node(node, priority LOCKING_STAT_FLAG_FALSE);
          break;
+      case STATE_PRIO_CHANGE:
+      case STATE_IDLE:
+         node->set_temporary_priority_if(priority);
+         break;
       case STATE_WORKING:
          // do nothing
          break;
@@ -378,6 +382,7 @@ threads_sched::do_set_node_priority(node *tn, const priority_t priority)
             prios.stati.insert(tn, tn->get_priority());
          break;
       case STATE_WORKING:
+      case STATE_PRIO_CHANGE:
       case STATE_IDLE:
          tn->set_temporary_priority_if(priority);
          break;

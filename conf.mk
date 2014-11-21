@@ -36,4 +36,4 @@ COORDINATION_BUFFERING = false
 EXTRA_ASSERTS = false
 
 # Free all memory used.
-FREE_OBJS = true
+FREE_OBJS = false
