@@ -112,6 +112,19 @@ external3(external_function_ptr ptr, type *ret, type *arg1, type *arg2, type *ar
    return f;
 }
 
+static inline external_function*
+external4(external_function_ptr ptr, type *ret, type *arg1, type *arg2, type *arg3, type *arg4, const string& name)
+{
+   external_function *f(new external_function(ptr, 4, ret, name));
+
+   f->set_arg_type(0, arg1);
+   f->set_arg_type(1, arg2);
+   f->set_arg_type(2, arg3);
+   f->set_arg_type(3, arg4);
+
+   return f;
+}
+
 static void
 cleanup_externals(void)
 {
@@ -139,6 +152,7 @@ init_external_functions(void)
 #define EXTERNAL1(NAME, RET, ARG1) external1(EXTERN(NAME), RET, ARG1, #NAME)
 #define EXTERNAL2(NAME, RET, ARG1, ARG2) external2(EXTERN(NAME), RET, ARG1, ARG2, #NAME)
 #define EXTERNAL3(NAME, RET, ARG1, ARG2, ARG3) external3(EXTERN(NAME), RET, ARG1, ARG2, ARG3, #NAME)
+#define EXTERNAL4(NAME, RET, ARG1, ARG2, ARG3, ARG4) external4(EXTERN(NAME), RET, ARG1, ARG2, ARG3, ARG4, #NAME)
 
    if(external_functions_initiated)
       return;
@@ -149,7 +163,7 @@ init_external_functions(void)
    static type *f(TYPE_FLOAT);
    static type *n(TYPE_NODE);
    static type *s(TYPE_STRING);
-   //static type *a(TYPE_ANY);
+   static type *b(TYPE_BOOL);
    static type *st(TYPE_STRUCT);
    static list_type *li(TYPE_LIST_INT);
    static list_type *lf(TYPE_LIST_FLOAT);
@@ -200,6 +214,9 @@ init_external_functions(void)
    register_external_function(EXTERNAL2(dividestruct, st, st, st));
    register_external_function(EXTERNAL2(convolvestruct, st, st, st));
    register_external_function(EXTERNAL1(cpu_static, i, n));
+   register_external_function(EXTERNAL1(is_moving, b, n));
+   register_external_function(EXTERNAL1(is_static, b, n));
+   register_external_function(EXTERNAL4(partition_vertical, i, i, i, i, i));
 
    atexit(cleanup_externals);
 

@@ -162,7 +162,7 @@ class struct_type: public type
       }
 };
 
-extern type *TYPE_INT, *TYPE_FLOAT, *TYPE_NODE, *TYPE_STRING, *TYPE_ANY, *TYPE_STRUCT;
+extern type *TYPE_INT, *TYPE_BOOL, *TYPE_FLOAT, *TYPE_NODE, *TYPE_STRING, *TYPE_ANY, *TYPE_STRUCT;
 extern list_type *TYPE_LIST_FLOAT, *TYPE_LIST_INT, *TYPE_LIST_NODE;
 
 void init_types(void);

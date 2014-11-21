@@ -16,6 +16,7 @@ type *TYPE_INT(NULL);
 type *TYPE_FLOAT(NULL);
 type *TYPE_NODE(NULL);
 type *TYPE_STRING(NULL);
+type *TYPE_BOOL(NULL);
 type *TYPE_ANY(NULL);
 type *TYPE_STRUCT(NULL);
 list_type *TYPE_LIST_INT(NULL);
@@ -34,6 +35,7 @@ init_types(void)
    TYPE_INT = new type(FIELD_INT);
    TYPE_FLOAT = new type(FIELD_FLOAT);
    TYPE_NODE = new type(FIELD_NODE);
+   TYPE_BOOL = new type(FIELD_BOOL);
    TYPE_STRING = new type(FIELD_STRING);
    TYPE_ANY = new type(FIELD_ANY);
    TYPE_STRUCT = new type(FIELD_STRUCT);

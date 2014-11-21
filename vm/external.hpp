@@ -30,6 +30,7 @@ typedef external_function_ptr0 external_function_ptr;
 #define DECLARE_STRING(NAME) const rstring::ptr NAME(FIELD_STRING(__ ## NAME))
 #define DECLARE_STRUCT(NAME) const runtime::struct1 *NAME(FIELD_STRUCT(__ ## NAME))
 #define RETURN_PTR(X) { argument _ret; SET_FIELD_PTR(_ret, X); return _ret; }
+#define RETURN_BOOL(X) { argument _ret; SET_FIELD_BOOL(_ret, X); return _ret; }
 #define RETURN_INT(X) { argument _ret; SET_FIELD_INT(_ret, X); return _ret; }
 #define RETURN_FLOAT(X) { argument _ret; SET_FIELD_FLOAT(_ret, X); return _ret; }
 #define RETURN_NODE(X) { argument _ret; SET_FIELD_NODE(_ret, X); return _ret; }
