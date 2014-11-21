@@ -105,14 +105,21 @@ class struct_type: public type
    private:
 
       std::vector<type*> types;
+      bool simple = true;
 
    public:
 
       inline size_t get_size(void) const { return types.size(); }
 
-      inline void set_type(const size_t i, type *t) { types[i] = t; }
+      inline void set_type(const size_t i, type *t) {
+         if(reference_type(t->get_type()))
+            simple = false;
+         types[i] = t;
+      }
 
       inline type* get_type(const size_t i) const { return types[i]; }
+
+      inline bool simple_composed_type(void) const { return simple; }
 
       virtual bool equal(type *other) const
       {

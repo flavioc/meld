@@ -21,15 +21,8 @@ do_increment_runtime(const vm::tuple_field& f, const vm::field_type t)
       db::node *node((db::node*)FIELD_NODE(f));
       if(!All->DATABASE->is_initial_node(node))
          p->refs++;
-   } else {
-      db::node *node((db::node*)p);
-      for(auto it(All->DATABASE->nodes_begin()); it != All->DATABASE->nodes_end(); ++it) {
-         if(it->second == node) {
-            cout << "GOT NODE!!!!!!!!\n";
-         }
-      }
+   } else
       p->refs++;
-   }
 }
 
 void

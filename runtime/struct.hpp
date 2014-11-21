@@ -51,12 +51,14 @@ struct struct1
             )
       {
          assert(zero_refs());
-         for(size_t i(0); i < get_size(); ++i) {
-            decrement_runtime_data(get_data(i), typ->get_type(i)->get_type()
+         if(!typ->simple_composed_type()) {
+            for(size_t i(0); i < get_size(); ++i) {
+               decrement_runtime_data(get_data(i), typ->get_type(i)->get_type()
 #ifdef GC_NODES
-                  , gc_nodes
+                     , gc_nodes
 #endif
-                  );
+                     );
+            }
          }
          remove(this);
       }
