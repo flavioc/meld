@@ -1,4 +1,7 @@
 
+#ifndef VM_PRIORITY_HPP
+#define VM_PRIORITY_HPP
+
 #include <limits>
 
 #include "vm/all.hpp"
@@ -16,13 +19,27 @@ higher_priority(const priority_t p1, const priority_t p2)
       return p1 < p2;
 }
 
-inline bool
-no_priority_value(void)
+static inline priority_t
+no_priority_value0(const bool desc)
 {
-   if(theProgram->is_priority_desc())
-      return std::numeric_limits<priority_t>::min();
+   if(desc)
+      return std::numeric_limits<priority_t>::lowest();
    else
       return std::numeric_limits<priority_t>::max();
 }
 
+static inline priority_t
+no_priority_value(void)
+{
+   return no_priority_value0(theProgram->is_priority_desc());
 }
+
+static inline priority_t
+max_priority_value(void)
+{
+   return no_priority_value0(!theProgram->is_priority_desc());
+}
+
+}
+
+#endif

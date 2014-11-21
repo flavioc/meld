@@ -123,7 +123,7 @@ main(int argc, char **argv)
    vm::machine_arguments margs(read_arguments(argc, argv));
 
    if(program == NULL) {
-		cerr << "Error: please provide a program to run" << endl;
+		cerr << "Error: please provide a byte-code file to run..." << endl;
       return EXIT_FAILURE;
    }
    

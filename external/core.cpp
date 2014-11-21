@@ -5,6 +5,7 @@
 
 using namespace sched;
 using namespace db;
+using namespace vm;
 using namespace std;
 
 namespace vm
@@ -16,7 +17,7 @@ argument
 node_priority(EXTERNAL_ARG(id))
 {
    DECLARE_NODE(id);
-   float_val ret(0.0);
+   priority_t ret(0.0);
    node *tn(NULL);
 
 #ifdef USE_REAL_NODES
@@ -27,9 +28,9 @@ node_priority(EXTERNAL_ARG(id))
 #endif
 
    if(tn) {
-      ret = tn->get_priority_level();
+      ret = tn->get_priority();
    } else
-      ret = 0.0;
+      ret = no_priority_value();
 
    RETURN_FLOAT(ret);
 }

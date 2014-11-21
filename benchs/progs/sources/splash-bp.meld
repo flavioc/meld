@@ -93,13 +93,13 @@ first-phase(A, All, [A, B | Next])
 
 // this only happens when the tree had only a single node.
 // we must run the update, since it was not run in the first pass.
-second-phase(A, [], _) -o set-priority(A, 0.0), waiting(A), update(A).
+second-phase(A, [], _) -o remove-priority(A), waiting(A), update(A).
 // in this rule, we are running the second phase on the last node (last node in the tree)
 // note that we need to send 'waiting' to the previous node and to this node
 // we also make sure the priority of this node is 0 so we don't start
 // building a tree from this node (see 2nd rule of tree building)
 second-phase(A, [A], Back)
-   -o update(A), waiting(Back), waiting(A), set-priority(A, 0.0).
+   -o update(A), waiting(Back), waiting(A), remove-priority(A).
 // running second phase but not yet done
 // we run the update function on 'A' and send the token to 'B'
 // note that we always need to derive back the 'waiting' on 'Back'

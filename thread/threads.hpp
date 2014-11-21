@@ -51,7 +51,7 @@ typedef enum {
 
 typedef struct {
    priority_add_type typ;
-   int val;
+   vm::priority_t val;
    db::node *target;
 } priority_add_item;
 
@@ -164,9 +164,9 @@ protected:
 	inline void add_to_priority_queue(db::node *node)
 	{
       if(node->is_static())
-         prios.stati.insert(node, node->get_priority_level());
+         prios.stati.insert(node, node->get_priority());
       else
-         prios.moving.insert(node, node->get_priority_level());
+         prios.moving.insert(node, node->get_priority());
 	}
 
    db::node *current_node;
@@ -251,7 +251,7 @@ protected:
    
    void add_to_queue(db::node *node)
    {
-		if(node->has_priority_level())
+		if(node->has_priority())
 			add_to_priority_queue(node);
       else {
          if(node->is_static())
@@ -267,13 +267,15 @@ protected:
    }
 
    void move_node_to_new_owner(db::node *, threads_sched *);
-   void do_set_node_priority_other(db::node *, const double);
+   void do_set_node_priority_other(db::node *, const vm::priority_t);
+   void do_remove_node_priority_other(db::node *);
 
    virtual void killed_while_active(void);
 
-   void do_set_node_priority(db::node *, const double);
-   void add_node_priority_other(db::node *, const double);
-   void set_node_priority_other(db::node *, const double);
+   void do_set_node_priority(db::node *, const vm::priority_t);
+   void do_remove_node_priority(db::node *);
+   void add_node_priority_other(db::node *, const vm::priority_t);
+   void set_node_priority_other(db::node *, const vm::priority_t);
    void set_node_owner(db::node *, threads_sched *);
    
 public:
@@ -293,9 +295,10 @@ public:
    virtual void set_node_static(db::node *);
    virtual void set_node_moving(db::node *);
    virtual void set_node_affinity(db::node *, db::node *);
-   virtual void set_default_node_priority(db::node *, const double);
-   virtual void set_node_priority(db::node *, const double);
-	virtual void add_node_priority(db::node *, const double);
+   virtual void set_default_node_priority(db::node *, const vm::priority_t);
+   virtual void set_node_priority(db::node *, const vm::priority_t);
+	virtual void add_node_priority(db::node *, const vm::priority_t);
+   virtual void remove_node_priority(db::node *);
    virtual void schedule_next(db::node *);
 
    inline uint64_t num_static_nodes(void) const { return static_nodes; }

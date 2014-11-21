@@ -22,6 +22,7 @@
 #include "vm/all.hpp"
 #include "db/linear_store.hpp"
 #include "vm/temporary.hpp"
+#include "vm/priority.hpp"
 #include "queue/intrusive.hpp"
 
 #ifdef USE_UI
@@ -76,14 +77,14 @@ private:
    friend class process::process;
    friend class process::machine;
    
-   sched::base *owner;
+   sched::base *owner = NULL;
 
    // marker that indicates if the node should not be stolen.
    // when not NULL it indicates which scheduler it needs to be on.
    sched::base *static_node = NULL;
 	
-   vm::priority_t default_priority_level = 0.0;
-   vm::priority_t priority_level = 0.0;
+   vm::priority_t default_priority_level;
+   vm::priority_t priority_level;
    
 public:
 
@@ -146,16 +147,24 @@ public:
 #endif
    }
 
-	inline vm::priority_t get_priority_level(void) {
-      if(priority_level == 0)
+	inline vm::priority_t get_priority(void) const {
+      if(priority_level == vm::no_priority_value())
          return default_priority_level;
       return priority_level;
    }
 
-	inline void set_priority_level(const vm::priority_t level) { priority_level = level; }
-   inline void set_default_priority_level(const vm::priority_t level) { default_priority_level = level; }
-	inline bool has_priority_level(void) const {
-      return default_priority_level != 0.0 || priority_level != 0.0;
+	inline void set_temporary_priority(const vm::priority_t level) { priority_level = level; }
+	inline bool set_temporary_priority_if(const vm::priority_t level) {
+      if(vm::higher_priority(level, get_priority())) {
+         priority_level = level;
+         return true;
+      }
+      return false;
+   }
+   inline void remove_temporary_priority(void) { priority_level = vm::no_priority_value(); }
+   inline void set_default_priority(const vm::priority_t level) { default_priority_level = level; }
+	inline bool has_priority(void) const {
+      return get_priority() != vm::no_priority_value();
    }
 
    inline sched::base* get_static(void) const { return static_node; }
@@ -174,13 +183,13 @@ public:
    // manages rule execution.
    db::linear_store linear;
    vm::temporary_store store;
-   bool unprocessed_facts;
+   bool unprocessed_facts = false;
    utils::mutex main_lock;
    utils::mutex database_lock;
 
 #ifdef DYNAMIC_INDEXING
-   uint16_t rounds;
-   vm::deterministic_timestamp indexing_epoch;
+   uint16_t rounds = 0;
+   vm::deterministic_timestamp indexing_epoch = 0;
 #endif
 
    // return queue of the node.

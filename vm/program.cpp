@@ -12,6 +12,7 @@
 #include "vm/state.hpp"
 #include "vm/reader.hpp"
 #include "vm/external.hpp"
+#include "vm/priority.hpp"
 #include "version.hpp"
 #ifdef USE_UI
 #include "ui/macros.hpp"
@@ -324,7 +325,7 @@ program::program(const string& _filename):
 	
 	read.read_type<byte>(&global_info);
 
-   initial_priority = 0.0;
+   initial_priority = no_priority_value0(true);
    priority_static = false;
 
    is_data_file = false;
@@ -332,7 +333,7 @@ program::program(const string& _filename):
    switch(global_info) {
       case 0x01: { // priority by predicate
          cerr << "Not supported anymore" << endl;
-         assert(false);
+         abort();
       }
       break;
       case 0x02: { // normal priority
@@ -350,6 +351,8 @@ program::program(const string& _filename):
          priority_static = (asc_desc & 0x02) ? true : false;
 
          read.read_type<float_val>(&initial_priority);
+         if(initial_priority == 0.0)
+            initial_priority = no_priority_value0(priority_order == PRIORITY_DESC);
       }
       break;
       case 0x03: { // data file

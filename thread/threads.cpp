@@ -6,6 +6,7 @@
 #include "db/database.hpp"
 #include "vm/state.hpp"
 #include "interface.hpp"
+#include "vm/priority.hpp"
 #include "machine.hpp"
 
 using namespace std;
@@ -364,7 +365,7 @@ threads_sched::check_if_current_useless(void)
             // the node has changed to another scheduler!
             current_node->set_owner(current_node->get_static());
          }
-         current_node->set_priority_level(0.0);
+         current_node->remove_temporary_priority();
          NODE_UNLOCK(current_node, curlock);
 #ifdef GC_NODES
          if(current_node->garbage_collect())
@@ -394,13 +395,13 @@ threads_sched::set_next_node(void)
       if(scheduling_mechanism) {
          current_node = prios.moving.pop_best(prios.stati, STATE_WORKING);
          if(current_node) {
-            //     cout << "Got node " << current_node->get_id() << " with prio " << current_node->get_priority_level() << endl;
+            //cout << "Got node " << current_node->get_id() << " with prio " << current_node->get_priority() << endl;
             break;
          }
       }
 
       if(pop_node_from_queues()) {
-  //     cout << "Got node " << current_node->get_id() << endl;
+         //cout << "Got node " << current_node->get_id() << endl;
          break;
       }
       if(!has_work()) {
@@ -481,9 +482,9 @@ threads_sched::init(const size_t)
 
    database::map_nodes::iterator it(All->DATABASE->get_node_iterator(All->MACHINE->find_first_node(id)));
    database::map_nodes::iterator end(All->DATABASE->get_node_iterator(All->MACHINE->find_last_node(id)));
-   const double initial(theProgram->get_initial_priority());
+   const priority_t initial(theProgram->get_initial_priority());
 
-   if(initial == 0.0 || !scheduling_mechanism) {
+   if(initial == no_priority_value() || !scheduling_mechanism) {
       for(; it != end; ++it)
       {
          db::node *cur_node(init_node(it));
@@ -495,7 +496,6 @@ threads_sched::init(const size_t)
       for(size_t i(0); it != end; ++it, ++i) {
          db::node *cur_node(init_node(it));
 
-         cur_node->set_priority_level(initial);
          prios.moving.initial_fast_insert(cur_node, initial, i);
       }
    }

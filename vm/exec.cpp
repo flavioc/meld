@@ -1568,6 +1568,26 @@ execute_add_priority_here(pcounter& pc, state& state)
 }
 
 static inline void
+execute_rem_priority(pcounter& pc, state& state)
+{
+   const reg_num node_reg(pcounter_reg(pc + instr_size));
+   const node_val node(state.get_node(node_reg));
+
+#ifdef USE_REAL_NODES
+   state.sched->remove_node_priority((db::node*)node);
+#else
+   state.sched->remove_node_priority(All->DATABASE->find_node(node));
+#endif
+}
+
+static inline void
+execute_rem_priority_here(pcounter& pc, state& state)
+{
+   (void)pc;
+   state.sched->remove_node_priority(state.node);
+}
+
+static inline void
 execute_set_defprio_here(pcounter& pc, state& state)
 {
    const reg_num prio_reg(pcounter_reg(pc + instr_size));
@@ -1741,7 +1761,7 @@ execute_node_priority(pcounter& pc, state& state)
    db::node *node(All->DATABASE->find_node(nodeval));
 #endif
 
-   state.set_float(dest_reg, node->get_priority_level());
+   state.set_float(dest_reg, node->get_priority());
 }
 
 static inline void
@@ -3840,6 +3860,18 @@ eval_loop:
          CASE(BOOLAND_INSTR)
             JUMP(booland, operation_size)
             execute_booland(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(REM_PRIORITY_INSTR)
+            JUMP(rem_priority, REM_PRIORITY_BASE)
+            execute_rem_priority(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(REM_PRIORITYH_INSTR)
+            JUMP(rem_priorityh, REM_PRIORITYH_BASE)
+            execute_rem_priority_here(pc, state);
             ADVANCE()
          ENDOP()
 

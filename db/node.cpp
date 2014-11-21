@@ -253,11 +253,9 @@ node::node(const node_id _id, const node_id _trans):
 #ifdef GC_NODES
    refs(0),
 #endif
-   id(_id), translation(_trans), owner(NULL), linear(),
-   store(), unprocessed_facts(false)
-#ifdef DYNAMIC_INDEXING
-   , rounds(0), indexing_epoch(0)
-#endif
+   id(_id), translation(_trans),
+   default_priority_level(no_priority_value()),
+   priority_level(theProgram->get_initial_priority())
 {
 }
 

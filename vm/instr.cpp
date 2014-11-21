@@ -963,6 +963,12 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          cout << "IS MOVING " << reg_string(pcounter_reg(pc + instr_size)) << " TO " <<
             reg_string(pcounter_reg(pc + instr_size + reg_val_size)) << endl;
          break;
+      case REM_PRIORITY_INSTR:
+         cout << "REMOVE PRIORITY FROM " << reg_string(pcounter_reg(pc + instr_size)) << endl;
+         break;
+      case REM_PRIORITYH_INSTR:
+         cout << "REMOVE PRIORITY FROM NODE" << endl;
+         break;
 		default:
          throw malformed_instr_error("unknown instruction code");
 	}
