@@ -271,6 +271,7 @@ private:
 
    void assert_end(void) const;
    bool set_next_node(void);
+   void make_current_node_inactive(void);
    bool check_if_current_useless();
    void make_active(void);
    void make_inactive(void);

@@ -388,25 +388,39 @@ threads_sched::busy_wait(void)
    return true;
 }
 
+void
+threads_sched::make_current_node_inactive(void)
+{
+   current_node->make_inactive();
+   current_node->remove_temporary_priority();
+#ifdef GC_NODES
+   if(current_node->garbage_collect())
+      delete_node(current_node);
+#endif
+}
+
 bool
 threads_sched::check_if_current_useless(void)
 {
-   if(!current_node->unprocessed_facts) {
-      LOCK_STACK(curlock);
+   LOCK_STACK(curlock);
+   if(current_node->has_new_owner()) {
+      NODE_LOCK(current_node, curlock, node_lock);
+      // the node has changed to another scheduler!
+      current_node->set_owner(current_node->get_static());
+      if(current_node->unprocessed_facts)
+         // move to new node
+         move_node_to_new_owner(current_node, current_node->get_owner());
+      else
+         make_current_node_inactive();
+      NODE_UNLOCK(current_node, curlock);
+      current_node = NULL;
+      return true;
+   } else if(!current_node->unprocessed_facts) {
       NODE_LOCK(current_node, curlock, node_lock);
       
       if(!current_node->unprocessed_facts) {
-         current_node->make_inactive();
-         if(current_node->is_static() && current_node->get_static() != this) {
-            // the node has changed to another scheduler!
-            current_node->set_owner(current_node->get_static());
-         }
-         current_node->remove_temporary_priority();
+         make_current_node_inactive();
          NODE_UNLOCK(current_node, curlock);
-#ifdef GC_NODES
-         if(current_node->garbage_collect())
-            delete_node(current_node);
-#endif
          current_node = NULL;
          return true;
       }

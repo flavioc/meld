@@ -166,6 +166,11 @@ public:
    inline void set_moving(void) { static_node = NULL; }
    inline bool is_static(void) const { return static_node != NULL; }
    inline bool is_moving(void) const { return static_node == NULL; }
+   inline bool has_new_owner(void) const {
+      if(static_node)
+         return owner != static_node;
+      return false;
+   }
 
    void print(std::ostream&) const;
    void dump(std::ostream&) const;

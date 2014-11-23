@@ -493,14 +493,7 @@ void
 threads_sched::move_node_to_new_owner(db::node *tn, threads_sched *new_owner)
 {
    new_owner->add_to_queue(tn);
-
-   MUTEX_LOCK_GUARD(new_owner->lock, thread_lock);
-   
-   if(new_owner->is_inactive())
-   {
-      new_owner->set_active();
-      assert(new_owner->is_active());
-   }
+   new_owner->activate_thread();
 }
 
 void

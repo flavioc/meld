@@ -110,12 +110,6 @@ public:
 #ifdef USE_UI
    static bool UI;
 #endif
-#ifdef USE_SIM
-   static bool SIM;
-   deterministic_timestamp sim_instr_counter;
-   deterministic_timestamp sim_instr_limit;
-   bool sim_instr_use;
-#endif
 
 #define define_get(WHAT, RET, BODY) \
    inline RET get_ ## WHAT (const reg_num& num) const { BODY; }
@@ -169,12 +163,9 @@ public:
 	
 	void mark_active_rules(void);
    void add_to_aggregate(full_tuple *);
-   bool do_persistent_tuples(void);
+   void do_persistent_tuples(void);
    void process_persistent_tuple(full_tuple *, vm::tuple *);
 	void process_consumed_local_tuples(void);
-#ifdef USE_SIM
-   bool check_instruction_limit(void) const;
-#endif
    void process_action_tuples(void);
    void process_incoming_tuples(void);
 	void run_node(db::node *);

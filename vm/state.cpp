@@ -4,9 +4,6 @@
 #include "vm/state.hpp"
 #include "machine.hpp"
 #include "vm/exec.hpp"
-#ifdef USE_SIM
-#include "sched/nodes/sim.hpp"
-#endif
 
 using namespace vm;
 using namespace db;
@@ -23,9 +20,6 @@ namespace vm
 
 #ifdef USE_UI
 bool state::UI = false;
-#endif
-#ifdef USE_SIM
-bool state::SIM = false;
 #endif
 
 #ifdef DYNAMIC_INDEXING
@@ -221,23 +215,10 @@ state::search_for_negative_tuple_full_agg(full_tuple *stpl)
    return NULL;
 }
 
-#ifdef USE_SIM
-bool
-state::check_instruction_limit(void) const
-{
-   return sim_instr_use && sim_instr_counter >= sim_instr_limit;
-}
-#endif
-
-bool
+void
 state::do_persistent_tuples(void)
 {
    while(!store->persistent_tuples.empty()) {
-#ifdef USE_SIM
-      if(check_instruction_limit()) {
-         return false;
-      }
-#endif
       full_tuple *stpl(store->persistent_tuples.pop_front());
       vm::predicate *pred(stpl->get_predicate());
       vm::tuple *tpl(stpl->get_tuple());
@@ -314,9 +295,6 @@ state::do_persistent_tuples(void)
          add_to_aggregate(stpl);
       }
    }
-   store->persistent_tuples.clear();
-   
-   return true;
 }
 
 void
@@ -768,8 +746,6 @@ state::indexing_state_machine(db::node *no)
 void
 state::run_node(db::node *no)
 {
-   bool aborted(false);
-
 #ifdef DYNAMIC_INDEXING
    if(sched && sched->get_id() == 0)
       indexing_state_machine(no);
@@ -808,27 +784,22 @@ state::run_node(db::node *no)
    node->rounds++;
 #endif
 	
-   if(do_persistent_tuples()) {
+   do_persistent_tuples();
+   {
 #ifdef CORE_STATISTICS
 		execution_time::scope s(stat.core_engine_time);
 #endif
       mark_active_rules();
-   } else
-      // if using the simulator, we check if we exhausted the available time to run
-      aborted = true;
+   }
 
-	while(!rule_queue.empty(theProgram->num_rules_next_uint()) && !aborted) {
-#ifdef USE_SIM
-      if(check_instruction_limit())
-         break;
-#endif
+	while(!rule_queue.empty(theProgram->num_rules_next_uint())) {
 		rule_id rule(rule_queue.remove_front(theProgram->num_rules_next_uint()));
 		
 #ifdef DEBUG_RULES
       cout << "Run rule " << theProgram->get_rule(rule)->get_string() << endl;
 #endif
 
-		/* delete rule and every check */
+		// delete rule and every check
 		{
 #ifdef CORE_STATISTICS
 			execution_time::scope s(stat.core_engine_time);
@@ -839,17 +810,7 @@ state::run_node(db::node *no)
 		setup(NULL, node, 1, 0);
 		execute_rule(rule, *this);
 
-      //node->assert_tries();
-#ifdef USE_SIM
-      if(sim_instr_use && !check_instruction_limit()) {
-         // gather new tuples
-         full_tuple_list new_tuples;
-         sched::sim_node *snode(dynamic_cast<sched::sim_node*>(node));
-         snode->get_tuples_until_timestamp(new_tuples, sim_instr_limit);
-         local_tuples.splice(local_tuples.end(), new_tuples);
-      }
-#endif
-      /* move from generated tuples to linear store */
+      // move from generated tuples to linear store
       if(generated_facts) {
          for(size_t i(0); i < theProgram->num_predicates(); ++i) {
             utils::intrusive_list<vm::tuple> *gen(store->generated + i);
@@ -859,69 +820,20 @@ state::run_node(db::node *no)
             }
          }
       }
-      if(!do_persistent_tuples()) {
-         aborted = true;
-         break;
-      }
+      do_persistent_tuples();
+
 		{
 #ifdef CORE_STATISTICS
 			execution_time::scope s(stat.core_engine_time);
 #endif
 			mark_active_rules();
 		}
+
+      if(node->has_new_owner())
+         break;
 	}
 
-#if 0
-   // push remaining tuples into node
-   for(size_t i(0); i < theProgram->num_predicates(); ++i) {
-      full_tuple_list *ls(store->get_list(i));
-      for(auto it(ls->begin()), end(ls->end()); it != end; ++it)
-      {
-         full_tuple *stpl(*it);
-         vm::tuple *tpl(stpl->get_tuple());
-		
-         if(stpl->can_be_consumed()) {
-            if(aborted) {
-#ifdef USE_SIM
-               sched::sim_node *snode(dynamic_cast<sched::sim_node*>(node));
-               snode->pending.push(stpl);
-#else
-               assert(false);
-#endif
-            } else {
-               add_fact_to_node(tpl, stpl->get_count(), stpl->get_depth());
-               delete stpl;
-            }
-         } else {
-            full_tuple::wipeout(stpl);
-         }
-      }
-      ls->clear();
-	}
-#endif
-
-   if(aborted)
-      rule_queue.clear(theProgram->num_rules_next_uint());
-   assert(rule_queue.empty(theProgram->num_rules_next_uint()));
-
-#ifdef USE_SIM
-   // store any remaining persistent tuples
-   sched::sim_node *snode(dynamic_cast<sched::sim_node*>(node));
-   for(auto it(store->persistent_tuples->begin()), end(store->persistent_tuples->end());
-         it != end; ++it)
-   {
-      assert(aborted);
-      full_tuple *stpl(*it);
-      snode->pending.push(stpl);
-   }
-#endif
-	
-   // this method must always run this code at the end
-   store->persistent_tuples.clear();
-#ifdef USE_SIM
-   if(sim_instr_use && sim_instr_counter < sim_instr_limit)
-      ++sim_instr_counter;
-#endif
+   assert(store->persistent_tuples.empty());
 #ifdef DYNAMIC_INDEXING
    lstore->improve_index();
    if(node->rounds > 0 && node->rounds % 5 == 0)
@@ -981,9 +893,6 @@ state::state(sched::threads_sched *_sched):
 {
    bitmap::create(rule_queue, theProgram->num_rules_next_uint());
    rule_queue.clear(theProgram->num_rules_next_uint());
-#ifdef USE_SIM
-   sim_instr_use = false;
-#endif
 #ifdef INSTRUMENTATION
    instr_facts_consumed = 0;
    instr_facts_derived = 0;
@@ -1013,9 +922,6 @@ state::state(void):
    , facts_sent(0)
 #endif
 {
-#ifdef USE_SIM
-   sim_instr_use = false;
-#endif
 }
 
 state::~state(void)
