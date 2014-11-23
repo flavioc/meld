@@ -217,6 +217,8 @@ init_external_functions(void)
    register_external_function(EXTERNAL1(is_moving, b, n));
    register_external_function(EXTERNAL1(is_static, b, n));
    register_external_function(EXTERNAL4(partition_vertical, i, i, i, i, i));
+   register_external_function(EXTERNAL4(partition_horizontal, i, i, i, i, i));
+   register_external_function(EXTERNAL4(partition_grid, i, i, i, i, i));
 
    atexit(cleanup_externals);
 

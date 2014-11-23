@@ -1,7 +1,7 @@
 
-include conf.mk
-
 TARGETS = meld print
+
+include ./conf.mk
 
 OS = $(shell uname -s)
 
@@ -77,10 +77,10 @@ endif
 
 WARNINGS = -Wall -Wextra
 
-CFLAGS = -std=c++11 -fno-rtti $(ARCH) $(PROFILING) \
+CFLAGS = -std=c++11 $(ARCH) $(PROFILING) \
 			$(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) \
 			$(INCLUDE_DIRS) $(FLAGS) #-fno-gcse -fno-crossjumping
-LIBRARIES = -L /usr/lib/gcc/x86_64-redhat-linux/4.8.3/ -lm -lreadline -ldl $(LIBS) -pthread
+LIBRARIES = -lm -lreadline -ldl $(LIBS) -pthread
 
 CXX = g++
 
@@ -97,6 +97,7 @@ endif
 
 CXXFLAGS = $(CFLAGS)
 LDFLAGS = $(PROFILING) $(LIBRARY_DIRS) $(LIBRARIES)
+
 COMPILE = $(CXX) $(CXXFLAGS) $(OBJS)
 
 SRCS = utils/utils.cpp \
@@ -149,7 +150,7 @@ all: $(TARGETS)
 .PHONY: clean
 clean:
 	find . -name '*.o' | xargs rm -f
-	rm -f meld print
+	rm -f meld print unit_tests/run
 
 -include Makefile.externs
 Makefile.externs:	conf.mk
@@ -163,6 +164,14 @@ meld: $(OBJS) meld.o
 
 print: $(OBJS) print.o
 	$(COMPILE) print.o -o print $(LDFLAGS)
+
+TEST_FILES = external/tests.cpp
+
+unit_tests/run: $(OBJS) unit_tests/run.cpp $(TEST_FILES)
+	$(COMPILE) unit_tests/run.cpp -o unit_tests/run $(LDFLAGS) -lcppunit
+
+test: unit_tests/run
+	@./unit_tests/run
 
 depend:
 	makedepend -- $(CXXFLAGS) -- $(shell find . -name '*.cpp')

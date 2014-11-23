@@ -128,7 +128,71 @@ partition_vertical(EXTERNAL_ARG(x), EXTERNAL_ARG(y), EXTERNAL_ARG(lx), EXTERNAL_
    const int_val part(std::max((int_val)1, (int_val)(total / All->NUM_THREADS)));
 
    // if it's not divisible by NUM_THREADS, last thread will get the rest.
-   const int_val ret(std::max(pos / part, (int_val)All->NUM_THREADS-1));
+   const int_val ret(std::min(pos / part, (int_val)All->NUM_THREADS-1));
+
+   RETURN_INT(ret);
+}
+
+argument
+partition_horizontal(EXTERNAL_ARG(x), EXTERNAL_ARG(y), EXTERNAL_ARG(lx), EXTERNAL_ARG(ly))
+{
+   DECLARE_INT(x);
+   DECLARE_INT(y);
+   DECLARE_INT(lx);
+   DECLARE_INT(ly);
+
+   const int_val pos(lx * x + y);
+   const int_val total(ly * lx);
+   assert(All->NUM_THREADS > 0);
+   const int_val part(std::max((int_val)1, (int_val)(total / All->NUM_THREADS)));
+
+   // if it's not divisible by NUM_THREADS, last thread will get the rest.
+   const int_val ret(std::min(pos / part, (int_val)All->NUM_THREADS-1));
+
+   RETURN_INT(ret);
+}
+
+argument
+partition_grid(EXTERNAL_ARG(x), EXTERNAL_ARG(y), EXTERNAL_ARG(lx), EXTERNAL_ARG(ly))
+{
+   DECLARE_INT(x);
+   DECLARE_INT(y);
+   DECLARE_INT(lx);
+   DECLARE_INT(ly);
+
+   assert(All->NUM_THREADS > 0);
+
+   // divide grid by fl x fl blocks
+   int_val fl(max(1, (int_val)round(sqrt((double)All->NUM_THREADS))));
+   while(fl * fl < (int_val)All->NUM_THREADS && fl <= lx -1 && fl <= ly - 1)
+      fl++;
+   const int_val total_blocks(fl * fl);
+   // find block width and height
+   const int_val height(std::max(1, (int_val)((float_val)lx / fl)));
+   const int_val width(std::max(1, (int_val)((float_val)ly / fl)));
+   // find block coordinates
+   const int_val block_x(std::min(fl - 1, (int_val)(x / height)));
+   const int_val block_y(std::min(fl - 1, (int_val)(y / width)));
+   int_val block_coord_y;
+   if(y >= fl * width)
+      block_coord_y = width - 1;
+   else
+      block_coord_y = y % width;
+
+   // find block number
+   int_val block_id(block_x * fl);
+   if(block_x % 2 == 0) {
+      // even
+      block_id += block_y;
+   } else {
+      // odd
+      block_id += fl - block_y - 1;
+      block_coord_y = width - block_coord_y - 1;
+   }
+   const int_val length_node(block_id * width + block_coord_y);
+   const int_val total_length(width * total_blocks);
+   const int_val length_per_thread(max(1, total_length / (int_val)All->NUM_THREADS));
+   const int_val ret(min((int_val)(All->NUM_THREADS-1), length_node / length_per_thread));
 
    RETURN_INT(ret);
 }
