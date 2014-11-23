@@ -29,8 +29,7 @@
 #include <json_spirit.h>
 #endif
 
-namespace sched { class base; class mpi_handler; }
-namespace process { class process; class machine; }
+namespace sched { class threads_sched; }
 
 namespace db {
 
@@ -72,16 +71,11 @@ private:
    
    tuple_trie* get_storage(vm::predicate*);
    
-   // code to handle local stratification
-   friend class sched::base;
-   friend class process::process;
-   friend class process::machine;
-   
-   sched::base *owner = NULL;
+   sched::threads_sched *owner = NULL;
 
    // marker that indicates if the node should not be stolen.
    // when not NULL it indicates which scheduler it needs to be on.
-   sched::base *static_node = NULL;
+   sched::threads_sched *static_node = NULL;
 	
    vm::priority_t default_priority_level;
    vm::priority_t priority_level;
@@ -93,8 +87,8 @@ public:
    inline node_id get_id(void) const { return id; }
    inline node_id get_translated_id(void) const { return translation; }
 
-   inline void set_owner(sched::base *_owner) { owner = _owner; }
-   inline sched::base *get_owner(void) const { return owner; }
+   inline void set_owner(sched::threads_sched *_owner) { owner = _owner; }
+   inline sched::threads_sched *get_owner(void) const { return owner; }
    
    bool add_tuple(vm::tuple*, vm::predicate *, const vm::derivation_count,
          const vm::depth_t);
@@ -167,8 +161,8 @@ public:
       return get_priority() != vm::no_priority_value();
    }
 
-   inline sched::base* get_static(void) const { return static_node; }
-   inline void set_static(sched::base *b) { static_node = b; }
+   inline sched::threads_sched* get_static(void) const { return static_node; }
+   inline void set_static(sched::threads_sched *b) { static_node = b; }
    inline void set_moving(void) { static_node = NULL; }
    inline bool is_static(void) const { return static_node != NULL; }
    inline bool is_moving(void) const { return static_node == NULL; }

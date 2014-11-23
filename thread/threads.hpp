@@ -4,7 +4,8 @@
 
 #include <vector>
 
-#include "sched/base.hpp"
+#include "db/database.hpp"
+#include "thread/ids.hpp"
 #include "queue/safe_linear_queue.hpp"
 #include "thread/termination_barrier.hpp"
 #include "queue/safe_complex_pqueue.hpp"
@@ -55,9 +56,35 @@ typedef struct {
    db::node *target;
 } priority_add_item;
 
-class threads_sched: public sched::base
+class threads_sched: public mem::base
 {
 private:
+   
+   const vm::process_id id;
+
+   char __padding_state[128];
+   
+   vm::state state;
+
+   ids node_handler;
+   
+#ifdef INSTRUMENTATION
+   mutable std::atomic<statistics::sched_state> ins_state;
+   
+#define ins_active ins_state = statistics::NOW_ACTIVE
+#define ins_idle ins_state = statistics::NOW_IDLE
+#define ins_sched ins_state = statistics::NOW_SCHED
+#define ins_round ins_state = statistics::NOW_ROUND
+
+#else
+
+#define ins_active
+#define ins_idle
+#define ins_sched
+#define ins_round
+
+#endif
+
    // thread state
    enum thread_state {
       THREAD_ACTIVE = 0,
@@ -124,8 +151,8 @@ private:
    {
       return term_barrier->all_finished();
    }
-   
-protected:
+
+   void do_loop(void);
    
    typedef queue::intrusive_safe_double_queue<db::node> node_queue;
    struct Queues {
@@ -242,12 +269,12 @@ protected:
       tn->set_moving();
    }
 
-   virtual void assert_end(void) const;
+   void assert_end(void) const;
    bool set_next_node(void);
-   virtual bool check_if_current_useless();
+   bool check_if_current_useless();
    void make_active(void);
    void make_inactive(void);
-   virtual bool busy_wait(void);
+   bool busy_wait(void);
    
    void add_to_queue(db::node *node)
    {
@@ -261,7 +288,7 @@ protected:
       }
    }
    
-   virtual bool has_work(void) const
+   bool has_work(void) const
    {
       return queues.has_work() || prios.has_work();
    }
@@ -270,49 +297,117 @@ protected:
    void do_set_node_priority_other(db::node *, const vm::priority_t);
    void do_remove_node_priority_other(db::node *);
 
-   virtual void killed_while_active(void);
+   void killed_while_active(void);
 
    void do_set_node_priority(db::node *, const vm::priority_t);
    void do_remove_node_priority(db::node *);
    void add_node_priority_other(db::node *, const vm::priority_t);
    void set_node_priority_other(db::node *, const vm::priority_t);
    void set_node_owner(db::node *, threads_sched *);
+
+   inline void setup_node(db::node *node)
+   {
+      vm::predicate *init_pred(vm::theProgram->get_init_predicate());
+      vm::tuple *init_tuple(vm::tuple::create(init_pred));
+#ifdef FACT_STATISTICS
+      state.facts_derived++;
+#endif
+      node->set_owner(this);
+      node->add_linear_fact(init_tuple, init_pred);
+      node->unprocessed_facts = true;
+   }
    
 public:
 
-   virtual void init(const size_t);
-   
-   virtual void new_work(db::node *, db::node *, vm::tuple *, vm::predicate *, const vm::ref_count, const vm::depth_t);
-   virtual void new_work_list(db::node *, db::node *, vm::tuple_array&);
-#ifdef COMPILE_MPI
-   virtual void new_work_remote(process::remote *, const db::node::node_id, message *);
-#endif
-   
-   virtual db::node* get_work(void);
-   virtual void end(void);
+   // allows the core machine to stop threads
+   static std::atomic<bool> stop_flag;
 
-   virtual void set_node_cpu(db::node *, const vm::int_val);
-   virtual void set_node_static(db::node *);
-   virtual void set_node_moving(db::node *);
-   virtual void set_node_affinity(db::node *, db::node *);
-   virtual void set_default_node_priority(db::node *, const vm::priority_t);
-   virtual void set_node_priority(db::node *, const vm::priority_t);
-	virtual void add_node_priority(db::node *, const vm::priority_t);
-   virtual void remove_node_priority(db::node *);
-   virtual void schedule_next(db::node *);
+   inline vm::process_id get_id(void) const { return id; }
+   
+   inline bool leader_thread(void) const { return get_id() == 0; }
+
+   db::node* init_node(db::database::map_nodes::iterator it)
+   {
+      db::node *node(vm::All->DATABASE->create_node_iterator(it));
+#ifdef USE_REAL_NODES
+      vm::theProgram->fix_node_address(node);
+#endif
+#ifdef GC_NODES
+      // initial nodes never get deleted.
+      node->refs++;
+#endif
+      setup_node(node);
+      return node;
+   }
+
+   inline db::node* create_node(void)
+   {
+      db::node *node(node_handler.create_node());
+      setup_node(node);
+      return node;
+   }
+
+   inline void delete_node(db::node *node)
+   {
+      node_handler.delete_node(node);
+   }
+
+   inline void merge_new_nodes(threads_sched& b)
+   {
+      node_handler.merge(b.node_handler);
+   }
+
+   inline void commit_nodes(void)
+   {
+      node_handler.commit();
+   }
+
+   void loop(void);
+   void init(const size_t);
+   
+   void new_work(db::node *, db::node *, vm::tuple *, vm::predicate *, const vm::ref_count, const vm::depth_t);
+   void new_work_list(db::node *, db::node *, vm::tuple_array&);
+   void new_work_delay(db::node *, db::node *, vm::tuple*, vm::predicate *,
+         const vm::ref_count, const vm::depth_t, const vm::uint_val)
+   {
+      assert(false);
+   }
+   
+   db::node* get_work(void);
+   void end(void);
+
+   void set_node_cpu(db::node *, const vm::int_val);
+   void set_node_static(db::node *);
+   void set_node_moving(db::node *);
+   void set_node_affinity(db::node *, db::node *);
+   void set_default_node_priority(db::node *, const vm::priority_t);
+   void set_node_priority(db::node *, const vm::priority_t);
+	void add_node_priority(db::node *, const vm::priority_t);
+   void remove_node_priority(db::node *);
+   void schedule_next(db::node *);
 
    inline uint64_t num_static_nodes(void) const { return static_nodes; }
 #ifdef LOCK_STATISTICS
    void print_average_priority_size(void) const;
 #endif
 
-   virtual void write_slice(statistics::slice&);
+#ifdef FACT_STATISTICS
+   vm::state& get_state(void) { return state; }
+
+   uint64_t count_add_work_self = 0;
+   uint64_t count_add_work_other = 0;
+   uint64_t count_stolen_nodes = 0;
+   uint64_t count_set_priority = 0;
+   uint64_t count_add_priority = 0;
+
+   void write_slice(statistics::slice&);
+#endif
 
    static void init_barriers(const size_t);
    
    explicit threads_sched(const vm::process_id);
    
-   virtual ~threads_sched(void);
+   ~threads_sched(void);
 };
 
 }

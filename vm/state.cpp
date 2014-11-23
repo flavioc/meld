@@ -965,7 +965,7 @@ state::sync(void)
    return ret;
 }
 
-state::state(sched::base *_sched):
+state::state(sched::threads_sched *_sched):
    sched(_sched)
 #ifdef DEBUG_MODE
    , print_instrs(false)

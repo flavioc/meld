@@ -35,6 +35,42 @@ termination_barrier* threads_sched::term_barrier(NULL);
 std::atomic<int> *threads_sched::steal_states(NULL);
 #endif
 
+std::atomic<bool> threads_sched::stop_flag(false);
+
+void
+threads_sched::do_loop(void)
+{
+   db::node *node(NULL);
+
+   while(true) {
+      node = get_work();
+      if(node == NULL)
+         break;
+      assert(node != NULL);
+      state.run_node(node);
+      if(stop_flag) {
+         killed_while_active();
+         return;
+      }
+   }
+   if(stop_flag) {
+      killed_while_active();
+      return;
+   }
+}
+	
+void
+threads_sched::loop(void)
+{
+   init(All->NUM_THREADS);
+
+   do_loop();
+
+   assert_end();
+   end();
+   // cout << "DONE " << id << endl;
+}
+
 void
 threads_sched::init_barriers(const size_t num_threads)
 {
@@ -64,7 +100,7 @@ threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
 
    NODE_LOCK(to, nodelock, node_lock);
    
-   threads_sched *owner(static_cast<threads_sched*>(to->get_owner()));
+   threads_sched *owner(to->get_owner());
 
    if(owner == this) {
 #ifdef FACT_STATISTICS
@@ -116,7 +152,7 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
    LOCK_STACK(nodelock);
    NODE_LOCK(to, nodelock, node_lock);
    
-   threads_sched *owner(static_cast<threads_sched*>(to->get_owner()));
+   threads_sched *owner(to->get_owner());
    if(owner == this) {
 #ifdef FACT_STATISTICS
       count_add_work_self++;
@@ -214,7 +250,7 @@ threads_sched::go_steal_nodes(void)
          if(node->is_static()) {
             if(node->get_owner() != target) {
                // set-affinity was used and the node was changed to another scheduler
-               move_node_to_new_owner(node, static_cast<threads_sched*>(node->get_owner()));
+               move_node_to_new_owner(node, node->get_owner());
                NODE_UNLOCK(node, nodelock);
                continue;
             } else {
@@ -503,11 +539,15 @@ threads_sched::init(const size_t)
    threads_synchronize();
 }
 
+#ifdef INSTRUMENTATION
 void
 threads_sched::write_slice(statistics::slice& sl)
 {
-#ifdef INSTRUMENTATION
-   base::write_slice(sl);
+   sl.state = ins_state;
+   sl.consumed_facts = state.instr_facts_consumed;
+   sl.derived_facts = state.instr_facts_derived;
+   sl.rules_run = state.instr_rules_run;
+   
    sl.work_queue = queues.stati.size() + queues.moving.size() + prios.stati.size() + prios.moving.size();
    sl.sent_facts_same_thread = sent_facts_same_thread;
    sl.sent_facts_other_thread = sent_facts_other_thread;
@@ -517,6 +557,11 @@ threads_sched::write_slice(statistics::slice& sl)
    sl.bytes_used = All->THREAD_POOLS[get_id()]->bytes_in_use;
    sl.node_lock_ok = node_lock_ok;
    sl.node_lock_fail = node_lock_fail;
+
+   // reset stats
+   state.instr_facts_consumed = 0;
+   state.instr_facts_derived = 0;
+   state.instr_rules_run = 0;
    node_lock_fail = 0;
    node_lock_ok = 0;
    sent_facts_same_thread = 0;
@@ -528,13 +573,15 @@ threads_sched::write_slice(statistics::slice& sl)
    sl.stolen_nodes = stolen_total;
    stolen_total = 0;
 #endif
-#else
-   (void)sl;
-#endif
 }
+#endif
 
 threads_sched::threads_sched(const vm::process_id _id):
-   base(_id),
+   id(_id),
+   state(this),
+#ifdef INSTRUMENTATION
+   ins_state(statistics::NOW_ACTIVE),
+#endif
    tstate(THREAD_ACTIVE),
    current_node(NULL)
 #ifdef TASK_STEALING

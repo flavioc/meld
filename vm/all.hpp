@@ -7,17 +7,9 @@
 #define MAX_CONSTS 32
 
 // forward declaration
-namespace db {
-   class database;
-}
-
-namespace process {
-   class machine;
-}
-
-namespace sched {
-	class base;
-}
+namespace db { class database; }
+namespace process { class machine; }
+namespace sched { class threads_sched; }
 
 namespace vm
 {
@@ -39,7 +31,7 @@ class all
    size_t NUM_THREADS;
    size_t NUM_THREADS_NEXT_UINT;
    size_t NUM_NODES_PER_PROCESS;
-   std::vector<sched::base*> SCHEDS;
+   std::vector<sched::threads_sched*> SCHEDS;
 	machine_arguments ARGS;
    std::vector<runtime::rstring::ptr> ARGUMENTS;
 #ifdef INSTRUMENTATION

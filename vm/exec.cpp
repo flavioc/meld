@@ -1691,7 +1691,7 @@ execute_cpu_id(pcounter& pc, state& state)
    db::node *node(All->DATABASE->find_node(nodeval));
 #endif
 
-   sched::base *owner(node->get_owner());
+   sched::threads_sched *owner(node->get_owner());
    state.set_int(dest_reg, owner->get_id());
 }
 
@@ -3805,7 +3805,7 @@ eval_loop:
          CASE(STOP_PROG_INSTR)
             JUMP(stop_program, STOP_PROG_BASE)
             if(scheduling_mechanism)
-               sched::base::stop_flag = true;
+               sched::threads_sched::stop_flag = true;
             ADVANCE()
          ENDOP()
 

@@ -16,6 +16,7 @@ using namespace utils;
 namespace statistics
 {
 
+#ifdef INSTRUMENTATION
 static void
 write_header(ofstream& out, const string& header, vm::all *all)
 {
@@ -183,4 +184,5 @@ slice_set::slice_set(const size_t num_threads):
 {
 }
 
+#endif
 }

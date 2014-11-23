@@ -22,7 +22,7 @@
 
 // forward declaration
 namespace sched {
-	class base;
+	class threads_sched;
 }
 
 namespace vm {
@@ -56,7 +56,7 @@ public:
    db::node *node;
    derivation_count count;
    vm::depth_t depth;
-   sched::base *sched;
+   sched::threads_sched *sched;
    bool is_linear;
 	utils::randgen randgen;
    size_t current_rule;
@@ -182,7 +182,7 @@ public:
    void setup(vm::predicate *, db::node*, const vm::derivation_count, const vm::depth_t);
    void cleanup(void);
 
-   explicit state(sched::base *);
+   explicit state(sched::threads_sched *);
 	explicit state(void);
    ~state(void);
 };

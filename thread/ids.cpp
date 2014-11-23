@@ -2,7 +2,7 @@
 #include "vm/all.hpp"
 #include "db/node.hpp"
 #include "db/database.hpp"
-#include "sched/ids.hpp"
+#include "thread/ids.hpp"
 
 using namespace std;
 using namespace db;

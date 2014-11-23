@@ -24,7 +24,7 @@ threads_sched::schedule_next(node *n)
    LOCK_STACK(nodelock);
    NODE_LOCK(n, nodelock, schedule_next_lock);
 
-   threads_sched *other((threads_sched*)n->get_owner());
+   threads_sched *other(n->get_owner());
    if(other == this)
       do_set_node_priority(n, prio);
 
@@ -38,7 +38,7 @@ void
 threads_sched::add_node_priority_other(node *n, const priority_t priority)
 {
 #ifdef SEND_OTHERS
-   threads_sched *other((threads_sched*)n->get_owner());
+   threads_sched *other(n->get_owner());
 
    priority_add_item item;
    item.typ = ADD_PRIORITY;
@@ -97,7 +97,7 @@ threads_sched::set_node_priority_other(node *n, const priority_t priority)
 {
 #ifdef SEND_OTHERS
    // will potentially change
-   threads_sched *other((threads_sched*)n->get_owner());
+   threads_sched *other(n->get_owner());
    priority_add_item item;
    item.typ = SET_PRIORITY;
    item.val = priority;
@@ -126,7 +126,7 @@ threads_sched::add_node_priority(node *tn, const priority_t priority)
 #ifdef TASK_STEALING
    LOCK_STACK(nodelock);
    NODE_LOCK(tn, nodelock, add_priority_lock);
-   threads_sched *other((threads_sched*)tn->get_owner());
+   threads_sched *other(tn->get_owner());
    if(other == this)
       do_set_node_priority(tn, tn->get_priority() + priority);
    else
@@ -137,7 +137,7 @@ threads_sched::add_node_priority(node *tn, const priority_t priority)
 #endif
    NODE_UNLOCK(tn, nodelock);
 #else
-   threads_sched *other((threads_sched*)tn->get_owner());
+   threads_sched *other(tn->get_owner());
    if(other == this) {
       const priority_t old_prio(tn->get_priority());
       set_node_priority(n, old_prio + priority);
@@ -193,7 +193,7 @@ threads_sched::do_remove_node_priority_other(node *tn)
 {
    // we know that the owner of node is not this.
    queue_id_t state(tn->node_state());
-   threads_sched *owner(static_cast<threads_sched*>(tn->get_owner()));
+   threads_sched *owner(tn->get_owner());
 
    switch(state) {
       case STATE_STEALING:
@@ -239,7 +239,7 @@ threads_sched::remove_node_priority(node *tn)
 #ifdef TASK_STEALING
    LOCK_STACK(nodelock);
    NODE_LOCK(tn, nodelock, set_priority_lock);
-   threads_sched *other((threads_sched*)tn->get_owner());
+   threads_sched *other(tn->get_owner());
    if(other == this)
       do_remove_node_priority(tn);
    else
@@ -250,7 +250,7 @@ threads_sched::remove_node_priority(node *tn)
 #endif
    NODE_UNLOCK(tn, nodelock);
 #else
-   threads_sched *other((threads_sched*)tn->get_owner());
+   threads_sched *other(tn->get_owner());
    if(other == this)
       do_remove_node_priority(n);
 #endif
@@ -278,7 +278,7 @@ threads_sched::set_node_priority(node *tn, const priority_t priority)
       NODE_UNLOCK(tn, nodelock);
       return;
    }
-   threads_sched *other((threads_sched*)tn->get_owner());
+   threads_sched *other(tn->get_owner());
    if(other == this)
       do_set_node_priority(tn, priority);
    else
@@ -291,7 +291,7 @@ threads_sched::set_node_priority(node *tn, const priority_t priority)
 #else
    if(!is_higher_priority(priority, tn))
       return;
-   threads_sched *other((threads_sched*)tn->get_owner());
+   threads_sched *other(tn->get_owner());
    if(other == this)
       do_set_node_priority(n, priority);
 #endif
@@ -305,7 +305,7 @@ threads_sched::do_set_node_priority_other(db::node *node, const priority_t prior
 #endif
    // we know that the owner of node is not this.
    queue_id_t state(node->node_state());
-   threads_sched *owner(static_cast<threads_sched*>(node->get_owner()));
+   threads_sched *owner(node->get_owner());
 
    switch(state) {
       case STATE_STEALING:
@@ -583,7 +583,7 @@ threads_sched::set_node_affinity(db::node *node, db::node *affinity)
 {
    if(!scheduling_mechanism)
       return;
-   threads_sched *new_owner(static_cast<threads_sched*>(affinity->get_owner()));
+   threads_sched *new_owner(affinity->get_owner());
    set_node_owner(node, new_owner);
 }
 

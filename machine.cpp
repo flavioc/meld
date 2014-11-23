@@ -34,7 +34,7 @@ namespace process
 {
    
 void
-machine::run_action(sched::base *sched, node* node, vm::tuple *tpl, vm::predicate *pred
+machine::run_action(sched::threads_sched *sched, node* node, vm::tuple *tpl, vm::predicate *pred
 #ifdef GC_NODES
       , candidate_gc_nodes& gc_nodes
 #endif
@@ -197,7 +197,7 @@ machine::init_sched(const process_id id)
    utils::_stat = utils::all_stats[id];
 #endif
 
-   all->SCHEDS[id] = dynamic_cast<sched::base*>(new sched::threads_sched(id));
+   all->SCHEDS[id] = new sched::threads_sched(id);
    all->SCHEDS[id]->loop();
 }
 

@@ -79,8 +79,6 @@ $ sbcl
       many types of queues here, including priority queues. It's all template code.
    - runtime
       classes for list and string objects used for meld objects.
-   - sched
-      sched::base is the base class for all the available schedulers.
    - stat
       code for generating execution statistics.
    - thread
