@@ -27,9 +27,8 @@ private:
          if(rule->as_persistent())
             continue;
 
-         if(rules[rule_id] == rule->num_predicates()) {
+         if(rules[rule_id] == rule->num_predicates())
             rule_queue.unset_bit(rule_id);
-         }
 
          rules[rule_id]--;
       }
@@ -45,9 +44,8 @@ private:
 
          rules[rule_id]++;
          assert(rules[rule_id] <= rule->num_predicates());
-         if(rules[rule_id] == rule->num_predicates()) {
+         if(rules[rule_id] == rule->num_predicates())
             rule_queue.set_bit(rule_id);
-         }
       }
    }
 

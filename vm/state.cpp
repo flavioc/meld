@@ -794,7 +794,6 @@ state::run_node(db::node *no)
       do_persistent_tuples();
 
       if(node->has_new_owner()) {
-         cout << "New owner!\n";
          node->unprocessed_facts = true;
          break;
       }

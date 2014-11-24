@@ -404,7 +404,6 @@ threads_sched::check_if_current_useless(void)
 {
    LOCK_STACK(curlock);
    if(current_node->has_new_owner()) {
-      cout << "New owner\n";
       NODE_LOCK(current_node, curlock, node_lock);
       // the node has changed to another scheduler!
       current_node->set_owner(current_node->get_static());
