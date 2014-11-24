@@ -22,9 +22,6 @@ rule_matcher::rule_matcher(void)
    bitmap::create(rule_queue, theProgram->num_rules_next_uint());
    rule_queue.clear(theProgram->num_rules_next_uint());
 
-   bitmap::create(active_bitmap, theProgram->num_rules_next_uint());
-   active_bitmap.clear(theProgram->num_rules_next_uint());
-
 #ifndef NDEBUG
    for(rule_id rid(0); rid < theProgram->num_rules(); ++rid)
    {
@@ -38,7 +35,6 @@ rule_matcher::~rule_matcher(void)
 {
    mem::allocator<pred_count>().deallocate(predicate_count, theProgram->num_predicates());
    mem::allocator<utils::byte>().deallocate(rules, theProgram->num_rules());
-   bitmap::destroy(active_bitmap, theProgram->num_rules_next_uint());
    bitmap::destroy(rule_queue, theProgram->num_rules_next_uint());
    assert(rule_queue.empty(theProgram->num_rules_next_uint()));
 }

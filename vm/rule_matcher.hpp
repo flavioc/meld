@@ -27,7 +27,6 @@ private:
             continue;
 
          if(rules[rule_id] == rule->num_predicates()) {
-            active_bitmap.unset_bit(rule_id);
             rule_queue.unset_bit(rule_id);
          }
 
@@ -46,7 +45,6 @@ private:
          rules[rule_id]++;
          assert(rules[rule_id] <= rule->num_predicates());
          if(rules[rule_id] == rule->num_predicates()) {
-            active_bitmap.set_bit(rule_id);
             rule_queue.set_bit(rule_id);
          }
       }
@@ -69,7 +67,6 @@ public:
    }
 
    bitmap rule_queue; // rules next to run
-   bitmap active_bitmap; // rules that may run
 
    // returns true if we did not have any tuples of this predicate
 	bool register_tuple(const predicate *pred, const derivation_count count,
@@ -136,10 +133,6 @@ public:
    inline pred_count get_count(const vm::predicate_id id) const
    {
       return predicate_count[id];
-   }
-
-   bitmap::iterator active_rules_iterator(void) {
-      return active_bitmap.begin(theProgram->num_rules());
    }
 
    rule_matcher(void);
