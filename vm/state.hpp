@@ -16,7 +16,7 @@
 #include "runtime/objs.hpp"
 #include "vm/stat.hpp"
 #include "vm/call_stack.hpp"
-#include "vm/temporary.hpp"
+#include "db/temporary_store.hpp"
 #include "db/linear_store.hpp"
 #include "vm/counter.hpp"
 

@@ -20,7 +20,7 @@
 #include "vm/rule_matcher.hpp"
 #include "vm/all.hpp"
 #include "db/linear_store.hpp"
-#include "vm/temporary.hpp"
+#include "db/temporary_store.hpp"
 #include "vm/priority.hpp"
 #include "queue/intrusive.hpp"
 #include "db/persistent_store.hpp"

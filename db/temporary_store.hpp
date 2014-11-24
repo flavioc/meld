@@ -1,6 +1,6 @@
 
-#ifndef VM_TEMPORARY_HPP
-#define VM_TEMPORARY_HPP
+#ifndef DB_TEMPORARY_STORE_HPP
+#define DB_TEMPORARY_STORE_HPP
 
 #include <unordered_map>
 
