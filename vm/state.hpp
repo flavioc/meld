@@ -87,7 +87,7 @@ public:
    bool hash_removes;
    typedef std::unordered_set<vm::tuple*, std::hash<vm::tuple*>, std::equal_to<vm::tuple*>, mem::allocator<vm::tuple*> > removed_hash;
    removed_hash removed;
-   temporary_store *store;
+   db::temporary_store *store;
    db::linear_store *lstore;
    vm::counter *match_counter;
    std::unordered_set<utils::byte*, std::hash<utils::byte*>,

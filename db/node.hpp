@@ -118,8 +118,8 @@ public:
 
    // internal databases of the node.
    persistent_store pers_store;
-   db::linear_store linear;
-   vm::temporary_store store;
+   linear_store linear;
+   temporary_store store;
    vm::rule_matcher matcher;
    bool unprocessed_facts = false;
    utils::mutex main_lock;

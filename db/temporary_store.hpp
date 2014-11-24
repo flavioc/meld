@@ -11,7 +11,7 @@
 #include "utils/intrusive_list.hpp"
 #include "vm/bitmap.hpp"
 
-namespace vm
+namespace db
 {
 
 //#define UNIQUE_INCOMING_LIST
@@ -30,19 +30,19 @@ struct temporary_store
 #endif
 
       // incoming persistent tuples
-      full_tuple_list incoming_persistent_tuples;
+      vm::full_tuple_list incoming_persistent_tuples;
 
       // incoming action tuples
-      full_tuple_list incoming_action_tuples;
+      vm::full_tuple_list incoming_action_tuples;
 
       // generated linear facts
       tuple_list *generated;
 
       // new action facts
-      full_tuple_list action_tuples;
+      vm::full_tuple_list action_tuples;
 
       // queue of persistent tuples
-      full_tuple_list persistent_tuples;
+      vm::full_tuple_list persistent_tuples;
 
       inline tuple_list* get_generated(const vm::predicate_id p)
       {
@@ -73,12 +73,12 @@ struct temporary_store
          ls->push_back(tpl);
       }
 
-      inline void add_action_fact(full_tuple *stpl)
+      inline void add_action_fact(vm::full_tuple *stpl)
       {
          action_tuples.push_back(stpl);
       }
 
-      inline void add_persistent_fact(full_tuple *stpl)
+      inline void add_persistent_fact(vm::full_tuple *stpl)
       {
          persistent_tuples.push_back(stpl);
       }
@@ -86,25 +86,25 @@ struct temporary_store
       explicit temporary_store(void)
       {
 #ifndef UNIQUE_INCOMING_LIST
-         incoming = mem::allocator<tuple_list>().allocate(theProgram->num_predicates());
-         for(size_t i(0); i < theProgram->num_predicates(); ++i)
+         incoming = mem::allocator<tuple_list>().allocate(vm::theProgram->num_predicates());
+         for(size_t i(0); i < vm::theProgram->num_predicates(); ++i)
             mem::allocator<tuple_list>().construct(incoming + i);
 #endif
-         generated = mem::allocator<tuple_list>().allocate(theProgram->num_predicates());
-         for(size_t i(0); i < theProgram->num_predicates(); ++i)
+         generated = mem::allocator<tuple_list>().allocate(vm::theProgram->num_predicates());
+         for(size_t i(0); i < vm::theProgram->num_predicates(); ++i)
             mem::allocator<tuple_list>().construct(generated + i);
       }
 
       ~temporary_store(void)
       {
 #ifndef UNIQUE_INCOMING_LIST
-         for(size_t i(0); i < theProgram->num_predicates(); ++i)
+         for(size_t i(0); i < vm::theProgram->num_predicates(); ++i)
             mem::allocator<tuple_list>().destroy(incoming + i);
-         mem::allocator<tuple_list>().deallocate(incoming, theProgram->num_predicates());
+         mem::allocator<tuple_list>().deallocate(incoming, vm::theProgram->num_predicates());
 #endif
-         for(size_t i(0); i < theProgram->num_predicates(); ++i)
+         for(size_t i(0); i < vm::theProgram->num_predicates(); ++i)
             mem::allocator<tuple_list>().destroy(generated + i);
-         mem::allocator<tuple_list>().deallocate(generated, theProgram->num_predicates());
+         mem::allocator<tuple_list>().deallocate(generated, vm::theProgram->num_predicates());
       }
 };
 
