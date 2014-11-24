@@ -119,6 +119,7 @@ SRCS = utils/utils.cpp \
 			db/node.cpp \
 			db/agg_configuration.cpp \
 			db/tuple_aggregate.cpp \
+			db/persistent_store.cpp \
 			db/database.cpp \
 			db/trie.cpp \
 			db/hash_table.cpp \

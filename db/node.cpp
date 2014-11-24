@@ -18,206 +18,13 @@ using namespace utils;
 namespace db
 {
 
-tuple_trie*
-node::get_storage(predicate* pred)
-{
-   auto it(tuples.find(pred->get_id()));
-   
-   if(it == tuples.end()) {
-      //cout << "New trie for " << *pred << endl;
-      tuple_trie *tr(new tuple_trie());
-      tuples[pred->get_id()] = tr;
-      return tr;
-   } else
-      return it->second;
-}
-
-bool
-node::add_tuple(vm::tuple *tpl, vm::predicate *pred, const derivation_count many, const depth_t depth)
-{
-   tuple_trie *tr(get_storage(pred));
-   
-   bool ret = tr->insert_tuple(tpl, pred, many, depth);
-   return ret;
-}
-
-node::delete_info
-node::delete_tuple(vm::tuple *tuple, vm::predicate *pred, const derivation_count many, const depth_t depth)
-{
-   tuple_trie *tr(get_storage(pred));
-   
-   return tr->delete_tuple(tuple, pred, many, depth);
-}
-
-agg_configuration*
-node::add_agg_tuple(vm::tuple *tuple, predicate *pred, const derivation_count many, const depth_t depth
-#ifdef GC_NODES
-      , candidate_gc_nodes& gc_nodes
-#endif
-      )
-{
-   predicate_id pred_id(pred->get_id());
-   aggregate_map::iterator it(aggs.find(pred_id));
-   tuple_aggregate *agg;
-   
-   if(it == aggs.end()) {
-      agg = new tuple_aggregate(pred);
-      aggs[pred_id] = agg;
-   } else
-      agg = it->second;
-
-   return agg->add_to_set(tuple, pred, many, depth
-#ifdef GC_NODES
-         , gc_nodes
-#endif
-         );
-}
-
-agg_configuration*
-node::remove_agg_tuple(vm::tuple *tuple, vm::predicate *pred, const derivation_count many, const depth_t depth
-#ifdef GC_NODES
-      , candidate_gc_nodes& gc_nodes
-#endif
-      )
-{
-   return add_agg_tuple(tuple, pred, -many, depth
-#ifdef GC_NODES
-         , gc_nodes
-#endif
-         );
-}
-
-full_tuple_list
-node::end_iteration(
-#ifdef GC_NODES
-      candidate_gc_nodes& gc_nodes
-#endif
-      )
-{
-   // generate possible aggregates
-   full_tuple_list ret;
-   
-   for(aggregate_map::iterator it(aggs.begin());
-      it != aggs.end();
-      ++it)
-   {
-      tuple_aggregate *agg(it->second);
-      
-#ifdef GC_NODES
-      full_tuple_list ls(agg->generate(gc_nodes));
-#else
-      full_tuple_list ls(agg->generate());
-#endif
-      for(auto jt(ls.begin()), end(ls.end()); jt != end; ++jt) {
-         (*jt)->set_as_aggregate();
-         ret.push_back(*jt);
-      }
-   }
-   
-   return ret;
-}
-
-tuple_trie::tuple_search_iterator
-node::match_predicate(const predicate_id id) const
-{
-   pers_tuple_map::const_iterator it(tuples.find(id));
-   
-   if(it == tuples.end())
-      return tuple_trie::tuple_search_iterator();
-   
-   const tuple_trie *tr(it->second);
-   
-   return tr->match_predicate();
-}
-
-tuple_trie::tuple_search_iterator
-node::match_predicate(const predicate_id id, const match* m) const
-{
-   pers_tuple_map::const_iterator it(tuples.find(id));
-   
-   if(it == tuples.end())
-      return tuple_trie::tuple_search_iterator();
-   
-   const tuple_trie *tr(it->second);
-   
-   if(m)
-      return tr->match_predicate(m);
-   else
-      return tr->match_predicate();
-}
-
-void
-node::delete_all(const predicate*)
-{
-   assert(false);
-}
-
-void
-node::delete_by_leaf(predicate *pred, tuple_trie_leaf *leaf, const depth_t depth
-#ifdef GC_NODES
-      , candidate_gc_nodes& gc_nodes
-#endif
-      )
-{
-   tuple_trie *tr(get_storage(pred));
-
-   tr->delete_by_leaf(leaf, pred, depth
-#ifdef GC_NODES
-         , gc_nodes
-#endif
-         );
-}
-
-void
-node::assert_tries(void)
-{
-   for(auto it(tuples.begin()), end(tuples.end()); it != end; ++it) {
-      tuple_trie *tr(it->second);
-      tr->assert_used();
-   }
-}
-
-void
-node::delete_by_index(predicate *pred, const match& m
-#ifdef GC_NODES
-      , candidate_gc_nodes& gc_nodes
-#endif
-      )
-{
-   tuple_trie *tr(get_storage(pred));
-   
-   tr->delete_by_index(pred, m
-#ifdef GC_NODES
-         , gc_nodes
-#endif
-         );
-   
-   aggregate_map::iterator it(aggs.find(pred->get_id()));
-   
-   if(it != aggs.end()) {
-      tuple_aggregate *agg(it->second);
-#ifdef GC_NODES
-      agg->delete_by_index(m, gc_nodes);
-#else
-      agg->delete_by_index(m);
-#endif
-   }
-}
-
 size_t
 node::count_total(const predicate_id id) const
 {
    predicate *pred(theProgram->get_predicate(id));
-   if(pred->is_persistent_pred()) {
-      auto it(tuples.find(id));
-   
-      if(it == tuples.end())
-         return 0;
-
-      const tuple_trie *tr(it->second);
-   
-      return tr->size();
-   } else {
+   if(pred->is_persistent_pred())
+      return pers_store.count_total(id);
+   else {
       if(linear.stored_as_hash_table(pred)) {
          const hash_table *table(linear.get_hash_table(pred->get_id()));
          return table->get_total_size();
@@ -241,12 +48,6 @@ node::count_total_all(void) const
 void
 node::assert_end(void) const
 {
-   for(aggregate_map::const_iterator it(aggs.begin());
-      it != aggs.end();
-      ++it)
-   {
-      assert(it->second->no_changes());
-   }
 }
 
 node::node(const node_id _id, const node_id _trans):
@@ -260,36 +61,11 @@ node::node(const node_id _id, const node_id _trans):
 }
 
 void
-#ifdef GC_NODES
 node::wipeout(candidate_gc_nodes& gc_nodes)
-#else
-node::wipeout(void)
-#endif
 {
-#ifdef GC_NODES
    linear.destroy(gc_nodes);
-#else
-   linear.destroy();
-#endif
-   for(auto it(tuples.begin()), end(tuples.end()); it != end; it++) {
-      tuple_trie *tr(it->second);
-      predicate *pred(theProgram->get_predicate(it->first));
-#ifdef GC_NODES
-      tr->wipeout(pred, gc_nodes);
-#else
-      tr->wipeout(pred);
-#endif
-      delete it->second;
-   }
-   for(aggregate_map::iterator it(aggs.begin()), end(aggs.end()); it != end; it++) {
-      tuple_aggregate *agg(it->second);
-#ifdef GC_NODES
-      agg->wipeout(gc_nodes);
-#else
-      agg->wipeout();
-#endif
-      delete agg;
-   }
+   pers_store.wipeout(gc_nodes);
+
    mem::allocator<node>().deallocate(this, 1);
 }
 
@@ -302,14 +78,9 @@ node::dump(ostream& cout) const
       predicate *pred(theProgram->get_sorted_predicate(i));
 
       vector<string> vec;
-      if(pred->is_persistent_pred()) {
-         auto it(tuples.find(pred->get_id()));
-         tuple_trie *tr = NULL;
-         if(it != tuples.end())
-            tr = it->second;
-         if(tr && !tr->empty())
-            vec = tr->get_print_strings(pred);
-      } else {
+      if(pred->is_persistent_pred())
+         vec = pers_store.dump(pred);
+      else {
          if(linear.stored_as_hash_table(pred)) {
             const hash_table *table(linear.get_hash_table(pred->get_id()));
             for(hash_table::iterator it(table->begin()); !it.end(); ++it) {
@@ -353,14 +124,9 @@ node::print(ostream& cout) const
       predicate *pred(theProgram->get_sorted_predicate(i));
 
       vector<string> vec;
-      if(pred->is_persistent_pred()) {
-         auto it(tuples.find(pred->get_id()));
-         tuple_trie *tr = NULL;
-         if(it != tuples.end())
-            tr = it->second;
-         if(tr && !tr->empty())
-            vec = tr->get_print_strings(pred);
-      } else {
+      if(pred->is_persistent_pred())
+         vec = pers_store.print(pred);
+      else {
          if(linear.stored_as_hash_table(pred)) {
             const hash_table *table(linear.get_hash_table(pred->get_id()));
             for(hash_table::iterator it(table->begin()); !it.end(); ++it) {

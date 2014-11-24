@@ -759,7 +759,7 @@ execute_pers_iter(const reg_num reg, match* m, const pcounter first, state& stat
    const bool old_is_linear(state.is_linear);
    const bool this_is_linear(false);
 
-   tuple_trie::tuple_search_iterator tuples_it = state.node->match_predicate(pred->get_id(), m);
+   tuple_trie::tuple_search_iterator tuples_it = state.node->pers_store.match_predicate(pred->get_id(), m);
    for(tuple_trie::tuple_search_iterator end(tuple_trie::match_end());
          tuples_it != end;
          ++tuples_it)
@@ -964,7 +964,7 @@ execute_opers_iter(const reg_num reg, match* m, const pcounter pc, const pcounte
    typedef vector<tuple_trie_leaf*, mem::allocator<tuple_trie_leaf*> > vector_leaves;
    vector_leaves leaves;
 
-   tuple_trie::tuple_search_iterator tuples_it = state.node->match_predicate(pred->get_id(), m);
+   tuple_trie::tuple_search_iterator tuples_it = state.node->pers_store.match_predicate(pred->get_id(), m);
 
    for(tuple_trie::tuple_search_iterator end(tuple_trie::match_end());
          tuples_it != end; ++tuples_it)

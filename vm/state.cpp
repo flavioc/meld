@@ -112,7 +112,7 @@ state::add_fact_to_node(vm::tuple *tpl, vm::predicate *pred, const vm::derivatio
    execution_time::scope s(stat.db_insertion_time_predicate[tpl->get_predicate_id()]);
 #endif
 
-	return node->add_tuple(tpl, pred, count, depth);
+	return node->pers_store.add_tuple(tpl, pred, count, depth);
 }
 
 static inline bool
@@ -334,13 +334,13 @@ state::add_to_aggregate(full_tuple *stpl)
    agg_configuration *agg(NULL);
 
    if(count < 0) {
-      agg = node->remove_agg_tuple(tpl, stpl->get_predicate(), -count, stpl->get_depth()
+      agg = node->pers_store.remove_agg_tuple(tpl, stpl->get_predicate(), -count, stpl->get_depth()
 #ifdef GC_NODES
             , gc_nodes
 #endif
             );
    } else {
-      agg = node->add_agg_tuple(tpl, stpl->get_predicate(), count, stpl->get_depth()
+      agg = node->pers_store.add_agg_tuple(tpl, stpl->get_predicate(), count, stpl->get_depth()
 #ifdef GC_NODES
             , gc_nodes
 #endif
@@ -404,7 +404,7 @@ state::process_persistent_tuple(full_tuple *stpl, vm::tuple *tpl)
 			setup(pred, node, stpl->get_count(), stpl->get_depth());
 			execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
 		} else {
-      	node::delete_info deleter(node->delete_tuple(tpl, pred, -stpl->get_count(), stpl->get_depth()));
+      	auto deleter(node->pers_store.delete_tuple(tpl, pred, -stpl->get_count(), stpl->get_depth()));
 
          if(!deleter.is_valid()) {
             // do nothing... it does not exist

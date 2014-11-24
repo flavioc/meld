@@ -1056,7 +1056,7 @@ tuple_trie::delete_tuple(vm::tuple *tpl, vm::predicate *pred, const derivation_c
 }
 
 vector<string>
-tuple_trie::get_print_strings(predicate *pred) const
+tuple_trie::get_print_strings(const predicate *pred) const
 {
    vector<string> vec;
    for(const_iterator it(begin());
@@ -1078,7 +1078,7 @@ tuple_trie::get_print_strings(predicate *pred) const
 }
 
 void
-tuple_trie::print(ostream& cout, predicate *pred) const
+tuple_trie::print(ostream& cout, const predicate *pred) const
 { 
    assert(!empty());
    utils::write_strings(get_print_strings(pred), cout, 1);

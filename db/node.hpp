@@ -12,7 +12,6 @@
 #include "vm/tuple.hpp"
 #include "vm/predicate.hpp"
 #include "vm/full_tuple.hpp"
-#include "db/tuple_aggregate.hpp"
 #include "mem/allocator.hpp"
 #include "db/trie.hpp"
 #include "vm/defs.hpp"
@@ -24,6 +23,7 @@
 #include "vm/temporary.hpp"
 #include "vm/priority.hpp"
 #include "queue/intrusive.hpp"
+#include "db/persistent_store.hpp"
 
 #ifdef USE_UI
 #include <json_spirit.h>
@@ -40,8 +40,6 @@ public:
 
    typedef vm::node_val node_id;
    
-   typedef trie::delete_info delete_info;
-
 	DECLARE_DOUBLE_QUEUE_NODE(node);
 
 private:
@@ -50,27 +48,7 @@ private:
    node_id translation;
    
 private:
-   
-   typedef std::unordered_map<vm::predicate_id, tuple_trie*,
-               std::hash<vm::predicate_id>,
-               std::equal_to<vm::predicate_id>,
-               mem::allocator<std::pair<const vm::predicate_id,
-                                 tuple_trie*> > > pers_tuple_map;
-                                 
-   typedef std::unordered_map<vm::predicate_id, tuple_aggregate*,
-               std::hash<vm::predicate_id>,
-               std::equal_to<vm::predicate_id>,
-               mem::allocator<std::pair<const vm::predicate_id,
-                                 tuple_aggregate*> > > aggregate_map;
-	
-	// tuple database
-   pers_tuple_map tuples;
-   
-   // sets of tuple aggregates
-   aggregate_map aggs;
-   
-   tuple_trie* get_storage(vm::predicate*);
-   
+
    sched::threads_sched *owner = NULL;
 
    // marker that indicates if the node should not be stolen.
@@ -82,53 +60,13 @@ private:
    
 public:
 
-   void assert_tries(void);
-   
    inline node_id get_id(void) const { return id; }
    inline node_id get_translated_id(void) const { return translation; }
 
    inline void set_owner(sched::threads_sched *_owner) { owner = _owner; }
    inline sched::threads_sched *get_owner(void) const { return owner; }
    
-   bool add_tuple(vm::tuple*, vm::predicate *, const vm::derivation_count,
-         const vm::depth_t);
-   delete_info delete_tuple(vm::tuple *, vm::predicate *,
-         const vm::derivation_count, const vm::depth_t);
-   
-   db::agg_configuration* add_agg_tuple(vm::tuple*, vm::predicate *,
-         const vm::derivation_count, const vm::depth_t
-#ifdef GC_NODES
-         , vm::candidate_gc_nodes&
-#endif
-         );
-   db::agg_configuration* remove_agg_tuple(vm::tuple*, vm::predicate *,
-         const vm::derivation_count, const vm::depth_t
-#ifdef GC_NODES
-         , vm::candidate_gc_nodes&
-#endif
-         );
-   vm::full_tuple_list end_iteration(
-#ifdef GC_NODES
-         vm::candidate_gc_nodes&
-#endif
-         );
-   
-   void delete_by_index(vm::predicate*, const vm::match&
-#ifdef GC_NODES
-         , vm::candidate_gc_nodes&
-#endif
-         );
-   void delete_by_leaf(vm::predicate*, tuple_trie_leaf*, const vm::depth_t
-#ifdef GC_NODES
-         , vm::candidate_gc_nodes&
-#endif
-         );
-   void delete_all(const vm::predicate*);
-   
    void assert_end(void) const;
-   
-   db::tuple_trie::tuple_search_iterator match_predicate(const vm::predicate_id) const;
-  	db::tuple_trie::tuple_search_iterator match_predicate(const vm::predicate_id, const vm::match*) const;
    
    size_t count_total(const vm::predicate_id) const;
    size_t count_total_all(void) const;
@@ -178,8 +116,8 @@ public:
 	json_spirit::Value dump_json(void) const;
 #endif
 
-   // internal database of the node.
-   // manages rule execution.
+   // internal databases of the node.
+   persistent_store pers_store;
    db::linear_store linear;
    vm::temporary_store store;
    bool unprocessed_facts = false;
