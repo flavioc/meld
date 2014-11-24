@@ -21,9 +21,7 @@
 #include "vm/counter.hpp"
 
 // forward declaration
-namespace sched {
-	class threads_sched;
-}
+namespace sched { class threads_sched; }
 
 namespace vm {
 	
@@ -38,8 +36,6 @@ private:
 	std::list<runtime::rstring::ptr, mem::allocator<runtime::rstring::ptr> > free_rstring;
    std::list<runtime::struct1*, mem::allocator<runtime::struct1*> > free_struct1;
    
-   vm::bitmap rule_queue;
-	
    void purge_runtime_objects(void);
    full_tuple* search_for_negative_tuple_partial_agg(full_tuple *);
    full_tuple* search_for_negative_tuple_full_agg(full_tuple *);
@@ -161,7 +157,6 @@ public:
    
 	bool add_fact_to_node(vm::tuple *, vm::predicate *, const vm::derivation_count count = 1, const vm::depth_t depth = 0);
 	
-	void mark_active_rules(void);
    void add_to_aggregate(full_tuple *);
    void do_persistent_tuples(void);
    void process_persistent_tuple(full_tuple *, vm::tuple *);

@@ -502,8 +502,10 @@ threads_sched::set_node_cpu(db::node *node, const int_val val)
    if(!scheduling_mechanism)
       return;
 
-   if(val >= (int_val)All->NUM_THREADS)
+   if(val >= (int_val)All->NUM_THREADS) {
+      abort();
       return;
+   }
 
    threads_sched *new_owner(static_cast<threads_sched*>(All->SCHEDS[val]));
 

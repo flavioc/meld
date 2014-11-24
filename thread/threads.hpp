@@ -250,7 +250,7 @@ private:
 
    inline void make_node_static(db::node *tn, threads_sched *target)
    {
-      threads_sched *old(static_cast<threads_sched*>(tn->get_static()));
+      threads_sched *old(tn->get_static());
 
       if(old != NULL)
          old->static_nodes--;
@@ -261,7 +261,7 @@ private:
 
    inline void make_node_moving(db::node *tn)
    {
-      threads_sched *old(static_cast<threads_sched*>(tn->get_static()));
+      threads_sched *old(tn->get_static());
 
       if(old != NULL)
          old->static_nodes--;

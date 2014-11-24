@@ -105,22 +105,6 @@ state::setup(vm::predicate *pred, db::node *n, const derivation_count count, con
 #endif
 }
 
-void
-state::mark_active_rules(void)
-{
-   for(bitmap::iterator it(store->matcher.predicates.begin(theProgram->num_predicates()));
-         !it.end(); it++)
-   {
-      const predicate_id p(*it);
-      predicate *pred(theProgram->get_predicate(p));
-      rule_queue.set_bits_of_and_result(pred->get_rules_map(), store->matcher.active_bitmap,
-            theProgram->num_rules_next_uint());
-   }
-	
-   rule_queue.unset_bits(store->matcher.dropped_bitmap, theProgram->num_rules_next_uint());
-   store->matcher.clear_dropped_rules();
-}
-
 bool
 state::add_fact_to_node(vm::tuple *tpl, vm::predicate *pred, const vm::derivation_count count, const vm::depth_t depth)
 {
@@ -746,12 +730,13 @@ state::indexing_state_machine(db::node *no)
 void
 state::run_node(db::node *no)
 {
+	node = no;
+
 #ifdef DYNAMIC_INDEXING
    if(sched && sched->get_id() == 0)
       indexing_state_machine(no);
 #endif
 
-	node = no;
 #ifdef DEBUG_RULES
    cout << "================> NODE " << node->get_id() << " ===============\n";
 #endif
@@ -785,28 +770,14 @@ state::run_node(db::node *no)
 #endif
 	
    do_persistent_tuples();
-   {
-#ifdef CORE_STATISTICS
-		execution_time::scope s(stat.core_engine_time);
-#endif
-      mark_active_rules();
-   }
 
-	while(!rule_queue.empty(theProgram->num_rules_next_uint())) {
-		rule_id rule(rule_queue.remove_front(theProgram->num_rules_next_uint()));
+	while(!store->matcher.rule_queue.empty(theProgram->num_rules_next_uint())) {
+		rule_id rule(store->matcher.rule_queue.remove_front(theProgram->num_rules_next_uint()));
 		
 #ifdef DEBUG_RULES
       cout << "Run rule " << theProgram->get_rule(rule)->get_string() << endl;
 #endif
 
-		// delete rule and every check
-		{
-#ifdef CORE_STATISTICS
-			execution_time::scope s(stat.core_engine_time);
-#endif
-         store->matcher.clear_predicates();
-		}
-		
 		setup(NULL, node, 1, 0);
 		execute_rule(rule, *this);
 
@@ -822,15 +793,11 @@ state::run_node(db::node *no)
       }
       do_persistent_tuples();
 
-		{
-#ifdef CORE_STATISTICS
-			execution_time::scope s(stat.core_engine_time);
-#endif
-			mark_active_rules();
-		}
-
-      if(node->has_new_owner())
+      if(node->has_new_owner()) {
+         cout << "New owner!\n";
+         node->unprocessed_facts = true;
          break;
+      }
 	}
 
    assert(store->persistent_tuples.empty());
@@ -840,7 +807,9 @@ state::run_node(db::node *no)
       lstore->cleanup_index();
 #endif
    MUTEX_UNLOCK(node->database_lock, internal_lock_data);
+
    sync();
+
 #ifdef GC_NODES
    for(auto it(gc_nodes.begin()); it != gc_nodes.end(); ++it) {
       db::node *n((db::node*)*it);
@@ -891,8 +860,6 @@ state::state(sched::threads_sched *_sched):
    , facts_sent(0)
 #endif
 {
-   bitmap::create(rule_queue, theProgram->num_rules_next_uint());
-   rule_queue.clear(theProgram->num_rules_next_uint());
 #ifdef INSTRUMENTATION
    instr_facts_consumed = 0;
    instr_facts_derived = 0;
@@ -930,10 +897,6 @@ state::~state(void)
 	if(sched != NULL)
       stat.print(cout);
 #endif
-   if(sched != NULL) {
-      bitmap::destroy(rule_queue, theProgram->num_rules_next_uint());
-      assert(rule_queue.empty(theProgram->num_rules_next_uint()));
-   }
    if(match_counter) {
       //cout << "==================================\n";
       //match_counter->print(theProgram->get_total_arguments());

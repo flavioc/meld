@@ -70,11 +70,11 @@ compiled:
 	@rm -f code/*.ast code/*.code
 
 update-queens:
-	python ../scripts/generate_8queens.py 9 v > progs/data/8queens-data9.meld
-	python ../scripts/generate_8queens.py 10 v > progs/data/8queens-data10.meld
-	python ../scripts/generate_8queens.py 11 v > progs/data/8queens-data11.meld
-	python ../scripts/generate_8queens.py 12 v > progs/data/8queens-data12.meld
-	python ../scripts/generate_8queens.py 13 v > progs/data/8queens-data13.meld
+	python ../scripts/generate_8queens.py 9 h > progs/data/8queens-data9.meld
+	python ../scripts/generate_8queens.py 10 h > progs/data/8queens-data10.meld
+	python ../scripts/generate_8queens.py 11 h > progs/data/8queens-data11.meld
+	python ../scripts/generate_8queens.py 12 h > progs/data/8queens-data12.meld
+	python ../scripts/generate_8queens.py 13 h > progs/data/8queens-data13.meld
 	touch progs/8queens-9.meld
 	touch progs/8queens-10.meld
 	touch progs/8queens-11.meld
@@ -96,6 +96,9 @@ update-ht:
 	python ../scripts/generate_heat_grid.py 120 42 0.8 1.0 1.0 100.0 5.0 > progs/data/heat-transfer-120.meld
 	git add progs/data/heat-transfer-120.meld
 	touch progs/new-heat-transfer-120.meld
+	python ../scripts/generate_heat_grid.py 200 70 0.8 1.0 1.0 100.0 5.0 > progs/data/heat-transfer-200.meld
+	git add progs/data/heat-transfer-200.meld
+	touch progs/new-heat-transfer-200.meld
 
 plots:
 	@bash ../scripts/plots/plot_instrumentation.sh instrumentation_files

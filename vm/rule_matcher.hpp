@@ -18,56 +18,130 @@ private:
    utils::byte *rules; // availability statistics per rule
    pred_count *predicate_count; // number of tuples per predicate
 
-	void register_predicate_availability(const predicate *);
-	void register_predicate_unavailability(const predicate *);
+	void register_predicate_unavailability(const predicate *pred) {
+      for(predicate::rule_iterator it(pred->begin_rules()), end(pred->end_rules()); it != end; it++) {
+         vm::rule_id rule_id(*it);
+         vm::rule *rule(theProgram->get_rule(rule_id));
+
+         if(rule->as_persistent())
+            continue;
+
+         if(rules[rule_id] == rule->num_predicates()) {
+            active_bitmap.unset_bit(rule_id);
+            rule_queue.unset_bit(rule_id);
+         }
+
+         rules[rule_id]--;
+      }
+   }
+
+	void register_predicate_availability(const predicate *pred) {
+      for(predicate::rule_iterator it(pred->begin_rules()), end(pred->end_rules()); it != end; it++) {
+         vm::rule_id rule_id(*it);
+         vm::rule *rule(theProgram->get_rule(rule_id));
+
+         if(rule->as_persistent())
+            continue;
+
+         rules[rule_id]++;
+         assert(rules[rule_id] <= rule->num_predicates());
+         if(rules[rule_id] == rule->num_predicates()) {
+            active_bitmap.set_bit(rule_id);
+            rule_queue.set_bit(rule_id);
+         }
+      }
+   }
 
 public:
 
+   inline void register_predicate_update(const predicate *pred)
+   {
+      for(predicate::rule_iterator it(pred->begin_rules()), end(pred->end_rules()); it != end; it++) {
+         vm::rule_id rule_id(*it);
+         vm::rule *rule(theProgram->get_rule(rule_id));
+
+         if(rule->as_persistent())
+            continue;
+
+         if(rules[rule_id] == rule->num_predicates())
+            rule_queue.set_bit(rule_id);
+      }
+   }
+
+   bitmap rule_queue; // rules next to run
    bitmap active_bitmap; // rules that may run
-   bitmap dropped_bitmap; // rules that are no longer runnable
-   bitmap predicates; // new generated predicates
 
    // returns true if we did not have any tuples of this predicate
-	bool register_tuple(predicate *, const derivation_count,
-         const bool is_new = true);
+	bool register_tuple(const predicate *pred, const derivation_count count,
+         const bool is_new = true)
+   {
+      const vm::predicate_id id(pred->get_id());
+      bool ret(false);
+      if(is_new) {
+         if(predicate_count[id] == 0) {
+            ret = true;
+            register_predicate_availability(pred);
+         } else
+            register_predicate_update(pred);
+      }
+
+      predicate_count[id] += count;
+      return ret;
+   }
 
 	// returns true if now we do not have any tuples of this predicate
-	bool deregister_tuple(predicate *, const derivation_count);
+	bool deregister_tuple(const predicate *pred, const derivation_count count)
+   {
+      const vm::predicate_id id(pred->get_id());
+      bool ret(false);
+      
+      assert(count > 0);
+      assert(predicate_count[id] >= (pred_count)count);
+
+      if(predicate_count[id] == (pred_count)count) {
+         ret = true;
+         register_predicate_unavailability(pred);
+      }
+
+      predicate_count[id] -= count;
+      return ret;
+   }
 
    // force a count of predicates
-   void set_count(predicate *, const pred_count);
+   void set_count(const predicate *pred, const pred_count count)
+   {
+      const vm::predicate_id id(pred->get_id());
+      if(predicate_count[id] == 0) {
+         if(count > 0)
+            register_predicate_availability(pred);
+      } else {
+         // > 0
+         if(count == 0)
+            register_predicate_unavailability(pred);
+         else
+            register_predicate_update(pred);
+      }
+      predicate_count[id] = count;
+   }
 
    // check if the counters are totally empty.
-   bool is_empty(void) const;
+   inline bool is_empty(void) const {
+      for(size_t i(0); i < theProgram->num_predicates(); ++i) {
+         if(predicate_count[i])
+            return false;
+      }
+      return true;
+   }
 
    inline pred_count get_count(const vm::predicate_id id) const
    {
       return predicate_count[id];
    }
 
-   inline void mark(const vm::predicate *pred)
-   {
-      predicates.set_bit(pred->get_id());
-   }
-
-   inline void clear_predicates(void)
-   {
-      predicates.clear(theProgram->num_predicates_next_uint());
-   }
-
-	void clear_dropped_rules(void)
-	{
-      dropped_bitmap.clear(theProgram->num_rules_next_uint());
-	}
-
    bitmap::iterator active_rules_iterator(void) {
       return active_bitmap.begin(theProgram->num_rules());
    }
 
-   bitmap::iterator dropped_rules_iterator(void) {
-      return dropped_bitmap.begin(theProgram->num_rules());
-   }
-	
    rule_matcher(void);
    ~rule_matcher(void);
 };

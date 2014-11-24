@@ -78,7 +78,7 @@ execute_alloc(const pcounter& pc, state& state)
    state.facts_derived++;
 #endif
 #ifdef INSTRUMENTATION
-      state.instr_facts_derived++;
+   state.instr_facts_derived++;
 #endif
 }
 
@@ -1346,7 +1346,7 @@ execute_update(pcounter pc, state& state)
    tpl->print(cout, pred);
    cout << endl;
 #endif
-   state.store->matcher.mark(pred);
+   state.store->matcher.register_predicate_update(pred);
 }
 
 static inline void
@@ -1455,6 +1455,8 @@ do_call(external_function *f, argument *args)
          return ((external_function_ptr2)f->get_fun_ptr())(args[0], args[1]);
       case 3:
          return ((external_function_ptr3)f->get_fun_ptr())(args[0], args[1], args[2]);
+      case 4:
+         return ((external_function_ptr4)f->get_fun_ptr())(args[0], args[1], args[2], args[3]);
       default:
          throw vm_exec_error("vm does not support external functions with more than 3 arguments");
    }
