@@ -8,7 +8,6 @@
 #include "vm/program.hpp"
 #include "vm/predicate.hpp"
 #include "vm/full_tuple.hpp"
-#include "vm/rule_matcher.hpp"
 #include "utils/intrusive_list.hpp"
 #include "vm/bitmap.hpp"
 
@@ -45,8 +44,6 @@ struct temporary_store
       // queue of persistent tuples
       full_tuple_list persistent_tuples;
 
-      vm::rule_matcher matcher;
-
       inline tuple_list* get_generated(const vm::predicate_id p)
       {
          return generated + p;
@@ -68,26 +65,6 @@ struct temporary_store
 
          ls->push_back(tpl);
 #endif
-      }
-
-      inline void register_fact(full_tuple *stpl)
-      {
-         register_tuple_fact(stpl->get_predicate(), stpl->get_count());
-      }
-
-      inline void register_tuple_fact(vm::predicate *pred, const vm::ref_count count)
-      {
-         matcher.register_tuple(pred, count);
-      }
-
-      inline void deregister_fact(full_tuple *stpl)
-      {
-         deregister_tuple_fact(stpl->get_predicate(), stpl->get_count());
-      }
-
-      inline void deregister_tuple_fact(vm::predicate *pred, const vm::ref_count count)
-      {
-         matcher.deregister_tuple(pred, count);
       }
 
       inline void add_generated(vm::tuple *tpl, vm::predicate *pred)

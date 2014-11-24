@@ -309,15 +309,15 @@ state::process_incoming_tuples(void)
       vm::tuple *tpl(store->incoming.pop_front());
       vm::predicate *pred(tpl->get_predicate());
       store->register_tuple_fact(pred, 1);
-      lstore->add_fact(tpl, pred, store->matcher);
+      lstore->add_fact(tpl, pred, node->matcher);
    }
 #else
    for(size_t i(0); i < theProgram->num_predicates(); ++i) {
       utils::intrusive_list<vm::tuple> *ls(store->incoming + i);
       if(!ls->empty()) {
          vm::predicate *pred(theProgram->get_predicate(i));
-         store->register_tuple_fact(pred, ls->get_size());
-         lstore->increment_database(pred, ls, store->matcher);
+         node->matcher.register_tuple(pred, ls->get_size());
+         lstore->increment_database(pred, ls, node->matcher);
       }
    }
 #endif
@@ -387,7 +387,7 @@ state::process_persistent_tuple(full_tuple *stpl, vm::tuple *tpl)
       if(pred->is_reused_pred()) {
          node->add_linear_fact(stpl->get_tuple(), pred);
       } else {
-         store->matcher.register_tuple(pred, stpl->get_count(), is_new);
+         node->matcher.register_tuple(pred, stpl->get_count(), is_new);
 
          if(!is_new) {
             vm::tuple::destroy(tpl, pred
@@ -434,7 +434,7 @@ state::process_persistent_tuple(full_tuple *stpl, vm::tuple *tpl)
                }
             }
          }
-         store->matcher.set_count(pred, deleter.trie_size());
+         node->matcher.set_count(pred, deleter.trie_size());
       }
       vm::full_tuple::wipeout(stpl
 #ifdef GC_NODES
@@ -771,8 +771,8 @@ state::run_node(db::node *no)
 	
    do_persistent_tuples();
 
-	while(!store->matcher.rule_queue.empty(theProgram->num_rules_next_uint())) {
-		rule_id rule(store->matcher.rule_queue.remove_front(theProgram->num_rules_next_uint()));
+	while(!node->matcher.rule_queue.empty(theProgram->num_rules_next_uint())) {
+		rule_id rule(node->matcher.rule_queue.remove_front(theProgram->num_rules_next_uint()));
 		
 #ifdef DEBUG_RULES
       cout << "Run rule " << theProgram->get_rule(rule)->get_string() << endl;
@@ -787,7 +787,7 @@ state::run_node(db::node *no)
             utils::intrusive_list<vm::tuple> *gen(store->generated + i);
             if(!gen->empty()) {
                vm::predicate *pred(theProgram->get_predicate(i));
-               lstore->increment_database(pred, gen, store->matcher);
+               lstore->increment_database(pred, gen, node->matcher);
             }
          }
       }

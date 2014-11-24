@@ -73,7 +73,7 @@ public:
    inline bool garbage_collect(void) const
    {
 #ifdef GC_NODES
-      return refs == 0 && store.matcher.is_empty() && !unprocessed_facts;
+      return refs == 0 && matcher.is_empty() && !unprocessed_facts;
 #else
       return false;
 #endif
@@ -120,6 +120,7 @@ public:
    persistent_store pers_store;
    db::linear_store linear;
    vm::temporary_store store;
+   vm::rule_matcher matcher;
    bool unprocessed_facts = false;
    utils::mutex main_lock;
    utils::mutex database_lock;
@@ -145,8 +146,8 @@ public:
 
    inline void add_linear_fact(vm::tuple *tpl, vm::predicate *pred)
    {
-      store.register_tuple_fact(pred, 1);
-      linear.add_fact(tpl, pred, store.matcher);
+      matcher.register_tuple(pred, 1);
+      linear.add_fact(tpl, pred, matcher);
    }
 
    inline void inner_add_work_myself(vm::tuple *tpl, vm::predicate *pred,
@@ -157,7 +158,7 @@ public:
       else if(pred->is_persistent_pred() || pred->is_reused_pred()) {
          vm::full_tuple *stpl(new vm::full_tuple(tpl, pred, count, depth));
          store.add_persistent_fact(stpl);
-         store.register_fact(stpl);
+         matcher.register_full_tuple(stpl);
       } else
          add_linear_fact(tpl, pred);
    }
@@ -192,7 +193,7 @@ public:
             store.add_action_fact(x);
          else if(pred->is_persistent_pred() || pred->is_reused_pred()) {
             store.add_persistent_fact(x);
-            store.register_fact(x);
+            matcher.register_full_tuple(x);
          } else {
             add_linear_fact(x->get_tuple(), pred);
             delete x;

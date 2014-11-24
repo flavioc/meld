@@ -182,7 +182,7 @@ execute_enqueue_linear0(tuple *tuple, predicate *pred, state& state)
 #endif
 
    state.store->add_generated(tuple, pred);
-   state.store->register_tuple_fact(pred, 1);
+   state.node->matcher.register_tuple(pred, 1);
    state.generated_facts = true;
    state.linear_facts_generated++;
 }
@@ -1323,7 +1323,7 @@ execute_remove(pcounter pc, state& state)
       state.removed.insert(tpl);
 
    if(state.count > 0) {
-      state.store->deregister_tuple_fact(pred, state.count);
+      state.node->matcher.deregister_tuple(pred, state.count);
       if(pred->is_reused_pred())
          state.store->persistent_tuples.push_back(new full_tuple(tpl, pred, -1, state.depth));
       state.linear_facts_consumed++;
@@ -1346,7 +1346,7 @@ execute_update(pcounter pc, state& state)
    tpl->print(cout, pred);
    cout << endl;
 #endif
-   state.store->matcher.register_predicate_update(pred);
+   state.node->matcher.register_predicate_update(pred);
 }
 
 static inline void

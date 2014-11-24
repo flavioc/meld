@@ -4,6 +4,7 @@
 
 #include "vm/predicate.hpp"
 #include "vm/tuple.hpp"
+#include "vm/full_tuple.hpp"
 #include "vm/bitmap.hpp"
 #include "vm/all.hpp"
 
@@ -102,6 +103,16 @@ public:
 
       predicate_count[id] -= count;
       return ret;
+   }
+
+   inline void register_full_tuple(const full_tuple *stpl)
+   {
+      register_tuple(stpl->get_predicate(), stpl->get_count());
+   }
+
+   inline void deregister_full_tuple(const full_tuple *stpl)
+   {
+      deregister_tuple(stpl->get_predicate(), stpl->get_count());
    }
 
    // force a count of predicates
