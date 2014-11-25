@@ -103,6 +103,16 @@ struct hash_table
          return total;
       }
 
+      inline bool empty(void) const
+      {
+         for(size_t i(0); i < size_table; ++i) {
+            tuple_list *ls(table + i);
+            if(!ls->empty())
+               return false;
+         }
+         return true;
+      }
+
       size_t insert(vm::tuple *);
       size_t insert_front(vm::tuple *);
 

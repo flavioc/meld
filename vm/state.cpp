@@ -284,7 +284,7 @@ state::process_incoming_tuples(void)
       utils::intrusive_list<vm::tuple> *ls(store->incoming + i);
       if(!ls->empty()) {
          vm::predicate *pred(theProgram->get_predicate(i));
-         node->matcher.register_tuple(pred, ls->get_size());
+         node->matcher.new_linear_fact(pred);
          lstore->increment_database(pred, ls);
       }
    }
@@ -345,7 +345,7 @@ state::process_persistent_tuple(full_tuple *stpl, vm::tuple *tpl)
       if(pred->is_reused_pred()) {
          node->add_linear_fact(stpl->get_tuple(), pred);
       } else {
-         node->matcher.register_tuple(pred, stpl->get_count(), is_new);
+         node->matcher.new_persistent_fact(pred);
 
          if(!is_new)
             vm::tuple::destroy(tpl, pred, gc_nodes);
@@ -379,7 +379,7 @@ state::process_persistent_tuple(full_tuple *stpl, vm::tuple *tpl)
                }
             }
          }
-         node->matcher.set_count(pred, deleter.trie_size());
+         node->matcher.new_persistent_count(pred, deleter.trie_size());
       }
       vm::full_tuple::wipeout(stpl, gc_nodes);
    }
@@ -728,6 +728,7 @@ state::run_node(db::node *no)
             utils::intrusive_list<vm::tuple> *gen(store->generated + i);
             if(!gen->empty()) {
                vm::predicate *pred(theProgram->get_predicate(i));
+               node->matcher.new_linear_fact(pred);
                lstore->increment_database(pred, gen);
             }
          }

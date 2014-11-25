@@ -135,7 +135,7 @@ public:
 
    inline void add_linear_fact(vm::tuple *tpl, vm::predicate *pred)
    {
-      matcher.register_tuple(pred, 1);
+      matcher.new_linear_fact(pred);
       linear.add_fact(tpl, pred);
    }
 
@@ -147,7 +147,6 @@ public:
       else if(pred->is_persistent_pred() || pred->is_reused_pred()) {
          vm::full_tuple *stpl(new vm::full_tuple(tpl, pred, count, depth));
          store.add_persistent_fact(stpl);
-         matcher.register_full_tuple(stpl);
       } else
          add_linear_fact(tpl, pred);
    }
@@ -182,7 +181,6 @@ public:
             store.add_action_fact(x);
          else if(pred->is_persistent_pred() || pred->is_reused_pred()) {
             store.add_persistent_fact(x);
-            matcher.register_full_tuple(x);
          } else {
             add_linear_fact(x->get_tuple(), pred);
             delete x;

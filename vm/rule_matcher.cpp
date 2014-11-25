@@ -13,14 +13,14 @@ namespace vm
 
 rule_matcher::rule_matcher(void)
 {
-   predicate_count = mem::allocator<pred_count>().allocate(theProgram->num_predicates());
-   memset(predicate_count, 0, theProgram->num_predicates() * sizeof(pred_count));
-
    rules = mem::allocator<utils::byte>().allocate(theProgram->num_rules());
    memset(rules, 0, sizeof(utils::byte) * theProgram->num_rules());
 
    bitmap::create(rule_queue, theProgram->num_rules_next_uint());
    rule_queue.clear(theProgram->num_rules_next_uint());
+
+   bitmap::create(predicate_existence, theProgram->num_predicates_next_uint());
+   predicate_existence.clear(theProgram->num_predicates_next_uint());
 
 #ifndef NDEBUG
    for(rule_id rid(0); rid < theProgram->num_rules(); ++rid)
@@ -33,10 +33,9 @@ rule_matcher::rule_matcher(void)
 
 rule_matcher::~rule_matcher(void)
 {
-   mem::allocator<pred_count>().deallocate(predicate_count, theProgram->num_predicates());
    mem::allocator<utils::byte>().deallocate(rules, theProgram->num_rules());
    bitmap::destroy(rule_queue, theProgram->num_rules_next_uint());
-   assert(rule_queue.empty(theProgram->num_rules_next_uint()));
+   bitmap::destroy(predicate_existence, theProgram->num_predicates_next_uint());
 }
 
 }

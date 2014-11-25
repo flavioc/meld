@@ -157,7 +157,6 @@ execute_enqueue_linear0(tuple *tuple, predicate *pred, state& state)
 #endif
 
    state.store->add_generated(tuple, pred);
-   state.node->matcher.register_tuple(pred, 1);
    state.generated_facts = true;
    state.linear_facts_generated++;
 }
@@ -1032,6 +1031,13 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
          } else {
             it = local_tuples->erase(it);
             vm::tuple::destroy(match_tuple, pred, state.gc_nodes);
+            if(tbl) {
+               if(local_tuples->empty() && tbl->empty())
+                  state.node->matcher.empty_predicate(pred);
+            } else {
+               if(local_tuples->empty())
+                  state.node->matcher.empty_predicate(pred);
+            }
             next_iter = false;
          }
       }
@@ -1262,12 +1268,10 @@ execute_remove(pcounter pc, state& state)
 #endif
    assert(tpl != nullptr);
 		
-   // the else case for deregistering the tuple is done in execute_iter
    if(state.hash_removes)
       state.removed.insert(tpl);
 
    if(state.count > 0) {
-      state.node->matcher.deregister_tuple(pred, state.count);
       if(pred->is_reused_pred())
          state.store->persistent_tuples.push_back(new full_tuple(tpl, pred, -1, state.depth));
       state.linear_facts_consumed++;

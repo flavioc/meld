@@ -54,13 +54,6 @@ struct linear_store
          return table;
       }
 
-      inline tuple_list* create_list(const vm::predicate *pred)
-      {
-         tuple_list *add(get_list(pred->get_id()));
-         mem::allocator<tuple_list>().construct(add);
-         return add;
-      }
-
       inline tuple_list* get_list(const vm::predicate_id p)
       {
          return (tuple_list*)(data + ITEM_SIZE * p);
@@ -146,6 +139,10 @@ struct linear_store
       }
 
    public:
+
+      inline bool empty(const vm::predicate *pred) const {
+         return get_list(pred->get_id())->empty();
+      }
 
       inline tuple_list* get_linked_list(const vm::predicate_id p) { return get_list(p); }
       inline const tuple_list* get_linked_list(const vm::predicate_id p) const { return get_list(p); }
