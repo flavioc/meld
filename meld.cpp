@@ -8,6 +8,7 @@
 #include "vm/state.hpp"
 #include "vm/exec.hpp"
 #include "interface.hpp"
+#include "version.hpp"
 
 using namespace utils;
 using namespace process;
@@ -19,8 +20,15 @@ static char *data_file = NULL;
 static char *progname = NULL;
 
 static void
+version(void)
+{
+   cout << "Linear Meld interpreter " << MAJOR_VERSION << "." << MINOR_VERSION << " (C++ " << __cplusplus << ")" << endl;
+}
+
+static void
 help(void)
 {
+   version();
 	cerr << "meld: execute meld program" << endl;
 	cerr << "meld -f <program file> -c <scheduler> [options] -- arg1 arg2 ... argN" << endl;
 	cerr << "\t-f <name>\tmeld program" << endl;
@@ -127,6 +135,7 @@ main(int argc, char **argv)
    vm::machine_arguments margs(read_arguments(argc, argv));
 
    if(program == NULL) {
+      version();
 		cerr << "Error: please provide a byte-code file to run..." << endl;
       return EXIT_FAILURE;
    }
