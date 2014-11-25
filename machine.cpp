@@ -11,9 +11,6 @@
 #include "stat/stat.hpp"
 #include "utils/fs.hpp"
 #include "interface.hpp"
-#ifdef USE_SIM
-#include "sched/sim.hpp"
-#endif
 #include "thread/threads.hpp"
 #include "runtime/objs.hpp"
 
@@ -30,11 +27,7 @@ namespace process
 {
    
 void
-machine::run_action(sched::threads_sched *sched, node* node, vm::tuple *tpl, vm::predicate *pred
-#ifdef GC_NODES
-      , candidate_gc_nodes& gc_nodes
-#endif
-      )
+machine::run_action(sched::threads_sched *sched, node* node, vm::tuple *tpl, vm::predicate *pred, candidate_gc_nodes& gc_nodes)
 {
 	const predicate_id pid(pred->get_id());
 	
@@ -42,32 +35,8 @@ machine::run_action(sched::threads_sched *sched, node* node, vm::tuple *tpl, vm:
 	
    switch(pid) {
       case SETCOLOR_PREDICATE_ID:
-#ifdef USE_SIM
-      if(state::SIM) {
-			((sim_sched*)sched)->set_color(node, tpl->get_int(0), tpl->get_int(1), tpl->get_int(2));
-      }
-#endif
       break;
       case SETCOLOR2_PREDICATE_ID:
-#ifdef USE_SIM
-      if(state::SIM) {
-         int r(0), g(0), b(0);
-         switch(tpl->get_int(0)) {
-            case 0: r = 255; break; // RED
-            case 1: r = 255; g = 160; break; // ORANGE
-            case 2: r = 255; g = 247; break; // YELLOW
-            case 3: g = 255; break; // GREEN
-            case 4: g = 191; b = 255; break; // AQUA
-            case 5: b = 255; break; // BLUE
-            case 6: r = 255; g = 255; b = 255; break; // WHITE
-            case 7: r = 139; b = 204; break; // PURPLE
-            case 8: r = 255; g = 192; b = 203; break; // PINK
-            case -1: return; break;
-            default: break;
-         }
-			((sim_sched*)sched)->set_color(node, r, g, b);
-      }
-#endif
       break;
       case SETEDGELABEL_PREDICATE_ID:
       break;
@@ -85,11 +54,7 @@ machine::run_action(sched::threads_sched *sched, node* node, vm::tuple *tpl, vm:
       break;
    }
 
-   vm::tuple::destroy(tpl, pred
-#ifdef GC_NODES
-         , gc_nodes
-#endif
-         );
+   vm::tuple::destroy(tpl, pred, gc_nodes);
 }
 
 void
@@ -216,12 +181,10 @@ machine::start(void)
    for(size_t i(1); i < all->NUM_THREADS; ++i)
       threads[i]->join();
 
-#ifdef GC_NODES
    // join dynamic node information
    for(size_t i(1); i < all->NUM_THREADS; ++i)
       all->SCHEDS[0]->merge_new_nodes(*(all->SCHEDS[i]));
    all->SCHEDS[0]->commit_nodes();
-#endif
 
 #if 0
    cout << "Total Facts: " << this->all->DATABASE->total_facts() << endl;
