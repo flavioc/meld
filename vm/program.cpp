@@ -14,9 +14,6 @@
 #include "vm/external.hpp"
 #include "vm/priority.hpp"
 #include "version.hpp"
-#ifdef USE_UI
-#include "ui/macros.hpp"
-#endif
 
 using namespace std;
 using namespace db;
@@ -596,41 +593,6 @@ program::print_predicates(ostream& cout) const
       cout << exported_predicates[i] << endl;
    }
 }
-
-#ifdef USE_UI
-using namespace json_spirit;
-
-Value
-program::dump_json(void) const
-{
-	Array preds_json;
-
-	for(size_t i(0); i < num_predicates(); ++i) {
-		Object obj;
-		predicate *pred(get_predicate((predicate_id)i));
-
-		UI_ADD_FIELD(obj, "name", pred->get_name());
-
-		Array field_types;
-
-		for(size_t j(0); j < pred->num_fields(); ++j) {
-         UI_ADD_ELEM(field_types, pred->get_field_type(j)->string());
-		}
-		UI_ADD_FIELD(obj, "fields", field_types);
-
-		UI_ADD_FIELD(obj, "route",
-				pred->is_route_pred() ? UI_YES : UI_NIL);
-		UI_ADD_FIELD(obj, "reverse_route",
-				pred->is_reverse_route_pred() ? UI_YES : UI_NIL);
-		UI_ADD_FIELD(obj, "linear",
-			pred->is_linear_pred() ? UI_YES : UI_NIL);
-
-		UI_ADD_ELEM(preds_json, obj);
-	}
-
-	return preds_json;
-}
-#endif
 
 predicate*
 program::get_predicate_by_name(const string& name) const

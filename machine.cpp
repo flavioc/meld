@@ -11,10 +11,6 @@
 #include "stat/stat.hpp"
 #include "utils/fs.hpp"
 #include "interface.hpp"
-#ifdef USE_UI
-#include "sched/serial_ui.hpp"
-#include "ui/manager.hpp"
-#endif
 #ifdef USE_SIM
 #include "sched/sim.hpp"
 #endif
@@ -46,11 +42,6 @@ machine::run_action(sched::threads_sched *sched, node* node, vm::tuple *tpl, vm:
 	
    switch(pid) {
       case SETCOLOR_PREDICATE_ID:
-#ifdef USE_UI
-      if(state::UI) {
-         LOG_SET_COLOR(node, tpl->get_int(0), tpl->get_int(1), tpl->get_int(2));
-      }
-#endif
 #ifdef USE_SIM
       if(state::SIM) {
 			((sim_sched*)sched)->set_color(node, tpl->get_int(0), tpl->get_int(1), tpl->get_int(2));
@@ -79,11 +70,6 @@ machine::run_action(sched::threads_sched *sched, node* node, vm::tuple *tpl, vm:
 #endif
       break;
       case SETEDGELABEL_PREDICATE_ID:
-#ifdef USE_UI
-      if(state::UI) {
-         LOG_SET_EDGE_LABEL(node->get_id(), tpl->get_node(0), tpl->get_string(1)->get_content());
-      }
-#endif
       break;
       case WRITE_STRING_PREDICATE_ID: {
          runtime::rstring::ptr s(tpl->get_string(0));

@@ -4,10 +4,6 @@
 #include <ostream>
 #include <unordered_set>
 
-#ifdef USE_UI
-#include <json_spirit.h>
-#endif
-
 #include "vm/defs.hpp"
 #include "vm/predicate.hpp"
 #include "runtime/objs.hpp"
@@ -83,9 +79,6 @@ public:
 
    std::string to_str(const vm::predicate *) const;
    void print(std::ostream&, const vm::predicate*) const;
-#ifdef USE_UI
-	json_spirit::Value dump_json(const vm::predicate*) const;
-#endif
    
    tuple *copy_except(vm::predicate *, const field_num) const;
    tuple *copy(vm::predicate *) const;

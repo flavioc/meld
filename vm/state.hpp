@@ -105,9 +105,6 @@ public:
    uint64_t facts_consumed;
    uint64_t facts_sent;
 #endif
-#ifdef USE_UI
-   static bool UI;
-#endif
 
 #define define_get(WHAT, RET, BODY) \
    inline RET get_ ## WHAT (const reg_num& num) const { BODY; }

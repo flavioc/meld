@@ -13,11 +13,6 @@
 #include "vm/program.hpp"
 #include "utils/mutex.hpp"
 
-#ifdef USE_UI
-#include <json_spirit.h>
-#include "ui/macros.hpp"
-#endif
-
 namespace db
 {
 
@@ -80,9 +75,6 @@ public:
    size_t total_facts(void) const;
    void print_db(std::ostream&) const;
    void dump_db(std::ostream&) const;
-#ifdef USE_UI
-	json_spirit::Value dump_json(void) const;
-#endif
    
    void print(std::ostream&) const;
    

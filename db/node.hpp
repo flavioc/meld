@@ -25,10 +25,6 @@
 #include "queue/intrusive.hpp"
 #include "db/persistent_store.hpp"
 
-#ifdef USE_UI
-#include <json_spirit.h>
-#endif
-
 namespace sched { class threads_sched; }
 
 namespace db {
@@ -108,9 +104,6 @@ public:
 
    void print(std::ostream&) const;
    void dump(std::ostream&) const;
-#ifdef USE_UI
-	json_spirit::Value dump_json(void) const;
-#endif
 
    // internal databases of the node.
    persistent_store pers_store;

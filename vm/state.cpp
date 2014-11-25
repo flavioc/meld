@@ -18,10 +18,6 @@ using namespace utils;
 namespace vm
 {
 
-#ifdef USE_UI
-bool state::UI = false;
-#endif
-
 #ifdef DYNAMIC_INDEXING
 static volatile deterministic_timestamp indexing_epoch(0);
 static size_t run_node_calls(0);

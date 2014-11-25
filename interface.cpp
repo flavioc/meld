@@ -11,9 +11,6 @@
 #include "utils/time.hpp"
 #include "utils/fs.hpp"
 #include "machine.hpp"
-#ifdef USE_UI
-#include "ui/manager.hpp"
-#endif
 #include "vm/reader.hpp"
 
 using namespace process;
@@ -115,12 +112,6 @@ run_program(int argc, char **argv, const char *program, const vm::machine_argume
          tm.start();
 
       machine mac(program, num_threads, margs, data_file == NULL ? string("") : string(data_file));
-
-#ifdef USE_UI
-      if(ui::man != NULL) {
-         ui::man->set_all(mac.get_all());
-      }
-#endif
 
       mac.start();
 

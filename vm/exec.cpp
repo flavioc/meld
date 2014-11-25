@@ -14,9 +14,6 @@
 #include "utils/mutex.hpp"
 #include "thread/threads.hpp"
 #include "vm/priority.hpp"
-#ifdef USE_UI
-#include "ui/manager.hpp"
-#endif
 #ifdef USE_JIT
 #include "jit/build.hpp"
 #endif
@@ -99,11 +96,6 @@ execute_add_linear(pcounter& pc, state& state)
    assert(!pred->is_action_pred());
    assert(pred->is_linear_pred());
 
-#ifdef USE_UI
-   if(state::UI) {
-      LOG_LINEAR_DERIVATION(state.node, tuple);
-   }
-#endif
 #ifdef DEBUG_SENDS
    cout << "\tadd linear ";
    tuple->print(cout, pred);
@@ -116,15 +108,6 @@ execute_add_linear(pcounter& pc, state& state)
 static inline void
 execute_add_persistent0(tuple *tpl, predicate *pred, state& state)
 {
-#ifdef USE_UI
-   if(state::UI) {
-      if(tpl->is_linear()) {
-         LOG_LINEAR_DERIVATION(state.node, tpl);
-      } else {
-         LOG_PERSISTENT_DERIVATION(state.node, tpl);
-      }
-   }
-#endif
 #ifdef DEBUG_SENDS
    cout << "\tadd persistent ";
    tpl->print(cout, pred);
@@ -223,11 +206,6 @@ execute_send(const pcounter& pc, state& state)
       cout << ss.str();
    }
 #endif
-#ifdef USE_UI
-   if(state::UI) {
-      LOG_TUPLE_SEND(state.node, All->DATABASE->find_node((node::node_id)dest_val), tuple);
-   }
-#endif
 #ifdef USE_REAL_NODES
    if(state.node == (db::node*)dest_val)
 #else
@@ -293,11 +271,6 @@ execute_send_delay(const pcounter& pc, state& state)
       cout << "\t";
       tuple->print(cout, pred);
       cout << " -> " << dest_val << endl;
-#endif
-#ifdef USE_UI
-      if(state::UI) {
-         LOG_TUPLE_SEND(state.node, All->DATABASE->find_node((node::node_id)dest_val), tuple);
-      }
 #endif
 #ifdef USE_REAL_NODES
       db::node *node((db::node*)dest_val);
@@ -1275,11 +1248,6 @@ execute_remove(pcounter pc, state& state)
    vm::tuple *tpl(state.get_tuple(reg));
    vm::predicate *pred(state.preds[reg]);
 
-#ifdef USE_UI
-   if(state::UI) {
-      LOG_LINEAR_CONSUMPTION(state.node, tpl);
-   }
-#endif
 #ifdef CORE_STATISTICS
    state.stat.stat_predicate_success[pred->get_id()]++;
 #endif
@@ -1749,13 +1717,6 @@ execute_rule(const pcounter& pc, state& state)
 
    state.current_rule = rule_id;
 
-#ifdef USE_UI
-   if(state::UI) {
-      vm::rule *rule(theProgram->get_rule(state.current_rule));
-      LOG_RULE_START(state.node, rule);
-   }
-#endif
-
 #ifdef CORE_STATISTICS
 	if(state.stat.stat_rules_activated == 0 && state.stat.stat_inside_rule) {
 		state.stat.stat_rules_failed++;
@@ -1770,13 +1731,6 @@ execute_rule_done(const pcounter& pc, state& state)
 {
    (void)pc;
    (void)state;
-
-#ifdef USE_UI
-   if(state::UI) {
-      vm::rule *rule(theProgram->get_rule(state.current_rule));
-      LOG_RULE_APPLIED(state.node, rule);
-   }
-#endif
 
 #ifdef CORE_STATISTICS
 	state.stat.stat_rules_ok++;
@@ -1800,12 +1754,6 @@ execute_new_node(const pcounter& pc, state& state)
    state.set_node(reg, (node_val)new_node);
 #else
    state.set_node(reg, new_node->get_id());
-#endif
-
-#ifdef USE_UI
-   if(state::UI) {
-      LOG_NEW_NODE(new_node);
-   }
 #endif
 }
 

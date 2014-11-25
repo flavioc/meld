@@ -6,10 +6,6 @@
 #include "vm/state.hpp"
 #include "utils/utils.hpp"
 
-#ifdef USE_UI
-#include "ui/macros.hpp"
-#endif
-
 using namespace db;
 using namespace std;
 using namespace vm;
@@ -156,36 +152,6 @@ node::print(ostream& cout) const
       write_strings(vec, cout, 1);
    }
 }
-
-#ifdef USE_UI
-using namespace json_spirit;
-
-Value
-node::dump_json(void) const
-{
-	Object ret;
-	
-	for(simple_tuple_map::const_iterator it(tuples.begin());
-      it != tuples.end();
-      ++it)
-	{
-		predicate_id pred(it->first);
-		tuple_trie *trie(it->second);
-		Array tpls;
-		
-		for(tuple_trie::const_iterator jt(trie->begin()), end(trie->end()); jt != end; jt++)
-	   {
-			tuple_trie_leaf *leaf(*jt);
-			tuple *tpl(leaf->get_underlying_tuple());
-			UI_ADD_ELEM(tpls, tpl->dump_json());
-		}
-		
-		UI_ADD_FIELD(ret, to_string((int)pred), tpls);
-	}
-	
-	return ret;
-}
-#endif
 
 ostream&
 operator<<(ostream& cout, const node& node)

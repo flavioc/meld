@@ -10,9 +10,6 @@
 #include "utils/utils.hpp"
 #include "vm/state.hpp"
 #include "utils/serialization.hpp"
-#ifdef USE_UI
-#include "ui/macros.hpp"
-#endif
 #include "db/node.hpp"
 
 using namespace vm;
@@ -244,59 +241,6 @@ tuple::print(ostream& cout, const vm::predicate *pred) const
    
    cout << ")";
 }
-
-#ifdef USE_UI
-using namespace json_spirit;
-
-Value
-value_to_json_value(type *t, const tuple_field& val)
-{
-   switch(t->get_type()) {
-      case FIELD_INT: return Value(FIELD_INT(val));
-      case FIELD_FLOAT: return Value(FIELD_FLOAT(val));
-      case FIELD_NODE: return Value((int_val)FIELD_NODE(val));
-      case FIELD_STRING: return Value(FIELD_STRING(val)->get_content());
-      case FIELD_LIST: {
-         runtime::cons *c(FIELD_CONS(val));
-         if(runtime::cons::is_null(c))
-            return Array();
-         list_type *lt((list_type*)t);
-         type *sub(lt->get_subtype());
-         tuple_field tail;
-         SET_FIELD_CONS(tail, c->get_tail());
-         Value v1(value_to_json_value(t, tail));
-         Value v2(value_to_json_value(sub, c->get_head()));
-         assert(v1.type() == array_type);
-         Array& arr(v2.get_array());
-         Array new_arr;
-         new_arr.push_back(v2);
-         for(size_t i(0); i < arr.size(); ++i)
-            new_arr.push_back(arr[i]);
-         return Value(new_arr);
-      }
-      break;
-      default:
-				throw type_error("Unrecognized field type " + t->string());
-   }
-}
-
-Value
-tuple::dump_json(const vm::predicate *pred) const
-{
-	Object ret;
-
-	UI_ADD_FIELD(ret, "predicate", (int)get_predicate_id());
-	Array fields;
-
-	for(field_num i = 0; i < pred->num_fields(); ++i) {
-      UI_ADD_ELEM(fields, value_to_json_value(pred->get_field_type(i), get_field(i)));
-	}
-
-	UI_ADD_FIELD(ret, "fields", fields);
-
-	return ret;
-}
-#endif
 
 void
 tuple::destructor(predicate *pred, candidate_gc_nodes& gc_nodes)
