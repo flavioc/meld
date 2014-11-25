@@ -35,7 +35,7 @@ size_t
 hash_table::insert(vm::tuple *item)
 {
    const uint_val id(hash_tuple(item));
-   table_list *bucket(table + (id % size_table));
+   tuple_list *bucket(table + (id % size_table));
    bucket->push_back(item);
    return bucket->get_size();
 }
@@ -44,7 +44,7 @@ size_t
 hash_table::insert_front(vm::tuple *item)
 {
    const uint_val id(hash_tuple(item));
-   table_list *bucket(table + (id % size_table));
+   tuple_list *bucket(table + (id % size_table));
    bucket->push_front(item);
    return bucket->get_size();
 }
@@ -54,25 +54,25 @@ hash_table::change_table(const size_t new_size_table)
 {
    assert(new_size_table >= HASH_TABLE_INITIAL_TABLE_SIZE);
 
-   table_list *new_table(alloc().allocate(new_size_table));
-   memset(new_table, 0, sizeof(table_list)*new_size_table);
+   tuple_list *new_table(allocator().allocate(new_size_table));
+   memset(new_table, 0, sizeof(tuple_list)*new_size_table);
 
    for(size_t i(0); i < size_table; ++i) {
-      table_list *ls(table + i);
+      tuple_list *ls(table + i);
 
-      for(table_list::iterator it(ls->begin()), end(ls->end()); it != end; ) {
+      for(tuple_list::iterator it(ls->begin()), end(ls->end()); it != end; ) {
          vm::tuple *tpl(*it);
          it++;
 
          const uint_val id(hash_tuple(tpl));
-         table_list *ls(new_table + (id % new_size_table));
+         tuple_list *ls(new_table + (id % new_size_table));
 
          ls->push_back(tpl);
       }
    }
 
    // change pointers
-   alloc().deallocate(table, size_table);
+   allocator().deallocate(table, size_table);
    table = new_table;
    size_table = new_size_table;
 }

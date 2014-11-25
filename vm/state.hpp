@@ -46,7 +46,8 @@ private:
 
 public:
 
-   typedef tuple_field reg;
+   using reg = tuple_field;
+
    reg regs[NUM_REGS];
    vm::predicate *preds[NUM_REGS];
    call_stack stack;
@@ -58,18 +59,18 @@ public:
 	utils::randgen randgen;
    size_t current_rule;
 #ifdef FACT_BUFFERING
-   typedef std::unordered_map<const db::node*, tuple_array,
-           db::node_hash,
-           std::equal_to<const db::node*>,
-           mem::allocator<std::pair<const db::node* const, tuple_array> > > map_sends;
+   using map_sends = std::unordered_map<const db::node*, tuple_array,
+         db::node_hash,
+         std::equal_to<const db::node*>,
+         mem::allocator<std::pair<const db::node* const, tuple_array>>>;
 
    map_sends facts_to_send;
 #endif
 #ifdef COORDINATION_BUFFERING
-   typedef std::unordered_map<const db::node*, vm::priority_t,
-           db::node_hash,
-           std::equal_to<const db::node*>,
-           mem::allocator<std::pair<const db::node* const, vm::priority_t>>> map_set_priority;
+   using map_set_priority = std::unordered_map<const db::node*, vm::priority_t,
+         db::node_hash,
+         std::equal_to<const db::node*>,
+         mem::allocator<std::pair<const db::node* const, vm::priority_t>>>;
    map_set_priority set_priorities;
 #endif
 #ifdef DEBUG_MODE
@@ -87,7 +88,9 @@ public:
    bool generated_facts;
    bool running_rule;
    bool hash_removes;
-   typedef std::unordered_set<vm::tuple*, utils::pointer_hash<vm::tuple>, std::equal_to<vm::tuple*>, mem::allocator<vm::tuple*> > removed_hash;
+   using removed_hash =
+      std::unordered_set<vm::tuple*, utils::pointer_hash<vm::tuple>,
+         std::equal_to<vm::tuple*>, mem::allocator<vm::tuple*>>;
    removed_hash removed;
    db::temporary_store *store;
    db::linear_store *lstore;

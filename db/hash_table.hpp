@@ -15,15 +15,14 @@ namespace db
 
 #define HASH_TABLE_INITIAL_TABLE_SIZE 8
 
-typedef utils::intrusive_list<vm::tuple> table_list;
-
 struct hash_table
 {
    private:
 
-      typedef mem::allocator<table_list> alloc;
+      using tuple_list = vm::tuple_list;
+      using allocator = mem::allocator<tuple_list>;
 
-      table_list *table;
+      tuple_list *table;
       size_t size_table;
       vm::field_num hash_argument;
       vm::field_type hash_type;
@@ -48,8 +47,8 @@ struct hash_table
       {
          private:
 
-            table_list *bucket;
-            table_list *finish;
+            tuple_list *bucket;
+            tuple_list *finish;
 
             inline void find_good_bucket(void)
             {
@@ -82,7 +81,7 @@ struct hash_table
                return *this;
             }
 
-            explicit iterator(table_list *start_bucket, table_list *end_bucket):
+            explicit iterator(tuple_list *start_bucket, tuple_list *end_bucket):
                bucket(start_bucket), finish(end_bucket)
             {
                find_good_bucket();
@@ -98,7 +97,7 @@ struct hash_table
       {
          size_t total(0);
          for(size_t i(0); i < size_table; ++i) {
-            table_list *ls(table + i);
+            tuple_list *ls(table + i);
             total += ls->get_size();
          }
          return total;
@@ -110,14 +109,14 @@ struct hash_table
       inline utils::intrusive_list<vm::tuple>* lookup_list(const vm::tuple_field field)
       {
          const vm::uint_val id(hash_field(field));
-         table_list *bucket(table + (id % size_table));
+         tuple_list *bucket(table + (id % size_table));
          return bucket;
       }
 
       inline void dump(std::ostream& out, const vm::predicate *pred) const
       {
          for(size_t i(0); i < size_table; ++i) {
-            table_list *ls(table + i);
+            tuple_list *ls(table + i);
             out << "Bucket for " << i << ": ";
             if(ls->empty())
                out << "empty\n";
@@ -135,7 +134,7 @@ struct hash_table
       {
          size_t crowded_buckets(0);
          for(size_t i(0); i < size_table; ++i) {
-            table_list *ls(table + i);
+            tuple_list *ls(table + i);
             crowded_buckets += (ls->get_size() / 3);
          }
          if(crowded_buckets == 0)
@@ -149,7 +148,7 @@ struct hash_table
       {
          size_t total(0);
          for(size_t i(0); i < size_table; ++i) {
-            table_list *ls(table + i);
+            tuple_list *ls(table + i);
             total += ls->get_size();
             if(total >= size_table)
                return false;
@@ -164,13 +163,13 @@ struct hash_table
          hash_type = type;
          next_expand = nullptr;
          size_table = default_table_size;
-         table = alloc().allocate(size_table);
-         memset(table, 0, sizeof(table_list)*size_table);
+         table = allocator().allocate(size_table);
+         memset(table, 0, sizeof(tuple_list)*size_table);
       }
 
       inline void destroy(void)
       {
-         alloc().deallocate(table, size_table);
+         allocator().deallocate(table, size_table);
       }
 };
 

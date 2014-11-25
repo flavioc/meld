@@ -20,7 +20,7 @@ struct temporary_store
 {
    public:
 
-      typedef utils::intrusive_list<vm::tuple> tuple_list;
+      using tuple_list = vm::tuple_list;
 
       // incoming linear tuples
 #ifdef UNIQUE_INCOMING_LIST

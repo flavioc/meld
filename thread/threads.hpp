@@ -154,7 +154,7 @@ private:
 
    void do_loop(void);
    
-   typedef queue::intrusive_safe_double_queue<db::node> node_queue;
+   using node_queue = queue::intrusive_safe_double_queue<db::node>;
    struct Queues {
       node_queue moving;
       node_queue stati;
@@ -171,7 +171,7 @@ private:
       }
    } queues;
 
-	typedef queue::intrusive_safe_complex_pqueue<db::node> priority_queue;
+	using priority_queue = queue::intrusive_safe_complex_pqueue<db::node>;
 
    struct Priorities {
       priority_queue moving;

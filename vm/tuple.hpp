@@ -119,6 +119,8 @@ private:
    void destructor(vm::predicate*, candidate_gc_nodes&);
 };
 
+typedef utils::intrusive_list<vm::tuple> tuple_list;
+
 }
 
 #endif

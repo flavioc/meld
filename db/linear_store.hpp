@@ -24,7 +24,8 @@ struct linear_store
 {
    public:
 
-      typedef utils::intrusive_list<vm::tuple> tuple_list;
+      using tuple_list = vm::tuple_list;
+
       // we store N lists or hash tables (the biggest structure) so that it is contiguous
       utils::byte *data;
 
@@ -97,7 +98,7 @@ struct linear_store
          return tbl;
       }
 
-      inline hash_table *transform_list_to_hash_table(table_list *ls, const vm::predicate *pred)
+      inline hash_table *transform_list_to_hash_table(tuple_list *ls, const vm::predicate *pred)
       {
          tuple_list::iterator it(ls->begin());
          tuple_list::iterator end(ls->end());
@@ -169,7 +170,7 @@ struct linear_store
                }
             } else {
                // still using a list
-               table_list *ls(get_list(pred->get_id()));
+               tuple_list *ls(get_list(pred->get_id()));
 
                if(ls->get_size() + 1 >= CREATE_HASHTABLE_THREADSHOLD) {
                   hash_table *table(transform_list_to_hash_table(ls, pred));
@@ -182,7 +183,7 @@ struct linear_store
                hash_table *table(get_table(pred->get_id()));
                table->insert(tpl);
             } else {
-               table_list *ls(get_list(pred->get_id()));
+               tuple_list *ls(get_list(pred->get_id()));
                ls->push_back(tpl);
             }
          }
@@ -210,7 +211,7 @@ struct linear_store
                   }
                }
             } else {
-               table_list *add(get_list(pred->get_id()));
+               tuple_list *add(get_list(pred->get_id()));
 
                if(add->get_size() + ls->get_size() >= CREATE_HASHTABLE_THREADSHOLD) {
                   hash_table *table(transform_list_to_hash_table(add, pred));
@@ -233,7 +234,7 @@ struct linear_store
                }
                ls->clear();
             } else {
-               table_list *add(get_list(pred->get_id()));
+               tuple_list *add(get_list(pred->get_id()));
                add->splice_back(*ls);
             }
          }

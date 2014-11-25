@@ -13,19 +13,20 @@ namespace db
 
 struct persistent_store
 {
-   typedef trie::delete_info delete_info;
-
-   typedef std::unordered_map<vm::predicate_id, tuple_trie*,
+   using delete_info = trie::delete_info;
+   using pers_tuple_map = 
+      std::unordered_map<vm::predicate_id, tuple_trie*,
                std::hash<vm::predicate_id>,
                std::equal_to<vm::predicate_id>,
                mem::allocator<std::pair<const vm::predicate_id,
-                                 tuple_trie*> > > pers_tuple_map;
+                                 tuple_trie*>>>;
                                  
-   typedef std::unordered_map<vm::predicate_id, tuple_aggregate*,
+   using aggregate_map =
+      std::unordered_map<vm::predicate_id, tuple_aggregate*,
                std::hash<vm::predicate_id>,
                std::equal_to<vm::predicate_id>,
                mem::allocator<std::pair<const vm::predicate_id,
-                                 tuple_aggregate*> > > aggregate_map;
+                                 tuple_aggregate*>>>;
 	
 	// tuple database
    pers_tuple_map tuples;

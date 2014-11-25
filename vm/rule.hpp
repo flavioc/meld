@@ -21,7 +21,8 @@ class rule
       const std::string str;
       byte_code code;
 		code_size_t code_size;
-		typedef std::vector<predicate*, mem::allocator<predicate*> > predicate_vector;
+      using predicate_vector =
+		   std::vector<predicate*, mem::allocator<predicate*>>;
       predicate_vector predicates;
       bool is_persistent;
       bitmap predicate_map;
@@ -50,7 +51,7 @@ class rule
       inline void set_as_persistent(void) { is_persistent = true; }
       inline bool as_persistent(void) const { return is_persistent; }
 
-		typedef predicate_vector::const_iterator predicate_iterator;
+      using predicate_iterator = predicate_vector::const_iterator;
 		inline predicate_iterator begin_predicates(void) const
       { return predicates.begin(); }
 		inline predicate_iterator end_predicates(void) const

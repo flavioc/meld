@@ -167,12 +167,12 @@ class depth_counter: public mem::base
 {
    private:
 
-      typedef std::map<vm::depth_t, vm::ref_count> map_count;
+      using map_count = std::map<vm::depth_t, vm::ref_count>;
       map_count counts;
 
    public:
 
-      typedef map_count::const_iterator const_iterator;
+      using const_iterator = map_count::const_iterator;
 
       inline bool empty(void) const
       {
@@ -444,7 +444,7 @@ class trie
 {
 protected:
    
-   typedef trie_node node;
+   using node = trie_node;
    
    node *root;
    int number_of_references;
@@ -586,8 +586,8 @@ public:
       }
    }
 
-   typedef tuple_trie_iterator iterator;
-   typedef tuple_trie_iterator const_iterator;
+   using iterator = tuple_trie_iterator;
+   using const_iterator = tuple_trie_iterator;
 
 	// this search iterator uses either the leaf list
 	// or a continuation stack to retrieve the next valid match
@@ -793,8 +793,8 @@ private:
    
 public:
 
-   typedef agg_trie_iterator iterator;
-   typedef agg_trie_iterator const_iterator;
+   using iterator = agg_trie_iterator;
+   using const_iterator = agg_trie_iterator;
    
    agg_trie_leaf *find_configuration(vm::tuple *, vm::predicate *);
    

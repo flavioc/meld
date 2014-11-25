@@ -19,10 +19,6 @@
 #include <unordered_map>
 #endif
 
-namespace process {
-   class router;
-}
-
 namespace db {
    class database;
    struct node;
@@ -84,7 +80,8 @@ private:
 
    mutable predicate *init;
 
-	typedef std::vector<runtime::rstring::ptr> string_store;
+   using string_store = 
+      std::vector<runtime::rstring::ptr, mem::allocator<runtime::rstring::ptr>>;
 	
 	string_store default_strings;
 	

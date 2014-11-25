@@ -27,7 +27,7 @@ class call_stack
 
    public:
 
-      typedef tuple_field* iterator;
+      using iterator = tuple_field*;
 
       inline bool empty(void) const { return size == 0; }
 

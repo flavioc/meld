@@ -17,8 +17,8 @@ class agg_configuration: public mem::base
 {
 private:
    
-   typedef tuple_trie::iterator iterator;
-   typedef tuple_trie::const_iterator const_iterator;
+   using iterator = tuple_trie::iterator;
+   using const_iterator = tuple_trie::const_iterator;
 
    bool changed;
    vm::tuple *corresponds;
@@ -37,7 +37,8 @@ protected:
    
    tuple_trie vals;
 
-   virtual vm::tuple *do_generate(vm::predicate *, const vm::aggregate_type, const vm::field_num, vm::depth_t&);
+   virtual vm::tuple *do_generate(vm::predicate *, const vm::aggregate_type,
+         const vm::field_num, vm::depth_t&);
 
 public:
 

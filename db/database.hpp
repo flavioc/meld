@@ -20,9 +20,10 @@ class database
 {
 public:
    
-   typedef std::map<node::node_id, node*,
-           std::less<node::node_id>,
-           mem::allocator< std::pair<const node::node_id, node*> > > map_nodes;
+   using map_nodes = 
+      std::map<node::node_id, node*,
+         std::less<node::node_id>,
+         mem::allocator< std::pair<const node::node_id, node*>>>;
 
 private:
 
