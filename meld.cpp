@@ -29,7 +29,9 @@ help(void)
    cerr << "\t-n \t\tno dynamic scheduling" << endl;
    cerr << "\t-w \t\tdisable work stealing" << endl;
 	cerr << "\t-t \t\ttime execution" << endl;
+#ifdef INSTRUMENTATION
 	cerr << "\t-i <file>\tdump time statistics" << endl;
+#endif
 	cerr << "\t-s \t\tshows database" << endl;
    cerr << "\t-d \t\tdump database (debug option)" << endl;
    cerr << "\t-h \t\tshow this screen" << endl;
@@ -82,6 +84,7 @@ read_arguments(int argc, char **argv)
          case 't':
             time_execution = true;
             break;
+#ifdef INSTRUMENTATION
          case 'i':
             if(argc < 2)
                help();
@@ -90,6 +93,7 @@ read_arguments(int argc, char **argv)
             argc--;
             argv++;
             break;
+#endif
          case 'n':
             scheduling_mechanism = false;
             break;
