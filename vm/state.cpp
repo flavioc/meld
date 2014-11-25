@@ -285,7 +285,7 @@ state::process_incoming_tuples(void)
       if(!ls->empty()) {
          vm::predicate *pred(theProgram->get_predicate(i));
          node->matcher.register_tuple(pred, ls->get_size());
-         lstore->increment_database(pred, ls, node->matcher);
+         lstore->increment_database(pred, ls);
       }
    }
 #endif
@@ -728,7 +728,7 @@ state::run_node(db::node *no)
             utils::intrusive_list<vm::tuple> *gen(store->generated + i);
             if(!gen->empty()) {
                vm::predicate *pred(theProgram->get_predicate(i));
-               lstore->increment_database(pred, gen, node->matcher);
+               lstore->increment_database(pred, gen);
             }
          }
       }

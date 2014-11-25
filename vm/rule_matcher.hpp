@@ -30,6 +30,7 @@ private:
          if(rules[rule_id] == rule->num_predicates())
             rule_queue.unset_bit(rule_id);
 
+         assert(rules[rule_id] > 0);
          rules[rule_id]--;
       }
    }
@@ -53,6 +54,7 @@ public:
 
    inline void register_predicate_update(const predicate *pred)
    {
+      assert(predicate_count[pred->get_id()] > 0);
       for(predicate::rule_iterator it(pred->begin_rules()), end(pred->end_rules()); it != end; it++) {
          vm::rule_id rule_id(*it);
          vm::rule *rule(theProgram->get_rule(rule_id));
@@ -73,6 +75,8 @@ public:
    {
       const vm::predicate_id id(pred->get_id());
       bool ret(false);
+      assert(count > 0);
+
       if(is_new) {
          if(predicate_count[id] == 0) {
             ret = true;
@@ -80,26 +84,25 @@ public:
          } else
             register_predicate_update(pred);
       }
-
       predicate_count[id] += count;
       return ret;
    }
-
-	// returns true if now we do not have any tuples of this predicate
-	bool deregister_tuple(const predicate *pred, const derivation_count count)
+   
+   // returns true if now we do not have any tuples of this predicate
+   bool deregister_tuple(const predicate *pred, const derivation_count count)
    {
       const vm::predicate_id id(pred->get_id());
       bool ret(false);
-      
+
       assert(count > 0);
       assert(predicate_count[id] >= (pred_count)count);
 
-      if(predicate_count[id] == (pred_count)count) {
+      predicate_count[id] -= count;
+      if(predicate_count[id] == 0) {
          ret = true;
          register_predicate_unavailability(pred);
       }
 
-      predicate_count[id] -= count;
       return ret;
    }
 
@@ -117,6 +120,7 @@ public:
    void set_count(const predicate *pred, const pred_count count)
    {
       const vm::predicate_id id(pred->get_id());
+      assert(count >= 0);
       if(predicate_count[id] == 0) {
          if(count > 0)
             register_predicate_availability(pred);
