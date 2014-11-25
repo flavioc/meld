@@ -136,7 +136,7 @@ public:
    inline void add_linear_fact(vm::tuple *tpl, vm::predicate *pred)
    {
       matcher.register_tuple(pred, 1);
-      linear.add_fact(tpl, pred, matcher);
+      linear.add_fact(tpl, pred);
    }
 
    inline void inner_add_work_myself(vm::tuple *tpl, vm::predicate *pred,

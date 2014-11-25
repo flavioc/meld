@@ -139,9 +139,9 @@ struct linear_store
          return (tuple_list*)tbl;
       }
 
-      inline bool decide_if_expand(vm::rule_matcher& m, const vm::predicate *pred, hash_table *table) const
+      inline bool decide_if_expand(hash_table *table) const
       {
-         return m.get_count(pred->get_id()) >= table->get_num_buckets();
+         return table->get_total_size() >= table->get_num_buckets();
       }
 
    public:
@@ -154,14 +154,14 @@ struct linear_store
 
       inline bool stored_as_hash_table(const vm::predicate *pred) const { return types.get_bit(pred->get_id()); }
 
-      inline void add_fact(vm::tuple *tpl, vm::predicate *pred, vm::rule_matcher& m)
+      inline void add_fact(vm::tuple *tpl, vm::predicate *pred)
       {
          if(pred->is_hash_table()) {
             if(stored_as_hash_table(pred)) {
                hash_table *table(get_table(pred->get_id()));
                size_t size_bucket(table->insert(tpl));
                if(!table->next_expand && size_bucket >= CREATE_HASHTABLE_THREADSHOLD) {
-                  if(decide_if_expand(m, pred, table)) {
+                  if(decide_if_expand(table)) {
                      assert(!table->next_expand);
                      table->next_expand = expand;
                      expand = table;
@@ -188,7 +188,7 @@ struct linear_store
          }
       }
 
-      inline void increment_database(vm::predicate *pred, tuple_list *ls, vm::rule_matcher& m)
+      inline void increment_database(vm::predicate *pred, tuple_list *ls)
       {
          if(pred->is_hash_table()) {
             if(stored_as_hash_table(pred)) {
@@ -203,7 +203,7 @@ struct linear_store
                }
                ls->clear();
                if(!table->next_expand && big_bucket) {
-                  if(decide_if_expand(m, pred, table)) {
+                  if(decide_if_expand(table)) {
                      assert(!table->next_expand);
                      table->next_expand = expand;
                      expand = table;
