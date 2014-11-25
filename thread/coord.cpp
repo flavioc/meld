@@ -20,6 +20,8 @@ threads_sched::schedule_next(node *n)
 {
    const priority_t prio(max_priority_value());
 
+   //cout << "Schedule next " << n->get_id() << endl;
+
 #ifdef TASK_STEALING
    LOCK_STACK(nodelock);
    NODE_LOCK(n, nodelock, schedule_next_lock);
@@ -231,6 +233,8 @@ threads_sched::remove_node_priority(node *tn)
    if(!scheduling_mechanism)
       return;
 
+   //cout << "Remove priority " << tn->get_id() << endl;
+
    if(current_node == tn) {
       tn->remove_temporary_priority();
       return;
@@ -263,6 +267,7 @@ threads_sched::set_node_priority(node *tn, const priority_t priority)
    if(!scheduling_mechanism)
       return;
 
+   //cout << "Set node " << tn->get_id() << " with prio " << priority << endl;
    if(current_node == tn)
       return;
 
@@ -270,7 +275,6 @@ threads_sched::set_node_priority(node *tn, const priority_t priority)
    count_set_priority++;
 #endif
 
-//   cout << "Set node " << n->get_id() << " with prio " << priority << endl;
 #ifdef TASK_STEALING
    LOCK_STACK(nodelock);
    NODE_LOCK(tn, nodelock, set_priority_lock);

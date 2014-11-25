@@ -13,6 +13,7 @@
 #include "vm/all.hpp"
 #include "utils/random.hpp"
 #include "utils/time.hpp"
+#include "utils/hash.hpp"
 #include "runtime/objs.hpp"
 #include "vm/stat.hpp"
 #include "vm/call_stack.hpp"
@@ -58,14 +59,15 @@ public:
    size_t current_rule;
 #ifdef FACT_BUFFERING
    typedef std::unordered_map<const db::node*, tuple_array,
-           std::hash<const db::node*>,
+           db::node_hash,
            std::equal_to<const db::node*>,
            mem::allocator<std::pair<const db::node* const, tuple_array> > > map_sends;
+
    map_sends facts_to_send;
 #endif
 #ifdef COORDINATION_BUFFERING
    typedef std::unordered_map<const db::node*, vm::priority_t,
-           std::hash<const db::node*>,
+           db::node_hash,
            std::equal_to<const db::node*>,
            mem::allocator<std::pair<const db::node* const, vm::priority_t>>> map_set_priority;
    map_set_priority set_priorities;
@@ -85,12 +87,12 @@ public:
    bool generated_facts;
    bool running_rule;
    bool hash_removes;
-   typedef std::unordered_set<vm::tuple*, std::hash<vm::tuple*>, std::equal_to<vm::tuple*>, mem::allocator<vm::tuple*> > removed_hash;
+   typedef std::unordered_set<vm::tuple*, utils::pointer_hash<vm::tuple>, std::equal_to<vm::tuple*>, mem::allocator<vm::tuple*> > removed_hash;
    removed_hash removed;
    db::temporary_store *store;
    db::linear_store *lstore;
    vm::counter *match_counter;
-   std::unordered_set<utils::byte*, std::hash<utils::byte*>,
+   std::unordered_set<utils::byte*, utils::pointer_hash<utils::byte>,
       std::equal_to<utils::byte*>, mem::allocator<utils::byte*>> allocated_match_objects;
 #ifdef GC_NODES
    candidate_gc_nodes gc_nodes;

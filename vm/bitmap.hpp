@@ -17,6 +17,9 @@ struct bitmap {
 
    BITMAP_TYPE first;
    BITMAP_TYPE *rest;
+#ifdef EXTRA_ASSERTS
+   bool initialized = false;
+#endif
 
    class iterator
    {
@@ -111,6 +114,9 @@ struct bitmap {
 
    inline void clear(const size_t size)
    {
+#ifdef EXTRA_ASSERTS
+      initialized = true;
+#endif
       first = 0;
       if(false_likely(size > 1))
          memset(rest, 0, sizeof(BITMAP_TYPE) * (size-1));
@@ -210,6 +216,9 @@ struct bitmap {
    // set bit to true
    inline void set_bit(const size_t i)
    {
+#ifdef EXTRA_ASSERTS
+      assert(initialized);
+#endif
       BITMAP_TYPE *p(get_array(i));
 
       *p = *p | ((BITMAP_TYPE)0x1 << (BITMAP_TYPE)(i % BITMAP_BITS));
@@ -242,6 +251,9 @@ struct bitmap {
 
    inline bool get_bit(const size_t i) const
    {
+#ifdef EXTRA_ASSERTS
+      assert(initialized);
+#endif
       const BITMAP_TYPE *p(get_array(i));
 
       return BITMAP_GET_BIT(*p, i % BITMAP_BITS);

@@ -248,6 +248,11 @@ public:
 
 std::ostream& operator<<(std::ostream&, const node&);
 
+struct node_hash
+{
+   size_t operator()(const db::node *x) const { return std::hash<node::node_id>()(x->get_id()); }
+};
+
 }
 
 #endif

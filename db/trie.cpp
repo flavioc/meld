@@ -379,7 +379,7 @@ trie_node::~trie_node(void)
 #define HASH_UINT(VAL) (std::hash<uint_val>()(VAL))
 #define HASH_FLOAT(VAL) (std::hash<float_val>()(VAL)/1000)
 #ifdef USE_REAL_NODES
-#define HASH_NODE(VAL) (std::hash<node::node_id>()(((db::node*)VAL)->get_id()))
+#define HASH_NODE(VAL) (node_hash()((db::node*)VAL))
 #else
 #define HASH_NODE(VAL) (std::hash<node_val>()(VAL))
 #endif
