@@ -8,7 +8,6 @@
 #include "vm/all.hpp"
 #include "utils/time.hpp"
 
-#ifdef CORE_STATISTICS
 namespace vm
 {
 
@@ -71,6 +70,5 @@ class core_statistics {
 };
 
 }
-#endif
 
 #endif

@@ -15,11 +15,13 @@
 #include "utils/time.hpp"
 #include "utils/hash.hpp"
 #include "runtime/objs.hpp"
-#include "vm/stat.hpp"
 #include "vm/call_stack.hpp"
 #include "db/temporary_store.hpp"
 #include "db/linear_store.hpp"
 #include "vm/counter.hpp"
+#ifdef CORE_STATISTICS
+#include "vm/stat.hpp"
+#endif
 
 // forward declaration
 namespace sched { class threads_sched; }

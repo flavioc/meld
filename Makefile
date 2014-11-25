@@ -115,7 +115,6 @@ SRCS = utils/utils.cpp \
 			vm/external.cpp \
 			vm/rule.cpp \
 			vm/rule_matcher.cpp \
-			vm/stat.cpp \
 			db/node.cpp \
 			db/agg_configuration.cpp \
 			db/tuple_aggregate.cpp \
@@ -137,11 +136,17 @@ SRCS = utils/utils.cpp \
 			external/others.cpp \
 			external/core.cpp \
 			external/structs.cpp \
-			stat/stat.cpp \
-			stat/slice.cpp \
-			stat/slice_set.cpp \
 			machine.cpp \
 			interface.cpp
+
+ifeq ($(INSTRUMENTATION), true)
+	OBJS += stat/stat.cpp \
+			  stat/slice.cpp \
+			  stat/slice_set.cpp
+endif
+ifeq ($(CORE_STATISTICS), true)
+	OBJS += vm/stat.cpp
+endif
 
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
