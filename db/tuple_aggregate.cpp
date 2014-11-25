@@ -16,16 +16,13 @@ tuple_aggregate::create_configuration(void) const
 }
    
 agg_configuration*
-tuple_aggregate::add_to_set(vm::tuple *tpl, vm::predicate *pred, const derivation_count many, const depth_t depth
-#ifdef GC_NODES
-      , candidate_gc_nodes& gc_nodes
-#endif
-      )
+tuple_aggregate::add_to_set(vm::tuple *tpl, vm::predicate *pred,
+      const derivation_count many, const depth_t depth, candidate_gc_nodes& gc_nodes)
 {
    agg_trie_leaf *leaf(vals.find_configuration(tpl, pred));
    agg_configuration *conf;
    
-   if(leaf->get_conf() == NULL) {
+   if(leaf->get_conf() == nullptr) {
       conf = create_configuration();
       leaf->set_conf(conf);
    } else {
@@ -36,11 +33,7 @@ tuple_aggregate::add_to_set(vm::tuple *tpl, vm::predicate *pred, const derivatio
    cout << "----> Before:" << endl;
    conf->print(cout);
 #endif
-#ifdef GC_NODES
    conf->add_to_set(tpl, pred, many, depth, gc_nodes);
-#else
-   conf->add_to_set(tpl, pred, many, depth);
-#endif
 #ifdef DEBUG_AGGS
    cout << "Add " << *tpl << " " << many << " with depth " << depth << endl;
    conf->print(cout);
@@ -50,11 +43,7 @@ tuple_aggregate::add_to_set(vm::tuple *tpl, vm::predicate *pred, const derivatio
 }
 
 full_tuple_list
-tuple_aggregate::generate(
-#ifdef GC_NODES
-      candidate_gc_nodes& gc_nodes
-#endif
-      )
+tuple_aggregate::generate()
 {
    const aggregate_type typ(pred->get_aggregate_type());
    const field_num field(pred->get_aggregate_field());
@@ -65,24 +54,18 @@ tuple_aggregate::generate(
    {
       agg_configuration *conf(*it);
       
-      assert(conf != NULL);
+      assert(conf != nullptr);
       
       if(conf->has_changed())
-         conf->generate(pred, typ, field, ls
-#ifdef GC_NODES
-               , gc_nodes
-#endif
-               );
+         conf->generate(pred, typ, field, ls);
       
       assert(!conf->has_changed());
       
-      if(conf->is_empty())
-         it = vals.erase(it, pred
-#ifdef GC_NODES
-               , gc_nodes
-#endif
-               );
-      else
+      if(conf->is_empty()) {
+         candidate_gc_nodes gc_nodes;
+         it = vals.erase(it, pred, gc_nodes);
+         assert(gc_nodes.empty());
+      } else
          it++;
    }
    
@@ -106,17 +89,9 @@ tuple_aggregate::no_changes(void) const
 }
 
 void
-tuple_aggregate::delete_by_index(const match& m
-#ifdef GC_NODES
-      , candidate_gc_nodes& gc_nodes
-#endif
-      )
+tuple_aggregate::delete_by_index(const match& m, candidate_gc_nodes& gc_nodes)
 {
-   vals.delete_by_index(pred, m
-#ifdef GC_NODES
-         , gc_nodes
-#endif
-         );
+   vals.delete_by_index(pred, m, gc_nodes);
 }
 
 tuple_aggregate::~tuple_aggregate(void)
@@ -124,29 +99,17 @@ tuple_aggregate::~tuple_aggregate(void)
 }
 
 void
-tuple_aggregate::wipeout(
-#ifdef GC_NODES
-      candidate_gc_nodes& gc_nodes
-#endif
-      )
+tuple_aggregate::wipeout(candidate_gc_nodes& gc_nodes)
 {
    for(agg_trie::const_iterator it(vals.begin());
       it != vals.end();
       it++)
    {
       agg_configuration *conf(*it);
-      assert(conf != NULL);
-      conf->wipeout(pred
-#ifdef GC_NODES
-            , gc_nodes
-#endif
-            );
+      assert(conf != nullptr);
+      conf->wipeout(pred, gc_nodes);
    }
-   vals.wipeout(pred
-#ifdef GC_NODES
-         , gc_nodes
-#endif
-         );
+   vals.wipeout(pred, gc_nodes);
 }
 
 void
@@ -159,7 +122,7 @@ tuple_aggregate::print(ostream& cout) const
       it++)
    {
       agg_configuration *conf(*it);
-      assert(conf != NULL);
+      assert(conf != nullptr);
       conf->print(cout, pred);
       cout << endl;
    }

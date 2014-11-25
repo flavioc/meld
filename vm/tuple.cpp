@@ -102,7 +102,7 @@ tuple::copy_field(type *ty, tuple *ret, const field_num i) const
 tuple*
 tuple::copy(vm::predicate *pred) const
 {
-   assert(pred != NULL);
+   assert(pred != nullptr);
    
    tuple *ret(tuple::create(pred));
    
@@ -115,7 +115,7 @@ tuple::copy(vm::predicate *pred) const
 tuple*
 tuple::copy_except(predicate *pred, const field_num field) const
 {
-   assert(pred != NULL);
+   assert(pred != nullptr);
    
    tuple *ret(tuple::create(pred));
    
@@ -228,7 +228,7 @@ tuple::to_str(const vm::predicate *pred) const
 void
 tuple::print(ostream& cout, const vm::predicate *pred) const
 {
-   assert(pred != NULL);
+   assert(pred != nullptr);
 
 	if(pred->is_persistent_pred())
 		cout << "!";
@@ -299,11 +299,7 @@ tuple::dump_json(const vm::predicate *pred) const
 #endif
 
 void
-tuple::destructor(predicate *pred
-#ifdef GC_NODES
-      , candidate_gc_nodes& gc_nodes
-#endif
-      )
+tuple::destructor(predicate *pred, candidate_gc_nodes& gc_nodes)
 {
    for(field_num i = 0; i < pred->num_fields(); ++i) {
       switch(pred->get_field_type(i)->get_type()) {
@@ -315,13 +311,14 @@ tuple::destructor(predicate *pred
             {
                db::node *n((db::node*)get_node(i));
                if(!All->DATABASE->is_initial_node(n)) {
-                  //cout << "Decrement " << n->get_id() << endl;
                   assert(n->refs > 0);
                   n->refs--;
                   if(n->garbage_collect())
                      gc_nodes.insert(get_node(i));
                }
             }
+#else
+            (void)gc_nodes;
 #endif
             break;
          case FIELD_BOOL:
@@ -338,32 +335,22 @@ tuple::set_node(const field_num& field, const node_val& val)
 {
 #ifdef GC_NODES
    db::node *n((db::node*)val);
-   if(!All->DATABASE->is_initial_node(n)) {
-      //cout << "Increment " << n->get_id() << endl;
+   if(!All->DATABASE->is_initial_node(n))
       n->refs++;
-   }
 #endif
 
    SET_FIELD_NODE(getfp()[field], val);
 }
 
 void
-tuple::set_field_ref(const field_num& field, const tuple_field& newval, const predicate *pred
-#ifdef GC_NODES
-      , candidate_gc_nodes& gc_nodes
-#endif
-      )
+tuple::set_field_ref(const field_num& field, const tuple_field& newval, const predicate *pred, candidate_gc_nodes& gc_nodes)
 {
    const tuple_field oldval(get_field(field));
    set_field(field, newval);
    const type *typ(pred->get_field_type(field));
    const field_type ftype(typ->get_type());
    do_increment_runtime(newval, ftype);
-   runtime::do_decrement_runtime(oldval, ftype
-#ifdef GC_NODES
-         , gc_nodes
-#endif
-         );
+   runtime::do_decrement_runtime(oldval, ftype, gc_nodes);
 }
 
 size_t

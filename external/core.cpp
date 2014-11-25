@@ -20,13 +20,13 @@ node_priority(EXTERNAL_ARG(id))
 {
    DECLARE_NODE(id);
    priority_t ret(0.0);
-   node *tn(NULL);
+   node *tn(nullptr);
 
 #ifdef USE_REAL_NODES
    tn = (node*)id;
 #else
    tn = All->DATABASE->find_node(id);
-   assert(n != NULL);
+   assert(n != nullptr);
 #endif
 
    if(tn) {
@@ -43,13 +43,13 @@ cpu_id(EXTERNAL_ARG(id))
    int_val ret(0);
    DECLARE_NODE(id);
 
-   node *n(NULL);
+   node *n(nullptr);
 #ifdef USE_REAL_NODES
    n = (node*)id;
 #else
    n = All->DATABASE->find_node(id);
 #endif
-   assert(n != NULL);
+   assert(n != nullptr);
 
    if(n)
       ret = n->get_owner()->get_id();
@@ -65,13 +65,13 @@ cpu_static(EXTERNAL_ARG(id))
    int_val ret(0);
    DECLARE_NODE(id);
    
-   node *tn(NULL);
+   node *tn(nullptr);
 #ifdef USE_REAL_NODES
    tn = (node*)id;
 #else
    tn = All->DATABASE->find_node(id);
 #endif
-   assert(tn != NULL);
+   assert(tn != nullptr);
 
    threads_sched *owner(static_cast<threads_sched*>(tn->get_owner()));
 
@@ -86,7 +86,7 @@ is_moving(EXTERNAL_ARG(id))
    bool_val ret(false);
    DECLARE_NODE(id);
 
-   node *tn(NULL);
+   node *tn(nullptr);
 #ifdef USE_REAL_NODES
    tn = (node*)id;
 #else
@@ -103,7 +103,7 @@ is_static(EXTERNAL_ARG(id))
    bool_val ret(false);
    DECLARE_NODE(id);
 
-   node *tn(NULL);
+   node *tn(nullptr);
 #ifdef USE_REAL_NODES
    tn = (node*)id;
 #else

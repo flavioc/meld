@@ -69,7 +69,7 @@ class all
 		assert(id <= ARGUMENTS.size());
       runtime::rstring::ptr ret(ARGUMENTS[id-1]);
 
-      if(ret == NULL)
+      if(ret == nullptr)
          ARGUMENTS[id-1] = ret = runtime::rstring::make_string(ARGS[id-1]);
       return ret;
 	}
@@ -79,7 +79,7 @@ class all
       ARGS = args;
       ARGUMENTS.resize(args.size());
       for(size_t i(0); i < args.size(); ++i) {
-         ARGUMENTS[i] = NULL;
+         ARGUMENTS[i] = nullptr;
       }
    }
 	
@@ -88,7 +88,7 @@ class all
    virtual ~all(void)
    {
       for(size_t i(0); i < ARGUMENTS.size(); ++i) {
-         if(ARGUMENTS[i] != NULL) {
+         if(ARGUMENTS[i] != nullptr) {
             ARGUMENTS[i]->dec_refs();
          }
       }

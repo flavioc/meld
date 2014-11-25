@@ -10,7 +10,7 @@ class const_iterator											\
 	public:														\
 		inline T operator*(void)							\
 		{															\
-			assert(cur != NULL);								\
+			assert(cur != nullptr);								\
 			return cur->data;									\
 		}															\
 																	\
@@ -23,7 +23,7 @@ class const_iterator											\
 																	\
 		inline void operator++(void)						\
 		{															\
-			assert(cur != NULL);								\
+			assert(cur != nullptr);								\
 			cur = (node*)cur->next;									\
 		}															\
 																	\
@@ -33,7 +33,7 @@ class const_iterator											\
 																	\
 		explicit const_iterator(node *n): cur(n) {}	\
 																	\
-		explicit const_iterator(void): cur(NULL) {}	\
+		explicit const_iterator(void): cur(nullptr) {}	\
 };
 																																																	
 #define QUEUE_DEFINE_LINEAR_CONST_ITERATOR()					\
@@ -42,6 +42,6 @@ class const_iterator											\
 	inline const_iterator begin(void) const						\
 	{ return const_iterator(head); }							\
 	inline const_iterator end(void) const						\
-	{ return const_iterator(NULL); }
+	{ return const_iterator(nullptr); }
 				
 #endif

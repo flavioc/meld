@@ -85,7 +85,7 @@ inline unix_timestamp
 get_timestamp(void)
 {
    struct timeval tv;
-   gettimeofday(&tv, NULL);
+   gettimeofday(&tv, nullptr);
 
    return tv.tv_sec * (unix_timestamp)1000 +
       tv.tv_usec/1000;

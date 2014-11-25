@@ -53,20 +53,12 @@ database::database(const string& filename):
 }
 
 void
-database::wipeout(
-#ifdef GC_NODES
-      candidate_gc_nodes& gc_nodes
-#endif
-      )
+database::wipeout(candidate_gc_nodes& gc_nodes)
 {
    deleting = true;
    for(auto it(nodes.begin()); it != nodes.end(); ++it) {
       db::node *n(it->second);
-#ifdef GC_NODES
       n->wipeout(gc_nodes);
-#else
-      n->wipeout();
-#endif
    }
 }
 
@@ -145,7 +137,7 @@ database::total_facts(void) const
 void
 database::print_db(ostream& cout) const
 {
-   std::vector<db::node*> arr(num_nodes(), NULL);
+   std::vector<db::node*> arr(num_nodes(), nullptr);
 
    size_t i(0);
    for(map_nodes::const_iterator it(nodes.begin());

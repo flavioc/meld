@@ -119,24 +119,24 @@ struct intrusive_list
             explicit iterator(T* cur): current(cur) {}
 
             // end iterator
-            explicit iterator(void): current(NULL) {}
+            explicit iterator(void): current(nullptr) {}
       };
 
       typedef iterator const_iterator;
 
-      inline bool empty(void) const { assert((head == NULL && size == 0) || (head != NULL && size > 0)); return head == NULL; }
+      inline bool empty(void) const { assert((head == nullptr && size == 0) || (head != nullptr && size > 0)); return head == nullptr; }
       inline size_t get_size(void) const { return size; }
 
       inline void assertl(void)
       {
 #ifndef NDEBUG
-         if(head == NULL) {
+         if(head == nullptr) {
             assert(size == 0);
-            assert(tail == NULL);
+            assert(tail == nullptr);
          } else {
             assert(size > 0);
             T* p(head);
-            T* prev(NULL);
+            T* prev(nullptr);
             assert(tail);
             while(p) {
                assert(Prev()(p) == prev);
@@ -158,16 +158,16 @@ struct intrusive_list
          assert(size > 0);
          if(obj == head) {
             head = Next()(head);
-            assert(Prev()(obj) == NULL);
+            assert(Prev()(obj) == nullptr);
             if(obj == tail) {
-               tail = NULL;
+               tail = nullptr;
                assert(size == 1);
-               assert(head == NULL);
-               assert(Next()(obj) == NULL);
+               assert(head == nullptr);
+               assert(Next()(obj) == nullptr);
             } else {
-               Prev().set(head, NULL);
-               assert(Next()(tail) == NULL);
-               assert(Prev()(head) == NULL);
+               Prev().set(head, nullptr);
+               assert(Next()(tail) == nullptr);
+               assert(Prev()(head) == nullptr);
             }
          } else {
             assert(size > 1);
@@ -180,10 +180,10 @@ struct intrusive_list
                Prev().set(next, prev);
             else {
                tail = prev;
-               assert(next == NULL);
+               assert(next == nullptr);
             }
-            assert(Next()(tail) == NULL);
-            assert(Prev()(head) == NULL);
+            assert(Next()(tail) == nullptr);
+            assert(Prev()(head) == nullptr);
          }
          size--;
          //assertl();
@@ -197,11 +197,11 @@ struct intrusive_list
 
       inline void push_front(T *n)
       {
-         if(head == NULL) {
+         if(head == nullptr) {
             assert(size == 0);
-            assert(tail == NULL);
+            assert(tail == nullptr);
             head = tail = n;
-            Next().set(n, NULL);
+            Next().set(n, nullptr);
          } else {
             assert(head && tail);
             assert(size > 0);
@@ -209,25 +209,25 @@ struct intrusive_list
             Next().set(n, head);
             head = n;
          }
-         Prev().set(n, NULL);
+         Prev().set(n, nullptr);
          size++;
          //assertl();
          assert(n == head);
-         assert(Next()(tail) == NULL);
-         assert(Prev()(head) == NULL);
+         assert(Next()(tail) == nullptr);
+         assert(Prev()(head) == nullptr);
       }
 
       inline T* pop_front(void)
       {
-         if(head == NULL)
-            return NULL;
+         if(head == nullptr)
+            return nullptr;
 
          T *ret(head);
          head = Next()(head);
          if(head)
-            Prev().set(head, NULL);
+            Prev().set(head, nullptr);
          else
-            tail = NULL;
+            tail = nullptr;
          size--;
          return ret;
       }
@@ -235,11 +235,11 @@ struct intrusive_list
       inline void push_back(T *n)
       {
          //assertl();
-         if(head == NULL) {
+         if(head == nullptr) {
             assert(size == 0);
-            assert(tail == NULL);
+            assert(tail == nullptr);
             head = tail = n;
-            Prev().set(n, NULL);
+            Prev().set(n, nullptr);
          } else {
             assert(tail);
             assert(size > 0);
@@ -249,23 +249,23 @@ struct intrusive_list
             tail = n;
             assert(tail != head);
          }
-         Next().set(tail, NULL);
+         Next().set(tail, nullptr);
          size++;
          assert(n == tail);
-         assert(Next()(tail) == NULL);
-         assert(Prev()(head) == NULL);
+         assert(Next()(tail) == nullptr);
+         assert(Prev()(head) == nullptr);
          //assertl();
       }
 
       inline void splice_front(intrusive_list& ls)
       {
          //assertl();
-         if(tail == NULL) {
-            assert(head == NULL);
+         if(tail == nullptr) {
+            assert(head == nullptr);
             head = ls.head;
             tail = ls.tail;
-            assert(!tail || Next()(tail) == NULL);
-            assert(!head || Prev()(head) == NULL);
+            assert(!tail || Next()(tail) == nullptr);
+            assert(!head || Prev()(head) == nullptr);
          } else {
             assert(head);
             Prev().set(head, ls.tail);
@@ -274,11 +274,11 @@ struct intrusive_list
                assert(ls.head);
                head = ls.head;
             } else {
-               assert(ls.head == NULL);
-               assert(Prev()(head) == NULL);
+               assert(ls.head == nullptr);
+               assert(Prev()(head) == nullptr);
             }
-            assert(Next()(tail) == NULL);
-            assert(Prev()(head) == NULL);
+            assert(Next()(tail) == nullptr);
+            assert(Prev()(head) == nullptr);
          }
          size += ls.size;
          ls.clear();
@@ -290,12 +290,12 @@ struct intrusive_list
          //std::cout << "splice " << this << " " << &ls << std::endl;
          //ls.assertl();
          //assertl();
-         if(head == NULL) {
-            assert(tail == NULL);
+         if(head == nullptr) {
+            assert(tail == nullptr);
             head = ls.head;
             tail = ls.tail;
-            assert(!tail || Next()(tail) == NULL);
-            assert(!head || Prev()(head) == NULL);
+            assert(!tail || Next()(tail) == nullptr);
+            assert(!head || Prev()(head) == nullptr);
          } else {
             assert(tail);
             Next().set(tail, ls.head);
@@ -304,11 +304,11 @@ struct intrusive_list
                assert(ls.tail);
                tail = ls.tail;
             } else {
-               assert(ls.tail == NULL);
-               assert(Next()(tail) == NULL);
+               assert(ls.tail == nullptr);
+               assert(Next()(tail) == nullptr);
             }
-            assert(Next()(tail) == NULL);
-            assert(Prev()(head) == NULL);
+            assert(Next()(tail) == nullptr);
+            assert(Prev()(head) == nullptr);
          }
          size += ls.size;
          ls.clear();
@@ -317,7 +317,7 @@ struct intrusive_list
 
       inline void dump(std::ostream& out, const vm::predicate *pred) const
       {
-         for(T *tpl(head); tpl != NULL; tpl = Next()(tpl)) {
+         for(T *tpl(head); tpl != nullptr; tpl = Next()(tpl)) {
             out << "\t"; tpl->print(out, pred); out << "\n";
          }
       }
@@ -325,13 +325,13 @@ struct intrusive_list
       inline void clear(void)
       {
          size = 0;
-         head = NULL;
-         tail = NULL;
+         head = nullptr;
+         tail = nullptr;
          //assertl();
       }
 
       explicit intrusive_list(void):
-         head(NULL), tail(NULL), size(0)
+         head(nullptr), tail(nullptr), size(0)
       {
          //assertl();
       }

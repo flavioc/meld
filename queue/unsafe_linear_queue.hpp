@@ -20,33 +20,33 @@ namespace queue
 	QUEUE_DEFINE_TOTAL_SERIAL()
 	
 #define QUEUE_DEFINE_LINEAR_DESTRUCTOR()	\
-	assert(tail == NULL);						\
-	assert(head == NULL);						\
+	assert(tail == nullptr);						\
+	assert(head == nullptr);						\
 	assert(empty())
 
 #define QUEUE_DEFINE_LINEAR_CONSTRUCTOR() \
-	head(NULL), tail(NULL)
+	head(nullptr), tail(nullptr)
 	
 #define QUEUE_DEFINE_LINEAR_CLEAR()	\
-	head = tail = NULL;					\
-	assert(head == NULL);				\
-	assert(tail == NULL);				\
+	head = tail = nullptr;					\
+	assert(head == nullptr);				\
+	assert(tail == nullptr);				\
 	assert(empty())
 
 #define QUEUE_DEFINE_LINEAR_EMPTY()				\
    inline bool empty(void) const					\
    {														\
-      return head == NULL;							\
+      return head == nullptr;							\
    }
 
 #define QUEUE_DEFINE_LINEAR_PUSH_NODE(ELEM)		\
 	node *new_node(new node());						\
    															\
    new_node->data = ELEM;								\
-   new_node->next = NULL;								\
+   new_node->next = nullptr;								\
    															\
-   if(head == NULL) {									\
-      assert(tail == NULL);							\
+   if(head == nullptr) {									\
+      assert(tail == nullptr);							\
       head = new_node;									\
       tail = new_node;									\
    } else {													\
@@ -54,16 +54,16 @@ namespace queue
       tail = new_node;									\
    }															\
 																\
-	assert(head != NULL);								\
+	assert(head != nullptr);								\
    assert(tail == new_node)
 
 #define QUEUE_DEFINE_LINEAR_POP_NODE()				\
    node *take(head);										\
    															\
-   assert(head != NULL);								\
+   assert(head != nullptr);								\
    															\
    if(head == tail)										\
-      head = tail = NULL;								\
+      head = tail = nullptr;								\
    else														\
       head = (node*)head->next;						\
    															\
@@ -77,16 +77,16 @@ namespace queue
    return el
 
 #define QUEUE_DEFINE_LINEAR_POP_LIST(VEC)			\
-	while(head != NULL)	{								\
+	while(head != nullptr)	{								\
 		node *next(head->next);							\
 		(VEC).push_back(head->data);					\
 		delete head;										\
 		head = next;										\
 	}															\
-	tail = NULL
+	tail = nullptr
 
 #define QUEUE_DEFINE_LINEAR_TOP_NODE()				\
-	assert(head != NULL);								\
+	assert(head != nullptr);								\
 	return head->data
 	
 // no safety of operations for this queue

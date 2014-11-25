@@ -42,7 +42,7 @@ filecountwords(EXTERNAL_ARG(dirname), EXTERNAL_ARG(filenum))
    string dir(dirname->get_content());
 
    dfd = opendir(dir.c_str());
-   if(dfd == NULL) {
+   if(dfd == nullptr) {
       cerr << "Can't open directory " << dir << endl;
       RETURN_INT(0);
    }
@@ -51,7 +51,7 @@ filecountwords(EXTERNAL_ARG(dirname), EXTERNAL_ARG(filenum))
    char filename_buffer[BUF_SIZE];
    int index = 0;
 
-   while((dp = readdir(dfd)) != NULL) {
+   while((dp = readdir(dfd)) != nullptr) {
       struct stat stbuf;
       snprintf(filename_buffer, BUF_SIZE, "%s/%s", dir.c_str(), dp->d_name);
       if(stat(filename_buffer, &stbuf) == -1) {

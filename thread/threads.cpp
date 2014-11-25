@@ -29,10 +29,10 @@ static atomic<size_t> prio_nodes_changed(0);
 namespace sched
 {
 
-tree_barrier* threads_sched::thread_barrier(NULL);
-termination_barrier* threads_sched::term_barrier(NULL);
+tree_barrier* threads_sched::thread_barrier(nullptr);
+termination_barrier* threads_sched::term_barrier(nullptr);
 #ifdef TASK_STEALING
-std::atomic<int> *threads_sched::steal_states(NULL);
+std::atomic<int> *threads_sched::steal_states(nullptr);
 #endif
 
 std::atomic<bool> threads_sched::stop_flag(false);
@@ -40,13 +40,13 @@ std::atomic<bool> threads_sched::stop_flag(false);
 void
 threads_sched::do_loop(void)
 {
-   db::node *node(NULL);
+   db::node *node(nullptr);
 
    while(true) {
       node = get_work();
-      if(node == NULL)
+      if(node == nullptr)
          break;
-      assert(node != NULL);
+      assert(node != nullptr);
       state.run_node(node);
       if(stop_flag) {
          killed_while_active();
@@ -281,7 +281,7 @@ threads_sched::steal_nodes(db::node **buffer, const size_t max)
    if(max == 0)
       return 0;
 
-   db::node *node(NULL);
+   db::node *node(nullptr);
    if(steal_flag) {
       if(!queues.moving.empty()) {
          if(queues.moving.pop_tail(node, STATE_STEALING)) {
@@ -410,7 +410,7 @@ threads_sched::check_if_current_useless(void)
       // move to new node
       move_node_to_new_owner(current_node, current_node->get_owner());
       NODE_UNLOCK(current_node, curlock);
-      current_node = NULL;
+      current_node = nullptr;
       return true;
    } else if(!current_node->unprocessed_facts) {
       NODE_LOCK(current_node, curlock, node_lock);
@@ -418,7 +418,7 @@ threads_sched::check_if_current_useless(void)
       if(!current_node->unprocessed_facts) {
          make_current_node_inactive();
          NODE_UNLOCK(current_node, curlock);
-         current_node = NULL;
+         current_node = nullptr;
          return true;
       }
       NODE_UNLOCK(current_node, curlock);
@@ -435,10 +435,10 @@ threads_sched::set_next_node(void)
    check_priority_buffer();
 #endif
 
-   if(current_node != NULL)
+   if(current_node != nullptr)
       check_if_current_useless();
    
-   while (current_node == NULL) {   
+   while (current_node == nullptr) {   
       if(scheduling_mechanism) {
          current_node = prios.moving.pop_best(prios.stati, STATE_WORKING);
          if(current_node) {
@@ -465,7 +465,7 @@ threads_sched::set_next_node(void)
    
    ins_active;
    
-   assert(current_node != NULL);
+   assert(current_node != nullptr);
    
    return true;
 }
@@ -474,11 +474,11 @@ node*
 threads_sched::get_work(void)
 {  
    if(!set_next_node())
-      return NULL;
+      return nullptr;
 
    set_active_if_inactive();
    ins_active;
-   assert(current_node != NULL);
+   assert(current_node != nullptr);
    assert(current_node->unprocessed_facts);
    
    return current_node;
@@ -594,7 +594,7 @@ threads_sched::threads_sched(const vm::process_id _id):
    ins_state(statistics::NOW_ACTIVE),
 #endif
    tstate(THREAD_ACTIVE),
-   current_node(NULL)
+   current_node(nullptr)
 #ifdef TASK_STEALING
    , rand(_id * 1000)
    , next_thread(rand(All->NUM_THREADS))

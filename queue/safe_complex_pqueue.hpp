@@ -45,7 +45,7 @@ private:
 	heap_object do_pop(const queue_id_t new_state = queue_no_queue)
 	{
 		if(empty())
-			return NULL;
+			return nullptr;
 
 		const heap_object min(heap.front());
 		
@@ -169,7 +169,7 @@ public:
 
       if(empty()) {
          if(other.empty())
-            return NULL;
+            return nullptr;
          return other.do_pop(new_state);
       } else {
          if(other.empty())

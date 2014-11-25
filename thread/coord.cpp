@@ -68,7 +68,7 @@ threads_sched::check_priority_buffer(void)
    for(size_t i(0); i < size; ++i) {
       priority_add_item p(priority_tmp[i]);
       node *target(p.target);
-      if(target == NULL)
+      if(target == nullptr)
          continue;
       const priority_t howmuch(p.val);
       const priority_add_type typ(p.typ);

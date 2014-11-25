@@ -41,38 +41,18 @@ struct persistent_store
          const vm::derivation_count, const vm::depth_t);
    
    db::agg_configuration* add_agg_tuple(vm::tuple*, vm::predicate *,
-         const vm::derivation_count, const vm::depth_t
-#ifdef GC_NODES
-         , vm::candidate_gc_nodes&
-#endif
-         );
+         const vm::derivation_count, const vm::depth_t, vm::candidate_gc_nodes&);
    db::agg_configuration* remove_agg_tuple(vm::tuple*, vm::predicate *,
-         const vm::derivation_count, const vm::depth_t
-#ifdef GC_NODES
-         , vm::candidate_gc_nodes&
-#endif
-         );
-   void delete_by_index(vm::predicate*, const vm::match&
-#ifdef GC_NODES
-         , vm::candidate_gc_nodes&
-#endif
-         );
-   void delete_by_leaf(vm::predicate*, tuple_trie_leaf*, const vm::depth_t
-#ifdef GC_NODES
-         , vm::candidate_gc_nodes&
-#endif
-         );
+         const vm::derivation_count, const vm::depth_t, vm::candidate_gc_nodes&);
+   void delete_by_index(vm::predicate*, const vm::match&, vm::candidate_gc_nodes&);
+   void delete_by_leaf(vm::predicate*, tuple_trie_leaf*, const vm::depth_t, vm::candidate_gc_nodes&);
    void delete_all(const vm::predicate*);
 
    db::tuple_trie::tuple_search_iterator match_predicate(const vm::predicate_id) const;
   	db::tuple_trie::tuple_search_iterator match_predicate(const vm::predicate_id, const vm::match*) const;
 
-   void assert_tries(void);
-   vm::full_tuple_list end_iteration(
-#ifdef GC_NODES
-         vm::candidate_gc_nodes&
-#endif
-         );
+   void assert_tries();
+   vm::full_tuple_list end_iteration();
    
    size_t count_total(const vm::predicate_id) const;
 

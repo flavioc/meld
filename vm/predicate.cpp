@@ -51,7 +51,7 @@ read_type_from_reader(code_reader& read)
          assert(false); break;
    }
    assert(false);
-   return NULL;
+   return nullptr;
 }
 
 type*
@@ -84,7 +84,7 @@ predicate::make_predicate_from_reader(code_reader& read, code_size_t *code_size,
    if(prop & PRED_AGG)
       pred->agg_info = new predicate::aggregate_info;
    else
-      pred->agg_info = NULL;
+      pred->agg_info = nullptr;
    pred->is_linear = prop & PRED_LINEAR;
    pred->is_route = prop & PRED_ROUTE;
    pred->is_reverse_route = prop & PRED_REVERSE_ROUTE;
@@ -218,7 +218,7 @@ predicate::cache_info(vm::program *prog)
 predicate::predicate(void): store_type(LINKED_LIST)
 {
    tuple_size = 0;
-   agg_info = NULL;
+   agg_info = nullptr;
 }
 
 void

@@ -252,7 +252,7 @@ private:
    {
       threads_sched *old(tn->get_static());
 
-      if(old != NULL)
+      if(old != nullptr)
          old->static_nodes--;
 
       target->static_nodes++;
@@ -263,7 +263,7 @@ private:
    {
       threads_sched *old(tn->get_static());
 
-      if(old != NULL)
+      if(old != nullptr)
          old->static_nodes--;
 
       tn->set_moving();

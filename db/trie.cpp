@@ -63,9 +63,9 @@ trie_node*
 trie_node::get_by_int(const int_val val) const
 {
    assert(!is_leaf());
-   assert(get_child() != NULL);
+   assert(get_child() != nullptr);
    
-   trie_node *node(NULL);
+   trie_node *node(nullptr);
    
    if(is_hashed()) {
       trie_hash *hash(get_hash());
@@ -81,16 +81,16 @@ trie_node::get_by_int(const int_val val) const
       node = node->get_next();
    }
    
-   return NULL;
+   return nullptr;
 }
 
 trie_node*
 trie_node::get_by_float(const float_val val) const
 {
    assert(!is_leaf());
-   assert(get_child() != NULL);
+   assert(get_child() != nullptr);
    
-   trie_node *node(NULL);
+   trie_node *node(nullptr);
    
    if(is_hashed()) {
       trie_hash *hash(get_hash());
@@ -106,16 +106,16 @@ trie_node::get_by_float(const float_val val) const
       node = node->get_next();
    }
    
-   return NULL;
+   return nullptr;
 }
 
 trie_node*
 trie_node::get_by_node(const node_val val) const
 {
    assert(!is_leaf());
-   assert(get_child() != NULL);
+   assert(get_child() != nullptr);
    
-   trie_node *node(NULL);
+   trie_node *node(nullptr);
    
    if(is_hashed()) {
       trie_hash *hash(get_hash());
@@ -131,7 +131,7 @@ trie_node::get_by_node(const node_val val) const
       node = node->get_next();
    }
    
-   return NULL;
+   return nullptr;
 }
 
 trie_node*
@@ -144,8 +144,8 @@ trie_node::match(const tuple_field& field, type *typ,
    
    trie_node *next(get_child());
    
-   if(next == NULL)
-      return NULL;
+   if(next == nullptr)
+      return nullptr;
       
    if(is_hashed()) {
       trie_hash *hash((trie_hash*)next);
@@ -163,7 +163,7 @@ trie_node::match(const tuple_field& field, type *typ,
       }
     }
    
-   while(next != NULL) {
+   while(next != nullptr) {
       tuple_field& f(next->data);
       
       ++count;
@@ -226,7 +226,7 @@ trie_node::match(const tuple_field& field, type *typ,
       next = next->get_next();
    }
 
-   return NULL;
+   return nullptr;
 }
    
 trie_node*
@@ -314,7 +314,7 @@ trie_node::insert(const tuple_field& field, type *t, match_stack& mstk)
       }
    } else {
       new_child->next = child;
-      new_child->prev = NULL;
+      new_child->prev = nullptr;
    
       if(child)
          child->prev = new_child;
@@ -337,7 +337,7 @@ trie_node::convert_hash(type *type)
    trie_hash *hash(new trie_hash(type, this));
    size_t total(0);
    
-   while (next != NULL) {
+   while (next != nullptr) {
       trie_node *tmp(next->next);
       
       switch(type->get_type()) {
@@ -418,7 +418,7 @@ trie_hash::insert_int(const int_val& val, trie_node *node)
    
    trie_node *old(buckets[bucket]);
    
-   node->prev = NULL;
+   node->prev = nullptr;
    node->next = old;
    if(old)
       old->prev = node;
@@ -437,7 +437,7 @@ trie_hash::insert_uint(const uint_val& val, trie_node *node)
    
    trie_node *old(buckets[bucket]);
    
-   node->prev = NULL;
+   node->prev = nullptr;
    node->next = old;
    if(old)
       old->prev = node;
@@ -455,7 +455,7 @@ trie_hash::insert_float(const float_val& val, trie_node *node)
    
    trie_node *old(buckets[bucket]);
    
-   node->prev = NULL;
+   node->prev = nullptr;
    node->next = old;
    if(old)
       old->prev = node;
@@ -473,7 +473,7 @@ trie_hash::insert_node(const node_val& val, trie_node *node)
    
    trie_node *old(buckets[bucket]);
    
-   node->prev = NULL;
+   node->prev = nullptr;
    node->next = old;
    if(old)
       old->prev = node;
@@ -541,26 +541,26 @@ trie::delete_path(trie_node *node)
    
    if(node == root) // reached root
    {
-      assert(node->child == NULL);
+      assert(node->child == nullptr);
       node->hashed = false;
       return;
    }
    
-   assert(node->child == NULL);
+   assert(node->child == nullptr);
    
-   if(node->prev != NULL)
+   if(node->prev != nullptr)
       node->prev->next = node->next;
       
-   if(node->next != NULL)
+   if(node->next != nullptr)
       node->next->prev = node->prev;
       
-   if(node->bucket != NULL) {
+   if(node->bucket != nullptr) {
       trie_hash *hash(parent->get_hash());
       hash->total--;
    }
    
-   if(node->prev == NULL) {
-      if(node->bucket != NULL) {
+   if(node->prev == nullptr) {
+      if(node->bucket != nullptr) {
          *(node->bucket) = node->next;
          
          trie_hash *hash(parent->get_hash());
@@ -568,9 +568,9 @@ trie::delete_path(trie_node *node)
          if(hash->total == 0) {
             delete hash;
 				node->hashed = false;
-				node->bucket = NULL;
+				node->bucket = nullptr;
             assert(parent != (trie_node*)hash);
-            parent->child = NULL;
+            parent->child = nullptr;
             delete_path(parent);
          }
       } else {
@@ -578,8 +578,8 @@ trie::delete_path(trie_node *node)
          
          parent->child = node->next;
          
-         if(parent->child == NULL) {
-            assert(node->next == NULL);
+         if(parent->child == nullptr) {
+            assert(node->next == nullptr);
             delete_path(parent);
          }
       }
@@ -590,11 +590,7 @@ trie::delete_path(trie_node *node)
 
 // deletes everything below the 'node'
 size_t
-trie::delete_branch(trie_node *node, predicate *pred
-#ifdef GC_NODES
-      , candidate_gc_nodes& gc_nodes
-#endif
-      )
+trie::delete_branch(trie_node *node, predicate *pred, candidate_gc_nodes& gc_nodes)
 {
    size_t count;
    
@@ -613,13 +609,9 @@ trie::delete_branch(trie_node *node, predicate *pred
       
       count = leaf->get_count();
       
-#ifdef GC_NODES
       leaf->destroy(pred, gc_nodes);
-#else
-      leaf->destroy(pred);
-#endif
       delete leaf;
-      node->child = NULL;
+      node->child = nullptr;
       
       return count;
    }
@@ -635,14 +627,10 @@ trie::delete_branch(trie_node *node, predicate *pred
          if(hash->buckets[i]) {
             trie_node *next(hash->buckets[i]);
 
-            while(next != NULL) {
+            while(next != nullptr) {
                trie_node *tmp(next->next);
 
-#ifdef GC_NODES
                count += delete_branch(next, pred, gc_nodes);
-#else
-               count += delete_branch(next, pred);
-#endif
                delete next;
 
                next = tmp;
@@ -650,21 +638,17 @@ trie::delete_branch(trie_node *node, predicate *pred
          }
       }
    } else {
-      while(next != NULL) {
+      while(next != nullptr) {
          trie_node *tmp(next->get_next());
          
-#ifdef GC_NODES
          count += delete_branch(next, pred, gc_nodes);
-#else
-         count += delete_branch(next, pred);
-#endif
          delete next;
          
          next = tmp;
       }
    }
    
-   node->child = NULL;
+   node->child = nullptr;
    
    return count;
 }
@@ -688,7 +672,7 @@ trie::check_insert(void *data, predicate *pred, const derivation_count many, con
             trie_leaf *leaf(create_leaf(data, pred, many, depth));
             root->set_leaf(leaf);
             leaf->node = root;
-            leaf->prev = leaf->next = NULL;
+            leaf->prev = leaf->next = nullptr;
             first_leaf = last_leaf = leaf;
          }
       } else {
@@ -719,9 +703,9 @@ trie::check_insert(void *data, predicate *pred, const derivation_count many, con
       
       cur = parent->match(field, typ, mstk, count);
       
-      if(cur == NULL) {
+      if(cur == nullptr) {
          if(many < 0) {
-            return NULL; // tuple not found in the trie
+            return nullptr; // tuple not found in the trie
          }
          // else do insertion
          assert(!parent->is_leaf());
@@ -759,11 +743,11 @@ trie::check_insert(void *data, predicate *pred, const derivation_count many, con
          trie_leaf *leaf(create_leaf(data, pred, many, depth));
          leaf->node = parent;
          parent->set_leaf(leaf);
-         leaf->next = NULL;
+         leaf->next = nullptr;
          
-         if(first_leaf == NULL) {
+         if(first_leaf == nullptr) {
             first_leaf = last_leaf = leaf;
-            leaf->prev = NULL;
+            leaf->prev = nullptr;
          } else {
             leaf->prev = last_leaf;
             last_leaf->next = leaf;
@@ -775,8 +759,8 @@ trie::check_insert(void *data, predicate *pred, const derivation_count many, con
          found = false;
          
          assert(!root->is_leaf());
-         assert(first_leaf != NULL);
-         assert(root->child != NULL);
+         assert(first_leaf != nullptr);
+         assert(root->child != nullptr);
          
          return parent;
       }
@@ -797,7 +781,7 @@ trie::check_insert(void *data, predicate *pred, const derivation_count many, con
    else
       orig->sub(depth, many);
 
-   assert(first_leaf != NULL && last_leaf != NULL);
+   assert(first_leaf != nullptr && last_leaf != nullptr);
    
    basic_invariants();
    
@@ -805,55 +789,32 @@ trie::check_insert(void *data, predicate *pred, const derivation_count many, con
 }
 
 void
-trie::commit_delete(trie_node *node, predicate *pred, const ref_count many
-#ifdef GC_NODES
-      , candidate_gc_nodes& gc_nodes
-#endif
-      )
+trie::commit_delete(trie_node *node, predicate *pred, const ref_count many,
+      candidate_gc_nodes& gc_nodes)
 {
    assert(node->is_leaf());
 
    number_of_references -= many;
    assert(number_of_references >= 0);
-   inner_delete_by_leaf(node->get_leaf(), pred, 0, 0
-#ifdef GC_NODES
-         , gc_nodes
-#endif
-         );
-#if 0
-   if(!(number_of_references == 0 || (number_of_references > 0 && first_leaf != NULL))) {
-      cout << " =========== > " << number_of_references << endl;
-      cout << root->child << endl;
-   }
-#endif
+   inner_delete_by_leaf(node->get_leaf(), pred, 0, 0, gc_nodes);
    basic_invariants();
 }
 
 void
-trie::delete_by_leaf(trie_leaf *leaf, predicate *pred, const depth_t depth
-#ifdef GC_NODES
-      , candidate_gc_nodes& gc_nodes
-#endif
-      )
+trie::delete_by_leaf(trie_leaf *leaf, predicate *pred, const depth_t depth,
+      candidate_gc_nodes& gc_nodes)
 {
    sanity_check();
    --number_of_references;
    assert(number_of_references >= 0);
-   inner_delete_by_leaf(leaf, pred, 1, depth
-#ifdef GC_NODES
-         , gc_nodes
-#endif
-         );
+   inner_delete_by_leaf(leaf, pred, 1, depth, gc_nodes);
    sanity_check();
 }
 
 // we assume that number_of_references was decrement previous to this
 void
-trie::inner_delete_by_leaf(trie_leaf *leaf, predicate *pred, const derivation_count count, const depth_t depth
-#ifdef GC_NODES
-      , candidate_gc_nodes& gc_nodes
-#endif
-      )
+trie::inner_delete_by_leaf(trie_leaf *leaf, predicate *pred, const derivation_count count,
+      const depth_t depth, candidate_gc_nodes& gc_nodes)
 {
    if(count != 0) {
       assert(count > 0);
@@ -875,42 +836,34 @@ trie::inner_delete_by_leaf(trie_leaf *leaf, predicate *pred, const derivation_co
       
    const bool equal_first(leaf == first_leaf);
    if(equal_first) {
-      assert(leaf->prev == NULL);
+      assert(leaf->prev == nullptr);
       first_leaf = first_leaf->next;
    }
    
    const bool equal_last(leaf == last_leaf);
    if(equal_last) {
-      assert(leaf->next == NULL);
+      assert(leaf->next == nullptr);
       last_leaf = last_leaf->prev;
    }
       
    if(equal_first && equal_last) {
-      assert(last_leaf == NULL);
-      assert(first_leaf == NULL);
+      assert(last_leaf == nullptr);
+      assert(first_leaf == nullptr);
    }
    
    //cout << this << " Total " << total << " root " << root << " node " << node << endl;
    
-#ifdef GC_NODES
    leaf->destroy(pred, gc_nodes);
-#else
-   leaf->destroy(pred);
-#endif
    delete leaf;
-   node->child = NULL;
+   node->child = nullptr;
    delete_path(node);
    
-   assert(root->next == NULL);
-   assert(root->prev == NULL);
+   assert(root->next == nullptr);
+   assert(root->prev == nullptr);
 }
 
 void
-trie::delete_by_index(predicate *pred, const match& m
-#ifdef GC_NODES
-      , candidate_gc_nodes& gc_nodes
-#endif
-      )
+trie::delete_by_index(predicate *pred, const match& m, candidate_gc_nodes& gc_nodes)
 {
    basic_invariants();
    
@@ -943,18 +896,14 @@ trie::delete_by_index(predicate *pred, const match& m
             break;
          default: assert(false);
       }
-      if(node == NULL)
+      if(node == nullptr)
          return; // not found
    }
    
-   assert(node != NULL);
+   assert(node != nullptr);
 
    // update number of tuples in this trie
-   number_of_references -= delete_branch(node, pred
-#ifdef GC_NODES
-         , gc_nodes
-#endif
-         );
+   number_of_references -= delete_branch(node, pred, gc_nodes);
    assert(number_of_references >= 0);
    delete_path(node);
    
@@ -962,17 +911,9 @@ trie::delete_by_index(predicate *pred, const match& m
 }
 
 void
-trie::wipeout(predicate *pred
-#ifdef GC_NODES
-      , candidate_gc_nodes& gc_nodes
-#endif
-      )
+trie::wipeout(predicate *pred, candidate_gc_nodes& gc_nodes)
 {
-   delete_branch(root, pred
-#ifdef GC_NODES
-         , gc_nodes
-#endif
-         );
+   delete_branch(root, pred, gc_nodes);
    delete root;
    number_of_references = 0;
 }
@@ -980,8 +921,8 @@ trie::wipeout(predicate *pred
 trie::trie(void):
    root(new trie_node()),
    number_of_references(0),
-   first_leaf(NULL),
-   last_leaf(NULL)
+   first_leaf(nullptr),
+   last_leaf(nullptr)
 {
    basic_invariants();
 }
@@ -1015,7 +956,7 @@ tuple_trie::insert_tuple(vm::tuple *tpl, vm::predicate *pred, const derivation_c
    check_insert(tpl, pred, many, depth, found);
    
    if(found) {
-      assert(root->child != NULL);
+      assert(root->child != nullptr);
       assert(number_of_references > 0);
    }
    
@@ -1036,9 +977,9 @@ tuple_trie::delete_tuple(vm::tuple *tpl, vm::predicate *pred, const derivation_c
    bool found;
    trie_node *node(check_insert(tpl, pred, -many, depth, found));
 
-   if(node == NULL) {
+   if(node == nullptr) {
       // already deleted
-      return delete_info(NULL, this, false, NULL, 0);
+      return delete_info(nullptr, this, false, nullptr, 0);
    }
    
    assert(found);
@@ -1160,7 +1101,7 @@ tuple_trie::visit(trie_node *n, predicate *pred) const
 }
 
 #define ADD_ALT(PARENT, NODE) do { \
-   assert((NODE) != NULL); \
+   assert((NODE) != nullptr); \
 	frm.parent = (PARENT);	\
    frm.node = NODE;   		\
    frm.mstack = mstk;   	\
@@ -1169,8 +1110,8 @@ tuple_trie::visit(trie_node *n, predicate *pred) const
 void
 tuple_trie::tuple_search_iterator::find_next(trie_continuation_frame& frm, const bool force_down)
 {
-	trie_node *parent = NULL;
-	trie_node *node = NULL;
+	trie_node *parent = nullptr;
+	trie_node *node = nullptr;
 	match_field f;
    tuple_field mfield;
    bool going_down = true;
@@ -1182,7 +1123,7 @@ try_again:
 	// use continuation stack to restore state at a given node
 
 	if(cont_stack.empty()) {
-		next = NULL;
+		next = nullptr;
 		return;
 	}
 
@@ -1201,8 +1142,8 @@ match_begin:
    
    f = mstk.top();
    
-   assert(node != NULL);
-   assert(parent != NULL);
+   assert(node != nullptr);
+   assert(parent != nullptr);
    
    if(f.exact) {
       // must do an exact match
@@ -1308,7 +1249,7 @@ match_begin:
             trie_node **end_buckets(buckets + hash->num_buckets);
             
             // find first valid bucket
-            for(; *buckets == NULL && buckets < end_buckets; ++buckets) {
+            for(; *buckets == nullptr && buckets < end_buckets; ++buckets) {
                if(*buckets)
                   break;
             }
@@ -1316,14 +1257,14 @@ match_begin:
             assert(buckets < end_buckets);
             
             node = *buckets;
-            assert(node != NULL);
+            assert(node != nullptr);
             
             if(node->next)
                ADD_ALT(parent, node->next);
             else {
                // find another valid bucket
                ++buckets;
-               for(; *buckets == NULL && buckets < end_buckets; ++buckets)
+               for(; *buckets == nullptr && buckets < end_buckets; ++buckets)
                   ;
                
                if(buckets != end_buckets)
@@ -1335,7 +1276,7 @@ match_begin:
             
             trie_hash *hash(parent->get_hash());
             
-            assert(hash != NULL);
+            assert(hash != nullptr);
             
             trie_node **buckets(hash->buckets);
             trie_node **end_buckets(buckets + hash->num_buckets);
@@ -1346,7 +1287,7 @@ match_begin:
             else {
                // must find new bucket
                ++current_bucket;
-               for(; *current_bucket == NULL && current_bucket < end_buckets; ++current_bucket)
+               for(; *current_bucket == nullptr && current_bucket < end_buckets; ++current_bucket)
                   ;
                if(current_bucket != end_buckets)
                   ADD_ALT(parent, *current_bucket);
@@ -1383,7 +1324,7 @@ match_succeeded_and_pop:
 
 match_succeeded:
 	if(node->is_leaf()) {
-      assert(node != NULL);
+      assert(node != nullptr);
       assert(node->is_leaf());
 
       if(((tuple_trie_leaf*)node->get_leaf())->get_count() == 0)
@@ -1440,7 +1381,7 @@ agg_trie::find_configuration(vm::tuple *tpl, vm::predicate *pred)
    }
    
    bool found;
-   trie_node *node(trie::check_insert(NULL, pred, 1, 0, mstk, found));
+   trie_node *node(trie::check_insert(nullptr, pred, 1, 0, mstk, found));
    
    if(!found)
       ++number_of_references;
@@ -1449,22 +1390,14 @@ agg_trie::find_configuration(vm::tuple *tpl, vm::predicate *pred)
 }
 
 agg_trie_iterator
-agg_trie::erase(agg_trie_iterator& it, predicate *pred
-#ifdef GC_NODES
-      , candidate_gc_nodes& gc_nodes
-#endif
-      )
+agg_trie::erase(agg_trie_iterator& it, predicate *pred, candidate_gc_nodes& gc_nodes)
 {
    agg_trie_leaf *leaf(it.current_leaf);
    agg_trie_leaf *next_leaf((agg_trie_leaf*)leaf->next);
    trie_node *node(leaf->node);
    
    leaf->set_zero_refs();
-   commit_delete(node, pred, 1
-#ifdef GC_NODES
-         , gc_nodes
-#endif
-         );
+   commit_delete(node, pred, 1, gc_nodes);
    
    return agg_trie_iterator(next_leaf);
 }

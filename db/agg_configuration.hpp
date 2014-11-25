@@ -43,11 +43,7 @@ public:
 
    void print(std::ostream&, vm::predicate *) const;
 
-   void generate(vm::predicate *, const vm::aggregate_type, const vm::field_num, vm::full_tuple_list&
-#ifdef GC_NODES
-         , vm::candidate_gc_nodes&
-#endif
-         );
+   void generate(vm::predicate *, const vm::aggregate_type, const vm::field_num, vm::full_tuple_list&);
 
    bool test(vm::predicate *, vm::tuple *, const vm::field_num) const;
 
@@ -55,38 +51,24 @@ public:
    inline bool is_empty(void) const { return vals.empty(); }
    inline size_t size(void) const { return vals.size(); }
 
-   virtual void add_to_set(vm::tuple *, vm::predicate *, const vm::derivation_count, const vm::depth_t
-#ifdef GC_NODES
-         , vm::candidate_gc_nodes&
-#endif
-         );
+   virtual void add_to_set(vm::tuple *, vm::predicate *, const vm::derivation_count,
+         const vm::depth_t, vm::candidate_gc_nodes&);
    
    bool matches_first_int_arg(vm::predicate *, const vm::int_val) const;
 
    explicit agg_configuration(void):
-      changed(false), corresponds(NULL), last_depth(0)
+      changed(false), corresponds(nullptr), last_depth(0)
    {
-      assert(corresponds == NULL);
+      assert(corresponds == nullptr);
       assert(!changed);
    }
 
-   inline void wipeout(vm::predicate *pred
-#ifdef GC_NODES
-         , vm::candidate_gc_nodes& gc_nodes
-#endif
-         ) {
-#ifdef GC_NODES
+   inline void wipeout(vm::predicate *pred, vm::candidate_gc_nodes& gc_nodes)
+   {
       vals.wipeout(pred, gc_nodes);
-#else
-      vals.wipeout(pred);
-#endif
       if(corresponds) {
-         vm::tuple::destroy(corresponds, pred
-#ifdef GC_NODES
-               , gc_nodes
-#endif
-               );
-         corresponds = NULL;
+         vm::tuple::destroy(corresponds, pred, gc_nodes);
+         corresponds = nullptr;
       }
    }
 };

@@ -4,6 +4,6 @@
 namespace mem
 {
    
-__thread pool *mem_pool(NULL);
+__thread pool *mem_pool(nullptr);
 
 }

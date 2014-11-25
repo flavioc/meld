@@ -38,13 +38,13 @@ private:
          bool my_sense(thread_sense);
          
          if(id == 0)
-            assert(parent == NULL);
+            assert(parent == nullptr);
          
          while(children_count > 0) {}
          
          children_count = count;
          
-         if(parent != NULL) {
+         if(parent != nullptr) {
             // not root
             parent->children_count--;
             while(outer->sense != my_sense) {}
@@ -65,7 +65,7 @@ private:
          id(_id)
       {
          if(id == 0)
-            assert(parent == NULL);
+            assert(parent == nullptr);
       }
    };
 
@@ -127,7 +127,7 @@ public:
       sense = false;
       
       num_nodes = 0;
-      build(NULL, depth);
+      build(nullptr, depth);
    }
 };
 

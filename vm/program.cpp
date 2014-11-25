@@ -69,7 +69,7 @@ get_function_pointer(char *lib_path, char* func_name)
 
 program::program(const string& _filename):
    filename(_filename),
-   init(NULL)
+   init(nullptr)
 {
    code_reader read(filename);
 
@@ -285,7 +285,7 @@ program::program(const string& _filename):
 
          register_custom_external_function((external_function_ptr)skip_ptr, num_args, ret_type, arg_type, extern_name);
       } else
-         register_custom_external_function((external_function_ptr)skip_ptr, 0, ret_type, NULL, extern_name);
+         register_custom_external_function((external_function_ptr)skip_ptr, 0, ret_type, nullptr, extern_name);
    }
 
    // read predicate information
@@ -414,7 +414,7 @@ program::program(const string& _filename):
       }
    }
 
-   data_rule = NULL;
+   data_rule = nullptr;
 }
 
 program::~program(void)
@@ -431,7 +431,7 @@ program::~program(void)
       rules[i]->destroy(num_predicates_uint);
 		delete rules[i];
 	}
-   if(data_rule != NULL)
+   if(data_rule != nullptr)
       delete data_rule;
    for(size_t i(0); i < functions.size(); ++i) {
       delete functions[i];
@@ -478,7 +478,7 @@ predicate*
 program::get_predicate(const predicate_id& id) const
 {
    if((size_t)id >= num_predicates()) {
-      return NULL;
+      return nullptr;
    }
    
    return predicates[id];
@@ -545,7 +545,7 @@ program::print_bytecode_by_predicate(ostream& out, const string& name) const
 {
 	predicate *p(get_predicate_by_name(name));
 	
-	if(p == NULL) {
+	if(p == nullptr) {
 		cerr << "Predicate " << name << " not found." << endl;
 		return;
 	}
@@ -642,13 +642,13 @@ program::get_predicate_by_name(const string& name) const
          return pred;
    }
    
-   return NULL;
+   return nullptr;
 }
 
 predicate*
 program::get_init_predicate(void) const
 {
-   if(init == NULL) {
+   if(init == nullptr) {
       init = get_predicate(INIT_PREDICATE_ID);
       if(init->get_name() != "_init") {
          cerr << "_init program should be predicate #" << (int)INIT_PREDICATE_ID << endl;
@@ -657,7 +657,7 @@ program::get_init_predicate(void) const
       assert(init->get_name() == "_init");
    }
 
-   assert(init != NULL);
+   assert(init != nullptr);
       
    return init;
 }

@@ -35,13 +35,13 @@ public:
       cur += size;
       
       if(cur > top)
-         return NULL; // full
+         return nullptr; // full
       
       return old_cur;
    }
    
    explicit chunk(const size_t size, const size_t num_elems):
-      next_chunk(NULL)
+      next_chunk(nullptr)
    {
       const size_t total(size * num_elems);
       

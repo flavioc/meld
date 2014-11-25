@@ -40,14 +40,14 @@ state::purge_runtime_objects(void)
 #define PURGE_OBJ(TYPE)                                                                      \
    for(list<TYPE*>::iterator it(free_ ## TYPE.begin()); it != free_ ## TYPE .end(); ++it) {  \
       TYPE *x(*it);                                                                          \
-      assert(x != NULL);                                                                     \
+      assert(x != nullptr);                                                                     \
       x->dec_refs(gc_nodes);                                                                 \
    }                                                                                         \
    free_ ## TYPE .clear()
 #define PURGE_OBJ_SIMPLE(TYPE)                                                               \
    for(list<TYPE*>::iterator it(free_ ## TYPE.begin()); it != free_ ## TYPE .end(); ++it) {  \
       TYPE *x(*it);                                                                          \
-      assert(x != NULL);                                                                     \
+      assert(x != nullptr);                                                                     \
       x->dec_refs();                                                                         \
    }                                                                                         \
    free_ ## TYPE .clear()
@@ -84,7 +84,7 @@ state::setup(vm::predicate *pred, db::node *n, const derivation_count count, con
 {
    this->node = n;
    this->count = count;
-   if(pred != NULL) {
+   if(pred != nullptr) {
       if(pred->is_cycle_pred())
          this->depth = depth + 1;
       else
@@ -92,12 +92,12 @@ state::setup(vm::predicate *pred, db::node *n, const derivation_count count, con
    } else {
       this->depth = 0;
    }
-	if(pred != NULL)
+	if(pred != nullptr)
    	this->is_linear = pred->is_linear_pred();
 	else
 		this->is_linear = false;
    for(size_t i(0); i < NUM_REGS; ++i) {
-      this->saved_leaves[i] = NULL;
+      this->saved_leaves[i] = nullptr;
       this->is_leaf[i] = false;
    }
 #ifdef CORE_STATISTICS
@@ -146,7 +146,7 @@ state::search_for_negative_tuple_partial_agg(full_tuple *stpl)
       }
    }
 
-   return NULL;
+   return nullptr;
 }
 
 full_tuple*
@@ -173,7 +173,7 @@ state::search_for_negative_tuple_normal(full_tuple *stpl)
       }
    }
 
-   return NULL;
+   return nullptr;
 }
 
 full_tuple*
@@ -196,7 +196,7 @@ state::search_for_negative_tuple_full_agg(full_tuple *stpl)
       }
    }
 
-   return NULL;
+   return nullptr;
 }
 
 void
@@ -214,16 +214,8 @@ state::do_persistent_tuples(void)
                assert(stpl != stpl2);
                assert(stpl2->get_tuple() != stpl->get_tuple());
                assert(stpl2->get_predicate() == stpl->get_predicate());
-               full_tuple::wipeout(stpl
-#ifdef GC_NODES
-                     , gc_nodes
-#endif
-                     );
-               full_tuple::wipeout(stpl2
-#ifdef GC_NODES
-                     , gc_nodes
-#endif
-                     );
+               full_tuple::wipeout(stpl, gc_nodes);
+               full_tuple::wipeout(stpl2, gc_nodes);
                continue;
             }
          }
@@ -234,16 +226,8 @@ state::do_persistent_tuples(void)
                assert(stpl != stpl2);
                assert(stpl2->get_tuple() != stpl->get_tuple());
                assert(stpl2->get_predicate() == stpl->get_predicate());
-               full_tuple::wipeout(stpl
-#ifdef GC_NODES
-                     , gc_nodes
-#endif
-                     );
-               full_tuple::wipeout(stpl2
-#ifdef GC_NODES
-                     , gc_nodes
-#endif
-                     );
+               full_tuple::wipeout(stpl, gc_nodes);
+               full_tuple::wipeout(stpl2, gc_nodes);
                continue;
             }
          }
@@ -251,16 +235,8 @@ state::do_persistent_tuples(void)
          if(stpl->get_count() == 1 && !pred->is_aggregate_pred()) {
             full_tuple *stpl2(search_for_negative_tuple_normal(stpl));
             if(stpl2) {
-               full_tuple::wipeout(stpl
-#ifdef GC_NODES
-                     , gc_nodes
-#endif
-                     );
-               full_tuple::wipeout(stpl2
-#ifdef GC_NODES
-                     , gc_nodes
-#endif
-                     );
+               full_tuple::wipeout(stpl, gc_nodes);
+               full_tuple::wipeout(stpl2, gc_nodes);
                continue;
             }
          }
@@ -291,11 +267,7 @@ state::process_action_tuples(void)
       full_tuple *stpl(*it);
       vm::tuple *tpl(stpl->get_tuple());
       vm::predicate *pred(stpl->get_predicate());
-      All->MACHINE->run_action(sched, node, tpl, pred
-#ifdef GC_NODES
-            , gc_nodes
-#endif
-            );
+      All->MACHINE->run_action(sched, node, tpl, pred, gc_nodes);
       delete stpl;
    }
    store->action_tuples.clear();
@@ -331,29 +303,19 @@ state::add_to_aggregate(full_tuple *stpl)
    vm::tuple *tpl(stpl->get_tuple());
    predicate *pred(stpl->get_predicate());
    vm::derivation_count count(stpl->get_count());
-   agg_configuration *agg(NULL);
+   agg_configuration *agg(nullptr);
 
    if(count < 0) {
-      agg = node->pers_store.remove_agg_tuple(tpl, stpl->get_predicate(), -count, stpl->get_depth()
-#ifdef GC_NODES
-            , gc_nodes
-#endif
-            );
+      agg = node->pers_store.remove_agg_tuple(tpl, stpl->get_predicate(),
+            -count, stpl->get_depth(), gc_nodes);
    } else {
-      agg = node->pers_store.add_agg_tuple(tpl, stpl->get_predicate(), count, stpl->get_depth()
-#ifdef GC_NODES
-            , gc_nodes
-#endif
-            );
+      agg = node->pers_store.add_agg_tuple(tpl, stpl->get_predicate(),
+            count, stpl->get_depth(), gc_nodes);
    }
 
    full_tuple_list list;
 
-   agg->generate(pred, pred->get_aggregate_type(), pred->get_aggregate_field(), list
-#ifdef GC_NODES
-         , gc_nodes
-#endif
-         );
+   agg->generate(pred, pred->get_aggregate_type(), pred->get_aggregate_field(), list);
 
    for(full_tuple_list::iterator it(list.begin()); it != list.end();) {
       full_tuple *stpl(*it);
@@ -389,13 +351,8 @@ state::process_persistent_tuple(full_tuple *stpl, vm::tuple *tpl)
       } else {
          node->matcher.register_tuple(pred, stpl->get_count(), is_new);
 
-         if(!is_new) {
-            vm::tuple::destroy(tpl, pred
-#ifdef GC_NODES
-                  , gc_nodes
-#endif
-                  );
-         }
+         if(!is_new)
+            vm::tuple::destroy(tpl, pred, gc_nodes);
       }
 
       delete stpl;
@@ -411,14 +368,10 @@ state::process_persistent_tuple(full_tuple *stpl, vm::tuple *tpl)
          } else if(deleter.to_delete()) { // to be removed
          	setup(pred, node, stpl->get_count(), stpl->get_depth());
          	execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
-#ifdef GC_NODES
             deleter.perform_delete(pred, gc_nodes);
-#else
-            deleter.perform_delete(pred);
-#endif
       	} else if(pred->is_cycle_pred()) {
             depth_counter *dc(deleter.get_depth_counter());
-            assert(dc != NULL);
+            assert(dc != nullptr);
 
             if(dc->get_count(stpl->get_depth()) == 0) {
                vm::derivation_count deleted(deleter.delete_depths_above(stpl->get_depth()));
@@ -426,21 +379,13 @@ state::process_persistent_tuple(full_tuple *stpl, vm::tuple *tpl)
                if(deleter.to_delete()) {
                   setup(pred, node, stpl->get_count(), stpl->get_depth());
                   execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
-#ifdef GC_NODES
                   deleter.perform_delete(pred, gc_nodes);
-#else
-                  deleter.perform_delete(pred);
-#endif
                }
             }
          }
          node->matcher.set_count(pred, deleter.trie_size());
       }
-      vm::full_tuple::wipeout(stpl
-#ifdef GC_NODES
-            , gc_nodes
-#endif
-         );
+      vm::full_tuple::wipeout(stpl, gc_nodes);
    }
 }
 
@@ -778,7 +723,7 @@ state::run_node(db::node *no)
       cout << "Run rule " << theProgram->get_rule(rule)->get_string() << endl;
 #endif
 
-		setup(NULL, node, 1, 0);
+		setup(nullptr, node, 1, 0);
 		execute_rule(rule, *this);
 
       // move from generated tuples to linear store
@@ -817,8 +762,8 @@ state::run_node(db::node *no)
       if(n->garbage_collect())
          sched->delete_node(n);
    }
-   gc_nodes.clear();
 #endif
+   gc_nodes.clear();
 }
 
 bool
@@ -874,11 +819,11 @@ state::state(sched::threads_sched *_sched):
 }
 
 state::state(void):
-   sched(NULL)
+   sched(nullptr)
 #ifdef DEBUG_MODE
    , print_instrs(false)
 #endif
-   , match_counter(NULL)
+   , match_counter(nullptr)
 #ifdef CORE_STATISTICS
    , stat()
 #endif
@@ -893,7 +838,7 @@ state::state(void):
 state::~state(void)
 {
 #ifdef CORE_STATISTICS
-	if(sched != NULL)
+	if(sched != nullptr)
       stat.print(cout);
 #endif
    if(match_counter) {

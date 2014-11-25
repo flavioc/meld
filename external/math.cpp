@@ -363,8 +363,8 @@ intpower(EXTERNAL_ARG(n1), EXTERNAL_ARG(n2))
    RETURN_INT(result);
 }
 
-static std::mt19937 *generator = NULL;
-static std::uniform_real_distribution<double> *uni_dist = NULL;
+static std::mt19937 *generator = nullptr;
+static std::uniform_real_distribution<double> *uni_dist = nullptr;
 
 static void
 de_finish(void)

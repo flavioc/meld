@@ -4,10 +4,6 @@
 #include <ostream>
 #include <unordered_set>
 
-#ifdef COMPILE_MPI
-#include <mpi.h>
-#endif
-
 #ifdef USE_UI
 #include <json_spirit.h>
 #endif
@@ -56,11 +52,8 @@ public:
 
    inline void set_nil(const field_num& field) { SET_FIELD_CONS(getfp()[field], runtime::cons::null_list()); }
    inline void set_field(const field_num& field, const tuple_field& f) { getfp()[field] = f; }
-   void set_field_ref(const field_num&, const tuple_field&, const predicate*
-#ifdef GC_NODES
-         , candidate_gc_nodes& gc_nodes
-#endif
-         );
+   void set_field_ref(const field_num&, const tuple_field&, const predicate*,
+         candidate_gc_nodes& gc_nodes);
 #undef define_set
 
    size_t get_storage_size(vm::predicate *) const;
@@ -114,18 +107,10 @@ public:
       return ptr;
    }
 
-   inline static void destroy(tuple *tpl, vm::predicate *pred
-#ifdef GC_NODES
-         , candidate_gc_nodes& gc_nodes
-#endif
-         )
+   inline static void destroy(tuple *tpl, vm::predicate *pred, candidate_gc_nodes& gc_nodes)
    {
       const size_t size(sizeof(vm::tuple) + sizeof(tuple_field) * pred->num_fields());
-      tpl->destructor(pred
-#ifdef GC_NODES
-            , gc_nodes
-#endif
-            );
+      tpl->destructor(pred, gc_nodes);
       mem::allocator<utils::byte>().deallocate((utils::byte*)tpl, size);
    }
    
@@ -134,15 +119,11 @@ private:
    inline void init(const predicate *pred)
    {
       flags = 0x00;
-      assert(pred != NULL);
+      assert(pred != nullptr);
       memset(getfp(), 0, sizeof(tuple_field) * pred->num_fields());
    }
 
-#ifdef GC_NODES
    void destructor(vm::predicate*, candidate_gc_nodes&);
-#else
-   void destructor(vm::predicate*);
-#endif
 };
 
 }

@@ -88,20 +88,12 @@ public:
    
    explicit database(const std::string&);
    
-#ifdef GC_NODES
    void wipeout(vm::candidate_gc_nodes&);
-#else
-   void wipeout(void);
-#endif
 
    ~database(void) {
 #ifdef FREE_OBJS
-#ifdef GC_NODES
       vm::candidate_gc_nodes nodes;
       wipeout(nodes);
-#else
-      wipeout();
-#endif
 #endif
    }
 };

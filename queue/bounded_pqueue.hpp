@@ -35,13 +35,13 @@ public:
       }
    }
    
-   inline bool is_leaf(void) const { return right == NULL; }
+   inline bool is_leaf(void) const { return right == nullptr; }
    
    explicit queue_tree_node(void):
       counter(0),
-      parent(NULL),
-      left(NULL),
-      right(NULL)
+      parent(nullptr),
+      left(nullptr),
+      right(nullptr)
    {
    }
    
@@ -296,7 +296,7 @@ public:
    
    ~bounded_pqueue(void)
    {
-      assert(root != NULL);
+      assert(root != nullptr);
       assert(empty());
       
       root->delete_all();

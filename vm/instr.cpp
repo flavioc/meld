@@ -144,7 +144,7 @@ val_string(const instr_val v, pcounter *pm, const program *prog)
       const uint_val id(pcounter_uint(*pm));
       runtime::rstring::ptr p(prog->get_default_string(id));
 
-      assert(p != NULL);
+      assert(p != nullptr);
 		const string ret(string("\"") + p->get_content() + "\"");
 		pcounter_move_uint(pm);
 		return ret;

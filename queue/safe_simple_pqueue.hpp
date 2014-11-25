@@ -87,7 +87,7 @@ public:
 		
 		explicit const_iterator(const heap_vector* v): cur_pos(0), end(false), vec(v) {}
 		
-		explicit const_iterator(void): end(true), vec(NULL)
+		explicit const_iterator(void): end(true), vec(nullptr)
 		{}
 	};
 	

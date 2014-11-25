@@ -117,7 +117,7 @@ struct linear_store
       inline tuple_list* transform_hash_table_to_list(hash_table *tbl, const vm::predicate *pred)
       {
          hash_table::iterator it(tbl->begin());
-         assert(tbl->next_expand == NULL);
+         assert(tbl->next_expand == nullptr);
          tuple_list ls;
          // cannot get list immediatelly since that would remove the pointer to the hash table data
 
@@ -243,7 +243,7 @@ struct linear_store
       {
          while(expand) {
             hash_table *next(expand->next_expand);
-            expand->next_expand = NULL;
+            expand->next_expand = nullptr;
             if(expand->too_crowded())
                expand->expand();
             expand = next;
@@ -308,14 +308,10 @@ struct linear_store
             utils::byte *p(data + ITEM_SIZE * i);
             mem::allocator<tuple_list>().construct((tuple_list*)p);
          }
-         expand = NULL;
+         expand = nullptr;
       }
 
-#ifdef GC_NODES
       inline void destroy(vm::candidate_gc_nodes& gc_nodes) {
-#else
-      inline void destroy(void) {
-#endif
          for(size_t i(0); i < vm::theProgram->num_predicates(); ++i) {
             utils::byte *p(data + ITEM_SIZE * i);
             if(types.get_bit(i)) {
@@ -325,11 +321,7 @@ struct linear_store
                   for(tuple_list::iterator it2(ls->begin()), end(ls->end()); it2 != end; ) {
                      vm::tuple *tpl(*it2);
                      it2++;
-                     vm::tuple::destroy(tpl, vm::theProgram->get_predicate(i)
-#ifdef GC_NODES
-                           , gc_nodes
-#endif
-                           );
+                     vm::tuple::destroy(tpl, vm::theProgram->get_predicate(i), gc_nodes);
                   }
                }
                // turn into list
@@ -341,11 +333,7 @@ struct linear_store
                for(tuple_list::iterator it(ls->begin()), end(ls->end()); it != end; ) {
                   vm::tuple *tpl(*it);
                   ++it;
-                  vm::tuple::destroy(tpl, vm::theProgram->get_predicate(i)
-#ifdef GC_NODES
-                        , gc_nodes
-#endif
-                        );
+                  vm::tuple::destroy(tpl, vm::theProgram->get_predicate(i), gc_nodes);
                }
                ls->clear();
             }

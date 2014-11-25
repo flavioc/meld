@@ -10,7 +10,7 @@ using namespace std;
 namespace utils
 {
    
-static std::mt19937 gen(time(NULL));
+static std::mt19937 gen(0);
 
 size_t
 number_cpus(void)

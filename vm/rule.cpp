@@ -20,7 +20,7 @@ rule::print(ostream& out, const vm::program *const prog) const
 	{
 		const predicate *pred(*it);
 
-      assert(pred != NULL);
+      assert(pred != nullptr);
 
       out << pred->get_name() << endl;
 		

@@ -357,9 +357,9 @@ machine::~machine(void)
 
    // when deleting database, we need to access the program,
    // so we must delete this in correct order
-   delete this->all->DATABASE;
+   delete all->DATABASE;
    
-   delete this->all->PROGRAM;
+   delete all->PROGRAM;
       
 #ifdef INSTRUMENTATION
    if(alarm_thread)

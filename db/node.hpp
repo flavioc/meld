@@ -49,11 +49,11 @@ private:
    
 private:
 
-   sched::threads_sched *owner = NULL;
+   sched::threads_sched *owner = nullptr;
 
    // marker that indicates if the node should not be stolen.
-   // when not NULL it indicates which scheduler it needs to be on.
-   sched::threads_sched *static_node = NULL;
+   // when not nullptr it indicates which scheduler it needs to be on.
+   sched::threads_sched *static_node = nullptr;
 	
    vm::priority_t default_priority_level;
    vm::priority_t priority_level;
@@ -72,11 +72,7 @@ public:
    size_t count_total_all(void) const;
    inline bool garbage_collect(void) const
    {
-#ifdef GC_NODES
       return refs == 0 && matcher.is_empty() && !unprocessed_facts;
-#else
-      return false;
-#endif
    }
 
 	inline vm::priority_t get_priority(void) const {
@@ -101,9 +97,9 @@ public:
 
    inline sched::threads_sched* get_static(void) const { return static_node; }
    inline void set_static(sched::threads_sched *b) { static_node = b; }
-   inline void set_moving(void) { static_node = NULL; }
-   inline bool is_static(void) const { return static_node != NULL; }
-   inline bool is_moving(void) const { return static_node == NULL; }
+   inline void set_moving(void) { static_node = nullptr; }
+   inline bool is_static(void) const { return static_node != nullptr; }
+   inline bool is_moving(void) const { return static_node == nullptr; }
    inline bool has_new_owner(void) const {
       if(static_node)
          return owner != static_node;
@@ -233,11 +229,7 @@ public:
    
    explicit node(const node_id, const node_id);
    
-#ifdef GC_NODES
    void wipeout(vm::candidate_gc_nodes&);
-#else
-   void wipeout(void);
-#endif
 
    static node *create(const node_id id, const node_id translate) {
       node *p(mem::allocator<node>().allocate(1));

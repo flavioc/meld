@@ -60,9 +60,9 @@ public:
          LOG_NORMAL_OPERATION();
          head = (node_type)__INTRUSIVE_NEXT(head);
       }
-      // head will not be NULL here.
-      assert(head != NULL);
-      __INTRUSIVE_PREV(head) = NULL;
+      // head will not be nullptr here.
+      assert(head != nullptr);
+      __INTRUSIVE_PREV(head) = nullptr;
       total -= half;
       return half;
    }

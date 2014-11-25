@@ -12,16 +12,16 @@ using namespace utils;
 
 namespace vm {
 
-type *TYPE_INT(NULL);
-type *TYPE_FLOAT(NULL);
-type *TYPE_NODE(NULL);
-type *TYPE_STRING(NULL);
-type *TYPE_BOOL(NULL);
-type *TYPE_ANY(NULL);
-type *TYPE_STRUCT(NULL);
-list_type *TYPE_LIST_INT(NULL);
-list_type *TYPE_LIST_FLOAT(NULL);
-list_type *TYPE_LIST_NODE(NULL);
+type *TYPE_INT(nullptr);
+type *TYPE_FLOAT(nullptr);
+type *TYPE_NODE(nullptr);
+type *TYPE_STRING(nullptr);
+type *TYPE_BOOL(nullptr);
+type *TYPE_ANY(nullptr);
+type *TYPE_STRUCT(nullptr);
+list_type *TYPE_LIST_INT(nullptr);
+list_type *TYPE_LIST_FLOAT(nullptr);
+list_type *TYPE_LIST_NODE(nullptr);
 static bool types_initiated(false);
 
 void

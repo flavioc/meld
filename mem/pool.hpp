@@ -74,10 +74,10 @@ private:
       // tries to find the chunkgroup, if not add it.
       const size_t index(size % size_table);
       
-      if(chunk_table[index] == NULL) {
+      if(chunk_table[index] == nullptr) {
          chunkgroup *cg(new_chunkgroup(size));
          chunk_table[index] = cg;
-         cg->next = NULL;
+         cg->next = nullptr;
          return cg;
       } else {
          chunkgroup *cg(chunk_table[index]);
@@ -106,7 +106,7 @@ private:
    {
       assert(size > 0);
       chunkgroup *cg(find_insert_chunkgroup(size));
-      assert(cg != NULL);
+      assert(cg != nullptr);
       return cg;
    }
 

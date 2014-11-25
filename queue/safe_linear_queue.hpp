@@ -45,15 +45,15 @@ private:
    {
 		QUEUE_INCREMENT_TOTAL();
 		
-      assert(tail != NULL);
-      assert(head != NULL);
+      assert(tail != nullptr);
+      assert(head != nullptr);
       
       while (true) {
          special_node *last(tail.load());
          special_node *next(last->next.load());
          
          if(last == tail.load()) {
-            if(next == NULL) {
+            if(next == nullptr) {
                if(last->next.compare_exchange_strong(next, new_node)) {
                   tail.compare_exchange_strong(last, new_node);
                   return;
@@ -71,7 +71,7 @@ private:
          special_node *next(last->next.load());
          
          if(last == tail.load()) {
-            if(next == NULL) {
+            if(next == nullptr) {
                if(last->next.compare_exchange_strong(next, qhead)) {
                   tail.compare_exchange_strong(last, qtail);
                   return;
@@ -96,23 +96,23 @@ public:
 	inline const_iterator begin(void) const
 	{ return const_iterator((node*)head->next); }
 	inline const_iterator end(void) const
-	{ return const_iterator(NULL); }
+	{ return const_iterator(nullptr); }
    
    inline void push(T el)
    {
       node *new_node(new node());
       
       new_node->data = el;
-      new_node->next = NULL;
+      new_node->next = nullptr;
       
       push_node((special_node*)new_node);
    }
 
 	inline T top(void)
 	{
-		assert(tail != NULL);
-		assert(head != NULL);
-		assert(head->next != NULL);
+		assert(tail != nullptr);
+		assert(head != nullptr);
+		assert(head->next != nullptr);
 		
 		return head->data;
 	}
@@ -121,9 +121,9 @@ public:
    {
 		QUEUE_DECREMENT_TOTAL();
 		
-      assert(tail != NULL);
-      assert(head != NULL);
-      assert(head->next != NULL);
+      assert(tail != nullptr);
+      assert(head != nullptr);
+      assert(head->next != nullptr);
       
       node *take((node*)head->next);
       node *old((node*)head);
@@ -133,7 +133,7 @@ public:
       delete old;
       
       assert(head == take);
-      assert(take != NULL);
+      assert(take != nullptr);
       
       return take->data;
    }
@@ -164,8 +164,8 @@ public:
 
 		QUEUE_INCREMENT_TOTAL_N(q.size());
       
-      assert(tail != NULL);
-      assert(head != NULL);
+      assert(tail != nullptr);
+      assert(head != nullptr);
       
       splice_headtail((special_node*)q.head, (special_node*)q.tail);
    }
@@ -176,18 +176,18 @@ public:
 
 		QUEUE_INCREMENT_TOTAL_N(q.size());
 
-      assert(tail != NULL);
-      assert(head != NULL);
+      assert(tail != nullptr);
+      assert(head != nullptr);
       
       splice_headtail((special_node*)q.head, (special_node*)q.tail);
    }
    
    explicit push_safe_linear_queue(void):
-      tail(NULL), total(0)
+      tail(nullptr), total(0)
    {
       // sentinel node
       head = new node();
-      head->next = NULL;
+      head->next = nullptr;
       tail = (special_node*)head;
    }
    
@@ -218,12 +218,12 @@ private:
    {
 		QUEUE_INCREMENT_TOTAL();
 		
-      assert(tail != NULL);
-      assert(head != NULL);
+      assert(tail != nullptr);
+      assert(head != nullptr);
 
       tail->next = new_node;
       tail = new_node;
-      assert(tail->next == NULL);
+      assert(tail->next == nullptr);
    }
    
 public:
@@ -234,8 +234,8 @@ public:
    
    inline bool pop_if_not_empty(T& data)
    {
-      assert(tail != NULL);
-      assert(head != NULL);
+      assert(tail != nullptr);
+      assert(head != nullptr);
       
       if(empty())
          return false;
@@ -245,10 +245,10 @@ public:
       if(empty())
          return false;
          
-      assert(head->next != NULL);
+      assert(head->next != nullptr);
       assert(!empty());
       
-      if(head->next->next == NULL)
+      if(head->next->next == nullptr)
          return false; // we must leave this queue with at least one element
       
       node *take((node*)head->next);
@@ -259,7 +259,7 @@ public:
       delete old;
       
       assert(head == take);
-      assert(take != NULL);
+      assert(take != nullptr);
       
       data = take->data;
 
@@ -270,8 +270,8 @@ public:
    
    inline bool pop(T& data)
    {
-      assert(tail != NULL);
-      assert(head != NULL);
+      assert(tail != nullptr);
+      assert(head != nullptr);
       
       if(empty())
          return false;
@@ -281,7 +281,7 @@ public:
       if(empty())
          return false;
       
-      assert(head->next != NULL);
+      assert(head->next != nullptr);
       assert(!empty());
       
       node *take((node*)head->next);
@@ -292,7 +292,7 @@ public:
       delete old;
       
       assert(head == take);
-      assert(take != NULL);
+      assert(take != nullptr);
       
       data = take->data;
 
@@ -306,7 +306,7 @@ public:
       node *new_node(new node());
       
       new_node->data = data;
-      new_node->next = NULL;
+      new_node->next = nullptr;
       
       std::lock_guard<utils::mutex> l(mtx);
    
@@ -314,13 +314,13 @@ public:
    }
    
    explicit safe_linear_queue(void):
-      tail(NULL)
+      tail(nullptr)
 #ifdef INSTRUMENTATION
       , total(0)
 #endif
    {
       head = new node();
-      head->next = NULL;
+      head->next = nullptr;
       tail = head;
    }
    

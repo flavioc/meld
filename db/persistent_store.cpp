@@ -38,11 +38,8 @@ persistent_store::delete_tuple(vm::tuple *tuple, vm::predicate *pred, const deri
 }
 
 agg_configuration*
-persistent_store::add_agg_tuple(vm::tuple *tuple, predicate *pred, const derivation_count many, const depth_t depth
-#ifdef GC_NODES
-      , candidate_gc_nodes& gc_nodes
-#endif
-      )
+persistent_store::add_agg_tuple(vm::tuple *tuple, predicate *pred,
+      const derivation_count many, const depth_t depth, candidate_gc_nodes& gc_nodes)
 {
    predicate_id pred_id(pred->get_id());
    aggregate_map::iterator it(aggs.find(pred_id));
@@ -54,33 +51,18 @@ persistent_store::add_agg_tuple(vm::tuple *tuple, predicate *pred, const derivat
    } else
       agg = it->second;
 
-   return agg->add_to_set(tuple, pred, many, depth
-#ifdef GC_NODES
-         , gc_nodes
-#endif
-         );
+   return agg->add_to_set(tuple, pred, many, depth, gc_nodes);
 }
 
 agg_configuration*
-persistent_store::remove_agg_tuple(vm::tuple *tuple, vm::predicate *pred, const derivation_count many, const depth_t depth
-#ifdef GC_NODES
-      , candidate_gc_nodes& gc_nodes
-#endif
-      )
+persistent_store::remove_agg_tuple(vm::tuple *tuple, vm::predicate *pred,
+      const derivation_count many, const depth_t depth, candidate_gc_nodes& gc_nodes)
 {
-   return add_agg_tuple(tuple, pred, -many, depth
-#ifdef GC_NODES
-         , gc_nodes
-#endif
-         );
+   return add_agg_tuple(tuple, pred, -many, depth, gc_nodes);
 }
 
 full_tuple_list
-persistent_store::end_iteration(
-#ifdef GC_NODES
-      candidate_gc_nodes& gc_nodes
-#endif
-      )
+persistent_store::end_iteration()
 {
    // generate possible aggregates
    full_tuple_list ret;
@@ -91,11 +73,8 @@ persistent_store::end_iteration(
    {
       tuple_aggregate *agg(it->second);
       
-#ifdef GC_NODES
-      full_tuple_list ls(agg->generate(gc_nodes));
-#else
       full_tuple_list ls(agg->generate());
-#endif
+
       for(auto jt(ls.begin()), end(ls.end()); jt != end; ++jt) {
          (*jt)->set_as_aggregate();
          ret.push_back(*jt);
@@ -141,19 +120,11 @@ persistent_store::delete_all(const predicate*)
 }
 
 void
-persistent_store::delete_by_leaf(predicate *pred, tuple_trie_leaf *leaf, const depth_t depth
-#ifdef GC_NODES
-      , candidate_gc_nodes& gc_nodes
-#endif
-      )
+persistent_store::delete_by_leaf(predicate *pred, tuple_trie_leaf *leaf, const depth_t depth, candidate_gc_nodes& gc_nodes)
 {
    tuple_trie *tr(get_storage(pred));
 
-   tr->delete_by_leaf(leaf, pred, depth
-#ifdef GC_NODES
-         , gc_nodes
-#endif
-         );
+   tr->delete_by_leaf(leaf, pred, depth, gc_nodes);
 }
 
 void
@@ -166,29 +137,17 @@ persistent_store::assert_tries(void)
 }
 
 void
-persistent_store::delete_by_index(predicate *pred, const match& m
-#ifdef GC_NODES
-      , candidate_gc_nodes& gc_nodes
-#endif
-      )
+persistent_store::delete_by_index(predicate *pred, const match& m, candidate_gc_nodes& gc_nodes)
 {
    tuple_trie *tr(get_storage(pred));
    
-   tr->delete_by_index(pred, m
-#ifdef GC_NODES
-         , gc_nodes
-#endif
-         );
+   tr->delete_by_index(pred, m, gc_nodes);
    
    aggregate_map::iterator it(aggs.find(pred->get_id()));
    
    if(it != aggs.end()) {
       tuple_aggregate *agg(it->second);
-#ifdef GC_NODES
       agg->delete_by_index(m, gc_nodes);
-#else
-      agg->delete_by_index(m);
-#endif
    }
 }
 
@@ -225,7 +184,7 @@ vector<string>
 persistent_store::dump(const predicate *pred) const
 {
    auto it(tuples.find(pred->get_id()));
-   tuple_trie *tr = NULL;
+   tuple_trie *tr = nullptr;
    if(it != tuples.end()) {
       tr = it->second;
       if(tr && !tr->empty())
@@ -238,7 +197,7 @@ vector<string>
 persistent_store::print(const predicate *pred) const
 {
    auto it(tuples.find(pred->get_id()));
-   tuple_trie *tr = NULL;
+   tuple_trie *tr = nullptr;
    if(it != tuples.end()) {
       tr = it->second;
       if(tr && !tr->empty())

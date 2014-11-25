@@ -35,14 +35,14 @@ public:
    {
       void *ret;
       
-      if(free_objs != NULL) {
+      if(free_objs != nullptr) {
          // use a free chunk node
          ret = free_objs;
          free_objs = free_objs->next;
          return ret;
       }
       
-      if(new_chunk == NULL) {
+      if(new_chunk == nullptr) {
          // this is the first chunk
          new_chunk = first_chunk = new chunk(size, num_elems_per_chunk);
          return new_chunk->allocate(size);
@@ -50,7 +50,7 @@ public:
 
       ret = new_chunk->allocate(size);
 
-      if(ret == NULL) { // chunk full!
+      if(ret == nullptr) { // chunk full!
          chunk *old_chunk(new_chunk);
          if(num_elems_per_chunk < std::numeric_limits<std::size_t>::max()/2)
             num_elems_per_chunk *= 2; // increase number of elements
@@ -72,10 +72,11 @@ public:
    }
    
    explicit chunkgroup(const size_t _size):
-      size(_size), first_chunk(NULL),
-      new_chunk(NULL), free_objs(NULL),
+      size(_size), first_chunk(nullptr),
+      new_chunk(nullptr), free_objs(nullptr),
       num_elems_per_chunk(_size <= 128 ? 64 : 16)
    {
+      assert(_size >= sizeof(mem_node));
    }
    
    ~chunkgroup(void)

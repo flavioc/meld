@@ -68,26 +68,26 @@ public:
    trie_node *insert(const vm::tuple_field&, vm::type*, vm::match_stack&);
    
    explicit trie_node(const vm::tuple_field& _data):
-      parent(NULL),
-      next(NULL),
-      prev(NULL),
-      child(NULL),
+      parent(nullptr),
+      next(nullptr),
+      prev(nullptr),
+      child(nullptr),
       data(_data),
       hashed(false),
-      bucket(NULL)
+      bucket(nullptr)
    {
-      assert(next == NULL && prev == NULL && parent == NULL && child == NULL && hashed == false);
+      assert(next == nullptr && prev == nullptr && parent == nullptr && child == nullptr && hashed == false);
    }
 
    explicit trie_node(void): // no data
-      parent(NULL),
-      next(NULL),
-      prev(NULL),
-      child(NULL),
+      parent(nullptr),
+      next(nullptr),
+      prev(nullptr),
+      child(nullptr),
       hashed(false),
-      bucket(NULL)
+      bucket(nullptr)
    {
-      assert(next == NULL && prev == NULL && parent == NULL && child == NULL && hashed == false);
+      assert(next == nullptr && prev == nullptr && parent == nullptr && child == nullptr && hashed == false);
    }
 
    ~trie_node(void);
@@ -160,11 +160,7 @@ public:
    {
    }
 
-#ifdef GC_NODES
    virtual void destroy(vm::predicate *, vm::candidate_gc_nodes&) {}
-#else
-   virtual void destroy(vm::predicate*) { }
-#endif
 };
 
 class depth_counter: public mem::base
@@ -285,7 +281,7 @@ private:
    vm::ref_count count;
    /// XXX this may be deleted...
    vm::ref_count used; // this is utilized by the VM core to manage leaves
-   depth_counter *depths; // depth counter -- usually NULL
+   depth_counter *depths; // depth counter -- usually nullptr
    
 public:
 
@@ -293,7 +289,7 @@ public:
 	
    virtual inline vm::ref_count get_count(void) const { return count; }
 
-   inline bool has_depth_counter(void) const { return depths != NULL; }
+   inline bool has_depth_counter(void) const { return depths != nullptr; }
 
    inline depth_counter *get_depth_counter(void) const { return depths; }
 
@@ -314,14 +310,14 @@ public:
    }
 
    inline vm::depth_t get_max_depth(void) const {
-      if(depths == NULL)
+      if(depths == nullptr)
          return 0;
       else
          return depths->max_depth();
    }
 
    inline vm::depth_t get_min_depth(void) const {
-      if(depths == NULL)
+      if(depths == nullptr)
          return 0;
       else
          return depths->min_depth();
@@ -353,7 +349,7 @@ public:
    {
       assert(many < 0);
       assert(count >= (vm::ref_count)-many);
-      assert(depths == NULL);
+      assert(depths == nullptr);
       count += many;
    }
 
@@ -381,23 +377,15 @@ public:
       if(pred->is_cycle_pred())
          depths = new depth_counter();
       else
-         depths = NULL;
+         depths = nullptr;
       add_new(depth, count);
    }
 
-#ifdef GC_NODES
    virtual void destroy(vm::predicate *pred, vm::candidate_gc_nodes& gc_nodes)
-#else
-   virtual void destroy(vm::predicate *pred)
-#endif
    {
       if(depths)
          delete depths;
-      vm::tuple::destroy(tpl, pred
-#ifdef GC_NODES
-            , gc_nodes
-#endif
-            );
+      vm::tuple::destroy(tpl, pred, gc_nodes);
    }
 };
 
@@ -416,7 +404,7 @@ public:
    
    inline tuple_trie_leaf* operator*(void) const
    {
-      assert(current_leaf != NULL);
+      assert(current_leaf != nullptr);
       
       return current_leaf;
    }
@@ -447,7 +435,7 @@ public:
    }
    
    explicit tuple_trie_iterator(void): // end iterator
-      current_leaf(NULL)
+      current_leaf(nullptr)
    {
    }
 };
@@ -465,45 +453,37 @@ protected:
    
    inline void basic_invariants(void)
    {
-      assert(root != NULL);
+      assert(root != nullptr);
       
-      assert(root->parent == NULL);
+      assert(root->parent == nullptr);
       
       if(number_of_references == 0) {
-         assert(root->child == NULL);
+         assert(root->child == nullptr);
       } else {
-         assert(root->child != NULL);
+         assert(root->child != nullptr);
       }
       
-      assert(root->prev == NULL);
+      assert(root->prev == nullptr);
       
-      assert(root->next == NULL);
+      assert(root->next == nullptr);
       
-      assert((root->child == NULL && first_leaf == NULL && last_leaf == NULL)
-         || (root->child != NULL && first_leaf != NULL && last_leaf != NULL));
+      assert((root->child == nullptr && first_leaf == nullptr && last_leaf == nullptr)
+         || (root->child != nullptr && first_leaf != nullptr && last_leaf != nullptr));
    }
    
-   void commit_delete(trie_node *, vm::predicate *, const vm::ref_count
-#ifdef GC_NODES
-         , vm::candidate_gc_nodes&
-#endif
-         );
-   size_t delete_branch(trie_node *, vm::predicate *
-#ifdef GC_NODES
-         , vm::candidate_gc_nodes&
-#endif
-         );
+   void commit_delete(trie_node *, vm::predicate *, const vm::ref_count,
+         vm::candidate_gc_nodes&);
+   size_t delete_branch(trie_node *, vm::predicate *, vm::candidate_gc_nodes&);
    void delete_path(trie_node *);
    void sanity_check(void) const;
    
-   virtual trie_leaf* create_leaf(void *data, vm::predicate*, const vm::ref_count many, const vm::depth_t depth) = 0;
-   void inner_delete_by_leaf(trie_leaf *, vm::predicate *, const vm::derivation_count, const vm::depth_t
-#ifdef GC_NODES
-         , vm::candidate_gc_nodes&
-#endif
-         );
+   virtual trie_leaf* create_leaf(void *data, vm::predicate*, const vm::ref_count many,
+         const vm::depth_t depth) = 0;
+   void inner_delete_by_leaf(trie_leaf *, vm::predicate *, const vm::derivation_count,
+         const vm::depth_t, vm::candidate_gc_nodes&);
    
-   trie_node *check_insert(void *, vm::predicate *, const vm::derivation_count, const vm::depth_t, vm::match_stack&, bool&);
+   trie_node *check_insert(void *, vm::predicate *, const vm::derivation_count,
+         const vm::depth_t, vm::match_stack&, bool&);
    
 public:
    
@@ -520,19 +500,11 @@ public:
    public:
 
       inline bool to_delete(void) const { return to_del; }
-      inline bool is_valid(void) const { return tr != NULL && leaf != NULL; }
+      inline bool is_valid(void) const { return tr != nullptr && leaf != nullptr; }
 
-      void perform_delete(vm::predicate *pred
-#ifdef GC_NODES
-            , vm::candidate_gc_nodes& gc_nodes
-#endif
-            )
+      void perform_delete(vm::predicate *pred, vm::candidate_gc_nodes& gc_nodes)
       {
-         tr->commit_delete(tr_node, pred, many
-#ifdef GC_NODES
-               , gc_nodes
-#endif
-               );
+         tr->commit_delete(tr_node, pred, many, gc_nodes);
       }
 
       inline depth_counter* get_depth_counter(void) const
@@ -573,21 +545,10 @@ public:
    inline size_t size(void) const { return number_of_references; }
    
    // if second argument is 0, the leaf is ensured to be deleted
-   void delete_by_leaf(trie_leaf *, vm::predicate *, const vm::depth_t
-#ifdef GC_NODES
-         , vm::candidate_gc_nodes&
-#endif
-         );
-   void delete_by_index(vm::predicate *, const vm::match&
-#ifdef GC_NODES
-         , vm::candidate_gc_nodes&
-#endif
-         );
-   virtual void wipeout(vm::predicate *
-#ifdef GC_NODES
-         , vm::candidate_gc_nodes&
-#endif
-         );
+   void delete_by_leaf(trie_leaf *, vm::predicate *, const vm::depth_t,
+         vm::candidate_gc_nodes&);
+   void delete_by_index(vm::predicate *, const vm::match&, vm::candidate_gc_nodes&);
+   virtual void wipeout(vm::predicate *, vm::candidate_gc_nodes&);
    
    explicit trie(void);
 };
@@ -652,7 +613,7 @@ public:
 					next = (tuple_trie_leaf*)next->next;
 				else if(type == USE_STACK) {
 					if(cont_stack.empty())
-						next = NULL;
+						next = nullptr;
 					else {
 						trie_continuation_frame frm;
 						frm = cont_stack.top();
@@ -678,7 +639,7 @@ public:
 				if(type == USE_LIST || type == USE_STACK)
 					return next;
 				else
-					return NULL;
+					return nullptr;
 		   }
 
          inline bool operator==(const tuple_search_iterator& it) const
@@ -694,11 +655,11 @@ public:
          }
 
          // end iterator
-         explicit tuple_search_iterator(void): type(USE_END), next(NULL) {}
+         explicit tuple_search_iterator(void): type(USE_END), next(nullptr) {}
 
 			// iterator for use with continuation stack
          explicit tuple_search_iterator(trie_continuation_frame& frm):
-				type(USE_STACK), next(NULL)
+				type(USE_STACK), next(nullptr)
          {
 				find_next(frm, true);
          }
@@ -785,7 +746,7 @@ public:
 
    inline agg_configuration* operator*(void) const
    {
-      assert(current_leaf != NULL);
+      assert(current_leaf != nullptr);
       
       return current_leaf->get_conf();
    }
@@ -816,7 +777,7 @@ public:
    }
    
    explicit agg_trie_iterator(void): // end iterator
-      current_leaf(NULL)
+      current_leaf(nullptr)
    {
    }
 };
@@ -827,7 +788,7 @@ private:
    
    virtual trie_leaf* create_leaf(void *, vm::predicate *, const vm::ref_count, const vm::depth_t)
    {
-      return new agg_trie_leaf(NULL);
+      return new agg_trie_leaf(nullptr);
    }
    
 public:
@@ -845,11 +806,7 @@ public:
    inline iterator begin(void) { return iterator((agg_trie_leaf*)first_leaf); }
    inline iterator end(void) { return iterator(); }
    
-   iterator erase(iterator& it, vm::predicate *
-#ifdef GC_NODES
-         , vm::candidate_gc_nodes&
-#endif
-         );
+   iterator erase(iterator& it, vm::predicate *, vm::candidate_gc_nodes&);
    
    explicit agg_trie(void) {}
    

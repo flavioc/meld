@@ -162,7 +162,7 @@ struct hash_table
       {
          hash_argument = field;
          hash_type = type;
-         next_expand = NULL;
+         next_expand = nullptr;
          size_table = default_table_size;
          table = alloc().allocate(size_table);
          memset(table, 0, sizeof(table_list)*size_table);

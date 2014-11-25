@@ -14,12 +14,12 @@ public:  											\
    union __next {                         \
       TYPE *next;                         \
       int64_t pos;                        \
-      __next(void): next(NULL) {}         \
+      __next(void): next(nullptr) {}         \
    } __intrusive_next;                    \
    union __prev {                         \
       TYPE *prev;                         \
       double priority;                    \
-      __prev(void): prev(NULL) {}         \
+      __prev(void): prev(nullptr) {}         \
    } __intrusive_prev;                    \
    queue_id_t __intrusive_queue = queue_no_queue
 

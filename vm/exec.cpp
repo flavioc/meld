@@ -151,17 +151,9 @@ execute_run_action0(tuple *tpl, predicate *pred, state& state)
 {
    assert(pred->is_action_pred());
    if(state.count > 0)
-      All->MACHINE->run_action(state.sched, state.node, tpl, pred
-#ifdef GC_NODES
-            , state.gc_nodes
-#endif
-            );
+      All->MACHINE->run_action(state.sched, state.node, tpl, pred, state.gc_nodes);
    else
-      vm::tuple::destroy(tpl, pred
-#ifdef GC_NODES
-            , state.gc_nodes
-#endif
-            );
+      vm::tuple::destroy(tpl, pred, state.gc_nodes);
 }
 
 static inline void
@@ -205,11 +197,7 @@ execute_send(const pcounter& pc, state& state)
    tuple *tuple(state.get_tuple(msg));
 
    if(state.count < 0 && pred->is_linear_pred() && !pred->is_reused_pred()) {
-      vm::tuple::destroy(tuple, pred
-#ifdef GC_NODES
-            , state.gc_nodes
-#endif
-            );
+      vm::tuple::destroy(tuple, pred, state.gc_nodes);
       return;
    }
 
@@ -261,11 +249,7 @@ execute_send(const pcounter& pc, state& state)
       db::node *node(All->DATABASE->find_node(dest_val));
 #endif
       if(pred->is_action_pred())
-         All->MACHINE->run_action(state.sched, node, tuple, pred
-#ifdef GC_NODES
-               , state.gc_nodes
-#endif
-               );
+         All->MACHINE->run_action(state.sched, node, tuple, pred, state.gc_nodes);
       else {
 #ifdef FACT_BUFFERING
          auto it(state.facts_to_send.find(node));
@@ -627,7 +611,7 @@ count_variable_match_elements(pcounter pc, const predicate *pred, const size_t m
 static inline bool
 sort_tuples(const tuple* t1, const tuple* t2, const field_num field, const predicate *pred)
 {
-   assert(t1 != NULL && t2 != NULL);
+   assert(t1 != nullptr && t2 != nullptr);
 
    switch(pred->get_field_type(field)->get_type()) {
       case FIELD_INT:
@@ -687,13 +671,13 @@ public:
 static inline match*
 retrieve_match_object(state& state, pcounter pc, const predicate *pred, const size_t base)
 {
-   match *mobj(NULL);
+   match *mobj(nullptr);
    const size_t matches = iter_matches_size(pc, base);
 
    if(matches > 0) {
       utils::byte *m((utils::byte*)iter_match_object(pc));
 
-      if(m == NULL) {
+      if(m == nullptr) {
          const size_t var_size(count_variable_match_elements(pc + base, pred, matches));
          const size_t mem(match::mem_size(pred, var_size));
          if(mem > MATCH_OBJECT_SIZE)
@@ -705,9 +689,9 @@ retrieve_match_object(state& state, pcounter pc, const predicate *pred, const si
             build_match_object(obj, pc + base, pred, state, matches);
          }
          ptr_val *pos(iter_match_object_pos(pc));
-         ptr_val old(cmpxchg(pos, (ptr_val)NULL, (ptr_val)m));
+         ptr_val old(cmpxchg(pos, (ptr_val)nullptr, (ptr_val)m));
 
-         if(old != (ptr_val)NULL) {
+         if(old != (ptr_val)nullptr) {
             // somebody already set this.
             mem::allocator<utils::byte>().deallocate(m, MATCH_OBJECT_SIZE * All->NUM_THREADS);
             m = (utils::byte*)old;
@@ -768,13 +752,13 @@ execute_pers_iter(const reg_num reg, match* m, const pcounter first, state& stat
 
       // we get the tuple later since the previous leaf may have been deleted
       tuple *match_tuple(tuple_leaf->get_underlying_tuple());
-      assert(match_tuple != NULL);
+      assert(match_tuple != nullptr);
 
 #ifdef TRIE_MATCHING_ASSERT
       assert(do_matches(m, match_tuple, pred));
 #endif
 
-      PUSH_CURRENT_STATE(match_tuple, tuple_leaf, NULL, tuple_leaf->get_min_depth());
+      PUSH_CURRENT_STATE(match_tuple, tuple_leaf, nullptr, tuple_leaf->get_min_depth());
 #ifdef DEBUG_ITERS
       cout << "\t use ";
       match_tuple->print(cout, pred);
@@ -846,7 +830,7 @@ execute_olinear_iter(const reg_num reg, match* m, const pcounter pc, const pcoun
 
       match_tuple->will_delete();
 
-      PUSH_CURRENT_STATE(match_tuple, NULL, match_tuple, (vm::depth_t)0);
+      PUSH_CURRENT_STATE(match_tuple, nullptr, match_tuple, (vm::depth_t)0);
       state.hash_removes = true;
 
       ret = execute(first, state, reg, match_tuple, pred);
@@ -857,11 +841,7 @@ execute_olinear_iter(const reg_num reg, match* m, const pcounter pc, const pcoun
       if(TO_FINISH(ret)) {
          utils::intrusive_list<vm::tuple>::iterator it(p.iterator);
          local_tuples->erase(it);
-         vm::tuple::destroy(match_tuple, pred
-#ifdef GC_NODES
-               , state.gc_nodes
-#endif
-               );
+         vm::tuple::destroy(match_tuple, pred, state.gc_nodes);
          if(ret == RETURN_LINEAR)
             return RETURN_LINEAR;
          if(ret == RETURN_DERIVED && old_is_linear)
@@ -930,7 +910,7 @@ execute_orlinear_iter(const reg_num reg, match* m, const pcounter pc, const pcou
 
       match_tuple->will_delete();
 
-      PUSH_CURRENT_STATE(match_tuple, NULL, match_tuple, (vm::depth_t)0);
+      PUSH_CURRENT_STATE(match_tuple, nullptr, match_tuple, (vm::depth_t)0);
       state.hash_removes = true;
 
       ret = execute(first, state, reg, match_tuple, pred);
@@ -990,9 +970,9 @@ execute_opers_iter(const reg_num reg, match* m, const pcounter pc, const pcounte
       tuple_trie_leaf *tuple_leaf(*it);
 
       tuple *match_tuple(tuple_leaf->get_underlying_tuple());
-      assert(match_tuple != NULL);
+      assert(match_tuple != nullptr);
 
-      PUSH_CURRENT_STATE(match_tuple, tuple_leaf, NULL, tuple_leaf->get_min_depth());
+      PUSH_CURRENT_STATE(match_tuple, tuple_leaf, nullptr, tuple_leaf->get_min_depth());
 
       return_type ret(execute(first, state, reg, match_tuple, pred));
 
@@ -1011,9 +991,9 @@ execute_opers_iter(const reg_num reg, match* m, const pcounter pc, const pcounte
 
 static inline return_type
 execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, state& state, predicate* pred,
-      utils::intrusive_list<vm::tuple> *local_tuples, hash_table *tbl = NULL)
+      utils::intrusive_list<vm::tuple> *local_tuples, hash_table *tbl = nullptr)
 {
-   if(local_tuples == NULL)
+   if(local_tuples == nullptr)
       return RETURN_NO_RETURN;
 
    const bool old_is_linear(state.is_linear);
@@ -1040,7 +1020,7 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
          }
       }
 
-      PUSH_CURRENT_STATE(match_tuple, NULL, match_tuple, (vm::depth_t)0);
+      PUSH_CURRENT_STATE(match_tuple, nullptr, match_tuple, (vm::depth_t)0);
 #ifdef DEBUG_ITERS
       cout << "\tuse ";
       match_tuple->print(cout, pred);
@@ -1078,11 +1058,7 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
             }
          } else {
             it = local_tuples->erase(it);
-            vm::tuple::destroy(match_tuple, pred
-#ifdef GC_NODES
-                  , state.gc_nodes
-#endif
-                  );
+            vm::tuple::destroy(match_tuple, pred, state.gc_nodes);
             next_iter = false;
          }
       }
@@ -1107,7 +1083,7 @@ execute_linear_iter(const reg_num reg, match* m, const pcounter first, state& st
       const field_num hashed(pred->get_hashed_field());
       hash_table *table(state.lstore->get_hash_table(pred->get_id()));
 
-      if(table == NULL)
+      if(table == nullptr)
          return RETURN_NO_RETURN;
 
 #if 0
@@ -1164,7 +1140,7 @@ execute_rlinear_iter_list(const reg_num reg, match* m, const pcounter first, sta
             continue;
       }
 
-      PUSH_CURRENT_STATE(match_tuple, NULL, match_tuple, (vm::depth_t)0);
+      PUSH_CURRENT_STATE(match_tuple, nullptr, match_tuple, (vm::depth_t)0);
 
       match_tuple->will_delete(); // this will avoid future uses of this tuple!
 
@@ -1259,7 +1235,7 @@ execute_delete(const pcounter pc, state& state)
    const size_t num_args(delete_num_args(pc));
    match mobj(pred);
    
-   assert(state.node != NULL);
+   assert(state.node != nullptr);
    assert(num_args > 0);
    int_val idx;
    
@@ -1316,7 +1292,7 @@ execute_remove(pcounter pc, state& state)
    tpl->print(cout, pred);
    cout << endl;
 #endif
-   assert(tpl != NULL);
+   assert(tpl != nullptr);
 		
    // the else case for deregistering the tuple is done in execute_iter
    if(state.hash_removes)
@@ -2061,11 +2037,7 @@ execute_mvfieldfieldr(pcounter pc, state& state)
    const field_num from(val_field_num(pc + instr_size));
    const field_num to(val_field_num(pc + instr_size + field_size));
 
-   tuple_to->set_field_ref(to, tuple_from->get_field(from), pred_to
-#ifdef GC_NODES
-            , state.gc_nodes
-#endif
-         );
+   tuple_to->set_field_ref(to, tuple_from->get_field(from), pred_to, state.gc_nodes);
 }
 
 static inline void
@@ -2117,11 +2089,7 @@ execute_mvregfieldr(pcounter& pc, state& state)
    tuple *tuple(get_tuple_field(state, pc + instr_size + reg_val_size));
    const field_num field(val_field_num(pc + instr_size + reg_val_size));
 
-   tuple->set_field_ref(field, state.get_reg(reg), pred
-#ifdef GC_NODES
-         , state.gc_nodes
-#endif
-         );
+   tuple->set_field_ref(field, state.get_reg(reg), pred, state.gc_nodes);
 
    assert(reference_type(pred->get_field_type(field)->get_type()));
 }
@@ -2755,7 +2723,7 @@ execute_consfff(pcounter& pc, state& state)
 static inline return_type
 execute(pcounter pc, state& state, const reg_num reg, tuple *tpl, predicate *pred)
 {
-	if(tpl != NULL) {
+	if(tpl != nullptr) {
       state.set_tuple(reg, tpl);
       state.preds[reg] = pred;
 #ifdef CORE_STATISTICS
@@ -2867,7 +2835,7 @@ eval_loop:
                
                state.is_linear = false;
                
-               return_type ret(execute(pc + RESET_LINEAR_BASE, state, 0, NULL, NULL));
+               return_type ret(execute(pc + RESET_LINEAR_BASE, state, 0, nullptr, nullptr));
 
 					assert(ret == RETURN_END_LINEAR);
                (void)ret;
@@ -3940,7 +3908,7 @@ execute_rule(const rule_id rule_id, state& state)
 	vm::rule *rule(theProgram->get_rule(rule_id));
 
    state.running_rule = true;
-   do_execute(rule->get_bytecode(), state, 0, NULL, NULL);
+   do_execute(rule->get_bytecode(), state, 0, nullptr, nullptr);
 
 #ifdef CORE_STATISTICS
    if(state.stat.stat_rules_activated == 0)

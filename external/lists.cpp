@@ -170,10 +170,10 @@ listappend(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
          p2 = p2->get_tail();
       }
 
-      list_type *t(NULL);
+      list_type *t(nullptr);
       if(ls1)
          t = ls1->get_type();
-      if(t == NULL)
+      if(t == nullptr)
          t = ls2->get_type();
 
       runtime::cons *ptr(from_general_stack_to_list(s, t));

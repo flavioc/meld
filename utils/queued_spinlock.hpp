@@ -42,7 +42,7 @@ class qspinlock
       {
          qsl_entry *stail;
 
-         ent->next = NULL;
+         ent->next = nullptr;
          ent->state = 0;
          stail = (qsl_entry*)xchg_64((void*)&tail, (void*)ent);
          if(!stail)
@@ -57,9 +57,9 @@ class qspinlock
       {
          qsl_entry *stail;
 
-         ent->next = NULL;
+         ent->next = nullptr;
          ent->state = 0;
-         stail = cmpxchg(&tail, NULL, ent);
+         stail = cmpxchg(&tail, nullptr, ent);
          if(!stail) return true;
          return false;
       }
@@ -67,7 +67,7 @@ class qspinlock
       inline void unlock(qsl_entry *ent)
       {
          if(!ent->next) {
-            if(cmpxchg(&tail, ent, NULL) == ent)
+            if(cmpxchg(&tail, ent, nullptr) == ent)
                return;
 
             while(!ent->next) cpu_relax();
@@ -75,7 +75,7 @@ class qspinlock
          ent->next->state = 1;
       }
 
-      explicit qspinlock(void): tail(NULL) {}
+      explicit qspinlock(void): tail(nullptr) {}
 };
 
 }

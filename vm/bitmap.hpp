@@ -88,7 +88,7 @@ struct bitmap {
          iterator(bitmap *_b, const size_t _items):
             rest(&(_b->first)), b(_b), in_first(true), pos(0), total(0), items(_items)
          {
-            if(_b->rest == NULL && _b->first == (BITMAP_TYPE)0)
+            if(_b->rest == nullptr && _b->first == (BITMAP_TYPE)0)
                total = items; // the end...
             else
                find_first_pos();
@@ -265,7 +265,7 @@ struct bitmap {
       if(size >= 2)
          b.rest = mem::allocator<BITMAP_TYPE>().allocate(size-1);
       else
-         b.rest = NULL;
+         b.rest = nullptr;
    }
 
    static inline void

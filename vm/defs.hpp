@@ -79,10 +79,8 @@ static const size_t NUM_REGS = 32;
 
 #define MATCH_OBJECT_SIZE 256
 
-#ifdef GC_NODES
 typedef std::unordered_set<vm::node_val, std::hash<vm::node_val>, std::equal_to<vm::node_val>,
         mem::allocator<vm::node_val>> candidate_gc_nodes;
-#endif
 
 }
 

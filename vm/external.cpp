@@ -68,7 +68,7 @@ lookup_external_function(const external_function_id id)
 
    external_function *ret(hash_external[id]);
    
-   assert(ret != NULL);
+   assert(ret != nullptr);
    
    return ret;
 }
