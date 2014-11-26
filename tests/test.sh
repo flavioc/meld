@@ -41,11 +41,11 @@ run_diff ()
 	${TO_RUN} > test.out
 	RET=$?
 	if [ $RET -eq 1 ]; then
-		echo "Meld failed! See report"
+		echo "Linear Meld has failed! See report"
 		exit 1
 	fi
    if [ $RET -eq 139 ]; then
-      echo "Meld crashed. Please report to <flaviocruz@gmail.com>"
+      echo "Linear Meld crashed. Please report to <flaviocruz@gmail.com>"
       exit 1
    fi
    failed_tests=""

@@ -10,7 +10,7 @@ namespace db
 
 void
 agg_configuration::add_to_set(vm::tuple *tpl, vm::predicate *pred,
-      const derivation_count many, const depth_t depth, candidate_gc_nodes& gc_nodes)
+      const derivation_direction dir, const depth_t depth, candidate_gc_nodes& gc_nodes)
 {
    assert(many != 0);
    //assert(many > 0 || (many < 0 && !vals.empty()));
@@ -21,38 +21,40 @@ agg_configuration::add_to_set(vm::tuple *tpl, vm::predicate *pred,
    const size_t start_size(vals.size());
 #endif
    
-   if(many > 0) {
-      
-      if(!vals.insert_tuple(tpl, pred, many, depth)) {
-         // repeated tuple
-         vm::tuple::destroy(tpl, pred, gc_nodes);
-      }
-
-      assert(vals.size() == start_size + many);
-   } else {
-      // to delete
-      trie::delete_info deleter(vals.delete_tuple(tpl, pred, -many, depth)); // note the minus sign
-      if(!deleter.is_valid()) {
-         changed = false;
-      } else if(deleter.to_delete()) {
-         deleter.perform_delete(pred, gc_nodes);
-      } else if(pred->is_cycle_pred()) {
-         depth_counter *dc(deleter.get_depth_counter());
-         assert(dc != nullptr);
-
-         if(dc->get_count(depth) == 0) {
-#ifndef NDEBUG
-            size_t old_size(vals.size());
-#endif
-            vm::ref_count deleted(deleter.delete_depths_above(depth));
-            (void)deleted;
-            if(deleter.to_delete())
-               deleter.perform_delete(pred, gc_nodes);
-            assert(vals.size() == old_size-deleted);
+   switch(dir) {
+      case POSITIVE_DERIVATION:
+         if(!vals.insert_tuple(tpl, pred, depth)) {
+            // repeated tuple
+            vm::tuple::destroy(tpl, pred, gc_nodes);
          }
-      }
-      
-      vm::tuple::destroy(tpl, pred, gc_nodes);
+
+         assert(vals.size() == start_size + many);
+         break;
+      case NEGATIVE_DERIVATION:
+         // to delete
+         trie::delete_info deleter(vals.delete_tuple(tpl, pred, depth)); // note the minus sign
+         if(!deleter.is_valid()) {
+            changed = false;
+         } else if(deleter.to_delete()) {
+            deleter.perform_delete(pred, gc_nodes);
+         } else if(pred->is_cycle_pred()) {
+            depth_counter *dc(deleter.get_depth_counter());
+            assert(dc != nullptr);
+
+            if(dc->get_count(depth) == 0) {
+#ifndef NDEBUG
+               size_t old_size(vals.size());
+#endif
+               vm::ref_count deleted(deleter.delete_depths_above(depth));
+               (void)deleted;
+               if(deleter.to_delete())
+                  deleter.perform_delete(pred, gc_nodes);
+               assert(vals.size() == old_size-deleted);
+            }
+         }
+         
+         vm::tuple::destroy(tpl, pred, gc_nodes);
+         break;
    }
 }
 

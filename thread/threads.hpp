@@ -366,10 +366,10 @@ public:
    void loop(void);
    void init(const size_t);
    
-   void new_work(db::node *, db::node *, vm::tuple *, vm::predicate *, const vm::ref_count, const vm::depth_t);
+   void new_work(db::node *, db::node *, vm::tuple *, vm::predicate *, const vm::derivation_direction, const vm::depth_t);
    void new_work_list(db::node *, db::node *, vm::tuple_array&);
    void new_work_delay(db::node *, db::node *, vm::tuple*, vm::predicate *,
-         const vm::ref_count, const vm::depth_t, const vm::uint_val)
+         const vm::derivation_direction, const vm::depth_t, const vm::uint_val)
    {
       assert(false);
    }

@@ -115,7 +115,7 @@ execute_add_persistent0(tuple *tpl, predicate *pred, state& state)
 #endif
 
    assert(pred->is_persistent_pred() || pred->is_reused_pred());
-   full_tuple *stuple(new full_tuple(tpl, pred, state.count, state.depth));
+   full_tuple *stuple(new full_tuple(tpl, pred, state.direction, state.depth));
    state.store->persistent_tuples.push_back(stuple);
    state.persistent_facts_generated++;
 }
@@ -133,10 +133,14 @@ static inline void
 execute_run_action0(tuple *tpl, predicate *pred, state& state)
 {
    assert(pred->is_action_pred());
-   if(state.count > 0)
-      All->MACHINE->run_action(state.sched, state.node, tpl, pred, state.gc_nodes);
-   else
-      vm::tuple::destroy(tpl, pred, state.gc_nodes);
+   switch(state.direction) {
+      case POSITIVE_DERIVATION:
+         All->MACHINE->run_action(state.sched, state.node, tpl, pred, state.gc_nodes);
+         break;
+      case NEGATIVE_DERIVATION:
+         vm::tuple::destroy(tpl, pred, state.gc_nodes);
+         break;
+   }
 }
 
 static inline void
@@ -178,7 +182,7 @@ execute_send(const pcounter& pc, state& state)
    predicate *pred(state.preds[msg]);
    tuple *tuple(state.get_tuple(msg));
 
-   if(state.count < 0 && pred->is_linear_pred() && !pred->is_reused_pred()) {
+   if(state.direction == NEGATIVE_DERIVATION && pred->is_linear_pred() && !pred->is_reused_pred()) {
       vm::tuple::destroy(tuple, pred, state.gc_nodes);
       return;
    }
@@ -236,7 +240,7 @@ execute_send(const pcounter& pc, state& state)
             it = state.facts_to_send.find(node);
          }
          arr = &(it->second);
-         full_tuple info(tuple, pred, state.count, state.depth);
+         full_tuple info(tuple, pred, state.direction, state.depth);
          arr->push_back(info);
 #else
          state.sched->new_work(state.node, node, tuple, pred, state.count, state.depth);
@@ -264,7 +268,7 @@ execute_send_delay(const pcounter& pc, state& state)
       tuple->print(cout, pred);
       cout << " -> self " << state.node->get_id() << endl;
 #endif
-      state.sched->new_work_delay(state.node, state.node, tuple, pred, state.count, state.depth, send_delay_time(pc));
+      state.sched->new_work_delay(state.node, state.node, tuple, pred, state.direction, state.depth, send_delay_time(pc));
    } else {
 #ifdef DEBUG_SENDS
       cout << "\t";
@@ -276,7 +280,7 @@ execute_send_delay(const pcounter& pc, state& state)
 #else
       db::node *node(All->DATABASE->find_node((node::node_id)dest_val));
 #endif
-      state.sched->new_work_delay(state.node, node, tuple, pred, state.count, state.depth, send_delay_time(pc));
+      state.sched->new_work_delay(state.node, node, tuple, pred, state.direction, state.depth, send_delay_time(pc));
    }
 }
 
@@ -1271,9 +1275,9 @@ execute_remove(pcounter pc, state& state)
    if(state.hash_removes)
       state.removed.insert(tpl);
 
-   if(state.count > 0) {
+   if(state.direction == POSITIVE_DERIVATION) {
       if(pred->is_reused_pred())
-         state.store->persistent_tuples.push_back(new full_tuple(tpl, pred, -1, state.depth));
+         state.store->persistent_tuples.push_back(full_tuple::remove_new(tpl, pred, state.depth));
       state.linear_facts_consumed++;
 #ifdef INSTRUMENTATION
       state.instr_facts_consumed++;

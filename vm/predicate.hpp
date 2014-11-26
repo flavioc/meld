@@ -174,6 +174,9 @@ public:
    static predicate* make_predicate_from_reader(code_reader&, code_size_t *,
          const predicate_id, const uint32_t, const uint32_t, const std::vector<type*>&,
          const size_t);
+
+   static predicate* make_predicate_simple(const predicate_id, const std::string&, const bool,
+      const std::vector<type*>&);
 };
 
 type* read_type_from_reader(code_reader&);

@@ -661,28 +661,36 @@ trie::sanity_check(void) const
 
 // inserts the data inside the trie
 trie_node*
-trie::check_insert(void *data, predicate *pred, const derivation_count many, const depth_t depth, match_stack& mstk, bool& found)
+trie::check_insert(void *data, predicate *pred, const derivation_direction dir, const depth_t depth, match_stack& mstk, bool& found)
 {
    if(mstk.empty()) {
       // 0-arity tuple
       if(!root->is_leaf()) {
          // branch not found
          found = false;
-         if(many > 0) {
-            trie_leaf *leaf(create_leaf(data, pred, many, depth));
-            root->set_leaf(leaf);
-            leaf->node = root;
-            leaf->prev = leaf->next = nullptr;
-            first_leaf = last_leaf = leaf;
+         switch(dir) {
+            case POSITIVE_DERIVATION:
+               {
+                  trie_leaf *leaf(create_leaf(data, pred, 1, depth));
+                  root->set_leaf(leaf);
+                  leaf->node = root;
+                  leaf->prev = leaf->next = nullptr;
+                  first_leaf = last_leaf = leaf;
+               }
+            default: break;
          }
       } else {
          found = true;
          trie_leaf *leaf(root->get_leaf());
          
-         if(many > 0)
-            leaf->add_new(depth, many);
-         else
-            leaf->sub(depth, many);
+         switch(dir) {
+            case POSITIVE_DERIVATION:
+               leaf->add_new(depth, 1);
+               break;
+            case NEGATIVE_DERIVATION:
+               leaf->sub(depth, 1);
+               break;
+         }
       }
 
       return root;
@@ -704,9 +712,9 @@ trie::check_insert(void *data, predicate *pred, const derivation_count many, con
       cur = parent->match(field, typ, mstk, count);
       
       if(cur == nullptr) {
-         if(many < 0) {
+         if(dir == NEGATIVE_DERIVATION)
             return nullptr; // tuple not found in the trie
-         }
+
          // else do insertion
          assert(!parent->is_leaf());
          
@@ -740,7 +748,7 @@ trie::check_insert(void *data, predicate *pred, const derivation_count many, con
          assert(mstk.empty());
          
          // parent is now set as a leaf
-         trie_leaf *leaf(create_leaf(data, pred, many, depth));
+         trie_leaf *leaf(create_leaf(data, pred, 1, depth));
          leaf->node = parent;
          parent->set_leaf(leaf);
          leaf->next = nullptr;
@@ -776,10 +784,14 @@ trie::check_insert(void *data, predicate *pred, const derivation_count many, con
    assert(parent->is_leaf());
    trie_leaf *orig(parent->get_leaf());
 
-   if(many > 0)
-      orig->add_new(depth, many);
-   else
-      orig->sub(depth, many);
+   switch(dir) {
+      case POSITIVE_DERIVATION:
+         orig->add_new(depth, 1);
+         break;
+      case NEGATIVE_DERIVATION:
+         orig->sub(depth, 1);
+         break;
+   }
 
    assert(first_leaf != nullptr && last_leaf != nullptr);
    
@@ -789,13 +801,12 @@ trie::check_insert(void *data, predicate *pred, const derivation_count many, con
 }
 
 void
-trie::commit_delete(trie_node *node, predicate *pred, const ref_count many,
-      candidate_gc_nodes& gc_nodes)
+trie::commit_delete(trie_node *node, predicate *pred, const vm::ref_count dec, candidate_gc_nodes& gc_nodes)
 {
+   assert(dec > 0);
    assert(node->is_leaf());
-
-   number_of_references -= many;
-   assert(number_of_references >= 0);
+   assert(dec >= number_of_references);
+   number_of_references -= dec;
    inner_delete_by_leaf(node->get_leaf(), pred, 0, 0, gc_nodes);
    basic_invariants();
 }
@@ -813,12 +824,12 @@ trie::delete_by_leaf(trie_leaf *leaf, predicate *pred, const depth_t depth,
 
 // we assume that number_of_references was decrement previous to this
 void
-trie::inner_delete_by_leaf(trie_leaf *leaf, predicate *pred, const derivation_count count,
+trie::inner_delete_by_leaf(trie_leaf *leaf, predicate *pred, const ref_count count,
       const depth_t depth, candidate_gc_nodes& gc_nodes)
 {
+   assert(count >= 0);
    if(count != 0) {
-      assert(count > 0);
-      leaf->sub(depth, -count);
+      leaf->sub(depth, count);
    }
    
    if(!leaf->to_delete()) {
@@ -928,7 +939,7 @@ trie::trie(void):
 }
 
 trie_node*
-tuple_trie::check_insert(vm::tuple *tpl, vm::predicate *pred, const derivation_count many, const depth_t depth, bool& found)
+tuple_trie::check_insert(vm::tuple *tpl, vm::predicate *pred, const derivation_direction dir, const depth_t depth, bool& found)
 {
    //cout << "Starting insertion of " << *tpl << endl;
  
@@ -941,19 +952,19 @@ tuple_trie::check_insert(vm::tuple *tpl, vm::predicate *pred, const derivation_c
       }
    }
    
-   trie_node *ret(trie::check_insert((void*)tpl, pred, many, depth, mstk, found));
+   trie_node *ret(trie::check_insert((void*)tpl, pred, dir, depth, mstk, found));
 
    return ret;
 }
 
 bool
-tuple_trie::insert_tuple(vm::tuple *tpl, vm::predicate *pred, const derivation_count many, const depth_t depth)
+tuple_trie::insert_tuple(vm::tuple *tpl, vm::predicate *pred, const depth_t depth)
 {
    sanity_check();
 
    bool found;
-   number_of_references += many;
-   check_insert(tpl, pred, many, depth, found);
+   number_of_references++;
+   check_insert(tpl, pred, POSITIVE_DERIVATION, depth, found);
    
    if(found) {
       assert(root->child != nullptr);
@@ -969,13 +980,12 @@ tuple_trie::insert_tuple(vm::tuple *tpl, vm::predicate *pred, const derivation_c
 }
 
 trie::delete_info
-tuple_trie::delete_tuple(vm::tuple *tpl, vm::predicate *pred, const derivation_count many, const depth_t depth)
+tuple_trie::delete_tuple(vm::tuple *tpl, vm::predicate *pred, const depth_t depth)
 {
-   assert(many > 0);
    basic_invariants();
    
    bool found;
-   trie_node *node(check_insert(tpl, pred, -many, depth, found));
+   trie_node *node(check_insert(tpl, pred, NEGATIVE_DERIVATION, depth, found));
 
    if(node == nullptr) {
       // already deleted
@@ -989,10 +999,11 @@ tuple_trie::delete_tuple(vm::tuple *tpl, vm::predicate *pred, const derivation_c
    if(leaf->to_delete()) {
       // for this branch, we will decrease number_of_references later
       // in commit_delete
-      return delete_info((tuple_trie_leaf*)leaf, this, true, node, many);
+      return delete_info((tuple_trie_leaf*)leaf, this, true, node, 1);
    } else {
-      number_of_references -= many;
-      return delete_info((tuple_trie_leaf*)leaf, this, false, node, many);
+      assert(number_of_references > 0);
+      number_of_references--;
+      return delete_info((tuple_trie_leaf*)leaf, this, false, node, 0);
    }
 }
 
@@ -1381,7 +1392,7 @@ agg_trie::find_configuration(vm::tuple *tpl, vm::predicate *pred)
    }
    
    bool found;
-   trie_node *node(trie::check_insert(nullptr, pred, 1, 0, mstk, found));
+   trie_node *node(trie::check_insert(nullptr, pred, POSITIVE_DERIVATION, 0, mstk, found));
    
    if(!found)
       ++number_of_references;

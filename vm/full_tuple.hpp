@@ -15,7 +15,7 @@
 
 namespace vm
 {
-   
+
 struct full_tuple: public mem::base
 {
 public:
@@ -23,7 +23,7 @@ public:
 
 private:
    vm::predicate *pred;
-   vm::derivation_count count;
+   derivation_direction dir;
    vm::depth_t depth;
 
 public:
@@ -39,34 +39,30 @@ public:
 
    void print(std::ostream&) const;
 
-   inline vm::derivation_count get_count(void) const { return count; }
-   inline bool reached_zero(void) const { return get_count() == 0; }
-   inline void inc_count(const vm::derivation_count& inc) { assert(inc > 0); count += inc; }
-   inline void dec_count(const vm::derivation_count& inc) { assert(inc > 0); count -= inc; }
-   inline void add_count(const vm::derivation_count& inc) { count += inc; }
+   inline derivation_direction get_dir(void) const { return dir; }
 
    inline vm::depth_t get_depth(void) const { return depth; }
    
    inline size_t storage_size(void) const
    {
-      return sizeof(vm::derivation_count) + sizeof(vm::depth_t) + data->get_storage_size(get_predicate());
+      return sizeof(derivation_direction) + sizeof(vm::depth_t) + data->get_storage_size(get_predicate());
    }
    
    void pack(utils::byte *, const size_t, int *) const;
    
    static full_tuple* unpack(vm::predicate *, utils::byte *, const size_t, int *, vm::program *);
 
-   static full_tuple* create_new(vm::tuple *tuple, vm::predicate *pred, const vm::depth_t depth) { return new full_tuple(tuple, pred, 1, depth); }
+   static full_tuple* create_new(vm::tuple *tuple, vm::predicate *pred, const vm::depth_t depth) { return new full_tuple(tuple, pred, POSITIVE_DERIVATION, depth); }
 
-   static full_tuple* remove_new(vm::tuple *tuple, vm::predicate *pred, const vm::depth_t depth) { return new full_tuple(tuple, pred, -1, depth); }
+   static full_tuple* remove_new(vm::tuple *tuple, vm::predicate *pred, const vm::depth_t depth) { return new full_tuple(tuple, pred, NEGATIVE_DERIVATION, depth); }
    
    static void wipeout(full_tuple *stpl, candidate_gc_nodes& gc_nodes) {
       vm::tuple::destroy(stpl->get_tuple(), stpl->get_predicate(), gc_nodes);
       delete stpl;
    }
 
-   explicit full_tuple(vm::tuple *_tuple, vm::predicate *_pred, const vm::derivation_count _count, const vm::depth_t _depth = 0):
-      data(_tuple), pred(_pred), count(_count), depth(_depth)
+   explicit full_tuple(vm::tuple *_tuple, vm::predicate *_pred, const derivation_direction _dir, const vm::depth_t _depth = 0):
+      data(_tuple), pred(_pred), dir(_dir), depth(_depth)
    {}
 
    explicit full_tuple(void) // for serialization purposes

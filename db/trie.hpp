@@ -150,9 +150,9 @@ public:
    
    virtual vm::ref_count get_count(void) const = 0;
    
-   virtual void add_new(const vm::depth_t depth, const vm::derivation_count many) = 0;
+   virtual void add_new(const vm::depth_t depth, const vm::ref_count many) = 0;
 
-   virtual void sub(const vm::depth_t depth, const vm::derivation_count many) = 0;
+   virtual void sub(const vm::depth_t depth, const vm::ref_count many) = 0;
    
    virtual bool to_delete(void) const = 0;
    
@@ -207,14 +207,14 @@ class depth_counter: public mem::base
          return it->first;
       }
 
-      inline void add(const vm::depth_t depth, const vm::derivation_count count)
+      inline void add(const vm::depth_t depth, const vm::ref_count count)
       {
          assert(count > 0);
 
          map_count::iterator it(counts.find(depth));
 
          if(it == counts.end()) {
-            counts[depth] = (vm::ref_count)count;
+            counts[depth] = count;
             //std::cout << "New depth " << depth << " with count " << count << "\n";
          } else {
             it->second += count;
@@ -224,19 +224,19 @@ class depth_counter: public mem::base
 
       // decrements a count of some depth
       // returns true if the count of such depth has gone to 0
-      inline bool sub(const vm::depth_t depth, const vm::derivation_count count)
+      inline bool sub(const vm::depth_t depth, const vm::ref_count count)
       {
          map_count::iterator it(counts.find(depth));
 
-         assert(count < 0);
+         assert(count > 0);
          
          if(it == counts.end())
             return true;
 
-         if((vm::ref_count)-count > it->second)
+         if(count > it->second)
             it->second = 0;
          else
-            it->second += count; // count is < 0
+            it->second -= count; // count is < 0
          //std::cout << "Depth " << depth << " dropped to count " << it->second << "\n";
 
          if(it->second == 0) {
@@ -336,7 +336,7 @@ public:
    }
    
    virtual inline void add_new(const vm::depth_t depth,
-         const vm::derivation_count many)
+         const vm::ref_count many)
    {
       assert(many > 0);
       count += many;
@@ -345,25 +345,24 @@ public:
       }
    }
 
-   inline void checked_sub(const vm::derivation_count many)
+   inline void checked_sub(const vm::ref_count many)
    {
-      assert(many < 0);
-      assert(count >= (vm::ref_count)-many);
+      assert(many > 0);
+      assert(count >= many);
       assert(depths == nullptr);
-      count += many;
+      count -= many;
    }
 
    virtual inline void sub(const vm::depth_t depth,
-         const vm::derivation_count many)
+         const vm::ref_count many)
    {
-      assert(many < 0);
-      if((vm::ref_count)-many > count)
+      assert(many > 0);
+      if(many > count)
          count = 0;
       else
-         count += many;
-      if(depths) {
+         count -= many;
+      if(depths)
          depths->sub(depth, many);
-      }
    }
    
    virtual inline bool to_delete(void) const { return count == 0; }
@@ -471,18 +470,17 @@ protected:
          || (root->child != nullptr && first_leaf != nullptr && last_leaf != nullptr));
    }
    
-   void commit_delete(trie_node *, vm::predicate *, const vm::ref_count,
-         vm::candidate_gc_nodes&);
+   void commit_delete(trie_node *, vm::predicate *, const vm::ref_count, vm::candidate_gc_nodes&);
    size_t delete_branch(trie_node *, vm::predicate *, vm::candidate_gc_nodes&);
    void delete_path(trie_node *);
    void sanity_check(void) const;
    
    virtual trie_leaf* create_leaf(void *data, vm::predicate*, const vm::ref_count many,
          const vm::depth_t depth) = 0;
-   void inner_delete_by_leaf(trie_leaf *, vm::predicate *, const vm::derivation_count,
+   void inner_delete_by_leaf(trie_leaf *, vm::predicate *, const vm::ref_count,
          const vm::depth_t, vm::candidate_gc_nodes&);
    
-   trie_node *check_insert(void *, vm::predicate *, const vm::derivation_count,
+   trie_node *check_insert(void *, vm::predicate *, const vm::derivation_direction,
          const vm::depth_t, vm::match_stack&, bool&);
    
 public:
@@ -495,7 +493,7 @@ public:
       trie *tr;
       bool to_del;
       trie_node *tr_node;
-      vm::ref_count many;
+      vm::ref_count decrease;
 
    public:
 
@@ -504,7 +502,7 @@ public:
 
       void perform_delete(vm::predicate *pred, vm::candidate_gc_nodes& gc_nodes)
       {
-         tr->commit_delete(tr_node, pred, many, gc_nodes);
+         tr->commit_delete(tr_node, pred, decrease, gc_nodes);
       }
 
       inline depth_counter* get_depth_counter(void) const
@@ -520,23 +518,20 @@ public:
       inline vm::ref_count delete_depths_above(const vm::depth_t depth)
       {
          const vm::ref_count deleted(leaf->delete_depths_above(depth));
-         many = deleted;
-         if(leaf->to_delete()) {
+
+         decrease += deleted;
+         if(leaf->to_delete())
             to_del = true;
-            // number of references will be updated upon calling operator()
-         } else {
-            tr->number_of_references -= deleted;
-         }
          return deleted;
       }
       
-      explicit delete_info(tuple_trie_leaf *_leaf,
-            trie *_tr,
-            const bool _to_del,
-            trie_node *_tr_node,
-            const vm::derivation_count _many):
+      explicit delete_info(tuple_trie_leaf *_leaf = nullptr,
+            trie *_tr = nullptr,
+            const bool _to_del = false,
+            trie_node *_tr_node = nullptr,
+            const vm::ref_count _dec = 0):
          leaf(_leaf), tr(_tr), to_del(_to_del),
-         tr_node(_tr_node), many(_many)
+         tr_node(_tr_node), decrease(_dec)
       {
       }
    };
@@ -570,7 +565,7 @@ private:
       return new tuple_trie_leaf((vm::tuple*)data, pred, many, depth);
    }
    
-   trie_node* check_insert(vm::tuple *, vm::predicate *, const vm::derivation_count, const vm::depth_t, bool&);
+   trie_node* check_insert(vm::tuple *, vm::predicate *, const vm::derivation_direction, const vm::depth_t, bool&);
 
    void visit(trie_node *n, vm::predicate *pred) const;
    void do_visit(trie_node *, const int, std::stack<vm::type*>&) const;
@@ -669,12 +664,12 @@ public:
    // inserts tuple into the trie
    // returns false if tuple is repeated (+ ref count)
    // returns true if tuple is new
-   bool insert_tuple(vm::tuple *, vm::predicate *, const vm::derivation_count, const vm::depth_t);
+   bool insert_tuple(vm::tuple *, vm::predicate *, const vm::depth_t depth = 0);
    
    // returns delete info object
    // call to_delete to know if the ref count reached zero
    // call the object to commit the deletion operation
-   delete_info delete_tuple(vm::tuple *, vm::predicate *, const vm::derivation_count, const vm::depth_t);
+   delete_info delete_tuple(vm::tuple *, vm::predicate *, const vm::depth_t depth = 0);
    
    inline const_iterator begin(void) const { return iterator((tuple_trie_leaf*)first_leaf); }
    inline const_iterator end(void) const { return iterator(); }
@@ -717,8 +712,8 @@ public:
    
    virtual inline vm::ref_count get_count(void) const { return count; }
    
-   virtual inline void add_new(const vm::depth_t, const vm::derivation_count) { }
-   virtual inline void sub(const vm::depth_t, const vm::derivation_count) { }
+   virtual inline void add_new(const vm::depth_t, const vm::ref_count) { }
+   virtual inline void sub(const vm::depth_t, const vm::ref_count) { }
    
    inline void set_zero_refs(void) { count = 0; }
 

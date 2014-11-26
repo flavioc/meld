@@ -33,7 +33,7 @@ public:
    vm::full_tuple_list generate();
 
    agg_configuration* add_to_set(vm::tuple *, vm::predicate *,
-         const vm::derivation_count, const vm::depth_t, vm::candidate_gc_nodes&);
+         const vm::derivation_direction, const vm::depth_t, vm::candidate_gc_nodes&);
    
    bool no_changes(void) const;
    inline bool empty(void) const { return vals.empty(); }

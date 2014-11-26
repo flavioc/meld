@@ -140,23 +140,23 @@ public:
    }
 
    inline void inner_add_work_myself(vm::tuple *tpl, vm::predicate *pred,
-         const vm::ref_count count, const vm::depth_t depth)
+         const vm::derivation_direction dir = vm::POSITIVE_DERIVATION, const vm::depth_t depth = 0)
    {
       if(pred->is_action_pred())
-         store.add_action_fact(new vm::full_tuple(tpl, pred, count, depth));
+         store.add_action_fact(new vm::full_tuple(tpl, pred, dir, depth));
       else if(pred->is_persistent_pred() || pred->is_reused_pred()) {
-         vm::full_tuple *stpl(new vm::full_tuple(tpl, pred, count, depth));
+         vm::full_tuple *stpl(new vm::full_tuple(tpl, pred, dir, depth));
          store.add_persistent_fact(stpl);
       } else
          add_linear_fact(tpl, pred);
    }
 
    inline void add_work_myself(vm::tuple *tpl, vm::predicate *pred,
-         const vm::ref_count count, const vm::depth_t depth)
+         const vm::derivation_direction dir = vm::POSITIVE_DERIVATION, const vm::depth_t depth = 0)
    {
       unprocessed_facts = true;
 
-      inner_add_work_myself(tpl, pred, count, depth);
+      inner_add_work_myself(tpl, pred, dir, depth);
    }
 
    inline void add_work_myself(vm::tuple_array& arr)
@@ -164,7 +164,7 @@ public:
       unprocessed_facts = true;
       for(auto it(arr.begin()), end(arr.end()); it != end; ++it) {
          vm::full_tuple info(*it);
-         inner_add_work_myself(info.get_tuple(), info.get_predicate(), info.get_count(), info.get_depth());
+         inner_add_work_myself(info.get_tuple(), info.get_predicate(), info.get_dir(), info.get_depth());
       }
    }
 
@@ -189,24 +189,24 @@ public:
    }
 
    inline void inner_add_work_others(vm::tuple *tpl, vm::predicate *pred,
-         const vm::ref_count count, const vm::depth_t depth)
+         const vm::derivation_direction dir = vm::POSITIVE_DERIVATION, const vm::depth_t depth = 0)
    {
       if(pred->is_action_pred()) {
-         vm::full_tuple *stpl(new vm::full_tuple(tpl, pred, count, depth));
+         vm::full_tuple *stpl(new vm::full_tuple(tpl, pred, dir, depth));
          store.incoming_action_tuples.push_back(stpl);
       } else if(pred->is_persistent_pred() || pred->is_reused_pred()) {
-         vm::full_tuple *stpl(new vm::full_tuple(tpl, pred, count, depth));
+         vm::full_tuple *stpl(new vm::full_tuple(tpl, pred, dir, depth));
          store.incoming_persistent_tuples.push_back(stpl);
       } else
          store.add_incoming(tpl, pred);
    }
 
    inline void add_work_others(vm::tuple *tpl, vm::predicate *pred,
-         const vm::ref_count count, const vm::depth_t depth)
+         const vm::derivation_direction dir = vm::POSITIVE_DERIVATION, const vm::depth_t depth = 0)
    {
       unprocessed_facts = true;
 
-      inner_add_work_others(tpl, pred, count, depth);
+      inner_add_work_others(tpl, pred, dir, depth);
    }
 
    inline void add_work_others(vm::tuple_array& arr)
@@ -214,7 +214,7 @@ public:
       unprocessed_facts = true;
       for(auto it(arr.begin()), end(arr.end()); it != end; ++it) {
          vm::full_tuple info(*it);
-         inner_add_work_others(info.get_tuple(), info.get_predicate(), info.get_count(), info.get_depth());
+         inner_add_work_others(info.get_tuple(), info.get_predicate(), info.get_dir(), info.get_depth());
       }
    }
    

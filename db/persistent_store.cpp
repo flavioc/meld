@@ -21,25 +21,25 @@ persistent_store::get_storage(predicate* pred)
 }
 
 bool
-persistent_store::add_tuple(vm::tuple *tpl, vm::predicate *pred, const derivation_count many, const depth_t depth)
+persistent_store::add_tuple(vm::tuple *tpl, vm::predicate *pred, const depth_t depth)
 {
    tuple_trie *tr(get_storage(pred));
    
-   bool ret = tr->insert_tuple(tpl, pred, many, depth);
+   bool ret = tr->insert_tuple(tpl, pred, depth);
    return ret;
 }
 
 persistent_store::delete_info
-persistent_store::delete_tuple(vm::tuple *tuple, vm::predicate *pred, const derivation_count many, const depth_t depth)
+persistent_store::delete_tuple(vm::tuple *tuple, vm::predicate *pred, const depth_t depth)
 {
    tuple_trie *tr(get_storage(pred));
    
-   return tr->delete_tuple(tuple, pred, many, depth);
+   return tr->delete_tuple(tuple, pred, depth);
 }
 
 agg_configuration*
 persistent_store::add_agg_tuple(vm::tuple *tuple, predicate *pred,
-      const derivation_count many, const depth_t depth, candidate_gc_nodes& gc_nodes)
+      const depth_t depth, candidate_gc_nodes& gc_nodes, const derivation_direction dir)
 {
    predicate_id pred_id(pred->get_id());
    aggregate_map::iterator it(aggs.find(pred_id));
@@ -51,14 +51,14 @@ persistent_store::add_agg_tuple(vm::tuple *tuple, predicate *pred,
    } else
       agg = it->second;
 
-   return agg->add_to_set(tuple, pred, many, depth, gc_nodes);
+   return agg->add_to_set(tuple, pred, dir, depth, gc_nodes);
 }
 
 agg_configuration*
 persistent_store::remove_agg_tuple(vm::tuple *tuple, vm::predicate *pred,
-      const derivation_count many, const depth_t depth, candidate_gc_nodes& gc_nodes)
+      const depth_t depth, candidate_gc_nodes& gc_nodes)
 {
-   return add_agg_tuple(tuple, pred, -many, depth, gc_nodes);
+   return add_agg_tuple(tuple, pred, depth, gc_nodes, NEGATIVE_DERIVATION);
 }
 
 full_tuple_list

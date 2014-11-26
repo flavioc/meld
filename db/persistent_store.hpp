@@ -36,15 +36,13 @@ struct persistent_store
    
    tuple_trie* get_storage(vm::predicate*);
 
-   bool add_tuple(vm::tuple*, vm::predicate *, const vm::derivation_count,
-         const vm::depth_t);
-   delete_info delete_tuple(vm::tuple *, vm::predicate *,
-         const vm::derivation_count, const vm::depth_t);
+   bool add_tuple(vm::tuple*, vm::predicate *, const vm::depth_t);
+   delete_info delete_tuple(vm::tuple *, vm::predicate *, const vm::depth_t);
    
    db::agg_configuration* add_agg_tuple(vm::tuple*, vm::predicate *,
-         const vm::derivation_count, const vm::depth_t, vm::candidate_gc_nodes&);
+         const vm::depth_t, vm::candidate_gc_nodes&, const vm::derivation_direction dir = vm::POSITIVE_DERIVATION);
    db::agg_configuration* remove_agg_tuple(vm::tuple*, vm::predicate *,
-         const vm::derivation_count, const vm::depth_t, vm::candidate_gc_nodes&);
+         const vm::depth_t, vm::candidate_gc_nodes&);
    void delete_by_index(vm::predicate*, const vm::match&, vm::candidate_gc_nodes&);
    void delete_by_leaf(vm::predicate*, tuple_trie_leaf*, const vm::depth_t, vm::candidate_gc_nodes&);
    void delete_all(const vm::predicate*);

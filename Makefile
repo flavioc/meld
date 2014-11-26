@@ -170,7 +170,8 @@ meld: $(OBJS) meld.o
 print: $(OBJS) print.o
 	$(COMPILE) print.o -o print $(LDFLAGS)
 
-TEST_FILES = external/tests.cpp
+TEST_FILES = external/tests.cpp \
+				 db/trie_tests.cpp
 
 unit_tests/run: $(OBJS) unit_tests/run.cpp $(TEST_FILES)
 	$(COMPILE) unit_tests/run.cpp -o unit_tests/run $(LDFLAGS) -lcppunit

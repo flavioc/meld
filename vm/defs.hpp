@@ -13,6 +13,11 @@
 
 namespace vm {
 
+typedef enum {
+   POSITIVE_DERIVATION,
+   NEGATIVE_DERIVATION
+} derivation_direction;
+
 typedef unsigned short field_num;
 typedef uint32_t uint_val;
 typedef int32_t int_val;
@@ -22,7 +27,6 @@ typedef uint64_t node_val;
 typedef bool bool_val;
 typedef unsigned char predicate_id;
 typedef unsigned short process_id;
-typedef short derivation_count;
 typedef uint64_t ref_count;
 typedef unsigned char byte_code_el;
 typedef byte_code_el* byte_code;

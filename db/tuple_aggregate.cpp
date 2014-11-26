@@ -17,7 +17,7 @@ tuple_aggregate::create_configuration(void) const
    
 agg_configuration*
 tuple_aggregate::add_to_set(vm::tuple *tpl, vm::predicate *pred,
-      const derivation_count many, const depth_t depth, candidate_gc_nodes& gc_nodes)
+      const derivation_direction dir, const depth_t depth, candidate_gc_nodes& gc_nodes)
 {
    agg_trie_leaf *leaf(vals.find_configuration(tpl, pred));
    agg_configuration *conf;
@@ -33,7 +33,7 @@ tuple_aggregate::add_to_set(vm::tuple *tpl, vm::predicate *pred,
    cout << "----> Before:" << endl;
    conf->print(cout);
 #endif
-   conf->add_to_set(tpl, pred, many, depth, gc_nodes);
+   conf->add_to_set(tpl, pred, dir, depth, gc_nodes);
 #ifdef DEBUG_AGGS
    cout << "Add " << *tpl << " " << many << " with depth " << depth << endl;
    conf->print(cout);

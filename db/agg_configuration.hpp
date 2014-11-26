@@ -52,7 +52,7 @@ public:
    inline bool is_empty(void) const { return vals.empty(); }
    inline size_t size(void) const { return vals.size(); }
 
-   virtual void add_to_set(vm::tuple *, vm::predicate *, const vm::derivation_count,
+   virtual void add_to_set(vm::tuple *, vm::predicate *, const vm::derivation_direction,
          const vm::depth_t, vm::candidate_gc_nodes&);
    
    bool matches_first_int_arg(vm::predicate *, const vm::int_val) const;

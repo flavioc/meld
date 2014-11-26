@@ -66,6 +66,30 @@ read_type_id_from_reader(code_reader& read, const vector<type*>& types)
 }
 
 predicate*
+predicate::make_predicate_simple(const predicate_id id, const string& name, const bool linear,
+      const vector<type*>& types)
+{
+   predicate *pred = new predicate();
+   
+   pred->id = id;
+
+   pred->agg_info = nullptr;
+   pred->is_linear = linear;
+   pred->is_route = false;
+   pred->is_reverse_route = false;
+   pred->is_action = false;
+   pred->is_reused = false;
+   pred->is_cycle = false;
+   pred->level = 0;
+   pred->types = types;
+   pred->name = name;
+   bitmap::create(pred->rule_map, 0);
+   pred->rule_map.clear(0);
+   
+   return pred;
+}
+
+predicate*
 predicate::make_predicate_from_reader(code_reader& read, code_size_t *code_size, const predicate_id id,
       const uint32_t major_version, const uint32_t minor_version,
       const vector<type*>& types,

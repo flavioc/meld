@@ -144,7 +144,7 @@ threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
 }
 
 void
-threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pred, const ref_count count, const depth_t depth)
+threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pred, const derivation_direction dir, const depth_t depth)
 {
    assert(is_active());
    (void)from;
@@ -159,7 +159,7 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
 #endif
       {
          MUTEX_LOCK_GUARD(to->database_lock, database_lock);
-         to->add_work_myself(tpl, pred, count, depth);
+         to->add_work_myself(tpl, pred, dir, depth);
       }
 #ifdef INSTRUMENTATION
       sent_facts_same_thread++;
@@ -174,14 +174,14 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
 
       if(to->database_lock.try_lock1(LOCK_STACK_USE(databaselock))) {
          LOCKING_STAT(database_lock_ok);
-         to->add_work_myself(tpl, pred, count, depth);
+         to->add_work_myself(tpl, pred, dir, depth);
 #ifdef INSTRUMENTATION
          sent_facts_other_thread_now++;
 #endif
          MUTEX_UNLOCK(to->database_lock, databaselock);
       } else {
          LOCKING_STAT(database_lock_fail);
-         to->add_work_others(tpl, pred, count, depth);
+         to->add_work_others(tpl, pred, dir, depth);
 #ifdef INSTRUMENTATION
       sent_facts_other_thread++;
 #endif

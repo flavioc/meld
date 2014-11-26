@@ -32,9 +32,6 @@ struct state
 {
 private:
    
-   db::tuple_trie_leaf *saved_leaves[NUM_REGS];
-	bool is_leaf[NUM_REGS];
-	
 	std::list<runtime::cons*, mem::allocator<runtime::cons*> > free_cons;
 	std::list<runtime::rstring::ptr, mem::allocator<runtime::rstring::ptr> > free_rstring;
    std::list<runtime::struct1*, mem::allocator<runtime::struct1*> > free_struct1;
@@ -54,7 +51,7 @@ public:
    vm::predicate *preds[NUM_REGS];
    call_stack stack;
    db::node *node;
-   derivation_count count;
+   derivation_direction direction;
    vm::depth_t depth;
    sched::threads_sched *sched;
    bool is_linear;
@@ -159,8 +156,6 @@ public:
    inline void add_struct(runtime::struct1 *s) { s->inc_refs();
                                                  free_struct1.push_back(s); }
    
-	bool add_fact_to_node(vm::tuple *, vm::predicate *, const vm::derivation_count count = 1, const vm::depth_t depth = 0);
-	
    void add_to_aggregate(full_tuple *);
    void do_persistent_tuples(void);
    void process_persistent_tuple(full_tuple *, vm::tuple *);
@@ -169,7 +164,7 @@ public:
    void process_incoming_tuples(void);
 	void run_node(db::node *);
    bool sync(void);
-   void setup(vm::predicate *, db::node*, const vm::derivation_count, const vm::depth_t);
+   void setup(vm::predicate *, db::node*, const vm::derivation_direction, const vm::depth_t);
    void cleanup(void);
 
    explicit state(sched::threads_sched *);
