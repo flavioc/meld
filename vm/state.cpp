@@ -104,13 +104,11 @@ tuple_for_assertion(full_tuple *stpl)
 }
 
 full_tuple*
-state::search_for_negative_tuple_partial_agg(full_tuple *stpl)
+state::search_for_negative_tuple(full_tuple *stpl)
 {
    vm::tuple *tpl(stpl->get_tuple());
    vm::predicate *pred(stpl->get_predicate());
 
-   assert(!stpl->is_aggregate());
-
    for(auto it(store->persistent_tuples.begin()),
          end(store->persistent_tuples.end());
          it != end; ++it)
@@ -119,58 +117,8 @@ state::search_for_negative_tuple_partial_agg(full_tuple *stpl)
       vm::tuple *tpl2(stpl2->get_tuple());
       vm::predicate *pred2(stpl2->get_predicate());
 
-      if(pred == pred2 && !stpl2->is_aggregate() &&
+      if(pred == pred2 && stpl2->is_aggregate() == stpl->is_aggregate() &&
             stpl2->get_dir() == NEGATIVE_DERIVATION && tpl2->equal(*tpl, pred))
-      {
-         store->persistent_tuples.erase(it);
-         return stpl2;
-      }
-   }
-
-   return nullptr;
-}
-
-full_tuple*
-state::search_for_negative_tuple_normal(full_tuple *stpl)
-{
-   vm::tuple *tpl(stpl->get_tuple());
-   vm::predicate *pred1(stpl->get_predicate());
-
-   assert(!pred1->is_aggregate_pred());
-   assert(!stpl->is_aggregate());
-
-   for(auto it(store->persistent_tuples.begin()),
-         end(store->persistent_tuples.end());
-         it != end; ++it)
-   {
-      full_tuple *stpl2(*it);
-      vm::tuple *tpl2(stpl2->get_tuple());
-      vm::predicate* pred2(stpl2->get_predicate());
-
-      if(pred1 == pred2 && stpl2->get_dir() == NEGATIVE_DERIVATION && tpl2->equal(*tpl, pred1))
-      {
-         store->persistent_tuples.erase(it);
-         return stpl2;
-      }
-   }
-
-   return nullptr;
-}
-
-full_tuple*
-state::search_for_negative_tuple_full_agg(full_tuple *stpl)
-{
-   vm::tuple *tpl(stpl->get_tuple());
-   vm::predicate *pred1(stpl->get_predicate());
-
-   for(auto it(store->persistent_tuples.begin()), end(store->persistent_tuples.end());
-         it != end; ++it)
-   {
-      full_tuple *stpl2(*it);
-      vm::tuple *tpl2(stpl2->get_tuple());
-      vm::predicate *pred2(stpl2->get_predicate());
-
-      if(pred1 == pred2 && stpl2->is_aggregate() && stpl2->get_dir() == NEGATIVE_DERIVATION && tpl2->equal(*tpl, pred1))
       {
          store->persistent_tuples.erase(it);
          return stpl2;
@@ -188,39 +136,15 @@ state::do_persistent_tuples(void)
       vm::predicate *pred(stpl->get_predicate());
       vm::tuple *tpl(stpl->get_tuple());
 
-      /// XXX remove all those if's
-      if(pred->is_persistent_pred()) {
-         if(stpl->get_dir() == POSITIVE_DERIVATION && (pred->is_aggregate_pred() && !stpl->is_aggregate())) {
-            full_tuple *stpl2(search_for_negative_tuple_partial_agg(stpl));
-            if(stpl2) {
-               assert(stpl != stpl2);
-               assert(stpl2->get_tuple() != stpl->get_tuple());
-               assert(stpl2->get_predicate() == stpl->get_predicate());
-               full_tuple::wipeout(stpl, gc_nodes);
-               full_tuple::wipeout(stpl2, gc_nodes);
-               continue;
-            }
-         }
-
-         if(stpl->get_dir() == POSITIVE_DERIVATION && (pred->is_aggregate_pred() && stpl->is_aggregate())) {
-            full_tuple *stpl2(search_for_negative_tuple_full_agg(stpl));
-            if(stpl2) {
-               assert(stpl != stpl2);
-               assert(stpl2->get_tuple() != stpl->get_tuple());
-               assert(stpl2->get_predicate() == stpl->get_predicate());
-               full_tuple::wipeout(stpl, gc_nodes);
-               full_tuple::wipeout(stpl2, gc_nodes);
-               continue;
-            }
-         }
-
-         if(stpl->get_dir() == POSITIVE_DERIVATION && !pred->is_aggregate_pred()) {
-            full_tuple *stpl2(search_for_negative_tuple_normal(stpl));
-            if(stpl2) {
-               full_tuple::wipeout(stpl, gc_nodes);
-               full_tuple::wipeout(stpl2, gc_nodes);
-               continue;
-            }
+      if(pred->is_persistent_pred() && stpl->get_dir() == POSITIVE_DERIVATION) {
+         full_tuple *stpl2(search_for_negative_tuple(stpl));
+         if(stpl2) {
+            assert(stpl != stpl2);
+            assert(stpl2->get_tuple() != stpl->get_tuple());
+            assert(stpl2->get_predicate() == stpl->get_predicate());
+            full_tuple::wipeout(stpl, gc_nodes);
+            full_tuple::wipeout(stpl2, gc_nodes);
+            continue;
          }
       }
 

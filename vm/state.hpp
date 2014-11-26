@@ -37,9 +37,7 @@ private:
    std::list<runtime::struct1*, mem::allocator<runtime::struct1*> > free_struct1;
    
    void purge_runtime_objects(void);
-   full_tuple* search_for_negative_tuple_partial_agg(full_tuple *);
-   full_tuple* search_for_negative_tuple_full_agg(full_tuple *);
-   full_tuple* search_for_negative_tuple_normal(full_tuple *);
+   full_tuple* search_for_negative_tuple(full_tuple *);
 
    void indexing_state_machine(db::node *);
 
