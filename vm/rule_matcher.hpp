@@ -21,11 +21,11 @@ private:
 
 	void register_predicate_unavailability(const predicate *pred) {
       predicate_existence.unset_bit(pred->get_id());
-      for(predicate::rule_iterator it(pred->begin_rules()), end(pred->end_rules()); it != end; it++) {
-         const vm::rule *rule(*it);
 
-         if(rule->as_persistent())
-            continue;
+      for(predicate::rule_iterator it(pred->begin_linear_rules()),
+            end(pred->end_linear_rules()); it != end; it++)
+      {
+         const vm::rule *rule(*it);
 
          if(rules[rule->get_id()] == rule->num_predicates())
             rule_queue.unset_bit(rule->get_id());
@@ -37,11 +37,10 @@ private:
 
 	void register_predicate_availability(const predicate *pred) {
       predicate_existence.set_bit(pred->get_id());
-      for(predicate::rule_iterator it(pred->begin_rules()), end(pred->end_rules()); it != end; it++) {
+      for(predicate::rule_iterator it(pred->begin_linear_rules()),
+            end(pred->end_linear_rules()); it != end; it++)
+      {
          const vm::rule *rule(*it);
-
-         if(rule->as_persistent())
-            continue;
 
          rules[rule->get_id()]++;
          assert(rules[rule->get_id()] <= rule->num_predicates());
@@ -58,11 +57,10 @@ public:
    {
       assert(predicate_existence.get_bit(pred->get_id()));
 
-      for(predicate::rule_iterator it(pred->begin_rules()), end(pred->end_rules()); it != end; it++) {
+      for(predicate::rule_iterator it(pred->begin_linear_rules()),
+            end(pred->end_linear_rules()); it != end; it++)
+      {
          const vm::rule *rule(*it);
-
-         if(rule->as_persistent())
-            continue;
 
          if(rules[rule->get_id()] == rule->num_predicates())
             rule_queue.set_bit(rule->get_id());

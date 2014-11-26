@@ -62,11 +62,20 @@ private:
    bool is_reused;
    bool is_cycle;
 
-   std::vector<const rule*> affected_rules;
+   std::vector<const rule*, mem::allocator<const rule*>> affected_rules;
+   std::vector<const rule*, mem::allocator<const rule*>> linear_rules;
+   std::vector<const rule*, mem::allocator<const rule*>> persistent_rules;
 
-   inline void add_affected_rule(const rule* rule)
+   inline void add_linear_affected_rule(const rule* rule)
    {
       affected_rules.push_back(rule);
+      linear_rules.push_back(rule);
+   }
+
+   inline void add_persistent_affected_rule(const rule* rule)
+   {
+      affected_rules.push_back(rule);
+      persistent_rules.push_back(rule);
    }
 
    store_type_t store_type;
@@ -88,15 +97,11 @@ public:
 
    using rule_iterator = std::vector<const rule*, mem::allocator<const rule*>>::const_iterator;
 
-   inline rule_iterator begin_rules(void) const
-   {
-      return affected_rules.begin();
-   }
+   inline rule_iterator begin_rules(void) const { return affected_rules.begin(); }
+   inline rule_iterator end_rules(void) const { return affected_rules.end(); }
 
-   inline rule_iterator end_rules(void) const
-   {
-      return affected_rules.end();
-   }
+   inline rule_iterator begin_linear_rules() const { return linear_rules.begin(); }
+   inline rule_iterator end_linear_rules() const { return linear_rules.end(); }
    
    inline bool is_aggregate_pred(void) const { return agg_info != nullptr; }
    

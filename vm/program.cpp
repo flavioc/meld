@@ -406,7 +406,10 @@ program::program(const string& _filename):
          read.read_type<predicate_id>(&id);
          predicate *pred(predicates[id]);
 
-         pred->add_affected_rule(rules[i]);
+         if(rules[i]->as_persistent())
+            pred->add_persistent_affected_rule(rules[i]);
+         else
+            pred->add_linear_affected_rule(rules[i]);
          rules[i]->add_predicate(pred);
       }
    }
