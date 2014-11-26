@@ -1095,8 +1095,6 @@ execute_linear_iter(const reg_num reg, match* m, const pcounter first, state& st
       utils::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_linked_list(pred->get_id()));
       return execute_linear_iter_list(reg, m, first, state, pred, local_tuples);
    }
-
-   return RETURN_NO_RETURN;
 }
 
 static inline return_type

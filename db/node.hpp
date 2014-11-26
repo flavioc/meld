@@ -64,7 +64,7 @@ public:
    
    void assert_end(void) const;
    
-   size_t count_total(const vm::predicate_id) const;
+   size_t count_total(const vm::predicate*) const;
    size_t count_total_all(void) const;
    inline bool garbage_collect(void) const
    {

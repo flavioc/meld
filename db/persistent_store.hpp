@@ -53,7 +53,7 @@ struct persistent_store
    void assert_tries();
    vm::full_tuple_list end_iteration();
    
-   size_t count_total(const vm::predicate_id) const;
+   size_t count_total(const vm::predicate*) const;
 
    void wipeout(vm::candidate_gc_nodes&);
 

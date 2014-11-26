@@ -22,33 +22,31 @@ private:
 	void register_predicate_unavailability(const predicate *pred) {
       predicate_existence.unset_bit(pred->get_id());
       for(predicate::rule_iterator it(pred->begin_rules()), end(pred->end_rules()); it != end; it++) {
-         vm::rule_id rule_id(*it);
-         vm::rule *rule(theProgram->get_rule(rule_id));
+         const vm::rule *rule(*it);
 
          if(rule->as_persistent())
             continue;
 
-         if(rules[rule_id] == rule->num_predicates())
-            rule_queue.unset_bit(rule_id);
+         if(rules[rule->get_id()] == rule->num_predicates())
+            rule_queue.unset_bit(rule->get_id());
 
-         assert(rules[rule_id] > 0);
-         rules[rule_id]--;
+         assert(rules[rule->get_id()] > 0);
+         rules[rule->get_id()]--;
       }
    }
 
 	void register_predicate_availability(const predicate *pred) {
       predicate_existence.set_bit(pred->get_id());
       for(predicate::rule_iterator it(pred->begin_rules()), end(pred->end_rules()); it != end; it++) {
-         vm::rule_id rule_id(*it);
-         vm::rule *rule(theProgram->get_rule(rule_id));
+         const vm::rule *rule(*it);
 
          if(rule->as_persistent())
             continue;
 
-         rules[rule_id]++;
-         assert(rules[rule_id] <= rule->num_predicates());
-         if(rules[rule_id] == rule->num_predicates())
-            rule_queue.set_bit(rule_id);
+         rules[rule->get_id()]++;
+         assert(rules[rule->get_id()] <= rule->num_predicates());
+         if(rules[rule->get_id()] == rule->num_predicates())
+            rule_queue.set_bit(rule->get_id());
       }
    }
 
@@ -61,14 +59,13 @@ public:
       assert(predicate_existence.get_bit(pred->get_id()));
 
       for(predicate::rule_iterator it(pred->begin_rules()), end(pred->end_rules()); it != end; it++) {
-         vm::rule_id rule_id(*it);
-         vm::rule *rule(theProgram->get_rule(rule_id));
+         const vm::rule *rule(*it);
 
          if(rule->as_persistent())
             continue;
 
-         if(rules[rule_id] == rule->num_predicates())
-            rule_queue.set_bit(rule_id);
+         if(rules[rule->get_id()] == rule->num_predicates())
+            rule_queue.set_bit(rule->get_id());
       }
    }
 

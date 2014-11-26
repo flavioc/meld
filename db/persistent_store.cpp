@@ -152,9 +152,9 @@ persistent_store::delete_by_index(predicate *pred, const match& m, candidate_gc_
 }
 
 size_t
-persistent_store::count_total(const predicate_id id) const
+persistent_store::count_total(const predicate* pred) const
 {
-   auto it(tuples.find(id));
+   auto it(tuples.find(pred->get_id()));
 
    if(it == tuples.end())
       return 0;

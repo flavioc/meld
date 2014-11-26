@@ -26,6 +26,8 @@ typedef enum {
    HASH_TABLE
 } store_type_t;
 
+class rule;
+
 class predicate {
 private:
    friend class program;
@@ -60,13 +62,11 @@ private:
    bool is_reused;
    bool is_cycle;
 
-   std::vector<rule_id> affected_rules;
-   bitmap rule_map;
+   std::vector<const rule*> affected_rules;
 
-   inline void add_affected_rule(const rule_id rule)
+   inline void add_affected_rule(const rule* rule)
    {
       affected_rules.push_back(rule);
-      rule_map.set_bit(rule);
    }
 
    store_type_t store_type;
@@ -81,14 +81,12 @@ private:
    
    explicit predicate(void);
 
-   void destroy(const size_t);
+   void destroy();
    ~predicate(void);
    
 public:
 
-   typedef std::vector<rule_id>::const_iterator rule_iterator;
-
-   inline bitmap& get_rules_map(void) { return rule_map; }
+   using rule_iterator = std::vector<const rule*, mem::allocator<const rule*>>::const_iterator;
 
    inline rule_iterator begin_rules(void) const
    {
@@ -172,15 +170,14 @@ public:
    }
    
    static predicate* make_predicate_from_reader(code_reader&, code_size_t *,
-         const predicate_id, const uint32_t, const uint32_t, const std::vector<type*>&,
-         const size_t);
+         const predicate_id, const uint32_t, const uint32_t, const std::vector<type*, mem::allocator<type*>>&);
 
    static predicate* make_predicate_simple(const predicate_id, const std::string&, const bool,
       const std::vector<type*>&);
 };
 
 type* read_type_from_reader(code_reader&);
-type* read_type_id_from_reader(code_reader&, const std::vector<type*>&);
+type* read_type_id_from_reader(code_reader&, const std::vector<type*, mem::allocator<type*>>&);
 std::ostream& operator<<(std::ostream&, const predicate&);
 
 }

@@ -47,31 +47,31 @@ private:
    const std::string filename;
    uint32_t major_version, minor_version;
 
-   std::vector<type*> types;
+   std::vector<type*, mem::allocator<type*>> types;
 
-   std::vector<import*> imported_predicates;
-   std::vector<std::string> exported_predicates;
+   std::vector<import*, mem::allocator<import*>> imported_predicates;
+   std::vector<std::string, mem::allocator<std::string>> exported_predicates;
 
 	size_t num_args;
    size_t number_rules;
    size_t number_rules_uint;
 
-   std::vector<rule*> rules;
+   std::vector<rule*, mem::allocator<rule*>> rules;
 
-   std::vector<function*> functions;
+   std::vector<function*, mem::allocator<function*>> functions;
    
-   std::vector<predicate*> predicates;
-   std::vector<predicate*> sorted_predicates;
+   std::vector<predicate*, mem::allocator<predicate*>> predicates;
+   std::vector<predicate*, mem::allocator<predicate*>> sorted_predicates;
    size_t num_predicates_uint;
   
-   std::vector<byte_code> code;
-   std::vector<code_size_t> code_size;
+   std::vector<byte_code, mem::allocator<byte_code>> code;
+   std::vector<code_size_t, mem::allocator<code_size_t>> code_size;
 
 	code_size_t const_code_size;
 	byte_code const_code;
-	std::vector<type*> const_types;
+	std::vector<type*, mem::allocator<type*>> const_types;
    
-   std::vector<predicate*> route_predicates;
+   std::vector<predicate*, mem::allocator<predicate*>> route_predicates;
    
    bool safe;
    bool is_data_file;
@@ -92,7 +92,7 @@ private:
 
 #ifdef USE_REAL_NODES
    // node references in the byte code
-   std::vector<byte_code> *node_references;
+   std::vector<byte_code, mem::allocator<byte_code>> *node_references;
 #endif
 
    size_t total_arguments;
@@ -101,6 +101,9 @@ private:
    void read_node_references(byte_code, code_reader&);
    
 public:
+
+   using predicate_iterator =
+      std::vector<predicate*, mem::allocator<predicate*>>::iterator;
 
    strat_level MAX_STRAT_LEVEL;
 
@@ -132,11 +135,13 @@ public:
 
    inline double get_initial_priority(void) const { return initial_priority; }
    inline bool is_static_priority(void) const { return priority_static; }
+
+   predicate_iterator begin_predicates(void) { return predicates.begin(); }
+   predicate_iterator end_predicates(void) { return predicates.end(); }
 	
    predicate *get_predicate_by_name(const std::string&) const;
    
    predicate *get_init_predicate(void) const;
-   
    predicate *get_edge_predicate(void) const;
    
    void print_bytecode(std::ostream&) const;

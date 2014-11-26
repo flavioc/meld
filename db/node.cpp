@@ -15,29 +15,26 @@ namespace db
 {
 
 size_t
-node::count_total(const predicate_id id) const
+node::count_total(const predicate *pred) const
 {
-   predicate *pred(theProgram->get_predicate(id));
    if(pred->is_persistent_pred())
-      return pers_store.count_total(id);
-   else {
-      if(linear.stored_as_hash_table(pred)) {
-         const hash_table *table(linear.get_hash_table(pred->get_id()));
-         return table->get_total_size();
-      } else {
-         const intrusive_list<vm::tuple> *ls(linear.get_linked_list(pred->get_id()));
-         return ls->get_size();
-      }
+      return pers_store.count_total(pred);
+
+   if(linear.stored_as_hash_table(pred)) {
+      const hash_table *table(linear.get_hash_table(pred->get_id()));
+      return table->get_total_size();
    }
+
+   const intrusive_list<vm::tuple> *ls(linear.get_linked_list(pred->get_id()));
+   return ls->get_size();
 }
 
 size_t
 node::count_total_all(void) const
 {
    size_t total(0);
-   for(size_t i(0); i < theProgram->num_predicates(); ++i) {
-      total += count_total(i);
-   }
+   for(auto it(theProgram->begin_predicates()), end(theProgram->end_predicates()); it != end; ++it)
+      total += count_total(*it);
    return total;
 }
 

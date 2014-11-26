@@ -103,7 +103,7 @@ program::program(const string& _filename):
 	read.read_type<uint_val>(&num_nodes);
 
 #ifdef USE_REAL_NODES
-   node_references = new vector<byte_code>[num_nodes];
+   node_references = new vector<byte_code, mem::allocator<byte_code>>[num_nodes];
 #endif
 
 	read.seek(num_nodes * database::node_size);
@@ -292,7 +292,7 @@ program::program(const string& _filename):
       code_size_t size;
 
       sorted_predicates[i] = predicates[i] =
-         predicate::make_predicate_from_reader(read, &size, (predicate_id)i, major_version, minor_version, types, number_rules_uint);
+         predicate::make_predicate_from_reader(read, &size, (predicate_id)i, major_version, minor_version, types);
       code_size[i] = size;
 
       predicate *pred(predicates[i]);
@@ -406,7 +406,7 @@ program::program(const string& _filename):
          read.read_type<predicate_id>(&id);
          predicate *pred(predicates[id]);
 
-         pred->add_affected_rule(i);
+         pred->add_affected_rule(rules[i]);
          rules[i]->add_predicate(pred);
       }
    }
@@ -420,7 +420,7 @@ program::~program(void)
       delete types[i];
    }
    for(size_t i(0); i < num_predicates(); ++i) {
-      predicates[i]->destroy(number_rules_uint);
+      predicates[i]->destroy();
       delete predicates[i];
       delete []code[i];
    }
@@ -465,7 +465,7 @@ program::read_node_references(byte_code code, code_reader& read)
 void
 program::fix_node_address(db::node *n)
 {
-   vector<byte_code>& vec(node_references[n->get_id()]);
+   vector<byte_code, mem::allocator<byte_code>>& vec(node_references[n->get_id()]);
    for(vector<byte_code>::iterator it(vec.begin()), end(vec.end()); it != end; ++it)
       pcounter_set_node(*it, (node_val)n);
 }
