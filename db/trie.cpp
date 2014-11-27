@@ -1320,7 +1320,6 @@ match_begin:
 					mstk.push(f);
                goto match_succeeded;
             }
-            break;
          case FIELD_INT:
          case FIELD_FLOAT:
          case FIELD_NODE:

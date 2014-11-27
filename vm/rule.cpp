@@ -1,6 +1,8 @@
 
 #include "vm/rule.hpp"
 #include "vm/state.hpp"
+#include "vm/predicate.hpp"
+#include "vm/program.hpp"
 #include "vm/instr.hpp"
 
 using namespace std;
@@ -13,12 +15,13 @@ rule::print(ostream& out, const vm::program *const prog) const
 {
 	out << str << endl;
 	
-	for(vector<predicate*, mem::allocator<predicate*> >::const_iterator it(predicates.begin()),
+	for(vector<predicate_id, mem::allocator<predicate_id> >::const_iterator it(predicates.begin()),
 		end(predicates.end());
 		it != end;
 		it++)
 	{
-		const predicate *pred(*it);
+		const predicate_id id(*it);
+		const predicate *pred(theProgram->get_predicate(id));
 
       assert(pred != nullptr);
 

@@ -52,7 +52,6 @@ value_equal(type *t, const tuple_field& v1, const tuple_field& v2)
             return false;
          return value_equal(t, tail1, tail2);
       }
-      break;
       default:
          throw type_error("Unrecognized field type " + t->string());
    }

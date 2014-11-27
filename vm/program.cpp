@@ -188,7 +188,7 @@ program::program(const string& _filename):
 
       str[rule_len] = '\0';
 
-      rules.push_back(new rule((rule_id)i, string(str), num_predicates_uint));
+      rules.push_back(new rule((rule_id)i, string(str)));
    }
 
 	// read string constants
@@ -410,7 +410,7 @@ program::program(const string& _filename):
             pred->add_persistent_affected_rule(rules[i]);
          else
             pred->add_linear_affected_rule(rules[i]);
-         rules[i]->add_predicate(pred);
+         rules[i]->add_predicate(id);
       }
    }
 
@@ -428,7 +428,7 @@ program::~program(void)
       delete []code[i];
    }
 	for(size_t i(0); i < num_rules(); ++i) {
-      rules[i]->destroy(num_predicates_uint);
+      rules[i]->destroy();
 		delete rules[i];
 	}
    if(data_rule != nullptr)
@@ -672,7 +672,6 @@ program::add_data_file(program& other)
 
    //instrs_print(init_rule->get_bytecode(), init_rule->get_codesize(), 0, this, cout);
 #endif
-   return true;
 }
 
 }

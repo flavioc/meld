@@ -115,15 +115,12 @@ struct linear_store
          tuple_list ls;
          // cannot get list immediatelly since that would remove the pointer to the hash table data
 
-         size_t total_size(0);
          while(!it.end()) {
             tuple_list *bucket_ls(*it);
             ++it;
 
-            total_size += bucket_ls->get_size();
             ls.splice_back(*bucket_ls);
          }
-         assert(ls.get_size() == total_size);
 
          tbl->destroy();
          memcpy(tbl, &ls, sizeof(tuple_list));

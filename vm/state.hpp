@@ -88,6 +88,8 @@ public:
    using removed_hash =
       std::unordered_set<vm::tuple*, utils::pointer_hash<vm::tuple>,
          std::equal_to<vm::tuple*>, mem::allocator<vm::tuple*>>;
+   // this hash table is used when using operators at the body of the rule.
+   // since the list of candidate tuples is ordered, it's not possible to know if something has been deleted.
    removed_hash removed;
    db::temporary_store *store;
    db::linear_store *lstore;

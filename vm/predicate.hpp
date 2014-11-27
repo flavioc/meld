@@ -28,7 +28,7 @@ typedef enum {
 
 class rule;
 
-class predicate {
+struct predicate {
 private:
    friend class program;
    
