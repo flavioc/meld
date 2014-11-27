@@ -12,9 +12,6 @@ void
 agg_configuration::add_to_set(vm::tuple *tpl, vm::predicate *pred,
       const derivation_direction dir, const depth_t depth, candidate_gc_nodes& gc_nodes)
 {
-   assert(many != 0);
-   //assert(many > 0 || (many < 0 && !vals.empty()));
-
    changed = true; // this is important
 
 #ifndef NDEBUG
@@ -28,7 +25,7 @@ agg_configuration::add_to_set(vm::tuple *tpl, vm::predicate *pred,
             vm::tuple::destroy(tpl, pred, gc_nodes);
          }
 
-         assert(vals.size() == start_size + many);
+         assert(vals.size() == start_size + 1);
          break;
       case NEGATIVE_DERIVATION:
          // to delete

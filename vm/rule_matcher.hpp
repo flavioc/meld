@@ -82,7 +82,6 @@ public:
 
    inline void new_persistent_count(const vm::predicate *pred, const size_t count)
    {
-      assert(count >= 0);
       if(count == 0) {
          if(predicate_existence.get_bit(pred->get_id()))
             register_predicate_unavailability(pred);

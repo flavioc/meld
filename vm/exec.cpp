@@ -20,9 +20,9 @@
 
 #if 0
 #define DEBUG_RULES
+#define DEBUG_INSTRS
 #define DEBUG_SENDS
 #define DEBUG_REMOVE
-#define DEBUG_INSTRS
 #define DEBUG_ITERS
 #endif
 
@@ -82,6 +82,12 @@ execute_alloc(const pcounter& pc, state& state)
 static inline void
 execute_add_linear0(tuple *tuple, predicate *pred, state& state)
 {
+#ifdef DEBUG_SENDS
+   cout << "\tadd linear ";
+   tuple->print(cout, pred);
+   cout << endl;
+#endif
+
    state.node->add_linear_fact(tuple, pred);
    state.linear_facts_generated++;
 }
@@ -95,12 +101,6 @@ execute_add_linear(pcounter& pc, state& state)
    assert(!pred->is_reused_pred());
    assert(!pred->is_action_pred());
    assert(pred->is_linear_pred());
-
-#ifdef DEBUG_SENDS
-   cout << "\tadd linear ";
-   tuple->print(cout, pred);
-   cout << endl;
-#endif
 
    execute_add_linear0(tuple, pred, state);
 }
@@ -205,7 +205,7 @@ execute_send(const pcounter& pc, state& state)
 #endif
       ss << "\t";
       tuple->print(ss, pred);
-      ss << " " << state.count << " -> " << print_val << " (" << state.depth << ")" << endl;
+      ss << " " << (state.direction == POSITIVE_DERIVATION ? "+" : "-") << " -> " << print_val << " (" << state.depth << ")" << endl;
       cout << ss.str();
    }
 #endif
@@ -243,7 +243,7 @@ execute_send(const pcounter& pc, state& state)
          full_tuple info(tuple, pred, state.direction, state.depth);
          arr->push_back(info);
 #else
-         state.sched->new_work(state.node, node, tuple, pred, state.count, state.depth);
+         state.sched->new_work(state.node, node, tuple, pred, state.direction, state.depth);
 #endif
       }
    }
