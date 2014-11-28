@@ -129,6 +129,7 @@ SRCS = utils/utils.cpp \
 			thread/ids.cpp \
 			thread/threads.cpp \
 			thread/coord.cpp \
+			compiler/lexer.cpp \
 			external/math.cpp \
 			external/lists.cpp \
 			external/utils.cpp \
@@ -171,7 +172,8 @@ print: $(OBJS) print.o
 	$(COMPILE) print.o -o print $(LDFLAGS)
 
 TEST_FILES = external/tests.cpp \
-				 db/trie_tests.cpp
+				 db/trie_tests.cpp \
+				 compiler/lexer_tests.cpp
 
 unit_tests/run: $(OBJS) unit_tests/run.cpp $(TEST_FILES)
 	$(COMPILE) unit_tests/run.cpp -o unit_tests/run $(LDFLAGS) -lcppunit
