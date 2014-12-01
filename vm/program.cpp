@@ -469,7 +469,7 @@ void
 program::fix_node_address(db::node *n)
 {
    vector<byte_code, mem::allocator<byte_code>>& vec(node_references[n->get_id()]);
-   for(vector<byte_code>::iterator it(vec.begin()), end(vec.end()); it != end; ++it)
+   for(auto it(vec.begin()), end(vec.end()); it != end; ++it)
       pcounter_set_node(*it, (node_val)n);
 }
 #endif
