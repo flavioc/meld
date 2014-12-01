@@ -131,6 +131,21 @@ update-queens:
 	touch progs/8queens-11-top.meld
 	touch progs/8queens-12-top.meld
 	touch progs/8queens-13-top.meld
+	python ../scripts/generate_8queens.py 9 h ts > progs/data/8queens-data9-top-static.meld
+	python ../scripts/generate_8queens.py 10 h ts > progs/data/8queens-data10-top-static.meld
+	python ../scripts/generate_8queens.py 11 h ts > progs/data/8queens-data11-top-static.meld
+	python ../scripts/generate_8queens.py 12 h ts > progs/data/8queens-data12-top-static.meld
+	python ../scripts/generate_8queens.py 13 h ts > progs/data/8queens-data13-top-static.meld
+	git add progs/data/8queens-data9-top-static.meld
+	git add progs/data/8queens-data10-top-static.meld
+	git add progs/data/8queens-data11-top-static.meld
+	git add progs/data/8queens-data12-top-static.meld
+	git add progs/data/8queens-data13-top-static.meld
+	touch progs/8queens-9-top-static.meld
+	touch progs/8queens-10-top-static.meld
+	touch progs/8queens-11-top-static.meld
+	touch progs/8queens-12-top-static.meld
+	touch progs/8queens-13-top-static.meld
 
 update-quicksort:
 	sed -e "s/down(@0, .*/down(@0, `python ../scripts/generate_list.py 70000`)./g" -i "" progs/quicksort.meld

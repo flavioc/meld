@@ -142,12 +142,12 @@ SRCS = utils/utils.cpp \
 			interface.cpp
 
 ifeq ($(INSTRUMENTATION), true)
-	OBJS += stat/stat.cpp \
+	SRCS += stat/stat.cpp \
 			  stat/slice.cpp \
 			  stat/slice_set.cpp
 endif
 ifeq ($(CORE_STATISTICS), true)
-	OBJS += vm/stat.cpp
+	SRCS += vm/stat.cpp
 endif
 
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))

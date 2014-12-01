@@ -14,6 +14,10 @@
 #include "utils/circular_buffer.hpp"
 #include "utils/tree_barrier.hpp"
 #include "vm/bitmap.hpp"
+#ifdef INSTRUMENTATION
+#include "stat/stat.hpp"
+#include "stat/slice.hpp"
+#endif
 
 #define DIRECT_PRIORITIES
 
@@ -28,7 +32,11 @@
 //#define STEAL_ONE
 #define STEAL_HALF
 
+#ifdef INSTRUMENTATION
+#define NODE_LOCK(NODE, ARG, STAT) if((NODE)->main_lock.try_lock1(LOCK_STACK_USE(ARG))) { node_lock_ok++; } else { node_lock_fail++; (NODE)->main_lock.lock1(LOCK_STACK_USE(ARG)); }
+#else
 #define NODE_LOCK(NODE, ARG, STAT) MUTEX_LOCK((NODE)->main_lock, ARG, STAT)
+#endif
 #define NODE_UNLOCK(NODE, ARG) MUTEX_UNLOCK((NODE)->main_lock, ARG)
 
 namespace sched
@@ -222,13 +230,15 @@ private:
 #endif
 
 #ifdef INSTRUMENTATION
-   std::atomic<size_t> sent_facts_same_thread;
-   std::atomic<size_t> sent_facts_other_thread;
-   std::atomic<size_t> sent_facts_other_thread_now;
+   std::atomic<size_t> sent_facts_same_thread{0};
+   std::atomic<size_t> sent_facts_other_thread{0};
+   std::atomic<size_t> sent_facts_other_thread_now{0};
    // SET PRIORITY executed on nodes of the current thread.
-   std::atomic<size_t> priority_nodes_thread;
+   std::atomic<size_t> priority_nodes_thread{0};
    // SET PRIORITY executed on nodes of other threads.
-   std::atomic<size_t> priority_nodes_others;
+   std::atomic<size_t> priority_nodes_others{0};
+   std::atomic<size_t> node_lock_ok{0};
+   std::atomic<size_t> node_lock_fail{0};
 #endif
 
 #ifndef DIRECT_PRIORITIES
@@ -400,7 +410,8 @@ public:
    uint64_t count_stolen_nodes = 0;
    uint64_t count_set_priority = 0;
    uint64_t count_add_priority = 0;
-
+#endif
+#ifdef INSTRUMENTATION
    void write_slice(statistics::slice&);
 #endif
 
