@@ -24,7 +24,8 @@ HT = new-heat-transfer-80
 HT_COORD = new-heat-transfer-80-coord
 BP = belief-propagation-400
 SPLASH_BP = splash-bp-400
-QUEENS = 8queens-13 8queens-13-bottom 8queens-13-bottom-static
+QUEENS = 8queens-13 8queens-13-bottom 8queens-13-bottom-static \
+			8queens-top
 SIMPLE = simple16 simple32 simple64
 MINMAX = min-max-tictactoe-big
 SHORTEST = shortest-usairports500 shortest-uspowergrid \
@@ -115,6 +116,21 @@ update-queens:
 	touch progs/8queens-11-bottom-static.meld
 	touch progs/8queens-12-bottom-static.meld
 	touch progs/8queens-13-bottom-static.meld
+	python ../scripts/generate_8queens.py 9 h t > progs/data/8queens-data9-top.meld
+	python ../scripts/generate_8queens.py 10 h t > progs/data/8queens-data10-top.meld
+	python ../scripts/generate_8queens.py 11 h t > progs/data/8queens-data11-top.meld
+	python ../scripts/generate_8queens.py 12 h t > progs/data/8queens-data12-top.meld
+	python ../scripts/generate_8queens.py 13 h t > progs/data/8queens-data13-top.meld
+	git add progs/data/8queens-data9-top.meld
+	git add progs/data/8queens-data10-top.meld
+	git add progs/data/8queens-data11-top.meld
+	git add progs/data/8queens-data12-top.meld
+	git add progs/data/8queens-data13-top.meld
+	touch progs/8queens-9-top.meld
+	touch progs/8queens-10-top.meld
+	touch progs/8queens-11-top.meld
+	touch progs/8queens-12-top.meld
+	touch progs/8queens-13-top.meld
 
 update-quicksort:
 	sed -e "s/down(@0, .*/down(@0, `python ../scripts/generate_list.py 70000`)./g" -i "" progs/quicksort.meld
