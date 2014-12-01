@@ -152,7 +152,7 @@ class funcall_expr: public expr
          return ret + ")";
       }
 
-      explicit funcall_expr(const token& tok, const std::vector<expr*>& _exprs):
+      explicit funcall_expr(const token& tok, std::vector<expr*>&& _exprs):
          expr(tok), exprs(_exprs)
       {
       }
@@ -199,7 +199,7 @@ class fact: public expr
 
       explicit fact(const token& tok,
             const vm::predicate *_pred,
-            std::vector<expr*> _exprs):
+            std::vector<expr*>&& _exprs):
          expr(tok), pred(_pred), exprs(_exprs)
       {
       }
@@ -243,10 +243,10 @@ class rule: public expr
       }
 
       explicit rule(const token& lolli,
-            std::vector<expr*> _conditions,
-            std::vector<fact*> _body,
-            std::vector<fact*> _head,
-            std::vector<construct*> _constructs):
+            std::vector<expr*>&& _conditions,
+            std::vector<fact*>&& _body,
+            std::vector<fact*>&& _head,
+            std::vector<construct*>&& _constructs):
          expr(lolli), body_conditions(_conditions),
          body_facts(_body), head_facts(_head),
          head_constructs(_constructs)
@@ -302,8 +302,8 @@ class conditional_axiom: public axiom
       }
 
       explicit conditional_axiom(const token& lolli,
-            std::vector<expr*>& _conditions,
-            std::vector<fact*>& _facts):
+            std::vector<expr*>&& _conditions,
+            std::vector<fact*>&& _facts):
          axiom(lolli), conditions(_conditions),
          head_facts(_facts)
       {}

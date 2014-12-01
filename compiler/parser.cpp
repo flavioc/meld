@@ -5,6 +5,7 @@
 
 using std::string;
 using std::vector;
+using std::move;
 
 namespace compiler
 {
@@ -176,10 +177,11 @@ parser::parse_rule_head(const token& lolli, vector<expr*>& conditions, vector<fa
       if(com.tok == token::Token::DOT) {
          if(body_facts.empty()) {
             // axiom
-            axioms.push_back(new conditional_axiom(lolli, conditions, head_facts));
+            axioms.push_back(new conditional_axiom(lolli, move(conditions), move(head_facts)));
             return;
          }
-         rules.push_back(new rule(lolli, conditions, body_facts, head_facts, constrs));
+         rules.push_back(new rule(move(lolli), move(conditions), move(body_facts),
+                  move(head_facts), move(constrs)));
          return;
       }
       if(com.tok != token::Token::COMMA)
@@ -220,7 +222,7 @@ parser::parse_body_fact(const token& name, const vm::predicate *pred)
       exprs.push_back(e);
       const token com(get());
       if(com.tok == token::Token::PAREN_RIGHT)
-         return new fact(name, pred, exprs);
+         return new fact(name, pred, move(exprs));
       if(com.tok != token::Token::COMMA)
          throw parser_error(com, "expecting a comma.");
    }
@@ -253,7 +255,7 @@ parser::parse_expr_funcall(const token& name)
          break;
    }
 
-   return new funcall_expr(name, exprs);
+   return new funcall_expr(name, move(exprs));
 }
 
 void
