@@ -1,5 +1,5 @@
 
-include #data/8queens-data13-horizontal.meld
+include #data/8queens-data13-bottom.meld
 
 type left(node, node).
 type right(node, node).
@@ -14,6 +14,8 @@ type linear test-diag-left(node, int, int, list int, list node, list int).
 type linear test-diag-right(node, int, int, list int, list node, list int).
 type linear send-down(node, list node, list int).
 type linear final-state(node, list node, list int).
+
+priority @cluster @static.
 
 const size = 13.
 

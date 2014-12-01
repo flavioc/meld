@@ -150,7 +150,7 @@ public:
    void print_program(std::ostream&) const;
    void print_bytecode_by_predicate(std::ostream&, const std::string&) const;
    
-   predicate* get_predicate(const predicate_id&) const;
+   predicate* get_predicate(const predicate_id i) const { return predicates[i]; }
    predicate* get_sorted_predicate(const size_t i) const {
       assert(i < num_predicates());
       return sorted_predicates[i];

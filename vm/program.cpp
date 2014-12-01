@@ -469,20 +469,10 @@ void
 program::fix_node_address(db::node *n)
 {
    vector<byte_code, mem::allocator<byte_code>>& vec(node_references[n->get_id()]);
-   for(vector<byte_code>::iterator it(vec.begin()), end(vec.end()); it != end; ++it)
+   for(auto it(vec.begin()), end(vec.end()); it != end; ++it)
       pcounter_set_node(*it, (node_val)n);
 }
 #endif
-
-predicate*
-program::get_predicate(const predicate_id& id) const
-{
-   if((size_t)id >= num_predicates()) {
-      return nullptr;
-   }
-   
-   return predicates[id];
-}
 
 predicate*
 program::get_route_predicate(const size_t& i) const

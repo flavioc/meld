@@ -5,6 +5,7 @@
 #include "vm/program.hpp"
 #include "mem/thread.hpp"
 #include "vm/instr.hpp"
+#include "vm/all.hpp"
 
 using namespace vm;
 using namespace std;
@@ -22,6 +23,8 @@ main(int argc, char **argv)
    try {
       mem::ensure_pool();
       program prog(file);
+
+      theProgram = &prog;
 
       vm::USING_MEM_ADDRESSES = false;
       if(argc == 2)

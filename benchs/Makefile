@@ -24,7 +24,8 @@ HT = new-heat-transfer-80
 HT_COORD = new-heat-transfer-80-coord
 BP = belief-propagation-400
 SPLASH_BP = splash-bp-400
-QUEENS = 8queens-13
+QUEENS = 8queens-13 8queens-13-bottom 8queens-13-bottom-static \
+			8queens-top
 SIMPLE = simple16 simple32 simple64
 MINMAX = min-max-tictactoe-big
 SHORTEST = shortest-usairports500 shortest-uspowergrid \
@@ -75,16 +76,61 @@ update-queens:
 	python ../scripts/generate_8queens.py 11 h > progs/data/8queens-data11.meld
 	python ../scripts/generate_8queens.py 12 h > progs/data/8queens-data12.meld
 	python ../scripts/generate_8queens.py 13 h > progs/data/8queens-data13.meld
-	touch progs/8queens-9.meld
-	touch progs/8queens-10.meld
-	touch progs/8queens-11.meld
-	touch progs/8queens-12.meld
-	touch progs/8queens-13.meld
 	git add progs/data/8queens-data9.meld
 	git add progs/data/8queens-data10.meld
 	git add progs/data/8queens-data11.meld
 	git add progs/data/8queens-data12.meld
 	git add progs/data/8queens-data13.meld
+	touch progs/8queens-9.meld
+	touch progs/8queens-10.meld
+	touch progs/8queens-11.meld
+	touch progs/8queens-12.meld
+	touch progs/8queens-13.meld
+	python ../scripts/generate_8queens.py 9 h b > progs/data/8queens-data9-bottom.meld
+	python ../scripts/generate_8queens.py 10 h b > progs/data/8queens-data10-bottom.meld
+	python ../scripts/generate_8queens.py 11 h b > progs/data/8queens-data11-bottom.meld
+	python ../scripts/generate_8queens.py 12 h b > progs/data/8queens-data12-bottom.meld
+	python ../scripts/generate_8queens.py 13 h b > progs/data/8queens-data13-bottom.meld
+	git add progs/data/8queens-data9-bottom.meld
+	git add progs/data/8queens-data10-bottom.meld
+	git add progs/data/8queens-data11-bottom.meld
+	git add progs/data/8queens-data12-bottom.meld
+	git add progs/data/8queens-data13-bottom.meld
+	touch progs/8queens-9-bottom.meld
+	touch progs/8queens-10-bottom.meld
+	touch progs/8queens-11-bottom.meld
+	touch progs/8queens-12-bottom.meld
+	touch progs/8queens-13-bottom.meld
+	python ../scripts/generate_8queens.py 9 h bs > progs/data/8queens-data9-bottom-static.meld
+	python ../scripts/generate_8queens.py 10 h bs > progs/data/8queens-data10-bottom-static.meld
+	python ../scripts/generate_8queens.py 11 h bs > progs/data/8queens-data11-bottom-static.meld
+	python ../scripts/generate_8queens.py 12 h bs > progs/data/8queens-data12-bottom-static.meld
+	python ../scripts/generate_8queens.py 13 h bs > progs/data/8queens-data13-bottom-static.meld
+	git add progs/data/8queens-data9-bottom-static.meld
+	git add progs/data/8queens-data10-bottom-static.meld
+	git add progs/data/8queens-data11-bottom-static.meld
+	git add progs/data/8queens-data12-bottom-static.meld
+	git add progs/data/8queens-data13-bottom-static.meld
+	touch progs/8queens-9-bottom-static.meld
+	touch progs/8queens-10-bottom-static.meld
+	touch progs/8queens-11-bottom-static.meld
+	touch progs/8queens-12-bottom-static.meld
+	touch progs/8queens-13-bottom-static.meld
+	python ../scripts/generate_8queens.py 9 h t > progs/data/8queens-data9-top.meld
+	python ../scripts/generate_8queens.py 10 h t > progs/data/8queens-data10-top.meld
+	python ../scripts/generate_8queens.py 11 h t > progs/data/8queens-data11-top.meld
+	python ../scripts/generate_8queens.py 12 h t > progs/data/8queens-data12-top.meld
+	python ../scripts/generate_8queens.py 13 h t > progs/data/8queens-data13-top.meld
+	git add progs/data/8queens-data9-top.meld
+	git add progs/data/8queens-data10-top.meld
+	git add progs/data/8queens-data11-top.meld
+	git add progs/data/8queens-data12-top.meld
+	git add progs/data/8queens-data13-top.meld
+	touch progs/8queens-9-top.meld
+	touch progs/8queens-10-top.meld
+	touch progs/8queens-11-top.meld
+	touch progs/8queens-12-top.meld
+	touch progs/8queens-13-top.meld
 
 update-quicksort:
 	sed -e "s/down(@0, .*/down(@0, `python ../scripts/generate_list.py 70000`)./g" -i "" progs/quicksort.meld
