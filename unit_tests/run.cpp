@@ -12,6 +12,7 @@ using namespace CppUnit;
 
 #include "vm/all.hpp"
 #include "compiler/lexer_tests.cpp"
+#include "compiler/parser_tests.cpp"
 #include "db/trie_tests.cpp"
 #include "external/tests.cpp"
 

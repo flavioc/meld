@@ -13,7 +13,7 @@ class LexerTests : public TestFixture {
 
       void tearDown(void)
       {
-
+         delete lex;
       }
 
       void check(compiler::token::Token typ)

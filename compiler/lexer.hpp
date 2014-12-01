@@ -93,15 +93,15 @@ class token
 
       Token tok;
       size_t line;
-      size_t column;
+      size_t col;
       std::string str;
 
       explicit token(const Token _tok,
             const size_t _line,
-            const size_t _column,
+            const size_t _col,
             const std::string& _str):
          tok(_tok), line(_line),
-         column(_column),
+         col(_col),
          str(_str)
       {
       }
@@ -109,7 +109,7 @@ class token
       explicit token(const Token _tok, const character x,
             const std::string& _str):
          tok(_tok), line(x.line),
-         column(x.col),
+         col(x.col),
          str(_str)
       {
       }
