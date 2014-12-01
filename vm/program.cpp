@@ -475,16 +475,6 @@ program::fix_node_address(db::node *n)
 #endif
 
 predicate*
-program::get_predicate(const predicate_id& id) const
-{
-   if((size_t)id >= num_predicates()) {
-      return nullptr;
-   }
-   
-   return predicates[id];
-}
-
-predicate*
 program::get_route_predicate(const size_t& i) const
 {
    assert(i < num_route_predicates());

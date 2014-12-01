@@ -14,16 +14,14 @@ void
 rule::print(ostream& out, const vm::program *const prog) const
 {
 	out << str << endl;
+   assert(theProgram);
 	
-	for(vector<predicate_id, mem::allocator<predicate_id> >::const_iterator it(predicates.begin()),
-		end(predicates.end());
-		it != end;
-		it++)
+	for(auto it(predicates.begin()), end(predicates.end()); it != end; it++)
 	{
 		const predicate_id id(*it);
 		const predicate *pred(theProgram->get_predicate(id));
 
-      assert(pred != nullptr);
+      assert(pred);
 
       out << pred->get_name() << endl;
 		
