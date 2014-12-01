@@ -600,15 +600,6 @@ threads_sched::threads_sched(const vm::process_id _id):
    , next_thread(rand(All->NUM_THREADS))
    , backoff(STEALING_ROUND_MIN)
 #endif
-#ifdef INSTRUMENTATION
-   , sent_facts_same_thread(0)
-   , sent_facts_other_thread(0)
-   , sent_facts_other_thread_now(0)
-   , priority_nodes_thread(0)
-   , priority_nodes_others(0)
-   , node_lock_fail(0)
-   , node_lock_ok(0)
-#endif
 #ifndef DIRECT_PRIORITIES
    , priority_buffer(std::min(PRIORITY_BUFFER_SIZE,
                      vm::All->DATABASE->num_nodes() / vm::All->NUM_THREADS))
