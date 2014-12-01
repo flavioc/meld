@@ -805,7 +805,7 @@ trie::commit_delete(trie_node *node, predicate *pred, const vm::ref_count dec, c
 {
    assert(dec > 0);
    assert(node->is_leaf());
-   assert(dec >= number_of_references);
+   assert(dec <= number_of_references);
    number_of_references -= dec;
    inner_delete_by_leaf(node->get_leaf(), pred, 0, 0, gc_nodes);
    basic_invariants();
