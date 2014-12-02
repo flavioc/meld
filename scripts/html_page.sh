@@ -13,7 +13,7 @@ for x in ${DIR}/*; do
       continue
    fi
    echo "<h1>$base</h1>" >> $DIR/index.html
-   for img in $x/*.png; do
+   for img in `ls -v $x/*.png`; do
       name=$(basename $img .png)
       echo "<img src=\"$img\" weight=\"200\" height=\"200\" />" >> $DIR/index.html
    done
