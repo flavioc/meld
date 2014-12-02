@@ -82,8 +82,8 @@ class binary_expr: public expr
          return e1->str() + " " + op2str(op) + " " + e2->str();
       }
 
-      explicit binary_expr(expr *_e1, expr *_e2, const Op _op):
-         expr(_e1->get_token()), e1(_e1), e2(_e2), op(_op)
+      explicit binary_expr(const token& tok, expr *_e1, expr *_e2, const Op _op):
+         expr(tok), e1(_e1), e2(_e2), op(_op)
       {
          assert(e2);
       }
@@ -355,13 +355,10 @@ class parser: mem::base
       comprehension_construct* parse_comprehension();
       fact *parse_head_fact(const token&);
       void parse_body_fact_or_funcall(const token&);
-      Op parse_operation();
+      Op parse_operation(const token&);
       expr *parse_expr_funcall(const token&);
-      expr *parse_expr_var(const token&);
-      expr *parse_expr_paren(const token&);
-      expr *parse_expr_num(const token&);
-      expr *parse_expr_address(const token&);
-      expr *parse_expr();
+      expr *parse_atom_expr();
+      expr *parse_expr(const token::Token *, const size_t);
       void parse_rule_head(const token&, std::vector<expr*>&, std::vector<fact*>&);
       void parse_rule(const token&);
       void parse_rules(void);

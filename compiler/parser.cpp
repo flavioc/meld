@@ -1,5 +1,6 @@
 
 #include <vector>
+#include <list>
 
 #include "compiler/parser.hpp"
 
@@ -190,23 +191,86 @@ parser::parse_rule_head(const token& lolli, vector<expr*>& conditions, vector<fa
 }
 
 expr*
-parser::parse_expr()
+parser::parse_atom_expr()
 {
-   const token tok(get());
+   static token::Token end_tokens[1] = {token::Token::PAREN_RIGHT};
 
+   const token tok(get());
    switch(tok.tok) {
       case token::Token::VAR:
-         return parse_expr_var(tok);
-      case token::Token::NUMBER:
-         return parse_expr_num(tok);
-      case token::Token::ADDRESS:
-         return parse_expr_address(tok);
+         return new var_expr(tok);
       case token::Token::NAME:
       case token::Token::FLOAT:
          return parse_expr_funcall(tok);
-      default:
-         throw parser_error(tok, "expected an expression.");
+      case token::Token::NUMBER:
+         return new number_expr(tok);
+      case token::Token::ADDRESS:
+         return new address_expr(tok);
+      case token::Token::PAREN_LEFT: {
+         expr *ret(parse_expr(end_tokens, 1));
+         const token rp(get());
+         if(rp.tok != token::Token::PAREN_RIGHT)
+            throw parser_error(rp, "expecting matching parenthesis.");
+         return ret;
+      }
+      default: throw parser_error(tok, "expression not handled yet.");
    }
+}
+
+expr*
+parser::parse_expr(const token::Token *end_tokens, const size_t end)
+{
+   std::list<expr*> atoms;
+   std::list<std::pair<Op, token>> ops;
+
+   while(true) {
+      atoms.push_back(parse_atom_expr());
+
+      const token tok(peek());
+      bool found_end(false);
+
+      for(size_t i(0); i < end && !found_end; ++i) {
+         if(tok.tok == end_tokens[i]) {
+            found_end = true;
+            break;
+         }
+      }
+      if(found_end)
+         break;
+
+      const token tok_op(get());
+      const Op op(parse_operation(tok_op));
+
+      if(op == Op::NO_OP)
+         throw parser_error(tok, "expected a valid operation.");
+
+      ops.push_back(std::make_pair(op, tok_op));
+   }
+   if(atoms.size() == 1)
+      return atoms.front();
+   // find operations with precedence: * / %
+   auto it_atoms(atoms.rbegin());
+   for(auto it_ops(ops.rbegin()); it_ops != ops.rend(); ) {
+      const Op op(it_ops->first);
+      const token tok(it_ops->second);
+      switch(op) {
+         case Op::MULT:
+         case Op::DIVIDE: {
+            expr *b(*it_atoms);
+            it_atoms = atoms.erase(it_atoms);
+            expr *a(*it_atoms);
+            expr *c(new binary_expr(tok, a, b, op));
+            *it_atoms = c;
+            it_ops = std::reverse_iterator(ops.erase(it_ops.base()));
+         }
+         break;
+         default:
+            it_atoms++;
+            it_ops++;
+            break;
+      }
+   }
+   return nullptr;
 }
 
 fact*
@@ -215,10 +279,12 @@ parser::parse_body_fact(const token& name, const vm::predicate *pred)
    const token lp(get());
    if(lp.tok != token::Token::PAREN_LEFT)
       throw parser_error(lp, "expecting a (.");
+   static token::Token end_tokens[2] = {token::Token::PAREN_RIGHT,
+      token::Token::COMMA};
 
    vector<expr*> exprs;
    while(true) {
-      expr *e(parse_expr());
+      expr *e(parse_expr(end_tokens, 2));
       exprs.push_back(e);
       const token com(get());
       if(com.tok == token::Token::PAREN_RIGHT)
@@ -241,10 +307,12 @@ parser::parse_expr_funcall(const token& name)
       return new funcall_expr(name, vector<expr*>());
    }
 
+   static token::Token end_tokens[2] = {token::Token::PAREN_RIGHT,
+      token::Token::COMMA};
    vector<expr*> exprs;
 
    while(true) {
-      expr *arg(parse_expr());
+      expr *arg(parse_expr(end_tokens, 2));
 
       exprs.push_back(arg);
 
@@ -269,30 +337,22 @@ parser::parse_body_fact_or_funcall(const token& name)
 }
 
 Op
-parser::parse_operation()
+parser::parse_operation(const token& tok)
 {
-   const token tok(peek());
    switch(tok.tok) {
       case token::Token::PLUS:
-         get();
          return Op::PLUS;
       case token::Token::MINUS:
-         get();
          return Op::MINUS;
       case token::Token::TIMES:
-         get();
          return Op::MULT;
       case token::Token::DIVIDE:
-         get();
          return Op::DIVIDE;
       case token::Token::MOD:
-         get();
          return Op::MOD;
       case token::Token::EQUAL:
-         get();
          return Op::EQUAL;
       case token::Token::NOT_EQUAL:
-         get();
          return Op::NOT_EQUAL;
       case token::Token::COMMA:
       case token::Token::PAREN_RIGHT:
@@ -302,81 +362,34 @@ parser::parse_operation()
    }
 }
 
-expr*
-parser::parse_expr_paren(const token& start)
-{
-   expr *e(parse_expr());
-
-   const token rp(get());
-   if(rp.tok != token::Token::PAREN_RIGHT)
-      throw parser_error(rp, "parenthesis needs to be enclosed.");
-
-   return e;
-}
-
-expr*
-parser::parse_expr_var(const token& start)
-{
-   var_expr *v(new var_expr(start));
-   Op op(parse_operation());
-   if(op == Op::NO_OP)
-      return v;
-
-   expr *e2(parse_expr());
-   assert(v);
-   assert(e2);
-   return new binary_expr(v, e2, op);
-}
-
-expr*
-parser::parse_expr_address(const token& start)
-{
-   address_expr *n(new address_expr(start));
-   Op op(parse_operation());
-   if(op == Op::NO_OP)
-      return n;
-
-   expr *e2(parse_expr());
-   return new binary_expr(n, e2, op);
-}
-
-expr*
-parser::parse_expr_num(const token& start)
-{
-   number_expr *n(new number_expr(start));
-   Op op(parse_operation());
-   if(op == Op::NO_OP)
-      return n;
-
-   expr *e2(parse_expr());
-   return new binary_expr(n, e2, op);
-}
-
 void
 parser::parse_rule(const token& start)
 {
    vector<expr*> conditions;
    vector<fact*> body_facts;
 
+   static token::Token ends[1] = {token::Token::COMMA};
+
    while(true) {
-      const token tok(get());
+      const token tok(peek());
 
       switch(tok.tok) {
          case token::Token::VAR:
-            conditions.push_back(parse_expr_var(tok));
-            break;
          case token::Token::PAREN_LEFT:
-            conditions.push_back(parse_expr_paren(tok));
-            break;
          case token::Token::NUMBER:
-            conditions.push_back(parse_expr_num(tok));
+         case token::Token::ADDRESS:
+         case token::Token::BRACKET_LEFT:
+         case token::Token::LPACO:
+            conditions.push_back(parse_expr(ends, 1));
             break;
          case token::Token::NAME: {
             auto it(predicates.find(tok.str));
             if(it == predicates.end())
-               conditions.push_back(parse_expr_funcall(tok));
-            else
+               conditions.push_back(parse_expr(ends, 1));
+            else {
+               get();
                body_facts.push_back(parse_body_fact(tok, it->second));
+            }
             break;
          }
          case token::Token::COMMA:
@@ -395,7 +408,7 @@ parser::parse_rule(const token& start)
       if(com.tok == token::Token::LOLLI)
          return parse_rule_head(com, conditions, body_facts);
       if(com.tok != token::Token::COMMA)
-         throw parser_error(com, "expecting a comma.");
+         throw parser_error(com, "here expecting a comma.");
    }
 }
 
