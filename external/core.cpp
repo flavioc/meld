@@ -197,5 +197,23 @@ partition_grid(EXTERNAL_ARG(x), EXTERNAL_ARG(y), EXTERNAL_ARG(lx), EXTERNAL_ARG(
    RETURN_INT(ret);
 }
 
+argument
+queue_size(EXTERNAL_ARG(id))
+{
+   DECLARE_NODE(id);
+
+   node *tn(nullptr);
+#ifdef USE_REAL_NODES
+   tn = (node*)id;
+#else
+   tn = All->DATABASE->find_node(id);
+#endif
+
+   auto *owner(tn->get_owner());
+   const int_val size((int_val)owner->queue_size());
+
+   RETURN_INT(size);
+}
+
 }
 }
