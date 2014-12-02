@@ -118,7 +118,7 @@ private:
 public:
 
 #ifdef INSTRUMENTATION
-   std::atomic<int64_t> bytes_in_use;
+   std::atomic<int64_t> bytes_in_use{0};
 #endif
    
    inline void* allocate(const size_t size)
@@ -142,9 +142,6 @@ public:
    }
    
    explicit pool(void)
-#ifdef INSTRUMENTATION
-      : bytes_in_use(0)
-#endif
    {
       create_new_chunkgroup_page();
       chunk_table = new chunkgroup*[size_table];

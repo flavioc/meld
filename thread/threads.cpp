@@ -565,7 +565,10 @@ threads_sched::write_slice(statistics::slice& sl)
    sl.sent_facts_other_thread_now = sent_facts_other_thread_now;
    sl.priority_nodes_thread = priority_nodes_thread;
    sl.priority_nodes_others = priority_nodes_others;
-   sl.bytes_used = All->THREAD_POOLS[get_id()]->bytes_in_use;
+   if(All->THREAD_POOLS[get_id()])
+      sl.bytes_used = All->THREAD_POOLS[get_id()]->bytes_in_use;
+   else
+      sl.bytes_used = 0;
    sl.node_lock_ok = node_lock_ok;
    sl.node_lock_fail = node_lock_fail;
 
