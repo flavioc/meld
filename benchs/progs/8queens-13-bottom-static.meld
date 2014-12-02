@@ -65,7 +65,8 @@ send-down(A, Nodes, Coords),
 !coord(A, size - 1, _)
    -o final-state(A, Nodes, Coords).
 
-send-down(A, Nodes, Coords)
+send-down(A, Nodes, Coords),
+!coord(A, X, Y)
    -o {B | !down-right(A, B), B <> A | propagate-right(B, Nodes, Coords)},
       {B | !down-left(A, B), B <> A | propagate-left(B, Nodes, Coords)}.
 
