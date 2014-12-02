@@ -219,6 +219,7 @@ init_external_functions(void)
    register_external_function(EXTERNAL4(partition_vertical, i, i, i, i, i));
    register_external_function(EXTERNAL4(partition_horizontal, i, i, i, i, i));
    register_external_function(EXTERNAL4(partition_grid, i, i, i, i, i));
+   register_external_function(EXTERNAL1(queue_size, i, n));
 
    atexit(cleanup_externals);
 

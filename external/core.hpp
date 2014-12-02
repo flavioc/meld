@@ -20,6 +20,7 @@ argument is_moving(const argument);
 argument partition_vertical(const argument, const argument, const argument, const argument);
 argument partition_horizontal(const argument, const argument, const argument, const argument);
 argument partition_grid(const argument, const argument, const argument, const argument);
+argument queue_size(const argument);
 
 }
 

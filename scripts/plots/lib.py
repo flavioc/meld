@@ -127,8 +127,6 @@ class experiment(object):
       fig = plt.figure()
       ax = fig.add_subplot(111)
 
-      names = ('Improvement')
-      formats = ('f4')
       titlefontsize = 22
       ylabelfontsize = 20
       ax.set_title(self.title, fontsize=titlefontsize)
@@ -156,8 +154,6 @@ class experiment(object):
       fig = plt.figure()
       ax = fig.add_subplot(111)
 
-      names = ('Speedup')
-      formats = ('f4')
       titlefontsize = 22
       ylabelfontsize = 20
       ax.set_title(self.title, fontsize=titlefontsize)
@@ -194,8 +190,6 @@ class experiment(object):
       fig = plt.figure()
       ax = fig.add_subplot(111)
 
-      names = ('Speedup')
-      formats = ('f4')
       titlefontsize = 22
       ylabelfontsize = 20
       ax.set_title(self.title, fontsize=titlefontsize)
@@ -230,8 +224,6 @@ class experiment(object):
       fig = plt.figure()
       ax = fig.add_subplot(111)
 
-      names = ('Speedup')
-      formats = ('f4')
       titlefontsize = 22
       ylabelfontsize = 20
       ax.set_title(self.title, fontsize=titlefontsize)
@@ -259,8 +251,6 @@ class experiment(object):
       fig = plt.figure()
       ax = fig.add_subplot(111)
 
-      names = ('Speedup')
-      formats = ('f4')
       titlefontsize = 22
       ylabelfontsize = 20
       if not title:
@@ -294,8 +284,6 @@ class experiment(object):
       fig = plt.figure()
       ax = fig.add_subplot(111)
 
-      names = ('Speedup')
-      formats = ('f4')
       titlefontsize = 22
       ylabelfontsize = 20
       if not title:
@@ -328,8 +316,6 @@ class experiment(object):
       fig = plt.figure()
       ax = fig.add_subplot(111)
 
-      names = ('Speedup')
-      formats = ('f4')
       titlefontsize = 22
       ylabelfontsize = 20
       ax.set_title(self.title, fontsize=titlefontsize)
