@@ -337,6 +337,10 @@ public:
    
    inline bool leader_thread(void) const { return get_id() == 0; }
 
+   size_t queue_size() const {
+      return queues.stati.size() + queues.moving.size() + prios.stati.size() + prios.moving.size();
+   }
+
    db::node* init_node(db::database::map_nodes::iterator it)
    {
       db::node *node(vm::All->DATABASE->create_node_iterator(it));

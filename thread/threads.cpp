@@ -559,7 +559,7 @@ threads_sched::write_slice(statistics::slice& sl)
    sl.derived_facts = state.instr_facts_derived;
    sl.rules_run = state.instr_rules_run;
    
-   sl.work_queue = queues.stati.size() + queues.moving.size() + prios.stati.size() + prios.moving.size();
+   sl.work_queue = queue_size();
    sl.sent_facts_same_thread = sent_facts_same_thread;
    sl.sent_facts_other_thread = sent_facts_other_thread;
    sl.sent_facts_other_thread_now = sent_facts_other_thread_now;
