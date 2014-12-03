@@ -1693,6 +1693,22 @@ execute_is_moving(pcounter& pc, state& state)
 }
 
 static inline void
+execute_facts_proved(pcounter& pc, state& state)
+{
+   const reg_num node_reg(pcounter_reg(pc + instr_size));
+   const reg_num dest_reg(pcounter_reg(pc + instr_size + reg_val_size));
+   const node_val nodeval(state.get_node(node_reg));
+#ifdef USE_REAL_NODES
+   db::node *node((db::node*)nodeval);
+#else
+   db::node *node(All->DATABASE->find_node(nodeval));
+#endif
+   (void)node;
+   assert(node == state.node);
+   state.set_int(dest_reg, state.linear_facts_generated + state.persistent_facts_generated);
+}
+
+static inline void
 execute_set_cpu_here(pcounter& pc, state& state)
 {
    const reg_num cpu_reg(pcounter_reg(pc + instr_size));
@@ -2319,12 +2335,6 @@ static inline void
 execute_boolor(pcounter& pc, state& state)
 {
    DO_OPERATION(set_bool, get_bool, ||);
-}
-
-static inline void
-execute_booland(pcounter& pc, state& state)
-{
-   DO_OPERATION(set_bool, get_bool, &&);
 }
 
 static inline void
@@ -3776,9 +3786,9 @@ eval_loop:
             ADVANCE()
          ENDOP()
 
-         CASE(BOOLAND_INSTR)
-            JUMP(booland, operation_size)
-            execute_booland(pc, state);
+         CASE(FACTS_PROVED_INSTR)
+            JUMP(facts_proved, FACTS_PROVED_BASE)
+            execute_facts_proved(pc, state);
             ADVANCE()
          ENDOP()
 

@@ -181,6 +181,7 @@ const size_t CPU_ID_BASE         = instr_size + 2 * reg_val_size;
 const size_t NODE_PRIORITY_BASE  = instr_size + 2 * reg_val_size;
 const size_t REM_PRIORITY_BASE   = instr_size + reg_val_size;
 const size_t REM_PRIORITYH_BASE  = instr_size;
+const size_t FACTS_PROVED_BASE   = instr_size + 2 * reg_val_size;
 const size_t IF_ELSE_BASE        = instr_size + reg_val_size + 2 * jump_size;
 const size_t JUMP_BASE           = instr_size + jump_size;
 
@@ -333,7 +334,7 @@ enum instr_type {
    SET_CPUH_INSTR       =  0xAD,
    IS_STATIC_INSTR      =  0xAE,
    IS_MOVING_INSTR      =  0xAF,
-   BOOLAND_INSTR        =  0xB0,
+   FACTS_PROVED_INSTR   =  0xB0,
    REM_PRIORITY_INSTR   =  0xB1,
    REM_PRIORITYH_INSTR  =  0xB2,
    RETURN_LINEAR_INSTR  =  0xD0,
@@ -862,7 +863,6 @@ advance(const pcounter pc)
       case FLOATGREATER_INSTR:
       case FLOATGREATEREQUAL_INSTR:
       case BOOLOR_INSTR:
-      case BOOLAND_INSTR:
       case BOOLEQUAL_INSTR:
       case BOOLNOTEQUAL_INSTR:
          return pc + operation_size;
@@ -997,6 +997,9 @@ advance(const pcounter pc)
 
       case REM_PRIORITYH_INSTR:
          return pc + REM_PRIORITYH_BASE;
+
+      case FACTS_PROVED_INSTR:
+         return pc + FACTS_PROVED_BASE;
 
       default:
          return pc;
