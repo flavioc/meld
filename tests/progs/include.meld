@@ -1,0 +1,6 @@
+
+include #data/included.meld
+
+type linear a(node, int).
+
+a(@0, myconst).
