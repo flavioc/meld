@@ -1,0 +1,8 @@
+
+type linear a(node, int).
+
+a(@0, 1).
+
+a(A, N),
+N = 1 || N = 2
+   -o 1.
