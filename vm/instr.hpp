@@ -79,7 +79,6 @@ const size_t NEXT_BASE           = instr_size;
 const size_t FLOAT_BASE          = instr_size + 2 * reg_val_size;
 const size_t SELECT_BASE         = instr_size + 8;
 const size_t RETURN_SELECT_BASE  = instr_size + 4;
-const size_t DELETE_BASE         = instr_size + 2;
 const size_t REMOVE_BASE         = instr_size + reg_val_size;
 const size_t RETURN_LINEAR_BASE  = instr_size;
 const size_t RETURN_DERIVED_BASE = instr_size;
@@ -182,6 +181,7 @@ const size_t NODE_PRIORITY_BASE  = instr_size + 2 * reg_val_size;
 const size_t REM_PRIORITY_BASE   = instr_size + reg_val_size;
 const size_t REM_PRIORITYH_BASE  = instr_size;
 const size_t FACTS_PROVED_BASE   = instr_size + 2 * reg_val_size;
+const size_t FACTS_CONSUMED_BASE = instr_size + 2 * reg_val_size;
 const size_t IF_ELSE_BASE        = instr_size + reg_val_size + 2 * jump_size;
 const size_t JUMP_BASE           = instr_size + jump_size;
 
@@ -199,7 +199,6 @@ enum instr_type {
    SELECT_INSTR         =  0x0A,
    RETURN_SELECT_INSTR  =  0x0B,
    OLINEAR_ITER_INSTR   =  0x0C,
-   DELETE_INSTR         =  0x0D,
    RESET_LINEAR_INSTR   =  0x0E,
    END_LINEAR_INSTR     =  0x0F,
    RULE_INSTR           =  0x10,
@@ -337,6 +336,7 @@ enum instr_type {
    FACTS_PROVED_INSTR   =  0xB0,
    REM_PRIORITY_INSTR   =  0xB1,
    REM_PRIORITYH_INSTR  =  0xB2,
+   FACTS_CONSUMED_INSTR =  0xB3,
    RETURN_LINEAR_INSTR  =  0xD0,
    RETURN_DERIVED_INSTR =  0xF0
 };
@@ -564,62 +564,6 @@ enum instr_argument_type {
    ARGUMENT_ANYTHING
 };
 
-template <instr_argument_type type>
-static inline size_t arg_size(const instr_val v);
-
-#define STATIC_INLINE inline
-
-template <>
-STATIC_INLINE size_t arg_size<ARGUMENT_ANYTHING>(const instr_val v)
-{
-   if(val_is_bool(v))
-      return bool_size;
-   else if(val_is_float(v))
-      return float_size;
-   else if(val_is_int(v))
-      return int_size;
-   else if(val_is_field(v))
-      return field_size;
-   else if(val_is_nil(v))
-      return nil_size;
-   else if(val_is_reg(v))
-      return reg_size;
-   else if(val_is_host(v))
-      return host_size;
-   else if(val_is_node(v))
-      return node_size;
-	else if(val_is_string(v))
-		return string_size;
-	else if(val_is_arg(v))
-		return argument_size;
-   else if(val_is_const(v))
-		return int_size;
-   else if(val_is_stack(v))
-      return stack_val_size;
-   else if(val_is_pcounter(v))
-      return pcounter_val_size;
-   else if(val_is_ptr(v))
-      return ptr_size;
-	else
-      return 0;
-      //throw malformed_instr_error("invalid instruction argument value");
-}
-
-inline size_t
-instr_delete_args_size(pcounter arg, size_t num)
-{
-   size_t size;
-   size_t total = 0;
-   
-   for(size_t i(0); i < num; ++i) {
-      size = index_size + val_size + arg_size<ARGUMENT_ANYTHING>(delete_val(arg));
-      arg += size;
-      total += size;
-   }
-   
-   return total;
-}
-
 inline pcounter
 advance(const pcounter pc)
 {
@@ -664,10 +608,6 @@ advance(const pcounter pc)
       case CALLE_INSTR:
          return pc + CALLE_BASE
                    + calle_num_args(pc) * reg_val_size;
-                   
-      case DELETE_INSTR:
-         return pc + DELETE_BASE
-                   + instr_delete_args_size(pc + DELETE_BASE, delete_num_args(pc));
                    
       case IF_INSTR:
          return pc + IF_BASE;
@@ -1000,6 +940,9 @@ advance(const pcounter pc)
 
       case FACTS_PROVED_INSTR:
          return pc + FACTS_PROVED_BASE;
+
+      case FACTS_CONSUMED_INSTR:
+         return pc + FACTS_CONSUMED_BASE;
 
       default:
          return pc;

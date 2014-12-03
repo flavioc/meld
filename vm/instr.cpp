@@ -482,29 +482,6 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
             cout << ")" << endl;
    		}
    		break;
-      case DELETE_INSTR: {
-            pcounter m = pc + DELETE_BASE;
-            const predicate_id pred_id(delete_predicate(pc));
-            const predicate *pred(prog->get_predicate(pred_id));
-            const size_t num_args(delete_num_args(pc));
-            
-            cout << "DELETE " << pred->get_name()
-                 << " USING ";
-                 
-            for(size_t i(0); i < num_args; ++i) {
-               if(i != 0)
-                  cout << ", ";
-               
-               pcounter val_ptr(m);
-               cout << (int)delete_index(val_ptr) << ":";
-               
-               m += index_size + val_size; // skip index and value bytes of this arg
-               
-               cout << val_string(delete_val(val_ptr), &m, prog);
-            }
-            cout << endl; 
-         }
-         break;
       case REMOVE_INSTR:
          cout << "REMOVE " << reg_string(pcounter_reg(pc + instr_size)) << endl;
          break;
@@ -968,6 +945,10 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          break;
       case FACTS_PROVED_INSTR:
          cout << "FACTS PROVEN OF " << reg_string(pcounter_reg(pc + instr_size)) << " TO " <<
+            reg_string(pcounter_reg(pc + instr_size + reg_val_size)) << endl;
+         break;
+      case FACTS_CONSUMED_INSTR:
+         cout << "FACTS CONSUMED OF " << reg_string(pcounter_reg(pc + instr_size)) << " TO " <<
             reg_string(pcounter_reg(pc + instr_size + reg_val_size)) << endl;
          break;
 		default:

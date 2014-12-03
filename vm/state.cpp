@@ -593,6 +593,8 @@ state::run_node(db::node *no)
 {
 	node = no;
 
+   reset_counters();
+
 #ifdef DYNAMIC_INDEXING
    if(sched && sched->get_id() == 0)
       indexing_state_machine(no);
@@ -707,25 +709,20 @@ state::sync(void)
    return ret;
 }
 
+void
+state::reset_counters()
+{
+   linear_facts_generated = 0;
+   persistent_facts_generated = 0;
+   linear_facts_consumed = 0;
+}
+
 state::state(sched::threads_sched *_sched):
    sched(_sched)
-#ifdef DEBUG_MODE
-   , print_instrs(false)
-#endif
 #ifdef CORE_STATISTICS
    , stat()
 #endif
-#ifdef FACT_STATISTICS
-   , facts_derived(0)
-   , facts_consumed(0)
-   , facts_sent(0)
-#endif
 {
-#ifdef INSTRUMENTATION
-   instr_facts_consumed = 0;
-   instr_facts_derived = 0;
-   instr_rules_run = 0;
-#endif
    match_counter = create_counter(theProgram->get_total_arguments());
 #ifdef DYNAMIC_INDEXING
    if(sched->get_id() == 0) {
@@ -736,18 +733,9 @@ state::state(sched::threads_sched *_sched):
 }
 
 state::state(void):
-   sched(nullptr)
-#ifdef DEBUG_MODE
-   , print_instrs(false)
-#endif
-   , match_counter(nullptr)
+   sched(nullptr), match_counter(nullptr)
 #ifdef CORE_STATISTICS
    , stat()
-#endif
-#ifdef FACT_STATISTICS
-   , facts_derived(0)
-   , facts_consumed(0)
-   , facts_sent(0)
 #endif
 {
 }

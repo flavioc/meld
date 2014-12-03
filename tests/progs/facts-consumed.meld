@@ -1,0 +1,9 @@
+
+type linear a(node, int).
+type linear b(node, int).
+
+a(@0, 1).
+
+a(A, N) -o b(A, N).
+
+b(A, N), facts-consumed(A) >= 1 -o 1.

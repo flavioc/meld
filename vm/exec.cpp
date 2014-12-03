@@ -1206,49 +1206,6 @@ execute_select(pcounter pc, state& state)
       return select_hash_code(hash_start, select_hash_size(pc), hashed);
 }
 
-#if 0
-static inline void
-execute_delete(const pcounter pc, state& state)
-{
-   const predicate_id id(delete_predicate(pc));
-   const predicate *pred(theProgram->get_predicate(id));
-   pcounter m(pc + DELETE_BASE);
-   const size_t num_args(delete_num_args(pc));
-   match mobj(pred);
-   
-   assert(state.node != nullptr);
-   assert(num_args > 0);
-   int_val idx;
-   
-   for(size_t i(0); i < num_args; ++i) {
-      const field_num fil_ind(delete_index(m));
-      const instr_val fil_val(delete_val(m));
-      
-      assert(fil_ind == i);
-      
-      m += index_size + val_size;
-      
-      switch(pred->get_field_type(fil_ind)->get_type()) {
-         case FIELD_INT:
-            idx = get_op_function<int_val>(fil_val, m, state);
-            mobj.match_int(mobj.get_update_match(fil_ind), idx);
-            break;
-         case FIELD_FLOAT:
-            mobj.match_float(mobj.get_update_match(fil_ind), get_op_function<float_val>(fil_val, m, state));
-            break;
-         case FIELD_NODE:
-            mobj.match_node(mobj.get_update_match(fil_ind), get_op_function<node_val>(fil_val, m, state));
-            break;
-         default: assert(false);
-      }
-   }
-   
-   //cout << "Removing from " << pred->get_name() << " iteration " << idx << " node " << state.node->get_id() << endl;
-   
-   state.node->delete_by_index(pred, mobj);
-}
-#endif
-
 static inline void
 execute_remove(pcounter pc, state& state)
 {
@@ -1259,16 +1216,13 @@ execute_remove(pcounter pc, state& state)
 #ifdef CORE_STATISTICS
    state.stat.stat_predicate_success[pred->get_id()]++;
 #endif
-#ifdef FACT_STATISTICS
-   state.facts_consumed++;
-#endif
 
 #ifdef DEBUG_REMOVE
    cout << "\tdelete ";
    tpl->print(cout, pred);
    cout << endl;
 #endif
-   assert(tpl != nullptr);
+   assert(tpl);
 		
    if(state.hash_removes)
       state.removed.insert(tpl);
@@ -1279,6 +1233,9 @@ execute_remove(pcounter pc, state& state)
       state.linear_facts_consumed++;
 #ifdef INSTRUMENTATION
       state.instr_facts_consumed++;
+#endif
+#ifdef FACT_STATISTICS
+      state.facts_consumed++;
 #endif
    }
 }
@@ -1706,6 +1663,22 @@ execute_facts_proved(pcounter& pc, state& state)
    (void)node;
    assert(node == state.node);
    state.set_int(dest_reg, state.linear_facts_generated + state.persistent_facts_generated);
+}
+
+static inline void
+execute_facts_consumed(pcounter& pc, state& state)
+{
+   const reg_num node_reg(pcounter_reg(pc + instr_size));
+   const reg_num dest_reg(pcounter_reg(pc + instr_size + reg_val_size));
+   const node_val nodeval(state.get_node(node_reg));
+#ifdef USE_REAL_NODES
+   db::node *node((db::node*)nodeval);
+#else
+   db::node *node(All->DATABASE->find_node(nodeval));
+#endif
+   (void)node;
+   assert(node == state.node);
+   state.set_int(dest_reg, state.linear_facts_consumed);
 }
 
 static inline void
@@ -2970,12 +2943,6 @@ eval_loop:
             JUMP_NEXT();
          ENDOP()
             
-         CASE(DELETE_INSTR)
-            JUMP(delete_instr, DELETE_BASE + instr_delete_args_size(pc + DELETE_BASE, delete_num_args(pc)))
-            //execute_delete(pc, state);
-            ADVANCE()
-         ENDOP()
-            
          CASE(CALL_INSTR)
             JUMP(call, CALL_BASE + call_num_args(pc) * reg_val_size)
             execute_call(pc, state);
@@ -3792,6 +3759,12 @@ eval_loop:
             ADVANCE()
          ENDOP()
 
+         CASE(FACTS_CONSUMED_INSTR)
+            JUMP(facts_consumed, FACTS_CONSUMED_BASE)
+            execute_facts_consumed(pc, state);
+            ADVANCE()
+         ENDOP()
+
          CASE(REM_PRIORITY_INSTR)
             JUMP(rem_priority, REM_PRIORITY_BASE)
             execute_rem_priority(pc, state);
@@ -3824,9 +3797,6 @@ do_execute(byte_code code, state& state, const reg_num reg, vm::tuple *tpl, pred
 
    state.hash_removes = false;
    state.generated_facts = false;
-   state.linear_facts_generated = 0;
-   state.persistent_facts_generated = 0;
-   state.linear_facts_consumed = 0;
 
    const return_type ret(execute((pcounter)code, state, reg, tpl, pred));
 

@@ -929,11 +929,8 @@ trie::wipeout(predicate *pred, candidate_gc_nodes& gc_nodes)
    number_of_references = 0;
 }
 
-trie::trie(void):
-   root(new trie_node()),
-   number_of_references(0),
-   first_leaf(nullptr),
-   last_leaf(nullptr)
+trie::trie():
+   root(new trie_node())
 {
    basic_invariants();
 }
