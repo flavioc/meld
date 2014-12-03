@@ -1,3 +1,5 @@
+const size = 8.
+
 !coord(@0, 0, 0).
 !down-right(@0, @10).
 !down-left(@0, @0).

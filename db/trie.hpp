@@ -27,15 +27,15 @@ class trie_node: public mem::base
 {
 public:
 
-   trie_node *parent;
-   trie_node *next;
-   trie_node *prev;
-   trie_node *child;
+   trie_node *parent{nullptr};
+   trie_node *next{nullptr};
+   trie_node *prev{nullptr};
+   trie_node *child{nullptr};
 
    vm::tuple_field data;
    
-   bool hashed;
-   trie_node **bucket;
+   bool hashed{false};
+   trie_node **bucket{nullptr};
    
    trie_node* get_by_int(const vm::int_val) const;
    trie_node* get_by_float(const vm::float_val) const;
@@ -68,26 +68,16 @@ public:
    trie_node *insert(const vm::tuple_field&, vm::type*, vm::match_stack&);
    
    explicit trie_node(const vm::tuple_field& _data):
-      parent(nullptr),
-      next(nullptr),
-      prev(nullptr),
-      child(nullptr),
-      data(_data),
-      hashed(false),
-      bucket(nullptr)
+      data(_data)
    {
-      assert(next == nullptr && prev == nullptr && parent == nullptr && child == nullptr && hashed == false);
+      assert(next == nullptr && prev == nullptr && parent == nullptr &&
+            child == nullptr && hashed == false);
    }
 
-   explicit trie_node(void): // no data
-      parent(nullptr),
-      next(nullptr),
-      prev(nullptr),
-      child(nullptr),
-      hashed(false),
-      bucket(nullptr)
+   explicit trie_node(void) // no data
    {
-      assert(next == nullptr && prev == nullptr && parent == nullptr && child == nullptr && hashed == false);
+      assert(next == nullptr && prev == nullptr && parent == nullptr &&
+            child == nullptr && hashed == false);
    }
 
    ~trie_node(void);
@@ -278,9 +268,9 @@ private:
    friend class tuple_trie_iterator;
    
    vm::tuple *tpl;
-   vm::ref_count count;
+   vm::ref_count count{0};
    /// XXX this may be deleted...
-   vm::ref_count used; // this is utilized by the VM core to manage leaves
+   vm::ref_count used{0}; // this is utilized by the VM core to manage leaves
    depth_counter *depths; // depth counter -- usually nullptr
    
 public:
@@ -369,9 +359,7 @@ public:
    
    explicit tuple_trie_leaf(vm::tuple *_tpl, vm::predicate *pred, const vm::ref_count count, const vm::depth_t depth):
       trie_leaf(),
-      tpl(_tpl),
-      count(0),
-      used(0)
+      tpl(_tpl)
    {
       if(pred->is_cycle_pred())
          depths = new depth_counter();
@@ -446,9 +434,9 @@ protected:
    using node = trie_node;
    
    node *root;
-   int number_of_references;
-   trie_leaf *first_leaf;
-   trie_leaf *last_leaf;
+   vm::ref_count number_of_references{0};
+   trie_leaf *first_leaf{nullptr};
+   trie_leaf *last_leaf{nullptr};
    
    inline void basic_invariants(void)
    {

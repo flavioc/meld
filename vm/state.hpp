@@ -71,16 +71,19 @@ public:
    map_set_priority set_priorities;
 #endif
 #ifdef DEBUG_MODE
-	bool print_instrs;
+	bool print_instrs{false};
 #endif
 
    size_t linear_facts_generated;
    size_t persistent_facts_generated;
    size_t linear_facts_consumed;
+   // resets previous counters.
+   void reset_counters();
+
 #ifdef INSTRUMENTATION
-   size_t instr_facts_consumed;
-   size_t instr_facts_derived;
-   size_t instr_rules_run;
+   size_t instr_facts_consumed{0};
+   size_t instr_facts_derived{0};
+   size_t instr_rules_run{0};
 #endif
    bool generated_facts;
    bool running_rule;
@@ -103,9 +106,9 @@ public:
    core_statistics stat;
 #endif
 #ifdef FACT_STATISTICS
-   uint64_t facts_derived;
-   uint64_t facts_consumed;
-   uint64_t facts_sent;
+   uint64_t facts_derived{0};
+   uint64_t facts_consumed{0};
+   uint64_t facts_sent{0};
 #endif
 
 #define define_get(WHAT, RET, BODY) \

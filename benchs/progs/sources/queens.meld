@@ -1,4 +1,3 @@
-
 type left(node, node).
 type right(node, node).
 type down-right(node, node).
@@ -13,7 +12,7 @@ type linear test-diag-right(node, int, int, list int, list node, list int).
 type linear send-down(node, list node, list int).
 type linear final-state(node, list node, list int).
 
-const size = 8.
+priority @cluster @static.
 
 propagate-right(@0, [], []).
 

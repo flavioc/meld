@@ -33,6 +33,8 @@ def map_node(id):
 	assert(False)
 	return 0
 
+print "const size = " + str(side) + "."
+
 for x in range(0, side):
 	for y in range(0, side):
 		id = x * side + y
