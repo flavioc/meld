@@ -1,0 +1,4 @@
+
+type linear b(node, int).
+
+b(@0, myconst).
