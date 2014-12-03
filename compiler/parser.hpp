@@ -51,7 +51,7 @@ class expr: public mem::base
 
 typedef enum {
    PLUS, MULT, MINUS, DIVIDE, MOD,
-   EQUAL, NOT_EQUAL, NO_OP
+   EQUAL, NOT_EQUAL, AND, OR, NO_OP
 } Op;
 
 static inline std::string op2str(const Op op)
@@ -65,6 +65,8 @@ static inline std::string op2str(const Op op)
       case Op::EQUAL: return "=";
       case Op::NOT_EQUAL: return "<>";
       case Op::NO_OP: return "";
+      case Op::AND: return "&&";
+      case Op::OR: return "||";
    }
 }
 
@@ -354,7 +356,6 @@ class parser: mem::base
       exists_construct* parse_exists();
       comprehension_construct* parse_comprehension();
       fact *parse_head_fact(const token&);
-      void parse_body_fact_or_funcall(const token&);
       Op parse_operation(const token&);
       expr *parse_expr_funcall(const token&);
       expr *parse_atom_expr();
