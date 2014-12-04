@@ -176,6 +176,7 @@ class lexer: public mem::base
       token lex_and(const character);
       token lex_slash(const character);
       token lex_lesser(const character);
+      token lex_greater(const character);
       token lex_variable(const character);
       token lex_const(const character);
       token lex_at(const character);

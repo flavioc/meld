@@ -35,7 +35,7 @@ lexer::lex_number(const character start)
       max_string[i++] = get().c;
 
    if(max_string[0] == '-' && i == 1)
-      throw lexer_error(start, "Cannot identify next token. Did you mean a-b?");
+      throw lexer_error(start, "Cannot identify next token. Did you mean a-b? (lex_number)");
 
    if(peek().c == '.') {
       size_t floats(0);
@@ -66,12 +66,16 @@ lexer::lex_number(const character start)
 token
 lexer::lex_number_minus(const character start)
 {
-   character next(get());
-   if(isend(next))
+   character next(peek());
+   if(isend(next)) {
+      get();
       return token(token::Token::MINUS, start, "-");
+   }
 
-   if(next.c == 'o')
+   if(next.c == 'o') {
+      get();
       return token(token::Token::LOLLI, start, "-o");
+   }
 
    return lex_number(start);
 }
@@ -149,9 +153,18 @@ token
 lexer::lex_lesser(const character start)
 {
    switch(peek().c) {
-      case '=': return token(token::Token::LESSER_EQUAL, start, "<=");
-      case '>': return token(token::Token::NOT_EQUAL, start, "<>");
+      case '=': get(); return token(token::Token::LESSER_EQUAL, start, "<=");
+      case '>': get(); return token(token::Token::NOT_EQUAL, start, "<>");
       default: return token(token::Token::LESSER, start, "<");
+   }
+}
+
+token
+lexer::lex_greater(const character start)
+{
+   switch(peek().c) {
+      case '=': get(); return token(token::Token::GREATER_EQUAL, start, ">=");
+      default: return token(token::Token::GREATER, start, ">");
    }
 }
 
@@ -452,6 +465,7 @@ lexer::next_token(void)
       case '+': return token(token::Token::PLUS, x, "*");
       case '%': return token(token::Token::MOD, x, "%");
       case '<': return lex_lesser(x);
+      case '>': return lex_greater(x);
       case '_': return token(token::Token::ANONYMOUS_VAR, x, "_");
       case '@': return lex_at(x);
       case '#': return lex_filename(x);

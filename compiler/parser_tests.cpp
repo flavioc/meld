@@ -21,6 +21,14 @@ class ParserTests : public TestFixture {
          p1.print(std::cout);
          parser p2("tests/progs/visit.meld");
          p2.print(std::cout);
+         parser p3("tests/progs/list-floats.meld");
+         p3.print(std::cout);
+         parser p4("tests/progs/binary.meld");
+         p4.print(std::cout);
+         parser p5("tests/progs/constant.meld");
+         p5.print(std::cout);
+         parser p6("tests/progs/bipartite.meld");
+         p6.print(std::cout);
       }
 
       CPPUNIT_TEST_SUITE(ParserTests);
