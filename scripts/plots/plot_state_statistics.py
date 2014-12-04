@@ -42,13 +42,24 @@ class instrumentation_slice(object):
       return (int_data[index] + int_data[index + 1])/2.0
 
    def add(self, other):
-      new_data = []
-      for a, b in itertools.izip(self.data, other.data):
-         new_data.append(a + b)
-      self.data = new_data
+      self.data = [a + b for a, b in itertools.izip(self.data, other.data)]
+
+   def sub(self, other):
+      self.data = [a - b for a, b in itertools.izip(self.data, other.data)]
+
+   def create_zeros(self):
+      return instrumentation_slice([0 for x in self.data])
 
    def __init__(self, data):
       self.data = [to_int(x) for x in data]
+
+
+def add_slices(ls):
+   f = ls[0]
+   s = f.create_zeros()
+   for x in ls:
+      s.add(x)
+   return s
 
 
 class instrumentation_item(object):
@@ -59,11 +70,29 @@ class instrumentation_item(object):
       for time, sl in self.slices.iteritems():
          sl.add(otheritem.slices[time])
 
+   def sub(self, otheritem):
+      for time, sl in self.slices.iteritems():
+         sl.sub(otheritem.slices[time])
+
    def ordered_average(self):
       return [self.slices[time].compute_average() for time in sorted(self.slices)]
 
    def ordered_median(self):
       return [self.slices[time].compute_median() for time in sorted(self.slices)]
+
+   def apply_running_total(self, window=5):
+      sum_list = []
+      included = 0
+      new_slices = {}
+      for time, slic in self.slices.iteritems():
+         if included < window:
+            sum_list.append(slic)
+            included = included + 1
+         else:
+            sum_list.pop(0)
+            sum_list.append(slic)
+         new_slices[time] = add_slices(sum_list)
+      self.slices = new_slices
 
    def time(self): return [time for time in sorted(self.slices)]
 
@@ -130,6 +159,22 @@ def parse_instrumentation_benchmark(subdir, name):
          bench.add_item("derived_facts", th, derived_facts)
       else:
          print "**WARNING** file", derived_facts_file, "is missing"
+      consumed_facts_file = os.path.join(path, "data.consumed_facts")
+      if os.path.isfile(consumed_facts_file):
+         consumed_facts = instrumentation_item(th)
+         parse_numbers(consumed_facts, consumed_facts_file)
+         bench.add_item("consumed_facts", th, consumed_facts)
+      else:
+         print "**WARNING** file", consumed_facts_file, "is missing"
+      if os.path.isfile(consumed_facts_file) and os.path.isfile(derived_facts_file):
+         consumed_facts = instrumentation_item(th)
+         derived_facts = instrumentation_item(th)
+         parse_numbers(consumed_facts, consumed_facts_file)
+         parse_numbers(derived_facts, derived_facts_file)
+         consumed_facts.apply_running_total()
+         derived_facts.apply_running_total()
+         derived_facts.sub(consumed_facts)
+         bench.add_item("pending_facts", th, derived_facts)
       bytes_used_file = os.path.join(path, "data.bytes_used")
       if os.path.isfile(bytes_used_file):
          bytes_used = instrumentation_item(th)
@@ -194,7 +239,7 @@ def plot_numeric_evolution(title, th, data, average=True, mean=100):
 
    titlefontsize = 22
    ylabelfontsize = 20
-   ax.set_title(title + " / " + str(th) + " threads", fontsize=titlefontsize)
+   ax.set_title(title.replace('_', ' ').title() + " / " + str(th) + " threads", fontsize=titlefontsize)
    ax.yaxis.tick_right()
    ax.yaxis.set_label_position("right")
    if average:
@@ -223,18 +268,20 @@ def plot_numeric_evolution(title, th, data, average=True, mean=100):
          linestyle='-', color=colors[i % len(colors)])
       plots.append(plot)
    ax.legend(plots, [name for (name, _) in data], loc=1, fontsize=12, markerscale=2)
-   if average:
-      end_file = "average.png"
-   else:
-      end_file = "median.png"
-   file_name = sys.argv[2] + "_" + title + "_th" + str(th) + "-" + end_file
+   file_name = sys.argv[2] + "/" + title + "/" + str(th) + ".png"
+   try:
+      os.makedirs(os.path.dirname(file_name))
+   except OSError:
+      pass
    print "Generating", file_name
    plt.savefig(file_name)
    plt.close(fig)
 
-for th in [1, 2, 4, 6, 8, 10, 12, 14, 16]:
+for th in [1, 2, 4, 6, 8, 10, 12, 14, 16, 20, 24]:
    state_data = []
    derived_facts_data = []
+   consumed_facts_data = []
+   pending_facts_data = []
    bytes_used_data = []
    node_locks_data = []
    stolen_nodes_data = []
@@ -247,6 +294,10 @@ for th in [1, 2, 4, 6, 8, 10, 12, 14, 16]:
          state_data.append((bench.get_name(), state))
          derived_facts = bench.get_item("derived_facts", th)
          derived_facts_data.append((bench.get_name(), derived_facts))
+         consumed_facts = bench.get_item("consumed_facts", th)
+         consumed_facts_data.append((bench.get_name(), consumed_facts))
+         pending_facts = bench.get_item("pending_facts", th)
+         pending_facts_data.append((bench.get_name(), pending_facts))
          bytes_used = bench.get_item("bytes_used", th)
          bytes_used_data.append((bench.get_name(), bytes_used))
          node_locks = bench.get_item("node_locks", th)
@@ -262,10 +313,10 @@ for th in [1, 2, 4, 6, 8, 10, 12, 14, 16]:
    if not failed:
       plot_numeric_evolution("nodes", th, state_data) # average
       plot_numeric_evolution("derived_facts", th, derived_facts_data, True, 250) # average
+      plot_numeric_evolution("consumed_facts", th, consumed_facts_data, True, 250) # average
+      plot_numeric_evolution("pending_facts", th, pending_facts_data, True, 250) # average
       plot_numeric_evolution("bytes_used", th, bytes_used_data, True, 50) # average
       plot_numeric_evolution("node_locks", th, node_locks_data, True, 100)
       plot_numeric_evolution("stolen_nodes", th, stolen_nodes_data, True, 100)
       plot_numeric_evolution("sent_facts_other_thread", th, sent_facts_other_thread_data, True, 50)
       plot_numeric_evolution("sent_facts", th, sent_facts_data, True, 50)
-      
-
