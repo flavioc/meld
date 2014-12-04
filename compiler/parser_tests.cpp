@@ -29,6 +29,8 @@ class ParserTests : public TestFixture {
          p5.print(std::cout);
          parser p6("tests/progs/bipartite.meld");
          p6.print(std::cout);
+         parser p7("tests/progs/include.meld");
+         p7.print(std::cout);
       }
 
       CPPUNIT_TEST_SUITE(ParserTests);

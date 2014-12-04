@@ -420,10 +420,11 @@ lexer::lex_filename(const character start)
 {
    char max_string[1024];
    size_t i(0);
-   while(peek().c != '\n' && i < 1024)
+   while(!isspace(peek().c) && i < 1024)
       max_string[i++] = get().c;
    if(i == 0)
       throw lexer_error(start, "Parser error: expecting #FILENAME.");
+   max_string[i] = '\0';
    return token(token::Token::FILENAME, start, max_string);
 }
 

@@ -96,7 +96,7 @@ parser::parse_declaration()
    if(dot.tok != token::Token::DOT)
       throw parser_error(dot, "expected a dot ..");
 
-   predicates[name] = vm::predicate::make_predicate_simple(predicates.size(), name, linear, types);
+   ast->predicates[name] = vm::predicate::make_predicate_simple(ast->predicates.size(), name, linear, types);
 }
 
 void
@@ -119,7 +119,7 @@ parser::parse_const()
    if(equal.tok != token::Token::EQUAL)
       throw parser_error(equal, "expected an equal = for the constant.");
    expr *e(parse_expr(end_tok, 1));
-   constants[name.str] = new constant_definition_expr(name, e);
+   ast->constants[name.str] = new constant_definition_expr(name, e);
    const token dot(get());
    if(dot.tok != token::Token::DOT)
       throw parser_error(dot, "constant must be finished with dot.");
@@ -242,8 +242,8 @@ parser::parse_aggregate()
 fact*
 parser::parse_head_fact(const token& name)
 {
-   auto it(predicates.find(name.str));
-   if(it == predicates.end())
+   auto it(ast->predicates.find(name.str));
+   if(it == ast->predicates.end())
       throw parser_error(name, string("predicate ") + name.str + " was not defined.");
    return parse_body_fact(name, it->second);
 }
@@ -283,10 +283,10 @@ parser::parse_rule_head(const token& lolli, vector<expr*>& conditions, vector<fa
       if(com.tok == token::Token::DOT) {
          if(body_facts.empty()) {
             // axiom
-            axioms.push_back(new conditional_axiom(lolli, move(conditions), move(head_facts)));
+            ast->axioms.push_back(new conditional_axiom(lolli, move(conditions), move(head_facts)));
             return;
          }
-         rules.push_back(new rule(move(lolli), move(conditions), move(body_facts),
+         ast->rules.push_back(new rule(move(lolli), move(conditions), move(body_facts),
                   move(head_facts), move(constrs)));
          return;
       }
@@ -360,8 +360,8 @@ parser::parse_atom_expr()
          return new var_expr(tok);
       case token::Token::NAME:
          {
-            auto it(constants.find(tok.str));
-            if(it == constants.end())
+            auto it(ast->constants.find(tok.str));
+            if(it == ast->constants.end())
                return parse_expr_funcall(tok);
             else
                return new constant_expr(tok);
@@ -571,8 +571,8 @@ parser::parse_body(vector<expr*>& conditions, vector<fact*>& body_facts, const t
          get();
          {
             tok = get();
-            auto it(predicates.find(tok.str));
-            if(it == predicates.end())
+            auto it(ast->predicates.find(tok.str));
+            if(it == ast->predicates.end())
                throw parser_error(tok, "expecting a predicate after the !.");
             const vm::predicate *pred(it->second);
             if(!pred->is_persistent_pred())
@@ -581,10 +581,10 @@ parser::parse_body(vector<expr*>& conditions, vector<fact*>& body_facts, const t
          }
          break;
       case token::Token::NAME: {
-         auto it(predicates.find(tok.str));
-         if(it == predicates.end()) {
-            auto it2(constants.find(tok.str));
-            if(it2 == constants.end())
+         auto it(ast->predicates.find(tok.str));
+         if(it == ast->predicates.end()) {
+            auto it2(ast->constants.find(tok.str));
+            if(it2 == ast->constants.end())
                conditions.push_back(parse_expr(ends, 2));
             else
                conditions.push_back(parse_expr(ends, 2));
@@ -616,7 +616,7 @@ parser::parse_rule(const token& start)
          if(!conditions.empty())
             throw parser_error(start, "axioms cannot have conditions.");
          for(size_t i(0); i < body_facts.size(); ++i)
-            axioms.push_back(new basic_axiom(body_facts[i]));
+            ast->axioms.push_back(new basic_axiom(body_facts[i]));
          return;
       }
       if(com.tok == token::Token::LOLLI)
@@ -652,9 +652,9 @@ parser::parse_priority()
             case token::Token::ORDER: {
                   tok = get();
                   if(tok.tok == token::Token::DESC)
-                     prio_type = vm::PRIORITY_DESC;
+                     ast->prio_type = vm::PRIORITY_DESC;
                   else if(tok.tok == token::Token::ASC)
-                     prio_type = vm::PRIORITY_ASC;
+                     ast->prio_type = vm::PRIORITY_ASC;
                   else
                      throw parser_error(tok, "invalid ordering type.");
                }
@@ -723,7 +723,7 @@ parser::parse_function()
 
    function *f(new function(fname, move(vars), move(types),
             ret_type, body));
-   functions[fname.str] = f;
+   ast->functions[fname.str] = f;
 }
 
 void
@@ -734,9 +734,52 @@ parser::parse_functions()
 }
 
 void
+parser::parse_include()
+{
+   const token include(get());
+   const token filetok(get());
+   if(filetok.tok != token::Token::FILENAME)
+      throw parser_error(include, "not a valid include declaration.");
+   string include_file(filetok.str);
+   const size_t last_pos(filename.rfind('/'));
+   string dirname = ".";
+   if(last_pos != string::npos)
+      dirname = string(filename, 0, last_pos);
+   include_file = dirname + "/" + include_file;
+   std::ifstream f(include_file.c_str());
+   if(f.good()) {
+      f.close();
+      include_files.push_back(include_file);
+   } else {
+      f.close();
+      throw parser_error(filetok, string("filename ") + include_file + " not found.");
+   }
+}
+
+void
+parser::parse_includes()
+{
+   while(peek().tok == token::Token::INCLUDE)
+      parse_include();
+}
+
+void
+parser::read_includes()
+{
+   for(auto it(include_files.begin()); it != include_files.end(); ++it) {
+      const string& file(*it);
+      parser(file, ast);
+   }
+}
+
+void
 parser::parse_program()
 {
+   parse_includes();
+
    parse_declarations();
+
+   read_includes();
 
    parse_priority();
 
@@ -747,9 +790,13 @@ parser::parse_program()
    parse_rules();
 }
 
-parser::parser(const std::string& file):
+parser::parser(const std::string& file, abstract_syntax_tree *tree):
+   ast(tree),
+   filename(file),
    lex(file)
 {
+   if(!ast)
+      ast = new abstract_syntax_tree();
    vm::init_types();
    parse_program();
    token tok(get());
