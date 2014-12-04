@@ -102,7 +102,6 @@ machine::slice_function(void)
    set_timer();
    
    while (true) {
-      
       const int ret(sigwait(&set, &sig));
 		
       (void)ret;
@@ -110,14 +109,14 @@ machine::slice_function(void)
       
       switch(sig) {
          case SIGALRM:
-         if(tofinish)
-            return;
-         slices.beat(all);
-         set_timer();
-         break;
+            if(tofinish)
+               return;
+            slices.beat(all);
+            set_timer();
+            break;
          case SIGUSR1:
-         tofinish = true;
-         break;
+            tofinish = true;
+            break;
          default: assert(false);
       }
    }

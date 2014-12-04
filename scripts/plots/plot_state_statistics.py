@@ -8,13 +8,14 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
 import scipy
+import itertools
 from scipy.interpolate import spline
 from matplotlib import rcParams
 from numpy import nanmax
 from lib import name2title, experiment_set, experiment, coordinated_program
 
-if len(sys.argv) != 2:
-   print "plot_state_statistics.py <dir>"
+if len(sys.argv) != 3:
+   print "plot_state_statistics.py <dir> <prefix>"
    sys.exit(1)
 
 
@@ -28,11 +29,11 @@ class instrumentation_slice(object):
    def compute_average(self):
       length = len(self.data)
       assert(length > 0)
-      total = sum(to_int(x) for x in self.data)
+      total = sum(x for x in self.data)
       return float(total) / float(length)
 
    def compute_median(self):
-      int_data = sorted([to_int(x) for x in self.data])
+      int_data = sorted([x for x in self.data])
       length = len(int_data)
       assert(length > 0)
       index = (length - 1) // 2
@@ -40,13 +41,23 @@ class instrumentation_slice(object):
          return int_data[index]
       return (int_data[index] + int_data[index + 1])/2.0
 
+   def add(self, other):
+      new_data = []
+      for a, b in itertools.izip(self.data, other.data):
+         new_data.append(a + b)
+      self.data = new_data
+
    def __init__(self, data):
-      self.data = data
+      self.data = [to_int(x) for x in data]
 
 
 class instrumentation_item(object):
    def add_slice(self, time, slc):
       self.slices[int(time)] = slc
+
+   def add(self, otheritem):
+      for time, sl in self.slices.iteritems():
+         sl.add(otheritem.slices[time])
 
    def ordered_average(self):
       return [self.slices[time].compute_average() for time in sorted(self.slices)]
@@ -58,15 +69,13 @@ class instrumentation_item(object):
 
    def get_num_threads(self): return self.threads
 
+   def print_first(self):
+      s = min(self.slices, key=self.slices.get)
+      print self.slices[s].data
+
    def __init__(self, threads):
       self.slices = {}
       self.threads = threads
-
-
-class instrumentation_state(instrumentation_item):
-
-   def __init__(self, threads):
-      super(instrumentation_state, self).__init__(threads)
 
 
 class instrumentation_benchmark(object):
@@ -93,7 +102,7 @@ class instrumentation_set(object):
       self.benchs = {}
 
 
-def parse_state(item, path):
+def parse_numbers(item, path):
    with open(path, 'rb') as csvfile:
       reader = csv.reader(csvfile, delimiter=' ')
       next(reader)
@@ -107,13 +116,61 @@ def parse_instrumentation_benchmark(subdir, name):
    bench = instrumentation_benchmark(name)
    for th in os.listdir(subdir):
       path = os.path.join(subdir, th)
-      state = os.path.join(path, "data.state")
-      if not os.path.isfile(state):
-         print "**WARNING** file missing", state
-         continue
-      item = instrumentation_state(th)
-      parse_state(item, state)
-      bench.add_item("state", th, item)
+      state_file = os.path.join(path, "data.state")
+      if os.path.isfile(state_file):
+         state = instrumentation_item(th)
+         parse_numbers(state, state_file)
+         bench.add_item("state", th, state)
+      else:
+         print "**WARNING** file", state_file, "is missing"
+      derived_facts_file = os.path.join(path, "data.derived_facts")
+      if os.path.isfile(derived_facts_file):
+         derived_facts = instrumentation_item(th)
+         parse_numbers(derived_facts, derived_facts_file)
+         bench.add_item("derived_facts", th, derived_facts)
+      else:
+         print "**WARNING** file", derived_facts_file, "is missing"
+      bytes_used_file = os.path.join(path, "data.bytes_used")
+      if os.path.isfile(bytes_used_file):
+         bytes_used = instrumentation_item(th)
+         parse_numbers(bytes_used, bytes_used_file)
+         bench.add_item("bytes_used", th, bytes_used)
+      else:
+         print "**WARNING** file", bytes_used_file, "is missing"
+      node_lock_ok_file = os.path.join(path, "data.node_lock_ok")
+      node_lock_fail_file = os.path.join(path, "data.node_lock_fail")
+      if os.path.isfile(node_lock_ok_file) and os.path.isfile(node_lock_fail_file):
+         lock_ok = instrumentation_item(th)
+         parse_numbers(lock_ok, node_lock_ok_file)
+         lock_fail = instrumentation_item(th)
+         parse_numbers(lock_fail, node_lock_fail_file)
+         lock_ok.add(lock_fail)
+         bench.add_item("node_locks", th, lock_ok)
+      else:
+         print "**WARNING** file", node_lock_ok_file, "missing"
+      stolen_nodes_file = os.path.join(path, "data.stolen_nodes")
+      if os.path.isfile(stolen_nodes_file):
+         stolen_nodes = instrumentation_item(th)
+         parse_numbers(stolen_nodes, stolen_nodes_file)
+         bench.add_item("stolen_nodes", th, stolen_nodes)
+      else:
+         print "**WARNING** file", stolen_nodes_file, "missing"
+      sent_facts_same_thread_file = os.path.join(path, "data.sent_facts_same_thread")
+      sent_facts_other_thread_file = os.path.join(path, "data.sent_facts_other_thread")
+      sent_facts_other_thread_now_file = os.path.join(path, "data.sent_facts_other_thread_now")
+      if os.path.isfile(sent_facts_same_thread_file) and os.path.isfile(sent_facts_other_thread_file) and os.path.isfile(sent_facts_other_thread_now_file):
+         sent_facts_same_thread = instrumentation_item(th)
+         parse_numbers(sent_facts_same_thread, sent_facts_same_thread_file)
+         sent_facts_other_thread = instrumentation_item(th)
+         parse_numbers(sent_facts_other_thread, sent_facts_other_thread_file)
+         sent_facts_other_thread_now = instrumentation_item(th)
+         parse_numbers(sent_facts_other_thread_now, sent_facts_other_thread_now_file)
+         sent_facts_other_thread.add(sent_facts_other_thread_now)
+         bench.add_item("sent_facts_other_thread", th, sent_facts_other_thread)
+         sent_facts_same_thread.add(sent_facts_other_thread)
+         bench.add_item("sent_facts", th, sent_facts_same_thread)
+      else:
+         print "**WARNING** file", sent_facts_same_thread_file, "missing"
    return bench
 
 
@@ -131,16 +188,19 @@ def runningMeanFast(x, N):
    return np.convolve(x, np.ones((N,))/N)[(N-1):]
 
 
-def plot_state_evolution(th, data, average):
+def plot_numeric_evolution(title, th, data, average=True, mean=100):
    fig = plt.figure(figsize = (10,4))
    ax = fig.add_subplot(111)
 
    titlefontsize = 22
    ylabelfontsize = 20
-   ax.set_title(str(th) + " threads", fontsize=titlefontsize)
+   ax.set_title(title + " / " + str(th) + " threads", fontsize=titlefontsize)
    ax.yaxis.tick_right()
    ax.yaxis.set_label_position("right")
-   ax.set_ylabel('Average', fontsize=ylabelfontsize)
+   if average:
+      ax.set_ylabel('Average', fontsize=ylabelfontsize)
+   else:
+      ax.set_ylabel('Median', fontsize=ylabelfontsize)
    ax.set_xlabel('Time', fontsize=ylabelfontsize)
 
    cmap = plt.get_cmap('gray')
@@ -158,30 +218,54 @@ def plot_state_evolution(th, data, average):
          y0 = state.ordered_average()
       else:
          y0 = state.ordered_median()
-      y = runningMeanFast(y0, 100)
+      y = runningMeanFast(y0, mean)
       plot, = ax.plot(x, y,
          linestyle='-', color=colors[i % len(colors)])
       plots.append(plot)
    ax.legend(plots, [name for (name, _) in data], loc=1, fontsize=12, markerscale=2)
    if average:
-      name = "average.png"
+      end_file = "average.png"
    else:
-      name = "median.png"
-   name = "th" + str(th) + "-" + name
-   print "Generating", name
-   plt.savefig(name)
+      end_file = "median.png"
+   file_name = sys.argv[2] + "_" + title + "_th" + str(th) + "-" + end_file
+   print "Generating", file_name
+   plt.savefig(file_name)
+   plt.close(fig)
 
 for th in [1, 2, 4, 6, 8, 10, 12, 14, 16]:
-   data = []
+   state_data = []
+   derived_facts_data = []
+   bytes_used_data = []
+   node_locks_data = []
+   stolen_nodes_data = []
+   sent_facts_other_thread_data = []
+   sent_facts_data = []
    failed = False
    for bench in ins_set:
       try:
          state = bench.get_item("state", th)
-         data.append((bench.get_name(), state))
+         state_data.append((bench.get_name(), state))
+         derived_facts = bench.get_item("derived_facts", th)
+         derived_facts_data.append((bench.get_name(), derived_facts))
+         bytes_used = bench.get_item("bytes_used", th)
+         bytes_used_data.append((bench.get_name(), bytes_used))
+         node_locks = bench.get_item("node_locks", th)
+         node_locks_data.append((bench.get_name(), node_locks))
+         stolen_nodes = bench.get_item("stolen_nodes", th)
+         stolen_nodes_data.append((bench.get_name(), stolen_nodes))
+         sent_facts_other_thread = bench.get_item("sent_facts_other_thread", th)
+         sent_facts_other_thread_data.append((bench.get_name(), sent_facts_other_thread))
+         sent_facts = bench.get_item("sent_facts", th)
+         sent_facts_data.append((bench.get_name(), sent_facts))
       except KeyError:
          failed = True
-         print "**WARNING** missing"
    if not failed:
-      plot_state_evolution(th, data, True)
-      plot_state_evolution(th, data, False)
+      plot_numeric_evolution("nodes", th, state_data) # average
+      plot_numeric_evolution("derived_facts", th, derived_facts_data, True, 250) # average
+      plot_numeric_evolution("bytes_used", th, bytes_used_data, True, 50) # average
+      plot_numeric_evolution("node_locks", th, node_locks_data, True, 100)
+      plot_numeric_evolution("stolen_nodes", th, stolen_nodes_data, True, 100)
+      plot_numeric_evolution("sent_facts_other_thread", th, sent_facts_other_thread_data, True, 50)
+      plot_numeric_evolution("sent_facts", th, sent_facts_data, True, 50)
+      
 
