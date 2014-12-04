@@ -160,7 +160,8 @@ slice_set::write(const string& file, vm::all *all) const
 void
 slice_set::beat_thread(const process_id id, slice& sl, vm::all *all)
 {
-   all->SCHEDS[id]->write_slice(sl);
+   if(all->SCHEDS[id])
+      all->SCHEDS[id]->write_slice(sl);
 }
 
 void
