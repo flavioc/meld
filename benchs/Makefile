@@ -12,9 +12,6 @@ endif # $(OS)
 
 all: compiled
 
-run:
-	@bash run.sh
-
 TYPE = even
 export RESULTS_FILE=$(PWD)/results.csv
 
@@ -24,8 +21,7 @@ HT = new-heat-transfer-80
 HT_COORD = new-heat-transfer-80-coord
 BP = belief-propagation-400
 SPLASH_BP = splash-bp-400
-QUEENS = 8queens-13 8queens-13-bottom 8queens-13-bottom-static \
-			8queens-top
+QUEENS = 8queens-13 8queens-13-top 8queens-13-top-static 8queens-13-bottom 8queens-13-bottom-static
 SIMPLE = simple16 simple32 simple64
 MINMAX = min-max-tictactoe-big
 SHORTEST = shortest-usairports500 shortest-uspowergrid \
@@ -64,6 +60,9 @@ shortest:
 	@bash $(SCRIPT) $(SHORTEST)
 coord-shortest:
 	@bash $(SCRIPT) $(COORD_SHORTEST)
+
+run:
+	@bash $(SCRIPT) $(TARGET)
 
 compiled:
 	@mkdir -p code
