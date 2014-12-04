@@ -13,8 +13,8 @@ from matplotlib import rcParams
 from numpy import nanmax
 from lib import name2title, experiment_set, experiment, coordinated_program
 
-if len(sys.argv) != 2:
-   print "plot_state_statistics.py <dir>"
+if len(sys.argv) != 3:
+   print "plot_state_statistics.py <dir> <prefix>"
    sys.exit(1)
 
 
@@ -63,12 +63,6 @@ class instrumentation_item(object):
       self.threads = threads
 
 
-class instrumentation_state(instrumentation_item):
-
-   def __init__(self, threads):
-      super(instrumentation_state, self).__init__(threads)
-
-
 class instrumentation_benchmark(object):
    def get_name(self): return self.name
 
@@ -93,7 +87,7 @@ class instrumentation_set(object):
       self.benchs = {}
 
 
-def parse_state(item, path):
+def parse_numbers(item, path):
    with open(path, 'rb') as csvfile:
       reader = csv.reader(csvfile, delimiter=' ')
       next(reader)
@@ -107,13 +101,20 @@ def parse_instrumentation_benchmark(subdir, name):
    bench = instrumentation_benchmark(name)
    for th in os.listdir(subdir):
       path = os.path.join(subdir, th)
-      state = os.path.join(path, "data.state")
-      if not os.path.isfile(state):
-         print "**WARNING** file missing", state
-         continue
-      item = instrumentation_state(th)
-      parse_state(item, state)
-      bench.add_item("state", th, item)
+      state_file = os.path.join(path, "data.state")
+      if os.path.isfile(state_file):
+         state = instrumentation_item(th)
+         parse_numbers(state, state_file)
+         bench.add_item("state", th, state)
+      else:
+         print "**WARNING** file", state_file, "is missing"
+      derived_facts_file = os.path.join(path, "data.derived_facts")
+      if os.path.isfile(derived_facts_file):
+         derived_facts = instrumentation_item(th)
+         parse_numbers(derived_facts, derived_facts_file)
+         bench.add_item("derived_facts", th, derived_facts)
+      else:
+         print "**WARNING** file", derived_facts_file, "is missing"
    return bench
 
 
@@ -131,16 +132,19 @@ def runningMeanFast(x, N):
    return np.convolve(x, np.ones((N,))/N)[(N-1):]
 
 
-def plot_state_evolution(th, data, average):
+def plot_numeric_evolution(title, th, data, average=True, mean=100):
    fig = plt.figure(figsize = (10,4))
    ax = fig.add_subplot(111)
 
    titlefontsize = 22
    ylabelfontsize = 20
-   ax.set_title(str(th) + " threads", fontsize=titlefontsize)
+   ax.set_title(title + " / " + str(th) + " threads", fontsize=titlefontsize)
    ax.yaxis.tick_right()
    ax.yaxis.set_label_position("right")
-   ax.set_ylabel('Average', fontsize=ylabelfontsize)
+   if average:
+      ax.set_ylabel('Average', fontsize=ylabelfontsize)
+   else:
+      ax.set_ylabel('Median', fontsize=ylabelfontsize)
    ax.set_xlabel('Time', fontsize=ylabelfontsize)
 
    cmap = plt.get_cmap('gray')
@@ -158,30 +162,33 @@ def plot_state_evolution(th, data, average):
          y0 = state.ordered_average()
       else:
          y0 = state.ordered_median()
-      y = runningMeanFast(y0, 100)
+      y = runningMeanFast(y0, mean)
       plot, = ax.plot(x, y,
          linestyle='-', color=colors[i % len(colors)])
       plots.append(plot)
    ax.legend(plots, [name for (name, _) in data], loc=1, fontsize=12, markerscale=2)
    if average:
-      name = "average.png"
+      end_file = "average.png"
    else:
-      name = "median.png"
-   name = "th" + str(th) + "-" + name
-   print "Generating", name
-   plt.savefig(name)
+      end_file = "median.png"
+   file_name = sys.argv[2] + "_" + title + "_th" + str(th) + "-" + end_file
+   print "Generating", file_name
+   plt.savefig(file_name)
 
 for th in [1, 2, 4, 6, 8, 10, 12, 14, 16]:
-   data = []
+   state_data = []
+   derived_facts_data = []
    failed = False
    for bench in ins_set:
       try:
          state = bench.get_item("state", th)
-         data.append((bench.get_name(), state))
+         state_data.append((bench.get_name(), state))
+         derived_facts = bench.get_item("derived_facts", th)
+         derived_facts_data.append((bench.get_name(), derived_facts))
       except KeyError:
          failed = True
-         print "**WARNING** missing"
    if not failed:
-      plot_state_evolution(th, data, True)
-      plot_state_evolution(th, data, False)
+      plot_numeric_evolution("nodes", th, state_data) # average
+      plot_numeric_evolution("derived_facts", th, derived_facts_data, True, 250) # average
+      
 
