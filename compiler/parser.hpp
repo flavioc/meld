@@ -175,6 +175,17 @@ class number_expr: public expr
       }
 };
 
+class world_expr: public expr
+{
+   public:
+
+      virtual std::string str() const { return "@world"; }
+
+      explicit world_expr(const token& tok):
+         expr(tok)
+      {}
+};
+
 class address_expr: public expr
 {
    public:
@@ -349,8 +360,87 @@ class exists_construct: public construct
       }
 };
 
+class aggregate_spec: public expr
+{
+   private:
+
+      var_expr *var;
+
+   public:
+
+      virtual std::string str() const
+      {
+         return tok.str + " => " + var->str();
+      }
+
+      explicit aggregate_spec(const token& mod,
+            var_expr *_var):
+         expr(mod), var(_var)
+      {
+      }
+};
+
 class aggregate_construct: public construct
 {
+   private:
+
+      std::vector<aggregate_spec*> specs;
+      std::vector<var_expr*> vars;
+      std::vector<expr*> conditions;
+      std::vector<fact*> body_facts;
+      std::vector<fact*> head_facts;
+
+   public:
+
+      virtual std::string str() const
+      {
+         std::string str("[");
+         for(size_t i(0); i < specs.size(); i++) {
+            str += specs[i]->str();
+            if(i < specs.size()-1)
+               str += ", ";
+         }
+
+         str += " | ";
+
+         for(size_t i(0); i < vars.size(); i++) {
+            str += vars[i]->str();
+            if(i < vars.size()-1)
+               str += ", ";
+         }
+
+         str += " | ";
+
+         for(size_t i(0); i < body_facts.size(); ++i) {
+            str += body_facts[i]->str();
+            if(i < body_facts.size()-1)
+               str += ", ";
+         }
+         for(size_t i(0); i < conditions.size(); ++i) {
+            str += ", " + conditions[i]->str();
+         }
+         str += " | ";
+         for(size_t i(0); i < head_facts.size(); ++i) {
+            str += head_facts[i]->str();
+            if(i < head_facts.size()-1)
+               str += ", ";
+         }
+
+         return str + "}";
+      }
+      explicit aggregate_construct(const token& tok,
+            std::vector<aggregate_spec*>&& _specs,
+            std::vector<var_expr*>&& _vars,
+            std::vector<expr*>&& _conditions,
+            std::vector<fact*>&& _body,
+            std::vector<fact*>&& _head):
+         construct(tok),
+         specs(_specs),
+         vars(_vars),
+         conditions(_conditions),
+         body_facts(_body),
+         head_facts(_head)
+      {}
 };
 
 class comprehension_construct: public construct
@@ -654,10 +744,11 @@ class parser: mem::base
       fact *parse_body_fact(const token&, const vm::predicate*);
       void parse_variables(const token::Token, std::vector<var_expr*>&);
       void parse_subhead(const token::Token, std::vector<fact*>&);
-      aggregate_construct* parse_aggregate();
+      aggregate_spec* parse_aggregate_spec();
+      aggregate_construct* parse_aggregate(const token&);
       exists_construct* parse_exists(const token&);
       comprehension_construct* parse_comprehension(const token&);
-      fact *parse_head_fact(const token&);
+      fact *parse_head_fact(const token&, const bool);
       Op parse_operation(const token&);
       expr *parse_expr_funcall(const token&);
       expr *parse_expr_list(const token&);

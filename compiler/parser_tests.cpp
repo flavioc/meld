@@ -31,6 +31,8 @@ class ParserTests : public TestFixture {
          p6.print(std::cout);
          parser p7("tests/progs/include.meld");
          p7.print(std::cout);
+         parser p8("tests/progs/mfp.meld");
+         p8.print(std::cout);
       }
 
       CPPUNIT_TEST_SUITE(ParserTests);

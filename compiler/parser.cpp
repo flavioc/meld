@@ -172,13 +172,21 @@ parser::parse_subhead(const token::Token end, vector<fact*>& head_facts)
       switch(tok.tok) {
          case token::Token::VAR:
             throw parser_error(tok, "heads of comprehensions cannot have conditions.");
+         case token::token::BANG:
+            {
+               const token name(get());
+               if(name.tok != token::Token::NAME)
+                  throw parser_error(name, "expecting a predicate name.");
+               head_facts.push_back(parse_head_fact(name, true));
+            }
+            break;
          case token::Token::NAME:
-            head_facts.push_back(parse_head_fact(tok));
+            head_facts.push_back(parse_head_fact(tok, false));
             break;
          case token::Token::NUMBER:
             throw parser_error(tok, "heads of rules cannot have conditions.");
          default:
-            throw parser_error(tok, "unrecognized token in comprehension.");
+            throw parser_error(tok, "unrecognized token in head.");
       }
 
       const token com(get());
@@ -233,18 +241,79 @@ parser::parse_comprehension(const token& start)
    }
 }
 
-aggregate_construct*
-parser::parse_aggregate()
+aggregate_spec*
+parser::parse_aggregate_spec()
 {
-   return nullptr;
+   const token mod(get());
+   if(mod.tok != token::Token::NAME && mod.tok != token::Token::MIN)
+      throw parser_error(mod, "expecting an aggregate modifier.");
+   const token arrow(get());
+   if(arrow.tok != token::Token::ARROW)
+      throw parser_error(arrow, "expecting an arrow =>.");
+   const token var(get());
+   if(var.tok != token::Token::VAR)
+      throw parser_error(var, "expecting a variable name.");
+
+   return new aggregate_spec(mod, new var_expr(var));
+}
+
+aggregate_construct*
+parser::parse_aggregate(const token& start)
+{
+   vector<aggregate_spec*> specs;
+
+   while(true) {
+      specs.push_back(parse_aggregate_spec());
+      const token tok(get());
+      if(tok.tok == token::Token::BAR)
+         break;
+      if(tok.tok != token::Token::COMMA)
+         throw parser_error(tok, "expecting a comma in the aggregate.");
+   }
+
+   // parse variables
+   token tok(peek());
+   vector<var_expr*> agg_vars;
+
+   if(tok.tok == token::Token::BAR)
+      get(); // no vars, get |
+   else if(tok.tok == token::Token::VAR)
+      parse_variables(token::Token::BAR, agg_vars);
+
+   // parse aggregate body!
+   vector<expr*> conditions;
+   vector<fact*> body_facts;
+
+   while(true) {
+      parse_body(conditions, body_facts, token::Token::BAR);
+
+      const token com(get());
+      if(com.tok == token::Token::BAR)
+         break;
+      if(com.tok != token::Token::COMMA)
+         throw parser_error(com, "expecting a comma.");
+   }
+
+   // parse head facts
+   vector<fact*> head_facts;
+   parse_subhead(token::Token::BRACKET_RIGHT, head_facts);
+
+   return new aggregate_construct(start, move(specs), move(agg_vars),
+            move(conditions), move(body_facts), move(head_facts));
 }
 
 fact*
-parser::parse_head_fact(const token& name)
+parser::parse_head_fact(const token& name, const bool persistent)
 {
    auto it(ast->predicates.find(name.str));
    if(it == ast->predicates.end())
       throw parser_error(name, string("predicate ") + name.str + " was not defined.");
+   if(persistent != it->second->is_persistent_pred()) {
+      if(persistent)
+         throw parser_error(name, "predicate must be persistent.");
+      else
+         throw parser_error(name, "predicate is linear.");
+   }
    return parse_body_fact(name, it->second);
 }
 
@@ -260,7 +329,7 @@ parser::parse_rule_head(const token& lolli, vector<expr*>& conditions, vector<fa
          case token::Token::VAR:
             throw parser_error(tok, "Heads of rules cannot have conditions.");
          case token::Token::NAME:
-            head_facts.push_back(parse_head_fact(tok));
+            head_facts.push_back(parse_head_fact(tok, false));
             break;
          case token::Token::NUMBER:
             throw parser_error(tok, "Heads of rules cannot have conditions.");
@@ -270,7 +339,7 @@ parser::parse_rule_head(const token& lolli, vector<expr*>& conditions, vector<fa
             constrs.push_back(parse_exists(tok));
             break;
          case token::Token::BRACKET_LEFT:
-            constrs.push_back(parse_aggregate());
+            constrs.push_back(parse_aggregate(tok));
             break;
          case token::Token::CURLY_LEFT:
             constrs.push_back(parse_comprehension(tok));
@@ -373,10 +442,14 @@ parser::parse_atom_expr()
          return new number_expr(tok);
       case token::Token::ADDRESS:
          return new address_expr(tok);
+      case token::Token::WORLD:
+         return new world_expr(tok);
       case token::Token::BRACKET_LEFT:
          return parse_expr_list(tok);
       case token::Token::IF:
          return parse_expr_if(tok);
+      case token::Token::ANONYMOUS_VAR:
+         return new var_expr(tok);
       case token::Token::PAREN_LEFT: {
          expr *ret(parse_expr(end_tokens, 1));
          const token rp(get());
@@ -540,10 +613,16 @@ parser::parse_operation(const token& tok)
          return Op::EQUAL;
       case token::Token::NOT_EQUAL:
          return Op::NOT_EQUAL;
+      case token::Token::LESSER:
+         return Op::LESSER;
+      case token::Token::LESSER_EQUAL:
+         return Op::LESSER_EQUAL;
       case token::Token::GREATER:
          return Op::GREATER;
       case token::Token::GREATER_EQUAL:
          return Op::GREATER_EQUAL;
+      case token::Token::OR:
+         return Op::OR;
       case token::Token::COMMA:
       case token::Token::PAREN_RIGHT:
          return Op::NO_OP;
