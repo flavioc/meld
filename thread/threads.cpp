@@ -111,27 +111,27 @@ threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
          to->add_work_myself(arr);
       }
 #ifdef INSTRUMENTATION
-      sent_facts_same_thread++;
+      sent_facts_same_thread += arr.size();
 #endif
       if(!to->active_node())
          add_to_queue(to);
    } else {
 #ifdef FACT_STATISTICS
-      count_add_work_other++;
+      count_add_work_other += arr.size();
 #endif
       LOCK_STACK(databaselock);
       if(to->database_lock.try_lock1(LOCK_STACK_USE(databaselock))) {
          LOCKING_STAT(database_lock_ok);
          to->add_work_myself(arr);
 #ifdef INSTRUMENTATION
-         sent_facts_other_thread_now++;
+         sent_facts_other_thread_now += arr.size();
 #endif
          MUTEX_UNLOCK(to->database_lock, databaselock);
       } else {
          LOCKING_STAT(database_lock_fail);
          to->add_work_others(arr);
 #ifdef INSTRUMENTATION
-         sent_facts_other_thread++;
+         sent_facts_other_thread += arr.size();
 #endif
       }
       if(!to->active_node()) {
