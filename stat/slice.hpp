@@ -21,6 +21,8 @@ public:
    size_t consumed_facts = 0;
    size_t rules_run = 0;
    size_t stolen_nodes = 0;
+   size_t thread_transactions = 0;
+   size_t all_transactions = 0;
    size_t sent_facts_same_thread = 0;
    size_t sent_facts_other_thread = 0;
    size_t sent_facts_other_thread_now = 0;
@@ -33,6 +35,8 @@ public:
    void print_state(utils::csv_line&) const;
    void print_derived_facts(utils::csv_line&) const;
    void print_consumed_facts(utils::csv_line&) const;
+   void print_thread_transactions(utils::csv_line&) const;
+   void print_all_transactions(utils::csv_line&) const;
    void print_rules_run(utils::csv_line&) const;
    void print_stolen_nodes(utils::csv_line&) const;
    void print_sent_facts_same_thread(utils::csv_line&) const;

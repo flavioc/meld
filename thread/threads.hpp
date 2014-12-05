@@ -77,7 +77,7 @@ private:
    ids node_handler;
    
 #ifdef INSTRUMENTATION
-   mutable std::atomic<statistics::sched_state> ins_state;
+   mutable std::atomic<statistics::sched_state> ins_state{statistics::NOW_ACTIVE};
    
 #define ins_active ins_state = statistics::NOW_ACTIVE
 #define ins_idle ins_state = statistics::NOW_IDLE
@@ -99,7 +99,7 @@ private:
       THREAD_INACTIVE = 1
    };
 
-   std::atomic<thread_state> tstate;
+   std::atomic<thread_state> tstate{THREAD_ACTIVE};
 
    static termination_barrier *term_barrier;
    static utils::tree_barrier *thread_barrier;
@@ -204,7 +204,7 @@ private:
          prios.moving.insert(node, node->get_priority());
 	}
 
-   db::node *current_node;
+   db::node *current_node{nullptr};
    vm::bitmap comm_threads; // threads we may need to communicate with
 
    inline bool pop_node_from_queues(void)
@@ -222,7 +222,7 @@ private:
    size_t steal_nodes(db::node **, const size_t);
 
 #ifdef INSTRUMENTATION
-   size_t stolen_total = 0;
+   std::atomic<size_t> stolen_total{0};
 #endif
 
    void clear_steal_requests(void);
@@ -239,6 +239,8 @@ private:
    std::atomic<size_t> priority_nodes_others{0};
    std::atomic<size_t> node_lock_ok{0};
    std::atomic<size_t> node_lock_fail{0};
+   std::atomic<size_t> thread_transactions{0};
+   std::atomic<size_t> all_transactions{0};
 #endif
 
 #ifndef DIRECT_PRIORITIES
@@ -256,7 +258,7 @@ private:
 #endif
 
    // number of static nodes owned by this thread.
-   std::atomic<uint64_t> static_nodes;
+   std::atomic<uint64_t> static_nodes{0};
 
    inline void make_node_static(db::node *tn, threads_sched *target)
    {

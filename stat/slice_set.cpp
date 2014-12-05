@@ -155,6 +155,8 @@ slice_set::write(const string& file, vm::all *all) const
    write_bytes_used(file, all);
    write_node_lock_ok(file, all);
    write_node_lock_fail(file, all);
+   write_general(file + ".thread_transactions", "threadtransactions", &slice::print_thread_transactions, all);
+   write_general(file + ".all_transactions", "alltransactions", &slice::print_all_transactions, all);
 }
    
 void

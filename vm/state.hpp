@@ -81,9 +81,9 @@ public:
    void reset_counters();
 
 #ifdef INSTRUMENTATION
-   size_t instr_facts_consumed{0};
-   size_t instr_facts_derived{0};
-   size_t instr_rules_run{0};
+   std::atomic<size_t> instr_facts_consumed{0};
+   std::atomic<size_t> instr_facts_derived{0};
+   std::atomic<size_t> instr_rules_run{0};
 #endif
    bool generated_facts;
    bool running_rule;
