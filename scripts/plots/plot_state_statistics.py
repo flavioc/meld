@@ -318,5 +318,5 @@ for th in [1, 2, 4, 6, 8, 10, 12, 14, 16, 20, 24]:
       plot_numeric_evolution("bytes_used", th, bytes_used_data, True, 50) # average
       plot_numeric_evolution("node_locks", th, node_locks_data, True, 100)
       plot_numeric_evolution("stolen_nodes", th, stolen_nodes_data, True, 100)
-      plot_numeric_evolution("sent_facts_other_thread", th, sent_facts_other_thread_data, True, 50)
-      plot_numeric_evolution("sent_facts", th, sent_facts_data, True, 50)
+      plot_numeric_evolution("sent_facts_other_thread", th, sent_facts_other_thread_data, True, 250)
+      plot_numeric_evolution("sent_facts", th, sent_facts_data, True, 250)
