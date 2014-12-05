@@ -31,6 +31,7 @@ public:
    int64_t bytes_used = 0;
    size_t node_lock_ok = 0;
    size_t node_lock_fail = 0;
+   int32_t node_difference = 0;
    
    void print_state(utils::csv_line&) const;
    void print_derived_facts(utils::csv_line&) const;
@@ -55,6 +56,10 @@ public:
    void print_node_lock_fail(utils::csv_line& csv) const
    {
       csv << utils::to_string<size_t>(node_lock_fail);
+   }
+   void print_node_difference(utils::csv_line& csv) const
+   {
+      csv << utils::to_string<size_t>(node_difference);
    }
 };
 

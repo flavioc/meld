@@ -490,6 +490,11 @@ threads_sched::get_work(void)
    ins_active;
    assert(current_node != nullptr);
    assert(current_node->unprocessed_facts);
+
+#ifdef INSTRUMENTATION
+   node_difference += current_node->get_translated_id() - last_node;
+   last_node = current_node->get_translated_id();
+#endif
    
    return current_node;
 }
@@ -583,6 +588,7 @@ threads_sched::write_slice(statistics::slice& sl)
    sl.node_lock_fail = node_lock_fail.exchange(0);
    sl.thread_transactions = thread_transactions.exchange(0);
    sl.all_transactions = all_transactions.exchange(0);
+   sl.node_difference = node_difference;
 
 #ifdef TASK_STEALING
    sl.stolen_nodes = stolen_total.exchange(0);

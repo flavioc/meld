@@ -241,6 +241,8 @@ private:
    std::atomic<size_t> node_lock_fail{0};
    std::atomic<size_t> thread_transactions{0};
    std::atomic<size_t> all_transactions{0};
+   db::node::node_id last_node{0};
+   std::atomic<int32_t> node_difference{0};
 #endif
 
 #ifndef DIRECT_PRIORITIES
