@@ -163,6 +163,9 @@ update-ht:
 plots:
 	@bash ../scripts/plots/plot_instrumentation.sh instrumentation_files
 
+state_plots:
+	@python ../scripts/plots/plot_state_statistics.py instrumentation_files state_statistics
+
 clean:
 	rm -f $(RESULTS_FILE)
 	rm -rf output

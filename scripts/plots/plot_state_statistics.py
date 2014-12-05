@@ -166,15 +166,6 @@ def parse_instrumentation_benchmark(subdir, name):
          bench.add_item("consumed_facts", th, consumed_facts)
       else:
          print "**WARNING** file", consumed_facts_file, "is missing"
-      if os.path.isfile(consumed_facts_file) and os.path.isfile(derived_facts_file):
-         consumed_facts = instrumentation_item(th)
-         derived_facts = instrumentation_item(th)
-         parse_numbers(consumed_facts, consumed_facts_file)
-         parse_numbers(derived_facts, derived_facts_file)
-         consumed_facts.apply_running_total()
-         derived_facts.apply_running_total()
-         derived_facts.sub(consumed_facts)
-         bench.add_item("pending_facts", th, derived_facts)
       bytes_used_file = os.path.join(path, "data.bytes_used")
       if os.path.isfile(bytes_used_file):
          bytes_used = instrumentation_item(th)
@@ -182,6 +173,27 @@ def parse_instrumentation_benchmark(subdir, name):
          bench.add_item("bytes_used", th, bytes_used)
       else:
          print "**WARNING** file", bytes_used_file, "is missing"
+      all_transactions_file = os.path.join(path, "data.all_transactions")
+      if os.path.isfile(all_transactions_file):
+         all_transactions = instrumentation_item(th)
+         parse_numbers(all_transactions, all_transactions_file)
+         bench.add_item("all_transactions", th, all_transactions)
+      else:
+         print "**WARNING** file", all_transactions_file, "is missing"
+      thread_transactions_file = os.path.join(path, "data.thread_transactions")
+      if os.path.isfile(thread_transactions_file):
+         thread_transactions = instrumentation_item(th)
+         parse_numbers(thread_transactions, thread_transactions_file)
+         bench.add_item("thread_transactions", th, thread_transactions)
+      else:
+         print "**WARNING** file", thread_transactions_file, "is missing"
+      node_difference_file = os.path.join(path, "data.node_difference")
+      if os.path.isfile(node_difference_file):
+         node_difference = instrumentation_item(th)
+         parse_numbers(node_difference, node_difference_file)
+         bench.add_item("node_difference", th, node_difference)
+      else:
+         print "**WARNING** file", node_difference_file, "is missing"
       node_lock_ok_file = os.path.join(path, "data.node_lock_ok")
       node_lock_fail_file = os.path.join(path, "data.node_lock_fail")
       if os.path.isfile(node_lock_ok_file) and os.path.isfile(node_lock_fail_file):
@@ -287,6 +299,9 @@ for th in [1, 2, 4, 6, 8, 10, 12, 14, 16, 20, 24]:
    stolen_nodes_data = []
    sent_facts_other_thread_data = []
    sent_facts_data = []
+   thread_transactions_data = []
+   all_transactions_data = []
+   node_difference_data = []
    failed = False
    for bench in ins_set:
       try:
@@ -296,8 +311,6 @@ for th in [1, 2, 4, 6, 8, 10, 12, 14, 16, 20, 24]:
          derived_facts_data.append((bench.get_name(), derived_facts))
          consumed_facts = bench.get_item("consumed_facts", th)
          consumed_facts_data.append((bench.get_name(), consumed_facts))
-         pending_facts = bench.get_item("pending_facts", th)
-         pending_facts_data.append((bench.get_name(), pending_facts))
          bytes_used = bench.get_item("bytes_used", th)
          bytes_used_data.append((bench.get_name(), bytes_used))
          node_locks = bench.get_item("node_locks", th)
@@ -308,15 +321,23 @@ for th in [1, 2, 4, 6, 8, 10, 12, 14, 16, 20, 24]:
          sent_facts_other_thread_data.append((bench.get_name(), sent_facts_other_thread))
          sent_facts = bench.get_item("sent_facts", th)
          sent_facts_data.append((bench.get_name(), sent_facts))
+         thread_transactions = bench.get_item("thread_transactions", th)
+         thread_transactions_data.append((bench.get_name(), thread_transactions))
+         all_transactions = bench.get_item("all_transactions", th)
+         all_transactions_data.append((bench.get_name(), thread_transactions))
+         node_difference = bench.get_item("node_difference", th)
+         node_difference_data.append((bench.get_name(), node_difference))
       except KeyError:
          failed = True
    if not failed:
       plot_numeric_evolution("nodes", th, state_data) # average
       plot_numeric_evolution("derived_facts", th, derived_facts_data, True, 250) # average
       plot_numeric_evolution("consumed_facts", th, consumed_facts_data, True, 250) # average
-      plot_numeric_evolution("pending_facts", th, pending_facts_data, True, 250) # average
       plot_numeric_evolution("bytes_used", th, bytes_used_data, True, 50) # average
       plot_numeric_evolution("node_locks", th, node_locks_data, True, 100)
       plot_numeric_evolution("stolen_nodes", th, stolen_nodes_data, True, 100)
       plot_numeric_evolution("sent_facts_other_thread", th, sent_facts_other_thread_data, True, 250)
       plot_numeric_evolution("sent_facts", th, sent_facts_data, True, 250)
+      plot_numeric_evolution("thread_transactions", th, thread_transactions_data, True, 150)
+      plot_numeric_evolution("all_transactions", th, all_transactions_data, True, 150)
+      plot_numeric_evolution("node_difference", th, node_difference_data, True, 5)
