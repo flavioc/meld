@@ -275,7 +275,10 @@ def plot_numeric_evolution(title, th, data, average=True, mean=100):
          y0 = state.ordered_average()
       else:
          y0 = state.ordered_median()
-      y = runningMeanFast(y0, mean)
+      if mean > 1:
+         y = runningMeanFast(y0, mean)
+      else:
+         y = y0
       plot, = ax.plot(x, y,
          linestyle='-', color=colors[i % len(colors)])
       plots.append(plot)
@@ -324,7 +327,7 @@ for th in [1, 2, 4, 6, 8, 10, 12, 14, 16, 20, 24]:
          thread_transactions = bench.get_item("thread_transactions", th)
          thread_transactions_data.append((bench.get_name(), thread_transactions))
          all_transactions = bench.get_item("all_transactions", th)
-         all_transactions_data.append((bench.get_name(), thread_transactions))
+         all_transactions_data.append((bench.get_name(), all_transactions))
          node_difference = bench.get_item("node_difference", th)
          node_difference_data.append((bench.get_name(), node_difference))
       except KeyError:
@@ -340,4 +343,4 @@ for th in [1, 2, 4, 6, 8, 10, 12, 14, 16, 20, 24]:
       plot_numeric_evolution("sent_facts", th, sent_facts_data, True, 250)
       plot_numeric_evolution("thread_transactions", th, thread_transactions_data, True, 150)
       plot_numeric_evolution("all_transactions", th, all_transactions_data, True, 150)
-      plot_numeric_evolution("node_difference", th, node_difference_data, True, 5)
+      plot_numeric_evolution("node_difference", th, node_difference_data, True, 1)
