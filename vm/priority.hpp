@@ -35,7 +35,7 @@ no_priority_value(void)
 }
 
 static inline priority_t
-max_priority_value(void)
+max_priority_value()
 {
    return no_priority_value0(!theProgram->is_priority_desc());
 }

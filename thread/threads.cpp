@@ -544,24 +544,26 @@ threads_sched::init(const size_t)
 
    database::map_nodes::iterator it(All->DATABASE->get_node_iterator(All->MACHINE->find_first_node(id)));
    database::map_nodes::iterator end(All->DATABASE->get_node_iterator(All->MACHINE->find_last_node(id)));
-   const priority_t initial(theProgram->get_initial_priority());
+   priority_t initial(theProgram->get_initial_priority());
 
-   if(initial == no_priority_value() || !scheduling_mechanism) {
+   if(initial == no_priority_value() || !scheduling_mechanism)
+      initial = max_priority_value();
+#if 0
+      const priority_t max_prio(max_priority_value());
       for(; it != end; ++it)
       {
          db::node *cur_node(init_node(it));
       	queues.moving.push_tail(cur_node);
       }
-   } else {
-      prios.moving.start_initial_insert(All->MACHINE->find_owned_nodes(id));
+#endif
+   prios.moving.start_initial_insert(All->MACHINE->find_owned_nodes(id));
 
-      for(size_t i(0); it != end; ++it, ++i) {
-         db::node *cur_node(init_node(it));
+   for(size_t i(0); it != end; ++it, ++i) {
+      db::node *cur_node(init_node(it));
 
-         prios.moving.initial_fast_insert(cur_node, initial, i);
-      }
+      prios.moving.initial_fast_insert(cur_node, initial, i);
    }
-   
+
    threads_synchronize();
 }
 
