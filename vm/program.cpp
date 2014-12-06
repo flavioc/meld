@@ -13,6 +13,7 @@
 #include "vm/reader.hpp"
 #include "vm/external.hpp"
 #include "vm/priority.hpp"
+#include "interface.hpp"
 #include "version.hpp"
 
 using namespace std;
@@ -360,6 +361,9 @@ program::program(const string& _filename):
          priority_order = PRIORITY_DESC;
       break;
    }
+
+   if(!scheduling_mechanism)
+      initial_priority = no_priority_value0(priority_order == PRIORITY_DESC);
    
    // read predicate code
    for(size_t i(0); i < num_predicates; ++i) {
