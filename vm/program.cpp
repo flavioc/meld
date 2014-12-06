@@ -348,7 +348,7 @@ program::program(const string& _filename):
          priority_static = (asc_desc & 0x02) ? true : false;
 
          read.read_type<float_val>(&initial_priority);
-         if(initial_priority == 0.0)
+         if(initial_priority <= 0.0)
             initial_priority = max_priority_value0(priority_order == PRIORITY_DESC);
       }
       break;
