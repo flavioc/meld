@@ -29,15 +29,21 @@ no_priority_value0(const bool desc)
 }
 
 static inline priority_t
-no_priority_value(void)
+max_priority_value0(const bool desc)
+{
+   return no_priority_value0(!desc);
+}
+
+static inline priority_t
+no_priority_value()
 {
    return no_priority_value0(theProgram->is_priority_desc());
 }
 
 static inline priority_t
-max_priority_value(void)
+max_priority_value()
 {
-   return no_priority_value0(!theProgram->is_priority_desc());
+   return max_priority_value0(theProgram->is_priority_desc());
 }
 
 }
