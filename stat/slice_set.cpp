@@ -16,70 +16,47 @@ using namespace utils;
 namespace statistics
 {
 
-static void
-write_header(ofstream& out, const string& header, vm::all *all)
-{
-   csv_line line;
-
-   line.set_header();
-
-   line << header;
-
-   for(size_t i(0); i < all->NUM_THREADS; ++i)
-      line << (string("thread") + to_string<size_t>(i));
-
-   line.print(out);
-}
-  
-void
-slice_set::write_general(const string& file, const string& title,
-   print_fn fun, vm::all *all) const
-{
-   ofstream out(file.c_str(), ios_base::out | ios_base::trunc);
-   
-   write_header(out, title, all);
-   
-   vector<iter> iters(all->NUM_THREADS, iter());
-
-	 assert(slices.size() == all->NUM_THREADS);
-
-   for(size_t i(0); i < all->NUM_THREADS; ++i) {
-		  assert(num_slices == slices[i].size());
-      iters[i] = slices[i].begin();
-	 }
-      
-   for(size_t slice(0); slice < num_slices; ++slice) {
-      csv_line line;
-      line << to_string<unsigned long>(slice * SLICE_PERIOD);
-      for(size_t proc(0); proc < all->NUM_THREADS; ++proc) {
-         assert(iters[proc] != slices[proc].end());
-         const statistics::slice& sl(*iters[proc]);
-         CALL_MEMBER_FN(sl, fun)(line);
-         iters[proc]++;
-      }
-      line.print(out);
-   }
-}
-
 void
 slice_set::write(const string& file, vm::all *all) const
 {
-   write_general(file + ".state", "state", &slice::print_state, all);
-   write_general(file + ".derived_facts", "derivedfacts", &slice::print_derived_facts, all);
-   write_general(file + ".consumed_facts", "consumedfacts", &slice::print_consumed_facts, all);
-   write_general(file + ".rules_run", "rulesrun", &slice::print_rules_run, all);
-   write_general(file + ".stolen_nodes", "stolennodes", &slice::print_stolen_nodes, all);
-   write_general(file + ".sent_facts_same_thread", "sentfactssamethread", &slice::print_sent_facts_same_thread, all);
-   write_general(file + ".sent_facts_other_thread", "sentfactsotherthread", &slice::print_sent_facts_other_thread, all);
-   write_general(file + ".sent_facts_other_thread_now", "sentfactsotherthreadnow", &slice::print_sent_facts_other_thread_now, all);
-   write_general(file + ".priority_nodes_thread", "prioritynodesthread", &slice::print_priority_nodes_thread, all);
-   write_general(file + ".priority_nodes_others", "prioritynodesothers", &slice::print_priority_nodes_others, all);
-   write_general(file + ".bytes_used", "bytesused", &slice::print_bytes_used, all);
-   write_general(file + ".node_lock_ok", "nodelockok", &slice::print_node_lock_ok, all);
-   write_general(file + ".node_lock_fail", "nodelockfail", &slice::print_node_lock_fail, all);
-   write_general(file + ".thread_transactions", "threadtransactions", &slice::print_thread_transactions, all);
-   write_general(file + ".all_transactions", "alltransactions", &slice::print_all_transactions, all);
-   write_general(file + ".node_difference", "node_difference", &slice::print_node_difference, all);
+   write_general(file + ".state", "state", all, [](const slice& sl) {
+      switch(sl.state) {
+      case NOW_ACTIVE:
+         return to_string<size_t>(sl.work_queue);
+      case NOW_IDLE:
+         return std::string("i");
+      case NOW_SCHED:
+         return std::string("s");
+      case NOW_ROUND:
+         return std::string("r");
+      default: assert(false);
+   }});
+   write_general(file + ".derived_facts", "derivedfacts", all, [](const slice& sl) { return sl.derived_facts; });
+   write_general(file + ".consumed_facts", "consumedfacts", all, [](const slice& sl) { return sl.consumed_facts; });
+   write_general(file + ".rules_run", "rulesrun", all, [](const slice& sl) { return sl.rules_run; });
+   write_general(file + ".stolen_nodes", "stolennodes", all, [](const slice& sl) { return sl.stolen_nodes; });
+   write_general(file + ".sent_facts_same_thread", "sentfactssamethread", all,
+         [](const slice& sl) { return sl.sent_facts_same_thread; });
+   write_general(file + ".sent_facts_other_thread", "sentfactsotherthread", all,
+         [](const slice& sl) { return sl.sent_facts_other_thread; });
+   write_general(file + ".sent_facts_other_thread_now", "sentfactsotherthreadnow", all,
+         [](const slice& sl) { return sl.sent_facts_other_thread_now; });
+   write_general(file + ".priority_nodes_thread", "prioritynodesthread", all,
+         [](const slice& sl) { return sl.priority_nodes_thread; });
+   write_general(file + ".priority_nodes_others", "prioritynodesothers", all,
+         [](const slice& sl) { return sl.priority_nodes_others; });
+   write_general(file + ".bytes_used", "bytesused", all,
+         [](const slice& sl) { return sl.bytes_used; });
+   write_general(file + ".node_lock_ok", "nodelockok", all,
+         [](const slice& sl) { return sl.node_lock_ok; });
+   write_general(file + ".node_lock_fail", "nodelockfail", all,
+         [](const slice& sl) { return sl.node_lock_fail; });
+   write_general(file + ".thread_transactions", "threadtransactions", all,
+         [](const slice& sl) { return sl.thread_transactions; });
+   write_general(file + ".all_transactions", "alltransactions", all,
+         [](const slice& sl) { return sl.all_transactions; });
+   write_general(file + ".node_difference", "node_difference", all,
+         [](const slice& sl) { return sl.node_difference; });
 }
    
 void
