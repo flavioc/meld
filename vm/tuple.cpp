@@ -255,8 +255,7 @@ tuple::destructor(predicate *pred, candidate_gc_nodes& gc_nodes)
                db::node *n((db::node*)get_node(i));
                if(!All->DATABASE->is_initial_node(n)) {
                   assert(n->refs > 0);
-                  n->refs--;
-                  if(n->garbage_collect())
+                  if(n->try_garbage_collect())
                      gc_nodes.insert(get_node(i));
                }
             }
@@ -286,13 +285,16 @@ tuple::set_node(const field_num& field, const node_val& val)
 }
 
 void
-tuple::set_field_ref(const field_num& field, const tuple_field& newval, const predicate *pred, candidate_gc_nodes& gc_nodes)
+tuple::set_field_ref(const field_num& field, const tuple_field& newval,
+      const predicate *pred, candidate_gc_nodes& gc_nodes)
 {
    const tuple_field oldval(get_field(field));
    set_field(field, newval);
    const type *typ(pred->get_field_type(field));
    const field_type ftype(typ->get_type());
-   do_increment_runtime(newval, ftype);
+   if(newval.ptr_field == oldval.ptr_field)
+      return;
+   runtime::do_increment_runtime(newval, ftype);
    runtime::do_decrement_runtime(oldval, ftype, gc_nodes);
 }
 

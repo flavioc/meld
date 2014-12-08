@@ -143,7 +143,6 @@ SRCS = utils/utils.cpp \
 
 ifeq ($(INSTRUMENTATION), true)
 	SRCS += stat/stat.cpp \
-			  stat/slice.cpp \
 			  stat/slice_set.cpp
 endif
 ifeq ($(CORE_STATISTICS), true)

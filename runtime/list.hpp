@@ -9,290 +9,255 @@
 
 struct cons
 {
-public:
-   
-   typedef cons* list_ptr;
-   typedef list_ptr ptr;
-   
-private:
-   
-   std::atomic<vm::ref_count> refs;
-   list_ptr tail;
-   vm::tuple_field head;
-   
-   vm::list_type *type;
-   
-   inline void set_tail(list_ptr t)
-   {
-      tail = t;
-      
-      if(!is_null(tail))
-         tail->inc_refs();
-   }
+   public:
 
-public:
-   
-   const vm::tuple_field get_head(void) const { return head; }
-   list_ptr get_tail(void) const { return tail; }
-   vm::list_type* get_type(void) const { return type; }
-   
-   inline void inc_refs(void)
-	 {
-      refs++;
-   }
-   
-   inline void dec_refs(
-#ifdef GC_NODES
-         vm::candidate_gc_nodes& gc_nodes
-#endif
-         )
-	 {
-      assert(refs > 0);
-      refs--;
-      if(zero_refs())
-#ifdef GC_NODES
-         destroy(gc_nodes);
-#else
-         destroy();
-#endif
-   }
+      typedef cons* list_ptr;
+      typedef list_ptr ptr;
 
-   static inline bool has_refs(list_ptr ls)
-   {
-      if(is_null(ls))
-         return true;
-      return ls->refs > 0;
-   }
-   
-   inline bool zero_refs(void) const { return refs == 0; }
-   
-   inline void destroy(
-#ifdef GC_NODES
-         vm::candidate_gc_nodes& gc_nodes
-#endif
-         )
-   {
-      assert(zero_refs());
-      if(!is_null(get_tail()))
-         get_tail()->dec_refs(
-#ifdef GC_NODES
-               gc_nodes
-#endif
-               );
-      decrement_runtime_data(get_head(), type->get_subtype()->get_type()
-#ifdef GC_NODES
-            , gc_nodes
-#endif
-            );
-      remove(this);
-   }
-   
-   typedef void (*print_function)(std::ostream&, const vm::tuple_field&);
+   private:
 
-   void print(std::ostream& cout, const bool first, print_function print) const
-   {
-      if(first)
-         cout << "[";
-      else
-         cout << ",";
-      
-      print(cout, head);
-      
-      if(is_null(tail))
-         cout << "]";
-      else
-         tail->print(cout, false, print);
-   }
-   
-   static inline list_ptr null_list(void) { return (list_ptr)0; }
-   
-   static inline bool is_null(cons const * ls) { return ls == null_list(); }
-   
-   static inline void dec_refs(list_ptr ls
-#ifdef GC_NODES
-         , vm::candidate_gc_nodes& gc_nodes
-#endif
-         )
-	 {
-      if(!is_null(ls))
-         ls->dec_refs(
-#ifdef GC_NODES
-               gc_nodes
-#endif
-               );
-   }
-   
-   static inline void inc_refs(list_ptr ls)
-	 {
-      if(!is_null(ls))
-         ls->inc_refs();
-   }
-   
-   static inline
-	size_t size_list(const list_ptr ptr)
-   {
-      return sizeof(unsigned int) + sizeof(vm::tuple_field) * length(ptr);
-   }
-   
-   static inline
-	void pack(const list_ptr ptr, utils::byte *buf, const size_t buf_size, int *pos)
-   {
-      const size_t len(length(ptr));
-      
-      utils::pack<unsigned int>((void*)&len, 1, buf, buf_size, pos);
-      
-      list_ptr p(ptr);
-      
-      assert(*pos < (int)buf_size);
-      
-      for(size_t i(0); i < len; ++i) {
-         if(is_null(p))
-            return;
-         
-         utils::pack<vm::tuple_field>((void *)&(p->head), 1, buf, buf_size, pos);
-         p = p->get_tail();
+      std::atomic<vm::ref_count> refs{0};
+      list_ptr tail{nullptr};
+      vm::tuple_field head;
+
+      vm::list_type *type;
+
+      inline void set_tail(list_ptr t)
+      {
+         tail = t;
+
+         if(!is_null(tail))
+            tail->inc_refs();
       }
-   }
-   
-   static inline
-	list_ptr unpack(utils::byte *buf, const size_t buf_size, int *pos, vm::list_type *t)
-   {
-      size_t len(0);
-      
-      utils::unpack<unsigned int>(buf, buf_size, pos, &len, 1);
-      
-      list_ptr prev(null_list());
-      list_ptr init(null_list());
-      
-      while(len > 0) {
-         vm::tuple_field head;
 
-         utils::unpack<vm::tuple_field>(buf, buf_size, pos, &head, 1);
-         
-         list_ptr n(cons::create(null_list(), head, t));
-         
-         if(is_null(prev))
-            init = n;
+   public:
+
+      const vm::tuple_field get_head(void) const { return head; }
+      list_ptr get_tail(void) const { return tail; }
+      vm::list_type* get_type(void) const { return type; }
+
+      inline void inc_refs(void)
+      {
+         refs++;
+      }
+
+      inline void dec_refs(vm::candidate_gc_nodes& gc_nodes)
+      {
+         assert(refs > 0);
+         if(--refs == 0) {
+            destroy(gc_nodes);
+         }
+      }
+
+      static inline bool has_refs(list_ptr ls)
+      {
+         if(is_null(ls))
+            return true;
+         return ls->refs > 0;
+      }
+
+      inline void destroy(vm::candidate_gc_nodes& gc_nodes)
+      {
+         if(!is_null(get_tail()))
+            get_tail()->dec_refs( gc_nodes);
+         decrement_runtime_data(get_head(), type->get_subtype()->get_type(), gc_nodes);
+         remove(this);
+      }
+
+      typedef void (*print_function)(std::ostream&, const vm::tuple_field&);
+
+      void print(std::ostream& cout, const bool first, print_function print) const
+      {
+         if(first)
+            cout << "[";
          else
-            prev->set_tail(n);
-         
-         prev = n;
-         
-         --len;
-      }
-      
-      return init;
-   }
+            cout << ",";
 
-   static inline
-   list_ptr copy(list_ptr ptr)
-   {
-      if(is_null(ptr))
-         return null_list();
-         
-      list_ptr init(cons::create(null_list(), ptr->get_head(), ptr->type));
-      list_ptr cur(init);
-      
-      ptr = ptr->get_tail();
-   
-      while (!is_null(ptr)) {
-         cur->set_tail(cons::create(null_list(), ptr->get_head(), ptr->type));
-         cur = cur->get_tail();
+         print(cout, head);
+
+         if(is_null(tail))
+            cout << "]";
+         else
+            tail->print(cout, false, print);
+      }
+
+      static inline list_ptr null_list(void) { return (list_ptr)0; }
+
+      static inline bool is_null(cons const * ls) { return ls == null_list(); }
+
+      static inline void dec_refs(list_ptr ls, vm::candidate_gc_nodes& gc_nodes)
+      {
+         if(!is_null(ls))
+            ls->dec_refs(gc_nodes);
+      }
+
+      static inline void inc_refs(list_ptr ls)
+      {
+         if(!is_null(ls))
+            ls->inc_refs();
+      }
+
+      static inline
+      size_t size_list(const list_ptr ptr)
+      {
+         return sizeof(unsigned int) + sizeof(vm::tuple_field) * length(ptr);
+      }
+
+      static inline
+      void pack(const list_ptr ptr, utils::byte *buf, const size_t buf_size, int *pos)
+      {
+         const size_t len(length(ptr));
+
+         utils::pack<unsigned int>((void*)&len, 1, buf, buf_size, pos);
+
+         list_ptr p(ptr);
+
+         assert(*pos < (int)buf_size);
+
+         for(size_t i(0); i < len; ++i) {
+            if(is_null(p))
+               return;
+
+            utils::pack<vm::tuple_field>((void *)&(p->head), 1, buf, buf_size, pos);
+            p = p->get_tail();
+         }
+      }
+
+      static inline
+      list_ptr unpack(utils::byte *buf, const size_t buf_size, int *pos, vm::list_type *t)
+      {
+         size_t len(0);
+
+         utils::unpack<unsigned int>(buf, buf_size, pos, &len, 1);
+
+         list_ptr prev(null_list());
+         list_ptr init(null_list());
+
+         while(len > 0) {
+            vm::tuple_field head;
+
+            utils::unpack<vm::tuple_field>(buf, buf_size, pos, &head, 1);
+
+            list_ptr n(cons::create(null_list(), head, t));
+
+            if(is_null(prev))
+               init = n;
+            else
+               prev->set_tail(n);
+
+            prev = n;
+
+            --len;
+         }
+
+         return init;
+      }
+
+      static inline
+      list_ptr copy(list_ptr ptr)
+      {
+         if(is_null(ptr))
+            return null_list();
+
+         list_ptr init(cons::create(null_list(), ptr->get_head(), ptr->type));
+         list_ptr cur(init);
+
          ptr = ptr->get_tail();
+
+         while (!is_null(ptr)) {
+            cur->set_tail(cons::create(null_list(), ptr->get_head(), ptr->type));
+            cur = cur->get_tail();
+            ptr = ptr->get_tail();
+         }
+
+         return init;
       }
-      
-      return init;
-   }
-   
-   static inline
-	void print(std::ostream& cout, list_ptr ls, print_function print)
-	{
-      if(is_null(ls))
-         cout << "[]";
-      else
-         ls->print(cout, true, print);
-   }
 
-   typedef bool (*equal_function)(const vm::tuple_field&, const vm::tuple_field&);
-   
-   static inline
-	bool equal(const list_ptr l1, const list_ptr l2, equal_function eq)
-	{
-      if(l1 == null_list() && l2 != null_list())
-         return false;
-      if(l1 != null_list() && l2 == null_list())
-         return false;
-      if(l1 == null_list() && l2 == null_list())
-         return true;
-         
-      if(!eq(l1->get_head(), l2->get_head()))
-         return false;
-      
-      return equal(l1->get_tail(), l2->get_tail(), eq);
-   }
-   
-   static inline
-	size_t length(const list_ptr ls)
-	{
-      if(is_null(ls))
-         return 0;
-         
-      return 1 + length(ls->get_tail());
-   }
-   
-   static inline
-	vm::tuple_field get(const list_ptr ls, const size_t pos, const vm::tuple_field def)
-	{
-      if(is_null(ls))
-         return def;
-         
-      if(pos == 0)
-         return ls->get_head();
-      
-      return get(ls->get_tail(), pos - 1, def);
-   }
+      static inline
+      void print(std::ostream& cout, list_ptr ls, print_function print)
+      {
+         if(is_null(ls))
+            cout << "[]";
+         else
+            ls->print(cout, true, print);
+      }
 
-	inline void stl_list(std::list<vm::tuple_field>& ls)
-	{
-		ls.push_back(get_head());
+      typedef bool (*equal_function)(const vm::tuple_field&, const vm::tuple_field&);
 
-		if(!is_null(get_tail()))
-			get_tail()->stl_list(ls);
-	}
+      static inline
+      bool equal(const list_ptr l1, const list_ptr l2, equal_function eq)
+      {
+         if(l1 == null_list() && l2 != null_list())
+            return false;
+         if(l1 != null_list() && l2 == null_list())
+            return false;
+         if(l1 == null_list() && l2 == null_list())
+            return true;
 
-	static inline
-	std::list<vm::tuple_field> stl_list(const list_ptr ls)
-	{
-		std::list<vm::tuple_field> ret;
+         if(!eq(l1->get_head(), l2->get_head()))
+            return false;
 
-		if(is_null(ls))
-			return ret;
+         return equal(l1->get_tail(), l2->get_tail(), eq);
+      }
 
-		ls->stl_list(ret);
-		return ret;
-	}
+      static inline
+      size_t length(const list_ptr ls)
+      {
+         if(is_null(ls))
+            return 0;
 
-   static inline cons* create(list_ptr _tail, const vm::tuple_field _head, vm::list_type *_type)
-   {
-      cons *c(mem::allocator<cons>().allocate(1));
-      c->refs = 0;
-      c->head = _head;
-      c->type = _type;
-      c->set_tail(_tail);
-      increment_runtime_data(c->head, c->type->get_subtype()->get_type());
-      return c;
-   }
+         return 1 + length(ls->get_tail());
+      }
 
-   static inline void remove(cons *c)
-   {
-      mem::allocator<cons>().deallocate(c, 1);
-   }
+      static inline
+      vm::tuple_field get(const list_ptr ls, const size_t pos, const vm::tuple_field def)
+      {
+         if(is_null(ls))
+            return def;
 
-private:
-   explicit cons(void):
-      refs(0)
-   {
-   }
+         if(pos == 0)
+            return ls->get_head();
+
+         return get(ls->get_tail(), pos - 1, def);
+      }
+
+      inline void stl_list(std::list<vm::tuple_field>& ls)
+      {
+         ls.push_back(get_head());
+
+         if(!is_null(get_tail()))
+            get_tail()->stl_list(ls);
+      }
+
+      static inline
+      std::list<vm::tuple_field> stl_list(const list_ptr ls)
+      {
+         std::list<vm::tuple_field> ret;
+
+         if(is_null(ls))
+            return ret;
+
+         ls->stl_list(ret);
+         return ret;
+      }
+
+      static inline cons* create(list_ptr _tail, const vm::tuple_field _head, vm::list_type *_type,
+            const size_t start_refs = 0)
+      {
+         cons *c(mem::allocator<cons>().allocate(1));
+         mem::allocator<cons>().construct(c);
+         c->refs = start_refs;
+         c->head = _head;
+         c->type = _type;
+         c->set_tail(_tail);
+         increment_runtime_data(c->head, c->type->get_subtype()->get_type());
+         return c;
+      }
+
+      static inline void remove(cons *c)
+      {
+         mem::allocator<cons>().deallocate(c, 1);
+      }
 };
 
 typedef std::stack<vm::float_val, std::deque<vm::float_val, mem::allocator<vm::float_val> > > stack_float_list;

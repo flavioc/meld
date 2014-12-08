@@ -27,7 +27,8 @@ namespace process
 {
    
 void
-machine::run_action(sched::threads_sched *sched, node* node, vm::tuple *tpl, vm::predicate *pred, candidate_gc_nodes& gc_nodes)
+machine::run_action(sched::threads_sched *sched, node* node, vm::tuple *tpl, vm::predicate *pred,
+      candidate_gc_nodes& gc_nodes)
 {
 	const predicate_id pid(pred->get_id());
 	

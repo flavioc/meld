@@ -81,9 +81,9 @@ public:
    void reset_counters();
 
 #ifdef INSTRUMENTATION
-   size_t instr_facts_consumed{0};
-   size_t instr_facts_derived{0};
-   size_t instr_rules_run{0};
+   std::atomic<size_t> instr_facts_consumed{0};
+   std::atomic<size_t> instr_facts_derived{0};
+   std::atomic<size_t> instr_rules_run{0};
 #endif
    bool generated_facts;
    bool running_rule;
@@ -99,9 +99,7 @@ public:
    vm::counter *match_counter;
    std::unordered_set<utils::byte*, utils::pointer_hash<utils::byte>,
       std::equal_to<utils::byte*>, mem::allocator<utils::byte*>> allocated_match_objects;
-#ifdef GC_NODES
    candidate_gc_nodes gc_nodes;
-#endif
 #ifdef CORE_STATISTICS
    core_statistics stat;
 #endif
@@ -152,8 +150,7 @@ public:
 
 	void copy_reg2const(const reg_num&, const const_id&);
    
-   inline void add_cons(runtime::cons *ls) { ls->inc_refs();
-                                             free_cons.push_back(ls); }
+   inline void add_cons(runtime::cons *ls) { free_cons.push_back(ls); }
 	inline void add_string(runtime::rstring::ptr str) { str->inc_refs();
                                                        free_rstring.push_back(str); }
    inline void add_struct(runtime::struct1 *s) { s->inc_refs();

@@ -6,6 +6,8 @@
 #include <vector>
 #include <string>
 
+#include "utils/utils.hpp"
+
 namespace utils
 {
 
@@ -50,6 +52,13 @@ public:
    operator<<(const std::string& str)
    {
       add(str);
+      return *this;
+   }
+
+   template <class T>
+   csv_line& operator<<(const T& x)
+   {
+      add(utils::to_string(x));
       return *this;
    }
    

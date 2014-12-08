@@ -27,14 +27,6 @@ type linear do-change-root(node).
 type linear halt(node).
 type linear change-root(node).
 
-/* must uncomment the following for this to work under fact proving */
-/*prio dotest < edgetype.*/
-/*prio start < edgetype.*/
-/*prio dotest < test-edge.*/
-/*prio dotest < level.*/
-/*prio dotest < core.*/
-/*prio inc-if-find < doreport.*/
-
 const sleeping = 0.
 const find = 1.
 const found = 2.

@@ -112,6 +112,7 @@ threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
       }
 #ifdef INSTRUMENTATION
       sent_facts_same_thread += arr.size();
+      all_transactions++;
 #endif
       if(!to->active_node())
          add_to_queue(to);
@@ -125,6 +126,8 @@ threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
          to->add_work_myself(arr);
 #ifdef INSTRUMENTATION
          sent_facts_other_thread_now += arr.size();
+         all_transactions++;
+         thread_transactions++;
 #endif
          MUTEX_UNLOCK(to->database_lock, databaselock);
       } else {
@@ -132,6 +135,8 @@ threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
          to->add_work_others(arr);
 #ifdef INSTRUMENTATION
          sent_facts_other_thread += arr.size();
+         all_transactions++;
+         thread_transactions++;
 #endif
       }
       if(!to->active_node()) {
@@ -163,6 +168,7 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
       }
 #ifdef INSTRUMENTATION
       sent_facts_same_thread++;
+      all_transactions++;
 #endif
       if(!to->active_node())
          add_to_queue(to);
@@ -177,13 +183,17 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
          to->add_work_myself(tpl, pred, dir, depth);
 #ifdef INSTRUMENTATION
          sent_facts_other_thread_now++;
+         all_transactions++;
+         thread_transactions++;
 #endif
          MUTEX_UNLOCK(to->database_lock, databaselock);
       } else {
          LOCKING_STAT(database_lock_fail);
          to->add_work_others(tpl, pred, dir, depth);
 #ifdef INSTRUMENTATION
-      sent_facts_other_thread++;
+         sent_facts_other_thread++;
+         all_transactions++;
+         thread_transactions++;
 #endif
       }
       if(!to->active_node()) {
@@ -406,7 +416,9 @@ threads_sched::check_if_current_useless(void)
    if(current_node->has_new_owner()) {
       NODE_LOCK(current_node, curlock, node_lock);
       // the node has changed to another scheduler!
+      assert(current_node->get_static() != this);
       current_node->set_owner(current_node->get_static());
+      current_node->remove_temporary_priority();
       // move to new node
       move_node_to_new_owner(current_node, current_node->get_owner());
       NODE_UNLOCK(current_node, curlock);
@@ -480,6 +492,11 @@ threads_sched::get_work(void)
    ins_active;
    assert(current_node != nullptr);
    assert(current_node->unprocessed_facts);
+
+#ifdef INSTRUMENTATION
+   node_difference += current_node->get_translated_id() - last_node;
+   last_node = current_node->get_translated_id();
+#endif
    
    return current_node;
 }
@@ -555,49 +572,35 @@ void
 threads_sched::write_slice(statistics::slice& sl)
 {
    sl.state = ins_state;
-   sl.consumed_facts = state.instr_facts_consumed;
-   sl.derived_facts = state.instr_facts_derived;
-   sl.rules_run = state.instr_rules_run;
+   sl.consumed_facts = state.instr_facts_consumed.exchange(0);
+   sl.derived_facts = state.instr_facts_derived.exchange(0);
+   sl.rules_run = state.instr_rules_run.exchange(0);
    
    sl.work_queue = queue_size();
-   sl.sent_facts_same_thread = sent_facts_same_thread;
-   sl.sent_facts_other_thread = sent_facts_other_thread;
-   sl.sent_facts_other_thread_now = sent_facts_other_thread_now;
-   sl.priority_nodes_thread = priority_nodes_thread;
-   sl.priority_nodes_others = priority_nodes_others;
+   sl.sent_facts_same_thread = sent_facts_same_thread.exchange(0);
+   sl.sent_facts_other_thread = sent_facts_other_thread.exchange(0);
+   sl.sent_facts_other_thread_now = sent_facts_other_thread_now.exchange(0);
+   sl.priority_nodes_thread = priority_nodes_thread.exchange(0);
+   sl.priority_nodes_others = priority_nodes_others.exchange(0);
    if(All->THREAD_POOLS[get_id()])
       sl.bytes_used = All->THREAD_POOLS[get_id()]->bytes_in_use;
    else
       sl.bytes_used = 0;
-   sl.node_lock_ok = node_lock_ok;
-   sl.node_lock_fail = node_lock_fail;
+   sl.node_lock_ok = node_lock_ok.exchange(0);
+   sl.node_lock_fail = node_lock_fail.exchange(0);
+   sl.thread_transactions = thread_transactions.exchange(0);
+   sl.all_transactions = all_transactions.exchange(0);
+   sl.node_difference = node_difference;
 
-   // reset stats
-   state.instr_facts_consumed = 0;
-   state.instr_facts_derived = 0;
-   state.instr_rules_run = 0;
-   node_lock_fail = 0;
-   node_lock_ok = 0;
-   sent_facts_same_thread = 0;
-   sent_facts_other_thread = 0;
-   sent_facts_other_thread_now = 0;
-   priority_nodes_thread = 0;
-   priority_nodes_others = 0;
 #ifdef TASK_STEALING
-   sl.stolen_nodes = stolen_total;
-   stolen_total = 0;
+   sl.stolen_nodes = stolen_total.exchange(0);
 #endif
 }
 #endif
 
 threads_sched::threads_sched(const vm::process_id _id):
    id(_id),
-   state(this),
-#ifdef INSTRUMENTATION
-   ins_state(statistics::NOW_ACTIVE),
-#endif
-   tstate(THREAD_ACTIVE),
-   current_node(nullptr)
+   state(this)
 #ifdef TASK_STEALING
    , rand(_id * 1000)
    , next_thread(rand(All->NUM_THREADS))
@@ -607,7 +610,6 @@ threads_sched::threads_sched(const vm::process_id _id):
    , priority_buffer(std::min(PRIORITY_BUFFER_SIZE,
                      vm::All->DATABASE->num_nodes() / vm::All->NUM_THREADS))
 #endif
-   , static_nodes(0)
 {
    bitmap::create(comm_threads, All->NUM_THREADS_NEXT_UINT);
    comm_threads.clear(All->NUM_THREADS_NEXT_UINT);
