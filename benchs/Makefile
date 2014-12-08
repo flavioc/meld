@@ -100,16 +100,31 @@ update-queens:
 	touch progs/8queens-11-bottom.meld
 	touch progs/8queens-12-bottom.meld
 	touch progs/8queens-13-bottom.meld
+	python ../scripts/generate_8queens.py 4 h bs > progs/data/8queens-data4-bottom-static.meld
+	python ../scripts/generate_8queens.py 5 h bs > progs/data/8queens-data5-bottom-static.meld
+	python ../scripts/generate_8queens.py 6 h bs > progs/data/8queens-data6-bottom-static.meld
+	python ../scripts/generate_8queens.py 7 h bs > progs/data/8queens-data7-bottom-static.meld
+	python ../scripts/generate_8queens.py 8 h bs > progs/data/8queens-data8-bottom-static.meld
 	python ../scripts/generate_8queens.py 9 h bs > progs/data/8queens-data9-bottom-static.meld
 	python ../scripts/generate_8queens.py 10 h bs > progs/data/8queens-data10-bottom-static.meld
 	python ../scripts/generate_8queens.py 11 h bs > progs/data/8queens-data11-bottom-static.meld
 	python ../scripts/generate_8queens.py 12 h bs > progs/data/8queens-data12-bottom-static.meld
 	python ../scripts/generate_8queens.py 13 h bs > progs/data/8queens-data13-bottom-static.meld
+	git add progs/data/8queens-data4-bottom-static.meld
+	git add progs/data/8queens-data5-bottom-static.meld
+	git add progs/data/8queens-data6-bottom-static.meld
+	git add progs/data/8queens-data7-bottom-static.meld
+	git add progs/data/8queens-data8-bottom-static.meld
 	git add progs/data/8queens-data9-bottom-static.meld
 	git add progs/data/8queens-data10-bottom-static.meld
 	git add progs/data/8queens-data11-bottom-static.meld
 	git add progs/data/8queens-data12-bottom-static.meld
 	git add progs/data/8queens-data13-bottom-static.meld
+	touch progs/8queens-4-bottom-static.meld
+	touch progs/8queens-5-bottom-static.meld
+	touch progs/8queens-6-bottom-static.meld
+	touch progs/8queens-7-bottom-static.meld
+	touch progs/8queens-8-bottom-static.meld
 	touch progs/8queens-9-bottom-static.meld
 	touch progs/8queens-10-bottom-static.meld
 	touch progs/8queens-11-bottom-static.meld
