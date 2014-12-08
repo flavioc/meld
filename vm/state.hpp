@@ -99,9 +99,7 @@ public:
    vm::counter *match_counter;
    std::unordered_set<utils::byte*, utils::pointer_hash<utils::byte>,
       std::equal_to<utils::byte*>, mem::allocator<utils::byte*>> allocated_match_objects;
-#ifdef GC_NODES
    candidate_gc_nodes gc_nodes;
-#endif
 #ifdef CORE_STATISTICS
    core_statistics stat;
 #endif
@@ -152,8 +150,7 @@ public:
 
 	void copy_reg2const(const reg_num&, const const_id&);
    
-   inline void add_cons(runtime::cons *ls) { ls->inc_refs();
-                                             free_cons.push_back(ls); }
+   inline void add_cons(runtime::cons *ls) { free_cons.push_back(ls); }
 	inline void add_string(runtime::rstring::ptr str) { str->inc_refs();
                                                        free_rstring.push_back(str); }
    inline void add_struct(runtime::struct1 *s) { s->inc_refs();

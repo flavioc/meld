@@ -264,6 +264,8 @@ private:
 
    inline void make_node_static(db::node *tn, threads_sched *target)
    {
+      assert(target);
+
       threads_sched *old(tn->get_static());
 
       if(old != nullptr)

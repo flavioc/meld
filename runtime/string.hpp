@@ -25,22 +25,15 @@ public:
 	inline void dec_refs(void)
 	{
 		assert(refs > 0);
-		refs--;
-		if(zero_refs())
+		if(--refs == 0)
          destroy();
 	}
 	
 	inline void destroy(void)
 	{
-		assert(zero_refs());
       remove(this);
 	}
 	
-	inline bool zero_refs(void) const
-	{
-		return refs == 0;
-	}
-
    inline bool has_refs(void) const
    {
       return refs > 0;

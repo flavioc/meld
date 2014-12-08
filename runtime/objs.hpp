@@ -18,11 +18,7 @@
 namespace runtime {
 
 void do_increment_runtime(const vm::tuple_field&, const vm::field_type);
-void do_decrement_runtime(const vm::tuple_field&, const vm::field_type
-#ifdef GC_NODES
-      , vm::candidate_gc_nodes&
-#endif
-      );
+void do_decrement_runtime(const vm::tuple_field&, const vm::field_type, vm::candidate_gc_nodes&);
 
 inline void increment_runtime_data(const vm::tuple_field& f, const vm::field_type t)
 {
@@ -37,22 +33,15 @@ inline void increment_runtime_data(const vm::tuple_field& f, const vm::field_typ
    }
 }
 
-inline void decrement_runtime_data(const vm::tuple_field& f, const vm::field_type t
-#ifdef GC_NODES
-      , vm::candidate_gc_nodes& gc_nodes
-#endif
-      )
+inline void decrement_runtime_data(const vm::tuple_field& f, const vm::field_type t,
+      vm::candidate_gc_nodes& gc_nodes)
 {
    switch(t) {
       case vm::FIELD_NODE:
       case vm::FIELD_STRING:
       case vm::FIELD_STRUCT:
       case vm::FIELD_LIST:
-#ifdef GC_NODES
          do_decrement_runtime(f, t, gc_nodes);
-#else
-         do_decrement_runtime(f, t);
-#endif
          break;
       default: break;
    }

@@ -71,6 +71,11 @@ public:
       return refs == 0 && matcher.is_empty() && !unprocessed_facts;
    }
 
+   inline bool try_garbage_collect()
+   {
+      return --refs == 0 && garbage_collect();
+   }
+
 	inline vm::priority_t get_priority(void) const {
       if(priority_level == vm::no_priority_value())
          return default_priority_level;

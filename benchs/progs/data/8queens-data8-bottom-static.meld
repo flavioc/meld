@@ -1,0 +1,449 @@
+const size = 8.
+!coord(@0, 0, 0).
+!down-right(@0, @10).
+!down-left(@0, @0).
+!left(@0, @0).
+!right(@0, @1).
+!coord(@1, 0, 1).
+!down-right(@1, @11).
+!down-left(@1, @1).
+!left(@1, @0).
+!right(@1, @2).
+!coord(@2, 0, 2).
+!down-right(@2, @12).
+!down-left(@2, @8).
+!left(@2, @1).
+!right(@2, @3).
+!coord(@3, 0, 3).
+!down-right(@3, @13).
+!down-left(@3, @9).
+!left(@3, @2).
+!right(@3, @4).
+!coord(@4, 0, 4).
+!down-right(@4, @14).
+!down-left(@4, @10).
+!left(@4, @3).
+!right(@4, @5).
+!coord(@5, 0, 5).
+!down-right(@5, @15).
+!down-left(@5, @11).
+!left(@5, @4).
+!right(@5, @6).
+!coord(@6, 0, 6).
+!down-right(@6, @6).
+!down-left(@6, @12).
+!left(@6, @5).
+!right(@6, @7).
+!coord(@7, 0, 7).
+!down-right(@7, @7).
+!down-left(@7, @13).
+!left(@7, @6).
+!right(@7, @7).
+!coord(@8, 1, 0).
+!down-right(@8, @18).
+!down-left(@8, @8).
+!left(@8, @8).
+!right(@8, @9).
+!coord(@9, 1, 1).
+!down-right(@9, @19).
+!down-left(@9, @9).
+!left(@9, @8).
+!right(@9, @10).
+!coord(@10, 1, 2).
+!down-right(@10, @20).
+!down-left(@10, @16).
+!left(@10, @9).
+!right(@10, @11).
+!coord(@11, 1, 3).
+!down-right(@11, @21).
+!down-left(@11, @17).
+!left(@11, @10).
+!right(@11, @12).
+!coord(@12, 1, 4).
+!down-right(@12, @22).
+!down-left(@12, @18).
+!left(@12, @11).
+!right(@12, @13).
+!coord(@13, 1, 5).
+!down-right(@13, @23).
+!down-left(@13, @19).
+!left(@13, @12).
+!right(@13, @14).
+!coord(@14, 1, 6).
+!down-right(@14, @14).
+!down-left(@14, @20).
+!left(@14, @13).
+!right(@14, @15).
+!coord(@15, 1, 7).
+!down-right(@15, @15).
+!down-left(@15, @21).
+!left(@15, @14).
+!right(@15, @15).
+!coord(@16, 2, 0).
+!down-right(@16, @26).
+!down-left(@16, @16).
+!left(@16, @16).
+!right(@16, @17).
+!coord(@17, 2, 1).
+!down-right(@17, @27).
+!down-left(@17, @17).
+!left(@17, @16).
+!right(@17, @18).
+!coord(@18, 2, 2).
+!down-right(@18, @28).
+!down-left(@18, @24).
+!left(@18, @17).
+!right(@18, @19).
+!coord(@19, 2, 3).
+!down-right(@19, @29).
+!down-left(@19, @25).
+!left(@19, @18).
+!right(@19, @20).
+!coord(@20, 2, 4).
+!down-right(@20, @30).
+!down-left(@20, @26).
+!left(@20, @19).
+!right(@20, @21).
+!coord(@21, 2, 5).
+!down-right(@21, @31).
+!down-left(@21, @27).
+!left(@21, @20).
+!right(@21, @22).
+!coord(@22, 2, 6).
+!down-right(@22, @22).
+!down-left(@22, @28).
+!left(@22, @21).
+!right(@22, @23).
+!coord(@23, 2, 7).
+!down-right(@23, @23).
+!down-left(@23, @29).
+!left(@23, @22).
+!right(@23, @23).
+!coord(@24, 3, 0).
+!down-right(@24, @34).
+!down-left(@24, @24).
+!left(@24, @24).
+!right(@24, @25).
+!coord(@25, 3, 1).
+!down-right(@25, @35).
+!down-left(@25, @25).
+!left(@25, @24).
+!right(@25, @26).
+!coord(@26, 3, 2).
+!down-right(@26, @36).
+!down-left(@26, @32).
+!left(@26, @25).
+!right(@26, @27).
+!coord(@27, 3, 3).
+!down-right(@27, @37).
+!down-left(@27, @33).
+!left(@27, @26).
+!right(@27, @28).
+!coord(@28, 3, 4).
+!down-right(@28, @38).
+!down-left(@28, @34).
+!left(@28, @27).
+!right(@28, @29).
+!coord(@29, 3, 5).
+!down-right(@29, @39).
+!down-left(@29, @35).
+!left(@29, @28).
+!right(@29, @30).
+!coord(@30, 3, 6).
+!down-right(@30, @30).
+!down-left(@30, @36).
+!left(@30, @29).
+!right(@30, @31).
+!coord(@31, 3, 7).
+!down-right(@31, @31).
+!down-left(@31, @37).
+!left(@31, @30).
+!right(@31, @31).
+!coord(@32, 4, 0).
+!down-right(@32, @42).
+!down-left(@32, @32).
+!left(@32, @32).
+!right(@32, @33).
+!coord(@33, 4, 1).
+!down-right(@33, @43).
+!down-left(@33, @33).
+!left(@33, @32).
+!right(@33, @34).
+!coord(@34, 4, 2).
+!down-right(@34, @44).
+!down-left(@34, @40).
+!left(@34, @33).
+!right(@34, @35).
+!coord(@35, 4, 3).
+!down-right(@35, @45).
+!down-left(@35, @41).
+!left(@35, @34).
+!right(@35, @36).
+!coord(@36, 4, 4).
+!down-right(@36, @46).
+!down-left(@36, @42).
+!left(@36, @35).
+!right(@36, @37).
+!coord(@37, 4, 5).
+!down-right(@37, @47).
+!down-left(@37, @43).
+!left(@37, @36).
+!right(@37, @38).
+!coord(@38, 4, 6).
+!down-right(@38, @38).
+!down-left(@38, @44).
+!left(@38, @37).
+!right(@38, @39).
+!coord(@39, 4, 7).
+!down-right(@39, @39).
+!down-left(@39, @45).
+!left(@39, @38).
+!right(@39, @39).
+!coord(@40, 5, 0).
+!down-right(@40, @50).
+!down-left(@40, @40).
+!left(@40, @40).
+!right(@40, @41).
+!coord(@41, 5, 1).
+!down-right(@41, @51).
+!down-left(@41, @41).
+!left(@41, @40).
+!right(@41, @42).
+!coord(@42, 5, 2).
+!down-right(@42, @52).
+!down-left(@42, @48).
+!left(@42, @41).
+!right(@42, @43).
+!coord(@43, 5, 3).
+!down-right(@43, @53).
+!down-left(@43, @49).
+!left(@43, @42).
+!right(@43, @44).
+!coord(@44, 5, 4).
+!down-right(@44, @54).
+!down-left(@44, @50).
+!left(@44, @43).
+!right(@44, @45).
+!coord(@45, 5, 5).
+!down-right(@45, @55).
+!down-left(@45, @51).
+!left(@45, @44).
+!right(@45, @46).
+!coord(@46, 5, 6).
+!down-right(@46, @46).
+!down-left(@46, @52).
+!left(@46, @45).
+!right(@46, @47).
+!coord(@47, 5, 7).
+!down-right(@47, @47).
+!down-left(@47, @53).
+!left(@47, @46).
+!right(@47, @47).
+!coord(@48, 6, 0).
+!down-right(@48, @58).
+!down-left(@48, @48).
+!left(@48, @48).
+!right(@48, @49).
+!coord(@49, 6, 1).
+!down-right(@49, @59).
+!down-left(@49, @49).
+!left(@49, @48).
+!right(@49, @50).
+!coord(@50, 6, 2).
+!down-right(@50, @60).
+!down-left(@50, @56).
+!left(@50, @49).
+!right(@50, @51).
+!coord(@51, 6, 3).
+!down-right(@51, @61).
+!down-left(@51, @57).
+!left(@51, @50).
+!right(@51, @52).
+!coord(@52, 6, 4).
+!down-right(@52, @62).
+!down-left(@52, @58).
+!left(@52, @51).
+!right(@52, @53).
+!coord(@53, 6, 5).
+!down-right(@53, @63).
+!down-left(@53, @59).
+!left(@53, @52).
+!right(@53, @54).
+!coord(@54, 6, 6).
+!down-right(@54, @54).
+!down-left(@54, @60).
+!left(@54, @53).
+!right(@54, @55).
+!coord(@55, 6, 7).
+!down-right(@55, @55).
+!down-left(@55, @61).
+!left(@55, @54).
+!right(@55, @55).
+!coord(@56, 7, 0).
+!down-right(@56, @56).
+!down-left(@56, @56).
+!left(@56, @56).
+!right(@56, @57).
+!coord(@57, 7, 1).
+!down-right(@57, @57).
+!down-left(@57, @57).
+!left(@57, @56).
+!right(@57, @58).
+!coord(@58, 7, 2).
+!down-right(@58, @58).
+!down-left(@58, @58).
+!left(@58, @57).
+!right(@58, @59).
+!coord(@59, 7, 3).
+!down-right(@59, @59).
+!down-left(@59, @59).
+!left(@59, @58).
+!right(@59, @60).
+!coord(@60, 7, 4).
+!down-right(@60, @60).
+!down-left(@60, @60).
+!left(@60, @59).
+!right(@60, @61).
+!coord(@61, 7, 5).
+!down-right(@61, @61).
+!down-left(@61, @61).
+!left(@61, @60).
+!right(@61, @62).
+!coord(@62, 7, 6).
+!down-right(@62, @62).
+!down-left(@62, @62).
+!left(@62, @61).
+!right(@62, @63).
+!coord(@63, 7, 7).
+!down-right(@63, @63).
+!down-left(@63, @63).
+!left(@63, @62).
+!right(@63, @63).
+set-default-priority(@0, 1.0).
+set-default-priority(@1, 1.0).
+set-default-priority(@2, 1.0).
+set-default-priority(@3, 1.0).
+set-default-priority(@4, 1.0).
+set-default-priority(@5, 1.0).
+set-default-priority(@6, 1.0).
+set-default-priority(@7, 1.0).
+set-default-priority(@8, 2.0).
+set-default-priority(@9, 2.0).
+set-default-priority(@10, 2.0).
+set-default-priority(@11, 2.0).
+set-default-priority(@12, 2.0).
+set-default-priority(@13, 2.0).
+set-default-priority(@14, 2.0).
+set-default-priority(@15, 2.0).
+set-default-priority(@16, 3.0).
+set-default-priority(@17, 3.0).
+set-default-priority(@18, 3.0).
+set-default-priority(@19, 3.0).
+set-default-priority(@20, 3.0).
+set-default-priority(@21, 3.0).
+set-default-priority(@22, 3.0).
+set-default-priority(@23, 3.0).
+set-default-priority(@24, 4.0).
+set-default-priority(@25, 4.0).
+set-default-priority(@26, 4.0).
+set-default-priority(@27, 4.0).
+set-default-priority(@28, 4.0).
+set-default-priority(@29, 4.0).
+set-default-priority(@30, 4.0).
+set-default-priority(@31, 4.0).
+set-default-priority(@32, 5.0).
+set-default-priority(@33, 5.0).
+set-default-priority(@34, 5.0).
+set-default-priority(@35, 5.0).
+set-default-priority(@36, 5.0).
+set-default-priority(@37, 5.0).
+set-default-priority(@38, 5.0).
+set-default-priority(@39, 5.0).
+set-default-priority(@40, 6.0).
+set-default-priority(@41, 6.0).
+set-default-priority(@42, 6.0).
+set-default-priority(@43, 6.0).
+set-default-priority(@44, 6.0).
+set-default-priority(@45, 6.0).
+set-default-priority(@46, 6.0).
+set-default-priority(@47, 6.0).
+set-default-priority(@48, 7.0).
+set-default-priority(@49, 7.0).
+set-default-priority(@50, 7.0).
+set-default-priority(@51, 7.0).
+set-default-priority(@52, 7.0).
+set-default-priority(@53, 7.0).
+set-default-priority(@54, 7.0).
+set-default-priority(@55, 7.0).
+set-default-priority(@56, 8.0).
+set-default-priority(@57, 8.0).
+set-default-priority(@58, 8.0).
+set-default-priority(@59, 8.0).
+set-default-priority(@60, 8.0).
+set-default-priority(@61, 8.0).
+set-default-priority(@62, 8.0).
+set-default-priority(@63, 8.0).
+set-cpu(@0, partition-vertical(0, 0, 8, 8)).
+set-cpu(@1, partition-vertical(0, 1, 8, 8)).
+set-cpu(@2, partition-vertical(0, 2, 8, 8)).
+set-cpu(@3, partition-vertical(0, 3, 8, 8)).
+set-cpu(@4, partition-vertical(0, 4, 8, 8)).
+set-cpu(@5, partition-vertical(0, 5, 8, 8)).
+set-cpu(@6, partition-vertical(0, 6, 8, 8)).
+set-cpu(@7, partition-vertical(0, 7, 8, 8)).
+set-cpu(@8, partition-vertical(1, 0, 8, 8)).
+set-cpu(@9, partition-vertical(1, 1, 8, 8)).
+set-cpu(@10, partition-vertical(1, 2, 8, 8)).
+set-cpu(@11, partition-vertical(1, 3, 8, 8)).
+set-cpu(@12, partition-vertical(1, 4, 8, 8)).
+set-cpu(@13, partition-vertical(1, 5, 8, 8)).
+set-cpu(@14, partition-vertical(1, 6, 8, 8)).
+set-cpu(@15, partition-vertical(1, 7, 8, 8)).
+set-cpu(@16, partition-vertical(2, 0, 8, 8)).
+set-cpu(@17, partition-vertical(2, 1, 8, 8)).
+set-cpu(@18, partition-vertical(2, 2, 8, 8)).
+set-cpu(@19, partition-vertical(2, 3, 8, 8)).
+set-cpu(@20, partition-vertical(2, 4, 8, 8)).
+set-cpu(@21, partition-vertical(2, 5, 8, 8)).
+set-cpu(@22, partition-vertical(2, 6, 8, 8)).
+set-cpu(@23, partition-vertical(2, 7, 8, 8)).
+set-cpu(@24, partition-vertical(3, 0, 8, 8)).
+set-cpu(@25, partition-vertical(3, 1, 8, 8)).
+set-cpu(@26, partition-vertical(3, 2, 8, 8)).
+set-cpu(@27, partition-vertical(3, 3, 8, 8)).
+set-cpu(@28, partition-vertical(3, 4, 8, 8)).
+set-cpu(@29, partition-vertical(3, 5, 8, 8)).
+set-cpu(@30, partition-vertical(3, 6, 8, 8)).
+set-cpu(@31, partition-vertical(3, 7, 8, 8)).
+set-cpu(@32, partition-vertical(4, 0, 8, 8)).
+set-cpu(@33, partition-vertical(4, 1, 8, 8)).
+set-cpu(@34, partition-vertical(4, 2, 8, 8)).
+set-cpu(@35, partition-vertical(4, 3, 8, 8)).
+set-cpu(@36, partition-vertical(4, 4, 8, 8)).
+set-cpu(@37, partition-vertical(4, 5, 8, 8)).
+set-cpu(@38, partition-vertical(4, 6, 8, 8)).
+set-cpu(@39, partition-vertical(4, 7, 8, 8)).
+set-cpu(@40, partition-vertical(5, 0, 8, 8)).
+set-cpu(@41, partition-vertical(5, 1, 8, 8)).
+set-cpu(@42, partition-vertical(5, 2, 8, 8)).
+set-cpu(@43, partition-vertical(5, 3, 8, 8)).
+set-cpu(@44, partition-vertical(5, 4, 8, 8)).
+set-cpu(@45, partition-vertical(5, 5, 8, 8)).
+set-cpu(@46, partition-vertical(5, 6, 8, 8)).
+set-cpu(@47, partition-vertical(5, 7, 8, 8)).
+set-cpu(@48, partition-vertical(6, 0, 8, 8)).
+set-cpu(@49, partition-vertical(6, 1, 8, 8)).
+set-cpu(@50, partition-vertical(6, 2, 8, 8)).
+set-cpu(@51, partition-vertical(6, 3, 8, 8)).
+set-cpu(@52, partition-vertical(6, 4, 8, 8)).
+set-cpu(@53, partition-vertical(6, 5, 8, 8)).
+set-cpu(@54, partition-vertical(6, 6, 8, 8)).
+set-cpu(@55, partition-vertical(6, 7, 8, 8)).
+set-cpu(@56, partition-vertical(7, 0, 8, 8)).
+set-cpu(@57, partition-vertical(7, 1, 8, 8)).
+set-cpu(@58, partition-vertical(7, 2, 8, 8)).
+set-cpu(@59, partition-vertical(7, 3, 8, 8)).
+set-cpu(@60, partition-vertical(7, 4, 8, 8)).
+set-cpu(@61, partition-vertical(7, 5, 8, 8)).
+set-cpu(@62, partition-vertical(7, 6, 8, 8)).
+set-cpu(@63, partition-vertical(7, 7, 8, 8)).

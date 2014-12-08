@@ -153,8 +153,11 @@ threads_sched::set_default_node_priority(node *tn, const priority_t priority)
    if(!scheduling_mechanism)
       return;
 
+   LOCK_STACK(nodelock);
+   NODE_LOCK(tn, nodelock, add_priority_lock);
 //   cout << "Default priority " << priority << endl;
    tn->set_default_priority(priority);
+   NODE_UNLOCK(tn, nodelock);
 }
 
 void
@@ -256,7 +259,7 @@ threads_sched::remove_node_priority(node *tn)
 #else
    threads_sched *other(tn->get_owner());
    if(other == this)
-      do_remove_node_priority(n);
+      do_remove_node_priority(tn);
 #endif
 
 }
@@ -297,7 +300,7 @@ threads_sched::set_node_priority(node *tn, const priority_t priority)
       return;
    threads_sched *other(tn->get_owner());
    if(other == this)
-      do_set_node_priority(n, priority);
+      do_set_node_priority(tn, priority);
 #endif
 }
 
@@ -497,7 +500,7 @@ void
 threads_sched::move_node_to_new_owner(db::node *tn, threads_sched *new_owner)
 {
    new_owner->add_to_queue(tn);
-   new_owner->activate_thread();
+   comm_threads.set_bit(new_owner->get_id());
 }
 
 void
@@ -519,13 +522,16 @@ threads_sched::set_node_cpu(db::node *node, const int_val val)
 void
 threads_sched::set_node_owner(db::node *tn, threads_sched *new_owner)
 {
+   LOCK_STACK(nodelock);
+
    if(tn == current_node) {
       // we will change the owner field once we are done with the node.
+      NODE_LOCK(tn, nodelock, set_affinity_lock);
       make_node_static(tn, new_owner);
+      NODE_UNLOCK(tn, nodelock);
       return;
    }
 
-   LOCK_STACK(nodelock);
    NODE_LOCK(tn, nodelock, set_affinity_lock);
    make_node_static(tn, new_owner);
    if(tn->get_owner() == new_owner) {
