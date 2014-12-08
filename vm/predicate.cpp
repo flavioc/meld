@@ -67,7 +67,7 @@ read_type_id_from_reader(code_reader& read, const vector<type*, mem::allocator<t
 
 predicate*
 predicate::make_predicate_simple(const predicate_id id, const string& name, const bool linear,
-      const vector<type*>& types)
+      vector<type*>&& types, const bool is_action)
 {
    predicate *pred = new predicate();
    
@@ -77,11 +77,11 @@ predicate::make_predicate_simple(const predicate_id id, const string& name, cons
    pred->is_linear = linear;
    pred->is_route = false;
    pred->is_reverse_route = false;
-   pred->is_action = false;
+   pred->is_action = is_action;
    pred->is_reused = false;
    pred->is_cycle = false;
    pred->level = 0;
-   pred->types = types;
+   pred->types = std::move(types);
    pred->name = name;
    
    return pred;

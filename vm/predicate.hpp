@@ -178,7 +178,7 @@ public:
          const predicate_id, const uint32_t, const uint32_t, const std::vector<type*, mem::allocator<type*>>&);
 
    static predicate* make_predicate_simple(const predicate_id, const std::string&, const bool,
-      const std::vector<type*>&);
+      std::vector<type*>&&, const bool is_action = false);
 };
 
 type* read_type_from_reader(code_reader&);

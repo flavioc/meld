@@ -9,11 +9,9 @@ class DbTrieTests : public TestFixture {
 
       void setUp(void)
       {
-         std::vector<vm::type*> types;
-         types.push_back(vm::TYPE_INT);
-         types.push_back(vm::TYPE_INT);
+         std::vector<vm::type*> types = {vm::TYPE_INT, vm::TYPE_INT};
          CPPUNIT_ASSERT(vm::TYPE_INT != nullptr);
-         f = vm::predicate::make_predicate_simple(0, "f", true, types);
+         f = vm::predicate::make_predicate_simple(0, "f", true, std::move(types));
          CPPUNIT_ASSERT(f->num_fields() == 2);
          trie = new db::tuple_trie();
       }

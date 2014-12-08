@@ -33,6 +33,10 @@ class ParserTests : public TestFixture {
          p7.print(std::cout);
          parser p8("tests/progs/mfp.meld");
          p8.print(std::cout);
+         parser p9("tests/progs/heat-transfer.meld");
+         p9.print(std::cout);
+         parser p10("tests/progs/belief-propagation-structs.meld");
+         p10.print(std::cout);
       }
 
       CPPUNIT_TEST_SUITE(ParserTests);

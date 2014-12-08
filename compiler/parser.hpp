@@ -19,6 +19,7 @@ namespace compiler
 class parser_error : public std::exception {
    private:
 
+      const std::string filename;
       const std::string msg;
       const token tok;
 
@@ -26,12 +27,12 @@ class parser_error : public std::exception {
 
       virtual const char *what() const noexcept
       {
-         return (msg + " (line: " + utils::to_string(tok.line) + " col: " +
+         return (filename + ": " + msg + " (line: " + utils::to_string(tok.line) + " col: " +
                utils::to_string(tok.col) + " " + tok.str + ")").c_str();
       }
 
-      explicit parser_error(const token& x, const std::string& _msg) :
-         msg(_msg), tok(x)
+      explicit parser_error(const std::string& _filename, const token& x, const std::string& _msg):
+         filename(_filename), msg(_msg), tok(x)
       {}
 };
 
@@ -127,6 +128,33 @@ class nil_expr: public expr
       {}
 };
 
+class struct_expr: public expr
+{
+   private:
+
+      std::vector<expr*> exprs;
+
+   public:
+
+      virtual std::string str() const {
+         std::string str = ":(";
+
+         for(size_t i(0); i < exprs.size(); ++i) {
+            str += exprs[i]->str();
+            if(i < exprs.size()-1)
+               str += ", ";
+         }
+
+         return str + ")";
+      }
+
+      explicit struct_expr(const token& start,
+            std::vector<expr*>&& _exprs):
+         expr(start), exprs(std::move(_exprs))
+      {
+      }
+};
+
 class list_expr: public expr
 {
    private:
@@ -155,7 +183,7 @@ class list_expr: public expr
             std::vector<expr*>&& _head,
             expr *_tail = nullptr):
          expr(tok),
-         head(_head),
+         head(std::move(_head)),
          tail(_tail)
       {
       }
@@ -545,6 +573,8 @@ class rule: public expr
             if(i < head_constructs.size()-1)
                ret += ", ";
          }
+         if(head_facts.empty() && head_constructs.empty())
+            ret += "1";
          return ret + ".";
       }
 
@@ -663,7 +693,52 @@ class abstract_syntax_tree: public mem::base
       std::vector<rule*> rules;
       vm::priority_type prio_type;
 
+      void initial_predicate1(const std::string& name, const bool linear, const bool action,
+            vm::type *t1)
+      {
+         std::vector<vm::type*> types = {t1};
+         predicates[name] = vm::predicate::make_predicate_simple(predicates.size(), name,
+               linear, std::move(types), action);
+      }
+
+      void initial_predicate4(const std::string& name, const bool linear, const bool action,
+            vm::type *t1, vm::type *t2, vm::type *t3, vm::type *t4)
+      {
+         std::vector<vm::type*> types = {t1, t2, t3, t4};
+         predicates[name] = vm::predicate::make_predicate_simple(predicates.size(), name,
+               linear, std::move(types), action);
+      }
+
+      void initial_predicate2(const std::string& name, const bool linear, const bool action,
+            vm::type *t1, vm::type *t2)
+      {
+         std::vector<vm::type*> types = {t1, t2};
+         predicates[name] = vm::predicate::make_predicate_simple(predicates.size(), name,
+               linear, std::move(types), action);
+      }
+
+      void initial_predicate3(const std::string& name, const bool linear, const bool action,
+            vm::type *t1, vm::type *t2, vm::type *t3)
+      {
+         std::vector<vm::type*> types = {t1, t2, t3};
+         predicates[name] = vm::predicate::make_predicate_simple(predicates.size(), name,
+               linear, std::move(types), action);
+      }
+
    public:
+
+      inline bool has_predicate(const std::string& str) const
+      {
+         auto it(predicates.find(str));
+         return it != predicates.end();
+      }
+
+      void add_predicate(const std::string& name, const bool is_linear,
+            std::vector<vm::type*>&& types)
+      {
+         predicates[name] = vm::predicate::make_predicate_simple(predicates.size(), name, is_linear,
+               std::move(types));
+      }
 
       void print(std::ostream& out) const
       {
@@ -691,8 +766,7 @@ class abstract_syntax_tree: public mem::base
          }
       }
 
-      explicit abstract_syntax_tree() {
-      }
+      explicit abstract_syntax_tree();
 
       friend class parser;
 };
@@ -752,6 +826,7 @@ class parser: mem::base
       Op parse_operation(const token&);
       expr *parse_expr_funcall(const token&);
       expr *parse_expr_list(const token&);
+      expr *parse_expr_struct(const token&);
       if_expr *parse_expr_if(const token&);
       expr *parse_atom_expr();
       expr *parse_expr(const token::Token *, const size_t);
