@@ -13,30 +13,30 @@ class ParserTests : public TestFixture {
 
       void testParser()
       {
+         test("tests/progs/float.meld");
+         test("tests/progs/visit.meld");
+         test("tests/progs/list-floats.meld");
+         test("tests/progs/binary.meld");
+         test("tests/progs/constant.meld");
+         test("tests/progs/bipartite.meld");
+         test("tests/progs/include.meld");
+         test("tests/progs/mfp.meld");
+         test("tests/progs/heat-transfer.meld");
+         test("tests/progs/belief-propagation-structs.meld");
+      }
+
+      inline void test(const char *file)
+      {
          using compiler::token;
          using compiler::parser;
          using compiler::lexer;
+         using compiler::abstract_syntax_tree;
 
-         parser p1("tests/progs/float.meld");
-         p1.print(std::cout);
-         parser p2("tests/progs/visit.meld");
-         p2.print(std::cout);
-         parser p3("tests/progs/list-floats.meld");
-         p3.print(std::cout);
-         parser p4("tests/progs/binary.meld");
-         p4.print(std::cout);
-         parser p5("tests/progs/constant.meld");
-         p5.print(std::cout);
-         parser p6("tests/progs/bipartite.meld");
-         p6.print(std::cout);
-         parser p7("tests/progs/include.meld");
-         p7.print(std::cout);
-         parser p8("tests/progs/mfp.meld");
-         p8.print(std::cout);
-         parser p9("tests/progs/heat-transfer.meld");
-         p9.print(std::cout);
-         parser p10("tests/progs/belief-propagation-structs.meld");
-         p10.print(std::cout);
+         parser p(file);
+         p.print(std::cout);
+         
+         abstract_syntax_tree *ast(p.get_ast());
+         ast->typecheck();
       }
 
       CPPUNIT_TEST_SUITE(ParserTests);

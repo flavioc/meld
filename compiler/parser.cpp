@@ -16,6 +16,8 @@ parser::parse_type(const token& tok)
 {
    if(tok.tok == token::Token::NODE)
       return vm::TYPE_NODE;
+   else if(tok.tok == token::Token::THREAD)
+      return vm::TYPE_THREAD;
    else if(tok.tok == token::Token::FLOAT)
       return vm::TYPE_FLOAT;
    else if(tok.tok == token::Token::INT)
@@ -38,7 +40,7 @@ parser::parse_type(const token& tok)
          if(com.tok == token::Token::PAREN_RIGHT)
             break;
          if(com.tok != token::Token::COMMA)
-            throw parser_error(filename, com, "expected a comma ,.");
+            throw parser_error(com, "expected a comma ,.");
       }
 
       vm::struct_type *s(new vm::struct_type(types.size()));
@@ -46,7 +48,7 @@ parser::parse_type(const token& tok)
          s->set_type(i, types[i]);
       return s;
    } else
-      throw parser_error(filename, tok, "expected type declaration.");
+      throw parser_error(tok, "expected type declaration.");
 }
 
 void
@@ -57,25 +59,24 @@ parser::parse_declaration()
    // parse modifiers
    bool route(false);
    bool linear(false);
-   string name;
+   token nametok;
 
    while (true) {
-      token tok(get());
-      if(tok.tok == token::Token::LINEAR) {
+      nametok = get();
+      if(nametok.tok == token::Token::LINEAR) {
          linear = true;
-      } else if(tok.tok == token::Token::ROUTE) {
+      } else if(nametok.tok == token::Token::ROUTE) {
          route = true;
-      } else if(tok.tok == token::Token::NAME) {
-         name = tok.str;
+      } else if(nametok.tok == token::Token::NAME)
          break;
-      } else
-         throw parser_error(filename, tok, "unknown type modifier");
+      else
+         throw parser_error(nametok, "unknown type modifier");
    }
 
    // (
    const token lp(get());
    if(lp.tok != token::Token::PAREN_LEFT)
-      throw parser_error(filename, lp, "expected a left parenthesis (.");
+      throw parser_error(lp, "expected a left parenthesis (.");
 
    vector<vm::type*> types;
 
@@ -89,16 +90,16 @@ parser::parse_declaration()
       if(com.tok == token::Token::PAREN_RIGHT)
          break;
       if(com.tok != token::Token::COMMA)
-         throw parser_error(filename, com, "expected a comma ,.");
+         throw parser_error(com, "expected a comma ,.");
    }
 
    const token dot(get());
    if(dot.tok != token::Token::DOT)
-      throw parser_error(filename, dot, "expected a dot ..");
+      throw parser_error(dot, "expected a dot ..");
 
-   if(ast->has_predicate(name))
-      throw parser_error(filename, start, "this predicate is already defined.");
-   ast->add_predicate(name, linear, std::move(types));
+   if(ast->has_predicate(nametok.str))
+      throw parser_error(start, "this predicate is already defined.");
+   ast->add_predicate(nametok, linear, std::move(types));
 }
 
 void
@@ -116,15 +117,15 @@ parser::parse_const()
    get(); // const
    const token name(get());
    if(name.tok != token::Token::NAME)
-      throw parser_error(filename, name, "expected a constant name.");
+      throw parser_error(name, "expected a constant name.");
    const token equal(get());
    if(equal.tok != token::Token::EQUAL)
-      throw parser_error(filename, equal, "expected an equal = for the constant.");
+      throw parser_error(equal, "expected an equal = for the constant.");
    expr *e(parse_expr(end_tok, 1));
    ast->constants[name.str] = new constant_definition_expr(name, e);
    const token dot(get());
    if(dot.tok != token::Token::DOT)
-      throw parser_error(filename, dot, "constant must be finished with dot.");
+      throw parser_error(dot, "constant must be finished with dot.");
 }
 
 void
@@ -141,7 +142,7 @@ parser::parse_exists(const token& start)
    parse_variables(token::Token::DOT, vars);
    const token lp(get());
    if(lp.tok != token::Token::PAREN_LEFT)
-      throw parser_error(filename, lp, "expecting a left parenthesis in exist.");
+      throw parser_error(lp, "expecting a left parenthesis in exist.");
    vector<fact*> facts;
    parse_subhead(token::Token::PAREN_RIGHT, facts);
    return new exists_construct(start, move(vars), move(facts));
@@ -154,7 +155,7 @@ parser::parse_variables(const token::Token stop, vector<var_expr*>& vars)
       token tok(get());
       // must be a variable
       if(tok.tok != token::Token::VAR)
-         throw parser_error(filename, tok, "expecting a comprehension variable.");
+         throw parser_error(tok, "expecting a comprehension variable.");
 
       vars.push_back(new var_expr(tok));
 
@@ -162,7 +163,7 @@ parser::parse_variables(const token::Token stop, vector<var_expr*>& vars)
       if(tok.tok == stop)
          break;
       if(tok.tok != token::Token::COMMA)
-         throw parser_error(filename, tok, "expecting a comma between comprehension variables.");
+         throw parser_error(tok, "expecting a comma between comprehension variables.");
    }
 }
 
@@ -173,12 +174,12 @@ parser::parse_subhead(const token::Token end, vector<fact*>& head_facts)
       const token tok(get());
       switch(tok.tok) {
          case token::Token::VAR:
-            throw parser_error(filename, tok, "heads of comprehensions cannot have conditions.");
+            throw parser_error(tok, "heads of comprehensions cannot have conditions.");
          case token::token::BANG:
             {
                const token name(get());
                if(name.tok != token::Token::NAME)
-                  throw parser_error(filename, name, "expecting a predicate name.");
+                  throw parser_error(name, "expecting a predicate name.");
                head_facts.push_back(parse_head_fact(name, true));
             }
             break;
@@ -186,16 +187,16 @@ parser::parse_subhead(const token::Token end, vector<fact*>& head_facts)
             head_facts.push_back(parse_head_fact(tok, false));
             break;
          case token::Token::NUMBER:
-            throw parser_error(filename, tok, "heads of rules cannot have conditions.");
+            throw parser_error(tok, "heads of rules cannot have conditions.");
          default:
-            throw parser_error(filename, tok, "unrecognized token in head.");
+            throw parser_error(tok, "unrecognized token in head.");
       }
 
       const token com(get());
       if(com.tok == end)
          return;
       if(com.tok != token::Token::COMMA)
-         throw parser_error(filename, com, "expecting a comma inside the head of the comprehension.");
+         throw parser_error(com, "expecting a comma inside the head of the comprehension.");
    }
 }
 
@@ -221,7 +222,7 @@ parser::parse_comprehension(const token& start)
       if(com.tok == token::Token::BAR)
          break;
       if(com.tok != token::Token::COMMA)
-         throw parser_error(filename, com, "here expecting a comma.");
+         throw parser_error(com, "here expecting a comma.");
    }
 
    vector<fact*> head_facts;
@@ -232,7 +233,7 @@ parser::parse_comprehension(const token& start)
       get();
       tok = get();
       if(tok.tok != token::Token::CURLY_RIGHT)
-         throw parser_error(filename, tok, "expected closing } after 1.");
+         throw parser_error(tok, "expected closing } after 1.");
       return new comprehension_construct(start, move(compr_vars), move(conditions), move(body_facts));
    } else {
       // parse head facts
@@ -248,13 +249,13 @@ parser::parse_aggregate_spec()
 {
    const token mod(get());
    if(mod.tok != token::Token::NAME && mod.tok != token::Token::MIN)
-      throw parser_error(filename, mod, "expecting an aggregate modifier.");
+      throw parser_error(mod, "expecting an aggregate modifier.");
    const token arrow(get());
    if(arrow.tok != token::Token::ARROW)
-      throw parser_error(filename, arrow, "expecting an arrow =>.");
+      throw parser_error(arrow, "expecting an arrow =>.");
    const token var(get());
    if(var.tok != token::Token::VAR)
-      throw parser_error(filename, var, "expecting a variable name.");
+      throw parser_error(var, "expecting a variable name.");
 
    return new aggregate_spec(mod, new var_expr(var));
 }
@@ -270,7 +271,7 @@ parser::parse_aggregate(const token& start)
       if(tok.tok == token::Token::BAR)
          break;
       if(tok.tok != token::Token::COMMA)
-         throw parser_error(filename, tok, "expecting a comma in the aggregate.");
+         throw parser_error(tok, "expecting a comma in the aggregate.");
    }
 
    // parse variables
@@ -293,7 +294,7 @@ parser::parse_aggregate(const token& start)
       if(com.tok == token::Token::BAR)
          break;
       if(com.tok != token::Token::COMMA)
-         throw parser_error(filename, com, "expecting a comma.");
+         throw parser_error(com, "expecting a comma.");
    }
 
    // parse head facts
@@ -309,12 +310,12 @@ parser::parse_head_fact(const token& name, const bool persistent)
 {
    auto it(ast->predicates.find(name.str));
    if(it == ast->predicates.end())
-      throw parser_error(filename, name, string("predicate ") + name.str + " was not defined.");
-   if(persistent != it->second->is_persistent_pred()) {
+      throw parser_error(name, string("predicate ") + name.str + " was not defined.");
+   if(persistent != it->second->is_persistent()) {
       if(persistent)
-         throw parser_error(filename, name, "predicate must be persistent.");
+         throw parser_error(name, "predicate must be persistent.");
       else
-         throw parser_error(filename, name, "predicate is linear.");
+         throw parser_error(name, "predicate is linear.");
    }
    return parse_body_fact(name, it->second);
 }
@@ -329,7 +330,7 @@ parser::parse_rule_head(const token& lolli, vector<expr*>& conditions, vector<fa
       const token tok(get());
       switch(tok.tok) {
          case token::Token::VAR:
-            throw parser_error(filename, tok, "Heads of rules cannot have conditions.");
+            throw parser_error(tok, "Heads of rules cannot have conditions.");
          case token::Token::NAME:
             head_facts.push_back(parse_head_fact(tok, false));
             break;
@@ -337,12 +338,12 @@ parser::parse_rule_head(const token& lolli, vector<expr*>& conditions, vector<fa
             if(tok.str == "1") {
                const token dot(get());
                if(dot.tok != token::Token::DOT)
-                  throw parser_error(filename, tok, "expecting a dot after 1.");
+                  throw parser_error(tok, "expecting a dot after 1.");
                goto end_head;
             }
-            throw parser_error(filename, tok, "Heads of rules cannot have conditions.");
+            throw parser_error(tok, "Heads of rules cannot have conditions.");
          case token::Token::LOLLI:
-            throw parser_error(filename, tok, "Only one implication is allowed in rules.");
+            throw parser_error(tok, "Only one implication is allowed in rules.");
          case token::Token::EXISTS:
             constrs.push_back(parse_exists(tok));
             break;
@@ -353,14 +354,14 @@ parser::parse_rule_head(const token& lolli, vector<expr*>& conditions, vector<fa
             constrs.push_back(parse_comprehension(tok));
             break;
          default:
-            throw parser_error(filename, tok, "unrecognized token.");
+            throw parser_error(tok, "unrecognized token.");
       }
 
       const token com(get());
       if(com.tok == token::Token::DOT)
          break;
       if(com.tok != token::Token::COMMA)
-         throw parser_error(filename, com, "Expecting a comma.");
+         throw parser_error(com, "Expecting a comma.");
    }
 end_head:
    if(body_facts.empty()) // axiom
@@ -385,7 +386,7 @@ parser::parse_expr_struct(const token& start)
       if(tok.tok == token::Token::PAREN_RIGHT)
          break;
       if(tok.tok != token::Token::COMMA)
-         throw parser_error(filename, tok, "expecting a comma.");
+         throw parser_error(tok, "expecting a comma.");
    }
    return new struct_expr(start, std::move(exprs));
 }
@@ -408,13 +409,13 @@ parser::parse_expr_list(const token& start)
          expr *tail(parse_atom_expr());
          const token end(get());
          if(end.tok != token::Token::BRACKET_RIGHT)
-            throw parser_error(filename, end, "expected end of list ].");
+            throw parser_error(end, "expected end of list ].");
          return new list_expr(start, move(heads), tail);
       }
       if(tok.tok == token::Token::BRACKET_RIGHT)
          return new list_expr(start, move(heads));
       if(tok.tok != token::Token::COMMA)
-         throw parser_error(filename, tok, "expecting comma or bar in list expression.");
+         throw parser_error(tok, "expecting comma or bar in list expression.");
    }
 }
 
@@ -426,20 +427,20 @@ parser::parse_expr_if(const token& start)
 
    const token then(get());
    if(then.tok != token::Token::THEN)
-      throw parser_error(filename, then, "expected then token.");
+      throw parser_error(then, "expected then token.");
 
    static const token::Token else_ops[2] = {token::Token::ELSE, token::Token::OTHERWISE};
    expr *e1(parse_expr(else_ops, sizeof(else_ops)/sizeof(token::Token)));
    const token se(get());
    if(se.tok != token::Token::ELSE && se.tok != token::Token::OTHERWISE)
-      throw parser_error(filename, se, "expected either else or otherwise.");
+      throw parser_error(se, "expected either else or otherwise.");
 
    static const token::Token end_ops[1] = {token::Token::END};
    expr *e2(parse_expr(end_ops, sizeof(end_ops)/sizeof(token::Token)));
 
    const token end(get());
    if(end.tok != token::Token::END)
-      throw parser_error(filename, end, "expected end token.");
+      throw parser_error(end, "expected end token.");
 
    return new if_expr(start, cmp, e1, e2);
 }
@@ -459,7 +460,7 @@ parser::parse_atom_expr()
             if(it == ast->constants.end())
                return parse_expr_funcall(tok);
             else
-               return new constant_expr(tok);
+               return new constant_expr(tok, it->second);
          }
          break;
       case token::Token::FLOAT:
@@ -482,10 +483,10 @@ parser::parse_atom_expr()
          expr *ret(parse_expr(end_tokens, 1));
          const token rp(get());
          if(rp.tok != token::Token::PAREN_RIGHT)
-            throw parser_error(filename, rp, "expecting matching parenthesis.");
+            throw parser_error(rp, "expecting matching parenthesis.");
          return ret;
       }
-      default: throw parser_error(filename, tok, "expression not handled yet.");
+      default: throw parser_error(tok, "expression not handled yet.");
    }
 }
 
@@ -543,7 +544,7 @@ parser::parse_expr(const token::Token *end_tokens, const size_t end)
       const Op op(parse_operation(tok_op));
 
       if(op == Op::NO_OP)
-         throw parser_error(filename, tok, "expected a valid operation.");
+         throw parser_error(tok, "expected a valid operation.");
 
       ops.push_front(std::make_pair(op, tok_op));
    }
@@ -560,17 +561,17 @@ parser::parse_expr(const token::Token *end_tokens, const size_t end)
    static const Op fifthprecedence[1] = {Op::OR};
    process_precedence(atoms, ops, fifthprecedence, sizeof(fifthprecedence)/sizeof(Op));
    if(atoms.size() > 1)
-      throw parser_error(filename, ops.front().second, "invalid operations were found!");
+      throw parser_error(ops.front().second, "invalid operations were found!");
    assert(atoms.size() == 1);
    return atoms.front();
 }
 
 fact*
-parser::parse_body_fact(const token& name, const vm::predicate *pred)
+parser::parse_body_fact(const token& name, predicate_definition *pred)
 {
    const token lp(get());
    if(lp.tok != token::Token::PAREN_LEFT)
-      throw parser_error(filename, lp, "expecting a (.");
+      throw parser_error(lp, "expecting a (.");
    static token::Token end_tokens[2] = {token::Token::PAREN_RIGHT,
       token::Token::COMMA};
 
@@ -579,29 +580,48 @@ parser::parse_body_fact(const token& name, const vm::predicate *pred)
       expr *e(parse_expr(end_tokens, 2));
       exprs.push_back(e);
       if(exprs.size() > pred->num_fields())
-         throw parser_error(filename, name, "too many arguments.");
+         throw parser_error(name, "too many arguments.");
       const token com(get());
       if(com.tok == token::Token::PAREN_RIGHT) {
          if(exprs.size() < pred->num_fields())
-            throw parser_error(filename, name, "too few arguments.");
+            throw parser_error(name, "too few arguments.");
          return new fact(name, pred, move(exprs));
       }
       if(com.tok != token::Token::COMMA)
-         throw parser_error(filename, com, "expecting a comma.");
+         throw parser_error(com, "expecting a comma.");
    }
 }
 
 expr*
 parser::parse_expr_funcall(const token& name)
 {
+   auto it(ast->functions.find(name.str));
+   size_t args(0);
+   function *finternal(nullptr);
+   vm::external_function *fexternal(nullptr);
+
+   if(name.str == "float")
+      args = 1;
+   else if(it == ast->functions.end()) {
+      fexternal = vm::lookup_external_function_by_name(name.str);
+      if(fexternal == nullptr)
+         throw parser_error(name, "cannot find such function.");
+      args = fexternal->get_num_args();
+   } else {
+      finternal = it->second;
+      args = finternal->num_args();
+   }
+
    const token lp(get());
    if(lp.tok != token::Token::PAREN_LEFT)
-      throw parser_error(filename, lp, "expected a left parenthesis in function call.");
+      throw parser_error(lp, "expected a left parenthesis in function call.");
    // 0-arg function call
    const token rp(peek());
    if(rp.tok == token::Token::PAREN_RIGHT) {
       get();
-      return new funcall_expr(name, vector<expr*>());
+      if(args != 0)
+         throw parser_error(name, "expected 0 arguments for this function");
+      return new funcall_expr(name, vector<expr*>(), fexternal, finternal);
    }
 
    static token::Token end_tokens[2] = {token::Token::PAREN_RIGHT,
@@ -620,7 +640,10 @@ parser::parse_expr_funcall(const token& name)
          break;
    }
 
-   return new funcall_expr(name, move(exprs));
+   if(args != exprs.size())
+      throw parser_error(name, "expected a different number of arguments.");
+
+   return new funcall_expr(name, move(exprs), fexternal, finternal);
 }
 
 Op
@@ -655,7 +678,7 @@ parser::parse_operation(const token& tok)
       case token::Token::PAREN_RIGHT:
          return Op::NO_OP;
       default:
-         throw parser_error(filename, tok, "unrecognized operation.");
+         throw parser_error(tok, "unrecognized operation.");
    }
 }
 
@@ -680,10 +703,10 @@ parser::parse_body(vector<expr*>& conditions, vector<fact*>& body_facts, const t
             tok = get();
             auto it(ast->predicates.find(tok.str));
             if(it == ast->predicates.end())
-               throw parser_error(filename, tok, "expecting a predicate after the !.");
-            const vm::predicate *pred(it->second);
-            if(!pred->is_persistent_pred())
-               throw parser_error(filename, tok, string("predicate ") + tok.str + " is not persistent.");
+               throw parser_error(tok, "expecting a predicate after the !.");
+            predicate_definition *pred(it->second);
+            if(!pred->is_persistent())
+               throw parser_error(tok, string("predicate ") + tok.str + " is not persistent.");
             body_facts.push_back(parse_body_fact(tok, pred));
          }
          break;
@@ -702,9 +725,9 @@ parser::parse_body(vector<expr*>& conditions, vector<fact*>& body_facts, const t
          break;
       }
       case token::Token::COMMA:
-         throw parser_error(filename, tok, "comma is not expected here.");
+         throw parser_error(tok, "comma is not expected here.");
       default:
-         throw parser_error(filename, tok, "don't know how to handle (in parse_rule).");
+         throw parser_error(tok, "don't know how to handle (in parse_rule).");
    }
 }
 
@@ -721,7 +744,7 @@ parser::parse_rule(const token& start)
       if(com.tok == token::Token::DOT) {
          // axiom
          if(!conditions.empty())
-            throw parser_error(filename, start, "axioms cannot have conditions.");
+            throw parser_error(start, "axioms cannot have conditions.");
          for(size_t i(0); i < body_facts.size(); ++i)
             ast->axioms.push_back(new basic_axiom(body_facts[i]));
          return;
@@ -729,7 +752,7 @@ parser::parse_rule(const token& start)
       if(com.tok == token::Token::LOLLI)
          return parse_rule_head(com, conditions, body_facts);
       if(com.tok != token::Token::COMMA)
-         throw parser_error(filename, com, "here expecting a comma.");
+         throw parser_error(com, "here expecting a comma.");
    }
 }
 
@@ -763,15 +786,15 @@ parser::parse_priority()
                   else if(tok.tok == token::Token::ASC)
                      ast->prio_type = vm::PRIORITY_ASC;
                   else
-                     throw parser_error(filename, tok, "invalid ordering type.");
+                     throw parser_error(tok, "invalid ordering type.");
                }
                break;
             default:
-               throw parser_error(filename, tok, "don't know how to handle priority statement.");
+               throw parser_error(tok, "don't know how to handle priority statement.");
          }
          tok = get();
          if(tok.tok != token::Token::DOT)
-            throw parser_error(filename, tok, "expecting a dot.");
+            throw parser_error(tok, "expecting a dot.");
       } else
          return;
    }
@@ -784,10 +807,10 @@ parser::parse_function()
 
    const token fname(get());
    if(fname.tok != token::Token::NAME)
-      throw parser_error(filename, fname, "expected a function name.");
+      throw parser_error(fname, "expected a function name.");
    const token lp(get());
    if(lp.tok != token::Token::PAREN_LEFT)
-      throw parser_error(filename, lp, "expected a left parenthesis.");
+      throw parser_error(lp, "expected a left parenthesis.");
 
    vector<var_expr*> vars;
    vector<vm::type*> types;
@@ -798,7 +821,7 @@ parser::parse_function()
 
       const token var(get());
       if(var.tok != token::Token::VAR)
-         throw parser_error(filename, var, "expected variable name.");
+         throw parser_error(var, "expected variable name.");
 
       vars.push_back(new var_expr(var));
 
@@ -807,26 +830,26 @@ parser::parse_function()
       if(end.tok == token::Token::PAREN_RIGHT)
          break;
       if(end.tok != token::Token::COMMA)
-         throw parser_error(filename, end, "expected a comma or right parenthesis.");
+         throw parser_error(end, "expected a comma or right parenthesis.");
    }
 
    const token semi(get());
    if(semi.tok != token::Token::SEMICOLON)
-      throw parser_error(filename, semi, "Expected a semicollon.");
+      throw parser_error(semi, "Expected a semicollon.");
 
    const token ret(get());
    vm::type *ret_type(parse_type(ret));
 
    const token eq(get());
    if(eq.tok != token::Token::EQUAL)
-      throw parser_error(filename, eq, "expected = sign.");
+      throw parser_error(eq, "expected = sign.");
 
    static token::Token end_tokens[1] = {token::Token::DOT};
    expr *body(parse_expr(end_tokens, 1));
 
    const token dot(get());
    if(dot.tok != token::Token::DOT)
-      throw parser_error(filename, dot, "expected a dot.");
+      throw parser_error(dot, "expected a dot.");
 
    function *f(new function(fname, move(vars), move(types),
             ret_type, body));
@@ -846,7 +869,7 @@ parser::parse_include()
    const token include(get());
    const token filetok(get());
    if(filetok.tok != token::Token::FILENAME)
-      throw parser_error(filename, include, "not a valid include declaration.");
+      throw parser_error(include, "not a valid include declaration.");
    string include_file(filetok.str);
    const size_t last_pos(filename.rfind('/'));
    string dirname = ".";
@@ -859,7 +882,7 @@ parser::parse_include()
       include_files.push_back(include_file);
    } else {
       f.close();
-      throw parser_error(filename, filetok, string("filename ") + include_file + " not found.");
+      throw parser_error(filetok, string("filename ") + include_file + " not found.");
    }
 }
 
@@ -905,30 +928,11 @@ parser::parser(const std::string& file, abstract_syntax_tree *tree):
    if(!ast)
       ast = new abstract_syntax_tree();
    vm::init_types();
+   vm::init_external_functions();
    parse_program();
    token tok(get());
    if(tok.tok != token::Token::ENDFILE)
-      throw parser_error(filename, tok, "expected end of file.");
-}
-
-abstract_syntax_tree::abstract_syntax_tree()
-{
-   // create default predicates.
-   initial_predicate1("_init", true, false, vm::TYPE_NODE);
-   initial_predicate1("set-priority", true, true, vm::TYPE_NODE);
-   initial_predicate4("setcolor", true, true, vm::TYPE_NODE, vm::TYPE_INT, vm::TYPE_INT, vm::TYPE_INT);
-   initial_predicate3("setedgelabel", true, true, vm::TYPE_NODE, vm::TYPE_NODE, vm::TYPE_STRING);
-   initial_predicate2("write-string", true, true, vm::TYPE_NODE, vm::TYPE_NODE);
-   initial_predicate2("add-priority", true, true, vm::TYPE_NODE, vm::TYPE_FLOAT);
-   initial_predicate1("schedule-next", true, true, vm::TYPE_NODE);
-   initial_predicate2("setColor2", false, true, vm::TYPE_NODE, vm::TYPE_INT);
-   initial_predicate1("stop-program", true, true, vm::TYPE_NODE);
-   initial_predicate2("set-default-priority", true, true, vm::TYPE_NODE, vm::TYPE_FLOAT);
-   initial_predicate1("set-moving", true, true, vm::TYPE_NODE);
-   initial_predicate1("set-static", true, true, vm::TYPE_NODE);
-   initial_predicate2("set-affinity", true, true, vm::TYPE_NODE, vm::TYPE_NODE);
-   initial_predicate2("set-cpu", true, true, vm::TYPE_NODE, vm::TYPE_INT);
-   initial_predicate1("remove-priority", true, true, vm::TYPE_NODE);
+      throw parser_error(tok, "expected end of file.");
 }
 
 }

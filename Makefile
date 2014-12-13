@@ -131,6 +131,7 @@ SRCS = utils/utils.cpp \
 			thread/coord.cpp \
 			compiler/lexer.cpp \
 			compiler/parser.cpp \
+			compiler/ast.cpp \
 			external/math.cpp \
 			external/lists.cpp \
 			external/utils.cpp \

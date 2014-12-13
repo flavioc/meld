@@ -83,7 +83,7 @@ class token
          FROM, AS, MIN,
          PRIORITY, TRUE, FALSE, NIL,
          IF, THEN, END, OTHERWISE, ELSE,
-         BOOL, INT, FLOAT, NODE,
+         BOOL, INT, FLOAT, NODE, THREAD,
          LIST, CONST,
          TYPE, EXTERN,
          LET, IN, FUN,
@@ -92,23 +92,32 @@ class token
       } Token;
 
       Token tok;
+      std::string filename;
       size_t line;
       size_t col;
       std::string str;
 
       explicit token(const Token _tok,
+            const std::string& _filename,
             const size_t _line,
             const size_t _col,
             const std::string& _str):
-         tok(_tok), line(_line),
-         col(_col),
-         str(_str)
+         tok(_tok), filename(_filename),
+         line(_line), col(_col), str(_str)
       {
       }
 
-      explicit token(const Token _tok, const character x,
+      explicit token():
+         tok(Token::ENDFILE), filename(""), line(0), col(0), str("")
+      {}
+
+      explicit token(const Token _tok,
+            const std::string& _filename,
+            const character x,
             const std::string& _str):
-         tok(_tok), line(x.line),
+         tok(_tok),
+         filename(_filename),
+         line(x.line),
          col(x.col),
          str(_str)
       {
@@ -119,6 +128,7 @@ class lexer: public mem::base
 {
    private:
 
+      const std::string& filename;
       std::ifstream stream;
       size_t cur_line;
       size_t cur_col;
