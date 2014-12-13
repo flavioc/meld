@@ -71,6 +71,7 @@ void init_external_functions(void);
 external_function_id first_custom_external_function(void);
 external_function_id register_external_function(external_function *);
 external_function* lookup_external_function(const external_function_id);
+external_function* lookup_external_function_by_name(const std::string&);
 void register_custom_external_function(external_function_ptr, const size_t, type*, type**, const std::string&);
 
 }

@@ -73,6 +73,20 @@ lookup_external_function(const external_function_id id)
    return ret;
 }
 
+external_function*
+lookup_external_function_by_name(const string& name)
+{
+   if(!external_functions_initiated)
+      init_external_functions();
+
+   for(hash_external_type::iterator it(hash_external.begin()), end(hash_external.end()); it != end; it++) {
+      external_function *f(it->second);
+      if(f->get_name() == name)
+         return f;
+   }
+   return nullptr;
+}
+
 static inline external_function*
 external0(external_function_ptr ptr, type *ret, const string& name)
 {
