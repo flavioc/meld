@@ -15,6 +15,7 @@ namespace vm {
 type *TYPE_INT(nullptr);
 type *TYPE_FLOAT(nullptr);
 type *TYPE_NODE(nullptr);
+type *TYPE_THREAD(nullptr);
 type *TYPE_STRING(nullptr);
 type *TYPE_BOOL(nullptr);
 type *TYPE_ANY(nullptr);
@@ -35,6 +36,7 @@ init_types(void)
    TYPE_INT = new type(FIELD_INT);
    TYPE_FLOAT = new type(FIELD_FLOAT);
    TYPE_NODE = new type(FIELD_NODE);
+   TYPE_THREAD = new type(FIELD_THREAD);
    TYPE_BOOL = new type(FIELD_BOOL);
    TYPE_STRING = new type(FIELD_STRING);
    TYPE_ANY = new type(FIELD_ANY);

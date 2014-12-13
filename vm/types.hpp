@@ -16,6 +16,7 @@ enum field_type {
    FIELD_LIST = 0x3,
    FIELD_STRUCT = 0x4,
    FIELD_BOOL = 0x5,
+   FIELD_THREAD = 0x6,
 	FIELD_STRING = 0x9,
    FIELD_ANY = 0x6
 };
@@ -126,13 +127,14 @@ class struct_type: public type
          if(!type::equal(other))
             return false;
 
-         struct_type *sother((struct_type*)other);
-         if(get_size() != sother->get_size())
-            return false;
-
-         for(size_t i(0); i < get_size(); ++i) {
-            if(!types[i]->equal(sother->types[i]))
+         if(struct_type *sother = dynamic_cast<struct_type*>(other)) {
+            if(get_size() != sother->get_size())
                return false;
+
+            for(size_t i(0); i < get_size(); ++i) {
+               if(!types[i]->equal(sother->types[i]))
+                  return false;
+            }
          }
 
          return true;
@@ -162,7 +164,7 @@ class struct_type: public type
       }
 };
 
-extern type *TYPE_INT, *TYPE_BOOL, *TYPE_FLOAT, *TYPE_NODE, *TYPE_STRING, *TYPE_ANY, *TYPE_STRUCT;
+extern type *TYPE_INT, *TYPE_BOOL, *TYPE_FLOAT, *TYPE_NODE, *TYPE_THREAD, *TYPE_STRING, *TYPE_ANY, *TYPE_STRUCT;
 extern list_type *TYPE_LIST_FLOAT, *TYPE_LIST_INT, *TYPE_LIST_NODE;
 
 void init_types(void);
