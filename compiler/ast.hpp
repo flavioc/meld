@@ -41,7 +41,7 @@ class expr: public mem::base
 
       vm::type *get_type() const { return type; }
 
-      virtual void typecheck(vm::type *t = nullptr) {
+      void typecheck(vm::type *t = nullptr) {
          if(type == nullptr)
             type = t;
          else if(t == nullptr)
@@ -53,6 +53,16 @@ class expr: public mem::base
 
       virtual void dotypecheck() {
          std::cerr << "Typechecking not implemented for " << typeid(*this).name() << std::endl;
+         abort();
+      }
+
+      vm::type* bottom_typecheck() {
+         dobottom_typecheck();
+         return type;
+      }
+
+      virtual void dobottom_typecheck() {
+         std::cerr << "Bottom-up typechecking not implemented for " << typeid(*this).name() << std::endl;
          abort();
       }
 
@@ -173,6 +183,7 @@ class var_expr: public expr
       }
 
       virtual void dotypecheck();
+      virtual void dobottom_typecheck();
 
       std::string get_name() const { return tok.str; }
 
@@ -271,6 +282,7 @@ class number_expr: public expr
    public:
 
       virtual void dotypecheck();
+      virtual void dobottom_typecheck() { }
 
       virtual std::string str() const {
          return tok.str;
@@ -324,6 +336,8 @@ class if_expr: public expr
 
    public:
 
+      virtual void dotypecheck();
+
       virtual std::string str() const
       {
          return std::string("if ") + cmp->str() + " then " + e1->str() + " else " + e2->str() + " end";
@@ -350,6 +364,8 @@ class function: public expr
       size_t num_args() const { return types.size(); }
       vm::type *get_ret_type() const { return ret_type; }
       vm::type *get_arg_type(const size_t i) const { return types[i]; }
+
+      virtual void dotypecheck();
 
       virtual std::string str() const
       {

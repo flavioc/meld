@@ -38,6 +38,14 @@ rule::dotypecheck()
 }
 
 void
+var_expr::dobottom_typecheck()
+{
+   auto it(var_context.find(get_name()));
+   if(it != var_context.end())
+      type = it->second;
+}
+
+void
 var_expr::dotypecheck()
 {
    auto it(var_context.find(get_name()));
@@ -141,7 +149,6 @@ number_expr::dotypecheck()
       if(!type->equal(TYPE_FLOAT) && !type->equal(TYPE_INT))
          throw type_error(this, "expected numeric type.");
    }
-
 }
 
 void
@@ -159,7 +166,16 @@ binary_expr::dotypecheck()
          e2->typecheck(type);
          break;
       case EQUAL:
-      case NOT_EQUAL:
+      case NOT_EQUAL: {
+            vm::type *t1(e1->bottom_typecheck());
+            vm::type *t2(e2->bottom_typecheck());
+            if(t1 && !t2)
+               e2->typecheck(t1);
+            else if(!t1 && t2)
+               e1->typecheck(t2);
+            else
+               abort();
+         }
          break;
       case AND:
       case OR:
@@ -182,6 +198,23 @@ fact::dotypecheck()
 }
 
 void
+if_expr::dotypecheck()
+{
+   cmp->typecheck(vm::TYPE_BOOL);
+   e1->typecheck(type);
+   e2->typecheck(type);
+}
+
+void
+function::dotypecheck()
+{
+   for(size_t i(0); i < vars.size(); ++i)
+      vars[i]->typecheck(types[i]);
+   body->typecheck(ret_type);
+   var_context.clear();
+}
+
+void
 basic_axiom::dotypecheck()
 {
    f->typecheck();
@@ -198,6 +231,8 @@ abstract_syntax_tree::typecheck()
          throw type_error(pred, "first argument meust be either node or thread.");
    }
 
+   for(auto it(functions.begin()), end(functions.end()); it != end; ++it)
+      it->second->typecheck();
    for(auto it(rules.begin()), end(rules.end()); it != end; ++it)
       (*it)->typecheck();
    for(auto it(axioms.begin()), end(axioms.end()); it != end; ++it)
