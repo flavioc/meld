@@ -66,6 +66,26 @@ class expr: public mem::base
          abort();
       }
 
+      typedef enum {CONTINUE, STOP, HALT} iterate_ret;
+      using iterate_fun = std::function<iterate_ret (expr*)>;
+      bool iterate(iterate_fun f) {
+         switch(f(this)) {
+            case HALT:
+               return false;
+            case STOP:
+               return true;
+            case CONTINUE:
+               return doiterate(f);
+         }
+      }
+
+      virtual bool doiterate(iterate_fun f) {
+         (void)f;
+         std::cerr << "Iterate not implemented for " << typeid(*this).name() << std::endl;
+         abort();
+         return false;
+      }
+
       inline const token get_token() const { return tok; }
 
       explicit expr(const token& _tok): tok(_tok) {}
@@ -151,29 +171,6 @@ class predicate_definition: public expr
       {}
 };
 
-class binary_expr: public expr
-{
-   private:
-
-      expr *e1;
-      expr *e2;
-      Op op;
-
-   public:
-
-      virtual void dotypecheck();
-
-      virtual std::string str() const {
-         return e1->str() + " " + op2str(op) + " " + e2->str();
-      }
-
-      explicit binary_expr(const token& tok, expr *_e1, expr *_e2, const Op _op):
-         expr(tok), e1(_e1), e2(_e2), op(_op)
-      {
-         assert(e2);
-      }
-};
-
 class var_expr: public expr
 {
    public:
@@ -190,6 +187,65 @@ class var_expr: public expr
       explicit var_expr(const token& tok):
          expr(tok)
       {}
+};
+
+class binary_expr: public expr
+{
+   private:
+
+      expr *e1;
+      expr *e2;
+      Op op;
+
+   public:
+
+      virtual void dotypecheck();
+      virtual void dobottom_typecheck();
+
+      virtual std::string str() const {
+         return e1->str() + " " + op2str(op) + " " + e2->str();
+      }
+
+      virtual bool doiterate(expr::iterate_fun f) {
+         return e1->iterate(f) && e2->iterate(f);
+      }
+
+      inline bool looks_like_assignment() const {
+         return op == Op::EQUAL && (dynamic_cast<var_expr*>(e1) || dynamic_cast<var_expr*>(e2));
+      }
+
+      inline expr* get_e1() { return e1; }
+      inline expr* get_e2() { return e2; }
+
+      explicit binary_expr(const token& tok, expr *_e1, expr *_e2, const Op _op):
+         expr(tok), e1(_e1), e2(_e2), op(_op)
+      {
+         assert(e2);
+      }
+};
+
+class assignment_expr: public expr
+{
+   private:
+
+      var_expr *var;
+      expr *value;
+
+   public:
+
+      inline var_expr *get_var() const { return var; }
+
+      virtual std::string str() const {
+         return var->str() + " := " + value->str();
+      }
+
+      virtual void dotypecheck();
+
+      explicit assignment_expr(const token& tok,
+            var_expr *_var, expr *_value):
+         expr(tok), var(_var), value(_value)
+      {
+      }
 };
 
 class nil_expr: public expr
@@ -282,7 +338,7 @@ class number_expr: public expr
    public:
 
       virtual void dotypecheck();
-      virtual void dobottom_typecheck() { }
+      virtual void dobottom_typecheck();
 
       virtual std::string str() const {
          return tok.str;
@@ -337,10 +393,16 @@ class if_expr: public expr
    public:
 
       virtual void dotypecheck();
+      virtual void dobottom_typecheck();
 
       virtual std::string str() const
       {
          return std::string("if ") + cmp->str() + " then " + e1->str() + " else " + e2->str() + " end";
+      }
+
+      virtual bool doiterate(iterate_fun f)
+      {
+         return cmp->iterate(f) && e1->iterate(f) && e2->iterate(f);
       }
 
       explicit if_expr(const token& tok,
@@ -401,9 +463,24 @@ class funcall_expr: public expr
       vm::external_function *fexternal;
       function *finternal;
 
+      inline vm::type *get_ret_type() const {
+         if(fexternal)
+            return fexternal->get_return_type();
+         else
+            return finternal->get_ret_type();
+      }
+
+      inline vm::type *get_arg_type(const size_t i) const {
+         if(finternal)
+            return finternal->get_arg_type(i);
+         else
+            return fexternal->get_arg_type(i);
+      }
+
    public:
 
       virtual void dotypecheck();
+      virtual void dobottom_typecheck();
 
       virtual std::string str() const {
          std::string ret = tok.str + "(";
@@ -415,6 +492,15 @@ class funcall_expr: public expr
          }
 
          return ret + ")";
+      }
+
+      virtual bool doiterate(expr::iterate_fun f) {
+         for(size_t i(0); i < exprs.size(); ++i) {
+            expr *e(exprs[i]);
+            if(!e->iterate(f))
+               return false;
+         }
+         return true;
       }
 
       std::string name() const { return tok.str; }
@@ -435,6 +521,8 @@ class fact: public expr
       std::vector<expr*> exprs;
 
    public:
+
+      expr *get_first() { return exprs[0]; }
 
       virtual void dotypecheck();
 
@@ -494,11 +582,14 @@ class constant_expr: public expr
    public:
 
       virtual void dotypecheck();
+      virtual void dobottom_typecheck();
 
       virtual std::string str() const
       {
          return std::string("const(") + tok.str + ")";
       }
+
+      virtual bool doiterate(iterate_fun f) { (void)f; return true; }
 
       explicit constant_expr(const token& tok, constant_definition_expr *_def):
          expr(tok), def(_def)
@@ -522,6 +613,8 @@ class exists_construct: public construct
       std::vector<fact*> facts;
 
    public:
+
+      virtual void dotypecheck();
 
       virtual std::string str() const
       {
@@ -552,23 +645,46 @@ class exists_construct: public construct
       }
 };
 
+typedef enum {
+   COUNT, COLLECT, SUM, MAX, MIN, NO_MOD
+} AggregateMod;
+
 class aggregate_spec: public expr
 {
    private:
 
       var_expr *var;
+      AggregateMod mod;
+
+      inline std::string get_mod_str() const { return tok.str; }
 
    public:
 
+      inline var_expr* get_var() const { return var; }
+      inline AggregateMod get_mod() const { return mod; }
+
       virtual std::string str() const
       {
-         return tok.str + " => " + var->str();
+         return get_mod_str() + " => " + var->str();
       }
 
-      explicit aggregate_spec(const token& mod,
+      explicit aggregate_spec(const token& _mod,
             var_expr *_var):
-         expr(mod), var(_var)
+         expr(_mod), var(_var)
       {
+         const std::string name(get_mod_str());
+         if(name == "count")
+            mod = AggregateMod::COUNT;
+         else if(name == "collect")
+            mod = AggregateMod::COLLECT;
+         else if(name == "sum")
+            mod = AggregateMod::SUM;
+         else if(name == "max")
+            mod = AggregateMod::MAX;
+         else if(name == "min")
+            mod = AggregateMod::MIN;
+         else
+            abort();
       }
 };
 
@@ -579,10 +695,13 @@ class aggregate_construct: public construct
       std::vector<aggregate_spec*> specs;
       std::vector<var_expr*> vars;
       std::vector<expr*> conditions;
+      std::vector<assignment_expr*> assignments;
       std::vector<fact*> body_facts;
       std::vector<fact*> head_facts;
 
    public:
+
+      virtual void dotypecheck();
 
       virtual std::string str() const
       {
@@ -641,10 +760,13 @@ class comprehension_construct: public construct
 
       std::vector<var_expr*> vars;
       std::vector<expr*> conditions;
+      std::vector<assignment_expr*> assignments;
       std::vector<fact*> body_facts;
       std::vector<fact*> head_facts;
 
    public:
+
+      virtual void dotypecheck();
 
       virtual std::string str() const
       {
@@ -704,6 +826,7 @@ class rule: public expr
    private:
 
       std::vector<expr*> body_conditions;
+      std::vector<assignment_expr*> body_assignments;
       std::vector<fact*> body_facts;
       std::vector<fact*> head_facts;
       std::vector<construct*> head_constructs;

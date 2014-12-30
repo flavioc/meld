@@ -168,6 +168,7 @@ extern type *TYPE_INT, *TYPE_BOOL, *TYPE_FLOAT, *TYPE_NODE, *TYPE_THREAD, *TYPE_
 extern list_type *TYPE_LIST_FLOAT, *TYPE_LIST_INT, *TYPE_LIST_NODE;
 
 void init_types(void);
+list_type *get_list_type(type *);
 
 enum aggregate_type {
    AGG_FIRST = 1,

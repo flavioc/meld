@@ -45,6 +45,19 @@ init_types(void)
    TYPE_LIST_FLOAT = new list_type(TYPE_FLOAT);
    TYPE_LIST_NODE = new list_type(TYPE_NODE);
 }
+
+list_type*
+get_list_type(type *t)
+{
+   if(t->equal(TYPE_INT))
+      return TYPE_LIST_INT;
+   else if(t->equal(TYPE_FLOAT))
+      return TYPE_LIST_FLOAT;
+   else if(t->equal(TYPE_NODE))
+      return TYPE_LIST_NODE;
+   else
+      abort();
+}
    
 size_t
 field_type_size(field_type type)
