@@ -59,6 +59,10 @@ lookup_variable(var_expr *e)
 static void
 process_conditions(std::vector<expr*>& in_constrs, std::vector<assignment_expr*>& out_ass)
 {
+   // add assignments
+   for(assignment_expr *a : out_ass) {
+      a->typecheck();
+   }
    // typecheck constraints and assignments:
    // we typecheck constraints with all variables defined
    // if we cannot find typecheck all the constraints
@@ -115,15 +119,14 @@ comprehension_construct::dotypecheck()
    unordered_map<string, vm::type*> copy_context(var_context);
 
    add_new_vars = true;
-   for(auto it(body_facts.begin()), end(body_facts.end()); it != end; ++it)
-      (*it)->typecheck();
+   for(fact *f : body_facts)
+      f->typecheck();
    add_new_vars = false;
    process_conditions(conditions, assignments);
    add_new_vars = false;
-   for(auto it(head_facts.begin()), end(head_facts.end()); it != end; ++it)
-      (*it)->typecheck();
-   for(auto it(vars.begin()), end(vars.end()); it != end; ++it) {
-      var_expr *v(*it);
+   for(fact * f : head_facts)
+      f->typecheck();
+   for(var_expr *v : vars) {
       const string name(v->get_name());
       auto f(var_context.find(name));
       if(f == var_context.end())
@@ -137,12 +140,12 @@ exists_construct::dotypecheck()
 {
    unordered_map<string, vm::type*> copy_context(var_context);
 
-   for(auto it(vars.begin()), end(vars.end()); it != end; ++it)
-      var_context[(*it)->get_name()] = TYPE_NODE;
+   for(var_expr *v : vars)
+      var_context[v->get_name()] = TYPE_NODE;
 
    add_new_vars = false;
-   for(auto it(facts.begin()), end(facts.end()); it != end; ++it)
-      (*it)->typecheck();
+   for(fact *f : facts)
+      f->typecheck();
 
    var_context = copy_context;
 }
@@ -153,12 +156,11 @@ aggregate_construct::dotypecheck()
    unordered_map<string, vm::type*> copy_context(var_context);
 
    add_new_vars = true;
-   for(auto it(body_facts.begin()), end(body_facts.end()); it != end; ++it)
-      (*it)->typecheck();
+   for(fact *f : body_facts)
+      f->typecheck();
    add_new_vars = false;
    process_conditions(conditions, assignments);
-   for(auto it(vars.begin()), end(vars.end()); it != end; ++it) {
-      var_expr *v(*it);
+   for(var_expr *v : vars) {
       const string name(v->get_name());
       auto f(var_context.find(name));
       if(f == var_context.end())
@@ -166,8 +168,7 @@ aggregate_construct::dotypecheck()
    }
    // check aggregate specs
    std::vector<vm::type*> var_types;
-   for(auto it(specs.begin()), end(specs.end()); it != end; ++it) {
-      aggregate_spec *spec(*it);
+   for(aggregate_spec *spec : specs) {
       var_expr *var(spec->get_var());
       const string name(var->get_name());
       const AggregateMod mod(spec->get_mod());
@@ -203,8 +204,8 @@ aggregate_construct::dotypecheck()
       var_context[(*it)->get_var()->get_name()] = *typ;
 
    add_new_vars = false;
-   for(auto it(head_facts.begin()), end(head_facts.end()); it != end; ++it)
-      (*it)->typecheck();
+   for(fact * f : head_facts)
+      f->typecheck();
 
    var_context = copy_context;
 }
@@ -214,15 +215,15 @@ rule::dotypecheck()
 {
    std::cout << "Typechecking " << str() << "\n";
    add_new_vars = true;
-   for(auto it(body_facts.begin()), end(body_facts.end()); it != end; ++it)
-      (*it)->typecheck(nullptr);
+   for(fact *f : body_facts)
+      f->typecheck(nullptr);
    add_new_vars = false;
    process_conditions(body_conditions, body_assignments);
    add_new_vars = false;
-   for(auto it(head_facts.begin()), end(head_facts.end()); it != end; ++it)
-      (*it)->typecheck();
-   for(auto it(head_constructs.begin()), end(head_constructs.end()); it != end; ++it)
-      (*it)->typecheck();
+   for(fact *f : head_facts)
+      f->typecheck();
+   for(construct *c : head_constructs)
+      c->typecheck();
    var_context.clear();
 }
 
@@ -246,6 +247,36 @@ var_expr::dotypecheck()
       if(!type->equal(it->second))
          throw type_error(this, std::string("types not equal ") + type->string() + " -> " + it->second->string());
    }
+}
+
+void
+tail_expr::dobottom_typecheck()
+{
+   vm::type *bottom(ls->bottom_typecheck());
+   vm::list_type *ltype(dynamic_cast<vm::list_type*>(bottom));
+   if(ltype)
+      type = bottom;
+   else
+      throw type_error(ls, "expecting list type.");
+}
+
+void
+head_expr::dobottom_typecheck()
+{
+   vm::type *bottom(ls->bottom_typecheck());
+   vm::list_type *ltype(dynamic_cast<vm::list_type*>(bottom));
+   if(ltype)
+      type = ltype->get_subtype();
+   else
+      throw type_error(ls, "expecting list type.");
+}
+
+void
+not_expr::dotypecheck()
+{
+   if(!type->equal(TYPE_BOOL))
+      throw type_error(e, "expecting boolean type.");
+   e->typecheck(TYPE_BOOL);
 }
 
 void
@@ -323,6 +354,13 @@ struct_expr::dotypecheck()
       for(size_t i(1); i < exprs.size(); ++i)
          exprs[i]->typecheck(ftype);
    }
+}
+
+void
+nil_expr::dotypecheck()
+{
+   if(type->get_type() != vm::FIELD_LIST)
+      throw type_error(this, "expected list type.");
 }
 
 void
@@ -581,24 +619,22 @@ abstract_syntax_tree::typecheck()
    untyped_exprs.clear();
    var_context.clear();
 
-   for(auto it(predicates.begin()), end(predicates.end()); it != end; it++) {
-      predicate_definition *pred(it->second);
+   for(auto it : predicates) {
+      predicate_definition *pred(it.second);
 
       type* first(pred->get_field(0));
       if(first != TYPE_NODE && first != TYPE_THREAD)
          throw type_error(pred, "first argument meust be either node or thread.");
    }
 
-   for(auto it(functions.begin()), end(functions.end()); it != end; ++it)
-      it->second->typecheck();
-   for(auto it(rules.begin()), end(rules.end()); it != end; ++it)
-      (*it)->typecheck();
-   for(auto it(axioms.begin()), end(axioms.end()); it != end; ++it)
-      (*it)->typecheck();
-   for(auto it(untyped_exprs.begin()), end(untyped_exprs.end()); it != end; ++it) {
-      expr *e(*it);
+   for(auto it : functions)
+      it.second->typecheck();
+   for(rule *r : rules)
+      r->typecheck();
+   for(axiom *a : axioms)
+      a->typecheck();
+   for(expr *e : untyped_exprs)
       throw type_error(e, "untyped expression.");
-   }
 }
 
 abstract_syntax_tree::abstract_syntax_tree()

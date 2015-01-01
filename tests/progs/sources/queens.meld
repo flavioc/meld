@@ -1,8 +1,3 @@
-type left(node, node).
-type right(node, node).
-type down-right(node, node).
-type down-left(node, node).
-type coord(node, int, int).
 type linear propagate-left(node, list node, list int).
 type linear propagate-right(node, list node, list int).
 type linear test-and-send-down(node, list node, list int).

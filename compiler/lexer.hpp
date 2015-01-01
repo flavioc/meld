@@ -88,7 +88,8 @@ class token
          TYPE, EXTERN,
          LET, IN, FUN,
          EXISTS,
-         ENDFILE
+         ENDFILE,
+         GENERATED
       } Token;
 
       Token tok;
@@ -96,6 +97,8 @@ class token
       size_t line;
       size_t col;
       std::string str;
+
+      static token generated;
 
       explicit token(const Token _tok,
             const std::string& _filename,
@@ -109,6 +112,13 @@ class token
 
       explicit token():
          tok(Token::ENDFILE), filename(""), line(0), col(0), str("")
+      {}
+
+      explicit token(const std::string& _str):
+         tok(Token::GENERATED),
+         filename(""),
+         line(0), col(0),
+         str(_str)
       {}
 
       explicit token(const Token _tok,

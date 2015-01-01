@@ -9,6 +9,8 @@ using std::pair;
 namespace compiler
 {
 
+token token::generated("generated");
+
 string
 lexer::lex_string()
 {

@@ -18,7 +18,7 @@ count(A, 0).
 /* neighbor heat has changed... we add this to delta */
 neighborchanged(A, B, V, O),
 delta(A, P1, P2),
-!edge(B, A, W)
+!edge(A, B, W)
    -o delta(A, P1 + V * W, P2 + O * W).
 
 /* we changed our heat, send this information to neighbors */

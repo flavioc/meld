@@ -15,6 +15,8 @@ namespace compiler
 {
 
 class expr;
+class var_expr;
+class assignment_expr;
 
 class type_error : public std::runtime_error
 {
@@ -26,6 +28,20 @@ class type_error : public std::runtime_error
    public:
 
       explicit type_error(const expr *, const std::string&);
+};
+
+class localize_error : public std::runtime_error
+{
+   private:
+
+      const expr *e;
+      const std::string msg;
+
+   public:
+
+      inline const expr* get_expr() const { return e; }
+
+      explicit localize_error(const expr *, const std::string&);
 };
 
 class expr: public mem::base
@@ -40,6 +56,11 @@ class expr: public mem::base
       virtual std::string str() const = 0;
 
       vm::type *get_type() const { return type; }
+
+      virtual void localize_argument(std::vector<expr*>&, std::vector<assignment_expr*>&, var_expr*) {
+         std::cerr << "localize_argument not implemented for " << typeid(*this).name() << std::endl;
+         abort();
+      }
 
       void typecheck(vm::type *t = nullptr) {
          if(type == nullptr)
@@ -175,14 +196,18 @@ class var_expr: public expr
 {
    public:
 
-      virtual std::string str() const {
-         return tok.str;
-      }
+      std::string get_name() const { return tok.str; }
+
+      virtual std::string str() const { return get_name(); }
 
       virtual void dotypecheck();
       virtual void dobottom_typecheck();
 
-      std::string get_name() const { return tok.str; }
+      inline bool equal(var_expr *other) const { return get_name() == other->get_name(); }
+
+      explicit var_expr(const std::string& name):
+         expr(token(name))
+      {}
 
       explicit var_expr(const token& tok):
          expr(tok)
@@ -201,6 +226,7 @@ class binary_expr: public expr
 
       virtual void dotypecheck();
       virtual void dobottom_typecheck();
+      virtual void localize_argument(std::vector<expr*>&, std::vector<assignment_expr*>&, var_expr*);
 
       virtual std::string str() const {
          return e1->str() + " " + op2str(op) + " " + e2->str();
@@ -248,9 +274,39 @@ class assignment_expr: public expr
       }
 };
 
+class not_expr: public expr
+{
+   private:
+
+      expr *e;
+
+   public:
+
+      virtual void dotypecheck();
+
+      virtual bool doiterate(iterate_fun f)
+      {
+         return e->iterate(f);
+      }
+
+      virtual std::string str() const
+      {
+         return std::string("not (") + e->str() + ")";
+      }
+
+      explicit not_expr(expr *_e):
+         expr(_e->get_token()),
+         e(_e)
+      {}
+};
+
 class nil_expr: public expr
 {
    public:
+
+      virtual void dobottom_typecheck() { }
+      virtual void dotypecheck();
+      virtual void localize_argument(std::vector<expr*>&, std::vector<assignment_expr*>&, var_expr*);
 
       virtual std::string str() const {
          return "[]";
@@ -290,6 +346,48 @@ class struct_expr: public expr
       }
 };
 
+class tail_expr: public expr
+{
+   private:
+
+      expr *ls;
+
+   public:
+
+      virtual void dobottom_typecheck();
+
+      virtual std::string str() const
+      {
+         return std::string("tail (") + ls->str() + ")";
+      }
+
+      explicit tail_expr(expr *_ls):
+         expr(_ls->get_token()),
+         ls(_ls)
+      {}
+};
+
+class head_expr: public expr
+{
+   private:
+
+      expr *ls;
+
+   public:
+
+      virtual void dobottom_typecheck();
+
+      virtual std::string str() const
+      {
+         return std::string("head (") + ls->str() + ")";
+      }
+
+      explicit head_expr(expr *_ls):
+         expr(_ls->get_token()),
+         ls(_ls)
+      {}
+};
+
 class list_expr: public expr
 {
    private:
@@ -300,6 +398,7 @@ class list_expr: public expr
    public:
 
       virtual void dotypecheck();
+      virtual void localize_argument(std::vector<expr*>&, std::vector<assignment_expr*>&, var_expr*);
 
       virtual std::string str() const {
          std::string str = "[";
@@ -337,6 +436,7 @@ class number_expr: public expr
 
    public:
 
+      virtual void localize_argument(std::vector<expr*>&, std::vector<assignment_expr*>&, var_expr*);
       virtual void dotypecheck();
       virtual void dobottom_typecheck();
 
@@ -524,6 +624,8 @@ class fact: public expr
 
       expr *get_first() { return exprs[0]; }
 
+      void localize_arguments(std::vector<expr*>&, std::vector<assignment_expr*>&);
+
       virtual void dotypecheck();
 
       virtual std::string str() const
@@ -583,6 +685,7 @@ class constant_expr: public expr
 
       virtual void dotypecheck();
       virtual void dobottom_typecheck();
+      virtual void localize_argument(std::vector<expr*>&, std::vector<assignment_expr*>&, var_expr*);
 
       virtual std::string str() const
       {
@@ -600,6 +703,8 @@ class construct: public expr
 {
    public:
 
+      virtual void localize(var_expr *) = 0;
+
       explicit construct(const token& tok):
          expr(tok)
       {}
@@ -615,6 +720,8 @@ class exists_construct: public construct
    public:
 
       virtual void dotypecheck();
+
+      virtual void localize(var_expr *) { }
 
       virtual std::string str() const
       {
@@ -702,6 +809,7 @@ class aggregate_construct: public construct
    public:
 
       virtual void dotypecheck();
+      virtual void localize(var_expr *);
 
       virtual std::string str() const
       {
@@ -727,9 +835,10 @@ class aggregate_construct: public construct
             if(i < body_facts.size()-1)
                str += ", ";
          }
-         for(size_t i(0); i < conditions.size(); ++i) {
-            str += ", " + conditions[i]->str();
-         }
+         for(assignment_expr *a : assignments)
+            str += ", " + a->str();
+         for(expr *e : conditions)
+            str += ", " + e->str();
          str += " | ";
          for(size_t i(0); i < head_facts.size(); ++i) {
             str += head_facts[i]->str();
@@ -767,6 +876,7 @@ class comprehension_construct: public construct
    public:
 
       virtual void dotypecheck();
+      virtual void localize(var_expr *);
 
       virtual std::string str() const
       {
@@ -784,9 +894,10 @@ class comprehension_construct: public construct
             if(i < body_facts.size()-1)
                str += ", ";
          }
-         for(size_t i(0); i < conditions.size(); ++i) {
-            str += ", " + conditions[i]->str();
-         }
+         for(assignment_expr *a : assignments)
+            str += ", " + a->str();
+         for(expr *e : conditions)
+            str += ", " + e->str();
          str += " | ";
          for(size_t i(0); i < head_facts.size(); ++i) {
             str += head_facts[i]->str();
@@ -833,10 +944,19 @@ class rule: public expr
 
    public:
 
+      void localize();
+
       virtual void dotypecheck();
 
       virtual std::string str() const {
          std::string ret;
+         for(size_t i(0); i < body_assignments.size(); ++i) {
+            ret += body_assignments[i]->str();
+            if(i < body_assignments.size()-1)
+               ret += ", ";
+         }
+         if(!body_assignments.empty() && !body_conditions.empty())
+            ret += ", ";
          for(size_t i(0); i < body_conditions.size(); ++i) {
             ret += body_conditions[i]->str();
             if(i < body_conditions.size()-1)
@@ -882,6 +1002,8 @@ class axiom: public expr
 {
    public:
 
+      virtual void localize() = 0;
+
       explicit axiom(const token& tok): expr(tok) {}
 };
 
@@ -893,6 +1015,7 @@ class basic_axiom: public axiom
 
    public:
 
+      virtual void localize();
       virtual void dotypecheck();
 
       virtual std::string str() const {
@@ -911,6 +1034,8 @@ class conditional_axiom: public axiom
       std::vector<fact*> head_facts;
 
    public:
+
+      virtual void localize();
 
       virtual std::string str() const {
          std::string ret;
@@ -1025,6 +1150,7 @@ class abstract_syntax_tree: public mem::base
       }
 
       void typecheck();
+      void localize();
 
       explicit abstract_syntax_tree();
 

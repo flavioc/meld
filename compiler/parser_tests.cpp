@@ -23,6 +23,7 @@ class ParserTests : public TestFixture {
          test("tests/progs/mfp.meld");
          test("tests/progs/heat-transfer.meld");
          test("tests/progs/belief-propagation-structs.meld");
+         test("tests/progs/8queens.meld");
       }
 
       inline void test(const char *file)
@@ -33,10 +34,12 @@ class ParserTests : public TestFixture {
          using compiler::abstract_syntax_tree;
 
          parser p(file);
-         p.print(std::cout);
          
          abstract_syntax_tree *ast(p.get_ast());
+         ast->localize();
          ast->typecheck();
+
+         p.print(std::cout);
       }
 
       CPPUNIT_TEST_SUITE(ParserTests);

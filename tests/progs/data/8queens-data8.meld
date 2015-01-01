@@ -1,3 +1,10 @@
+
+type left(node, node).
+type right(node, node).
+type down-right(node, node).
+type down-left(node, node).
+type coord(node, int, int).
+
 const size = 8.
 
 !coord(@0, 0, 0).

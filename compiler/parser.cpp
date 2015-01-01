@@ -789,6 +789,14 @@ parser::parse_priority()
                      throw parser_error(tok, "invalid ordering type.");
                }
                break;
+            case token::Token::CLUSTER: {
+                  tok = get();
+                  if(tok.tok == token::Token::STATIC)
+                     ;
+                  else
+                     throw parser_error(tok, "invalid cluster type.");
+               }
+               break;
             default:
                throw parser_error(tok, "don't know how to handle priority statement.");
          }
