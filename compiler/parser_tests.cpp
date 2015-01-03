@@ -1,4 +1,5 @@
 #include "compiler/parser.hpp"
+#include "compiler/asm.hpp"
 
 class ParserTests : public TestFixture {
    public:
@@ -32,6 +33,7 @@ class ParserTests : public TestFixture {
          using compiler::parser;
          using compiler::lexer;
          using compiler::abstract_syntax_tree;
+         using compiler::compiled_program;
 
          parser p(file);
          
@@ -39,7 +41,10 @@ class ParserTests : public TestFixture {
          ast->localize();
          ast->typecheck();
 
-         p.print(std::cout);
+         compiled_program *prog(new compiled_program(ast));
+         prog->compile();
+
+         //p.print(std::cout);
       }
 
       CPPUNIT_TEST_SUITE(ParserTests);

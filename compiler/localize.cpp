@@ -54,7 +54,7 @@ conditional_axiom::localize()
 static void
 check_home_variable(std::vector<fact*>& body_facts, var_expr *home)
 {
-   for(fact *f  : body_facts) {
+   for(fact *f : body_facts) {
       expr *x(f->get_first());
       var_expr *var(dynamic_cast<var_expr*>(x));
       if(var) {
@@ -82,9 +82,8 @@ aggregate_construct::localize(var_expr *home)
 }
 
 void
-constant_expr::localize_argument(std::vector<expr*>& conditions, std::vector<assignment_expr*>& ass, var_expr *var)
+constant_expr::localize_argument(std::vector<expr*>& conditions, std::vector<assignment_expr*>&, var_expr *var)
 {
-   (void)ass;
    conditions.push_back(new binary_expr(token::generated, var, this, Op::EQUAL));
 }
 
@@ -134,9 +133,8 @@ binary_expr::localize_argument(std::vector<expr*>& conditions, std::vector<assig
 }
 
 void
-number_expr::localize_argument(std::vector<expr*>& conditions, std::vector<assignment_expr*>& ass, var_expr *var)
+number_expr::localize_argument(std::vector<expr*>& conditions, std::vector<assignment_expr*>&, var_expr *var)
 {
-   (void)ass;
    conditions.push_back(new binary_expr(token::generated, var, this, Op::EQUAL));
 }
 

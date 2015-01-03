@@ -155,6 +155,8 @@ class predicate_definition: public expr
 
    public:
 
+      inline std::string get_name() const { return name; }
+
       inline size_t num_fields() const { return types.size(); }
 
       inline vm::type *get_field(const size_t i) const { return types[i]; }
@@ -622,7 +624,8 @@ class fact: public expr
 
    public:
 
-      expr *get_first() { return exprs[0]; }
+      inline expr *get_first() { return exprs[0]; }
+      inline predicate_definition* get_def() { return pred; }
 
       void localize_arguments(std::vector<expr*>&, std::vector<assignment_expr*>&);
 
@@ -987,6 +990,9 @@ class rule: public expr
          return ret + ".";
       }
 
+      bool is_persistent() const;
+      bool uses_predicate(predicate_definition *) const;
+
       explicit rule(const token& lolli,
             std::vector<expr*>&& _conditions,
             std::vector<fact*>&& _body,
@@ -996,6 +1002,8 @@ class rule: public expr
          body_facts(_body), head_facts(_head),
          head_constructs(_constructs)
       {}
+
+      friend class compiled_rule;
 };
 
 class axiom: public expr
@@ -1155,6 +1163,7 @@ class abstract_syntax_tree: public mem::base
       explicit abstract_syntax_tree();
 
       friend class parser;
+      friend class compiled_program;
 };
 
 }

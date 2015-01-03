@@ -76,7 +76,6 @@ process_conditions(std::vector<expr*>& in_constrs, std::vector<assignment_expr*>
             constr->typecheck(TYPE_BOOL);
             it = constrs.erase(it);
          } else {
-            std::cout << "Var not ok " << constr->str() << "\n";
             it++;
          }
       }
@@ -87,7 +86,6 @@ process_conditions(std::vector<expr*>& in_constrs, std::vector<assignment_expr*>
          binary_expr *bexp(dynamic_cast<binary_expr*>(x));
 
          if(bexp->looks_like_assignment()) {
-            std::cout << "Looks like assignment " << bexp->str() << "\n";
             expr *e1(bexp->get_e1());
             expr *e2(bexp->get_e2());
             var_expr *v1(dynamic_cast<var_expr*>(e1));
@@ -210,10 +208,30 @@ aggregate_construct::dotypecheck()
    var_context = copy_context;
 }
 
+bool
+rule::is_persistent() const
+{
+   for(fact *f : body_facts) {
+      if(!f->get_def()->is_persistent())
+         return false;
+   }
+   return true;
+}
+
+bool
+rule::uses_predicate(predicate_definition *def) const
+{
+   for(fact *f : body_facts) {
+      if(f->get_def() == def)
+         return true;
+   }
+   return false;
+}
+
 void
 rule::dotypecheck()
 {
-   std::cout << "Typechecking " << str() << "\n";
+   //std::cout << "Typechecking " << str() << "\n";
    add_new_vars = true;
    for(fact *f : body_facts)
       f->typecheck(nullptr);
