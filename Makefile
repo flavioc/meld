@@ -133,6 +133,7 @@ SRCS = utils/utils.cpp \
 			compiler/parser.cpp \
 			compiler/ast.cpp \
 			compiler/localize.cpp \
+			compiler/compiler.cpp \
 			external/math.cpp \
 			external/lists.cpp \
 			external/utils.cpp \
