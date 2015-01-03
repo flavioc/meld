@@ -953,6 +953,7 @@ advance(const pcounter pc)
 }
 
 /* byte code print functions */
+std::string instr_name(const instr::instr_type);
 pcounter instr_print(pcounter, const bool, const int, const program *, std::ostream&);
 pcounter instr_print_simple(pcounter, const int, const program *, std::ostream&);
 byte_code instrs_print(const byte_code, const code_size_t, const int, const program*, std::ostream&);
