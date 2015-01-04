@@ -49,6 +49,12 @@ max_priority_value()
    return max_priority_value0(theProgram->is_priority_desc());
 }
 
+static inline priority_t
+initial_priority_value0(const bool desc)
+{
+   return max_priority_value0(desc)/2;
+}
+
 }
 
 #endif
