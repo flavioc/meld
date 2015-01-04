@@ -18,7 +18,7 @@ a(A, N)
    -o a(B, N + 1),
       a(C, N + 1),
       b(A, N + 1),
-      set-priority(B, 2.0).
+      set-priority(C, 2.0).
 
 !edge(A, B, 2),
 !edge(A, C, 0),
