@@ -80,7 +80,7 @@ execute_alloc(const pcounter& pc, state& state)
 }
 
 static inline void
-execute_add_linear0(tuple *tuple, predicate *pred, state& state)
+execute_add_linear0(db::node *node, tuple *tuple, predicate *pred, state& state)
 {
 #ifdef DEBUG_SENDS
    cout << "\tadd linear ";
@@ -88,12 +88,12 @@ execute_add_linear0(tuple *tuple, predicate *pred, state& state)
    cout << endl;
 #endif
 
-   state.node->add_linear_fact(tuple, pred);
+   node->add_linear_fact(tuple, pred);
    state.linear_facts_generated++;
 }
 
 static inline void
-execute_add_linear(pcounter& pc, state& state)
+execute_add_linear(db::node *node, pcounter& pc, state& state)
 {
    const reg_num r(pcounter_reg(pc + instr_size));
    predicate *pred(state.preds[r]);
@@ -102,11 +102,11 @@ execute_add_linear(pcounter& pc, state& state)
    assert(!pred->is_action_pred());
    assert(pred->is_linear_pred());
 
-   execute_add_linear0(tuple, pred, state);
+   execute_add_linear0(node, tuple, pred, state);
 }
 
 static inline void
-execute_add_persistent0(tuple *tpl, predicate *pred, state& state)
+execute_add_persistent0(db::node *node, tuple *tpl, predicate *pred, state& state)
 {
 #ifdef DEBUG_SENDS
    cout << "\tadd persistent ";
@@ -116,26 +116,26 @@ execute_add_persistent0(tuple *tpl, predicate *pred, state& state)
 
    assert(pred->is_persistent_pred() || pred->is_reused_pred());
    full_tuple *stuple(new full_tuple(tpl, pred, state.direction, state.depth));
-   state.store->persistent_tuples.push_back(stuple);
+   node->store.persistent_tuples.push_back(stuple);
    state.persistent_facts_generated++;
 }
 
 static inline void
-execute_add_persistent(pcounter& pc, state& state)
+execute_add_persistent(db::node *node, pcounter& pc, state& state)
 {
    const reg_num r(pcounter_reg(pc + instr_size));
 
    // tuple is either persistent or linear reused
-   execute_add_persistent0(state.get_tuple(r), state.preds[r], state);
+   execute_add_persistent0(node, state.get_tuple(r), state.preds[r], state);
 }
 
 static inline void
-execute_run_action0(tuple *tpl, predicate *pred, state& state)
+execute_run_action0(db::node *node, tuple *tpl, predicate *pred, state& state)
 {
    assert(pred->is_action_pred());
    switch(state.direction) {
       case POSITIVE_DERIVATION:
-         All->MACHINE->run_action(state.sched, state.node, tpl, pred, state.gc_nodes);
+         All->MACHINE->run_action(state.sched, node, tpl, pred, state.gc_nodes);
          break;
       case NEGATIVE_DERIVATION:
          vm::tuple::destroy(tpl, pred, state.gc_nodes);
@@ -144,14 +144,14 @@ execute_run_action0(tuple *tpl, predicate *pred, state& state)
 }
 
 static inline void
-execute_run_action(pcounter& pc, state& state)
+execute_run_action(db::node *node, pcounter& pc, state& state)
 {
    const reg_num r(pcounter_reg(pc + instr_size));
-   execute_run_action0(state.get_tuple(r), state.preds[r], state);
+   execute_run_action0(node, state.get_tuple(r), state.preds[r], state);
 }
 
 static inline void
-execute_enqueue_linear0(tuple *tuple, predicate *pred, state& state)
+execute_enqueue_linear0(db::node *node, tuple *tuple, predicate *pred, state& state)
 {
    assert(pred->is_linear_pred());
 #ifdef DEBUG_SENDS
@@ -160,21 +160,21 @@ execute_enqueue_linear0(tuple *tuple, predicate *pred, state& state)
    cout << endl;
 #endif
 
-   state.store->add_generated(tuple, pred);
+   node->store.add_generated(tuple, pred);
    state.generated_facts = true;
    state.linear_facts_generated++;
 }
 
 static inline void
-execute_enqueue_linear(pcounter& pc, state& state)
+execute_enqueue_linear(db::node *node, pcounter& pc, state& state)
 {
    const reg_num r(pcounter_reg(pc + instr_size));
 
-   execute_enqueue_linear0(state.get_tuple(r), state.preds[r], state);
+   execute_enqueue_linear0(node, state.get_tuple(r), state.preds[r], state);
 }
 
 static inline void
-execute_send(const pcounter& pc, state& state)
+execute_send(db::node *node, const pcounter& pc, state& state)
 {
    const reg_num msg(send_msg(pc));
    const reg_num dest(send_dest(pc));
@@ -210,19 +210,18 @@ execute_send(const pcounter& pc, state& state)
    }
 #endif
 #ifdef USE_REAL_NODES
-   if(state.node == (db::node*)dest_val)
+   if(node == (db::node*)dest_val)
 #else
    if(state.node->get_id() == dest_val)
 #endif
    {
       // same node
-      if(pred->is_action_pred()) {
-         execute_run_action0(tuple, pred, state);
-      } else if(pred->is_persistent_pred() || pred->is_reused_pred()) {
-         execute_add_persistent0(tuple, pred, state);
-      } else {
-         execute_enqueue_linear0(tuple, pred, state);
-      }
+      if(pred->is_action_pred())
+         execute_run_action0(node, tuple, pred, state);
+      else if(pred->is_persistent_pred() || pred->is_reused_pred())
+         execute_add_persistent0(node, tuple, pred, state);
+      else
+         execute_enqueue_linear0(node, tuple, pred, state);
    } else {
 #ifdef USE_REAL_NODES
       db::node *node((db::node*)dest_val);
@@ -250,7 +249,7 @@ execute_send(const pcounter& pc, state& state)
 }
 
 static inline void
-execute_send_delay(const pcounter& pc, state& state)
+execute_send_delay(db::node *node, const pcounter& pc, state& state)
 {
    const reg_num msg(send_delay_msg(pc));
    const reg_num dest(send_delay_dest(pc));
@@ -268,7 +267,7 @@ execute_send_delay(const pcounter& pc, state& state)
       tuple->print(cout, pred);
       cout << " -> self " << state.node->get_id() << endl;
 #endif
-      state.sched->new_work_delay(state.node, state.node, tuple, pred, state.direction, state.depth, send_delay_time(pc));
+      state.sched->new_work_delay(node, node, tuple, pred, state.direction, state.depth, send_delay_time(pc));
    } else {
 #ifdef DEBUG_SENDS
       cout << "\t";
@@ -280,7 +279,7 @@ execute_send_delay(const pcounter& pc, state& state)
 #else
       db::node *node(All->DATABASE->find_node((node::node_id)dest_val));
 #endif
-      state.sched->new_work_delay(state.node, node, tuple, pred, state.direction, state.depth, send_delay_time(pc));
+      state.sched->new_work_delay(node, node, tuple, pred, state.direction, state.depth, send_delay_time(pc));
    }
 }
 
@@ -713,13 +712,13 @@ retrieve_match_object(state& state, pcounter pc, const predicate *pred, const si
 #define TO_FINISH(ret) ((ret) == RETURN_LINEAR || (ret) == RETURN_DERIVED)
 
 static inline return_type
-execute_pers_iter(const reg_num reg, match* m, const pcounter first, state& state, predicate *pred)
+execute_pers_iter(const reg_num reg, match* m, const pcounter first, state& state, predicate *pred, db::node *node)
 {
    const depth_t old_depth(state.depth);
    const bool old_is_linear(state.is_linear);
    const bool this_is_linear(false);
 
-   tuple_trie::tuple_search_iterator tuples_it = state.node->pers_store.match_predicate(pred->get_id(), m);
+   tuple_trie::tuple_search_iterator tuples_it = node->pers_store.match_predicate(pred->get_id(), m);
    for(tuple_trie::tuple_search_iterator end(tuple_trie::match_end());
          tuples_it != end;
          ++tuples_it)
@@ -754,7 +753,7 @@ execute_pers_iter(const reg_num reg, match* m, const pcounter first, state& stat
 }
 
 static inline return_type
-execute_olinear_iter(const reg_num reg, match* m, const pcounter pc, const pcounter first, state& state, predicate *pred)
+execute_olinear_iter(const reg_num reg, match* m, const pcounter pc, const pcounter first, state& state, predicate *pred, db::node *node)
 {
    const depth_t old_depth(state.depth);
    const bool old_is_linear(state.is_linear);
@@ -764,7 +763,7 @@ execute_olinear_iter(const reg_num reg, match* m, const pcounter pc, const pcoun
 
    vector_iter tpls;
 
-   utils::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_linked_list(pred->get_id()));
+   utils::intrusive_list<vm::tuple> *local_tuples(node->linear.get_linked_list(pred->get_id()));
 #ifdef CORE_STATISTICS
    execution_time::scope s(state.stat.ts_search_time_predicate[pred->get_id()]);
 #endif
@@ -834,7 +833,7 @@ next_tuple:
 }
 
 static inline return_type
-execute_orlinear_iter(const reg_num reg, match* m, const pcounter pc, const pcounter first, state& state, predicate *pred)
+execute_orlinear_iter(const reg_num reg, match* m, const pcounter pc, const pcounter first, state& state, predicate *pred, db::node *node)
 {
    const depth_t old_depth(state.depth);
    const bool old_is_linear(state.is_linear);
@@ -844,7 +843,7 @@ execute_orlinear_iter(const reg_num reg, match* m, const pcounter pc, const pcou
 
    vector_iter tpls;
 
-   utils::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_linked_list(pred->get_id()));
+   utils::intrusive_list<vm::tuple> *local_tuples(node->linear.get_linked_list(pred->get_id()));
 #ifdef CORE_STATISTICS
    execution_time::scope s(state.stat.ts_search_time_predicate[pred->get_id()]);
 #endif
@@ -909,7 +908,7 @@ next_tuple:
 }
 
 static inline return_type
-execute_opers_iter(const reg_num reg, match* m, const pcounter pc, const pcounter first, state& state, predicate *pred)
+execute_opers_iter(const reg_num reg, match* m, const pcounter pc, const pcounter first, state& state, predicate *pred, db::node *node)
 {
    const depth_t old_depth(state.depth);
    const bool old_is_linear(state.is_linear);
@@ -920,7 +919,7 @@ execute_opers_iter(const reg_num reg, match* m, const pcounter pc, const pcounte
    typedef vector<tuple_trie_leaf*, mem::allocator<tuple_trie_leaf*> > vector_leaves;
    vector_leaves leaves;
 
-   tuple_trie::tuple_search_iterator tuples_it = state.node->pers_store.match_predicate(pred->get_id(), m);
+   tuple_trie::tuple_search_iterator tuples_it = node->pers_store.match_predicate(pred->get_id(), m);
 
    for(tuple_trie::tuple_search_iterator end(tuple_trie::match_end());
          tuples_it != end; ++tuples_it)
@@ -967,7 +966,7 @@ execute_opers_iter(const reg_num reg, match* m, const pcounter pc, const pcounte
 
 static inline return_type
 execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, state& state, predicate* pred,
-      utils::intrusive_list<vm::tuple> *local_tuples, hash_table *tbl = nullptr)
+      db::node *node, utils::intrusive_list<vm::tuple> *local_tuples, hash_table *tbl = nullptr)
 {
    if(local_tuples == nullptr)
       return RETURN_NO_RETURN;
@@ -1005,7 +1004,7 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
 
       match_tuple->will_delete(); // this will avoid future uses of this tuple!
 
-      return_type ret(execute(first, state, reg, match_tuple, pred));
+      const return_type ret(execute(first, state, reg, match_tuple, pred));
 
       POP_STATE();
 
@@ -1018,7 +1017,7 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
             if(reg > 0) {
                // if this is the first iterate, we do not need to send this to the generate list
                it = local_tuples->erase(it);
-               state.store->add_generated(match_tuple, pred);
+               node->store.add_generated(match_tuple, pred);
                state.generated_facts = true;
                next_iter = false;
             } else {
@@ -1037,10 +1036,10 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
             vm::tuple::destroy(match_tuple, pred, state.gc_nodes);
             if(tbl) {
                if(local_tuples->empty() && tbl->empty())
-                  state.node->matcher.empty_predicate(pred);
+                  node->matcher.empty_predicate(pred);
             } else {
                if(local_tuples->empty())
-                  state.node->matcher.empty_predicate(pred);
+                  node->matcher.empty_predicate(pred);
             }
             next_iter = false;
          }
@@ -1059,31 +1058,26 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
 }
 
 static inline return_type
-execute_linear_iter(const reg_num reg, match* m, const pcounter first, state& state, predicate *pred)
+execute_linear_iter(const reg_num reg, match* m, const pcounter first, state& state, predicate *pred, db::node *node)
 {
 #ifdef DYNAMIC_INDEXING
-   if(state.lstore->stored_as_hash_table(pred)) {
+   if(node->linear.stored_as_hash_table(pred)) {
       const field_num hashed(pred->get_hashed_field());
-      hash_table *table(state.lstore->get_hash_table(pred->get_id()));
+      hash_table *table(node->linear.get_hash_table(pred->get_id()));
 
       if(table == nullptr)
          return RETURN_NO_RETURN;
 
-#if 0
-      cout << "Table" << endl;
-      table->dump(cout, pred);
-#endif
-
       if(m && m->has_match(hashed)) {
          const match_field mf(m->get_match(hashed));
          utils::intrusive_list<vm::tuple> *local_tuples(table->lookup_list(mf.field));
-         return_type ret(execute_linear_iter_list(reg, m, first, state, pred, local_tuples, table));
+         return_type ret(execute_linear_iter_list(reg, m, first, state, pred, node, local_tuples, table));
          return ret;
       } else {
          // go through hash table
          for(hash_table::iterator it(table->begin()); !it.end(); ++it) {
             utils::intrusive_list<vm::tuple> *local_tuples(*it);
-            return_type ret(execute_linear_iter_list(reg, m, first, state, pred, local_tuples, table));
+            return_type ret(execute_linear_iter_list(reg, m, first, state, pred, node, local_tuples, table));
             if(ret != RETURN_NO_RETURN)
                return ret;
          }
@@ -1092,8 +1086,8 @@ execute_linear_iter(const reg_num reg, match* m, const pcounter first, state& st
    } else
 #endif
    {
-      utils::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_linked_list(pred->get_id()));
-      return execute_linear_iter_list(reg, m, first, state, pred, local_tuples);
+      utils::intrusive_list<vm::tuple> *local_tuples(node->linear.get_linked_list(pred->get_id()));
+      return execute_linear_iter_list(reg, m, first, state, pred, node, local_tuples);
    }
 }
 
@@ -1125,7 +1119,7 @@ execute_rlinear_iter_list(const reg_num reg, match* m, const pcounter first, sta
 
       match_tuple->will_delete(); // this will avoid future uses of this tuple!
 
-      return_type ret(execute(first, state, reg, match_tuple, pred));
+      const return_type ret(execute(first, state, reg, match_tuple, pred));
 
       POP_STATE();
 
@@ -1141,18 +1135,17 @@ execute_rlinear_iter_list(const reg_num reg, match* m, const pcounter first, sta
 }
 
 static inline return_type
-execute_rlinear_iter(const reg_num reg, match* m, const pcounter first, state& state, predicate *pred)
+execute_rlinear_iter(const reg_num reg, match* m, const pcounter first, state& state, predicate *pred, db::node *node)
 {
 #ifdef DYNAMIC_INDEXING
-   if(state.lstore->stored_as_hash_table(pred)) {
+   if(node->linear.stored_as_hash_table(pred)) {
       const field_num hashed(pred->get_hashed_field());
-      hash_table *table(state.lstore->get_hash_table(pred->get_id()));
+      hash_table *table(node->linear.get_hash_table(pred->get_id()));
 
       if(m && m->has_match(hashed)) {
          const match_field mf(m->get_match(hashed));
          utils::intrusive_list<vm::tuple> *local_tuples(table->lookup_list(mf.field));
-         return_type ret(execute_rlinear_iter_list(reg, m, first, state, pred, local_tuples));
-         return ret;
+         return execute_rlinear_iter_list(reg, m, first, state, pred, local_tuples);
       } else {
          // go through hash table
          for(hash_table::iterator it(table->begin()); !it.end(); ++it) {
@@ -1166,7 +1159,7 @@ execute_rlinear_iter(const reg_num reg, match* m, const pcounter first, state& s
    } else
 #endif
    {
-      utils::intrusive_list<vm::tuple> *local_tuples(state.lstore->get_linked_list(pred->get_id()));
+      utils::intrusive_list<vm::tuple> *local_tuples(node->linear.get_linked_list(pred->get_id()));
       return execute_rlinear_iter_list(reg, m, first, state, pred, local_tuples);
    }
 }
@@ -1192,13 +1185,14 @@ execute_float(pcounter& pc, state& state)
 }
 
 static inline pcounter
-execute_select(pcounter pc, state& state)
+execute_select(db::node *node, pcounter pc, state& state)
 {
-   if(state.node->get_id() > All->DATABASE->static_max_id())
+   (void)state;
+   if(node->get_id() > All->DATABASE->static_max_id())
       return pc + select_size(pc);
 
    const pcounter hash_start(select_hash_start(pc));
-   const code_size_t hashed(select_hash(hash_start, state.node->get_id()));
+   const code_size_t hashed(select_hash(hash_start, node->get_id()));
    
    if(hashed == 0) // no specific code
       return pc + select_size(pc);
@@ -1207,7 +1201,7 @@ execute_select(pcounter pc, state& state)
 }
 
 static inline void
-execute_remove(pcounter pc, state& state)
+execute_remove(db::node *node, pcounter pc, state& state)
 {
    const reg_num reg(pcounter_reg(pc + instr_size));
    vm::tuple *tpl(state.get_tuple(reg));
@@ -1229,7 +1223,7 @@ execute_remove(pcounter pc, state& state)
 
    if(state.direction == POSITIVE_DERIVATION) {
       if(pred->is_reused_pred())
-         state.store->persistent_tuples.push_back(full_tuple::remove_new(tpl, pred, state.depth));
+         node->store.persistent_tuples.push_back(full_tuple::remove_new(tpl, pred, state.depth));
       state.linear_facts_consumed++;
 #ifdef INSTRUMENTATION
       state.instr_facts_consumed++;
@@ -1241,7 +1235,7 @@ execute_remove(pcounter pc, state& state)
 }
 
 static inline void
-execute_update(pcounter pc, state& state)
+execute_update(db::node *node, pcounter pc, state& state)
 {
    const reg_num reg(pcounter_reg(pc + instr_size));
    vm::tuple *tpl(state.get_tuple(reg));
@@ -1253,7 +1247,7 @@ execute_update(pcounter pc, state& state)
    tpl->print(cout, pred);
    cout << endl;
 #endif
-   state.node->matcher.register_predicate_update(pred);
+   node->matcher.register_predicate_update(pred);
 }
 
 static inline void
@@ -1446,12 +1440,12 @@ execute_set_priority(pcounter& pc, state& state)
 }
 
 static inline void
-execute_set_priority_here(pcounter& pc, state& state)
+execute_set_priority_here(db::node *node, pcounter& pc, state& state)
 {
    const reg_num prio_reg(pcounter_reg(pc + instr_size));
    const float_val prio(state.get_float(prio_reg));
 
-   state.sched->set_node_priority(state.node, prio);
+   state.sched->set_node_priority(node, prio);
 }
 
 static inline void
@@ -1470,12 +1464,12 @@ execute_add_priority(pcounter& pc, state& state)
 }
 
 static inline void
-execute_add_priority_here(pcounter& pc, state& state)
+execute_add_priority_here(db::node *node, pcounter& pc, state& state)
 {
    const reg_num prio_reg(pcounter_reg(pc + instr_size));
    const float_val prio(state.get_float(prio_reg));
 
-   state.sched->add_node_priority(state.node, prio);
+   state.sched->add_node_priority(node, prio);
 }
 
 static inline void
@@ -1492,19 +1486,19 @@ execute_rem_priority(pcounter& pc, state& state)
 }
 
 static inline void
-execute_rem_priority_here(pcounter& pc, state& state)
+execute_rem_priority_here(db::node *node, pcounter& pc, state& state)
 {
    (void)pc;
-   state.sched->remove_node_priority(state.node);
+   state.sched->remove_node_priority(node);
 }
 
 static inline void
-execute_set_defprio_here(pcounter& pc, state& state)
+execute_set_defprio_here(db::node *node, pcounter& pc, state& state)
 {
    const reg_num prio_reg(pcounter_reg(pc + instr_size));
    const float_val prio(state.get_float(prio_reg));
 
-   state.sched->set_default_node_priority(state.node, prio);
+   state.sched->set_default_node_priority(node, prio);
 }
 
 static inline void
@@ -1523,10 +1517,10 @@ execute_set_defprio(pcounter& pc, state& state)
 }
 
 static inline void
-execute_set_static_here(pcounter& pc, state& state)
+execute_set_static_here(db::node *node, pcounter& pc, state& state)
 {
    (void)pc;
-   state.sched->set_node_static(state.node);
+   state.sched->set_node_static(node);
 }
 
 static inline void
@@ -1543,10 +1537,10 @@ execute_set_static(pcounter& pc, state& state)
 }
 
 static inline void
-execute_set_moving_here(pcounter& pc, state& state)
+execute_set_moving_here(db::node *node, pcounter& pc, state& state)
 {
    (void)pc;
-   state.sched->set_node_moving(state.node);
+   state.sched->set_node_moving(node);
 }
 
 static inline void
@@ -1563,15 +1557,15 @@ execute_set_moving(pcounter& pc, state& state)
 }
 
 static inline void
-execute_set_affinity_here(pcounter& pc, state& state)
+execute_set_affinity_here(db::node *node, pcounter& pc, state& state)
 {
    const reg_num target_reg(pcounter_reg(pc + instr_size));
    const node_val target(state.get_node(target_reg));
 
 #ifdef USE_REAL_NODES
-   state.sched->set_node_affinity(state.node, (db::node*)target);
+   state.sched->set_node_affinity(node, (db::node*)target);
 #else
-   state.sched->set_node_affinity(state.node, All->DATABASE->find_node(target));
+   state.sched->set_node_affinity(node, All->DATABASE->find_node(target));
 #endif
 }
 
@@ -1684,12 +1678,12 @@ execute_facts_consumed(pcounter& pc, state& state)
 }
 
 static inline void
-execute_set_cpu_here(pcounter& pc, state& state)
+execute_set_cpu_here(db::node *node, pcounter& pc, state& state)
 {
    const reg_num cpu_reg(pcounter_reg(pc + instr_size));
    const int_val cpu(state.get_int(cpu_reg));
 
-   state.sched->set_node_cpu(state.node, cpu);
+   state.sched->set_node_cpu(node, cpu);
 }
 
 static inline void
@@ -1796,7 +1790,7 @@ axiom_read_data(pcounter& pc, type *t)
 }
 
 static inline void
-execute_new_axioms(pcounter pc, state& state)
+execute_new_axioms(db::node *node, pcounter pc, state& state)
 {
    const pcounter end(pc + new_axioms_jump(pc));
    pc += NEW_AXIOMS_BASE;
@@ -1841,11 +1835,11 @@ execute_new_axioms(pcounter pc, state& state)
       }
 
       if(pred->is_action_pred())
-         execute_run_action0(tpl, pred, state);
+         execute_run_action0(node, tpl, pred, state);
       else if(pred->is_reused_pred() || pred->is_persistent_pred())
-         execute_add_persistent0(tpl, pred, state);
+         execute_add_persistent0(node, tpl, pred, state);
       else
-         execute_add_linear0(tpl, pred, state);
+         execute_add_linear0(node, tpl, pred, state);
    }
 }
 
@@ -2040,13 +2034,13 @@ execute_mvregfieldr(pcounter& pc, state& state)
 }
 
 static inline void
-execute_mvhostfield(pcounter& pc, state& state)
+execute_mvhostfield(db::node *node, pcounter& pc, state& state)
 {
    tuple *tuple(get_tuple_field(state, pc + instr_size));
    const field_num field(val_field_num(pc + instr_size));
 
 #ifdef USE_REAL_NODES
-   tuple->set_node(field, (node_val)state.node);
+   tuple->set_node(field, (node_val)node);
 #else
    tuple->set_node(field, state.node->get_id());
 #endif
@@ -2234,13 +2228,13 @@ execute_mvaddrreg(pcounter& pc, state& state)
 }
 
 static inline void
-execute_mvhostreg(pcounter& pc, state& state)
+execute_mvhostreg(db::node *node, pcounter& pc, state& state)
 {
    const reg_num reg(pcounter_reg(pc + instr_size));
 #ifdef USE_REAL_NODES
-   state.set_node(reg, (node_val)state.node);
+   state.set_node(reg, (node_val)node);
 #else
-   state.set_node(reg, state.node->get_id());
+   state.set_node(reg, node->get_id());
 #endif
 }
 
@@ -2802,7 +2796,7 @@ eval_loop:
                const reg_num reg(iter_reg(pc));
                match *mobj(retrieve_match_object(state, pc, pred, PERS_ITER_BASE));
 
-               const return_type ret(execute_pers_iter(reg, mobj, pc + iter_inner_jump(pc), state, pred));
+               const return_type ret(execute_pers_iter(reg, mobj, pc + iter_inner_jump(pc), state, pred, state.node));
 
                DECIDE_NEXT_ITER_INSTR();
             }
@@ -2815,7 +2809,20 @@ eval_loop:
                const reg_num reg(iter_reg(pc));
                match *mobj(retrieve_match_object(state, pc, pred, LINEAR_ITER_BASE));
 
-               const return_type ret(execute_linear_iter(reg, mobj, pc + iter_inner_jump(pc), state, pred));
+               const return_type ret(execute_linear_iter(reg, mobj, pc + iter_inner_jump(pc), state, pred, state.node));
+
+               DECIDE_NEXT_ITER_INSTR();
+            }
+         ENDOP()
+
+         CASE(TLINEAR_ITER_INSTR)
+            COMPLEX_JUMP(tlinear_iter)
+            {
+               predicate *pred(theProgram->get_predicate(iter_predicate(pc)));
+               const reg_num reg(iter_reg(pc));
+               match *mobj(retrieve_match_object(state, pc, pred, TLINEAR_ITER_BASE));
+
+               const return_type ret(execute_linear_iter(reg, mobj, pc + iter_inner_jump(pc), state, pred, state.node));
 
                DECIDE_NEXT_ITER_INSTR();
             }
@@ -2828,7 +2835,7 @@ eval_loop:
                const reg_num reg(iter_reg(pc));
                match *mobj(retrieve_match_object(state, pc, pred, RLINEAR_ITER_BASE));
 
-               const return_type ret(execute_rlinear_iter(reg, mobj, pc + iter_inner_jump(pc), state, pred));
+               const return_type ret(execute_rlinear_iter(reg, mobj, pc + iter_inner_jump(pc), state, pred, state.node));
 
                DECIDE_NEXT_ITER_INSTR();
             }
@@ -2841,7 +2848,7 @@ eval_loop:
                const reg_num reg(iter_reg(pc));
                match *mobj(retrieve_match_object(state, pc, pred, OPERS_ITER_BASE));
 
-               const return_type ret(execute_opers_iter(reg, mobj, pc, pc + iter_inner_jump(pc), state, pred));
+               const return_type ret(execute_opers_iter(reg, mobj, pc, pc + iter_inner_jump(pc), state, pred, state.node));
 
                DECIDE_NEXT_ITER_INSTR();
             }
@@ -2854,7 +2861,7 @@ eval_loop:
                const reg_num reg(iter_reg(pc));
                match *mobj(retrieve_match_object(state, pc, pred, OLINEAR_ITER_BASE));
 
-               const return_type ret(execute_olinear_iter(reg, mobj, pc, pc + iter_inner_jump(pc), state, pred));
+               const return_type ret(execute_olinear_iter(reg, mobj, pc, pc + iter_inner_jump(pc), state, pred, state.node));
 
                DECIDE_NEXT_ITER_INSTR();
             }
@@ -2867,7 +2874,7 @@ eval_loop:
                const reg_num reg(iter_reg(pc));
                match *mobj(retrieve_match_object(state, pc, pred, ORLINEAR_ITER_BASE));
 
-               const return_type ret(execute_orlinear_iter(reg, mobj, pc, pc + iter_inner_jump(pc), state, pred));
+               const return_type ret(execute_orlinear_iter(reg, mobj, pc, pc + iter_inner_jump(pc), state, pred, state.node));
 
                DECIDE_NEXT_ITER_INSTR();
             }
@@ -2875,13 +2882,13 @@ eval_loop:
             
          CASE(REMOVE_INSTR)
             JUMP(remove, REMOVE_BASE)
-            execute_remove(pc, state);
+            execute_remove(state.node, pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(UPDATE_INSTR)
             JUMP(update, UPDATE_BASE)
-            execute_update(pc, state);
+            execute_update(state.node, pc, state);
             ADVANCE()
          ENDOP()
             
@@ -2893,37 +2900,37 @@ eval_loop:
             
          CASE(SEND_INSTR)
             JUMP(send, SEND_BASE)
-            execute_send(pc, state);
+            execute_send(state.node, pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(ADDLINEAR_INSTR)
             JUMP(addlinear, ADDLINEAR_BASE)
-            execute_add_linear(pc, state);
+            execute_add_linear(state.node, pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(ADDPERS_INSTR)
             JUMP(addpers, ADDPERS_BASE)
-            execute_add_persistent(pc, state);
+            execute_add_persistent(state.node, pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(RUNACTION_INSTR)
             JUMP(runaction, RUNACTION_BASE)
-            execute_run_action(pc, state);
+            execute_run_action(state.node, pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(ENQUEUE_LINEAR_INSTR)
             JUMP(enqueue_linear, ENQUEUE_LINEAR_BASE)
-            execute_enqueue_linear(pc, state);
+            execute_enqueue_linear(state.node, pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(SEND_DELAY_INSTR)
             JUMP(send_delay, SEND_DELAY_BASE)
-            execute_send_delay(pc, state);
+            execute_send_delay(state.node, pc, state);
             ADVANCE()
          ENDOP()
             
@@ -2947,7 +2954,7 @@ eval_loop:
             
          CASE(SELECT_INSTR)
             COMPLEX_JUMP(select)
-            pc = execute_select(pc, state);
+            pc = execute_select(state.node, pc, state);
             JUMP_NEXT();
          ENDOP()
             
@@ -2997,7 +3004,7 @@ eval_loop:
 
          CASE(NEW_AXIOMS_INSTR)
             JUMP(new_axioms, new_axioms_jump(pc))
-            execute_new_axioms(pc, state);
+            execute_new_axioms(state.node, pc, state);
             ADVANCE()
          ENDOP()
 
@@ -3180,7 +3187,7 @@ eval_loop:
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
-            execute_mvhostfield(pc, state);
+            execute_mvhostfield(state.node, pc, state);
             ADVANCE()
          ENDOP()
 
@@ -3306,7 +3313,7 @@ eval_loop:
 #ifdef CORE_STATISTICS
             state.stat.stat_moves_executed++;
 #endif
-            execute_mvhostreg(pc, state);
+            execute_mvhostreg(state.node, pc, state);
             ADVANCE()
          ENDOP()
 
@@ -3642,7 +3649,7 @@ eval_loop:
 
          CASE(SET_PRIORITYH_INSTR)
             JUMP(set_priorityh, SET_PRIORITYH_BASE)
-            execute_set_priority_here(pc, state);
+            execute_set_priority_here(state.node, pc, state);
             ADVANCE()
          ENDOP()
 
@@ -3654,13 +3661,13 @@ eval_loop:
 
          CASE(ADD_PRIORITYH_INSTR)
             JUMP(add_priorityh, ADD_PRIORITYH_BASE)
-            execute_add_priority_here(pc, state);
+            execute_add_priority_here(state.node, pc, state);
             ADVANCE()
          ENDOP()
 
          CASE(SET_DEFPRIOH_INSTR)
             JUMP(set_defprioh, SET_DEFPRIOH_BASE)
-            execute_set_defprio_here(pc, state);
+            execute_set_defprio_here(state.node, pc, state);
             ADVANCE()
          ENDOP()
 
@@ -3672,7 +3679,7 @@ eval_loop:
 
          CASE(SET_STATICH_INSTR)
             JUMP(set_statich, SET_STATICH_BASE)
-            execute_set_static_here(pc, state);
+            execute_set_static_here(state.node, pc, state);
             ADVANCE()
          ENDOP()
 
@@ -3684,7 +3691,7 @@ eval_loop:
 
          CASE(SET_MOVINGH_INSTR)
             JUMP(set_movingh, SET_MOVINGH_BASE)
-            execute_set_moving_here(pc, state);
+            execute_set_moving_here(state.node, pc, state);
             ADVANCE()
          ENDOP()
 
@@ -3696,7 +3703,7 @@ eval_loop:
 
          CASE(SET_AFFINITYH_INSTR)
             JUMP(set_affinityh, SET_AFFINITYH_BASE)
-            execute_set_affinity_here(pc, state);
+            execute_set_affinity_here(state.node, pc, state);
             ADVANCE()
          ENDOP()
 
@@ -3739,7 +3746,7 @@ eval_loop:
 
          CASE(SET_CPUH_INSTR)
             JUMP(set_cpuh, SET_CPUH_BASE)
-            execute_set_cpu_here(pc, state);
+            execute_set_cpu_here(state.node, pc, state);
             ADVANCE()
          ENDOP()
 
@@ -3781,7 +3788,7 @@ eval_loop:
 
          CASE(REM_PRIORITYH_INSTR)
             JUMP(rem_priorityh, REM_PRIORITYH_BASE)
-            execute_rem_priority_here(pc, state);
+            execute_rem_priority_here(state.node, pc, state);
             ADVANCE()
          ENDOP()
 

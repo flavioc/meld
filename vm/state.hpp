@@ -36,8 +36,8 @@ private:
 	std::list<runtime::rstring::ptr, mem::allocator<runtime::rstring::ptr> > free_rstring;
    std::list<runtime::struct1*, mem::allocator<runtime::struct1*> > free_struct1;
    
-   void purge_runtime_objects(void);
-   full_tuple* search_for_negative_tuple(full_tuple *);
+   void purge_runtime_objects();
+   full_tuple* search_for_negative_tuple(db::node *, full_tuple *);
 
    void indexing_state_machine(db::node *);
 
@@ -94,8 +94,6 @@ public:
    // this hash table is used when using operators at the body of the rule.
    // since the list of candidate tuples is ordered, it's not possible to know if something has been deleted.
    removed_hash removed;
-   db::temporary_store *store;
-   db::linear_store *lstore;
    vm::counter *match_counter;
    std::unordered_set<utils::byte*, utils::pointer_hash<utils::byte>,
       std::equal_to<utils::byte*>, mem::allocator<utils::byte*>> allocated_match_objects;
@@ -156,15 +154,15 @@ public:
    inline void add_struct(runtime::struct1 *s) { s->inc_refs();
                                                  free_struct1.push_back(s); }
    
-   void add_to_aggregate(full_tuple *);
-   void do_persistent_tuples(void);
-   void process_persistent_tuple(full_tuple *, vm::tuple *);
+   void add_to_aggregate(db::node *, full_tuple *);
+   void do_persistent_tuples(db::node *);
+   void process_persistent_tuple(db::node *, full_tuple *, vm::tuple *);
 	void process_consumed_local_tuples(void);
-   void process_action_tuples(void);
-   void process_incoming_tuples(void);
+   void process_action_tuples(db::node *);
+   void process_incoming_tuples(db::node *);
 	void run_node(db::node *);
-   bool sync(void);
-   void setup(vm::predicate *, db::node*, const vm::derivation_direction, const vm::depth_t);
+   bool sync(db::node *);
+   void setup(vm::predicate *, const vm::derivation_direction, const vm::depth_t);
    void cleanup(void);
 
    explicit state(sched::threads_sched *);

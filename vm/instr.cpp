@@ -313,6 +313,7 @@ instr_name(const instr::instr_type code)
       case ENQUEUE_LINEAR_INSTR: return string("ENQUEUE LINEAR");
       case PERS_ITER_INSTR: return string("PERSISTENT ITERATE");
       case LINEAR_ITER_INSTR: return string("LINEAR ITERATE");
+      case TLINEAR_ITER_INSTR: return string("THREAD LINEAR ITERATE");
       case RLINEAR_ITER_INSTR: return string("LINEAR(R) ITERATE");
       case OPERS_ITER_INSTR: return string("ORDER PERSISTENT ITERATE");
       case OLINEAR_ITER_INSTR: return string("ORDER LINEAR ITERATE");
@@ -533,46 +534,19 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          cout << " " << reg_string(pcounter_reg(pc + instr_size)) << endl;
          break;
       case PERS_ITER_INSTR:
-         cout << " OVER " << prog->get_predicate(iter_predicate(pc))->get_name() << " MATCHING TO " << reg_string(iter_reg(pc)) << endl;
-         print_iter_matches(pc, PERS_ITER_BASE, tabcount, prog);
-         if(recurse) {
-            instrs_print_until(pc + iter_inner_jump(pc), pc + iter_outer_jump(pc), tabcount + 1, prog, cout);
-            return pc + iter_outer_jump(pc);
-         }
-         break;
       case LINEAR_ITER_INSTR:
-         cout << " OVER " << prog->get_predicate(iter_predicate(pc))->get_name() << " MATCHING TO " << reg_string(iter_reg(pc)) << endl;
-         print_iter_matches(pc, LINEAR_ITER_BASE, tabcount, prog);
-         if(recurse) {
-            instrs_print_until(pc + iter_inner_jump(pc), pc + iter_outer_jump(pc), tabcount + 1, prog, cout);
-            return pc + iter_outer_jump(pc);
-         }
-         break;
+      case TLINEAR_ITER_INSTR:
       case RLINEAR_ITER_INSTR:
          cout << " OVER " << prog->get_predicate(iter_predicate(pc))->get_name() << " MATCHING TO " << reg_string(iter_reg(pc)) << endl;
-         print_iter_matches(pc, RLINEAR_ITER_BASE, tabcount, prog);
+         print_iter_matches(pc, ITER_BASE, tabcount, prog);
          if(recurse) {
             instrs_print_until(pc + iter_inner_jump(pc), pc + iter_outer_jump(pc), tabcount + 1, prog, cout);
             return pc + iter_outer_jump(pc);
          }
          break;
       case OPERS_ITER_INSTR:
-         cout << " OVER " << prog->get_predicate(iter_predicate(pc))->get_name() << " (";
-         {
-            const byte opts(iter_options(pc));
-            if(iter_options_random(opts))
-               cout << "random";
-            else if(iter_options_min(opts))
-               cout << "min " << iter_options_min_arg(iter_options_argument(pc));
-         }
-         cout << ") MATCHING TO " << reg_string(iter_reg(pc)) << endl;
-         print_iter_matches(pc, OPERS_ITER_BASE, tabcount, prog);
-         if(recurse) {
-            instrs_print_until(pc + iter_inner_jump(pc), pc + iter_outer_jump(pc), tabcount + 1, prog, cout);
-            return pc + iter_outer_jump(pc);
-         }
-         break;
       case OLINEAR_ITER_INSTR:
+      case ORLINEAR_ITER_INSTR:
          cout << " OVER " << prog->get_predicate(iter_predicate(pc))->get_name() << " (";
          {
             const byte opts(iter_options(pc));
@@ -582,23 +556,7 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
                cout << "min " << iter_options_min_arg(iter_options_argument(pc));
          }
          cout << ") MATCHING TO " << reg_string(iter_reg(pc)) << endl;
-         print_iter_matches(pc, OLINEAR_ITER_BASE, tabcount, prog);
-         if(recurse) {
-            instrs_print_until(pc + iter_inner_jump(pc), pc + iter_outer_jump(pc), tabcount + 1, prog, cout);
-            return pc + iter_outer_jump(pc);
-         }
-         break;
-      case ORLINEAR_ITER_INSTR:
-         cout << "ORDER LINEAR(R) ITERATE OVER " << prog->get_predicate(iter_predicate(pc))->get_name() << " (";
-         {
-            const byte opts(iter_options(pc));
-            if(iter_options_random(opts))
-               cout << "random";
-            else if(iter_options_min(opts))
-               cout << "min " << iter_options_min_arg(iter_options_argument(pc));
-         }
-         cout << ") MATCHING TO " << reg_string(iter_reg(pc)) << endl;
-         print_iter_matches(pc, ORLINEAR_ITER_BASE, tabcount, prog);
+         print_iter_matches(pc, OITER_BASE, tabcount, prog);
          if(recurse) {
             instrs_print_until(pc + iter_inner_jump(pc), pc + iter_outer_jump(pc), tabcount + 1, prog, cout);
             return pc + iter_outer_jump(pc);
