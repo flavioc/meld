@@ -76,9 +76,8 @@ state::copy_reg2const(const reg_num& reg_from, const const_id& cid)
 }
 
 void
-state::setup(vm::predicate *pred, db::node *n, const derivation_direction dir, const depth_t dpt)
+state::setup(vm::predicate *pred, const derivation_direction dir, const depth_t dpt)
 {
-   node = n;
    direction = dir;
    if(pred != nullptr) {
       if(pred->is_cycle_pred())
@@ -104,13 +103,13 @@ tuple_for_assertion(full_tuple *stpl)
 }
 
 full_tuple*
-state::search_for_negative_tuple(full_tuple *stpl)
+state::search_for_negative_tuple(db::node *node, full_tuple *stpl)
 {
    vm::tuple *tpl(stpl->get_tuple());
    vm::predicate *pred(stpl->get_predicate());
 
-   for(auto it(store->persistent_tuples.begin()),
-         end(store->persistent_tuples.end());
+   for(auto it(node->store.persistent_tuples.begin()),
+         end(node->store.persistent_tuples.end());
          it != end; ++it)
    {
       full_tuple *stpl2(*it);
@@ -120,7 +119,7 @@ state::search_for_negative_tuple(full_tuple *stpl)
       if(pred == pred2 && stpl2->is_aggregate() == stpl->is_aggregate() &&
             stpl2->get_dir() == NEGATIVE_DERIVATION && tpl2->equal(*tpl, pred))
       {
-         store->persistent_tuples.erase(it);
+         node->store.persistent_tuples.erase(it);
          return stpl2;
       }
    }
@@ -129,15 +128,15 @@ state::search_for_negative_tuple(full_tuple *stpl)
 }
 
 void
-state::do_persistent_tuples(void)
+state::do_persistent_tuples(db::node *node)
 {
-   while(!store->persistent_tuples.empty()) {
-      full_tuple *stpl(store->persistent_tuples.pop_front());
+   while(!node->store.persistent_tuples.empty()) {
+      full_tuple *stpl(node->store.persistent_tuples.pop_front());
       vm::predicate *pred(stpl->get_predicate());
       vm::tuple *tpl(stpl->get_tuple());
 
       if(pred->is_persistent_pred() && stpl->get_dir() == POSITIVE_DERIVATION) {
-         full_tuple *stpl2(search_for_negative_tuple(stpl));
+         full_tuple *stpl2(search_for_negative_tuple(node, stpl));
          if(stpl2) {
             assert(stpl != stpl2);
             assert(stpl2->get_tuple() != stpl->get_tuple());
@@ -152,59 +151,56 @@ state::do_persistent_tuples(void)
 #ifdef DEBUG_RULES
       cout << ">>>>>>>>>>>>> Running process for " << node->get_id() << " " << *stpl << " (" << stpl->get_depth() << ")" << endl;
 #endif
-         process_persistent_tuple(stpl, tpl);
+         process_persistent_tuple(node, stpl, tpl);
       } else {
          // aggregate
 #ifdef DEBUG_RULES
       cout << ">>>>>>>>>>>>> Adding aggregate " << node->get_id() << " " << *stpl << " (" << stpl->get_depth() << ")" << endl;
 #endif
-         add_to_aggregate(stpl);
+         add_to_aggregate(node, stpl);
       }
    }
 }
 
 void
-state::process_action_tuples(void)
+state::process_action_tuples(db::node *node)
 {
-   store->action_tuples.splice_back(store->incoming_action_tuples);
-   for(auto it(store->action_tuples.begin()), end(store->action_tuples.end());
-         it != end; ++it)
-   {
-      full_tuple *stpl(*it);
+   node->store.action_tuples.splice_back(node->store.incoming_action_tuples);
+   for(full_tuple *stpl : node->store.action_tuples) {
       vm::tuple *tpl(stpl->get_tuple());
       vm::predicate *pred(stpl->get_predicate());
       All->MACHINE->run_action(sched, node, tpl, pred, gc_nodes);
       delete stpl;
    }
-   store->action_tuples.clear();
+   node->store.action_tuples.clear();
 }
 
 void
-state::process_incoming_tuples(void)
+state::process_incoming_tuples(db::node *node)
 {
 #ifdef UNIQUE_INCOMING_LIST
-   while(!store->incoming.empty()) {
-      vm::tuple *tpl(store->incoming.pop_front());
+   while(!node->store.incoming.empty()) {
+      vm::tuple *tpl(node->store.incoming.pop_front());
       vm::predicate *pred(tpl->get_predicate());
-      store->register_tuple_fact(pred, 1);
-      lstore->add_fact(tpl, pred, node->matcher);
+      node->store.register_tuple_fact(pred, 1);
+      node->linear.add_fact(tpl, pred, node->matcher);
    }
 #else
    for(size_t i(0); i < theProgram->num_predicates(); ++i) {
-      utils::intrusive_list<vm::tuple> *ls(store->incoming + i);
+      utils::intrusive_list<vm::tuple> *ls(node->store.incoming + i);
       if(!ls->empty()) {
          vm::predicate *pred(theProgram->get_predicate(i));
          node->matcher.new_linear_fact(pred);
-         lstore->increment_database(pred, ls);
+         node->linear.increment_database(pred, ls);
       }
    }
 #endif
-   if(!store->incoming_persistent_tuples.empty())
-      store->persistent_tuples.splice_back(store->incoming_persistent_tuples);
+   if(!node->store.incoming_persistent_tuples.empty())
+      node->store.persistent_tuples.splice_back(node->store.incoming_persistent_tuples);
 }
 
 void
-state::add_to_aggregate(full_tuple *stpl)
+state::add_to_aggregate(db::node *node, full_tuple *stpl)
 {
    vm::tuple *tpl(stpl->get_tuple());
    predicate *pred(stpl->get_predicate());
@@ -230,12 +226,12 @@ state::add_to_aggregate(full_tuple *stpl)
       it++;
 
       stpl->set_as_aggregate();
-      store->persistent_tuples.push_back(stpl);
+      node->store.persistent_tuples.push_back(stpl);
    }
 }
 
 void
-state::process_persistent_tuple(full_tuple *stpl, vm::tuple *tpl)
+state::process_persistent_tuple(db::node *node, full_tuple *stpl, vm::tuple *tpl)
 {
    predicate *pred(stpl->get_predicate());
 
@@ -256,7 +252,7 @@ state::process_persistent_tuple(full_tuple *stpl, vm::tuple *tpl)
             }
 
             if(is_new) {
-               setup(pred, node, POSITIVE_DERIVATION, stpl->get_depth());
+               setup(pred, POSITIVE_DERIVATION, stpl->get_depth());
                execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
             }
 
@@ -274,7 +270,7 @@ state::process_persistent_tuple(full_tuple *stpl, vm::tuple *tpl)
         break;
      case NEGATIVE_DERIVATION:
          if(pred->is_reused_pred()) {
-            setup(pred, node, NEGATIVE_DERIVATION, stpl->get_depth());
+            setup(pred, NEGATIVE_DERIVATION, stpl->get_depth());
             execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
          } else {
             auto deleter(node->pers_store.delete_tuple(tpl, pred, stpl->get_depth()));
@@ -282,7 +278,7 @@ state::process_persistent_tuple(full_tuple *stpl, vm::tuple *tpl)
             if(!deleter.is_valid()) {
                // do nothing... it does not exist
             } else if(deleter.to_delete()) { // to be removed
-               setup(pred, node, NEGATIVE_DERIVATION, stpl->get_depth());
+               setup(pred, NEGATIVE_DERIVATION, stpl->get_depth());
                execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
                deleter.perform_delete(pred, gc_nodes);
             } else if(pred->is_cycle_pred()) {
@@ -292,7 +288,7 @@ state::process_persistent_tuple(full_tuple *stpl, vm::tuple *tpl)
                if(dc->get_count(stpl->get_depth()) == 0) {
                   deleter.delete_depths_above(stpl->get_depth());
                   if(deleter.to_delete()) {
-                     setup(pred, node, stpl->get_dir(), stpl->get_depth());
+                     setup(pred, stpl->get_dir(), stpl->get_depth());
                      execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
                      deleter.perform_delete(pred, gc_nodes);
                   }
@@ -589,9 +585,9 @@ state::indexing_state_machine(db::node *no)
 #endif
 
 void
-state::run_node(db::node *no)
+state::run_node(db::node *node)
 {
-	node = no;
+   this->node = node;
 
    reset_counters();
 
@@ -604,20 +600,17 @@ state::run_node(db::node *no)
    cout << "================> NODE " << node->get_id() << " ===============\n";
 #endif
 
-   store = &(node->store);
-   lstore = &(node->linear);
-
 	{
 #ifdef CORE_STATISTICS
 		execution_time::scope s(stat.core_engine_time);
 #endif
       LOCK_STACK(node_lock);
       MUTEX_LOCK(node->main_lock, node_lock, node_lock);
-      process_action_tuples();
-		process_incoming_tuples();
+      process_action_tuples(node);
+		process_incoming_tuples(node);
 #ifdef DYNAMIC_INDEXING
       if(node->indexing_epoch != indexing_epoch) {
-         lstore->rebuild_index();
+         node->linear.rebuild_index();
          node->indexing_epoch = indexing_epoch;
       }
 #endif
@@ -632,7 +625,7 @@ state::run_node(db::node *no)
    node->rounds++;
 #endif
 	
-   do_persistent_tuples();
+   do_persistent_tuples(node);
 
 	while(!node->matcher.rule_queue.empty(theProgram->num_rules_next_uint())) {
 		rule_id rule(node->matcher.rule_queue.remove_front(theProgram->num_rules_next_uint()));
@@ -641,21 +634,21 @@ state::run_node(db::node *no)
       cout << "Run rule " << theProgram->get_rule(rule)->get_string() << endl;
 #endif
 
-		setup(nullptr, node, POSITIVE_DERIVATION, 0);
+		setup(nullptr, POSITIVE_DERIVATION, 0);
 		execute_rule(rule, *this);
 
       // move from generated tuples to linear store
       if(generated_facts) {
          for(size_t i(0); i < theProgram->num_predicates(); ++i) {
-            utils::intrusive_list<vm::tuple> *gen(store->generated + i);
+            utils::intrusive_list<vm::tuple> *gen(node->store.generated + i);
             if(!gen->empty()) {
                vm::predicate *pred(theProgram->get_predicate(i));
                node->matcher.new_linear_fact(pred);
-               lstore->increment_database(pred, gen);
+               node->linear.increment_database(pred, gen);
             }
          }
       }
-      do_persistent_tuples();
+      do_persistent_tuples(node);
 
       if(node->has_new_owner()) {
          node->unprocessed_facts = true;
@@ -663,15 +656,15 @@ state::run_node(db::node *no)
       }
 	}
 
-   assert(store->persistent_tuples.empty());
+   assert(node->store.persistent_tuples.empty());
 #ifdef DYNAMIC_INDEXING
-   lstore->improve_index();
+   node->linear.improve_index();
    if(node->rounds > 0 && node->rounds % 5 == 0)
-      lstore->cleanup_index();
+      node->linear.cleanup_index();
 #endif
    MUTEX_UNLOCK(node->database_lock, internal_lock_data);
 
-   sync();
+   sync(node);
 
 #ifdef GC_NODES
    for(auto it(gc_nodes.begin()); it != gc_nodes.end(); ++it) {
@@ -686,7 +679,7 @@ state::run_node(db::node *no)
 }
 
 bool
-state::sync(void)
+state::sync(db::node *node)
 {
    bool ret(false);
 #ifdef FACT_BUFFERING

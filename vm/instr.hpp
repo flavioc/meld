@@ -60,14 +60,15 @@ const size_t iter_options_size = 2 * sizeof(utils::byte);
 
 const size_t SEND_BASE           = instr_size + 2 * reg_val_size;
 const size_t OP_BASE             = instr_size + 4;
-const size_t BASE_ITER           = instr_size + ptr_size + predicate_size + reg_val_size + bool_size + 2 * jump_size + count_size;
-const size_t ITER_BASE           = BASE_ITER + iter_options_size;
-const size_t PERS_ITER_BASE      = BASE_ITER;
-const size_t OPERS_ITER_BASE     = ITER_BASE;
-const size_t LINEAR_ITER_BASE    = BASE_ITER;
-const size_t RLINEAR_ITER_BASE   = BASE_ITER;
-const size_t OLINEAR_ITER_BASE   = ITER_BASE;
-const size_t ORLINEAR_ITER_BASE  = ITER_BASE;
+const size_t ITER_BASE           = instr_size + ptr_size + predicate_size + reg_val_size + bool_size + 2 * jump_size + count_size;
+const size_t OITER_BASE          = ITER_BASE + iter_options_size;
+const size_t PERS_ITER_BASE      = ITER_BASE;
+const size_t LINEAR_ITER_BASE    = ITER_BASE;
+const size_t TLINEAR_ITER_BASE   = ITER_BASE;
+const size_t RLINEAR_ITER_BASE   = ITER_BASE;
+const size_t OPERS_ITER_BASE     = OITER_BASE;
+const size_t OLINEAR_ITER_BASE   = OITER_BASE;
+const size_t ORLINEAR_ITER_BASE  = OITER_BASE;
 const size_t ALLOC_BASE          = instr_size + 2;
 const size_t CALL_BASE           = call_size + count_size;
 const size_t IF_BASE             = instr_size + 1 + jump_size;
@@ -337,6 +338,7 @@ enum instr_type {
    REM_PRIORITY_INSTR   =  0xB1,
    REM_PRIORITYH_INSTR  =  0xB2,
    FACTS_CONSUMED_INSTR =  0xB3,
+   TLINEAR_ITER_INSTR   =  0xB4,
    RETURN_LINEAR_INSTR  =  0xD0,
    RETURN_DERIVED_INSTR =  0xF0
 };
@@ -455,8 +457,8 @@ inline code_offset_t iter_inner_jump(pcounter pc) { return jump_get(pc, instr_si
 inline code_offset_t iter_outer_jump(pcounter pc) { return jump_get(pc, instr_size + ptr_size + predicate_size + reg_val_size + bool_size + jump_size); }
 inline size_t iter_matches_size(const pcounter pc, const size_t base) { return (size_t)byte_get(pc, base - count_size); }
 
-inline utils::byte iter_options(const pcounter pc) { return byte_get(pc, BASE_ITER - count_size); }
-inline utils::byte iter_options_argument(const pcounter pc) { return byte_get(pc, BASE_ITER - count_size + sizeof(utils::byte)); }
+inline utils::byte iter_options(const pcounter pc) { return byte_get(pc, ITER_BASE); }
+inline utils::byte iter_options_argument(const pcounter pc) { return byte_get(pc, ITER_BASE + sizeof(utils::byte)); }
 inline instr_val iter_match_val(iter_match m) { return val_get((pcounter)m, sizeof(utils::byte)); }
 inline field_num iter_match_field(iter_match m) { return (field_num)*m; }
 
@@ -585,6 +587,7 @@ advance(const pcounter pc)
       case PERS_ITER_INSTR:
       case OPERS_ITER_INSTR:
       case LINEAR_ITER_INSTR:
+      case TLINEAR_ITER_INSTR:
       case RLINEAR_ITER_INSTR:
       case OLINEAR_ITER_INSTR:
       case ORLINEAR_ITER_INSTR:

@@ -130,9 +130,9 @@ machine::execute_const_code(void)
 	state st;
 	
 	// no node or tuple whatsoever
-	st.setup(NULL, NULL, POSITIVE_DERIVATION, 0);
+	st.setup(nullptr, POSITIVE_DERIVATION, 0);
 	
-	execute_process(all->PROGRAM->get_const_bytecode(), st, NULL, NULL);
+	execute_process(all->PROGRAM->get_const_bytecode(), st, nullptr, nullptr);
 }
 
 void
