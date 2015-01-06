@@ -4,18 +4,18 @@ VM = ../meld -d -f
 .PHONY: test clean
 
 all: ARGS = 1
-all: test-serial test-thread
+all: serial thread
 
 full: ARGS = 3
-full: test-serial test-thread
+full: serial thread
 
 test: all
 
-test-serial:
+serial:
 	@echo "====> Serial test"
 	@bash test_all.sh serial $(ARGS)
 
-test-thread:
+thread:
 	@echo "===> Thread test"
 	@bash test_all.sh thread $(ARGS)
 
