@@ -27,9 +27,11 @@ namespace process
 {
    
 void
-machine::run_action(sched::threads_sched *sched, node* node, vm::tuple *tpl, vm::predicate *pred,
+machine::run_action(sched::threads_sched *sched, vm::tuple *tpl, vm::predicate *pred,
       candidate_gc_nodes& gc_nodes)
 {
+   (void)sched;
+
 	const predicate_id pid(pred->get_id());
 	
 	assert(pred->is_action_pred());
@@ -47,12 +49,10 @@ machine::run_action(sched::threads_sched *sched, node* node, vm::tuple *tpl, vm:
          cout << s->get_content() << endl;
         }
       break;
-      case SCHEDULE_NEXT_PREDICATE_ID:
-         sched->schedule_next(node);
-      break;
       default:
-		assert(false);
-      break;
+         cerr << "Cannot execute action " << pred->get_name() << endl;
+         assert(false);
+         break;
    }
 
    vm::tuple::destroy(tpl, pred, gc_nodes);

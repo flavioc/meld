@@ -322,6 +322,15 @@ private:
    void set_node_priority_other(db::node *, const vm::priority_t);
    void set_node_owner(db::node *, threads_sched *);
 
+   inline void setup_thread_node()
+   {
+      vm::predicate *init_thread_pred(vm::theProgram->get_init_thread_predicate());
+      vm::tuple *init_tuple(vm::tuple::create(init_thread_pred));
+      thread_node->add_linear_fact(init_tuple, init_thread_pred);
+      thread_node->set_owner(this);
+      thread_node->unprocessed_facts = false;
+   }
+
    inline void setup_node(db::node *node)
    {
       vm::predicate *init_pred(vm::theProgram->get_init_predicate());
@@ -335,6 +344,8 @@ private:
    }
    
 public:
+
+   db::node *thread_node{nullptr};
 
    // allows the core machine to stop threads
    static std::atomic<bool> stop_flag;

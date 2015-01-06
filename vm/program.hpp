@@ -32,11 +32,11 @@ typedef enum {
 } priority_type;
 
 const size_t INIT_PREDICATE_ID(0);
+const size_t INIT_THREAD_PREDICATE_ID(1);
 const size_t SETCOLOR_PREDICATE_ID(2);
 const size_t SETEDGELABEL_PREDICATE_ID(3);
 const size_t WRITE_STRING_PREDICATE_ID(4);
-const size_t SCHEDULE_NEXT_PREDICATE_ID(6);
-const size_t SETCOLOR2_PREDICATE_ID(7);
+const size_t SETCOLOR2_PREDICATE_ID(5);
 
 #define VERSION_AT_LEAST(MAJ, MIN) (major_version > (MAJ) || (major_version == (MAJ) && minor_version >= (MIN)))
 
@@ -78,7 +78,7 @@ private:
 
    rule *data_rule;
 
-   mutable predicate *init;
+   mutable predicate *init, *init_thread;
 
    using string_store = 
       std::vector<runtime::rstring::ptr, mem::allocator<runtime::rstring::ptr>>;
@@ -142,6 +142,7 @@ public:
    predicate *get_predicate_by_name(const std::string&) const;
    
    predicate *get_init_predicate(void) const;
+   predicate *get_init_thread_predicate(void) const;
    predicate *get_edge_predicate(void) const;
    
    void print_bytecode(std::ostream&) const;

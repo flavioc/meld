@@ -130,12 +130,12 @@ execute_add_persistent(db::node *node, pcounter& pc, state& state)
 }
 
 static inline void
-execute_run_action0(db::node *node, tuple *tpl, predicate *pred, state& state)
+execute_run_action0(tuple *tpl, predicate *pred, state& state)
 {
    assert(pred->is_action_pred());
    switch(state.direction) {
       case POSITIVE_DERIVATION:
-         All->MACHINE->run_action(state.sched, node, tpl, pred, state.gc_nodes);
+         All->MACHINE->run_action(state.sched, tpl, pred, state.gc_nodes);
          break;
       case NEGATIVE_DERIVATION:
          vm::tuple::destroy(tpl, pred, state.gc_nodes);
@@ -144,10 +144,10 @@ execute_run_action0(db::node *node, tuple *tpl, predicate *pred, state& state)
 }
 
 static inline void
-execute_run_action(db::node *node, pcounter& pc, state& state)
+execute_run_action(pcounter& pc, state& state)
 {
    const reg_num r(pcounter_reg(pc + instr_size));
-   execute_run_action0(node, state.get_tuple(r), state.preds[r], state);
+   execute_run_action0(state.get_tuple(r), state.preds[r], state);
 }
 
 static inline void
@@ -217,7 +217,7 @@ execute_send(db::node *node, const pcounter& pc, state& state)
    {
       // same node
       if(pred->is_action_pred())
-         execute_run_action0(node, tuple, pred, state);
+         execute_run_action0(tuple, pred, state);
       else if(pred->is_persistent_pred() || pred->is_reused_pred())
          execute_add_persistent0(node, tuple, pred, state);
       else
@@ -229,7 +229,7 @@ execute_send(db::node *node, const pcounter& pc, state& state)
       db::node *node(All->DATABASE->find_node(dest_val));
 #endif
       if(pred->is_action_pred())
-         All->MACHINE->run_action(state.sched, node, tuple, pred, state.gc_nodes);
+         All->MACHINE->run_action(state.sched, tuple, pred, state.gc_nodes);
       else {
 #ifdef FACT_BUFFERING
          auto it(state.facts_to_send.find(node));
@@ -1493,6 +1493,19 @@ execute_rem_priority_here(db::node *node, pcounter& pc, state& state)
 }
 
 static inline void
+execute_schedule_next(pcounter& pc, state& state)
+{
+   const reg_num node_reg(pcounter_reg(pc + instr_size));
+   const node_val node(state.get_node(node_reg));
+
+#ifdef USE_REAL_NODES
+   state.sched->schedule_next((db::node*)node);
+#else
+   state.sched->schedule_next(All->DATABASE->find_node(node));
+#endif
+}
+
+static inline void
 execute_set_defprio_here(db::node *node, pcounter& pc, state& state)
 {
    const reg_num prio_reg(pcounter_reg(pc + instr_size));
@@ -1835,7 +1848,7 @@ execute_new_axioms(db::node *node, pcounter pc, state& state)
       }
 
       if(pred->is_action_pred())
-         execute_run_action0(node, tpl, pred, state);
+         execute_run_action0(tpl, pred, state);
       else if(pred->is_reused_pred() || pred->is_persistent_pred())
          execute_add_persistent0(node, tpl, pred, state);
       else
@@ -2918,7 +2931,7 @@ eval_loop:
 
          CASE(RUNACTION_INSTR)
             JUMP(runaction, RUNACTION_BASE)
-            execute_run_action(state.node, pc, state);
+            execute_run_action(pc, state);
             ADVANCE()
          ENDOP()
 
@@ -3789,6 +3802,18 @@ eval_loop:
          CASE(REM_PRIORITYH_INSTR)
             JUMP(rem_priorityh, REM_PRIORITYH_BASE)
             execute_rem_priority_here(state.node, pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(ENQUEUE_TLINEAR_INSTR)
+            JUMP(enqueue_tlinear, ENQUEUE_TLINEAR_BASE)
+            // XXX
+            ADVANCE()
+         ENDOP()
+
+         CASE(SCHEDULE_NEXT_INSTR)
+            JUMP(schedule_next, SCHEDULE_NEXT_BASE)
+            execute_schedule_next(pc, state);
             ADVANCE()
          ENDOP()
 

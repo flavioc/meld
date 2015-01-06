@@ -60,7 +60,8 @@ const size_t iter_options_size = 2 * sizeof(utils::byte);
 
 const size_t SEND_BASE           = instr_size + 2 * reg_val_size;
 const size_t OP_BASE             = instr_size + 4;
-const size_t ITER_BASE           = instr_size + ptr_size + predicate_size + reg_val_size + bool_size + 2 * jump_size + count_size;
+const size_t ITER_BASE0          = instr_size + ptr_size + predicate_size + reg_val_size + bool_size + 2 * jump_size;
+const size_t ITER_BASE           = ITER_BASE0 + count_size;
 const size_t OITER_BASE          = ITER_BASE + iter_options_size;
 const size_t PERS_ITER_BASE      = ITER_BASE;
 const size_t LINEAR_ITER_BASE    = ITER_BASE;
@@ -158,6 +159,7 @@ const size_t ADDLINEAR_BASE      = instr_size + reg_val_size;
 const size_t ADDPERS_BASE        = ADDLINEAR_BASE;
 const size_t RUNACTION_BASE      = ADDLINEAR_BASE;
 const size_t ENQUEUE_LINEAR_BASE = ADDLINEAR_BASE;
+const size_t ENQUEUE_TLINEAR_BASE= ADDLINEAR_BASE;
 const size_t UPDATE_BASE         = instr_size + reg_val_size;
 const size_t SET_PRIORITY_BASE   = instr_size + 2 * reg_val_size;
 const size_t SET_PRIORITYH_BASE  = instr_size + reg_val_size;
@@ -183,6 +185,7 @@ const size_t REM_PRIORITY_BASE   = instr_size + reg_val_size;
 const size_t REM_PRIORITYH_BASE  = instr_size;
 const size_t FACTS_PROVED_BASE   = instr_size + 2 * reg_val_size;
 const size_t FACTS_CONSUMED_BASE = instr_size + 2 * reg_val_size;
+const size_t SCHEDULE_NEXT_BASE  = instr_size + reg_val_size;
 const size_t IF_ELSE_BASE        = instr_size + reg_val_size + 2 * jump_size;
 const size_t JUMP_BASE           = instr_size + jump_size;
 
@@ -339,6 +342,8 @@ enum instr_type {
    REM_PRIORITYH_INSTR  =  0xB2,
    FACTS_CONSUMED_INSTR =  0xB3,
    TLINEAR_ITER_INSTR   =  0xB4,
+   ENQUEUE_TLINEAR_INSTR=  0xB5,
+   SCHEDULE_NEXT_INSTR  =  0xB6,
    RETURN_LINEAR_INSTR  =  0xD0,
    RETURN_DERIVED_INSTR =  0xF0
 };
@@ -457,8 +462,8 @@ inline code_offset_t iter_inner_jump(pcounter pc) { return jump_get(pc, instr_si
 inline code_offset_t iter_outer_jump(pcounter pc) { return jump_get(pc, instr_size + ptr_size + predicate_size + reg_val_size + bool_size + jump_size); }
 inline size_t iter_matches_size(const pcounter pc, const size_t base) { return (size_t)byte_get(pc, base - count_size); }
 
-inline utils::byte iter_options(const pcounter pc) { return byte_get(pc, ITER_BASE); }
-inline utils::byte iter_options_argument(const pcounter pc) { return byte_get(pc, ITER_BASE + sizeof(utils::byte)); }
+inline utils::byte iter_options(const pcounter pc) { return byte_get(pc, ITER_BASE0); }
+inline utils::byte iter_options_argument(const pcounter pc) { return byte_get(pc, ITER_BASE0 + sizeof(utils::byte)); }
 inline instr_val iter_match_val(iter_match m) { return val_get((pcounter)m, sizeof(utils::byte)); }
 inline field_num iter_match_field(iter_match m) { return (field_num)*m; }
 
@@ -579,6 +584,7 @@ advance(const pcounter pc)
       case RUNACTION_INSTR:
          return pc + RUNACTION_BASE;
       case ENQUEUE_LINEAR_INSTR:
+      case ENQUEUE_TLINEAR_INSTR:
          return pc + ENQUEUE_LINEAR_BASE;
                    
       case FLOAT_INSTR:
@@ -946,6 +952,9 @@ advance(const pcounter pc)
 
       case FACTS_CONSUMED_INSTR:
          return pc + FACTS_CONSUMED_BASE;
+
+      case SCHEDULE_NEXT_INSTR:
+         return pc + SCHEDULE_NEXT_BASE;
 
       default:
          return pc;

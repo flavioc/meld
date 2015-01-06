@@ -622,6 +622,22 @@ program::get_init_predicate(void) const
 }
 
 predicate*
+program::get_init_thread_predicate() const
+{
+   if(init_thread == nullptr) {
+      init_thread = get_predicate(INIT_THREAD_PREDICATE_ID);
+      if(init_thread->get_name() != "_init_thread") {
+         cerr << "_init_thread predicate should be predicate #" << (int)INIT_THREAD_PREDICATE_ID << endl;
+         init_thread = get_predicate_by_name("_init_thread");
+      }
+      assert(init_thread->get_name() == "_init_thread");
+   }
+
+   assert(init_thread != nullptr);
+   return init_thread;
+}
+
+predicate*
 program::get_edge_predicate(void) const
 {
    return get_predicate_by_name("edge");

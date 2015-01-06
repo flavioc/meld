@@ -169,7 +169,7 @@ state::process_action_tuples(db::node *node)
    for(full_tuple *stpl : node->store.action_tuples) {
       vm::tuple *tpl(stpl->get_tuple());
       vm::predicate *pred(stpl->get_predicate());
-      All->MACHINE->run_action(sched, node, tpl, pred, gc_nodes);
+      All->MACHINE->run_action(sched, tpl, pred, gc_nodes);
       delete stpl;
    }
    node->store.action_tuples.clear();
