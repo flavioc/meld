@@ -15,6 +15,7 @@
 #include "runtime/objs.hpp"
 #include "queue/heap_implementation.hpp"
 #include "vm/import.hpp"
+#include "vm/bitmap.hpp"
 #ifdef USE_REAL_NODES
 #include <unordered_map>
 #endif
@@ -38,7 +39,8 @@ const size_t SETEDGELABEL_PREDICATE_ID(3);
 const size_t WRITE_STRING_PREDICATE_ID(4);
 const size_t SETCOLOR2_PREDICATE_ID(5);
 
-#define VERSION_AT_LEAST(MAJ, MIN) (major_version > (MAJ) || (major_version == (MAJ) && minor_version >= (MIN)))
+#define VERSION_AT_LEAST(MAJ, MIN) (major_version > (MAJ) || \
+      (major_version == (MAJ) && minor_version >= (MIN)))
 
 class program
 {
@@ -72,7 +74,9 @@ private:
 	std::vector<type*, mem::allocator<type*>> const_types;
    
    std::vector<predicate*, mem::allocator<predicate*>> route_predicates;
-   
+   // predicates that are instantiated at the thread level
+   std::vector<predicate*, mem::allocator<predicate*>> thread_predicates;
+
    bool safe;
    bool is_data_file;
 
@@ -105,6 +109,8 @@ public:
    using predicate_iterator =
       std::vector<predicate*, mem::allocator<predicate*>>::iterator;
 
+   vm::bitmap thread_predicates_map;
+   
    strat_level MAX_STRAT_LEVEL;
 
    inline size_t num_types(void) const { return types.size(); }
@@ -138,12 +144,17 @@ public:
 
    predicate_iterator begin_predicates(void) { return predicates.begin(); }
    predicate_iterator end_predicates(void) { return predicates.end(); }
+
+   predicate_iterator begin_thread_predicates() { return thread_predicates.begin(); }
+   predicate_iterator end_thread_predicates() { return thread_predicates.end(); }
 	
    predicate *get_predicate_by_name(const std::string&) const;
    
    predicate *get_init_predicate(void) const;
    predicate *get_init_thread_predicate(void) const;
    predicate *get_edge_predicate(void) const;
+
+   inline bool has_thread_predicates() const { return !thread_predicates.empty(); }
    
    void print_bytecode(std::ostream&) const;
    void print_predicates(std::ostream&) const;
@@ -162,12 +173,13 @@ public:
       assert(id < num_predicates());
       return code[id];
    }
-	inline byte_code get_const_bytecode(void) const { return const_code; }
+	inline byte_code get_const_bytecode() const { return const_code; }
 	inline type* get_const_type(const const_id& id) const { return const_types[id]; }
    
-   size_t num_predicates(void) const { return predicates.size(); }
-   size_t num_route_predicates(void) const { return route_predicates.size(); }
-   size_t num_predicates_next_uint(void) const { return num_predicates_uint; }
+   size_t num_predicates() const { return predicates.size(); }
+   size_t num_route_predicates() const { return route_predicates.size(); }
+   size_t num_thread_predicates() const { return thread_predicates.size(); }
+   size_t num_predicates_next_uint() const { return num_predicates_uint; }
 
 	inline runtime::rstring::ptr get_default_string(const size_t i) const
 	{

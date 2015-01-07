@@ -64,6 +64,7 @@ const size_t ITER_BASE0          = instr_size + ptr_size + predicate_size + reg_
 const size_t ITER_BASE           = ITER_BASE0 + count_size;
 const size_t OITER_BASE          = ITER_BASE + iter_options_size;
 const size_t PERS_ITER_BASE      = ITER_BASE;
+const size_t TPERS_ITER_BASE      = ITER_BASE;
 const size_t LINEAR_ITER_BASE    = ITER_BASE;
 const size_t TLINEAR_ITER_BASE   = ITER_BASE;
 const size_t RLINEAR_ITER_BASE   = ITER_BASE;
@@ -157,9 +158,9 @@ const size_t STRUCT_VALFFR_BASE  = STRUCT_VALFF_BASE;
 const size_t MVFLOATSTACK_BASE   = instr_size + float_size + stack_val_size;
 const size_t ADDLINEAR_BASE      = instr_size + reg_val_size;
 const size_t ADDPERS_BASE        = ADDLINEAR_BASE;
+const size_t ADDTPERS_BASE       = ADDLINEAR_BASE;
 const size_t RUNACTION_BASE      = ADDLINEAR_BASE;
 const size_t ENQUEUE_LINEAR_BASE = ADDLINEAR_BASE;
-const size_t ENQUEUE_TLINEAR_BASE= ADDLINEAR_BASE;
 const size_t UPDATE_BASE         = instr_size + reg_val_size;
 const size_t SET_PRIORITY_BASE   = instr_size + 2 * reg_val_size;
 const size_t SET_PRIORITYH_BASE  = instr_size + reg_val_size;
@@ -342,8 +343,9 @@ enum instr_type {
    REM_PRIORITYH_INSTR  =  0xB2,
    FACTS_CONSUMED_INSTR =  0xB3,
    TLINEAR_ITER_INSTR   =  0xB4,
-   ENQUEUE_TLINEAR_INSTR=  0xB5,
+   ADDTPERS_INSTR       =  0xB5,
    SCHEDULE_NEXT_INSTR  =  0xB6,
+   TPERS_ITER_INSTR     =  0xB7,
    RETURN_LINEAR_INSTR  =  0xD0,
    RETURN_DERIVED_INSTR =  0xF0
 };
@@ -580,17 +582,18 @@ advance(const pcounter pc)
       case ADDLINEAR_INSTR:
          return pc + ADDLINEAR_BASE;
       case ADDPERS_INSTR:
+      case ADDTPERS_INSTR:
          return pc + ADDPERS_BASE;
       case RUNACTION_INSTR:
          return pc + RUNACTION_BASE;
       case ENQUEUE_LINEAR_INSTR:
-      case ENQUEUE_TLINEAR_INSTR:
          return pc + ENQUEUE_LINEAR_BASE;
                    
       case FLOAT_INSTR:
          return pc + FLOAT_BASE;
                    
       case PERS_ITER_INSTR:
+      case TPERS_ITER_INSTR:
       case OPERS_ITER_INSTR:
       case LINEAR_ITER_INSTR:
       case TLINEAR_ITER_INSTR:
@@ -957,8 +960,7 @@ advance(const pcounter pc)
          return pc + SCHEDULE_NEXT_BASE;
 
       default:
-         return pc;
-         //throw malformed_instr_error("unknown instruction code (advance)");
+         throw malformed_instr_error("unknown instruction code (advance)");
    }
 }
 

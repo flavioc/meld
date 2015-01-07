@@ -99,6 +99,31 @@ public:
       return predicate_existence.empty(theProgram->num_predicates_next_uint());
    }
 
+   inline void add_thread(rule_matcher& thread_matcher) {
+      // adds facts marked in the thread matcher
+      for(auto it(thread_matcher.predicate_existence.begin(theProgram->num_predicates())); !it.end(); ++it) {
+         const size_t pred(*it);
+         new_linear_fact(theProgram->get_predicate(pred));
+      }
+   }
+
+   inline void print(std::ostream& cout)
+   {
+      for(auto it(predicate_existence.begin(theProgram->num_predicates())); !it.end(); ++it) {
+         vm::predicate *pred(theProgram->get_predicate(*it));
+         cout << "Has predicate " << pred->get_name() << "\n";
+      }
+   }
+
+   inline void remove_thread(rule_matcher& thread_matcher) {
+      thread_matcher.predicate_existence.set_bits_of_and_result(theProgram->thread_predicates_map, predicate_existence, theProgram->num_predicates_next_uint());
+      for(auto it(theProgram->thread_predicates_map.begin(theProgram->num_predicates())); !it.end(); ++it) {
+         const size_t id(*it);
+         if(predicate_existence.get_bit(id))
+            register_predicate_unavailability(theProgram->get_predicate(*it));
+      }
+   }
+
    rule_matcher(void);
    ~rule_matcher(void);
 };

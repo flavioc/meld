@@ -205,12 +205,27 @@ struct bitmap {
       }
    }
 
+   // set the bitmap as the result of OR'ing with the other argument
+   inline void set_bits_or(const bitmap& other, const size_t size)
+   {
+      first = first | other.first;
+      for(size_t i(0); i < size - 1; ++i)
+         *(rest + i) = *(rest + i) | *(other.rest + i);
+   }
+
    // and the two arguments and set the corresponding bits on our bitmap
    inline void set_bits_of_and_result(const bitmap& a, const bitmap& b, const size_t size)
    {
       first = first | (a.first & b.first);
       for(size_t i(0); i < size - 1; ++i)
          *(rest + i) = *(rest + i) | (*(a.rest + i) & *(b.rest + i));
+   }
+
+   inline void unset_bits_of_and_result(const bitmap& a, const bitmap& b, const size_t size)
+   {
+      first = first & ~(a.first & b.first);
+      for(size_t i(0); i < size - 1; ++i)
+         *(rest + i) = *(rest + i) & ~(*(a.rest + i) & *(b.rest + i));
    }
 
    // set bit to true

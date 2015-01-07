@@ -324,10 +324,11 @@ private:
 
    inline void setup_thread_node()
    {
+      thread_node->set_owner(this);
+
       vm::predicate *init_thread_pred(vm::theProgram->get_init_thread_predicate());
       vm::tuple *init_tuple(vm::tuple::create(init_thread_pred));
       thread_node->add_linear_fact(init_tuple, init_thread_pred);
-      thread_node->set_owner(this);
       thread_node->unprocessed_facts = false;
    }
 

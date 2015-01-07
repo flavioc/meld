@@ -33,12 +33,6 @@ program* theProgram;
 // most integers in the byte-code have 4 bytes
 static_assert(sizeof(uint_val) == 4, "uint_val must be 4 bytes long.");
 
-static inline bool
-predicate_sorter(const predicate* p1, const predicate* p2)
-{
-	return p1->get_name() < p2->get_name();
-}
-
 static inline ptr_val 
 get_function_pointer(char *lib_path, char* func_name)
 {
@@ -114,9 +108,8 @@ program::program(const string& _filename):
    read.read_type<byte>(&ntypes);
    types.resize((size_t)ntypes);
 
-   for(size_t i(0); i < num_types(); ++i) {
+   for(size_t i(0); i < num_types(); ++i)
       types[i] = read_type_from_reader(read);
-   }
 
    // read imported/exported predicates
    uint32_t number_imported_predicates;
@@ -288,6 +281,7 @@ program::program(const string& _filename):
 
    // read predicate information
    total_arguments = 0;
+   bitmap::create(thread_predicates_map, num_predicates_uint);
 
    for(size_t i(0); i < num_predicates; ++i) {
       code_size_t size;
@@ -302,13 +296,18 @@ program::program(const string& _filename):
 
       if(pred->is_route_pred())
          route_predicates.push_back(pred);
+      if(pred->is_thread_pred()) {
+         thread_predicates.push_back(pred);
+         thread_predicates_map.set_bit(pred->get_id());
+      }
 
       pred->set_argument_position(total_arguments);
       total_arguments += pred->num_fields();
    }
 
    // create 'sorted_predicates' from 'predicates'
-   sort(sorted_predicates.begin(), sorted_predicates.end(), predicate_sorter);
+   sort(sorted_predicates.begin(), sorted_predicates.end(), [](predicate *a1, predicate *a2) {
+         return a1->get_name() < a2->get_name(); });
 
    safe = true;
    for(size_t i(0); i < num_predicates; ++i) {
@@ -448,6 +447,7 @@ program::~program(void)
 #ifdef USE_REAL_NODES
    delete []node_references;
 #endif
+   bitmap::destroy(thread_predicates_map, num_predicates_uint);
 }
 
 void
@@ -473,8 +473,8 @@ void
 program::fix_node_address(db::node *n)
 {
    vector<byte_code, mem::allocator<byte_code>>& vec(node_references[n->get_id()]);
-   for(auto it(vec.begin()), end(vec.end()); it != end; ++it)
-      pcounter_set_node(*it, (node_val)n);
+   for(byte_code code : vec)
+      pcounter_set_node(code, (node_val)n);
 }
 #endif
 
@@ -578,17 +578,14 @@ program::print_predicates(ostream& cout) const
    if(is_data())
       cout << ">> Data file" << endl;
    cout << ">> Predicates:" << endl;
-   for(size_t i(0); i < num_predicates(); ++i) {
-      cout << predicates[i] << " " << *predicates[i] << endl;
-   }
+   for(size_t i(0); i < num_predicates(); ++i)
+      cout << *predicates[i] << endl;
    cout << ">> Imported Predicates:" << endl;
-   for(size_t i(0); i < imported_predicates.size(); i++) {
+   for(size_t i(0); i < imported_predicates.size(); i++)
       cout << *imported_predicates[i] << endl;
-   }
    cout << ">> Exported Predicates:" << endl;
-   for(size_t i(0); i < exported_predicates.size(); i++) {
+   for(size_t i(0); i < exported_predicates.size(); i++)
       cout << exported_predicates[i] << endl;
-   }
 }
 
 predicate*

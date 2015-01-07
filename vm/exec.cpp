@@ -745,7 +745,7 @@ execute_pers_iter(const reg_num reg, match* m, const pcounter first, state& stat
       POP_STATE();
 
       if(ret == RETURN_LINEAR) return ret;
-      else if(ret == RETURN_DERIVED && state.is_linear)
+      if(ret == RETURN_DERIVED && state.is_linear)
          return RETURN_DERIVED;
    }
 
@@ -821,9 +821,8 @@ execute_olinear_iter(const reg_num reg, match* m, const pcounter pc, const pcoun
             return RETURN_LINEAR;
          if(ret == RETURN_DERIVED && old_is_linear)
             return RETURN_DERIVED;
-      } else {
+      } else
          match_tuple->will_not_delete();
-      }
 next_tuple:
       // removed item from the list because it is no longer needed
       it = tpls.erase(it);
@@ -955,10 +954,9 @@ execute_opers_iter(const reg_num reg, match* m, const pcounter pc, const pcounte
 
       if(ret == RETURN_LINEAR)
          return RETURN_LINEAR;
-      else if(ret == RETURN_DERIVED && old_is_linear)
+      if(ret == RETURN_DERIVED && old_is_linear)
          return RETURN_DERIVED;
-      else
-         it = leaves.erase(it);
+      it = leaves.erase(it);
    }
 
    return RETURN_NO_RETURN;
@@ -1036,10 +1034,10 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
             vm::tuple::destroy(match_tuple, pred, state.gc_nodes);
             if(tbl) {
                if(local_tuples->empty() && tbl->empty())
-                  node->matcher.empty_predicate(pred);
+                  state.node->matcher.empty_predicate(pred);
             } else {
                if(local_tuples->empty())
-                  node->matcher.empty_predicate(pred);
+                  state.node->matcher.empty_predicate(pred);
             }
             next_iter = false;
          }
@@ -1047,9 +1045,9 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
 
       if(ret == RETURN_LINEAR)
          return RETURN_LINEAR;
-      else if(old_is_linear && ret == RETURN_DERIVED)
+      if(old_is_linear && ret == RETURN_DERIVED)
          return RETURN_DERIVED;
-      else if(next_iter) {
+      if(next_iter) {
          match_tuple->will_not_delete();
          it++;
       }
@@ -1127,7 +1125,7 @@ execute_rlinear_iter_list(const reg_num reg, match* m, const pcounter first, sta
 
       if(ret == RETURN_LINEAR)
          return RETURN_LINEAR;
-      else if(old_is_linear && ret == RETURN_DERIVED)
+      if(old_is_linear && ret == RETURN_DERIVED)
          return RETURN_DERIVED;
    }
 
@@ -1196,8 +1194,7 @@ execute_select(db::node *node, pcounter pc, state& state)
    
    if(hashed == 0) // no specific code
       return pc + select_size(pc);
-   else
-      return select_hash_code(hash_start, select_hash_size(pc), hashed);
+   return select_hash_code(hash_start, select_hash_size(pc), hashed);
 }
 
 static inline void
@@ -2835,8 +2832,22 @@ eval_loop:
                const reg_num reg(iter_reg(pc));
                match *mobj(retrieve_match_object(state, pc, pred, TLINEAR_ITER_BASE));
 
-               const return_type ret(execute_linear_iter(reg, mobj, pc + iter_inner_jump(pc), state, pred, state.node));
+               const return_type ret(execute_linear_iter(reg, mobj, pc + iter_inner_jump(pc),
+                        state, pred, state.sched->thread_node));
 
+               DECIDE_NEXT_ITER_INSTR();
+            }
+         ENDOP()
+
+         CASE(TPERS_ITER_INSTR)
+            COMPLEX_JUMP(tpers_iter)
+            {
+               predicate *pred(theProgram->get_predicate(iter_predicate(pc)));
+               const reg_num reg(iter_reg(pc));
+               match *mobj(retrieve_match_object(state, pc, pred, TPERS_ITER_BASE));
+
+               const return_type ret(execute_pers_iter(reg, mobj, pc + iter_inner_jump(pc), state, pred, state.sched->thread_node));
+               
                DECIDE_NEXT_ITER_INSTR();
             }
          ENDOP()
@@ -3805,15 +3816,15 @@ eval_loop:
             ADVANCE()
          ENDOP()
 
-         CASE(ENQUEUE_TLINEAR_INSTR)
-            JUMP(enqueue_tlinear, ENQUEUE_TLINEAR_BASE)
-            // XXX
-            ADVANCE()
-         ENDOP()
-
          CASE(SCHEDULE_NEXT_INSTR)
             JUMP(schedule_next, SCHEDULE_NEXT_BASE)
             execute_schedule_next(pc, state);
+            ADVANCE()
+         ENDOP()
+
+         CASE(ADDTPERS_INSTR)
+            JUMP(addtpers, ADDTPERS_BASE)
+            execute_add_persistent(state.sched->thread_node, pc, state);
             ADVANCE()
          ENDOP()
 

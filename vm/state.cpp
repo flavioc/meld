@@ -34,15 +34,13 @@ void
 state::purge_runtime_objects(void)
 {
 #define PURGE_OBJ(TYPE)                                                                      \
-   for(list<TYPE*>::iterator it(free_ ## TYPE.begin()); it != free_ ## TYPE .end(); ++it) {  \
-      TYPE *x(*it);                                                                          \
-      assert(x != nullptr);                                                                     \
+   for(TYPE *x : free_ ## TYPE) {                                                            \
+      assert(x != nullptr);                                                                  \
       x->dec_refs(gc_nodes);                                                                 \
    }                                                                                         \
    free_ ## TYPE .clear()
 #define PURGE_OBJ_SIMPLE(TYPE)                                                               \
-   for(list<TYPE*>::iterator it(free_ ## TYPE.begin()); it != free_ ## TYPE .end(); ++it) {  \
-      TYPE *x(*it);                                                                          \
+   for(TYPE *x : free_ ## TYPE) {                                                            \
       assert(x != nullptr);                                                                     \
       x->dec_refs();                                                                         \
    }                                                                                         \
@@ -183,14 +181,14 @@ state::process_incoming_tuples(db::node *node)
       vm::tuple *tpl(node->store.incoming.pop_front());
       vm::predicate *pred(tpl->get_predicate());
       node->store.register_tuple_fact(pred, 1);
-      node->linear.add_fact(tpl, pred, node->matcher);
+      node->linear.add_fact(tpl, pred, matcher);
    }
 #else
    for(size_t i(0); i < theProgram->num_predicates(); ++i) {
       utils::intrusive_list<vm::tuple> *ls(node->store.incoming + i);
       if(!ls->empty()) {
          vm::predicate *pred(theProgram->get_predicate(i));
-         node->matcher.new_linear_fact(pred);
+         matcher->new_linear_fact(pred);
          node->linear.increment_database(pred, ls);
       }
    }
@@ -241,13 +239,12 @@ state::process_persistent_tuple(db::node *node, full_tuple *stpl, vm::tuple *tpl
          {
             bool is_new;
 
-            if(pred->is_reused_pred()) {
+            if(pred->is_reused_pred())
                is_new = true;
-            } else {
+            else {
 #ifdef CORE_STATISTICS
                execution_time::scope s(stat.db_insertion_time_predicate[pred->get_id()]);
 #endif
-
                is_new = node->pers_store.add_tuple(tpl, pred, depth);
             }
 
@@ -256,10 +253,10 @@ state::process_persistent_tuple(db::node *node, full_tuple *stpl, vm::tuple *tpl
                execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
             }
 
-            if(pred->is_reused_pred()) {
+            if(pred->is_reused_pred())
                node->add_linear_fact(stpl->get_tuple(), pred);
-            } else {
-               node->matcher.new_persistent_fact(pred);
+            else {
+               matcher->new_persistent_fact(pred);
 
                if(!is_new)
                   vm::tuple::destroy(tpl, pred, gc_nodes);
@@ -294,7 +291,7 @@ state::process_persistent_tuple(db::node *node, full_tuple *stpl, vm::tuple *tpl
                   }
                }
             }
-            node->matcher.new_persistent_count(pred, deleter.trie_size());
+            matcher->new_persistent_count(pred, deleter.trie_size());
          }
          vm::full_tuple::wipeout(stpl, gc_nodes);
          break;
@@ -365,8 +362,7 @@ compute_entropy(db::node *node, const predicate *pred, const size_t arg)
    } else {
       utils::intrusive_list<tuple> *ls(node->linear.get_linked_list(pred->get_id()));
 
-      for(utils::intrusive_list<tuple>::iterator it(ls->begin()), end(ls->end()); it != end; ++it) {
-         vm::tuple *tpl(*it);
+      for(vm::tuple *tpl : *ls) {
          total++;
          switch(pred->get_field_type(arg)->get_type()) {
             case FIELD_INT: {
@@ -588,6 +584,7 @@ void
 state::run_node(db::node *node)
 {
    this->node = node;
+   this->matcher = &(node->matcher);
 
    reset_counters();
 
@@ -624,11 +621,16 @@ state::run_node(db::node *node)
 #ifdef DYNAMIC_INDEXING
    node->rounds++;
 #endif
-	
    do_persistent_tuples(node);
 
-	while(!node->matcher.rule_queue.empty(theProgram->num_rules_next_uint())) {
-		rule_id rule(node->matcher.rule_queue.remove_front(theProgram->num_rules_next_uint()));
+   // add linear facts to the node matcher
+   if(theProgram->has_thread_predicates()) {
+      do_persistent_tuples(sched->thread_node);
+      matcher->add_thread(sched->thread_node->matcher);
+   }
+
+	while(!matcher->rule_queue.empty(theProgram->num_rules_next_uint())) {
+		rule_id rule(matcher->rule_queue.remove_front(theProgram->num_rules_next_uint()));
 		
 #ifdef DEBUG_RULES
       cout << "Run rule " << theProgram->get_rule(rule)->get_string() << endl;
@@ -643,18 +645,29 @@ state::run_node(db::node *node)
             utils::intrusive_list<vm::tuple> *gen(node->store.generated + i);
             if(!gen->empty()) {
                vm::predicate *pred(theProgram->get_predicate(i));
-               node->matcher.new_linear_fact(pred);
-               node->linear.increment_database(pred, gen);
+               if(pred->is_thread_pred()) {
+                  matcher->new_linear_fact(pred);
+                  sched->thread_node->linear.increment_database(pred, gen);
+               } else {
+                  matcher->new_linear_fact(pred);
+                  node->linear.increment_database(pred, gen);
+               }
             }
          }
       }
       do_persistent_tuples(node);
+      if(theProgram->has_thread_predicates())
+         do_persistent_tuples(sched->thread_node);
 
       if(node->has_new_owner()) {
          node->unprocessed_facts = true;
          break;
       }
 	}
+
+   // unmark all thread facts and save state in 'thread_node'.
+   if(theProgram->has_thread_predicates())
+      matcher->remove_thread(sched->thread_node->matcher);
 
    assert(node->store.persistent_tuples.empty());
 #ifdef DYNAMIC_INDEXING
@@ -667,8 +680,8 @@ state::run_node(db::node *node)
    sync(node);
 
 #ifdef GC_NODES
-   for(auto it(gc_nodes.begin()); it != gc_nodes.end(); ++it) {
-      db::node *n((db::node*)*it);
+   for(auto x : gc_nodes) {
+      db::node *n((db::node*)x);
       MUTEX_LOCK_GUARD(n->main_lock, node_lock);
       // need to lock node since it may have pending facts
       if(n->garbage_collect())
@@ -684,18 +697,18 @@ state::sync(db::node *node)
    bool ret(false);
 #ifdef FACT_BUFFERING
    // send all facts to nodes.
-   for(auto it(facts_to_send.begin()), end(facts_to_send.end()); it != end; ++it) {
-      tuple_array& ls(it->second);
-      db::node *target((db::node*)it->first);
+   for(auto p : facts_to_send) {
+      tuple_array& ls(p.second);
+      db::node *target((db::node*)p.first);
       sched->new_work_list(node, target, ls);
       ret = true;
    }
    facts_to_send.clear();
 #endif
 #ifdef COORDINATION_BUFFERING
-   for(auto it(set_priorities.begin()), end(set_priorities.end()); it != end; ++it) {
-      db::node *target((db::node*)it->first);
-      sched->set_node_priority(target, it->second);
+   for(auto p : set_priorities) {
+      db::node *target((db::node*)p.first);
+      sched->set_node_priority(target, p.second);
    }
    set_priorities.clear();
 #endif
@@ -744,8 +757,8 @@ state::~state(void)
       //match_counter->print(theProgram->get_total_arguments());
       delete_counter(match_counter, theProgram->get_total_arguments());
    }
-   for(auto it(allocated_match_objects.begin()), end(allocated_match_objects.end()); it != end; ++it)
-      mem::allocator<utils::byte>().deallocate(*it, MATCH_OBJECT_SIZE * All->NUM_THREADS);
+   for(utils::byte *obj : allocated_match_objects)
+      mem::allocator<utils::byte>().deallocate(obj, MATCH_OBJECT_SIZE * All->NUM_THREADS);
 }
 
 }

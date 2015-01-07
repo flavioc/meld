@@ -49,6 +49,7 @@ public:
    vm::predicate *preds[NUM_REGS];
    call_stack stack;
    db::node *node;
+   vm::rule_matcher *matcher;
    derivation_direction direction;
    vm::depth_t depth;
    sched::threads_sched *sched;

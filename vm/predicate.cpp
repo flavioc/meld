@@ -17,6 +17,7 @@ namespace vm {
 #define PRED_ACTION 0x10
 #define PRED_REUSED 0x20
 #define PRED_CYCLE 0x40
+#define PRED_THREAD 0x80
 #define PRED_AGG_LOCAL 0x01
 #define PRED_AGG_REMOTE 0x02
 #define PRED_AGG_REMOTE_AND_SELF 0x04
@@ -75,12 +76,6 @@ predicate::make_predicate_simple(const predicate_id id, const string& name, cons
 
    pred->agg_info = nullptr;
    pred->is_linear = linear;
-   pred->is_route = false;
-   pred->is_reverse_route = false;
-   pred->is_action = false;
-   pred->is_reused = false;
-   pred->is_cycle = false;
-   pred->level = 0;
    pred->types = types;
    pred->name = name;
    
@@ -112,6 +107,7 @@ predicate::make_predicate_from_reader(code_reader& read, code_size_t *code_size,
    pred->is_action = prop & PRED_ACTION;
    pred->is_reused = prop & PRED_REUSED;
    pred->is_cycle = prop & PRED_CYCLE;
+   pred->is_thread = prop & PRED_THREAD;
 
    // get aggregate information, if any
    byte agg;
@@ -297,6 +293,8 @@ predicate::print(ostream& cout) const
       cout << ",reused";
    if(is_cycle)
       cout << ",cycle";
+   if(is_thread)
+      cout << ",thread";
    
    cout << "]";
    

@@ -308,11 +308,12 @@ instr_name(const instr::instr_type code)
       case POP_INSTR: return string("POP");
       case PUSH_REGS_INSTR: return string("PUSH REGS");
       case POP_REGS_INSTR: return string("POP REGS");
-      case ADDPERS_INSTR: return string("ADDPERS");
+      case ADDPERS_INSTR: return string("ADD PERSISTENT");
+      case ADDTPERS_INSTR: return string("ADD THREAD PERSISTENT");
       case RUNACTION_INSTR: return string("RUN ACTION");
       case ENQUEUE_LINEAR_INSTR: return string("ENQUEUE LINEAR");
-      case ENQUEUE_TLINEAR_INSTR: return string("ENQUEUE THREAD LINEAR");
       case PERS_ITER_INSTR: return string("PERSISTENT ITERATE");
+      case TPERS_ITER_INSTR: return string("THREAD PERSISTENT ITERATE");
       case LINEAR_ITER_INSTR: return string("LINEAR ITERATE");
       case TLINEAR_ITER_INSTR: return string("THREAD LINEAR ITERATE");
       case RLINEAR_ITER_INSTR: return string("LINEAR(R) ITERATE");
@@ -527,16 +528,17 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          cout << " " << reg_string(pcounter_reg(pc + instr_size)) << endl;
          break;
       case ADDPERS_INSTR:
+      case ADDTPERS_INSTR:
          cout << " " << reg_string(pcounter_reg(pc + instr_size)) << endl;
          break;
       case RUNACTION_INSTR:
          cout << " " << reg_string(pcounter_reg(pc + instr_size)) << endl;
          break;
       case ENQUEUE_LINEAR_INSTR:
-      case ENQUEUE_TLINEAR_INSTR:
          cout << " " << reg_string(pcounter_reg(pc + instr_size)) << endl;
          break;
       case PERS_ITER_INSTR:
+      case TPERS_ITER_INSTR:
       case LINEAR_ITER_INSTR:
       case TLINEAR_ITER_INSTR:
       case RLINEAR_ITER_INSTR:

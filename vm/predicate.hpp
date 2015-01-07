@@ -36,7 +36,7 @@ private:
    
    predicate_id id;
    std::string name;
-   strat_level level;
+   strat_level level{0};
    
    std::vector<type*> types;
    std::vector<size_t> fields_size;
@@ -55,12 +55,13 @@ private:
    
    aggregate_info *agg_info;
    
-   bool is_route;
-   bool is_linear;
-   bool is_reverse_route;
-   bool is_action;
-   bool is_reused;
-   bool is_cycle;
+   bool is_route{false};
+   bool is_linear{false};
+   bool is_reverse_route{false};
+   bool is_action{false};
+   bool is_reused{false};
+   bool is_cycle{false};
+   bool is_thread{false};
 
    std::vector<const rule*, mem::allocator<const rule*>> affected_rules;
    std::vector<const rule*, mem::allocator<const rule*>> linear_rules;
@@ -111,6 +112,7 @@ public:
    strat_level get_agg_strat_level(void) const { return agg_info->local_level; }
    
    inline bool is_route_pred(void) const { return is_route || is_reverse_route; }
+   inline bool is_thread_pred() const { return is_thread; }
 
 	inline bool is_reverse_route_pred(void) const { return is_reverse_route; }
 
