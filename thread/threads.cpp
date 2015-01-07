@@ -613,14 +613,18 @@ threads_sched::threads_sched(const vm::process_id _id):
 {
    bitmap::create(comm_threads, All->NUM_THREADS_NEXT_UINT);
    comm_threads.clear(All->NUM_THREADS_NEXT_UINT);
-   thread_node = node_handler.create_node();
-   setup_thread_node();
+   if(theProgram->has_thread_predicates()) {
+      thread_node = node_handler.create_node();
+      setup_thread_node();
+   }
 }
 
 threads_sched::~threads_sched(void)
 {
    bitmap::destroy(comm_threads, All->NUM_THREADS_NEXT_UINT);
    assert(tstate == THREAD_INACTIVE);
+   if(theProgram->has_thread_predicates())
+      node_handler.delete_node(thread_node);
 }
    
 }

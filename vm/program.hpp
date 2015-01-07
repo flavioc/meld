@@ -34,10 +34,6 @@ typedef enum {
 
 const size_t INIT_PREDICATE_ID(0);
 const size_t INIT_THREAD_PREDICATE_ID(1);
-const size_t SETCOLOR_PREDICATE_ID(2);
-const size_t SETEDGELABEL_PREDICATE_ID(3);
-const size_t WRITE_STRING_PREDICATE_ID(4);
-const size_t SETCOLOR2_PREDICATE_ID(5);
 
 #define VERSION_AT_LEAST(MAJ, MIN) (major_version > (MAJ) || \
       (major_version == (MAJ) && minor_version >= (MIN)))

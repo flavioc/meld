@@ -32,27 +32,20 @@ machine::run_action(sched::threads_sched *sched, vm::tuple *tpl, vm::predicate *
 {
    (void)sched;
 
-	const predicate_id pid(pred->get_id());
-	
 	assert(pred->is_action_pred());
-	
-   switch(pid) {
-      case SETCOLOR_PREDICATE_ID:
-      break;
-      case SETCOLOR2_PREDICATE_ID:
-      break;
-      case SETEDGELABEL_PREDICATE_ID:
-      break;
-      case WRITE_STRING_PREDICATE_ID: {
-         runtime::rstring::ptr s(tpl->get_string(0));
 
-         cout << s->get_content() << endl;
-        }
-      break;
-      default:
-         cerr << "Cannot execute action " << pred->get_name() << endl;
-         assert(false);
-         break;
+   if(pred->get_name() == "setcolor")
+      ;
+   else if(pred->get_name() == "setcolor2")
+      ;
+   else if(pred->get_name() == "setedgelabel")
+      ;
+   else if(pred->get_name() == "write-string") {
+      runtime::rstring::ptr s(tpl->get_string(0));
+      cout << s->get_content() << endl;
+   } else {
+      cerr << "Cannot execute action " << pred->get_name() << endl;
+      assert(false);
    }
 
    vm::tuple::destroy(tpl, pred, gc_nodes);
