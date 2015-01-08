@@ -1,0 +1,11 @@
+
+type p(thread, int).
+type q(node, int).
+
+!p(A, 2).
+!p(A, 3).
+!p(A, 2).
+q(@1, 1).
+
+!p(A, 2), !q(B, 1) -o !p(A, 5).
+!p(A, 5), !q(B, 1) -o !p(A, 7).

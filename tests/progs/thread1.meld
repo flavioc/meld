@@ -1,0 +1,17 @@
+
+type linear a(thread, int).
+type linear c(thread, int).
+type linear f(node).
+type linear b(node, int).
+type linear g(node).
+
+a(A, 2).
+g(@2).
+f(@1).
+
+a(A, N), N < 4 -o c(A, N + 1), a(A, N + 1).
+
+a(B, 4), f(A) -o b(A, 5), a(B, 5).
+
+a(B, 5), g(A) -o b(A, 6).
+
