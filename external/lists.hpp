@@ -12,6 +12,8 @@ namespace vm
 namespace external
 {
    
+argument listcount(const argument, const argument);
+argument listexists(const argument, const argument);
 argument listlength(const argument);
 argument listappend(const argument, const argument);
 argument listreverse(const argument);

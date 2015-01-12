@@ -67,9 +67,9 @@ Ignore <> A
 new-tree(T, [A | All], Next),
 A = @host
    -o [collect => L | !edge(A, L),
-         0 = nodelistcount(All, L), 0 = nodelistcount(Next, L),
+         ~ lexists(All, L), ~ lexists(Next, L),
          priority(L) > 0.0, cpu-id(L) = cpu-id(A) | expand-new-tree(T, [A | All],
-               if nodelistlength(All) + 1 = maxnodes then [] else nodelistappend(Next, L) end)].
+               if nodelistlength(All) + 1 = maxnodes then [] else append(Next, L) end)].
 
 // after the tree has been expanded,
 // we decide to either stop and start the first phase

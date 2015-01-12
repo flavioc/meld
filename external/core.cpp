@@ -215,5 +215,41 @@ queue_size(EXTERNAL_ARG(id))
    RETURN_INT(size);
 }
 
+argument
+facts_proved(EXTERNAL_ARG(id))
+{
+   DECLARE_NODE(id);
+
+   node *tn(nullptr);
+#ifdef USE_REAL_NODES
+   tn = (node*)id;
+#else
+   tn = All->DATABASE->find_node(id);
+#endif
+
+   int_val total(0);
+   // this is actually implemented by an instruction
+   abort();
+   RETURN_INT(total);
+}
+
+argument
+facts_consumed(EXTERNAL_ARG(id))
+{
+   DECLARE_NODE(id);
+
+   node *tn(nullptr);
+#ifdef USE_REAL_NODES
+   tn = (node*)id;
+#else
+   tn = All->DATABASE->find_node(id);
+#endif
+
+   int_val total(0);
+   // this is actually implemented by an instruction
+   abort();
+   RETURN_INT(total);
+}
+
 }
 }

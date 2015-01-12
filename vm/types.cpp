@@ -20,6 +20,7 @@ type *TYPE_STRING(nullptr);
 type *TYPE_BOOL(nullptr);
 type *TYPE_ANY(nullptr);
 type *TYPE_STRUCT(nullptr);
+type *TYPE_LIST(nullptr);
 list_type *TYPE_LIST_INT(nullptr);
 list_type *TYPE_LIST_FLOAT(nullptr);
 list_type *TYPE_LIST_NODE(nullptr);
@@ -41,6 +42,7 @@ init_types(void)
    TYPE_STRING = new type(FIELD_STRING);
    TYPE_ANY = new type(FIELD_ANY);
    TYPE_STRUCT = new type(FIELD_STRUCT);
+   TYPE_LIST = new type(FIELD_LIST);
    TYPE_LIST_INT = new list_type(TYPE_INT);
    TYPE_LIST_FLOAT = new list_type(TYPE_FLOAT);
    TYPE_LIST_NODE = new list_type(TYPE_NODE);

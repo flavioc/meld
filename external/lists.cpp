@@ -14,6 +14,102 @@ namespace vm
 {
 namespace external
 {
+
+argument
+listcount(EXTERNAL_ARG(ls), EXTERNAL_ARG(i))
+{
+   DECLARE_LIST(ls);
+   int_val total(0);
+   runtime::cons *p((runtime::cons *)ls);
+   if(runtime::cons::is_null(p)) {
+      RETURN_INT(total);
+   }
+   vm::list_type *lt(p->get_type());
+   vm::type *t(lt->get_subtype());
+
+   switch(t->get_type()) {
+      case FIELD_INT: {
+            DECLARE_INT(i);
+            while(!runtime::cons::is_null(p)) {
+               if(FIELD_INT(p->get_head()) == i)
+                  total++;
+               p = p->get_tail();
+            }
+         }
+         break;
+      case FIELD_FLOAT: {
+            DECLARE_FLOAT(i);
+            while(!runtime::cons::is_null(p)) {
+               if(FIELD_FLOAT(p->get_head()) == i)
+                  total++;
+               p = p->get_tail();
+            }
+         }
+         break;
+      case FIELD_NODE: {
+            DECLARE_NODE(i);
+            while(!runtime::cons::is_null(p)) {
+               if(FIELD_NODE(p->get_head()) == i)
+                  total++;
+               p = p->get_tail();
+            }
+         }
+         break;
+      default:
+         cerr << "cannot count types in listcount\n";
+         abort();
+         break;
+   }
+
+   RETURN_INT(total);
+}
+
+argument
+listexists(EXTERNAL_ARG(ls), EXTERNAL_ARG(i))
+{
+   DECLARE_LIST(ls);
+   runtime::cons *p((runtime::cons *)ls);
+   if(runtime::cons::is_null(p))
+      RETURN_BOOL(false);
+   vm::list_type *lt(p->get_type());
+   vm::type *t(lt->get_subtype());
+
+   switch(t->get_type()) {
+      case FIELD_INT: {
+            DECLARE_INT(i);
+            while(!runtime::cons::is_null(p)) {
+               if(FIELD_INT(p->get_head()) == i)
+                  RETURN_BOOL(true);
+               p = p->get_tail();
+            }
+         }
+         break;
+      case FIELD_FLOAT: {
+            DECLARE_FLOAT(i);
+            while(!runtime::cons::is_null(p)) {
+               if(FIELD_FLOAT(p->get_head()) == i)
+                  RETURN_BOOL(true);
+               p = p->get_tail();
+            }
+         }
+         break;
+      case FIELD_NODE: {
+            DECLARE_NODE(i);
+            while(!runtime::cons::is_null(p)) {
+               if(FIELD_NODE(p->get_head()) == i)
+                  RETURN_BOOL(true);
+               p = p->get_tail();
+            }
+         }
+         break;
+      default:
+         cerr << "cannot count types in listexists\n";
+         abort();
+         break;
+   }
+
+   RETURN_BOOL(false);
+}
    
 argument
 listlength(EXTERNAL_ARG(ls))
@@ -290,24 +386,6 @@ str2intlist(EXTERNAL_ARG(str))
    runtime::cons *ptr(from_int_stack_to_list(st));
 
    RETURN_LIST(ptr);
-}
-
-argument
-nodelistcount(EXTERNAL_ARG(ls), EXTERNAL_ARG(el))
-{
-   DECLARE_LIST(ls);
-   DECLARE_NODE(el);
-   runtime::cons *p((runtime::cons*)ls);
-   int_val total(0);
-
-   while(!runtime::cons::is_null(p)){
-      if(FIELD_NODE(p->get_head()) == el) {
-         ++total;
-      }
-      p = p->get_tail();
-   }
-
-   RETURN_INT(total);
 }
 
 argument

@@ -179,6 +179,7 @@ init_external_functions(void)
    static type *s(TYPE_STRING);
    static type *b(TYPE_BOOL);
    static type *st(TYPE_STRUCT);
+   static type *lt(TYPE_LIST);
    static list_type *li(TYPE_LIST_INT);
    static list_type *lf(TYPE_LIST_FLOAT);
    static list_type *ln(TYPE_LIST_NODE);
@@ -203,13 +204,11 @@ init_external_functions(void)
 	register_external_function(EXTERNAL1(int2str, s, i));
 	register_external_function(EXTERNAL1(float2str, s, f));
    register_external_function(EXTERNAL3(intlistsub, li, li, i, i));
-   register_external_function(EXTERNAL2(listappend, li, li, li));
    register_external_function(EXTERNAL1(str2intlist, li, s));
    register_external_function(EXTERNAL2(filecountwords, i, s, i));
    register_external_function(EXTERNAL2(residual, f, lf, lf));
    register_external_function(EXTERNAL1(listlength, i, ln));
-   register_external_function(EXTERNAL2(nodelistcount, i, ln, n));
-   register_external_function(EXTERNAL2(listappend, ln, ln, ln));
+   register_external_function(EXTERNAL2(listappend, lt, lt, lt));
    register_external_function(EXTERNAL1(priority, f, n));
    register_external_function(EXTERNAL1(listreverse, ln, ln));
    register_external_function(EXTERNAL1(listlast, n, ln));
@@ -234,6 +233,10 @@ init_external_functions(void)
    register_external_function(EXTERNAL4(partition_horizontal, i, i, i, i, i));
    register_external_function(EXTERNAL4(partition_grid, i, i, i, i, i));
    register_external_function(EXTERNAL1(queue_size, i, n));
+   register_external_function(EXTERNAL1(facts_proved, i, n));
+   register_external_function(EXTERNAL1(facts_consumed, i, n));
+   register_external_function(EXTERNAL2(listcount, i, lt, i));
+   register_external_function(EXTERNAL2(listexists, b, lt, i));
 
    atexit(cleanup_externals);
 

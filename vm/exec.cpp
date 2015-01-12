@@ -1253,6 +1253,9 @@ set_call_return(const reg_num reg, const tuple_field ret, external_function* f, 
    type *ret_type(f->get_return_type());
    assert(ret_type);
    switch(ret_type->get_type()) {
+      case FIELD_BOOL:
+         state.set_bool(reg, FIELD_BOOL(ret));
+         break;
       case FIELD_INT:
          state.set_int(reg, FIELD_INT(ret));
          break;

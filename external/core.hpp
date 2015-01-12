@@ -21,6 +21,8 @@ argument partition_vertical(const argument, const argument, const argument, cons
 argument partition_horizontal(const argument, const argument, const argument, const argument);
 argument partition_grid(const argument, const argument, const argument, const argument);
 argument queue_size(const argument);
+argument facts_proved(const argument);
+argument facts_consumed(const argument);
 
 }
 
