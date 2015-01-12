@@ -216,9 +216,9 @@ struct bitmap {
    // and the two arguments and set the corresponding bits on our bitmap
    inline void set_bits_of_and_result(const bitmap& a, const bitmap& b, const size_t size)
    {
-      first = first | (a.first & b.first);
+      first = (a.first & b.first);
       for(size_t i(0); i < size - 1; ++i)
-         *(rest + i) = *(rest + i) | (*(a.rest + i) & *(b.rest + i));
+         *(rest + i) = (*(a.rest + i) & *(b.rest + i));
    }
 
    inline void unset_bits_of_and_result(const bitmap& a, const bitmap& b, const size_t size)
