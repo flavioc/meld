@@ -65,18 +65,11 @@ private:
 
    std::vector<const rule*, mem::allocator<const rule*>> affected_rules;
    std::vector<const rule*, mem::allocator<const rule*>> linear_rules;
-   std::vector<const rule*, mem::allocator<const rule*>> persistent_rules;
 
    inline void add_linear_affected_rule(const rule* rule)
    {
       affected_rules.push_back(rule);
       linear_rules.push_back(rule);
-   }
-
-   inline void add_persistent_affected_rule(const rule* rule)
-   {
-      affected_rules.push_back(rule);
-      persistent_rules.push_back(rule);
    }
 
    store_type_t store_type;

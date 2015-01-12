@@ -250,7 +250,8 @@ state::process_persistent_tuple(db::node *node, full_tuple *stpl, vm::tuple *tpl
 
             if(is_new) {
                setup(pred, POSITIVE_DERIVATION, stpl->get_depth());
-               execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
+               if(theProgram->has_process(pred))
+                  execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
             }
 
             if(pred->is_reused_pred())
@@ -268,7 +269,8 @@ state::process_persistent_tuple(db::node *node, full_tuple *stpl, vm::tuple *tpl
      case NEGATIVE_DERIVATION:
          if(pred->is_reused_pred()) {
             setup(pred, NEGATIVE_DERIVATION, stpl->get_depth());
-            execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
+            if(theProgram->has_process(pred))
+               execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
          } else {
             auto deleter(node->pers_store.delete_tuple(tpl, pred, stpl->get_depth()));
 
@@ -276,7 +278,8 @@ state::process_persistent_tuple(db::node *node, full_tuple *stpl, vm::tuple *tpl
                // do nothing... it does not exist
             } else if(deleter.to_delete()) { // to be removed
                setup(pred, NEGATIVE_DERIVATION, stpl->get_depth());
-               execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
+               if(theProgram->has_process(pred))
+                  execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
                deleter.perform_delete(pred, gc_nodes);
             } else if(pred->is_cycle_pred()) {
                depth_counter *dc(deleter.get_depth_counter());
@@ -286,7 +289,8 @@ state::process_persistent_tuple(db::node *node, full_tuple *stpl, vm::tuple *tpl
                   deleter.delete_depths_above(stpl->get_depth());
                   if(deleter.to_delete()) {
                      setup(pred, stpl->get_dir(), stpl->get_depth());
-                     execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
+                     if(theProgram->has_process(pred))
+                        execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
                      deleter.perform_delete(pred, gc_nodes);
                   }
                }
@@ -594,7 +598,11 @@ state::run_node(db::node *node)
 #endif
 
 #ifdef DEBUG_RULES
-   cout << "================> NODE " << node->get_id() << " ===============\n";
+   cout << "===============================================================\n";
+   cout << "===                                                         ===\n";
+   cout << "===                  NODE " << node->get_id() << "                                ===\n";
+   cout << "===                                                         ===\n";
+   cout << "===============================================================\n";
 #endif
 
 	{

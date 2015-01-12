@@ -367,10 +367,12 @@ program::program(const string& _filename):
    // read predicate code
    for(size_t i(0); i < num_predicates; ++i) {
       const size_t size = code_size[i];
-      code[i] = new byte_code_el[size];
-      
-		read.read_any(code[i], size);
-      read_node_references(code[i], read);
+      if(size > 0) {
+         code[i] = new byte_code_el[size];
+         read.read_any(code[i], size);
+         read_node_references(code[i], read);
+      } else
+         code[i] = nullptr;
    }
 
    // read rules code
@@ -391,13 +393,6 @@ program::program(const string& _filename):
 
       read_node_references(code, read);
 
-      byte is_persistent(0x0);
-
-      read.read_type<byte>(&is_persistent);
-
-      if(is_persistent == 0x1)
-         rules[i]->set_as_persistent();
-
       uint32_t num_preds;
 
       read.read_type<uint32_t>(&num_preds);
@@ -409,10 +404,7 @@ program::program(const string& _filename):
          read.read_type<predicate_id>(&id);
          predicate *pred(predicates[id]);
 
-         if(rules[i]->as_persistent())
-            pred->add_persistent_affected_rule(rules[i]);
-         else
-            pred->add_linear_affected_rule(rules[i]);
+         pred->add_linear_affected_rule(rules[i]);
          rules[i]->add_predicate(id);
       }
    }
@@ -489,6 +481,8 @@ program::get_route_predicate(const size_t& i) const
 void
 program::print_predicate_code(ostream& out, predicate* p) const
 {
+   if(code_size[p->get_id()] == 0)
+      return;
    out << "PROCESS " << p->get_name()
       << " (" << code_size[p->get_id()] << "):" << endl;
    instrs_print(code[p->get_id()], code_size[p->get_id()], 0, this, out);
@@ -518,6 +512,8 @@ program::print_bytecode(ostream& out) const
 	
    for(size_t i = 0; i < num_predicates(); ++i) {
       predicate_id id = (predicate_id)i;
+      if(code_size[id] == 0)
+         continue;
       
       if(i != 0)
          out << endl;

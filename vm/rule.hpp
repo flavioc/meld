@@ -24,7 +24,6 @@ class rule
       using predicate_vector =
 		   std::vector<predicate_id, mem::allocator<predicate_id>>;
       predicate_vector predicates;
-      bool is_persistent;
 
    public:
 	
@@ -46,11 +45,8 @@ class rule
 		inline byte_code get_bytecode(void) const { return code; }
 		inline size_t num_predicates(void) const { return predicates.size(); }
 
-      inline void set_as_persistent(void) { is_persistent = true; }
-      inline bool as_persistent(void) const { return is_persistent; }
-
       explicit rule(const rule_id _id, const std::string& _str):
-         id(_id), str(_str), is_persistent(false)
+         id(_id), str(_str)
       {
       }
 

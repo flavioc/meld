@@ -491,7 +491,6 @@ threads_sched::get_work(void)
    set_active_if_inactive();
    ins_active;
    assert(current_node != nullptr);
-   assert(current_node->unprocessed_facts);
 
 #ifdef INSTRUMENTATION
    node_difference += current_node->get_translated_id() - last_node;

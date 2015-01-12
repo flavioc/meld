@@ -316,7 +316,7 @@ private:
 
    void killed_while_active(void);
 
-   void do_set_node_priority(db::node *, const vm::priority_t);
+   void do_set_node_priority(db::node *, const vm::priority_t, const bool force_queue=false);
    void do_remove_node_priority(db::node *);
    void add_node_priority_other(db::node *, const vm::priority_t);
    void set_node_priority_other(db::node *, const vm::priority_t);

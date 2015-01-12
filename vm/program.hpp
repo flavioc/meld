@@ -169,6 +169,7 @@ public:
       assert(id < num_predicates());
       return code[id];
    }
+   inline bool has_process(predicate *pred) const { return code_size[pred->get_id()] > 0; }
 	inline byte_code get_const_bytecode() const { return const_code; }
 	inline type* get_const_type(const const_id& id) const { return const_types[id]; }
    

@@ -1494,12 +1494,17 @@ execute_schedule_next(pcounter& pc, state& state)
 {
    const reg_num node_reg(pcounter_reg(pc + instr_size));
    const node_val node(state.get_node(node_reg));
-
+   db::node *nodep;
 #ifdef USE_REAL_NODES
-   state.sched->schedule_next((db::node*)node);
+   nodep = (db::node*)node;
 #else
-   state.sched->schedule_next(All->DATABASE->find_node(node));
+   nodep = All->DATABASE->find_node(node);
 #endif
+#ifdef DEBUG_SENDS
+   cout << "\tSCHEDULE NEXT " << nodep->get_id() << endl;
+#endif
+
+   state.sched->schedule_next(nodep);
 }
 
 static inline void
@@ -3875,9 +3880,6 @@ execute_process(byte_code code, state& state, vm::tuple *tpl, predicate *pred)
 void
 execute_rule(const rule_id rule_id, state& state)
 {
-#ifdef DEBUG_RULES
-	cout << "Running rule " << theProgram->get_rule(rule_id)->get_string() << endl;
-#endif
 #ifdef CORE_STATISTICS
    execution_time::scope s(state.stat.rule_times[rule_id]);
 #endif

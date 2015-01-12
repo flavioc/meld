@@ -28,11 +28,11 @@ threads_sched::schedule_next(node *n)
 
    threads_sched *other(n->get_owner());
    if(other == this)
-      do_set_node_priority(n, prio);
+      do_set_node_priority(n, prio, true);
 
    NODE_UNLOCK(n, nodelock);
 #else
-   do_set_node_priority(n, prio);
+   do_set_node_priority(n, prio, true);
 #endif
 }
 
@@ -353,7 +353,7 @@ threads_sched::do_set_node_priority_other(db::node *node, const priority_t prior
 }
 
 void
-threads_sched::do_set_node_priority(node *tn, const priority_t priority)
+threads_sched::do_set_node_priority(node *tn, const priority_t priority, const bool force_queue)
 {
 #ifdef INSTRUMENTATION
    priority_nodes_thread++;
@@ -369,6 +369,7 @@ threads_sched::do_set_node_priority(node *tn, const priority_t priority)
          // node is being stolen, let's simply set the level
          // and let the other thread do it's job
          tn->set_temporary_priority_if(priority);
+         (void)force_queue; // it's already on the queue!
          break;
       case PRIORITY_MOVING:
          if(tn->set_temporary_priority_if(priority))
@@ -390,8 +391,12 @@ threads_sched::do_set_node_priority(node *tn, const priority_t priority)
          break;
       case STATE_WORKING:
       case STATE_PRIO_CHANGE:
+         tn->set_temporary_priority_if(priority);
+         break;
       case STATE_IDLE:
          tn->set_temporary_priority_if(priority);
+         if(force_queue)
+            add_to_queue(tn);
          break;
       default: abort(); break;
    }

@@ -16,11 +16,13 @@ type linear sum-messages(node, :(float, float, float, float, float)).
 type linear update-messages(node, :(float, float, float, float, float)).
 type linear check-residual(node, node, float, :(float, float, float, float, float)).
 
-type linear token(node, list node, list node).
-type linear waiting(node).
-type linear first-phase(node, list node, list node).
-type linear send-token(node, list node, list node).
-type linear second-phase(node, list node, node).
+type linear start-tree(thread).
+type linear new-tree(thread, list node, list node).
+type linear expand-new-tree(thread, list node, list node).
+type linear start-first-phase(thread, list node, list node).
+type linear start-second-phase(thread, list node).
+type linear first-phase(thread, list node, list node).
+type linear second-phase(thread, list node).
 
 priority @initial 100.
 priority @static.
@@ -37,75 +39,71 @@ const maxnodes = 20.
 // setups initial node belief and some other things
 start(A) -o belief(A, initial-belief),
             {B | !edge(A, B) | neighbor-belief(A, B, initial-message),
-                               sent-neighbor-belief(A, B, initial-message)},
-            waiting(A).
+                               sent-neighbor-belief(A, B, initial-message)}.
+
+start-tree(T).
 
 // TREE BUILDING RULES
-
-// a node just received the token and is being asked to become
-// part of splash tree
-// we first delete "waiting" and keep the token
-waiting(A),
-token(A, All, Next)
-   -o token(A, All, Next).
 
 // this rule is run for the root of the tree
 // note that the root does not run the previous
 // rule since it does not receive a token
-waiting(A),
+start-tree(T),
+A = @host,
 nodepriority(A) > 0.0
-   -o token(A, [A], [A]).
+   -o new-tree(T, [A], []).
 
-// if the number of nodes in the tree exceed the limit
-// we may start phase 1 of the algorithm (leaves -> root)
-// NOTE: node 'A' is in All (in the last position)
-token(A, All, Next),
-nodelistlength(All) > maxnodes
-   -o first-phase(A, All, nodelistreverse(All)).
+new-tree(T, All, Next),
+nodelistlength(All) >= maxnodes
+   -o start-first-phase(T, All, All).
 
 // All is still not big enough, so we grab all neighbors not yet in the tree
 // or not yet schedule to be visited in Next.
-token(A, All, [A | Next])
+new-tree(T, [A | All], Next),
+A = @host
    -o [collect => L | !edge(A, L),
          0 = nodelistcount(All, L), 0 = nodelistcount(Next, L),
-         nodepriority(L) > 0.0, cpu-id(L) = cpu-id(A) | send-token(A, All, nodelistappend(Next, L))].
+         nodepriority(L) > 0.0, cpu-id(L) = cpu-id(A) | expand-new-tree(T, [A | All], nodelistappend(Next, L))].
 
 // the previous rule forces the token to be sent to the next node
 // we schedule node B to be run and send the token to it
-send-token(A, All, []) -o first-phase(A, All, nodelistreverse(All)).
-send-token(A, All, [B | Next]) -o schedule-next(B), token(B, nodelistappend(All, [B]), [B | Next]).
+expand-new-tree(T, All, []) -o start-first-phase(T, All, nodelistreverse(All)).
+expand-new-tree(T, All, [B | Next]) -o schedule-next(B), new-tree(T, [B | All], Next).
+
+start-first-phase(T, All, [A | Next]) -o schedule-next(A), first-phase(T, All, [A | Next]).
 
 // RULES FOR FIRST PHASE
 
-first-phase(A, [A], [A]) -o second-phase(A, [], A).
+first-phase(T, [A], [A]), A = @host -o second-phase(T, [A]).
 // we are currently in some node 'A' running the first phase
 // and this is the last node
 // we still have to run the 'update' function
 // but we'll start the second phase on 'B'
-first-phase(A, [A, B | Next], [A])
-   -o update(A), schedule-next(B), second-phase(B, [B | Next], A).
+first-phase(T, Next, [A]), A = @host
+   -o update(A), start-second-phase(T, nodelistreverse(Next)).
 // in this case, the first phase is not yet done
 // we run the update function on 'A' and send the first phase fact to 'B'
-first-phase(A, All, [A, B | Next])
-   -o update(A), schedule-next(B), first-phase(B, All, [B | Next]).
+first-phase(T, All, [A, B | Next]), A = @host
+   -o update(A), schedule-next(B), first-phase(T, All, [B | Next]).
 
 // RULES FOR SECOND PHASE
 
-// this only happens when the tree had only a single node.
-// we must run the update, since it was not run in the first pass.
-second-phase(A, [], _) -o remove-priority(A), waiting(A), update(A).
+start-second-phase(T, [A, B | Next]),
+A = @host
+   -o schedule-next(B), second-phase(T, [B | Next]).
+
 // in this rule, we are running the second phase on the last node (last node in the tree)
 // note that we need to send 'waiting' to the previous node and to this node
 // we also make sure the priority of this node is 0 so we don't start
 // building a tree from this node (see 2nd rule of tree building)
-second-phase(A, [A], Back)
-   -o update(A), waiting(Back), waiting(A), remove-priority(A).
+second-phase(T, [A]), A = @host
+   -o update(A), remove-priority(A), start-tree(T).
 // running second phase but not yet done
 // we run the update function on 'A' and send the token to 'B'
 // note that we always need to derive back the 'waiting' on 'Back'
 // so that this node can become part of a splash tree later on.
-second-phase(A, [A, B | Next], Back)
-   -o update(A), waiting(Back), schedule-next(B), second-phase(B, [B | Next], A).
+second-phase(T, [A, B | Next]), A = @host
+   -o update(A), schedule-next(B), second-phase(T, [B | Next]).
 
 // NORMAL CODE STARTS HERE
 
