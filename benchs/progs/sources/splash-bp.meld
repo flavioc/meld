@@ -53,14 +53,14 @@ token(A, All, Next)
 // note that the root does not run the previous
 // rule since it does not receive a token
 waiting(A),
-nodepriority(A) > 0.0
+priority(A) > 0.0
    -o token(A, [A], [A]).
 
 // if the number of nodes in the tree exceed the limit
 // we may start phase 1 of the algorithm (leaves -> root)
 // NOTE: node 'A' is in All (in the last position)
 token(A, All, Next),
-nodelistlength(All) > maxnodes
+nodelistlength(All) >= maxnodes
    -o first-phase(A, All, nodelistreverse(All)).
 
 // All is still not big enough, so we grab all neighbors not yet in the tree
@@ -68,7 +68,7 @@ nodelistlength(All) > maxnodes
 token(A, All, [A | Next])
    -o [collect => L | !edge(A, L),
          0 = nodelistcount(All, L), 0 = nodelistcount(Next, L),
-         nodepriority(L) > 0.0, cpu-id(L) = cpu-id(A) | send-token(A, All, nodelistappend(Next, L))].
+         priority(L) > 0.0, cpu-id(L) = cpu-id(A) | send-token(A, All, nodelistappend(Next, L))].
 
 // the previous rule forces the token to be sent to the next node
 // we schedule node B to be run and send the token to it
