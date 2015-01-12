@@ -26,7 +26,9 @@ priority @initial 100.
 priority @static.
 priority @cluster @static.
 
-const global-potential =  :(-0.0, -2.0, -4.0, -6.0, -8.0, -2.0, -0.0, -2.0, -4.0, -6.0, -4.0, -2.0, -0.0, -2.0, -4.0, -6.0, -4.0, -2.0, -0.0, -2.0, -8.0, -6.0, -4.0, -2.0, -0.0).
+const global-potential =  :(-0.0, -2.0, -4.0, -6.0, -8.0, -2.0, -0.0, -2.0, -4.0,
+                            -6.0, -4.0, -2.0, -0.0, -2.0, -4.0, -6.0, -4.0, -2.0,
+                            -0.0, -2.0, -8.0, -6.0, -4.0, -2.0, -0.0).
 const initial-message = :(-1.60944, -1.60944, -1.60944, -1.60944, -1.60944).
 const initial-belief = :(-1.609438, -1.609438, -1.609438, -1.609438, -1.609438).
 const damping = 0.1.
@@ -47,16 +49,16 @@ start-tree(T, []).
 // this rule is run for the root of the tree
 start-tree(T, []),
 A = @host,
-nodepriority(A) > 0.0
+priority(A) > 0.0
    -o new-tree(T, [A], []).
 start-tree(T, [Ignore]),
 A = @host,
-nodepriority(A) > 0.0,
+priority(A) > 0.0,
 Ignore <> A
    -o new-tree(T, [A], []).
 start-tree(T, [Ignore]),
 A = @host,
-nodepriority(A) <= 0.0,
+priority(A) <= 0.0,
 Ignore <> A
    -o 1.
 
@@ -66,7 +68,7 @@ new-tree(T, [A | All], Next),
 A = @host
    -o [collect => L | !edge(A, L),
          0 = nodelistcount(All, L), 0 = nodelistcount(Next, L),
-         nodepriority(L) > 0.0, cpu-id(L) = cpu-id(A) | expand-new-tree(T, [A | All],
+         priority(L) > 0.0, cpu-id(L) = cpu-id(A) | expand-new-tree(T, [A | All],
                if nodelistlength(All) + 1 = maxnodes then [] else nodelistappend(Next, L) end)].
 
 // after the tree has been expanded,

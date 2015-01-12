@@ -16,7 +16,7 @@ namespace external
 {
 
 argument
-node_priority(EXTERNAL_ARG(id))
+priority(EXTERNAL_ARG(id))
 {
    DECLARE_NODE(id);
    priority_t ret(0.0);

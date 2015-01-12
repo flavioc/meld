@@ -12,7 +12,7 @@ namespace vm
 namespace external
 {
    
-argument node_priority(const argument);
+argument priority(const argument);
 argument cpu_id(const argument);
 argument cpu_static(const argument);
 argument is_static(const argument);

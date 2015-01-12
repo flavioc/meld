@@ -210,7 +210,7 @@ init_external_functions(void)
    register_external_function(EXTERNAL1(listlength, i, ln));
    register_external_function(EXTERNAL2(nodelistcount, i, ln, n));
    register_external_function(EXTERNAL2(listappend, ln, ln, ln));
-   register_external_function(EXTERNAL1(node_priority, f, n));
+   register_external_function(EXTERNAL1(priority, f, n));
    register_external_function(EXTERNAL1(listreverse, ln, ln));
    register_external_function(EXTERNAL1(listlast, n, ln));
    register_external_function(EXTERNAL1(cpu_id, i, n));
