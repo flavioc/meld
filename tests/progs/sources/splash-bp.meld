@@ -19,8 +19,6 @@ type linear check-residual(node, node, float, :(float, float, float, float, floa
 type linear start-tree(thread).
 type linear new-tree(thread, list node, list node).
 type linear expand-new-tree(thread, list node, list node).
-type linear start-first-phase(thread, list node, list node).
-type linear start-second-phase(thread, list node).
 type linear first-phase(thread, list node, list node).
 type linear second-phase(thread, list node).
 
@@ -41,6 +39,7 @@ start(A) -o belief(A, initial-belief),
             {B | !edge(A, B) | neighbor-belief(A, B, initial-message),
                                sent-neighbor-belief(A, B, initial-message)}.
 
+// start the tree process
 start-tree(T).
 
 // TREE BUILDING RULES
@@ -53,44 +52,39 @@ A = @host,
 nodepriority(A) > 0.0
    -o new-tree(T, [A], []).
 
-new-tree(T, All, Next),
-nodelistlength(All) >= maxnodes
-   -o start-first-phase(T, All, All).
-
-// All is still not big enough, so we grab all neighbors not yet in the tree
-// or not yet schedule to be visited in Next.
+// We append into Next all neighbors not yet in the tree
+// or not yet schedule to be visited.
 new-tree(T, [A | All], Next),
 A = @host
    -o [collect => L | !edge(A, L),
          0 = nodelistcount(All, L), 0 = nodelistcount(Next, L),
-         nodepriority(L) > 0.0, cpu-id(L) = cpu-id(A) | expand-new-tree(T, [A | All], nodelistappend(Next, L))].
+         nodepriority(L) > 0.0, cpu-id(L) = cpu-id(A) | expand-new-tree(T, [A | All],
+               if nodelistlength(All) + 1 = maxnodes then [] else nodelistappend(Next, L) end)].
 
 // the previous rule forces the token to be sent to the next node
 // we schedule node B to be run and send the token to it
-expand-new-tree(T, All, []) -o start-first-phase(T, All, nodelistreverse(All)).
-expand-new-tree(T, All, [B | Next]) -o schedule-next(B), new-tree(T, [B | All], Next).
-
-start-first-phase(T, All, [A | Next]) -o schedule-next(A), first-phase(T, All, [A | Next]).
+expand-new-tree(T, [A | All], [])
+   -o schedule-next(A), first-phase(T, nodelistreverse([A | All]), [A | All]).
+expand-new-tree(T, All, [B | Next])
+   -o schedule-next(B), new-tree(T, [B | All], Next).
 
 // RULES FOR FIRST PHASE
 
-first-phase(T, [A], [A]), A = @host -o second-phase(T, [A]).
+first-phase(T, [A], [A]),
+A = @host
+   -o second-phase(T, [A]).
 // we are currently in some node 'A' running the first phase
 // and this is the last node
 // we still have to run the 'update' function
 // but we'll start the second phase on 'B'
-first-phase(T, Next, [A]), A = @host
-   -o update(A), start-second-phase(T, nodelistreverse(Next)).
+first-phase(T, [A, B | Next], [A]), A = @host
+   -o update(A), schedule-next(B), second-phase(T, [B | Next]).
 // in this case, the first phase is not yet done
 // we run the update function on 'A' and send the first phase fact to 'B'
 first-phase(T, All, [A, B | Next]), A = @host
    -o update(A), schedule-next(B), first-phase(T, All, [B | Next]).
 
 // RULES FOR SECOND PHASE
-
-start-second-phase(T, [A, B | Next]),
-A = @host
-   -o schedule-next(B), second-phase(T, [B | Next]).
 
 // in this rule, we are running the second phase on the last node (last node in the tree)
 // note that we need to send 'waiting' to the previous node and to this node
