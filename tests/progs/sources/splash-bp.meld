@@ -82,7 +82,7 @@ expand-new-tree(T, All, [B | Next])
 // when the tree has a single node, we run update immediatelly on the node
 first-phase(T, [A], [A]),
 A = @host
-   -o second-phase(T, [A]).
+   -o update(A), start-tree(T, [A]).
 // the first phase is done, update A and run the second phase on B.
 first-phase(T, [A, B | Next], [A]), A = @host
    -o update(A), schedule-next(B), second-phase(T, [B | Next]).
