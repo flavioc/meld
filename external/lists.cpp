@@ -444,36 +444,35 @@ argument
 listreverse(EXTERNAL_ARG(ls))
 {
    DECLARE_LIST(ls);
-   if(runtime::cons::is_null(ls)) {
-      RETURN_LIST(runtime::cons::null_list());
-   } else {
-      runtime::cons *p((runtime::cons *)ls);
-      stack_general_list s;
+   runtime::cons *p((runtime::cons *)ls);
+   if(runtime::cons::is_null(p))
+      RETURN_LIST(p);
 
-      while(!runtime::cons::is_null(p)) {
-         s.push(p->get_head());
-         p = p->get_tail();
-      }
+   runtime::cons *nl(runtime::cons::null_list());
 
-      runtime::cons *ptr(from_general_stack_to_reverse_list(s, ls->get_type()));
-
-      RETURN_LIST(ptr);
+   while(!runtime::cons::is_null(p)) {
+      nl = runtime::cons::create(nl, p->get_head(), p->get_type());
+      p = p->get_tail();
    }
+
+   RETURN_LIST(nl);
 }
 
 argument
 listlast(EXTERNAL_ARG(ls))
 {
    DECLARE_LIST(ls);
-   runtime::cons *p((runtime::cons *)ls);
-   tuple_field last;
+   runtime::cons *p((runtime::cons*)(ls));
 
-   while(!runtime::cons::is_null(p)) {
-      last = p->get_head();
-      p = p->get_tail();
+   if(runtime::cons::is_null(p)) {
+      cerr << "listlast: list has no elements.\n";
+      abort();
    }
 
-   return last;
+   while(!runtime::cons::is_null(p->get_tail()))
+      p = p->get_tail();
+
+   return p->get_head();
 }
 
 }
