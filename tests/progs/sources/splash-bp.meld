@@ -67,15 +67,15 @@ Ignore <> A
 new-tree(T, [A | All], Next),
 A = @host
    -o [collect => L | !edge(A, L),
-         ~ lexists(All, L), ~ lexists(Next, L),
+         ~ L in All, ~ L in Next,
          priority(L) > 0.0, cpu-id(L) = cpu-id(A) | expand-new-tree(T, [A | All],
-               if nodelistlength(All) + 1 = maxnodes then [] else append(Next, L) end)].
+               if nodelistlength(All) + 1 = maxnodes then [] else Next ++ L end)].
 
 // after the tree has been expanded,
 // we decide to either stop and start the first phase
 // or keep expanding.
 expand-new-tree(T, [A | All], [])
-   -o schedule-next(A), first-phase(T, nodelistreverse([A | All]), [A | All]).
+   -o schedule-next(A), first-phase(T, reverse([A | All]), [A | All]).
 expand-new-tree(T, All, [B | Next])
    -o schedule-next(B), new-tree(T, [B | All], Next).
 
