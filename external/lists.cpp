@@ -345,40 +345,47 @@ listsort(EXTERNAL_ARG(ls))
       default:
          cerr << "listsort: cannot sort this list type.\n";
          abort();
+         RETURN_LIST(runtime::cons::null_list());
    }
+   RETURN_LIST(runtime::cons::null_list());
 }
 
 argument
-intlistremoveduplicates(EXTERNAL_ARG(ls))
+listremoveduplicates(EXTERNAL_ARG(ls))
 {
    DECLARE_LIST(ls);
 
    runtime::cons *p((runtime::cons*)ls);
-   vector_int_list vec;
+   if(runtime::cons::is_null(p))
+      RETURN_LIST(p);
 
-   while(!runtime::cons::is_null(p)) {
-      vec.push_back(FIELD_INT(p->get_head()));
-      p = p->get_tail();
+   list_type *ltype(p->get_type());
+   type *t(ltype->get_subtype());
+   runtime::cons *nl(runtime::cons::null_list());
+
+   switch(t->get_type()) {
+      case FIELD_INT: {
+         std::unordered_set<vm::int_val, std::hash<vm::int_val>,
+            std::equal_to<vm::int_val>, mem::allocator<vm::int_val>> set;
+
+         while(!runtime::cons::is_null(p)) {
+            auto it(set.find(FIELD_INT(p->get_head())));
+            if(it == set.end())
+               set.insert(FIELD_INT(p->get_head()));
+            p = p->get_tail();
+         }
+
+         for(vm::int_val v : set)
+            nl = runtime::cons::create(nl, build_from_int(v), vm::TYPE_LIST_INT);
+      }
+      break;
+      default:
+         cerr << "listremoveduplicates: cannot remove duplicates of this list type.\n";
+         abort();
+         break;
    }
 
-   vector<bool, mem::allocator<bool> > marked(vec.size(), true);
-   stack_int_list s;
-
-   for(size_t i(0); i < vec.size(); ++i) {
-      if(marked[i] == false) {
-         continue;
-      }
-      // this will be kept
-      s.push(vec[i]);
-      for(size_t j(i+1); j < vec.size(); ++j) {
-         if(vec[j] == vec[i])
-            marked[j] = false;
-      }
-   }
-
-   runtime::cons *ptr(from_int_stack_to_list(s));
-
-   RETURN_LIST(ptr);
+   RETURN_LIST(nl);
 }
 
 argument

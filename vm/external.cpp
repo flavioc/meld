@@ -215,7 +215,7 @@ init_external_functions(void)
    register_external_function(EXTERNAL1(node2int, i, n));
    register_external_function(EXTERNAL2(intpower, i, i, i));
    register_external_function(EXTERNAL1(listsort, li, li));
-   register_external_function(EXTERNAL1(intlistremoveduplicates, li, li));
+   register_external_function(EXTERNAL1(listremoveduplicates, li, li));
    register_external_function(EXTERNAL2(degeneratevector, li, i, i));
    register_external_function(EXTERNAL2(demergemessages, li, li, li));
    register_external_function(EXTERNAL2(intlistequal, i, i, i));
