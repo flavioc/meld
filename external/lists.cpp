@@ -190,26 +190,42 @@ listnth(EXTERNAL_ARG(ls), EXTERNAL_ARG(v))
 }
 
 argument
-nodelistremove(EXTERNAL_ARG(ls), EXTERNAL_ARG(n))
+listremove(EXTERNAL_ARG(ls), EXTERNAL_ARG(n))
 {
 	DECLARE_LIST(ls);
-	DECLARE_NODE(n);
-
    runtime::cons *p((runtime::cons*)ls);
 
-   stack_node_list s;
+   if(runtime::cons::is_null(p))
+      RETURN_LIST(p);
 
-   while(!runtime::cons::is_null(p)) {
+   list_type *ltyp(p->get_type());
+   type *t(ltyp->get_subtype());
 
-		if(FIELD_NODE(p->get_head()) != n)
-			s.push(FIELD_NODE(p->get_head()));
+   switch(t->get_type()) {
+      case FIELD_NODE: {
+         DECLARE_NODE(n);
 
-      p = p->get_tail();
-   }
+         runtime::cons *nl(runtime::cons::null_list());
+         stack_node_list s;
 
-   runtime::cons *ptr(from_node_stack_to_list(s));
+         while(!runtime::cons::is_null(p)) {
+
+            if(FIELD_NODE(p->get_head()) != n)
+               s.push(FIELD_NODE(p->get_head()));
+
+            p = p->get_tail();
+         }
+
+         runtime::cons *ptr(from_node_stack_to_list(s));
       
-   RETURN_LIST(ptr);
+         RETURN_LIST(ptr);
+      }
+      break;
+      default:
+         cerr << "listremove: cannot remove elements from this type.\n";
+         abort();
+         RETURN_LIST(p);
+   }
 }
 
 argument
