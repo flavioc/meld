@@ -563,16 +563,6 @@ program::print_rules(ostream& out) const
 void
 program::print_predicates(ostream& cout) const
 {
-   if(is_safe())
-      cout << ">> Safe program" << endl;
-   else
-      cout << ">> Unsafe program" << endl;
-   cout << ">> Priorities: " << (priority_order == PRIORITY_ASC ? "ascending" : "descending") << " ";
-   cout << "initial: " << initial_priority << endl;
-   if(priority_static)
-      cout << ">> No work stealing" << endl;
-   if(is_data())
-      cout << ">> Data file" << endl;
    cout << ">> Predicates:" << endl;
    for(size_t i(0); i < num_predicates(); ++i)
       cout << *predicates[i] << endl;
@@ -582,6 +572,11 @@ program::print_predicates(ostream& cout) const
    cout << ">> Exported Predicates:" << endl;
    for(size_t i(0); i < exported_predicates.size(); i++)
       cout << exported_predicates[i] << endl;
+   cout << ">> Priorities: " << (priority_order == PRIORITY_ASC ? "ascending" : "descending") << "\n";
+   if(priority_static)
+      cout << ">> No work stealing" << endl;
+   if(is_data())
+      cout << ">> Data file" << endl;
 }
 
 predicate*
