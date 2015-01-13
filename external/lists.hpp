@@ -18,17 +18,16 @@ argument listlength(const argument);
 argument listappend(const argument, const argument);
 argument listreverse(const argument);
 argument listlast(const argument);
-
-argument intlistnth(const argument, const argument);
-argument intlistdiff(const argument, const argument);
-argument intlistsub(const argument, const argument, const argument);
+argument listnth(const argument, const argument);
 argument listsort(const argument);
 argument listremoveduplicates(const argument);
+
+argument intlistdiff(const argument, const argument);
+argument intlistsub(const argument, const argument, const argument);
 argument intlistequal(const argument, const argument);
 argument str2intlist(const argument);
 
 argument nodelistremove(const argument, const argument);
-argument nodelistcount(const argument, const argument);
 
 }
 

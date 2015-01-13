@@ -180,6 +180,7 @@ init_external_functions(void)
    static type *b(TYPE_BOOL);
    static type *st(TYPE_STRUCT);
    static type *lt(TYPE_LIST);
+   static type *any(TYPE_ANY);
    static list_type *li(TYPE_LIST_INT);
    static list_type *lf(TYPE_LIST_FLOAT);
    static list_type *ln(TYPE_LIST_NODE);
@@ -192,7 +193,7 @@ init_external_functions(void)
    register_external_function(EXTERNAL2(convolve, lf, lf, lf));
    register_external_function(EXTERNAL2(addfloatlists, lf, lf, lf));
    register_external_function(EXTERNAL2(intlistdiff, li, li, li));
-   register_external_function(EXTERNAL2(intlistnth, i, li, i));
+   register_external_function(EXTERNAL2(listnth, any, lt, i));
 	register_external_function(EXTERNAL2(concatenate, s, s, s));
 	register_external_function(EXTERNAL1(str2float, f, s));
 	register_external_function(EXTERNAL1(str2int, i, s));

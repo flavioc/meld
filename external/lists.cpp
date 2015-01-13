@@ -167,7 +167,7 @@ intlistdiff(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
 }
 
 argument
-intlistnth(EXTERNAL_ARG(ls), EXTERNAL_ARG(v))
+listnth(EXTERNAL_ARG(ls), EXTERNAL_ARG(v))
 {
    DECLARE_LIST(ls);
    DECLARE_INT(v);
@@ -177,17 +177,15 @@ intlistnth(EXTERNAL_ARG(ls), EXTERNAL_ARG(v))
 
    while(!runtime::cons::is_null(p)) {
 
-      if(count == v) {
-         int_val r(FIELD_INT(p->get_head()));
-
-         RETURN_INT(r);
-      }
+      if(count == v)
+         return p->get_head();
 
       count++;
       p = p->get_tail();
    }
 
-   assert(false);
+   cerr << "listnth: not enough list values\n";
+   abort();
    RETURN_INT(-1);
 }
 

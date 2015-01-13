@@ -1290,6 +1290,9 @@ set_call_return(const reg_num reg, const tuple_field ret, external_function* f, 
          state.add_struct(s);
          break;
       }
+      case FIELD_ANY:
+         state.set_reg(reg, ret);
+         break;
       default:
          throw vm_exec_error("invalid return type in call (set_call_return)");
    }
