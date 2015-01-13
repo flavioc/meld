@@ -60,20 +60,20 @@ priority(A) > 0.0
 // we may start phase 1 of the algorithm (leaves -> root)
 // NOTE: node 'A' is in All (in the last position)
 token(A, All, Next),
-nodelistlength(All) >= maxnodes
-   -o first-phase(A, All, nodelistreverse(All)).
+llength(All) >= maxnodes
+   -o first-phase(A, All, reverse(All)).
 
 // All is still not big enough, so we grab all neighbors not yet in the tree
 // or not yet schedule to be visited in Next.
 token(A, All, [A | Next])
    -o [collect => L | !edge(A, L),
-         0 = nodelistcount(All, L), 0 = nodelistcount(Next, L),
-         priority(L) > 0.0, cpu-id(L) = cpu-id(A) | send-token(A, All, nodelistappend(Next, L))].
+         ~ L in All, ~ L in Next,
+         priority(L) > 0.0, cpu-id(L) = cpu-id(A) | send-token(A, All, Next ++ L)].
 
 // the previous rule forces the token to be sent to the next node
 // we schedule node B to be run and send the token to it
-send-token(A, All, []) -o first-phase(A, All, nodelistreverse(All)).
-send-token(A, All, [B | Next]) -o schedule-next(B), token(B, nodelistappend(All, [B]), [B | Next]).
+send-token(A, All, []) -o first-phase(A, All, reverse(All)).
+send-token(A, All, [B | Next]) -o schedule-next(B), token(B, All ++ [B], [B | Next]).
 
 // RULES FOR FIRST PHASE
 
