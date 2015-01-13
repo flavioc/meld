@@ -18,7 +18,7 @@ enum field_type {
    FIELD_BOOL = 0x5,
    FIELD_THREAD = 0x6,
 	FIELD_STRING = 0x9,
-   FIELD_ANY = 0x6
+   FIELD_ANY = 0xA
 };
 
 inline bool reference_type(const field_type typ)
