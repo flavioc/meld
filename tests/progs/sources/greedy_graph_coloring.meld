@@ -26,7 +26,7 @@ neighbor-color(A, B, Old, _)
    -o neighbor-color(A, B, New, 1).
 
 select-best-color(A) -o [collect => L | B | neighbor-pick-color(A, B, L) |
-            invalid-colors(A, intlistsort(intlistremoveduplicates(L)), 1)].
+            invalid-colors(A, lsort(intlistremoveduplicates(L)), 1)].
 
 invalid-colors(A, [], C) -o update-neighbors(A, C).
 invalid-colors(A, [invalid-color | Ls], C) -o invalid-colors(A, Ls, C).

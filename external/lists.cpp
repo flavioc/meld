@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "db/node.hpp"
 #include "runtime/objs.hpp"
 #include "external/lists.hpp"
 #include "utils/utils.hpp"
@@ -277,30 +278,74 @@ listappend(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
    }
 }
 
-static bool
-cmp_ints(const int_val i, const int_val j)
-{
-   return i > j;
-}
-
 argument
-intlistsort(EXTERNAL_ARG(ls))
+listsort(EXTERNAL_ARG(ls))
 {
    DECLARE_LIST(ls);
 
    runtime::cons *p((runtime::cons*)ls);
-   vector_int_list vec;
+   if(runtime::cons::is_null(p))
+      RETURN_LIST(p);
 
-   while(!runtime::cons::is_null(p)) {
-      vec.push_back(FIELD_INT(p->get_head()));
-      p = p->get_tail();
+   list_type *ltype((list_type*)p->get_type());
+   type *t(ltype->get_subtype());
+
+   switch(t->get_type()) {
+      case FIELD_INT: {
+         vector_int_list vec;
+
+         while(!runtime::cons::is_null(p)) {
+            vec.push_back(FIELD_INT(p->get_head()));
+            p = p->get_tail();
+         }
+
+         sort(vec.begin(), vec.end(), [](const vm::int_val a1, const vm::int_val a2) { return a1 > a2; });
+
+         runtime::cons *ptr(from_int_vector_to_reverse_list(vec));
+
+         RETURN_LIST(ptr);
+      }
+      break;
+      case FIELD_FLOAT: {
+         vector_float_list vec;
+
+         while(!runtime::cons::is_null(p)) {
+            vec.push_back(FIELD_FLOAT(p->get_head()));
+            p = p->get_tail();
+         }
+
+         sort(vec.begin(), vec.end(), [](const vm::float_val a1, const vm::float_val a2) { return a1 > a2; });
+
+         runtime::cons *ptr(from_float_vector_to_reverse_list(vec));
+
+         RETURN_LIST(ptr);
+      }
+      break;
+      case FIELD_NODE: {
+         vector_node_list vec;
+
+         while(!runtime::cons::is_null(p)) {
+            vec.push_back(FIELD_NODE(p->get_head()));
+            p = p->get_tail();
+         }
+
+         sort(vec.begin(), vec.end(), [](const vm::node_val a1, const vm::node_val a2) {
+               vm::node_val a, b;
+#ifdef USE_REAL_NODES
+               a = ((db::node*)a1)->get_id();
+               b = ((db::node*)a2)->get_id();
+#else
+               a = a1;
+               b = a2;
+#endif
+               return a > b;
+               });
+    }
+      break;
+      default:
+         cerr << "listsort: cannot sort this list type.\n";
+         abort();
    }
-
-   sort(vec.begin(), vec.end(), cmp_ints);
-
-   runtime::cons *ptr(from_int_vector_to_reverse_list(vec));
-
-   RETURN_LIST(ptr);
 }
 
 argument

@@ -69,7 +69,7 @@ A = @host
    -o [collect => L | !edge(A, L),
          ~ L in All, ~ L in Next,
          priority(L) > 0.0, cpu-id(L) = cpu-id(A) | expand-new-tree(T, [A | All],
-               if nodelistlength(All) + 1 = maxnodes then [] else Next ++ L end)].
+               if llength(All) + 1 = maxnodes then [] else Next ++ L end)].
 
 // after the tree has been expanded,
 // we decide to either stop and start the first phase

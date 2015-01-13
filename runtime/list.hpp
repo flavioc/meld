@@ -265,6 +265,8 @@ typedef std::stack<vm::int_val, std::deque<vm::int_val, mem::allocator<vm::int_v
 typedef std::stack<vm::node_val, std::deque<vm::node_val, mem::allocator<vm::node_val> > > stack_node_list;
 typedef std::stack<vm::tuple_field, std::deque<vm::tuple_field, mem::allocator<vm::tuple_field> > > stack_general_list;
 typedef std::vector<vm::int_val, mem::allocator<vm::int_val> > vector_int_list;
+typedef std::vector<vm::float_val, mem::allocator<vm::float_val> > vector_float_list;
+typedef std::vector<vm::node_val, mem::allocator<vm::node_val> > vector_node_list;
 
 static inline vm::tuple_field
 build_from_int(const vm::int_val v)
@@ -378,5 +380,17 @@ static inline cons*
 from_int_vector_to_reverse_list(vector_int_list& vec)
 {
    return from_vector_to_reverse_list(vec, build_from_int, vm::TYPE_LIST_INT);
+}
+
+static inline cons*
+from_float_vector_to_reverse_list(vector_float_list& vec)
+{
+   return from_vector_to_reverse_list(vec, build_from_float, vm::TYPE_LIST_FLOAT);
+}
+
+static inline cons*
+from_node_vector_to_reverse_list(vector_node_list& vec)
+{
+   return from_vector_to_reverse_list(vec, build_from_node, vm::TYPE_LIST_NODE);
 }
 

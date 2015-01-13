@@ -191,7 +191,6 @@ init_external_functions(void)
    register_external_function(EXTERNAL2(divide, lf, lf, lf));
    register_external_function(EXTERNAL2(convolve, lf, lf, lf));
    register_external_function(EXTERNAL2(addfloatlists, lf, lf, lf));
-   register_external_function(EXTERNAL1(listlength, i, li));
    register_external_function(EXTERNAL2(intlistdiff, li, li, li));
    register_external_function(EXTERNAL2(intlistnth, i, li, i));
 	register_external_function(EXTERNAL2(concatenate, s, s, s));
@@ -207,7 +206,7 @@ init_external_functions(void)
    register_external_function(EXTERNAL1(str2intlist, li, s));
    register_external_function(EXTERNAL2(filecountwords, i, s, i));
    register_external_function(EXTERNAL2(residual, f, lf, lf));
-   register_external_function(EXTERNAL1(listlength, i, ln));
+   register_external_function(EXTERNAL1(listlength, i, lt));
    register_external_function(EXTERNAL2(listappend, lt, lt, lt));
    register_external_function(EXTERNAL1(priority, f, n));
    register_external_function(EXTERNAL1(listreverse, lt, lt));
@@ -215,7 +214,7 @@ init_external_functions(void)
    register_external_function(EXTERNAL1(cpu_id, i, n));
    register_external_function(EXTERNAL1(node2int, i, n));
    register_external_function(EXTERNAL2(intpower, i, i, i));
-   register_external_function(EXTERNAL1(intlistsort, li, li));
+   register_external_function(EXTERNAL1(listsort, li, li));
    register_external_function(EXTERNAL1(intlistremoveduplicates, li, li));
    register_external_function(EXTERNAL2(degeneratevector, li, i, i));
    register_external_function(EXTERNAL2(demergemessages, li, li, li));

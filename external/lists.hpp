@@ -22,7 +22,7 @@ argument listlast(const argument);
 argument intlistnth(const argument, const argument);
 argument intlistdiff(const argument, const argument);
 argument intlistsub(const argument, const argument, const argument);
-argument intlistsort(const argument);
+argument listsort(const argument);
 argument intlistremoveduplicates(const argument);
 argument intlistequal(const argument, const argument);
 argument str2intlist(const argument);
