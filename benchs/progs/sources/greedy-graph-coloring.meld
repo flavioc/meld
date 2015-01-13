@@ -22,7 +22,7 @@ start(A) -o {B | !edge(A, B) | neighbor-color(A, B, invalid-color, 0)},
             update(A).
 
 select-best-color(A) -o [collect => L | B | neighbor-pick-color(A, B, L) |
-            invalid-colors(A, intlistsort(intlistremoveduplicates(L)), 1)].
+            invalid-colors(A, lsort(lremoveduplicates(L)), 1)].
 
 invalid-colors(A, [], C) -o update-neighbors(A, C).
 invalid-colors(A, [invalid-color | Ls], C) -o invalid-colors(A, Ls, C).
