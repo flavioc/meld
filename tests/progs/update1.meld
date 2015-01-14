@@ -1,0 +1,8 @@
+
+type linear a(node, int, int).
+type linear b(node, int, int).
+
+a(@0, 1, 2).
+b(@0, 3, 4).
+
+a(A, X, Y), X = 1, b(A, Z, W) -o a(A, Z, X), b(A, X, Y).
