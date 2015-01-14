@@ -189,6 +189,7 @@ const size_t FACTS_CONSUMED_BASE = instr_size + 2 * reg_val_size;
 const size_t SCHEDULE_NEXT_BASE  = instr_size + reg_val_size;
 const size_t IF_ELSE_BASE        = instr_size + reg_val_size + 2 * jump_size;
 const size_t JUMP_BASE           = instr_size + jump_size;
+const size_t GC_BASE             = instr_size + type_size + reg_val_size;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -346,6 +347,7 @@ enum instr_type {
    ADDTPERS_INSTR       =  0xB5,
    SCHEDULE_NEXT_INSTR  =  0xB6,
    TPERS_ITER_INSTR     =  0xB7,
+   GC_INSTR             =  0xB8,
    RETURN_LINEAR_INSTR  =  0xD0,
    RETURN_DERIVED_INSTR =  0xF0
 };
@@ -500,6 +502,11 @@ inline reg_num test_nil_dest(pcounter pc) { return pcounter_reg(pc + instr_size 
 /* CONS (a :: b) TO c */
 
 inline size_t cons_type(pcounter pc) { return (size_t)byte_get(pc, instr_size); }
+
+/* GC a TYPE */
+
+inline reg_num gc_reg(pcounter pc) { return pcounter_reg(pc + instr_size + type_size); }
+inline size_t gc_type(pcounter pc) { return (size_t)byte_get(pc, instr_size); }
 
 /* NOT a TO b */
 
@@ -958,6 +965,9 @@ advance(const pcounter pc)
 
       case SCHEDULE_NEXT_INSTR:
          return pc + SCHEDULE_NEXT_BASE;
+
+      case GC_INSTR:
+         return pc + GC_BASE;
 
       default:
          throw malformed_instr_error("unknown instruction code (advance)");
