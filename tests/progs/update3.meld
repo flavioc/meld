@@ -1,0 +1,9 @@
+
+type linear a(node, node).
+type linear b(node, node).
+type linear c(node).
+
+a(@0, @1).
+b(@0, @2).
+
+a(A, X), b(A, Y) -o a(A, Y), c(Y).
