@@ -205,7 +205,6 @@ listremove(EXTERNAL_ARG(ls), EXTERNAL_ARG(n))
       case FIELD_NODE: {
          DECLARE_NODE(n);
 
-         runtime::cons *nl(runtime::cons::null_list());
          stack_node_list s;
 
          while(!runtime::cons::is_null(p)) {
