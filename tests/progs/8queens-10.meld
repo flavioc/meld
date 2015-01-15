@@ -1,4 +1,2 @@
-
 include #data/8queens-data10.meld
-include #sources/queens.meld
-
+include #../../benchs/progs/sources/queens.meld
