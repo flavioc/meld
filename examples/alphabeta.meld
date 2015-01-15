@@ -1,0 +1,183 @@
+
+type linear play(node, list int, int, int, int).
+type linear check-if-end(node, list int, int, int, int, list list int).
+type linear root(node).
+type linear build-next-plays(node, list int, list int, int, int, int, int, int, list node).
+type linear leaf(node, list int, int, int).
+type linear back(node, node).
+type linear evaluate-wins(node, list int, int, list list int, int).
+type linear evaluate-win(node, list int, int, list int, list list int, int).
+type linear count-points(node, list int, int, int, int).
+type linear score(node, int, int).
+type linear final-score(node, int, int).
+type linear new-score(node, int, int).
+type linear received(node, node).
+type linear receive-score(node, node, int, int).
+type linear receive-final-score(node, node, int, int).
+type linear root-receive-final-score(node, node, int, int).
+type linear maximize(node, node, int, int, int).
+type linear minimize(node, node, int, int, int).
+type linear depth(node, int).
+type linear children(node, list node).
+
+const maxinf = 9999.
+const mininf = -9999.
+const maxdepth = 10.
+
+//play(@0, [1, 0, 0, 0, 0, 0, 1, 2, 2], 1, 0, 1).
+play(@0, [0, 0, 0, 0, 0, 0, 0, 0, 0], 1, 0, 1).
+root(@0).
+depth(@0, 1).
+
+play(A, Game, NextPlayer, LastPlay, RootPlayer),
+depth(A, Depth),
+Depth > maxdepth
+   -o leaf(A, Game, RootPlayer, LastPlay),
+      depth(A, Depth).
+
+play(A, Game, NextPlayer, LastPlay, RootPlayer)
+   -o check-if-end(A, Game, NextPlayer, LastPlay, RootPlayer, [[0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 4, 8], [2, 4, 6]]).
+
+check-if-end(A, Game, NextPlayer, LastPlay, RootPlayer, [])
+   -o build-next-plays(A, [], Game, NextPlayer, 0, RootPlayer, 0, LastPlay, []).
+check-if-end(A, Game, NextPlayer, LastPlay, RootPlayer, [[P1, P2, P3] | Xs]),
+intlistnth(Game, P2) = intlistnth(Game, P1),
+intlistnth(Game, P1) = intlistnth(Game, P3),
+intlistnth(Game, P1) <> 0
+   -o leaf(A, Game, RootPlayer, LastPlay).
+check-if-end(A, Game, NextPlayer, LastPlay, RootPlayer, [X | Xs])
+   -o check-if-end(A, Game, NextPlayer, LastPlay, RootPlayer, Xs).
+
+build-next-plays(A, Previous, [], NextPlayer, X, RootPlayer, 0, Play, _) -o leaf(A, Previous, RootPlayer, Play).
+build-next-plays(A, Previous, [], RootPlayer, X, RootPlayer, N, Play, ChildList), N > 0
+   -o maximize(A, A, mininf, 0, N), children(A, ChildList).
+build-next-plays(A, Previous, [], NextPlayer, X, RootPlayer, N, Play, ChildList), N > 0, NextPlayer <> RootPlayer
+   -o minimize(A, A, maxinf, 0, N), children(A, ChildList).
+depth(A, Depth),
+build-next-plays(A, Previous, [0 | Xs], NextPlayer, X, RootPlayer, Descendants, Play, ChildList)
+   -o exists B. (play(B, Previous ++ [NextPlayer | Xs], if NextPlayer = 1 then 2 else 1 end, X, RootPlayer),
+         build-next-plays(A, Previous ++ [0], Xs, NextPlayer, X + 1, RootPlayer, Descendants + 1, Play, [B | ChildList]),
+         depth(A, Depth),
+         depth(B, Depth + 1),
+         back(B, A)).
+build-next-plays(A, Previous, [C | Xs], NextPlayer, X, RootPlayer, Descendants, Play, ChildList), C <> 0
+   -o build-next-plays(A, Previous ++ [C], Xs, NextPlayer, X + 1, RootPlayer, Descendants, Play, ChildList).
+
+leaf(A, Game, RootPlayer, Play)
+   -o evaluate-wins(A, Game, RootPlayer, [[0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 4, 8], [2, 4, 6]], Play).
+
+evaluate-wins(A, Game, RootPlayer, [], Play)
+   -o count-points(A, Game, RootPlayer, 0, Play).
+evaluate-wins(A, Game, RootPlayer, [X | Xs], Play)
+   -o evaluate-win(A, Game, RootPlayer, X, Xs, Play).
+evaluate-win(A, Game, RootPlayer, [P1, P2, P3], Wins, Play),
+intlistnth(Game, P2) = intlistnth(Game, P1),
+intlistnth(Game, P1) = intlistnth(Game, P3)
+   -o final-score(A, if intlistnth(Game, P1) = RootPlayer then 200 else -100 end, Play).
+evaluate-win(A, Game, RootPlayer, X, Wins, Play) -o evaluate-wins(A, Game, RootPlayer, Wins, Play).
+
+count-points(A, [], RootPlayer, Points, Play) -o final-score(A, Points, Play).
+count-points(A, [RootPlayer | Games], RootPlayer, Points, Play)
+   -o count-points(A, Games, RootPlayer, Points + 1, Play).
+count-points(A, [X | Xs], RootPlayer, Points, Play), X <> RootPlayer
+   -o count-points(A, Xs, RootPlayer, Points, Play).
+
+final-score(A, Score, Play),
+back(A, B)
+   -o receive-final-score(B, A, Score, Play).
+
+new-score(A, Score, Play),
+back(A, B)
+   -o back(A, B),
+      receive-score(B, A, Score, Play).
+
+new-score(A, _, _),
+root(A)
+   -o root(A).
+
+/* we receive the final score from one of the children */
+receive-final-score(A, B, Score, Play),
+minimize(A, _, Current, BestPlay, N),
+Current > Score // new best
+   -o minimize(A, B, Score, Play, N - 1),
+      new-score(A, Score, Play).
+
+receive-final-score(A, _, Score, Play),
+minimize(A, B, Current, BestPlay, N),
+Current <= Score
+   -o minimize(A, B, Current, BestPlay, N - 1).
+
+root(A),
+children(A, []),
+maximize(A, B, Score, Play, N),
+received(A, B)
+   -o stop-program(A),
+      maximize(A, B, Score, Play, N),
+      root(A).
+
+root-receive-final-score(A, B, Score, Play),
+maximize(A, _, Current, BestPlay, N),
+Current < Score
+   -o maximize(A, B, Score, Play, N - 1),
+      received(A, B).
+
+root-receive-final-score(A, C, Score, Play),
+maximize(A, B, Current, BestPlay, N),
+Current >= Score
+   -o maximize(A, B, Current, BestPlay, N - 1),
+      received(A, C).
+
+receive-final-score(A, B, Score, Play),
+root(A)
+   -o root(A),
+      root-receive-final-score(A, B, Score, Play).
+
+receive-final-score(A, B, Score, Play),
+maximize(A, _, Current, BestPlay, N),
+Current < Score // new best
+   -o maximize(A, B, Score, Play, N - 1),
+      new-score(A, Score, Play).
+
+receive-final-score(A, _, Score, Play),
+maximize(A, B, Current, BestPlay, N),
+Current >= Score
+   -o maximize(A, B, Current, BestPlay, N - 1).
+
+/* we receive an improved score from the children nodes that may not be the best */
+receive-score(A, B, Score, Play),
+minimize(A, _, Current, BestPlay, N),
+children(A, L),
+Current > Score // new best
+   -o minimize(A, B, Score, Play, N),
+      new-score(A, Score, Play),
+      children(A, nodelistremove(L, B)).
+
+receive-score(A, C, Score, Play),
+minimize(A, B, Current, BestPlay, N),
+children(A, L),
+Current <= Score
+   -o minimize(A, B, Current, BestPlay, N),
+      children(A, nodelistremove(L, C)).
+
+receive-score(A, B, Score, Play),
+maximize(A, _, Current, BestPlay, N),
+children(A, L),
+Current < Score // new best
+   -o maximize(A, B, Score, Play, N),
+      new-score(A, Score, Play),
+      children(A, nodelistremove(L, B)).
+
+receive-score(A, C, Score, Play),
+maximize(A, B, Current, BestPlay, N),
+children(A, L),
+Current >= Score
+   -o maximize(A, B, Current, BestPlay, N),
+      children(A, nodelistremove(L, C)).
+
+/* send final score when we get all final scores from the children nodes*/
+minimize(A, C, Score, Play, 0),
+back(A, B)
+   -o receive-final-score(B, A, Score, Play).
+maximize(A, C, Score, Play, 0),
+back(A, B)
+   -o receive-final-score(B, A, Score, Play).

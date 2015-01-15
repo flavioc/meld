@@ -1,0 +1,6 @@
+
+type linear a(node, list int, list int).
+
+a(@0, [1, 2], [1, 2, 3]).
+
+a(A, X, Y), X ins Y -o 1.
