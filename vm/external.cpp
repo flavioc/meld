@@ -237,6 +237,7 @@ init_external_functions(void)
    register_external_function(EXTERNAL1(facts_consumed, i, n));
    register_external_function(EXTERNAL2(listcount, i, lt, i));
    register_external_function(EXTERNAL2(listexists, b, lt, i));
+   register_external_function(EXTERNAL2(listexistss, b, lt, lt));
 
    atexit(cleanup_externals);
 

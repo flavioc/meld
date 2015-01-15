@@ -111,6 +111,61 @@ listexists(EXTERNAL_ARG(ls), EXTERNAL_ARG(i))
 
    RETURN_BOOL(false);
 }
+
+argument
+listexistss(EXTERNAL_ARG(ls), EXTERNAL_ARG(other))
+{
+   DECLARE_LIST(ls);
+   runtime::cons *p((runtime::cons *)ls);
+   if(runtime::cons::is_null(p))
+      RETURN_BOOL(false);
+   vm::list_type *lt(p->get_type());
+   vm::type *t(lt->get_subtype());
+   DECLARE_LIST(other);
+   if(runtime::cons::is_null(other))
+      RETURN_BOOL(true);
+
+   runtime::cons *x((runtime::cons*)other);
+   while(!runtime::cons::is_null(x)) {
+      vm::tuple_field head(x->get_head());
+      x = x->get_tail();
+      switch(t->get_type()) {
+         case FIELD_INT: {
+                            int_val i(FIELD_INT(head));
+                            while(!runtime::cons::is_null(p)) {
+                               if(FIELD_INT(p->get_head()) == i)
+                                  RETURN_BOOL(true);
+                               p = p->get_tail();
+                            }
+                         }
+                         break;
+         case FIELD_FLOAT: {
+                              float_val i(FIELD_FLOAT(head));
+                              while(!runtime::cons::is_null(p)) {
+                                 if(FIELD_FLOAT(p->get_head()) == i)
+                                    RETURN_BOOL(true);
+                                 p = p->get_tail();
+                              }
+                           }
+                           break;
+         case FIELD_NODE: {
+                             node_val i(FIELD_FLOAT(head));
+                             while(!runtime::cons::is_null(p)) {
+                                if(FIELD_NODE(p->get_head()) == i)
+                                   RETURN_BOOL(true);
+                                p = p->get_tail();
+                             }
+                          }
+                          break;
+         default:
+                          cerr << "cannot count types in listexistss\n";
+                          abort();
+                          break;
+      }
+   }
+
+   RETURN_BOOL(false);
+}
    
 argument
 listlength(EXTERNAL_ARG(ls))
