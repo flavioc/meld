@@ -6,8 +6,6 @@ type coord(node, int, int).
 type linear propagate-left(node, list int).
 type linear propagate-right(node, list int).
 type linear test-and-send-down(node, list int).
-type linear test-diag-left(node, int, int, list int, list int).
-type linear test-diag-right(node, int, int, list int, list int).
 type linear send-down(node, list int).
 type linear final-state(node, list int).
 

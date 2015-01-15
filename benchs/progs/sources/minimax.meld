@@ -1,6 +1,4 @@
-
-include #sources/minimax-base.meld
-include #data/minimax-normal.meld
+include #minimax-base.meld
 
 build-next-plays(A, Previous, [], NextPlayer, X, RootPlayer, 0, Play) -o leaf(A, Previous, RootPlayer, Play).
 build-next-plays(A, Previous, [], RootPlayer, X, RootPlayer, N, Play), N > 0
@@ -9,10 +7,7 @@ build-next-plays(A, Previous, [], NextPlayer, X, RootPlayer, N, Play), N > 0, Ne
    -o minimize(A, N, maxinf, 0).
 depth(A, Depth),
 build-next-plays(A, Previous, [0 | Xs], NextPlayer, X, RootPlayer, Descendants, Play)
-   -o exists B. (
-         set-default-priority(B, float(Depth + 1)),
-         (if Depth >= 4 then set-static(B) otherwise 1 end),
-         play(B, Previous ++ [NextPlayer | Xs], if NextPlayer = 1 then 2 else 1 end, X, RootPlayer),
+   -o exists B. (play(B, Previous ++ [NextPlayer | Xs], if NextPlayer = 1 then 2 else 1 end, X, RootPlayer),
          build-next-plays(A, Previous ++ [0], Xs, NextPlayer, X + 1, RootPlayer, Descendants + 1, Play),
          depth(A, Depth),
          depth(B, Depth + 1),
