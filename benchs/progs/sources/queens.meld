@@ -6,7 +6,6 @@ type coord(node, int, int).
 type linear propagate-left(node, list int).
 type linear propagate-right(node, list int).
 type linear test-and-send-down(node, list int).
-type linear test-y(node, int, list int, list int).
 type linear test-diag-left(node, int, int, list int, list int).
 type linear test-diag-right(node, int, int, list int, list int).
 type linear send-down(node, list int).
@@ -25,34 +24,13 @@ propagate-right(A, Coords)
       test-and-send-down(A, Coords).
 
 test-and-send-down(A, Coords),
+!coord(A, X, Y),
+~ queens_violation(Y, Coords)
+   -o send-down(A, [Y | Coords]).
+
+test-and-send-down(A, Coords),
 !coord(A, X, Y)
-   -o test-y(A, Y, Coords, Coords).
-
-test-y(A, Y, [], Coords), !coord(A, OX, OY) -o test-diag-left(A, OX - 1, OY - 1, Coords, Coords).
-test-y(A, Y, [Y1 | RestCoords], Coords), Y = Y1 -o 1. // fail
-test-y(A, Y, [Y1 | RestCoords], Coords), Y <> Y1 -o test-y(A, Y, RestCoords, Coords).
-
-test-diag-left(A, X, Y, _, Coords),
-X < 0 || Y < 0, !coord(A, OX, OY)
-   -o test-diag-right(A, OX -  1, OY + 1, Coords, Coords).
-test-diag-left(A, X, Y, [Y1 | RestCoords], Coords),
-Y = Y1
-   -o 1. // fail
-test-diag-left(A, X, Y, [Y1 | RestCoords], Coords),
-Y <> Y1
-   -o test-diag-left(A, X - 1, Y - 1, RestCoords, Coords).
-
-test-diag-right(A, X, Y, [], Coords),
-X < 0 || Y >= size,
-!coord(A, OX, OY)
-   -o send-down(A, [OY | Coords]).
-
-test-diag-right(A, X, Y, [Y1 | RestCoords], Coords),
-Y = Y1
-   -o 1. // fail
-test-diag-right(A, X, Y, [Y1 | RestCoords], Coords),
-Y <> Y1
-   -o test-diag-right(A, X - 1, Y + 1, RestCoords, Coords).
+   -o 1.
 
 send-down(A, Coords),
 !coord(A, size - 1, _)

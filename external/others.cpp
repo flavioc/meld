@@ -7,6 +7,7 @@
 
 #include "external/others.hpp"
 #include "runtime/objs.hpp"
+#include "vm/types.hpp"
 
 using namespace runtime;
 using namespace std;
@@ -79,6 +80,26 @@ filecountwords(EXTERNAL_ARG(dirname), EXTERNAL_ARG(filenum))
    closedir(dfd);
 
    RETURN_INT(0);
+}
+
+argument
+queens_violation(EXTERNAL_ARG(y), EXTERNAL_ARG(cols))
+{
+   DECLARE_INT(y);
+   DECLARE_LIST(cols);
+
+   int_val dly(y - 1);
+   int_val dry(y + 1);
+   runtime::cons *l((runtime::cons *)cols);
+   while(!runtime::cons::is_null(l)) {
+      const vm::int_val p(FIELD_INT(l->get_head()));
+      if(p == y || p == dly || p == dry)
+         RETURN_BOOL(true);
+      dly--;
+      dry++;
+      l = l->get_tail();
+   }
+   RETURN_BOOL(false);
 }
 
 }

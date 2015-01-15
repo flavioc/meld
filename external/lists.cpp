@@ -116,19 +116,19 @@ argument
 listexistss(EXTERNAL_ARG(ls), EXTERNAL_ARG(other))
 {
    DECLARE_LIST(ls);
-   runtime::cons *p((runtime::cons *)ls);
-   if(runtime::cons::is_null(p))
+   if(runtime::cons::is_null(ls))
       RETURN_BOOL(false);
-   vm::list_type *lt(p->get_type());
+   vm::list_type *lt(ls->get_type());
    vm::type *t(lt->get_subtype());
    DECLARE_LIST(other);
    if(runtime::cons::is_null(other))
-      RETURN_BOOL(true);
+      RETURN_BOOL(false);
 
    runtime::cons *x((runtime::cons*)other);
    while(!runtime::cons::is_null(x)) {
       vm::tuple_field head(x->get_head());
       x = x->get_tail();
+      runtime::cons *p((runtime::cons *)ls);
       switch(t->get_type()) {
          case FIELD_INT: {
                             int_val i(FIELD_INT(head));

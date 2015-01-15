@@ -139,6 +139,34 @@ external4(external_function_ptr ptr, type *ret, type *arg1, type *arg2, type *ar
    return f;
 }
 
+static inline external_function*
+external5(external_function_ptr ptr, type *ret, type *arg1, type *arg2, type *arg3, type *arg4, type *arg5, const string& name)
+{
+   external_function *f(new external_function(ptr, 5, ret, name));
+
+   f->set_arg_type(0, arg1);
+   f->set_arg_type(1, arg2);
+   f->set_arg_type(2, arg3);
+   f->set_arg_type(3, arg4);
+   f->set_arg_type(4, arg5);
+
+   return f;
+}
+
+static inline external_function*
+external6(external_function_ptr ptr, type *ret, type *arg1, type *arg2, type *arg3, type *arg4, type *arg5, type *arg6, const string& name)
+{
+   external_function *f(new external_function(ptr, 6, ret, name));
+
+   f->set_arg_type(0, arg1);
+   f->set_arg_type(1, arg2);
+   f->set_arg_type(2, arg3);
+   f->set_arg_type(3, arg4);
+   f->set_arg_type(4, arg5);
+   f->set_arg_type(5, arg6);
+
+   return f;
+}
 static void
 cleanup_externals(void)
 {
@@ -167,6 +195,8 @@ init_external_functions(void)
 #define EXTERNAL2(NAME, RET, ARG1, ARG2) external2(EXTERN(NAME), RET, ARG1, ARG2, #NAME)
 #define EXTERNAL3(NAME, RET, ARG1, ARG2, ARG3) external3(EXTERN(NAME), RET, ARG1, ARG2, ARG3, #NAME)
 #define EXTERNAL4(NAME, RET, ARG1, ARG2, ARG3, ARG4) external4(EXTERN(NAME), RET, ARG1, ARG2, ARG3, ARG4, #NAME)
+#define EXTERNAL5(NAME, RET, ARG1, ARG2, ARG3, ARG4, ARG5) external5(EXTERN(NAME), RET, ARG1, ARG2, ARG3, ARG4, ARG5, #NAME)
+#define EXTERNAL6(NAME, RET, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6) external6(EXTERN(NAME), RET, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, #NAME)
 
    if(external_functions_initiated)
       return;
@@ -238,6 +268,7 @@ init_external_functions(void)
    register_external_function(EXTERNAL2(listcount, i, lt, i));
    register_external_function(EXTERNAL2(listexists, b, lt, i));
    register_external_function(EXTERNAL2(listexistss, b, lt, lt));
+   register_external_function(EXTERNAL2(queens_violation, b, i, li));
 
    atexit(cleanup_externals);
 
