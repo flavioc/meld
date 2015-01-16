@@ -59,7 +59,7 @@ struct cons
       inline void destroy(vm::candidate_gc_nodes& gc_nodes)
       {
          if(!is_null(get_tail()))
-            get_tail()->dec_refs( gc_nodes);
+            get_tail()->dec_refs(gc_nodes);
          decrement_runtime_data(get_head(), type->get_subtype()->get_type(), gc_nodes);
          remove(this);
       }

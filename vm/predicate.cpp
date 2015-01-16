@@ -48,8 +48,10 @@ read_type_from_reader(code_reader& read)
             ret->set_type(i, read_type_from_reader(read));
          return ret;
       }
+      case FIELD_ARRAY:
+         return new array_type(read_type_from_reader(read));
       default:
-         assert(false); break;
+         assert(false); abort(); break;
    }
    assert(false);
    return nullptr;

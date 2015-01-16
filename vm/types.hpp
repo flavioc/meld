@@ -17,6 +17,7 @@ enum field_type {
    FIELD_STRUCT = 0x4,
    FIELD_BOOL = 0x5,
    FIELD_THREAD = 0x6,
+   FIELD_ARRAY = 0x7,
 	FIELD_STRING = 0x9,
    FIELD_ANY = 0xA
 };
@@ -28,6 +29,7 @@ inline bool reference_type(const field_type typ)
       case FIELD_STRUCT:
       case FIELD_STRING:
       case FIELD_NODE:
+      case FIELD_ARRAY:
          return true;
       default:
          return false;
@@ -44,6 +46,8 @@ class type
       field_type ftype;
 
    public:
+
+      virtual bool is_reference() const { return false; }
 
       inline field_type get_type(void) const { return ftype; }
 
@@ -76,6 +80,8 @@ class list_type: public type
       type *sub_type;
 
    public:
+
+      virtual bool is_reference() const { return true; }
 
       inline type *get_subtype(void) const { return sub_type; }
 
@@ -110,6 +116,8 @@ class struct_type: public type
 
    public:
 
+      virtual bool is_reference() const { return true; }
+
       inline size_t get_size(void) const { return types.size(); }
 
       inline void set_type(const size_t i, type *t) {
@@ -137,7 +145,7 @@ class struct_type: public type
             }
          }
 
-         return true;
+         return false;
       }
 
       virtual std::string string(void) const
@@ -159,13 +167,47 @@ class struct_type: public type
 
       virtual ~struct_type(void)
       {
-         for(size_t i(0); i < get_size(); ++i)
-            delete types[i];
       }
 };
 
+class array_type: public type
+{
+   private:
+
+      type *base;
+
+   public:
+
+      virtual bool is_reference() const { return true; }
+
+      inline type *get_base() const { return base; }
+
+      virtual std::string string(void) const
+      {
+         return type::string() + " " + base->string();
+      }
+
+      virtual bool equal(type *other) const
+      {
+         if(!type::equal(other))
+            return false;
+
+         if(array_type *sother = dynamic_cast<array_type*>(other))
+            return base->equal(sother->base);
+         return false;
+      }
+
+      explicit array_type(vm::type *_base):
+         type(FIELD_ARRAY),
+         base(_base)
+      {}
+
+      virtual ~array_type()
+      {}
+};
+
 extern type *TYPE_INT, *TYPE_BOOL, *TYPE_FLOAT, *TYPE_NODE, *TYPE_THREAD,
-            *TYPE_STRING, *TYPE_ANY, *TYPE_STRUCT, *TYPE_LIST;
+            *TYPE_STRING, *TYPE_ANY, *TYPE_STRUCT, *TYPE_LIST, *TYPE_ARRAY;
 extern list_type *TYPE_LIST_FLOAT, *TYPE_LIST_INT, *TYPE_LIST_NODE;
 
 void init_types(void);

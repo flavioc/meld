@@ -45,6 +45,7 @@ public:
 	define_set(string, const runtime::rstring::ptr, SET_FIELD_STRING(getfp()[field], val); val->inc_refs());
    define_set(cons, runtime::cons*, SET_FIELD_CONS(getfp()[field], val); runtime::cons::inc_refs(val));
    define_set(struct, runtime::struct1*, SET_FIELD_STRUCT(getfp()[field], val); val->inc_refs());
+   define_set(array, runtime::array*, SET_FIELD_ARRAY(getfp()[field], val); val->inc_refs());
 
    inline void set_nil(const field_num& field) { SET_FIELD_CONS(getfp()[field], runtime::cons::null_list()); }
    inline void set_field(const field_num& field, const tuple_field& f) { getfp()[field] = f; }
@@ -74,6 +75,7 @@ public:
 	define_get(runtime::rstring::ptr, string, FIELD_STRING(getfp()[field]));
    define_get(runtime::cons*, cons, FIELD_CONS(getfp()[field]));
    define_get(runtime::struct1*, struct, FIELD_STRUCT(getfp()[field]));
+   define_get(runtime::array*, array, FIELD_ARRAY(getfp()[field]));
 
 #undef define_get
 

@@ -35,6 +35,7 @@ private:
 	std::list<runtime::cons*, mem::allocator<runtime::cons*> > free_cons;
 	std::list<runtime::rstring::ptr, mem::allocator<runtime::rstring::ptr> > free_rstring;
    std::list<runtime::struct1*, mem::allocator<runtime::struct1*> > free_struct1;
+   std::list<runtime::array*, mem::allocator<runtime::array*> > free_array;
    
    void purge_runtime_objects();
    full_tuple* search_for_negative_tuple(db::node *, full_tuple *);
@@ -121,6 +122,7 @@ public:
    define_get(tuple, vm::tuple*, return (vm::tuple*)get_ptr(num));
    define_get(node, vm::node_val, return FIELD_NODE(regs[num]));
    define_get(struct, runtime::struct1*, return FIELD_STRUCT(regs[num]));
+   define_get(array, runtime::array*, return FIELD_ARRAY(regs[num]));
    
 #undef define_get
 
@@ -136,6 +138,7 @@ public:
    define_set(tuple, vm::tuple*, set_ptr(num, (ptr_val)val));
    define_set(node, const node_val, SET_FIELD_NODE(regs[num], val));
    define_set(struct, runtime::struct1*, SET_FIELD_STRUCT(regs[num], val));
+   define_set(array, runtime::array*, SET_FIELD_ARRAY(regs[num], val));
    
 #undef define_set
    
@@ -150,6 +153,7 @@ public:
 	void copy_reg2const(const reg_num&, const const_id&);
    
    inline void add_cons(runtime::cons *ls) { free_cons.push_back(ls); }
+   inline void add_array(runtime::array *x) { free_array.push_back(x); }
 	inline void add_string(runtime::rstring::ptr str) { str->inc_refs();
                                                        free_rstring.push_back(str); }
    inline void add_struct(runtime::struct1 *s) { s->inc_refs();

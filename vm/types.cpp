@@ -21,6 +21,7 @@ type *TYPE_BOOL(nullptr);
 type *TYPE_ANY(nullptr);
 type *TYPE_STRUCT(nullptr);
 type *TYPE_LIST(nullptr);
+type *TYPE_ARRAY(nullptr);
 list_type *TYPE_LIST_INT(nullptr);
 list_type *TYPE_LIST_FLOAT(nullptr);
 list_type *TYPE_LIST_NODE(nullptr);
@@ -43,6 +44,7 @@ init_types(void)
    TYPE_ANY = new type(FIELD_ANY);
    TYPE_STRUCT = new type(FIELD_STRUCT);
    TYPE_LIST = new type(FIELD_LIST);
+   TYPE_ARRAY = new type(FIELD_ARRAY);
    TYPE_LIST_INT = new list_type(TYPE_INT);
    TYPE_LIST_FLOAT = new list_type(TYPE_FLOAT);
    TYPE_LIST_NODE = new list_type(TYPE_NODE);
@@ -61,11 +63,10 @@ field_type_size(field_type type)
       case FIELD_NODE:
          return sizeof(node_val);
 		case FIELD_STRING:
-			return sizeof(ptr_val);
       case FIELD_LIST:
-         return sizeof(ptr_val);
       case FIELD_STRUCT:
-         return sizeof(ptr_val);
+      case FIELD_ARRAY:
+			return sizeof(ptr_val);
 
       default:
          throw type_error("Unrecognized field type " + to_string(type) + " (field_type_size)");
@@ -85,6 +86,7 @@ field_type_string(field_type type)
 		case FIELD_STRING: return string("string");
       case FIELD_LIST: return string("list");
       case FIELD_STRUCT: return string("struct");
+      case FIELD_ARRAY: return string("array");
       default:
          throw type_error("Unrecognized field type " + to_string(type) + " (field_type_string)");
 	}

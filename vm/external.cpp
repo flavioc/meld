@@ -11,6 +11,7 @@
 #include "external/strings.hpp"
 #include "external/others.hpp"
 #include "external/core.hpp"
+#include "external/array.hpp"
 
 using namespace std;
 
@@ -210,6 +211,7 @@ init_external_functions(void)
    static type *b(TYPE_BOOL);
    static type *st(TYPE_STRUCT);
    static type *lt(TYPE_LIST);
+   static type *at(TYPE_ARRAY);
    static type *any(TYPE_ANY);
    static list_type *li(TYPE_LIST_INT);
    static list_type *lf(TYPE_LIST_FLOAT);
@@ -271,6 +273,7 @@ init_external_functions(void)
    register_external_function(EXTERNAL2(queens_violation, b, i, li));
    register_external_function(EXTERNAL3(minimax_score, i, li, i, i));
    register_external_function(EXTERNAL2(minimax_points, i, li, i));
+   register_external_function(EXTERNAL3(array_init, at, i, any, i));
 
    atexit(cleanup_externals);
 

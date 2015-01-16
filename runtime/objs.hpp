@@ -48,6 +48,7 @@ inline void decrement_runtime_data(const vm::tuple_field& f, const vm::field_typ
 }
 
 #include "runtime/list.hpp"
+#include "runtime/array.hpp"
 #include "runtime/struct.hpp"
 #include "runtime/string.hpp"
 

@@ -171,6 +171,19 @@ print_tuple_type(ostream& cout, const tuple_field& field, type *t, const bool in
       case FIELD_STRING:
          cout << '"' << FIELD_STRING(field)->get_content() << '"';
          break;
+      case FIELD_ARRAY: {
+         runtime::array *a(FIELD_ARRAY(field));
+         vm::type *at(a->get_type());
+         cout << "#[";
+
+         for(size_t i(0); i < a->get_size(); ++i) {
+            if(i > 0)
+               cout << ", ";
+            print_tuple_type(cout, a->get_item(i), at);
+         }
+         cout << "]";
+      }
+      break;
       case FIELD_STRUCT: {
          runtime::struct1 *s(FIELD_STRUCT(field));
          struct_type *st(s->get_type());
@@ -249,6 +262,7 @@ tuple::destructor(predicate *pred, candidate_gc_nodes& gc_nodes)
          case FIELD_LIST: cons::dec_refs(get_cons(i), gc_nodes); break;
          case FIELD_STRING: get_string(i)->dec_refs(); break;
          case FIELD_STRUCT: get_struct(i)->dec_refs(gc_nodes); break;
+         case FIELD_ARRAY: get_array(i)->dec_refs(gc_nodes); break;
          case FIELD_NODE:
 #ifdef GC_NODES
             {
@@ -267,7 +281,9 @@ tuple::destructor(predicate *pred, candidate_gc_nodes& gc_nodes)
          case FIELD_INT:
          case FIELD_FLOAT:
             break;
-         default: assert(false); break;
+         default:
+            throw type_error("unsupport field type in tuple::destructor");
+            break;
       }
    }
 }

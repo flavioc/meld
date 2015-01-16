@@ -125,12 +125,14 @@ SRCS = utils/utils.cpp \
 			mem/thread.cpp \
 			mem/center.cpp \
 			mem/stat.cpp \
+			jit/build.cpp \
 			runtime/objs.cpp \
 			thread/ids.cpp \
 			thread/threads.cpp \
 			thread/coord.cpp \
 			external/math.cpp \
 			external/lists.cpp \
+			external/array.cpp \
 			external/utils.cpp \
 			external/strings.cpp \
 			external/others.cpp \

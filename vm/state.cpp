@@ -33,6 +33,7 @@ static enum {
 void
 state::purge_runtime_objects(void)
 {
+   using runtime::array;
 #define PURGE_OBJ(TYPE)                                                                      \
    for(TYPE *x : free_ ## TYPE) {                                                            \
       assert(x != nullptr);                                                                  \
@@ -49,6 +50,7 @@ state::purge_runtime_objects(void)
    PURGE_OBJ(cons);
 	PURGE_OBJ_SIMPLE(rstring);
    PURGE_OBJ(struct1);
+   PURGE_OBJ(array);
 	
 #undef PURGE_OBJ
 }

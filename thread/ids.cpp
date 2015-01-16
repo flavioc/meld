@@ -68,6 +68,7 @@ ids::create_node(void)
    }
 
    node *n(node::create(next_available_id, next_translated_id));
+   n->remove_temporary_priority();
 
    added_nodes[next_available_id] = n;
    next_available_id++;
