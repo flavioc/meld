@@ -37,6 +37,7 @@ read_type_from_reader(code_reader& read)
       case FIELD_FLOAT:
       case FIELD_NODE:
       case FIELD_STRING:
+      case FIELD_THREAD:
          return new type(t);
       case FIELD_LIST:
          return new list_type(read_type_from_reader(read));
