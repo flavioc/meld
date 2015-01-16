@@ -168,6 +168,59 @@ minimax_score(EXTERNAL_ARG(game), EXTERNAL_ARG(player), EXTERNAL_ARG(rootplayer)
 }
 
 argument
+minimax_score2(EXTERNAL_ARG(game), EXTERNAL_ARG(player), EXTERNAL_ARG(rootplayer))
+{
+   DECLARE_ARRAY(game);
+   DECLARE_INT(player);
+   DECLARE_INT(rootplayer);
+
+   int other_player(player == 1 ? 2 : 1);
+
+   static vector<vector<int>> valid = {{0, 3, 6}, {1, 4, 7}, {2, 5, 8}, {0, 1, 2}, {3, 4, 5}, {6, 7, 8}, {0, 4, 8}, {2, 4, 6}};
+
+   for(vector<int> v : valid) {
+      bool found(true);
+      for(int i : v) {
+         if(FIELD_INT(game->get_item(i)) != player) {
+            found = false;
+            break;
+         }
+      }
+      if(found) {
+         if(player == rootplayer) {
+            RETURN_INT(200);
+         } else {
+            RETURN_INT(-100);
+         }
+      }
+      found = true;
+      for(int i : v) {
+         if(FIELD_INT(game->get_item(i)) != other_player) {
+            found = false;
+            break;
+         }
+      }
+      if(found) {
+         if(other_player == rootplayer) {
+            RETURN_INT(200);
+         } else {
+            RETURN_INT(-100);
+         }
+      }
+   }
+   int count(0);
+   for(size_t i(0); i < game->get_size(); ++i) {
+      const vm::int_val v(FIELD_INT(game->get_item(i)));
+      if(v == 0) {
+         RETURN_INT(0);
+      }
+      if(v == rootplayer)
+         count++;
+   }
+   RETURN_INT(count);
+}
+
+argument
 minimax_points(EXTERNAL_ARG(game), EXTERNAL_ARG(rootplayer))
 {
    DECLARE_LIST(game);
@@ -180,6 +233,22 @@ minimax_points(EXTERNAL_ARG(game), EXTERNAL_ARG(rootplayer))
       if(v == rootplayer)
          count++;
       p = p->get_tail();
+   }
+
+   RETURN_INT(count);
+}
+
+argument
+minimax_points2(EXTERNAL_ARG(game), EXTERNAL_ARG(rootplayer))
+{
+   DECLARE_ARRAY(game);
+   DECLARE_INT(rootplayer);
+
+   int count(0);
+   for(size_t i(0); i < game->get_size(); ++i) {
+      vm::int_val v(FIELD_INT(game->get_item(i)));
+      if(v == rootplayer)
+         count++;
    }
 
    RETURN_INT(count);

@@ -25,6 +25,7 @@ type *TYPE_ARRAY(nullptr);
 list_type *TYPE_LIST_INT(nullptr);
 list_type *TYPE_LIST_FLOAT(nullptr);
 list_type *TYPE_LIST_NODE(nullptr);
+array_type *TYPE_ARRAY_INT(nullptr);
 static bool types_initiated(false);
 
 void
@@ -48,6 +49,7 @@ init_types(void)
    TYPE_LIST_INT = new list_type(TYPE_INT);
    TYPE_LIST_FLOAT = new list_type(TYPE_FLOAT);
    TYPE_LIST_NODE = new list_type(TYPE_NODE);
+   TYPE_ARRAY_INT = new array_type(TYPE_INT);
 }
    
 size_t

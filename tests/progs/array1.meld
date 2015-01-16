@@ -1,0 +1,10 @@
+
+type linear a(node, array int).
+type linear b(node, array int).
+type linear c(node, int).
+type linear d(node, array int).
+
+a(@0, array_init(9, 0)).
+d(@0, array_from_list([1, 2, 3, 4, 5])).
+
+a(A, X) -o b(A, array_set(X, 1, 4)), c(A, array_get(X, 2)), d(A, array_add(X, 5)).

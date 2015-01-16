@@ -216,6 +216,7 @@ init_external_functions(void)
    static list_type *li(TYPE_LIST_INT);
    static list_type *lf(TYPE_LIST_FLOAT);
    static list_type *ln(TYPE_LIST_NODE);
+   static array_type *ai(TYPE_ARRAY_INT);
 
    register_external_function(EXTERNAL1(sigmoid, f, f));
    register_external_function(EXTERNAL1(randint, i, i));
@@ -274,6 +275,13 @@ init_external_functions(void)
    register_external_function(EXTERNAL3(minimax_score, i, li, i, i));
    register_external_function(EXTERNAL2(minimax_points, i, li, i));
    register_external_function(EXTERNAL3(array_init, at, i, any, i));
+   register_external_function(EXTERNAL2(array_get, any, at, i));
+   register_external_function(EXTERNAL3(array_set, at, at, i, any));
+   register_external_function(EXTERNAL2(array_add, at, at, any));
+   register_external_function(EXTERNAL2(array_from_list, at, lt, i));
+   register_external_function(EXTERNAL1(array_size, i, at));
+   register_external_function(EXTERNAL3(minimax_score2, i, ai, i, i));
+   register_external_function(EXTERNAL2(minimax_points2, i, ai, i));
 
    atexit(cleanup_externals);
 
