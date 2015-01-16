@@ -2,21 +2,18 @@
 include #sources/minimax-base.meld
 include #data/minimax-normal.meld
 
-build-next-plays(A, Previous, [], NextPlayer, X, RootPlayer, 0, Play) -o leaf(A, Previous, RootPlayer, Play).
-build-next-plays(A, Previous, [], RootPlayer, X, RootPlayer, N, Play), N > 0
+build-next-plays(A, Previous, [], NextPlayer, X, RootPlayer, 0, Play, Depth) -o score(A, minimax_points(Previous, RootPlayer), Play).
+build-next-plays(A, Previous, [], RootPlayer, X, RootPlayer, N, Play, Depth), N > 0
    -o maximize(A, N, mininf, 0).
-build-next-plays(A, Previous, [], NextPlayer, X, RootPlayer, N, Play), N > 0, NextPlayer <> RootPlayer
+build-next-plays(A, Previous, [], NextPlayer, X, RootPlayer, N, Play, Depth), N > 0, NextPlayer <> RootPlayer
    -o minimize(A, N, maxinf, 0).
-depth(A, Depth),
-build-next-plays(A, Previous, [0 | Xs], NextPlayer, X, RootPlayer, Descendants, Play)
+build-next-plays(A, Previous, [0 | Xs], NextPlayer, X, RootPlayer, Descendants, Play, Depth)
    -o exists B. (
          set-default-priority(B, float(Depth + 1)),
          (if Depth >= 4 then set-static(B) otherwise 1 end),
-         play(B, Previous ++ [NextPlayer | Xs], if NextPlayer = 1 then 2 else 1 end, X, RootPlayer),
-         build-next-plays(A, Previous ++ [0], Xs, NextPlayer, X + 1, RootPlayer, Descendants + 1, Play),
-         depth(A, Depth),
-         depth(B, Depth + 1),
+         play(B, Previous ++ [NextPlayer | Xs], if NextPlayer = 1 then 2 else 1 end, X, RootPlayer, Depth + 1),
+         build-next-plays(A, Previous ++ [0], Xs, NextPlayer, X + 1, RootPlayer, Descendants + 1, Play, Depth),
          back(B, A)).
-build-next-plays(A, Previous, [C | Xs], NextPlayer, X, RootPlayer, Descendants, Play), C <> 0
-   -o build-next-plays(A, Previous ++ [C], Xs, NextPlayer, X + 1, RootPlayer, Descendants, Play).
+build-next-plays(A, Previous, [C | Xs], NextPlayer, X, RootPlayer, Descendants, Play, Depth), C <> 0
+   -o build-next-plays(A, Previous ++ [C], Xs, NextPlayer, X + 1, RootPlayer, Descendants, Play, Depth).
 

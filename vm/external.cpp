@@ -269,6 +269,8 @@ init_external_functions(void)
    register_external_function(EXTERNAL2(listexists, b, lt, i));
    register_external_function(EXTERNAL2(listexistss, b, lt, lt));
    register_external_function(EXTERNAL2(queens_violation, b, i, li));
+   register_external_function(EXTERNAL3(minimax_score, i, li, i, i));
+   register_external_function(EXTERNAL2(minimax_points, i, li, i));
 
    atexit(cleanup_externals);
 

@@ -102,6 +102,88 @@ queens_violation(EXTERNAL_ARG(y), EXTERNAL_ARG(cols))
    RETURN_BOOL(false);
 }
 
+argument
+minimax_score(EXTERNAL_ARG(game), EXTERNAL_ARG(player), EXTERNAL_ARG(rootplayer))
+{
+   DECLARE_LIST(game);
+   DECLARE_INT(player);
+   DECLARE_INT(rootplayer);
+
+   vector<int, mem::allocator<int>> board;
+   board.reserve(10);
+
+   runtime::cons *p((runtime::cons*)game);
+   bool all_non_zero(true);
+   int count(0);
+   while(!runtime::cons::is_null(p)) {
+      vm::int_val v(FIELD_INT(p->get_head()));
+      if(all_non_zero) {
+         if(v != 0)
+            all_non_zero = false;
+         if(v == rootplayer)
+            count++;
+      }
+      board.push_back(v);
+      p = p->get_tail();
+   }
+   int other_player(player == 1 ? 2 : 1);
+
+   static vector<vector<int>> valid = {{0, 3, 6}, {1, 4, 7}, {2, 5, 8}, {0, 1, 2}, {3, 4, 5}, {6, 7, 8}, {0, 4, 8}, {2, 4, 6}};
+
+   for(vector<int> v : valid) {
+      bool found(true);
+      for(int i : v) {
+         if(board[i] != player) {
+            found = false;
+            break;
+         }
+      }
+      if(found) {
+         if(player == rootplayer) {
+            RETURN_INT(200);
+         } else {
+            RETURN_INT(-100);
+         }
+      }
+      found = true;
+      for(int i : v) {
+         if(board[i] != other_player) {
+            found = false;
+            break;
+         }
+      }
+      if(found) {
+         if(other_player == rootplayer) {
+            RETURN_INT(200);
+         } else {
+            RETURN_INT(-100);
+         }
+      }
+   }
+   if(all_non_zero) {
+      RETURN_INT(count);
+   } else {
+      RETURN_INT(0);
+   }
 }
 
+argument
+minimax_points(EXTERNAL_ARG(game), EXTERNAL_ARG(rootplayer))
+{
+   DECLARE_LIST(game);
+   DECLARE_INT(rootplayer);
+
+   runtime::cons *p((runtime::cons*)game);
+   int count(0);
+   while(!runtime::cons::is_null(p)) {
+      vm::int_val v(FIELD_INT(p->get_head()));
+      if(v == rootplayer)
+         count++;
+      p = p->get_tail();
+   }
+
+   RETURN_INT(count);
+}
+
+}
 }
