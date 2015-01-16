@@ -152,8 +152,8 @@ public:
 
 	void copy_reg2const(const reg_num&, const const_id&);
    
-   inline void add_cons(runtime::cons *ls) { free_cons.push_back(ls); }
-   inline void add_array(runtime::array *x) { free_array.push_back(x); }
+   inline void add_cons(runtime::cons *ls) { ls->inc_refs(); free_cons.push_back(ls); }
+   inline void add_array(runtime::array *x) { x->inc_refs(); free_array.push_back(x); }
 	inline void add_string(runtime::rstring::ptr str) { str->inc_refs();
                                                        free_rstring.push_back(str); }
    inline void add_struct(runtime::struct1 *s) { s->inc_refs();

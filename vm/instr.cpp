@@ -38,7 +38,7 @@ static inline string
 call_string(const string& extra, pcounter& pc, const size_t args)
 {
    external_function* f(lookup_external_function(call_extern_id(pc)));
-   return extra + " " + f->get_name() + "/" + to_string(args) + " TO " + reg_string(call_dest(pc)) + " = (";
+   return extra + " " + f->get_name() + "/" + to_string(args) + " TO " + reg_string(call_dest(pc)) + " " + (call_gc(pc) ? "GC " : "") + "= (";
 }
 
 static string val_string(const instr_val, pcounter *, const program *);
@@ -61,6 +61,12 @@ static inline string
 int_string(const int_val i)
 {
    return string("INT ") + to_string(i);
+}
+
+static inline string
+bool_string(const bool_val b)
+{
+   return b ? string("TRUE") : string("FALSE");
 }
 
 static inline string
@@ -948,7 +954,9 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          cout << " " << const_id_string(pcounter_const_id(pc + instr_size)) << " TO " << reg_string(pcounter_reg(pc + instr_size + const_id_size)) << endl;
          break;
       case CONSRRR_INSTR:
-         cout << " (" << reg_string(pcounter_reg(pc + instr_size + type_size)) << "::" << reg_string(pcounter_reg(pc + instr_size + type_size + reg_val_size)) << ") TO " << reg_string(pcounter_reg(pc + instr_size + type_size + 2 * reg_val_size)) << endl;
+         cout << " (" << reg_string(pcounter_reg(pc + instr_size + type_size)) << "::" << reg_string(pcounter_reg(pc + instr_size + type_size + reg_val_size))
+            << ") TO " << reg_string(pcounter_reg(pc + instr_size + type_size + 2 * reg_val_size))
+            << " GC " << bool_string(pcounter_bool(pc + instr_size + type_size + 3 * reg_val_size)) << endl;
          break;
       case CONSRFF_INSTR:
          cout << " (" << reg_string(pcounter_reg(pc + instr_size)) << "::" << field_string(pc + instr_size + reg_val_size) << ") TO " <<
@@ -960,19 +968,22 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          break;
       case CONSFFR_INSTR:
          cout << " (" << field_string(pc + instr_size) << "::" << field_string(pc + instr_size + field_size) << ") TO " <<
-            reg_string(pcounter_reg(pc + instr_size + 2 * field_size)) << endl;
+            reg_string(pcounter_reg(pc + instr_size + 2 * field_size))
+            << " GC " << bool_string(pcounter_bool(pc + instr_size + 2 * field_size + reg_val_size)) << endl;
          break;
       case CONSRRF_INSTR:
          cout << " (" << reg_string(pcounter_reg(pc + instr_size)) << "::" << reg_string(pcounter_reg(pc + instr_size + reg_val_size)) << ") TO " <<
             field_string(pc + instr_size + 2 * reg_val_size) << endl;
          break;
       case CONSRFR_INSTR:
-         cout << " (" << reg_string(pcounter_reg(pc + instr_size)) << "::" << field_string(pc + instr_size + reg_val_size) << ") TO " <<
-            reg_string(pcounter_reg(pc + instr_size + reg_val_size + field_size)) << endl;
+         cout << " (" << reg_string(pcounter_reg(pc + instr_size)) << "::" << field_string(pc + instr_size + reg_val_size) << ") TO "
+            << reg_string(pcounter_reg(pc + instr_size + reg_val_size + field_size))
+            << " GC " << bool_string(pcounter_bool(pc + instr_size + reg_val_size + field_size + reg_val_size)) << endl;
          break;
       case CONSFRR_INSTR:
-         cout << " (" << field_string(pc + instr_size + type_size) << "::" << reg_string(pcounter_reg(pc + instr_size + type_size + field_size)) << ") TO " <<
-            reg_string(pcounter_reg(pc + instr_size + type_size + field_size + reg_val_size)) << endl;
+         cout << " (" << field_string(pc + instr_size + type_size) << "::" << reg_string(pcounter_reg(pc + instr_size + type_size + field_size)) << ") TO "
+            << reg_string(pcounter_reg(pc + instr_size + type_size + field_size + reg_val_size))
+            << " GC " << bool_string(pcounter_bool(pc + instr_size + type_size + field_size + 2 * reg_val_size)) << endl;
          break;
       case CONSFFF_INSTR:
          cout << " (" << field_string(pc + instr_size) << "::" << field_string(pc + instr_size + field_size) << ") TO " <<

@@ -1143,7 +1143,7 @@ execute_update(db::node *node, pcounter pc, state& state)
 }
 
 static inline void
-set_call_return(const reg_num reg, const tuple_field ret, external_function* f, state& state)
+set_call_return(const reg_num reg, const bool gc, const tuple_field ret, external_function* f, state& state)
 {
    type *ret_type(f->get_return_type());
    assert(ret_type);
@@ -1164,7 +1164,8 @@ set_call_return(const reg_num reg, const tuple_field ret, external_function* f, 
 			rstring::ptr s(FIELD_STRING(ret));
 			
 			state.set_string(reg, s);
-			state.add_string(s);
+         if(gc)
+            state.add_string(s);
 			
 			break;
 		}
@@ -1172,23 +1173,23 @@ set_call_return(const reg_num reg, const tuple_field ret, external_function* f, 
          cons *l(FIELD_CONS(ret));
 
          state.set_cons(reg, l);
-         if(!cons::is_null(l)) {
-            l->inc_refs();
+         if(gc && !cons::is_null(l))
             state.add_cons(l);
-         }
          break;
       }
       case FIELD_STRUCT: {
          struct1 *s(FIELD_STRUCT(ret));
 
          state.set_struct(reg, s);
-         state.add_struct(s);
+         if(gc)
+            state.add_struct(s);
          break;
       }
       case FIELD_ARRAY: {
          runtime::array *a(FIELD_ARRAY(ret));
          state.set_array(reg, a);
-         state.add_array(a);
+         if(gc)
+            state.add_array(a);
          break;
       }
       case FIELD_ANY:
@@ -1208,7 +1209,7 @@ execute_call0(pcounter& pc, state& state)
    assert(f->get_num_args() == 0);
 
    argument ret = f->get_fun_ptr()();
-   set_call_return(call_dest(pc), ret, f, state);
+   set_call_return(call_dest(pc), call_gc(pc), ret, f, state);
 }
 
 static inline void
@@ -1220,7 +1221,7 @@ execute_call1(pcounter& pc, state& state)
    assert(f->get_num_args() == 1);
 
    argument ret = ((external_function_ptr1)f->get_fun_ptr())(state.get_reg(pcounter_reg(pc + call_size)));
-   set_call_return(call_dest(pc), ret, f, state);
+   set_call_return(call_dest(pc), call_gc(pc), ret, f, state);
 }
 
 static inline void
@@ -1233,7 +1234,7 @@ execute_call2(pcounter& pc, state& state)
 
    argument ret = ((external_function_ptr2)f->get_fun_ptr())(state.get_reg(pcounter_reg(pc + call_size)),
          state.get_reg(pcounter_reg(pc + call_size + reg_val_size)));
-   set_call_return(call_dest(pc), ret, f, state);
+   set_call_return(call_dest(pc), call_gc(pc), ret, f, state);
 }
 
 static inline void
@@ -1247,7 +1248,7 @@ execute_call3(pcounter& pc, state& state)
    argument ret = ((external_function_ptr3)f->get_fun_ptr())(state.get_reg(pcounter_reg(pc + call_size)),
          state.get_reg(pcounter_reg(pc + call_size + reg_val_size)),
          state.get_reg(pcounter_reg(pc + call_size + 2 * reg_val_size)));
-   set_call_return(call_dest(pc), ret, f, state);
+   set_call_return(call_dest(pc), call_gc(pc), ret, f, state);
 }
 
 static inline argument
@@ -1293,7 +1294,7 @@ execute_call(pcounter& pc, state& state)
    
    assert(num_args == f->get_num_args());
    
-   set_call_return(call_dest(pc), do_call(f, args), f, state);
+   set_call_return(call_dest(pc), call_gc(pc), do_call(f, args), f, state);
 }
 
 static inline void
@@ -1312,7 +1313,7 @@ execute_calle(pcounter pc, state& state)
    
    assert(num_args == f->get_num_args());
 
-   set_call_return(calle_dest(pc), do_call(f, args), f, state);
+   set_call_return(calle_dest(pc), calle_gc(pc), do_call(f, args), f, state);
 }
 
 static inline void
@@ -2449,10 +2450,12 @@ execute_consrrr(pcounter& pc, state& state)
    const reg_num head(pcounter_reg(pc + instr_size + type_size));
    const reg_num tail(pcounter_reg(pc + instr_size + type_size + reg_val_size));
    const reg_num dest(pcounter_reg(pc + instr_size + type_size + 2 * reg_val_size));
+   const bool_val gc(pcounter_bool(pc + instr_size + type_size + 3 * reg_val_size));
 
    list_type *ltype((list_type*)theProgram->get_type(cons_type(pc)));
-   cons *new_list(cons::create(state.get_cons(tail), state.get_reg(head), ltype, 1));
-	state.add_cons(new_list);
+   cons *new_list(cons::create(state.get_cons(tail), state.get_reg(head), ltype));
+   if(gc)
+      state.add_cons(new_list);
    state.set_cons(dest, new_list);
 }
 
@@ -2495,10 +2498,12 @@ execute_consffr(pcounter& pc, state& state)
    tuple *tail(get_tuple_field(state, pc + instr_size + field_size));
    const field_num tail_field(val_field_num(pc + instr_size + field_size));
    const reg_num dest(pcounter_reg(pc + instr_size + 2 * field_size));
+   const bool_val gc(pcounter_bool(pc + instr_size + 2 * field_size + reg_val_size));
 
    cons *new_list(cons::create(tail->get_cons(tail_field), head->get_field(head_field),
-            (list_type*)pred->get_field_type(tail_field), 1));
-	state.add_cons(new_list);
+            (list_type*)pred->get_field_type(tail_field)));
+   if(gc)
+      state.add_cons(new_list);
    state.set_cons(dest, new_list);
 }
 
@@ -2524,10 +2529,12 @@ execute_consrfr(pcounter& pc, state& state)
    predicate *pred(state.preds[val_field_reg(pc + instr_size + reg_val_size)]);
    const field_num field(val_field_num(pc + instr_size + reg_val_size));
    const reg_num dest(pcounter_reg(pc + instr_size + reg_val_size + field_size));
+   const bool_val gc(pcounter_bool(pc + instr_size + reg_val_size + field_size + reg_val_size));
 
    cons *new_list(cons::create(tail->get_cons(field), state.get_reg(head),
-            (list_type*)pred->get_field_type(field), 1));
-   state.add_cons(new_list);
+            (list_type*)pred->get_field_type(field)));
+   if(gc)
+      state.add_cons(new_list);
    state.set_cons(dest, new_list);
 }
 
@@ -2538,10 +2545,12 @@ execute_consfrr(pcounter& pc, state& state)
    const field_num field(val_field_num(pc + instr_size + type_size));
    const reg_num tail(pcounter_reg(pc + instr_size + type_size + field_size));
    const reg_num dest(pcounter_reg(pc + instr_size + type_size + field_size + reg_val_size));
+   const bool_val gc(pcounter_bool(pc + instr_size + type_size + field_size + 2 * reg_val_size));
 
    list_type *ltype((list_type*)theProgram->get_type(cons_type(pc)));
-   cons *new_list(cons::create(state.get_cons(tail), head->get_field(field), ltype, 1));
-   state.add_cons(new_list);
+   cons *new_list(cons::create(state.get_cons(tail), head->get_field(field), ltype));
+   if(gc)
+      state.add_cons(new_list);
    state.set_cons(dest, new_list);
 }
 

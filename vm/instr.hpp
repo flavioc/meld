@@ -55,7 +55,7 @@ const size_t count_size = sizeof(utils::byte);
 const size_t stack_val_size = sizeof(offset_num);
 const size_t pcounter_val_size = 0;
 const size_t operation_size = instr_size + 3 * reg_val_size;
-const size_t call_size = instr_size + extern_id_size + reg_val_size;
+const size_t call_size = instr_size + extern_id_size + reg_val_size + bool_size;
 const size_t iter_options_size = 2 * sizeof(utils::byte);
 
 const size_t SEND_BASE           = instr_size + 2 * reg_val_size;
@@ -134,13 +134,13 @@ const size_t TAILFF_BASE         = HEADFF_BASE;
 const size_t TAILRF_BASE         = HEADRF_BASE;
 const size_t MVWORLDREG_BASE     = instr_size + reg_val_size;
 const size_t MVCONSTREG_BASE     = instr_size + const_id_size + reg_val_size;
-const size_t CONSRRR_BASE        = instr_size + type_size + 3 * reg_val_size;
+const size_t CONSRRR_BASE        = instr_size + type_size + 3 * reg_val_size + bool_size;
 const size_t CONSRFF_BASE        = instr_size + reg_val_size + 2 * field_size;
 const size_t CONSFRF_BASE        = instr_size + field_size + reg_val_size + field_size;
-const size_t CONSFFR_BASE        = instr_size + 2 * field_size + reg_val_size;
+const size_t CONSFFR_BASE        = instr_size + 2 * field_size + reg_val_size + bool_size;
 const size_t CONSRRF_BASE        = instr_size + 2 * reg_val_size + field_size;
-const size_t CONSRFR_BASE        = instr_size + reg_val_size + field_size + reg_val_size;
-const size_t CONSFRR_BASE        = instr_size + type_size + field_size + 2 * reg_val_size;
+const size_t CONSRFR_BASE        = instr_size + reg_val_size + field_size + reg_val_size + bool_size;
+const size_t CONSFRR_BASE        = instr_size + type_size + field_size + 2 * reg_val_size + bool_size;
 const size_t CONSFFF_BASE        = instr_size + 3 * field_size;
 const size_t CALL0_BASE          = call_size;
 const size_t CALL1_BASE          = call_size + reg_val_size;
@@ -190,6 +190,7 @@ const size_t SCHEDULE_NEXT_BASE  = instr_size + reg_val_size;
 const size_t IF_ELSE_BASE        = instr_size + reg_val_size + 2 * jump_size;
 const size_t JUMP_BASE           = instr_size + jump_size;
 const size_t GC_BASE             = instr_size + type_size + reg_val_size;
+const size_t JIT_BASE            = instr_size + jump_size + ptr_size;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -485,14 +486,15 @@ inline reg_num alloc_reg(pcounter pc) { return pcounter_reg(pc + instr_size + pr
 
 inline external_function_id call_extern_id(pcounter pc) { return (external_function_id)byte_get(pc, instr_size); }
 inline reg_num call_dest(pcounter pc) { return pcounter_reg(pc + instr_size + extern_id_size); }
-inline size_t call_num_args(pcounter pc) { return (size_t)byte_get(pc, instr_size + extern_id_size + reg_val_size); }
-inline instr_val call_val(pcounter pc) { return val_get(pc, 0); } // XXX: to remove
+inline size_t call_gc(pcounter pc) { return pcounter_bool(pc + instr_size + extern_id_size + reg_val_size); }
+inline size_t call_num_args(pcounter pc) { return (size_t)byte_get(pc, call_size); }
 
 /* CALLE (similar to CALL) */
 
 inline external_function_id calle_extern_id(pcounter pc) { return (external_function_id)byte_get(pc, 1); }
 inline reg_num calle_dest(pcounter pc) { return pcounter_reg(pc + instr_size + extern_id_size); }
-inline size_t calle_num_args(pcounter pc) { return (size_t)byte_get(pc, instr_size + extern_id_size + reg_val_size); }
+inline size_t calle_gc(pcounter pc) { return pcounter_bool(pc + instr_size + extern_id_size + reg_val_size); }
+inline size_t calle_num_args(pcounter pc) { return (size_t)byte_get(pc, call_size); }
 
 /* TEST-NIL a TO b */
 
