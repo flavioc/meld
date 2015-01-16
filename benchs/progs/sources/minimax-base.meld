@@ -14,12 +14,9 @@ const mininf = -9999.
 root(@0).
 
 play(A, Game, NextPlayer, LastPlay, RootPlayer, Depth),
-Score = minimax_score2(Game, NextPlayer, RootPlayer),
-Score <> 0
-   -o score(A, Score, LastPlay).
-
-play(A, Game, NextPlayer, LastPlay, RootPlayer, Depth)
-   -o build-next-plays(A, Game, NextPlayer, 0, array_size(Game), RootPlayer, 0, LastPlay, Depth).
+Score = minimax_score2(Game, NextPlayer, RootPlayer)
+   -o (if Score <> 0 then score(A, Score, LastPlay)
+         otherwise build-next-plays(A, Game, NextPlayer, 0, array_size(Game), RootPlayer, 0, LastPlay, Depth) end).
 
 score(A, Score, BestPlay),
 back(A, B)
