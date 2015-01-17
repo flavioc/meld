@@ -102,7 +102,24 @@ struct array
          return a;
       }
 
-      static inline array* mutate(array *old, const size_t idx, const vm::tuple_field f, const size_t start_refs = 0)
+      static inline array* create_from_vector(vm::type *t, const std::vector<vm::tuple_field, mem::allocator<vm::tuple_field>>& v, const size_t start_refs = 0)
+      {
+         array *a(mem::allocator<array>().allocate(1));
+         a->refs = start_refs;
+         a->type = t;
+         a->cap = v.size() * 2;
+         a->size = v.size();
+         a->elems = mem::allocator<vm::tuple_field>().allocate(a->cap);
+         const vm::tuple_field* pv = &v[0];
+         memcpy(a->elems, pv, v.size() * sizeof(vm::tuple_field));
+         if(t->is_reference()) {
+            for(size_t i(0); i < a->size; ++i)
+               increment_runtime_data(a->elems[i], a->type->get_type());
+         }
+         return a;
+      }
+
+      static inline array* mutate(const array *old, const size_t idx, const vm::tuple_field f, const size_t start_refs = 0)
       {
          array *a(mem::allocator<array>().allocate(1));
          a->refs = start_refs;
@@ -119,7 +136,7 @@ struct array
          return a;
       }
 
-      static inline array* mutate_add(array *old, const vm::tuple_field f, const size_t start_refs = 0)
+      static inline array* mutate_add(const array *old, const vm::tuple_field f, const size_t start_refs = 0)
       {
          array *a(mem::allocator<array>().allocate(1));
          a->refs = start_refs;

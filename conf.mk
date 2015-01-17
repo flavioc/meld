@@ -17,6 +17,8 @@ USE_ADDRESSES = true
 TASK_STEALING = true
 # enable node collection if the node is no longer referenced anywhere.
 GC_NODES = true
+# enable JIT compilation of sequences of simple instructions
+JIT = false
 
 # statistics flags.
 FACT_STATISTICS = false

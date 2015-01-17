@@ -4,6 +4,7 @@
 #include "vm/predicate.hpp"
 #include "vm/program.hpp"
 #include "vm/instr.hpp"
+#include "jit/build.hpp"
 
 using namespace std;
 
@@ -28,6 +29,14 @@ rule::print(ostream& out, const vm::program *const prog) const
 	}
 
    instrs_print(code, code_size, 0, prog, out);
+}
+
+void
+rule::jit_compile()
+{
+#ifdef JIT
+   jit::jit_compile(code, code_size);
+#endif
 }
 
 }

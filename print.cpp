@@ -27,6 +27,9 @@ main(int argc, char **argv)
       theProgram = &prog;
 
       vm::USING_MEM_ADDRESSES = false;
+#ifdef JIT
+      theProgram->jit_compile();
+#endif
       if(argc == 2)
          prog.print_bytecode(cout);
       if(argc == 3) {

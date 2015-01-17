@@ -15,6 +15,7 @@
 #include "vm/priority.hpp"
 #include "interface.hpp"
 #include "version.hpp"
+#include "jit/build.hpp"
 
 using namespace std;
 using namespace db;
@@ -469,6 +470,13 @@ program::fix_node_address(db::node *n)
       pcounter_set_node(code, (node_val)n);
 }
 #endif
+
+void
+program::jit_compile()
+{
+   for(size_t i(1); i < number_rules; ++i)
+      rules[i]->jit_compile();
+}
 
 predicate*
 program::get_route_predicate(const size_t& i) const

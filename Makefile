@@ -74,10 +74,14 @@ endif
 ifeq ($(GC_NODES), true)
 	FLAGS += -DGC_NODES
 endif
+ifeq ($(JIT), true)
+	FLAGS += -DJIT
+	LIBS += -L /usr/local/lib/x86_64/ -ljit
+endif
 
 WARNINGS = -Wall -Wextra
 
-CFLAGS = -std=c++11 $(ARCH) $(PROFILING) \
+CFLAGS = -std=c++1y $(ARCH) $(PROFILING) \
 			$(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) \
 			$(INCLUDE_DIRS) $(FLAGS) #-fno-gcse -fno-crossjumping
 LIBRARIES = -lm -lreadline -ldl $(LIBS) -pthread
@@ -125,7 +129,6 @@ SRCS = utils/utils.cpp \
 			mem/thread.cpp \
 			mem/center.cpp \
 			mem/stat.cpp \
-			jit/build.cpp \
 			runtime/objs.cpp \
 			thread/ids.cpp \
 			thread/threads.cpp \
@@ -147,6 +150,9 @@ ifeq ($(INSTRUMENTATION), true)
 endif
 ifeq ($(CORE_STATISTICS), true)
 	SRCS += vm/stat.cpp
+endif
+ifeq ($(JIT), true)
+	SRCS += jit/build.cpp
 endif
 
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))

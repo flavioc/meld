@@ -32,6 +32,7 @@ typedef external_function_ptr0 external_function_ptr;
 #define DECLARE_LIST(NAME) const runtime::cons *NAME(FIELD_CONS(__ ## NAME))
 #define DECLARE_STRING(NAME) const rstring::ptr NAME(FIELD_STRING(__ ## NAME))
 #define DECLARE_STRUCT(NAME) const runtime::struct1 *NAME(FIELD_STRUCT(__ ## NAME))
+#define DECLARE_ARRAY(NAME) const runtime::array *NAME(FIELD_ARRAY(__ ## NAME))
 #define DECLARE_ANY(NAME) const argument NAME(__ ## NAME)
 #define RETURN_PTR(X) { argument _ret; SET_FIELD_PTR(_ret, X); return _ret; }
 #define RETURN_BOOL(X) { argument _ret; SET_FIELD_BOOL(_ret, X); return _ret; }

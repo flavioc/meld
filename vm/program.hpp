@@ -191,6 +191,7 @@ public:
 #ifdef USE_REAL_NODES
    void fix_node_address(db::node *);
 #endif
+   void jit_compile();
    
    explicit program(const std::string&);
    

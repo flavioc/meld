@@ -562,8 +562,16 @@ threads_sched::init(const size_t)
          prios.moving.initial_fast_insert(cur_node, initial, i);
       }
    }
-   
+
    threads_synchronize();
+
+#ifdef JIT
+   if(id == 0) {
+      theProgram->jit_compile();
+   }
+
+   threads_synchronize();
+#endif
 }
 
 #ifdef INSTRUMENTATION

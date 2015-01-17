@@ -349,6 +349,7 @@ enum instr_type {
    SCHEDULE_NEXT_INSTR  =  0xB6,
    TPERS_ITER_INSTR     =  0xB7,
    GC_INSTR             =  0xB8,
+   JIT_INSTR            =  0xB9,
    RETURN_LINEAR_INSTR  =  0xD0,
    RETURN_DERIVED_INSTR =  0xF0
 };
@@ -970,6 +971,9 @@ advance(const pcounter pc)
 
       case GC_INSTR:
          return pc + GC_BASE;
+
+      case JIT_INSTR:
+         return pc + jump_get(pc, instr_size);
 
       default:
          throw malformed_instr_error("unknown instruction code (advance)");

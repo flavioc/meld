@@ -45,6 +45,8 @@ class rule
 		inline byte_code get_bytecode(void) const { return code; }
 		inline size_t num_predicates(void) const { return predicates.size(); }
 
+      void jit_compile();
+
       explicit rule(const rule_id _id, const std::string& _str):
          id(_id), str(_str)
       {

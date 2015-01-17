@@ -3751,6 +3751,15 @@ eval_loop:
             ADVANCE()
          ENDOP()
 
+         CASE(JIT_INSTR)
+            COMPLEX_JUMP(jit)
+            typedef void (*jit_fun)(vm::tuple_field *, vm::state *, db::node *);
+            jit_fun f(*(jit_fun*)(pc + instr_size + jump_size));
+            f(state.regs, &state, state.node);
+            pc += jump_get(pc, instr_size);
+            JUMP_NEXT();
+         ENDOP()
+
          COMPLEX_JUMP(not_found)
 #ifndef COMPUTED_GOTOS
          default:
