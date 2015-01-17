@@ -1,0 +1,4 @@
+
+type linear a(node, int X).
+
+a(@0, 1).

@@ -1,0 +1,12 @@
+
+type linear a(node, int).
+type linear b(node, int).
+
+a(@0, 1).
+
+a(A, X),
+Y = X + 1,
+Y >= 2,
+Z = @cpus + 1,
+Z > 20
+   -o b(A, Y).
