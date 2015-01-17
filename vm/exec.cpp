@@ -1402,16 +1402,6 @@ execute_schedule_next(pcounter& pc, state& state)
 }
 
 static inline void
-execute_gc(pcounter& pc, state&)
-{
-   const reg_num reg(pcounter_reg(pc + instr_size));
-   vm::type *type(theProgram->get_type(gc_type(pc)));
-
-   (void)reg;
-   (void)type;
-}
-
-static inline void
 execute_set_defprio_here(db::node *node, pcounter& pc, state& state)
 {
    const reg_num prio_reg(pcounter_reg(pc + instr_size));
@@ -3742,12 +3732,6 @@ eval_loop:
          CASE(ADDTPERS_INSTR)
             JUMP(addtpers, ADDTPERS_BASE)
             execute_add_persistent(state.sched->thread_node, pc, state);
-            ADVANCE()
-         ENDOP()
-
-         CASE(GC_INSTR)
-            JUMP(gc, GC_BASE)
-            execute_gc(pc, state);
             ADVANCE()
          ENDOP()
 

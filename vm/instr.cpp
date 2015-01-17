@@ -456,7 +456,6 @@ instr_name(const instr::instr_type code)
       case REM_PRIORITY_INSTR: return string("REMOVE PRIORITY");
       case FACTS_PROVED_INSTR: return string("FACTS PROVED");
       case FACTS_CONSUMED_INSTR: return string("FACTS CONSUMED");
-      case GC_INSTR: return string("GC");
       case JIT_INSTR: return string("JIT");
    }
    return string("");
@@ -1068,9 +1067,6 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          break;
       case SCHEDULE_NEXT_INSTR:
          cout << " " << reg_string(pcounter_reg(pc + instr_size)) << endl;
-         break;
-      case GC_INSTR:
-         cout << " " << reg_string(gc_reg(pc)) << endl;
          break;
       case JIT_INSTR:
          cout << " " << jump_get(pc, instr_size) << endl;
