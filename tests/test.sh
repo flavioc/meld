@@ -19,7 +19,12 @@ to_exclude () {
 }
 
 FILE="files/$(basename $TEST .m).test"
+ARGS="args/$(basename $TEST .m)"
 NODES=$(python ./number_nodes.py $TEST)
+
+if [ -f $ARGS ]; then
+   . $ARGS
+fi
 
 if dynamic_test $(basename $TEST .m); then
    # We can actually use more than 1 thread.
@@ -37,7 +42,7 @@ do_exit ()
 
 run_diff ()
 {
-	TO_RUN="${1}"
+	TO_RUN="${1} ${MELD_ARGS} -- ${PROG_ARGS}"
 	${TO_RUN} > test.out
 	RET=$?
 	if [ $RET -eq 1 ]; then
