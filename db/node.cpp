@@ -57,6 +57,7 @@ node::wipeout(candidate_gc_nodes& gc_nodes)
    linear.destroy(gc_nodes);
    pers_store.wipeout(gc_nodes);
 
+   mem::allocator<node>().destroy(this);
    mem::allocator<node>().deallocate(this, 1);
 }
 
