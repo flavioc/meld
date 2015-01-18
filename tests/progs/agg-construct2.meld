@@ -1,0 +1,12 @@
+
+type linear a(node, int).
+type linear b(node, int).
+type linear c(node, list int).
+type linear d(node, int).
+
+a(@0, 1).
+b(@0, 1).
+b(@0, 2).
+b(@0, 3).
+
+a(A, X) -o [collect => L | b(A, L) | d(A, L) | c(A, L)].
