@@ -5,13 +5,11 @@ type coord(node, int, int).
 type inner(node).
 type linear heat(node, float).
 type linear neighbor-heat(node, node, float).
-type linear neighbor-heat-copy(node, node, float).
 type linear new-neighbor-heat(node, node Neighbor, float Value).
 type linear initial-neighbor-heat(node, node Neighbor, float Value).
 type linear start(node).
 type linear wait(node, int).
 type linear update(node).
-type linear sum-heats(node).
 type linear new-heat(node, float, float).
 
 priority @order @desc.
@@ -31,11 +29,6 @@ new-neighbor-heat(A, B, Heat),
 neighbor-heat(A, B, OldHeat)
    -o neighbor-heat(A, B, Heat).
 
-sum-heats(A),
-heat(A, H),
-!inbound(A, T)
-   -o [sum => X | B | neighbor-heat-copy(A, B, X) | new-heat(A, (X + H) / float(T + 1), H)].
-
 new-heat(A, New, Old),
 Diff = if (New - Old > 0.0) then (New - Old) else (Old - New) end
    -o {B, W | !edge(A, B, W) | new-neighbor-heat(B, A, New),
@@ -52,7 +45,9 @@ T > 0
 wait(A, 0)
    -o update(A).
 
-update(A), update(A) -o update(A).
-update(A)
-   -o {B, H | neighbor-heat(A, B, H) | neighbor-heat-copy(A, B, H), neighbor-heat(A, B, H)},
-      sum-heats(A).
+update(A), update(A)
+   -o update(A).
+update(A),
+!inbound(A, T),
+heat(A, H)
+   -o [sum => X | B | neighbor-heat(A, B, X) | neighbor-heat(A, B, X) | new-heat(A, (X + H) / float(T + 1), H)].
