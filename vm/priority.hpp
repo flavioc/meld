@@ -23,9 +23,8 @@ static inline priority_t
 no_priority_value0(const bool desc)
 {
    if(desc)
-      return std::numeric_limits<priority_t>::lowest();
-   else
-      return std::numeric_limits<priority_t>::max();
+      return 0;
+   return std::numeric_limits<priority_t>::max();
 }
 
 static inline priority_t
