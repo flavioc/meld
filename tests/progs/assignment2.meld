@@ -1,0 +1,12 @@
+
+type linear a(node, int).
+type linear b(node, int).
+type linear c(node, int).
+type linear d(node, int).
+
+d(@0, 1).
+b(@0, 2).
+b(@0, 3).
+
+d(A, N) -o N1 = N + 1, a(A, N1).
+a(A, N) -o [sum => Y | Y1 | b(A, Y) | Y1 = Y + 1, c(A, Y1)].
