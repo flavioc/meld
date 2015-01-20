@@ -1077,6 +1077,15 @@ execute_float(pcounter& pc, state& state)
    state.set_float(dst, static_cast<float_val>(state.get_int(src)));
 }
 
+static inline void
+execute_fabs(pcounter& pc, state& state)
+{
+   const reg_num src(pcounter_reg(pc + instr_size));
+   const reg_num dst(pcounter_reg(pc + instr_size + reg_val_size));
+
+   state.set_float(dst, fabs(state.get_float(src)));
+}
+
 static inline pcounter
 execute_select(db::node *node, pcounter pc, state& state)
 {
@@ -3743,6 +3752,12 @@ eval_loop:
             pc += jump_get(pc, instr_size);
             JUMP_NEXT();
          ENDOP()
+
+         CASE(FABS_INSTR)
+            JUMP(lfabs, FABS_BASE)
+            execute_fabs(pc, state);
+            ADVANCE();
+         ENDOP();
 
          COMPLEX_JUMP(not_found)
 #ifndef COMPUTED_GOTOS

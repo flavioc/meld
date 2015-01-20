@@ -457,6 +457,7 @@ instr_name(const instr::instr_type code)
       case FACTS_PROVED_INSTR: return string("FACTS PROVED");
       case FACTS_CONSUMED_INSTR: return string("FACTS CONSUMED");
       case JIT_INSTR: return string("JIT");
+      case FABS_INSTR: return string("FABS");
    }
    return string("");
 }
@@ -1070,6 +1071,10 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
          break;
       case JIT_INSTR:
          cout << " " << jump_get(pc, instr_size) << endl;
+         break;
+      case FABS_INSTR:
+         cout << " " << reg_string(pcounter_reg(pc + instr_size)) << " TO " << reg_string(pcounter_reg(pc + instr_size + reg_val_size))
+            << endl;
          break;
 		default:
          throw malformed_instr_error("unknown instruction code");

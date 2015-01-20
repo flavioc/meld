@@ -26,6 +26,7 @@ argument addfloatstructs(const argument, const argument);
 argument residual(const argument, const argument);
 argument residualstruct(const argument, const argument);
 argument intpower(const argument, const argument);
+argument myfabs(const argument);
 
 /* for the diameter estimation algorithm */
 argument degeneratevector(const argument, const argument);

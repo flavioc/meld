@@ -190,6 +190,7 @@ const size_t SCHEDULE_NEXT_BASE  = instr_size + reg_val_size;
 const size_t IF_ELSE_BASE        = instr_size + reg_val_size + 2 * jump_size;
 const size_t JUMP_BASE           = instr_size + jump_size;
 const size_t JIT_BASE            = instr_size + jump_size + ptr_size;
+const size_t FABS_BASE           = instr_size + 2 * reg_val_size;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -347,6 +348,7 @@ enum instr_type {
    ADDTPERS_INSTR       =  0xB5,
    SCHEDULE_NEXT_INSTR  =  0xB6,
    TPERS_ITER_INSTR     =  0xB7,
+   FABS_INSTR           =  0xB8,
    JIT_INSTR            =  0xB9,
    RETURN_LINEAR_INSTR  =  0xD0,
    RETURN_DERIVED_INSTR =  0xF0
@@ -969,6 +971,9 @@ advance(const pcounter pc)
 
       case JIT_INSTR:
          return pc + jump_get(pc, instr_size);
+
+      case FABS_INSTR:
+         return pc + FABS_BASE;
 
       default:
          throw malformed_instr_error("unknown instruction code (advance)");

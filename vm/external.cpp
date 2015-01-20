@@ -282,6 +282,7 @@ init_external_functions(void)
    register_external_function(EXTERNAL1(array_size, i, at));
    register_external_function(EXTERNAL3(minimax_score2, i, ai, i, i));
    register_external_function(EXTERNAL2(minimax_points2, i, ai, i));
+   register_external_function(EXTERNAL1(myfabs, f, f));
 
    atexit(cleanup_externals);
 

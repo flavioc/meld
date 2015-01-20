@@ -443,6 +443,14 @@ demergemessages(EXTERNAL_ARG(v1), EXTERNAL_ARG(v2))
    RETURN_LIST(ret);
 }
 
+argument
+myfabs(EXTERNAL_ARG(f))
+{
+   DECLARE_FLOAT(f);
+
+   RETURN_FLOAT(fabs(f));
+}
+
 }
 }
 
