@@ -126,6 +126,13 @@ predicate::make_predicate_from_reader(code_reader& read, code_size_t *code_size,
    read.read_type<byte>(&level);
    pred->level = (strat_level)level;
 
+   if(VERSION_AT_LEAST(0, 12)) {
+      byte field_index;
+      read.read_type<byte>(&field_index);
+      if(field_index != 0)
+         pred->store_as_hash_table(field_index-1);
+   }
+
    // read number of fields
    byte nfields;
    read.read_type<byte>(&nfields);
@@ -133,9 +140,8 @@ predicate::make_predicate_from_reader(code_reader& read, code_size_t *code_size,
    
    // read argument types
    if(VERSION_AT_LEAST(0, 10)) {
-      for(size_t i(0); i < pred->num_fields(); ++i) {
+      for(size_t i(0); i < pred->num_fields(); ++i)
          pred->types[i] = read_type_id_from_reader(read, types);
-      }
    } else {
       for(size_t i = 0; i < PRED_ARGS_MAX; ++i) {
          byte f;

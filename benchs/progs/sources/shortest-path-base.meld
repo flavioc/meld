@@ -1,12 +1,13 @@
 type linear path(node, node, int, int).
 
 priority @order @asc.
+index path/2.
 
 const used = 1.
 const notused = 0.
 
 path(A, U, B2, Y), path(A, U, B1, X), B1 <= B2
-   -o path(A, U, B1, if Y = used then Y else X end).
+   -o path(A, U, B1, if B1 < B2 then X else (if Y = used then used else X end) end).
 
 path(A, X, D, notused)
    -o {B, W | !edge(A, B, W) | path(B, X, D + W, notused), set-priority(B, float(D + W))}, path(A, X, D, used).

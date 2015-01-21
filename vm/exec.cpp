@@ -953,7 +953,6 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
 static inline return_type
 execute_linear_iter(const reg_num reg, match* m, const pcounter first, state& state, predicate *pred, db::node *node)
 {
-#ifdef DYNAMIC_INDEXING
    if(node->linear.stored_as_hash_table(pred)) {
       const field_num hashed(pred->get_hashed_field());
       hash_table *table(node->linear.get_hash_table(pred->get_id()));
@@ -977,7 +976,6 @@ execute_linear_iter(const reg_num reg, match* m, const pcounter first, state& st
          return RETURN_NO_RETURN;
       }
    } else
-#endif
    {
       utils::intrusive_list<vm::tuple> *local_tuples(node->linear.get_linked_list(pred->get_id()));
       return execute_linear_iter_list(reg, m, first, state, pred, node, local_tuples);
@@ -1030,7 +1028,6 @@ execute_rlinear_iter_list(const reg_num reg, match* m, const pcounter first, sta
 static inline return_type
 execute_rlinear_iter(const reg_num reg, match* m, const pcounter first, state& state, predicate *pred, db::node *node)
 {
-#ifdef DYNAMIC_INDEXING
    if(node->linear.stored_as_hash_table(pred)) {
       const field_num hashed(pred->get_hashed_field());
       hash_table *table(node->linear.get_hash_table(pred->get_id()));
@@ -1050,7 +1047,6 @@ execute_rlinear_iter(const reg_num reg, match* m, const pcounter first, state& s
          return RETURN_NO_RETURN;
       }
    } else
-#endif
    {
       utils::intrusive_list<vm::tuple> *local_tuples(node->linear.get_linked_list(pred->get_id()));
       return execute_rlinear_iter_list(reg, m, first, state, pred, local_tuples);
