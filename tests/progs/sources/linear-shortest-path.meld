@@ -10,11 +10,8 @@ const notused = 0.
 path(startnode, 0, 0).
 set-priority(startnode, 1.0).
 
-path(A, B, used), path(A, B, notused)
-	-o path(A, B, used).
-
 path(A, B1, X), path(A, B2, Y), B1 <= B2
-   -o path(A, B1, X).
+   -o path(A, B1, if X = used then X else Y end).
 
 path(A, D, notused), A <> finalnode
    -o {B, W | !edge(A, B, W) | path(B, D + W, notused), set-priority(B, float(D + W))}, path(A, D, used).
