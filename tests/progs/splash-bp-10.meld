@@ -1,2 +1,2 @@
-include #sources/splash-bp.meld
+include #../../benchs/progs/sources/splash-bp.meld
 include #data/sbp-data10.meld

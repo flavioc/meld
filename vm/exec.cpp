@@ -1843,10 +1843,8 @@ execute_remote_update(pcounter& pc, state& state)
    if(updated)
       return;
    tuple *tuple(vm::tuple::create(pred_edit));
-   for(size_t i(0); i < pred_edit->num_fields(); ++i) {
-      vm::type *ftype(pred_edit->get_field_type(i));
-      tuple_set_field(tuple, ftype, i, regs[i]);
-   }
+   for(size_t i(0); i < pred_edit->num_fields(); ++i)
+      tuple_set_field(tuple, pred_edit->get_field_type(i), i, regs[i]);
    execute_send0(state.node, n0, tuple, pred_edit, state);
 }
 
