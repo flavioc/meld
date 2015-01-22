@@ -14,8 +14,6 @@ type linear update-neighbors(node, float Diff, float Heat).
 
 priority @order @desc.
 priority @cluster @static.
-index neighbor-heat/2.
-index new-neighbor-heat/2.
 
 const epsilon = str2float(@arg1).
 const delta = str2float(@arg2).
@@ -32,22 +30,18 @@ neighbor-heat(A, B, OldHeat)
 
 update-neighbors(A, Diff, New)
    -o {B, W | !edge(A, B, W) | new-neighbor-heat(B, A, New),
-                              (if Diff > epsilon then update(B) otherwise 1 end),
-                              (if Diff > delta then add-priority(B, Diff) otherwise 1 end)}.
+                               (if Diff > epsilon then update(B) otherwise 1 end),
+                               (if Diff > delta then add-priority(B, Diff) otherwise 1 end)}.
 
 initial-neighbor-heat(A, B, Heat),
-wait(A, T),
-T > 0
+wait(A, T), T > 0
    -o wait(A, T - 1),
       neighbor-heat(A, B, Heat).
 
-wait(A, 0)
-   -o update(A).
+wait(A, 0) -o update(A).
 
-update(A), update(A)
-   -o update(A).
-update(A),
-!inbound(A, T),
-heat(A, OldHeat)
+update(A), update(A) -o update(A).
+
+update(A), !inbound(A, T), heat(A, OldHeat)
    -o [sum => X | B, NewHeat | neighbor-heat(A, B, X) | neighbor-heat(A, B, X) | NewHeat = (X + OldHeat) / float(T + 1), heat(A, NewHeat),
          update-neighbors(A, fabs(NewHeat - OldHeat), NewHeat)].

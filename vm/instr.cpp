@@ -458,6 +458,7 @@ instr_name(const instr::instr_type code)
       case FACTS_CONSUMED_INSTR: return string("FACTS CONSUMED");
       case JIT_INSTR: return string("JIT");
       case FABS_INSTR: return string("FABS");
+      case REMOTE_UPDATE_INSTR: return string("REMOTE UPDATE");
    }
    return string("");
 }
@@ -1075,6 +1076,19 @@ instr_print(pcounter pc, const bool recurse, const int tabcount, const program *
       case FABS_INSTR:
          cout << " " << reg_string(pcounter_reg(pc + instr_size)) << " TO " << reg_string(pcounter_reg(pc + instr_size + reg_val_size))
             << endl;
+         break;
+      case REMOTE_UPDATE_INSTR:
+         {
+            const predicate_id edit(remote_update_edit(pc));
+            const predicate_id target(remote_update_target(pc));
+            cout << " TO " << reg_string(remote_update_dest(pc)) << " OF"
+                 << " " << theProgram->get_predicate(target)->get_name() << " FROM " << theProgram->get_predicate(edit)->get_name()
+                 << " ";
+            const size_t nregs(remote_update_nregs(pc));
+            for(size_t i(0); i < nregs; ++i)
+               cout << reg_string(pcounter_reg(pc + REMOTE_UPDATE_BASE + i * reg_val_size)) << " ";
+            cout << "(common: " << remote_update_common(pc) << ")" << endl;
+         }
          break;
 		default:
          throw malformed_instr_error("unknown instruction code");

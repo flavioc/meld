@@ -191,6 +191,7 @@ const size_t IF_ELSE_BASE        = instr_size + reg_val_size + 2 * jump_size;
 const size_t JUMP_BASE           = instr_size + jump_size;
 const size_t JIT_BASE            = instr_size + jump_size + ptr_size;
 const size_t FABS_BASE           = instr_size + 2 * reg_val_size;
+const size_t REMOTE_UPDATE_BASE  = instr_size + reg_val_size + 2 * predicate_size + 2 * count_size;
 
 enum instr_type {
    RETURN_INSTR	      =  0x00,
@@ -324,6 +325,7 @@ enum instr_type {
    IF_ELSE_INSTR        =  0x81,
    JUMP_INSTR           =  0x82,
    MVSTACKFIELD_INSTR   =  0x83,
+   REMOTE_UPDATE_INSTR  =  0x84,
    ADD_PRIORITY_INSTR   =  0xA0,
    ADD_PRIORITYH_INSTR  =  0xA1,
    STOP_PROG_INSTR      =  0xA2,
@@ -576,6 +578,14 @@ inline instr_val struct_val_to(pcounter pc) { return val_get(pc, instr_size + si
 /* PUSH N */
 
 inline size_t push_n(pcounter pc) { return (size_t)byte_get(pc, instr_size); }
+
+/* REMOTE UPDATE */
+
+inline reg_num remote_update_dest(const pcounter pc) { return predicate_get(pc, instr_size); }
+inline predicate_id remote_update_edit(const pcounter pc) { return predicate_get(pc, instr_size + reg_val_size); }
+inline predicate_id remote_update_target(const pcounter pc) { return predicate_get(pc, instr_size + reg_val_size + predicate_size); }
+inline size_t remote_update_common(const pcounter pc) { return (size_t)byte_get(pc, instr_size + reg_val_size + 2 * predicate_size); }
+inline size_t remote_update_nregs(const pcounter pc) { return (size_t)byte_get(pc, instr_size + reg_val_size + 2 * predicate_size + count_size); }
 
 /* advance function */
 
@@ -974,6 +984,9 @@ advance(const pcounter pc)
 
       case FABS_INSTR:
          return pc + FABS_BASE;
+
+      case REMOTE_UPDATE_INSTR:
+         return pc + REMOTE_UPDATE_BASE + remote_update_nregs(pc) * reg_val_size;
 
       default:
          throw malformed_instr_error("unknown instruction code (advance)");

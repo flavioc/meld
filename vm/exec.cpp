@@ -1704,6 +1704,31 @@ axiom_read_data(pcounter& pc, type *t)
 }
 
 static inline void
+tuple_set_field(vm::tuple *tpl, vm::type *t, const field_num i, const tuple_field field)
+{
+   switch(t->get_type()) {
+      case FIELD_LIST:
+         tpl->set_cons(i, FIELD_CONS(field));
+         break;
+      case FIELD_STRUCT:
+         tpl->set_struct(i, FIELD_STRUCT(field));
+         break;
+      case FIELD_NODE:
+         tpl->set_node(i, FIELD_NODE(field));
+         break;
+      case FIELD_INT:
+      case FIELD_FLOAT:
+         tpl->set_field(i, field);
+         break;
+      case FIELD_STRING:
+         tpl->set_string(i, FIELD_STRING(field));
+         break;
+      default:
+         throw vm_exec_error("don't know how to handle this type (execute_new_axioms)");
+   }
+}
+
+static inline void
 execute_new_axioms(db::node *node, pcounter pc, state& state)
 {
    const pcounter end(pc + new_axioms_jump(pc));
@@ -1726,26 +1751,7 @@ execute_new_axioms(db::node *node, pcounter pc, state& state)
       {
          tuple_field field(axiom_read_data(pc, pred->get_field_type(i)));
 
-         switch(pred->get_field_type(i)->get_type()) {
-            case FIELD_LIST:
-               tpl->set_cons(i, FIELD_CONS(field));
-               break;
-            case FIELD_STRUCT:
-               tpl->set_struct(i, FIELD_STRUCT(field));
-               break;
-            case FIELD_NODE:
-               tpl->set_node(i, FIELD_NODE(field));
-               break;
-            case FIELD_INT:
-            case FIELD_FLOAT:
-               tpl->set_field(i, field);
-               break;
-            case FIELD_STRING:
-               tpl->set_string(i, FIELD_STRING(field));
-               break;
-            default:
-               throw vm_exec_error("don't know how to handle this type (execute_new_axioms)");
-         }
+         tuple_set_field(tpl, pred->get_field_type(i), i, field);
       }
 
       if(pred->is_action_pred())
@@ -1754,6 +1760,73 @@ execute_new_axioms(db::node *node, pcounter pc, state& state)
          execute_add_persistent0(node, tpl, pred, state);
       else
          execute_add_linear0(node, tpl, pred, state);
+   }
+}
+
+static inline void
+execute_remote_update(pcounter& pc, state& state)
+{
+   const reg_num dest(remote_update_dest(pc));
+   const predicate_id edit(remote_update_edit(pc));
+   const predicate_id target(remote_update_target(pc));
+   predicate *pred_edit(theProgram->get_predicate(edit));
+   predicate *pred_target(theProgram->get_predicate(target));
+   const size_t common(remote_update_common(pc));
+   const size_t nregs(remote_update_nregs(pc));
+   tuple_field regs[nregs];
+   for(size_t i(0); i < nregs; ++i)
+      regs[i] = state.get_reg(pcounter_reg(pc + REMOTE_UPDATE_BASE + i * reg_val_size));
+   vm::node_val n0(state.get_node(dest));
+   db::node *n;
+#ifdef USE_REAL_NODES
+   n = (db::node*)n0;
+#else
+   abort();
+#endif
+
+   LOCK_STACK(internal_lock_data);
+   MUTEX_LOCK(n->database_lock, internal_lock_data, database_lock);
+   if(n->linear.stored_as_hash_table(pred_target)) {
+      abort();
+   } else {
+      utils::intrusive_list<vm::tuple> *local_tuples(n->linear.get_linked_list(pred_target->get_id()));
+      tuple *match_tuple{nullptr};
+      bool found{false};
+      for(auto it(local_tuples->begin()), end(local_tuples->end()); it != end; it++) {
+         match_tuple = *it;
+         bool ok{true};
+         for(size_t i(0); i < common; ++i) {
+            vm::type *t(pred_target->get_field_type(i));
+            match_field m = {true, t, regs[i]};
+            if(!do_rec_match(m, match_tuple->get_field(i), t)) {
+               ok = false;
+               break;
+            }
+         }
+         if(ok) {
+            found = true;
+            break;
+         }
+      }
+      if(found && match_tuple) {
+         // update tuple.
+         for(size_t i(common); i < pred_target->num_fields(); ++i) {
+            const tuple_field old(match_tuple->get_field(i));
+            vm::type *ftype(pred_target->get_field_type(i));
+            tuple_set_field(match_tuple, ftype, i, regs[i]);
+            if(ftype->is_reference())
+               runtime::do_decrement_runtime(old, ftype->get_type(), state.gc_nodes);
+         }
+         MUTEX_UNLOCK(n->database_lock, internal_lock_data);
+      } else {
+         MUTEX_UNLOCK(n->database_lock, internal_lock_data);
+         tuple *tuple(vm::tuple::create(pred_edit));
+         for(size_t i(0); i < pred_edit->num_fields(); ++i) {
+            vm::type *ftype(pred_edit->get_field_type(i));
+            tuple_set_field(tuple, ftype, i, regs[i]);
+         }
+         execute_send0(state.node, n0, tuple, pred_edit, state);
+      }
    }
 }
 
@@ -3754,6 +3827,13 @@ eval_loop:
             execute_fabs(pc, state);
             ADVANCE();
          ENDOP();
+
+         CASE(REMOTE_UPDATE_INSTR)
+            COMPLEX_JUMP(remote_update)
+            execute_remote_update(pc, state);
+            pc += REMOTE_UPDATE_BASE + remote_update_nregs(pc) * reg_val_size;
+            JUMP_NEXT();
+         ENDOP()
 
          COMPLEX_JUMP(not_found)
 #ifndef COMPUTED_GOTOS
