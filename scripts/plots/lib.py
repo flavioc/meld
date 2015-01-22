@@ -111,14 +111,19 @@ class experiment(object):
    def linear_speedup(self):
       return self.x_axis()
 
+   def max_speedup0(self, base=None):
+      if not base:
+         base = self.times[1]
+      return math.ceil(max(float(base)/float(x) for th, x in self.times.iteritems() if th <= max_threads))
+
    def max_speedup(self, base=None):
       if not base:
          base = self.times[1]
-      m = max(float(base)/float(x) for th, x in self.times.iteritems() if th <= max_threads)
+      m = self.max_speedup0(base)
       if m <= 16:
          return 16
       else:
-         return math.ceil(m) + 2
+         return m + 2
 
    def get_improvement(self, reg):
       return [float(reg.get_time(th))/float(c) for th, c in self.times.iteritems() if th <= max_threads]
@@ -335,6 +340,35 @@ class experiment(object):
          label='Old Speedup', linestyle='--', marker='+', color=cmap(0.6))
       ax.plot(self.x_axis(), self.linear_speedup(),
         label='Linear', linestyle='-', color=cmap(0.2))
+      ax.legend([new, old], ["New Version", "Old Version"], loc=2, fontsize=20, markerscale=2)
+
+      setup_lines(ax, cmap)
+
+      name = prefix + self.name + ".png"
+      plt.savefig(name)
+
+   def create_speedup_compare_thirdparty(self, prefix, other, third):
+      fig = plt.figure()
+      ax = fig.add_subplot(111)
+
+      titlefontsize = 22
+      ylabelfontsize = 20
+      ax.set_title(self.title + " (versus C++)", fontsize=titlefontsize)
+      ax.yaxis.tick_right()
+      ax.yaxis.set_label_position("right")
+      ax.set_ylabel('Speedup', fontsize=ylabelfontsize)
+      ax.set_xlabel('Threads', fontsize=ylabelfontsize)
+      max_value_threads = max(x for x in self.times.keys() if x <= max_threads)
+      baseline = third.get_time(1)
+      ax.set_xlim([0, max_value_threads])
+      ax.set_ylim([0, self.max_speedup0(baseline)+1])
+      speedup1 = self.speedup_data(baseline)
+      speedup2 = other.speedup_data(baseline)
+
+      cmap = plt.get_cmap('gray')
+
+      new, = ax.plot(self.x_axis(), speedup1, label='New Speedup', linestyle='--', marker='^', color=cmap(0.1))
+      old, = ax.plot(self.x_axis(), speedup2, label='Old Speedup', linestyle='--', marker='+', color=cmap(0.6))
       ax.legend([new, old], ["New Version", "Old Version"], loc=2, fontsize=20, markerscale=2)
 
       setup_lines(ax, cmap)
