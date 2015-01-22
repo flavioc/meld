@@ -1,0 +1,6 @@
+
+type linear a(node, int).
+
+index a/2.
+
+a(@0, 1).

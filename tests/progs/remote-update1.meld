@@ -1,0 +1,15 @@
+
+type linear edit(node, int).
+type linear value(node, int).
+type linear a(node, node).
+
+priority @cluster @static.
+
+a(@0, @1).
+value(@1, 2).
+
+edit(A, New),
+value(A, Old)
+   -o value(A, New).
+
+a(A, B) -o edit(B, 3).
