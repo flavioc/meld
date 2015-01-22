@@ -14,6 +14,7 @@ type linear update-neighbors(node, float Diff, float Heat).
 
 priority @order @desc.
 priority @cluster @static.
+index neighbor-heat/2.
 
 const epsilon = str2float(@arg1).
 const delta = str2float(@arg2).

@@ -14,7 +14,7 @@
 #include "utils/intrusive_list.hpp"
 #include "db/hash_table.hpp"
 
-#define CREATE_HASHTABLE_THREADSHOLD 8
+#define CREATE_HASHTABLE_THREADSHOLD 4
 #define ITEM_SIZE ((sizeof(hash_table) > sizeof(tuple_list) ? sizeof(hash_table) : sizeof(tuple_list)))
 
 namespace db

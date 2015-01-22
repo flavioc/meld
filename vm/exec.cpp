@@ -1763,6 +1763,41 @@ execute_new_axioms(db::node *node, pcounter pc, state& state)
    }
 }
 
+static inline bool
+perform_remote_update(utils::intrusive_list<vm::tuple> *local_tuples, predicate *pred_target, const size_t common, tuple_field *regs, state& state)
+{
+   tuple *match_tuple{nullptr};
+   bool found{false};
+   for(auto it(local_tuples->begin()), end(local_tuples->end()); it != end; it++) {
+      match_tuple = *it;
+      bool ok{true};
+      for(size_t i(0); i < common; ++i) {
+         vm::type *t(pred_target->get_field_type(i));
+         match_field m = {true, t, regs[i]};
+         if(!do_rec_match(m, match_tuple->get_field(i), t)) {
+            ok = false;
+            break;
+         }
+      }
+      if(ok) {
+         found = true;
+         break;
+      }
+   }
+   if(found && match_tuple) {
+      // update tuple.
+      for(size_t i(common); i < pred_target->num_fields(); ++i) {
+         const tuple_field old(match_tuple->get_field(i));
+         vm::type *ftype(pred_target->get_field_type(i));
+         tuple_set_field(match_tuple, ftype, i, regs[i]);
+         if(ftype->is_reference())
+            runtime::do_decrement_runtime(old, ftype->get_type(), state.gc_nodes);
+      }
+      return true;
+   }
+   return false;
+}
+
 static inline void
 execute_remote_update(pcounter& pc, state& state)
 {
@@ -1784,50 +1819,34 @@ execute_remote_update(pcounter& pc, state& state)
    abort();
 #endif
 
+   bool updated{false};
    LOCK_STACK(internal_lock_data);
    MUTEX_LOCK(n->database_lock, internal_lock_data, database_lock);
    if(n->linear.stored_as_hash_table(pred_target)) {
-      abort();
-   } else {
-      utils::intrusive_list<vm::tuple> *local_tuples(n->linear.get_linked_list(pred_target->get_id()));
-      tuple *match_tuple{nullptr};
-      bool found{false};
-      for(auto it(local_tuples->begin()), end(local_tuples->end()); it != end; it++) {
-         match_tuple = *it;
-         bool ok{true};
-         for(size_t i(0); i < common; ++i) {
-            vm::type *t(pred_target->get_field_type(i));
-            match_field m = {true, t, regs[i]};
-            if(!do_rec_match(m, match_tuple->get_field(i), t)) {
-               ok = false;
-               break;
+      const field_num h(pred_target->get_hashed_field());
+      hash_table *table(n->linear.get_hash_table(pred_target->get_id()));
+
+      if(table) {
+         if(h < common)
+            updated = perform_remote_update(table->lookup_list(regs[h]), pred_target, common, regs, state);
+         else {
+            for(auto it(table->begin()); !it.end(); ++it) {
+               if((updated = perform_remote_update(*it, pred_target, common, regs, state)))
+                  break;
             }
          }
-         if(ok) {
-            found = true;
-            break;
-         }
       }
-      if(found && match_tuple) {
-         // update tuple.
-         for(size_t i(common); i < pred_target->num_fields(); ++i) {
-            const tuple_field old(match_tuple->get_field(i));
-            vm::type *ftype(pred_target->get_field_type(i));
-            tuple_set_field(match_tuple, ftype, i, regs[i]);
-            if(ftype->is_reference())
-               runtime::do_decrement_runtime(old, ftype->get_type(), state.gc_nodes);
-         }
-         MUTEX_UNLOCK(n->database_lock, internal_lock_data);
-      } else {
-         MUTEX_UNLOCK(n->database_lock, internal_lock_data);
-         tuple *tuple(vm::tuple::create(pred_edit));
-         for(size_t i(0); i < pred_edit->num_fields(); ++i) {
-            vm::type *ftype(pred_edit->get_field_type(i));
-            tuple_set_field(tuple, ftype, i, regs[i]);
-         }
-         execute_send0(state.node, n0, tuple, pred_edit, state);
-      }
+   } else
+      updated = perform_remote_update(n->linear.get_linked_list(pred_target->get_id()), pred_target, common, regs, state);
+   MUTEX_UNLOCK(n->database_lock, internal_lock_data);
+   if(updated)
+      return;
+   tuple *tuple(vm::tuple::create(pred_edit));
+   for(size_t i(0); i < pred_edit->num_fields(); ++i) {
+      vm::type *ftype(pred_edit->get_field_type(i));
+      tuple_set_field(tuple, ftype, i, regs[i]);
    }
+   execute_send0(state.node, n0, tuple, pred_edit, state);
 }
 
 static inline void
