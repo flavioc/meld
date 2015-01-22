@@ -1821,24 +1821,25 @@ execute_remote_update(pcounter& pc, state& state)
 
    bool updated{false};
    LOCK_STACK(internal_lock_data);
-   MUTEX_LOCK(n->database_lock, internal_lock_data, database_lock);
-   if(n->linear.stored_as_hash_table(pred_target)) {
-      const field_num h(pred_target->get_hashed_field());
-      hash_table *table(n->linear.get_hash_table(pred_target->get_id()));
+   if(n->database_lock.try_lock1(LOCK_STACK_USE(internal_lock_data))) {
+      if(n->linear.stored_as_hash_table(pred_target)) {
+         const field_num h(pred_target->get_hashed_field());
+         hash_table *table(n->linear.get_hash_table(pred_target->get_id()));
 
-      if(table) {
-         if(h < common)
-            updated = perform_remote_update(table->lookup_list(regs[h]), pred_target, common, regs, state);
-         else {
-            for(auto it(table->begin()); !it.end(); ++it) {
-               if((updated = perform_remote_update(*it, pred_target, common, regs, state)))
-                  break;
+         if(table) {
+            if(h < common)
+               updated = perform_remote_update(table->lookup_list(regs[h]), pred_target, common, regs, state);
+            else {
+               for(auto it(table->begin()); !it.end(); ++it) {
+                  if((updated = perform_remote_update(*it, pred_target, common, regs, state)))
+                     break;
+               }
             }
          }
-      }
-   } else
-      updated = perform_remote_update(n->linear.get_linked_list(pred_target->get_id()), pred_target, common, regs, state);
-   MUTEX_UNLOCK(n->database_lock, internal_lock_data);
+      } else
+         updated = perform_remote_update(n->linear.get_linked_list(pred_target->get_id()), pred_target, common, regs, state);
+      MUTEX_UNLOCK(n->database_lock, internal_lock_data);
+   }
    if(updated)
       return;
    tuple *tuple(vm::tuple::create(pred_edit));

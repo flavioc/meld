@@ -607,12 +607,15 @@ state::run_node(db::node *node)
    cout << "===============================================================\n";
 #endif
 
+   LOCK_STACK(node_lock);
+   MUTEX_LOCK(node->main_lock, node_lock, node_lock);
+   LOCK_STACK(internal_lock_data);
+   MUTEX_LOCK(node->database_lock, internal_lock_data, database_lock);
+
 	{
 #ifdef CORE_STATISTICS
 		execution_time::scope s(stat.core_engine_time);
 #endif
-      LOCK_STACK(node_lock);
-      MUTEX_LOCK(node->main_lock, node_lock, node_lock);
       process_action_tuples(node);
 		process_incoming_tuples(node);
 #ifdef DYNAMIC_INDEXING
@@ -624,9 +627,6 @@ state::run_node(db::node *node)
       node->unprocessed_facts = false;
       MUTEX_UNLOCK(node->main_lock, node_lock);
 	}
-
-   LOCK_STACK(internal_lock_data);
-   MUTEX_LOCK(node->database_lock, internal_lock_data, database_lock);
 
 #ifdef DYNAMIC_INDEXING
    node->rounds++;
