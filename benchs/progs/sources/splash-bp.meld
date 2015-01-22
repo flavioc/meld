@@ -13,7 +13,6 @@ type linear start(node).
 type linear update(node).
 type linear copy-messages(node).
 type linear update-messages(node, :(float, float, float, float, float)).
-type linear check-residual(node, node, float, :(float, float, float, float, float)).
 
 type linear start-tree(thread, list node).
 type linear new-tree(thread, list node, list node).
@@ -110,16 +109,6 @@ neighbor-belief(A, B, Belief),
 new-neighbor-belief(A, B, NewBelief)
    -o neighbor-belief(A, B, NewBelief).
 
-// checks residual for setting priorities
-check-residual(A, B, Delta, OutMessage),
-!edge(A, B),
-Delta > bound
-   -o update(B), new-neighbor-belief(B, A, OutMessage).
-
-check-residual(A, B, Delta, OutMessage),
-!edge(A, B)
-   -o new-neighbor-belief(B, A, OutMessage).
-
 // update belief to be sent to one neighbor
 update-messages(A, NewBelief),
 !edge(A, B),
@@ -128,7 +117,9 @@ sent-neighbor-belief(A, B, OldOut),
 Cavity = normalizestruct(dividestruct(NewBelief, OldIn)),
 Convolved = normalizestruct(convolvestruct(global-potential, Cavity)),
 OutMessage = dampstruct(Convolved, OldOut, damping)
-   -o check-residual(A, B, residualstruct(OutMessage, OldOut), OutMessage),
+   -o Residual = residualstruct(OutMessage, OldOut),
+      (if Residual > bound then set-priority(B, Residual), update(B) otherwise 1 end),
+      new-neighbor-belief(B, A, OutMessage),
       update-messages(A, NewBelief),
       sent-neighbor-belief(A, B, OutMessage).
 

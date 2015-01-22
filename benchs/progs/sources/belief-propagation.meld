@@ -12,7 +12,6 @@ type linear neighbor-belief-old(node, node, :(float, float, float, float, float)
 type linear start(node).
 type linear update(node).
 type linear update-messages(node, :(float, float, float, float, float)).
-type linear check-residual(node, node, float, :(float, float, float, float, float)).
 
 priority @cluster @static.
 
@@ -36,16 +35,6 @@ neighbor-belief(A, B, Belief),
 new-neighbor-belief(A, B, NewBelief)
    -o neighbor-belief(A, B, NewBelief).
 
-// checks residual for setting priorities
-check-residual(A, B, Delta, OutMessage),
-!edge(A, B),
-Delta > bound
-   -o update(B), new-neighbor-belief(B, A, OutMessage).
-
-check-residual(A, B, Delta, OutMessage),
-!edge(A, B)
-   -o new-neighbor-belief(B, A, OutMessage).
-
 // update belief to be sent to one neighbor
 update-messages(A, NewBelief),
 !edge(A, B),
@@ -54,8 +43,10 @@ sent-neighbor-belief(A, B, OldOut),
 Cavity = normalizestruct(dividestruct(NewBelief, OldIn)),
 Convolved = normalizestruct(convolvestruct(global-potential, Cavity)),
 OutMessage = dampstruct(Convolved, OldOut, damping)
-   -o check-residual(A, B, residualstruct(OutMessage, OldOut), OutMessage),
+   -o Residual = residualstruct(OutMessage, OldOut),
+      (if Residual > bound then update(B) otherwise 1 end),
       update-messages(A, NewBelief),
+      new-neighbor-belief(B, A, OutMessage),
       sent-neighbor-belief(A, B, OutMessage).
 
 // all beliefs were sent!
