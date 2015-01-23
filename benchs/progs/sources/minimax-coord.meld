@@ -12,8 +12,9 @@ NextPlayer <> root-player
 build-next-plays(A, Game, NextPlayer, X, T, Descendants, Play, Depth),
 array_get(Game, X) = 0
    -o build-next-plays(A, Game, NextPlayer, X + 1, T, Descendants + 1, Play, Depth),
-      exists B. (play(B, array_set(Game, X, NextPlayer), if NextPlayer = 1 then 2 else 1 end, X, Depth + 1),
-                 back(B, A)).
+      exists B. (set-default-priority(B, float(Depth + 1)),
+                (if Depth >= 4 then set-static(B) otherwise 1 end),
+                play(B, array_set(Game, X, NextPlayer), if NextPlayer = 1 then 2 else 1 end, X, Depth + 1),
+                back(B, A)).
 build-next-plays(A, Game, NextPlayer, X, T, Descendants, Play, Depth)
    -o build-next-plays(A, Game, NextPlayer, X + 1, T, Descendants, Play, Depth).
-

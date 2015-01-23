@@ -167,6 +167,18 @@ minimax_score(EXTERNAL_ARG(game), EXTERNAL_ARG(player), EXTERNAL_ARG(rootplayer)
    }
 }
 
+int_val
+minmax_points_factor(const runtime::array *a)
+{
+   int_val num_zeros(0);
+   for(size_t i(0); i < a->get_size(); ++i) {
+      if(FIELD_INT(a->get_item(i)) == 0)
+         num_zeros++;
+   }
+
+   return std::max((int_val)1, (int_val)(a->get_size() - num_zeros));
+}
+
 argument
 minimax_score2(EXTERNAL_ARG(game), EXTERNAL_ARG(player), EXTERNAL_ARG(rootplayer))
 {
@@ -188,9 +200,9 @@ minimax_score2(EXTERNAL_ARG(game), EXTERNAL_ARG(player), EXTERNAL_ARG(rootplayer
       }
       if(found) {
          if(player == rootplayer) {
-            RETURN_INT(200);
+            RETURN_INT(minmax_points_factor(game) * 200);
          } else {
-            RETURN_INT(-100);
+            RETURN_INT(minmax_points_factor(game) * -100);
          }
       }
       found = true;
@@ -202,9 +214,9 @@ minimax_score2(EXTERNAL_ARG(game), EXTERNAL_ARG(player), EXTERNAL_ARG(rootplayer
       }
       if(found) {
          if(other_player == rootplayer) {
-            RETURN_INT(200);
+            RETURN_INT(minmax_points_factor(game) * 200);
          } else {
-            RETURN_INT(-100);
+            RETURN_INT(minmax_points_factor(game) * -100);
          }
       }
    }

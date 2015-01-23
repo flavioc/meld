@@ -1,0 +1,2 @@
+include #../../benchs/progs/sources/minimax-coord.meld
+include #../../benchs/progs/data/minimax-small.meld
