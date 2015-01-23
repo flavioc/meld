@@ -7,11 +7,8 @@ type linear input-rank(node, node, float).
 type linear start(node).
 type linear update(node).
 type linear new-input-rank(node, node, float).
-type linear add-input-ranks(node).
 type linear sum-ranks(node, float).
-type linear input-rank-copy(node, node, float).
 type linear output-rank(node, node, float).
-type linear output-rank-copy(node, node, float).
 type linear new-output-rank(node, node, float).
 
 //priority @cluster @static.
@@ -36,20 +33,16 @@ new-output-rank(A, B, V),
 output-rank(A, B, OldV)
    -o output-rank(A, B, V).
 
-add-input-ranks(A)
-   -o [sum => V | B | input-rank-copy(A, B, V) | sum-ranks(A, V)].
-
 sum-ranks(A, Acc),
-V = damping/float(pages) + (1.0 - damping) * Acc,
-pagerank(A, Old)
-   -o pagerank(A, V),
-      {B, W, O, Delta | !output(A, B, W), output-rank-copy(A, B, O), Delta = (if O > V then O - V else V - O end) * W |
-           new-input-rank(B, A, V), (if Delta > bound then update(B) otherwise 1 end)}.
+NewRank = damping/float(pages) + (1.0 - damping) * Acc,
+pagerank(A, OldRank)
+   -o pagerank(A, NewRank),
+      {B, W, O, Delta | !output(A, B, W), output-rank(A, B, O), Delta = fabs(O - NewRank) * W |
+           output-rank(A, B, O), new-input-rank(B, A, NewRank), (if Delta > bound then update(B) otherwise 1 end)}.
 
 update(A), update(A) -o update(A).
 
 update(A)
-   -o {B, V, W | input-rank(A, B, V), !input(A, B, W) | input-rank(A, B, V), input-rank-copy(A, B, V * W) , new-output-rank(B, A, V)},
-      {B, V | output-rank(A, B, V) | output-rank-copy(A, B, V), output-rank(A, B, V)},
-      add-input-ranks(A).
+   -o [sum => V | B, W, Val | input-rank(A, B, Val), !input(A, B, W), V = Val * W |
+            input-rank(A, B, Val), new-output-rank(B, A, Val) | sum-ranks(A, V)].
 
