@@ -1,7 +1,7 @@
 
-type linear play(node, array int, int, int, int, int).
+type linear play(node, array int Game, int NextPlayer, int LastPlay, int Depth).
 type linear root(node).
-type linear build-next-plays(node, array int, int, int, int, int, int, int, int).
+type linear build-next-plays(node, array int, int, int, int, int, int, int).
 type linear back(node, node).
 type linear score(node, int, int).
 type linear new-score(node, int, int).
@@ -10,13 +10,14 @@ type linear minimize(node, int, int, int).
 
 const maxinf = 9999.
 const mininf = -9999.
+const root-player = 1.
 
 root(@0).
 
-play(A, Game, NextPlayer, LastPlay, RootPlayer, Depth),
-Score = minimax_score2(Game, NextPlayer, RootPlayer)
+play(A, Game, NextPlayer, LastPlay, Depth),
+Score = minimax_score2(Game, NextPlayer, root-player)
    -o (if Score <> 0 then score(A, Score, LastPlay)
-         otherwise build-next-plays(A, Game, NextPlayer, 0, array_size(Game), RootPlayer, 0, LastPlay, Depth) end).
+         otherwise build-next-plays(A, Game, NextPlayer, 0, array_size(Game), 0, LastPlay, Depth) end).
 
 score(A, Score, BestPlay),
 back(A, B)
