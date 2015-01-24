@@ -21,7 +21,7 @@ const start-pagerank = 1.0 / float(pages).
 start(A).
 
 start(A) -o { B, W | !input(A, B, W) | neighbor-rank(A, B, start-pagerank)},
-            { B, W | !output(A, B, W) | used-rank(A, B, 0.0) },
+            { B, W | !output(A, B, W) | used-rank(A, B, start-pagerank) },
             pagerank(A, start-pagerank),
             update(A).
 
