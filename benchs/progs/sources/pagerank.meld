@@ -3,13 +3,13 @@ type route input(node, node, float).
 type route output(node, node, float).
 
 type linear pagerank(node, float).
-type linear input-rank(node, node, float).
+type linear neighbor-rank(node, node, float).
 type linear start(node).
 type linear update(node).
-type linear new-input-rank(node, node, float).
+type linear new-neighbor-rank(node, node, float).
 type linear sum-ranks(node, float).
-type linear output-rank(node, node, float).
-type linear new-output-rank(node, node, float).
+type linear used-rank(node, node, float).
+type linear new-used-rank(node, node, float).
 
 //priority @cluster @static.
 
@@ -20,29 +20,29 @@ const start-pagerank = 1.0 / float(pages).
 
 start(A).
 
-start(A) -o { B, W | !input(A, B, W) | input-rank(A, B, start-pagerank)},
-            { B, W | !output(A, B, W) | output-rank(A, B, 0.0) },
+start(A) -o { B, W | !input(A, B, W) | neighbor-rank(A, B, start-pagerank)},
+            { B, W | !output(A, B, W) | used-rank(A, B, 0.0) },
             pagerank(A, start-pagerank),
             update(A).
 
-new-input-rank(A, B, V),
-input-rank(A, B, OldV)
-   -o input-rank(A, B, V).
+new-neighbor-rank(A, B, V),
+neighbor-rank(A, B, OldV)
+   -o neighbor-rank(A, B, V).
 
-new-output-rank(A, B, V),
-output-rank(A, B, OldV)
-   -o output-rank(A, B, V).
+new-used-rank(A, B, V),
+used-rank(A, B, OldV)
+   -o used-rank(A, B, V).
 
 sum-ranks(A, Acc),
 NewRank = damping/float(pages) + (1.0 - damping) * Acc,
 pagerank(A, OldRank)
    -o pagerank(A, NewRank),
-      {B, W, O, Delta | !output(A, B, W), output-rank(A, B, O), Delta = fabs(O - NewRank) * W |
-           output-rank(A, B, O), new-input-rank(B, A, NewRank), (if Delta > bound then update(B) otherwise 1 end)}.
+      {B, W, O, Delta | !output(A, B, W), used-rank(A, B, O), Delta = fabs(O - NewRank) * W |
+           used-rank(A, B, O), new-neighbor-rank(B, A, NewRank), (if Delta > bound then update(B) otherwise 1 end)}.
 
 update(A), update(A) -o update(A).
 
 update(A)
-   -o [sum => V | B, W, Val | input-rank(A, B, Val), !input(A, B, W), V = Val * W |
-            input-rank(A, B, Val), new-output-rank(B, A, Val) | sum-ranks(A, V)].
+   -o [sum => V | B, W, Val | neighbor-rank(A, B, Val), !input(A, B, W), V = Val * W |
+            neighbor-rank(A, B, Val), new-used-rank(B, A, Val) | sum-ranks(A, V)].
 
