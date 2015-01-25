@@ -8,8 +8,6 @@ type linear start(node).
 type linear update(node).
 type linear new-neighbor-rank(node, node, float).
 type linear sum-ranks(node, float).
-type linear used-rank(node, node, float).
-type linear new-used-rank(node, node, float).
 
 //priority @cluster @static.
 
@@ -21,7 +19,6 @@ const start-pagerank = 1.0 / float(pages).
 start(A).
 
 start(A) -o { B, W | !input(A, B, W) | neighbor-rank(A, B, start-pagerank)},
-            { B, W | !output(A, B, W) | used-rank(A, B, start-pagerank) },
             pagerank(A, start-pagerank),
             update(A).
 
@@ -29,20 +26,16 @@ new-neighbor-rank(A, B, V),
 neighbor-rank(A, B, OldV)
    -o neighbor-rank(A, B, V).
 
-new-used-rank(A, B, V),
-used-rank(A, B, OldV)
-   -o used-rank(A, B, V).
-
 sum-ranks(A, Acc),
 NewRank = damping/float(pages) + (1.0 - damping) * Acc,
 pagerank(A, OldRank)
    -o pagerank(A, NewRank),
-      {B, W, O, Delta | !output(A, B, W), used-rank(A, B, O), Delta = fabs(O - NewRank) * W |
-           used-rank(A, B, O), new-neighbor-rank(B, A, NewRank), (if Delta > bound then update(B) otherwise 1 end)}.
+      {B, W, Delta | !output(A, B, W), Delta = fabs(OldRank - NewRank) * W |
+           new-neighbor-rank(B, A, NewRank), (if Delta > bound then update(B) otherwise 1 end)}.
 
 update(A), update(A) -o update(A).
 
 update(A)
    -o [sum => V | B, W, Val | neighbor-rank(A, B, Val), !input(A, B, W), V = Val * W |
-            neighbor-rank(A, B, Val), new-used-rank(B, A, Val) | sum-ranks(A, V)].
+            neighbor-rank(A, B, Val) | sum-ranks(A, V)].
 
