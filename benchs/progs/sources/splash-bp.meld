@@ -1,16 +1,18 @@
 
-type route edge(node, node).
-type potential(node, :(float, float, float, float, float)).
+type :(float, float, float, float, float) bvector.
 
-type linear belief(node, :(float, float, float, float, float)).
-type linear new-neighbor-belief(node, node, :(float, float, float, float, float)). // neighbor sent an update
-type linear sent-neighbor-belief(node, node, :(float, float, float, float, float)). // what we sent previously
-type linear neighbor-belief(node, node, :(float, float, float, float, float)). // current neighbor belief
-type linear neighbor-belief-old(node, node, :(float, float, float, float, float)).
+type route edge(node, node).
+type potential(node, bvector).
+
+type linear belief(node, bvector).
+type linear new-neighbor-belief(node, node, bvector). // neighbor sent an update
+type linear sent-neighbor-belief(node, node, bvector). // what we sent previously
+type linear neighbor-belief(node, node, bvector). // current neighbor belief
+type linear neighbor-belief-old(node, node, bvector).
 
 type linear start(node).
 type linear update(node).
-type linear update-messages(node, :(float, float, float, float, float)).
+type linear update-messages(node, bvector).
 
 type linear start-tree(thread, list node).
 type linear new-tree(thread, list node, list node).
