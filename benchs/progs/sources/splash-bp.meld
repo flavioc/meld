@@ -6,17 +6,15 @@ type linear belief(node, :(float, float, float, float, float)).
 type linear new-neighbor-belief(node, node, :(float, float, float, float, float)). // neighbor sent an update
 type linear sent-neighbor-belief(node, node, :(float, float, float, float, float)). // what we sent previously
 type linear neighbor-belief(node, node, :(float, float, float, float, float)). // current neighbor belief
-type linear neighbor-belief-copy(node, :(float, float, float, float, float)).
 type linear neighbor-belief-old(node, node, :(float, float, float, float, float)).
 
 type linear start(node).
 type linear update(node).
-type linear copy-messages(node).
 type linear update-messages(node, :(float, float, float, float, float)).
 
 type linear start-tree(thread, list node).
 type linear new-tree(thread, list node, list node).
-type linear expand-new-tree(thread, list node, list node).
+type linear expand-tree(thread, list node, list node).
 type linear first-phase(thread, list node, list node).
 type linear second-phase(thread, list node).
 
@@ -48,12 +46,12 @@ start-tree(T, []).
 start-tree(T, []),
 A = @host,
 priority(A) > 0.0
-   -o new-tree(T, [A], []).
+   -o expand-tree(T, [A], []).
 start-tree(T, [Ignore]),
 A = @host,
 priority(A) > 0.0,
 Ignore <> A
-   -o new-tree(T, [A], []).
+   -o expand-tree(T, [A], []).
 start-tree(T, [Ignore]),
 A = @host,
 priority(A) <= 0.0,
@@ -62,24 +60,24 @@ Ignore <> A
 
 // We append into Next all neighbors not yet in the tree
 // or not yet schedule to be visited.
-new-tree(T, [A | All], Next),
+expand-tree(T, [A | All], Next),
 A = @host
    -o [collect => L | !edge(A, L),
          ~ L in All, ~ L in Next,
-         priority(L) > 0.0, cpu-id(L) = cpu-id(A) | expand-new-tree(T, [A | All],
+         priority(L) > 0.0, cpu-id(L) = cpu-id(A) | new-tree(T, [A | All],
                if llength(All) + 1 = maxnodes then [] else Next ++ L end)].
 
 // after the tree has been expanded,
 // we decide to either stop and start the first phase
 // or keep expanding.
-expand-new-tree(T, [A | All], [])
+new-tree(T, [A | All], [])
    -o schedule-next(A), first-phase(T, reverse([A | All]), [A | All]).
-expand-new-tree(T, All, [B | Next])
-   -o schedule-next(B), new-tree(T, [B | All], Next).
+new-tree(T, All, [B | Next])
+   -o schedule-next(B), expand-tree(T, [B | All], Next).
 
 // RULES FOR FIRST PHASE
 
-// when the tree has a single node, we run update immediatelly on the node
+// when the tree has a single node, we run update immediately on the node
 first-phase(T, [A], [A]),
 A = @host
    -o update(A), start-tree(T, [A]).

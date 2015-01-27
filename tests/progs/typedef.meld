@@ -1,0 +1,7 @@
+
+type int number.
+type number number2.
+
+type linear a(node, number, number2).
+
+a(@0, 1, 2).

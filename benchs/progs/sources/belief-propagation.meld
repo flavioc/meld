@@ -6,7 +6,6 @@ type linear belief(node, :(float, float, float, float, float)).
 type linear new-neighbor-belief(node, node, :(float, float, float, float, float)). // neighbor sent an update
 type linear sent-neighbor-belief(node, node, :(float, float, float, float, float)). // what we sent previously
 type linear neighbor-belief(node, node, :(float, float, float, float, float)). // current neighbor belief
-type linear neighbor-belief-copy(node, :(float, float, float, float, float)).
 type linear neighbor-belief-old(node, node, :(float, float, float, float, float)).
 
 type linear start(node).
