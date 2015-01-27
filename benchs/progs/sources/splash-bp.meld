@@ -14,11 +14,13 @@ type linear start(node).
 type linear update(node).
 type linear update-messages(node, bvector).
 
-type linear start-tree(thread, list node).
-type linear new-tree(thread, list node, list node).
-type linear expand-tree(thread, list node, list node).
-type linear first-phase(thread, list node, list node).
-type linear second-phase(thread, list node).
+type list node tree.
+
+type linear start-tree(thread, tree).
+type linear new-tree(thread, tree, tree).
+type linear expand-tree(thread, tree, tree).
+type linear first-phase(thread, tree, tree).
+type linear second-phase(thread, tree).
 
 priority @initial 100.
 priority @static.
