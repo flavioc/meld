@@ -111,7 +111,9 @@ public:
 
    inline size_t num_types(void) const { return types.size(); }
 
+   inline void add_type(type *t) { types.push_back(t); }
    inline type* get_type(const size_t i) const { assert(i < types.size()); return types[i]; }
+   inline void add_predicate(vm::predicate *pred) { predicates.push_back(pred); }
 
    inline size_t num_rules(void) const { return number_rules; }
    inline size_t num_rules_next_uint(void) const { return number_rules_uint; }

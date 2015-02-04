@@ -29,8 +29,7 @@ typedef enum {
 class rule;
 
 struct predicate {
-private:
-   friend class program;
+public:
    
    static predicate_id current_id;
    
@@ -87,8 +86,6 @@ private:
    void destroy();
    ~predicate(void);
    
-public:
-
    using rule_iterator = std::vector<const rule*, mem::allocator<const rule*>>::const_iterator;
 
    inline rule_iterator begin_rules(void) const { return affected_rules.begin(); }
