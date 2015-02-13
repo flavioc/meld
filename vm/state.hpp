@@ -90,12 +90,6 @@ public:
    bool generated_facts;
    bool running_rule;
    bool hash_removes;
-   using removed_hash =
-      std::unordered_set<vm::tuple*, utils::pointer_hash<vm::tuple>,
-         std::equal_to<vm::tuple*>, mem::allocator<vm::tuple*>>;
-   // this hash table is used when using operators at the body of the rule.
-   // since the list of candidate tuples is ordered, it's not possible to know if something has been deleted.
-   removed_hash removed;
    vm::counter *match_counter;
    std::unordered_set<utils::byte*, utils::pointer_hash<utils::byte>,
       std::equal_to<utils::byte*>, mem::allocator<utils::byte*>> allocated_match_objects;

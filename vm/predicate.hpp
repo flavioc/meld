@@ -61,6 +61,7 @@ public:
    bool is_reused{false};
    bool is_cycle{false};
    bool is_thread{false};
+   bool has_code{true};
 
    std::vector<const rule*, mem::allocator<const rule*>> affected_rules;
    std::vector<const rule*, mem::allocator<const rule*>> linear_rules;
@@ -173,7 +174,7 @@ public:
       const std::vector<type*>&);
 };
 
-type* read_type_from_reader(code_reader&);
+type* read_type_from_reader(code_reader&, vm::program*);
 type* read_type_id_from_reader(code_reader&, const std::vector<type*, mem::allocator<type*>>&);
 std::ostream& operator<<(std::ostream&, const predicate&);
 

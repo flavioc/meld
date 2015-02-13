@@ -22,12 +22,12 @@ class machine
 private:
    
    vm::all *all;
-   const std::string filename;
+   std::string filename;
 
    size_t nodes_per_thread;
    
 #ifdef INSTRUMENTATION
-   std::thread *alarm_thread;
+   std::thread *alarm_thread{nullptr};
    statistics::slice_set slices;
 #endif
 
@@ -35,6 +35,9 @@ private:
    void deactivate_signals(void);
    void slice_function(void);
    void set_timer(void);
+   void setup_threads(const size_t);
+   void check_args(const vm::machine_arguments&) const;
+   void init(const vm::machine_arguments&);
 
    inline size_t total_nodes(void) const
    {
@@ -69,6 +72,8 @@ public:
    explicit machine(const std::string&, const size_t,
          const vm::machine_arguments& args = vm::machine_arguments(),
          const std::string& data_file = std::string());
+   explicit machine(const size_t, const vm::machine_arguments&,
+         const std::string& data_file);
                
    ~machine(void);
 };

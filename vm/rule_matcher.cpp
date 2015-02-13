@@ -21,14 +21,6 @@ rule_matcher::rule_matcher(void)
 
    bitmap::create(predicate_existence, theProgram->num_predicates_next_uint());
    predicate_existence.clear(theProgram->num_predicates_next_uint());
-
-#ifndef NDEBUG
-   for(rule_id rid(0); rid < theProgram->num_rules(); ++rid)
-   {
-      rule *rl(theProgram->get_rule(rid));
-      assert(rl->num_predicates() <= 255);
-	}
-#endif
 }
 
 rule_matcher::~rule_matcher(void)

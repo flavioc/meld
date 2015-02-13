@@ -75,7 +75,7 @@ A = @host
 // we decide to either stop and start the first phase
 // or keep expanding.
 new-tree(T, [A | All], [])
-   -o schedule-next(A), first-phase(T, reverse([A | All]), [A | All]).
+   -o schedule-next(A), first-phase(T, lreverse([A | All]), [A | All]).
 new-tree(T, All, [B | Next])
    -o schedule-next(B), expand-tree(T, [B | All], Next).
 

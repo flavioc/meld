@@ -25,7 +25,7 @@ namespace vm {
 #define PRED_AGG_UNSAFE 0x00
 
 type*
-read_type_from_reader(code_reader& read)
+read_type_from_reader(code_reader& read, vm::program *prog)
 {
    byte f;
    read.read_type<byte>(&f);
@@ -39,18 +39,27 @@ read_type_from_reader(code_reader& read)
       case FIELD_STRING:
       case FIELD_THREAD:
          return new type(t);
-      case FIELD_LIST:
-         return new list_type(read_type_from_reader(read));
+      case FIELD_LIST: {
+         byte id;
+         read.read_type<byte>(&id);
+         return new list_type(prog->get_type(id));
+      }
       case FIELD_STRUCT: {
          byte size;
+         byte id;
          read.read_type<byte>(&size);
          struct_type *ret = new struct_type((size_t)size);
-         for(size_t i(0); i < ret->get_size(); ++i)
-            ret->set_type(i, read_type_from_reader(read));
+         for(size_t i(0); i < ret->get_size(); ++i) {
+            read.read_type<byte>(&id);
+            ret->set_type(i, prog->get_type(id));
+         }
          return ret;
       }
-      case FIELD_ARRAY:
-         return new array_type(read_type_from_reader(read));
+      case FIELD_ARRAY: {
+         byte id;
+         read.read_type<byte>(&id);
+         return new array_type(prog->get_type(id));
+      }
       default:
          assert(false); abort(); break;
    }
@@ -129,8 +138,9 @@ predicate::make_predicate_from_reader(code_reader& read, code_size_t *code_size,
    if(VERSION_AT_LEAST(0, 12)) {
       byte field_index;
       read.read_type<byte>(&field_index);
-      if(field_index != 0)
+      if(field_index != 0) {
          pred->store_as_hash_table(field_index-1);
+      }
    }
 
    // read number of fields

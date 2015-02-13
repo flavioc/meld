@@ -12,19 +12,11 @@ using namespace utils;
 namespace db
 {
    
-database::database(const string& filename):
-   nodes_total(0)
+database::database(ifstream& fp)
 {
    int_val num_nodes;
    node::node_id fake_id;
    node::node_id user_id;
-   
-   ifstream fp(filename.c_str(), ios::in | ios::binary);
-
-   fp.seekg(vm::MAGIC_SIZE, ios_base::cur); // skip magic
-   fp.seekg(2*sizeof(uint32_t), ios_base::cur); // skip version
-   
-   fp.seekg(sizeof(byte), ios_base::cur); // skip number of definitions
    
    fp.read((char*)&num_nodes, sizeof(int_val));
    

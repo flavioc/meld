@@ -19,8 +19,8 @@ class rule
 
       rule_id id;
       const std::string str;
-      byte_code code;
-		code_size_t code_size;
+      byte_code code{nullptr};
+		code_size_t code_size{0};
       using predicate_vector =
 		   std::vector<predicate_id, mem::allocator<predicate_id>>;
       predicate_vector predicates;
@@ -54,7 +54,10 @@ class rule
 
       inline void destroy()
       {
-         delete []code;
+#ifndef COMPILED
+         if(code_size > 0)
+            delete []code;
+#endif
       }
 };
 

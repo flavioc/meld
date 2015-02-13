@@ -82,19 +82,6 @@ execute_alloc(const pcounter& pc, state& state)
 }
 
 static inline void
-execute_add_linear0(db::node *node, tuple *tuple, predicate *pred, state& state)
-{
-#ifdef DEBUG_SENDS
-   cout << "\tadd linear ";
-   tuple->print(cout, pred);
-   cout << endl;
-#endif
-
-   node->add_linear_fact(tuple, pred);
-   state.linear_facts_generated++;
-}
-
-static inline void
 execute_add_linear(db::node *node, pcounter& pc, state& state)
 {
    const reg_num r(pcounter_reg(pc + instr_size));
@@ -478,65 +465,7 @@ count_variable_match_elements(pcounter pc, const predicate *pred, const size_t m
    return ret;
 }
 
-static inline bool
-sort_tuples(const tuple* t1, const tuple* t2, const field_num field, const predicate *pred)
-{
-   assert(t1 != nullptr && t2 != nullptr);
-
-   switch(pred->get_field_type(field)->get_type()) {
-      case FIELD_INT:
-         return t1->get_int(field) < t2->get_int(field);
-      case FIELD_FLOAT:
-         return t1->get_float(field) < t2->get_float(field);
-      case FIELD_NODE:
-         return t1->get_node(field) < t2->get_node(field);
-      default:
-         throw vm_exec_error("don't know how to compare this field type (tuple_sorter)");
-   }
-   return false;
-}
-
-typedef struct {
-   tuple *tpl;
-   utils::intrusive_list<vm::tuple>::iterator iterator;
-} iter_object;
-typedef vector<iter_object, mem::allocator<iter_object> > vector_iter;
-
-class tuple_sorter
-{
-private:
-	const predicate *pred;
-	const field_num field;
-	
-public:
-	
-	inline bool operator()(const iter_object& l1, const iter_object& l2)
-	{
-      return sort_tuples(l1.tpl, l2.tpl, field, pred);
-	}
-	
-	explicit tuple_sorter(const field_num _field, const predicate *_pred):
-		pred(_pred), field(_field)
-	{}
-};
-
-class tuple_leaf_sorter
-{
-private:
-	const predicate *pred;
-	const field_num field;
-	
-public:
-	
-	inline bool operator()(const tuple_trie_leaf* l1, const tuple_trie_leaf* l2)
-	{
-      return sort_tuples(l1->get_underlying_tuple(), l2->get_underlying_tuple(), field, pred);
-	}
-	
-	explicit tuple_leaf_sorter(const field_num _field, const predicate *_pred):
-		pred(_pred), field(_field)
-	{}
-};
+#include "vm/order.cpp"
 
 static inline match*
 retrieve_match_object(state& state, pcounter pc, const predicate *pred, const size_t base)
@@ -630,7 +559,7 @@ execute_pers_iter(const reg_num reg, match* m, const pcounter first, state& stat
 
       PUSH_CURRENT_STATE(match_tuple, tuple_leaf, nullptr, tuple_leaf->get_min_depth());
 #ifdef DEBUG_ITERS
-      cout << "\t use ";
+      cout << "\titerate ";
       match_tuple->print(cout, pred);
       cout << "\n";
 #endif
@@ -670,6 +599,7 @@ execute_olinear_iter(const reg_num reg, match* m, const pcounter pc, const pcoun
          iter_object obj;
          obj.tpl = tpl;
          obj.iterator = it;
+         obj.ls = local_tuples;
          tpls.push_back(obj);
       }
    }
@@ -684,16 +614,10 @@ execute_olinear_iter(const reg_num reg, match* m, const pcounter pc, const pcoun
 
    for(vector_iter::iterator it(tpls.begin()); it != tpls.end(); ) {
       iter_object p(*it);
+      auto ls(p.ls);
       return_type ret;
 
       tuple *match_tuple(p.tpl);
-
-      state::removed_hash::const_iterator found(state.removed.find(match_tuple));
-      if(found != state.removed.end()) {
-         // tuple already removed
-         state.removed.erase(found);
-         goto next_tuple;
-      }
 
       if(match_tuple->must_be_deleted())
          goto next_tuple;
@@ -701,16 +625,14 @@ execute_olinear_iter(const reg_num reg, match* m, const pcounter pc, const pcoun
       match_tuple->will_delete();
 
       PUSH_CURRENT_STATE(match_tuple, nullptr, match_tuple, (vm::depth_t)0);
-      state.hash_removes = true;
 
       ret = execute(first, state, reg, match_tuple, pred);
 
-      state.hash_removes = false;
       POP_STATE();
 
       if(TO_FINISH(ret)) {
          utils::intrusive_list<vm::tuple>::iterator it(p.iterator);
-         local_tuples->erase(it);
+         ls->erase(it);
          vm::tuple::destroy(match_tuple, pred, state.gc_nodes);
          if(ret == RETURN_LINEAR)
             return RETURN_LINEAR;
@@ -767,24 +689,15 @@ execute_orlinear_iter(const reg_num reg, match* m, const pcounter pc, const pcou
 
       tuple *match_tuple(p.tpl);
 
-      state::removed_hash::const_iterator found(state.removed.find(match_tuple));
-      if(found != state.removed.end()) {
-         // tuple already removed
-         state.removed.erase(found);
-         goto next_tuple;
-      }
-
       if(match_tuple->must_be_deleted())
          goto next_tuple;
 
       match_tuple->will_delete();
 
       PUSH_CURRENT_STATE(match_tuple, nullptr, match_tuple, (vm::depth_t)0);
-      state.hash_removes = true;
 
       ret = execute(first, state, reg, match_tuple, pred);
 
-      state.hash_removes = false;
       POP_STATE();
 
       match_tuple->will_not_delete();
@@ -810,7 +723,6 @@ execute_opers_iter(const reg_num reg, match* m, const pcounter pc, const pcounte
    const utils::byte options(iter_options(pc));
    const utils::byte options_arguments(iter_options_argument(pc));
 
-   typedef vector<tuple_trie_leaf*, mem::allocator<tuple_trie_leaf*> > vector_leaves;
    vector_leaves leaves;
 
    tuple_trie::tuple_search_iterator tuples_it = node->pers_store.match_predicate(pred->get_id(), m);
@@ -890,7 +802,7 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
 
       PUSH_CURRENT_STATE(match_tuple, nullptr, match_tuple, (vm::depth_t)0);
 #ifdef DEBUG_ITERS
-      cout << "\tuse ";
+      cout << "\titerate ";
       match_tuple->print(cout, pred);
       cout << "\n";
 #endif
@@ -920,7 +832,7 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
                   it = local_tuples->erase(it);
                   // add the tuple to the back of the bucket
                   // that way, we do not see it again if it's added to the same bucket
-                  tbl->insert_front(match_tuple);
+                  tbl->insert(match_tuple);
                   next_iter = false;
                }
             }
@@ -1007,6 +919,11 @@ execute_rlinear_iter_list(const reg_num reg, match* m, const pcounter first, sta
       }
 
       PUSH_CURRENT_STATE(match_tuple, nullptr, match_tuple, (vm::depth_t)0);
+#ifdef DEBUG_ITERS
+      cout << "\titerate ";
+      match_tuple->print(cout, pred);
+      cout << "\n";
+#endif
 
       match_tuple->will_delete(); // this will avoid future uses of this tuple!
 
@@ -1115,9 +1032,6 @@ execute_remove(db::node *node, pcounter pc, state& state)
 #endif
    assert(tpl);
 		
-   if(state.hash_removes)
-      state.removed.insert(tpl);
-
    if(state.direction == POSITIVE_DERIVATION) {
       if(pred->is_reused_pred())
          node->store.persistent_tuples.push_back(full_tuple::remove_new(tpl, pred, state.depth));
@@ -1662,105 +1576,13 @@ execute_new_node(const pcounter& pc, state& state)
 #endif
 }
 
-static inline tuple_field
-axiom_read_data(pcounter& pc, type *t)
-{
-   tuple_field f;
-
-   switch(t->get_type()) {
-      case FIELD_INT:
-         SET_FIELD_INT(f, pcounter_int(pc));
-         pcounter_move_int(&pc);
-         break;
-      case FIELD_FLOAT:
-         SET_FIELD_FLOAT(f, pcounter_float(pc));
-         pcounter_move_float(&pc);
-         break;
-      case FIELD_NODE:
-         SET_FIELD_NODE(f, pcounter_node(pc));
-         pcounter_move_node(&pc);
-         break;
-      case FIELD_LIST:
-         if(*pc == 0) {
-            pc++;
-            SET_FIELD_CONS(f, runtime::cons::null_list());
-         } else if(*pc == 1) {
-            pc++;
-            list_type *lt((list_type*)t);
-            tuple_field head(axiom_read_data(pc, lt->get_subtype()));
-            tuple_field tail(axiom_read_data(pc, t));
-            runtime::cons *c(FIELD_CONS(tail));
-            runtime::cons *nc(cons::create(c, head, lt));
-            SET_FIELD_CONS(f, nc);
-         } else {
-            assert(false);
-         }
-         break;
-
-      default: assert(false);
-   }
-
-   return f;
-}
-
-static inline void
-tuple_set_field(vm::tuple *tpl, vm::type *t, const field_num i, const tuple_field field)
-{
-   switch(t->get_type()) {
-      case FIELD_LIST:
-         tpl->set_cons(i, FIELD_CONS(field));
-         break;
-      case FIELD_STRUCT:
-         tpl->set_struct(i, FIELD_STRUCT(field));
-         break;
-      case FIELD_NODE:
-         tpl->set_node(i, FIELD_NODE(field));
-         break;
-      case FIELD_INT:
-      case FIELD_FLOAT:
-         tpl->set_field(i, field);
-         break;
-      case FIELD_STRING:
-         tpl->set_string(i, FIELD_STRING(field));
-         break;
-      default:
-         throw vm_exec_error("don't know how to handle this type (execute_new_axioms)");
-   }
-}
-
 static inline void
 execute_new_axioms(db::node *node, pcounter pc, state& state)
 {
    const pcounter end(pc + new_axioms_jump(pc));
    pc += NEW_AXIOMS_BASE;
 
-   while(pc < end) {
-      // read axions until the end!
-      predicate_id pid(predicate_get(pc, 0));
-      predicate *pred(theProgram->get_predicate(pid));
-      tuple *tpl(vm::tuple::create(pred));
-#ifdef FACT_STATISTICS
-   state.facts_derived++;
-#endif
-
-      pc++;
-
-      for(size_t i(0), num_fields(pred->num_fields());
-            i != num_fields;
-            ++i)
-      {
-         tuple_field field(axiom_read_data(pc, pred->get_field_type(i)));
-
-         tuple_set_field(tpl, pred->get_field_type(i), i, field);
-      }
-
-      if(pred->is_action_pred())
-         execute_run_action0(tpl, pred, state);
-      else if(pred->is_reused_pred() || pred->is_persistent_pred())
-         execute_add_persistent0(node, tpl, pred, state);
-      else
-         execute_add_linear0(node, tpl, pred, state);
-   }
+   add_new_axioms(state, node, pc, end, false);
 }
 
 static inline bool
@@ -2078,8 +1900,7 @@ execute_mvconstfieldr(pcounter& pc, state& state)
    predicate *pred(state.preds[val_field_reg(pc + instr_size + const_id_size)]);
    tuple *tuple(get_tuple_field(state, pc + instr_size + const_id_size));
 
-   tuple->set_field(field, All->get_const(id));
-   do_increment_runtime(tuple->get_field(field), pred->get_field_type(field)->get_type());
+   tuple->set_field_ref(field, All->get_const(id), pred, state.gc_nodes);
 }
 
 static inline void
@@ -3869,15 +3690,10 @@ static inline return_type
 do_execute(byte_code code, state& state, const reg_num reg, vm::tuple *tpl, predicate *pred)
 {
    assert(state.stack.empty());
-   assert(state.removed.empty());
-
-   state.hash_removes = false;
-   state.generated_facts = false;
 
    const return_type ret(execute((pcounter)code, state, reg, tpl, pred));
 
    state.cleanup();
-   assert(state.removed.empty());
    assert(state.stack.empty());
    return ret;
 }

@@ -40,7 +40,7 @@ const size_t INIT_THREAD_PREDICATE_ID(1);
 
 class program
 {
-private:
+public:
 
    const std::string filename;
    uint32_t major_version, minor_version;
@@ -50,9 +50,9 @@ private:
    std::vector<import*, mem::allocator<import*>> imported_predicates;
    std::vector<std::string, mem::allocator<std::string>> exported_predicates;
 
-	size_t num_args;
-   size_t number_rules;
-   size_t number_rules_uint;
+	size_t num_args{0};
+   size_t number_rules{0};
+   size_t number_rules_uint{0};
 
    std::vector<rule*, mem::allocator<rule*>> rules;
 
@@ -60,48 +60,46 @@ private:
    
    std::vector<predicate*, mem::allocator<predicate*>> predicates;
    std::vector<predicate*, mem::allocator<predicate*>> sorted_predicates;
-   size_t num_predicates_uint;
+   size_t num_predicates_uint{0};
   
    std::vector<byte_code, mem::allocator<byte_code>> code;
    std::vector<code_size_t, mem::allocator<code_size_t>> code_size;
 
-	code_size_t const_code_size;
-	byte_code const_code;
+	code_size_t const_code_size{0};
+	byte_code const_code{nullptr};
 	std::vector<type*, mem::allocator<type*>> const_types;
    
    std::vector<predicate*, mem::allocator<predicate*>> route_predicates;
    // predicates that are instantiated at the thread level
    std::vector<predicate*, mem::allocator<predicate*>> thread_predicates;
 
-   bool safe;
-   bool is_data_file;
+   bool safe{true};
+   bool is_data_file{false};
 
    rule *data_rule;
 
-   mutable predicate *init, *init_thread;
+   mutable predicate *init{nullptr}, *init_thread{nullptr};
 
    using string_store = 
       std::vector<runtime::rstring::ptr, mem::allocator<runtime::rstring::ptr>>;
 	
 	string_store default_strings;
 	
-   strat_level priority_strat_level;
+   strat_level priority_strat_level{0};
    vm::priority_type priority_order;
-   bool priority_static;
-   double initial_priority;
+   bool priority_static{false};
+   vm::priority_t initial_priority;
 
 #ifdef USE_REAL_NODES
    // node references in the byte code
-   std::vector<byte_code, mem::allocator<byte_code>> *node_references;
+   std::vector<byte_code, mem::allocator<byte_code>> *node_references{nullptr};
 #endif
 
-   size_t total_arguments;
+   size_t total_arguments{0};
 
    void print_predicate_code(std::ostream&, predicate*) const;
    void read_node_references(byte_code, code_reader&);
    
-public:
-
    using predicate_iterator =
       std::vector<predicate*, mem::allocator<predicate*>>::iterator;
 
@@ -113,7 +111,8 @@ public:
 
    inline void add_type(type *t) { types.push_back(t); }
    inline type* get_type(const size_t i) const { assert(i < types.size()); return types[i]; }
-   inline void add_predicate(vm::predicate *pred) { predicates.push_back(pred); }
+   inline void add_predicate(vm::predicate *pred) { predicates.push_back(pred); sorted_predicates.push_back(pred); }
+   void sort_predicates();
 
    inline size_t num_rules(void) const { return number_rules; }
    inline size_t num_rules_next_uint(void) const { return number_rules_uint; }
@@ -171,7 +170,6 @@ public:
       assert(id < num_predicates());
       return code[id];
    }
-   inline bool has_process(predicate *pred) const { return code_size[pred->get_id()] > 0; }
 	inline byte_code get_const_bytecode() const { return const_code; }
 	inline type* get_const_type(const const_id& id) const { return const_types[id]; }
    
@@ -194,8 +192,11 @@ public:
    void fix_node_address(db::node *);
 #endif
    void jit_compile();
+
+   static std::ifstream bypass_bytecode_header(const std::string&);
    
    explicit program(const std::string&);
+   explicit program(void); // add compiled program
    
    ~program(void);
 };

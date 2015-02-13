@@ -24,6 +24,8 @@ using namespace vm::instr;
 using namespace process;
 using namespace utils;
 
+extern void add_definitions(program*);
+
 namespace vm {
 
 all* All;     // global variable that holds pointer to vm
@@ -58,6 +60,27 @@ get_function_pointer(char *lib_path, char* func_name)
    }
 
    return (ptr_val)func;
+}
+
+program::program()
+{
+#ifdef COMPILED
+   add_definitions(this);
+#else
+   abort();
+#endif
+}
+
+ifstream
+program::bypass_bytecode_header(const string& filename)
+{
+   ifstream fp(filename.c_str(), ios::in | ios::binary);
+
+   fp.seekg(vm::MAGIC_SIZE, ios_base::cur); // skip magic
+   fp.seekg(2*sizeof(uint32_t), ios_base::cur); // skip version
+   
+   fp.seekg(sizeof(byte), ios_base::cur); // skip number of definitions
+   return fp;
 }
 
 program::program(const string& _filename):
@@ -110,7 +133,7 @@ program::program(const string& _filename):
    types.resize((size_t)ntypes);
 
    for(size_t i(0); i < num_types(); ++i)
-      types[i] = read_type_from_reader(read);
+      types[i] = read_type_from_reader(read, this);
 
    // read imported/exported predicates
    uint32_t number_imported_predicates;
@@ -303,12 +326,11 @@ program::program(const string& _filename):
       }
 
       pred->set_argument_position(total_arguments);
+      pred->has_code = code_size[i] > 0;
       total_arguments += pred->num_fields();
    }
 
-   // create 'sorted_predicates' from 'predicates'
-   sort(sorted_predicates.begin(), sorted_predicates.end(), [](predicate *a1, predicate *a2) {
-         return a1->get_name() < a2->get_name(); });
+   sort_predicates();
 
    safe = true;
    for(size_t i(0); i < num_predicates; ++i) {
@@ -415,30 +437,33 @@ program::program(const string& _filename):
 
 program::~program(void)
 {
-   for(size_t i(0); i < num_types(); ++i) {
-      delete types[i];
-   }
-   for(size_t i(0); i < num_predicates(); ++i) {
-      predicates[i]->destroy();
-      delete predicates[i];
-      delete []code[i];
-   }
 	for(size_t i(0); i < num_rules(); ++i) {
       rules[i]->destroy();
 		delete rules[i];
 	}
+   for(size_t i(0); i < num_types(); ++i)
+      delete types[i];
+   for(size_t i(0); i < num_predicates(); ++i) {
+      predicates[i]->destroy();
+      delete predicates[i];
+#ifndef COMPILED
+      delete []code[i];
+#endif
+   }
    if(data_rule != nullptr)
       delete data_rule;
    for(size_t i(0); i < functions.size(); ++i) {
       delete functions[i];
    }
-	delete []const_code;
+   if(const_code)
+      delete []const_code;
    for(size_t i(0); i < imported_predicates.size(); ++i) {
       delete imported_predicates[i];
    }
    MAX_STRAT_LEVEL = 0;
 #ifdef USE_REAL_NODES
-   delete []node_references;
+   if(node_references)
+      delete []node_references;
 #endif
    bitmap::destroy(thread_predicates_map, num_predicates_uint);
 }
@@ -465,9 +490,13 @@ program::read_node_references(byte_code code, code_reader& read)
 void
 program::fix_node_address(db::node *n)
 {
+#ifdef COMPILED
+   return;
+#else
    vector<byte_code, mem::allocator<byte_code>>& vec(node_references[n->get_id()]);
    for(byte_code code : vec)
       pcounter_set_node(code, (node_val)n);
+#endif
 }
 #endif
 
@@ -637,6 +666,13 @@ predicate*
 program::get_edge_predicate(void) const
 {
    return get_predicate_by_name("edge");
+}
+
+void
+program::sort_predicates()
+{
+   sort(sorted_predicates.begin(), sorted_predicates.end(), [](predicate *a1, predicate *a2) {
+         return a1->get_name() < a2->get_name(); });
 }
 
 bool

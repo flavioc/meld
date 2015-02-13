@@ -95,13 +95,8 @@ finish(void)
 }
 
 bool
-run_program(int argc, char **argv, const char *program, const vm::machine_arguments& margs, const char *data_file)
+run_program(machine& mac)
 {
-	assert(utils::file_exists(string(program)));
-	assert(num_threads > 0);
-   (void)argc;
-   (void)argv;
-
 	try {
       double start_time(0.0);
       execution_time tm;
@@ -110,8 +105,6 @@ run_program(int argc, char **argv, const char *program, const vm::machine_argume
       
       if(time_execution)
          tm.start();
-
-      machine mac(program, num_threads, margs, data_file == NULL ? string("") : string(data_file));
 
       mac.start();
 

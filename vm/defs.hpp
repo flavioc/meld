@@ -48,13 +48,13 @@ static_assert(sizeof(ptr_val) == sizeof(vm::node_val),
 static_assert(sizeof(ptr_val) == sizeof(void*),
       "ptr_val and void* must have the same size.");
 
-typedef union {
+union tuple_field {
    bool_val bool_field;
 	int_val int_field;
 	float_val float_field;
 	node_val node_field;
 	ptr_val ptr_field;
-} tuple_field;
+};
 
 #define FIELD_BOOL(F) ((F).bool_field)
 #define FIELD_INT(F) ((F).int_field)

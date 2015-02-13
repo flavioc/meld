@@ -106,11 +106,7 @@ void
 node::print(ostream& cout) const
 {
    cout << "--> node " << get_translated_id() << "/(id " << get_id()
-        << ") (" << this;
-#ifdef DYNAMIC_INDEXING
-   cout << "/" << rounds;
-#endif
-  cout << ") <--" << endl;
+        << ") <--" << endl;
    
    for(size_t i(0); i < theProgram->num_predicates(); ++i) {
       predicate *pred(theProgram->get_sorted_predicate(i));

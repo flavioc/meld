@@ -66,7 +66,7 @@ listcount(EXTERNAL_ARG(ls), EXTERNAL_ARG(i))
 }
 
 argument
-listexists(EXTERNAL_ARG(ls), EXTERNAL_ARG(i))
+lexists(EXTERNAL_ARG(ls), EXTERNAL_ARG(i))
 {
    DECLARE_LIST(ls);
    runtime::cons *p((runtime::cons *)ls);
@@ -113,7 +113,7 @@ listexists(EXTERNAL_ARG(ls), EXTERNAL_ARG(i))
 }
 
 argument
-listexistss(EXTERNAL_ARG(ls), EXTERNAL_ARG(other))
+lexistss(EXTERNAL_ARG(ls), EXTERNAL_ARG(other))
 {
    DECLARE_LIST(ls);
    if(runtime::cons::is_null(ls))
@@ -168,7 +168,7 @@ listexistss(EXTERNAL_ARG(ls), EXTERNAL_ARG(other))
 }
    
 argument
-listlength(EXTERNAL_ARG(ls))
+llength(EXTERNAL_ARG(ls))
 {
 	DECLARE_LIST(ls);
    int_val total(0);
@@ -222,7 +222,7 @@ intlistdiff(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
 }
 
 argument
-listnth(EXTERNAL_ARG(ls), EXTERNAL_ARG(v))
+lnth(EXTERNAL_ARG(ls), EXTERNAL_ARG(v))
 {
    DECLARE_LIST(ls);
    DECLARE_INT(v);
@@ -312,7 +312,7 @@ intlistsub(EXTERNAL_ARG(p), EXTERNAL_ARG(a), EXTERNAL_ARG(b))
 }
 
 argument
-listappend(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
+lappend(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
 {
    DECLARE_LIST(ls1);
    DECLARE_LIST(ls2);
@@ -347,7 +347,7 @@ listappend(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
 }
 
 argument
-listsort(EXTERNAL_ARG(ls))
+lsort(EXTERNAL_ARG(ls))
 {
    DECLARE_LIST(ls);
 
@@ -419,7 +419,7 @@ listsort(EXTERNAL_ARG(ls))
 }
 
 argument
-listremoveduplicates(EXTERNAL_ARG(ls))
+lremoveduplicates(EXTERNAL_ARG(ls))
 {
    DECLARE_LIST(ls);
 
@@ -509,7 +509,7 @@ str2intlist(EXTERNAL_ARG(str))
 }
 
 argument
-listreverse(EXTERNAL_ARG(ls))
+lreverse(EXTERNAL_ARG(ls))
 {
    DECLARE_LIST(ls);
    runtime::cons *p((runtime::cons *)ls);

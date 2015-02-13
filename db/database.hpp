@@ -45,7 +45,7 @@ public:
          "node_val must have the size of a pointer.");
 
    static const size_t node_size = sizeof(node::node_id) * 2;
-   size_t nodes_total;
+   size_t nodes_total{0};
    
    map_nodes::const_iterator nodes_begin(void) const { return nodes.begin(); }
    map_nodes::const_iterator nodes_end(void) const { return nodes.end(); }
@@ -79,7 +79,7 @@ public:
    
    void print(std::ostream&) const;
    
-   explicit database(const std::string&);
+   explicit database(std::ifstream&);
    
    void wipeout(vm::candidate_gc_nodes&);
 

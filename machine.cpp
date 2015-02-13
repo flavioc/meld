@@ -120,12 +120,16 @@ machine::slice_function(void)
 void
 machine::execute_const_code(void)
 {
+#ifdef COMPILED
+   return;
+#else
 	state st;
 	
 	// no node or tuple whatsoever
 	st.setup(nullptr, POSITIVE_DERIVATION, 0);
 	
 	execute_process(all->PROGRAM->get_const_bytecode(), st, nullptr, nullptr);
+#endif
 }
 
 void
@@ -244,25 +248,67 @@ machine::start(void)
 #endif
 }
 
-machine::machine(const string& file, const size_t th,
-		const machine_arguments& margs, const string& data_file):
-   all(new vm::all()),
-   filename(file)
+void
+machine::check_args(const machine_arguments& margs) const
+{
+   if(margs.size() < this->all->PROGRAM->num_args_needed())
+      throw machine_error(string("this program requires ") + utils::to_string(all->PROGRAM->num_args_needed()) + " arguments");
+}
+
+machine::machine(const size_t th, const machine_arguments& margs, const string& data_file)
 #ifdef INSTRUMENTATION
-   , alarm_thread(NULL)
-   , slices(th)
+   : slices(th)
 #endif
 {
+#ifdef COMPILED
+   init(margs);
+
+   theProgram = all->PROGRAM = new vm::program();
+
+   check_args(margs);
+   all->DATA_FILE = data_file;
+   ifstream fp(data_file.c_str(), ios::in | ios::binary);
+   all->DATABASE = new database(fp);
+   setup_threads(th);
+#endif
+}
+
+void
+machine::setup_threads(const size_t th)
+{
+   this->all->NUM_THREADS = th;
+   this->all->NUM_THREADS_NEXT_UINT = next_multiple_of_uint(th);
+   this->all->MACHINE = this;
+   this->all->SCHEDS.resize(th, NULL);
+
+    nodes_per_thread = total_nodes() / num_threads;
+    if(nodes_per_thread * num_threads < total_nodes())
+       nodes_per_thread++;
+}
+
+void
+machine::init(const machine_arguments& margs)
+{
    mem::ensure_pool();
+   All = all = new vm::all();
 
    init_types();
    init_external_functions();
+   all->set_arguments(margs);
+}
 
+machine::machine(const string& file, const size_t th,
+		const machine_arguments& margs, const string& data_file):
+   filename(file)
+#ifdef INSTRUMENTATION
+   , slices(th)
+#endif
+{
+   init(margs);
    bool added_data_file(false);
 
-   All = all;
-   this->all->PROGRAM = new vm::program(file);
-   theProgram = this->all->PROGRAM;
+   theProgram = all->PROGRAM = new vm::program(file);
+
    if(this->all->PROGRAM->is_data())
       throw machine_error(string("cannot run data files"));
    if(data_file != string("")) {
@@ -277,19 +323,11 @@ machine::machine(const string& file, const size_t th,
       }
    }
 
-   if(margs.size() < this->all->PROGRAM->num_args_needed())
-      throw machine_error(string("this program requires ") + utils::to_string(all->PROGRAM->num_args_needed()) + " arguments");
-
-   this->all->set_arguments(margs);
-   this->all->DATABASE = new database(added_data_file ? data_file : filename);
-   this->all->NUM_THREADS = th;
-   this->all->NUM_THREADS_NEXT_UINT = next_multiple_of_uint(th);
-   this->all->MACHINE = this;
-   this->all->SCHEDS.resize(th, NULL);
-
-    nodes_per_thread = total_nodes() / num_threads;
-    if(nodes_per_thread * num_threads < total_nodes())
-       nodes_per_thread++;
+   check_args(margs);
+   ifstream fp(program::bypass_bytecode_header(added_data_file ? data_file : filename));
+   all->DATABASE = new database(fp);
+   fp.close();
+   setup_threads(th);
 }
 
 machine::~machine(void)

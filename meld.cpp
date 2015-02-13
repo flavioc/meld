@@ -78,6 +78,8 @@ read_arguments(int argc, char **argv)
          }
          break;
          case 'c': {
+            if(argc < 2)
+               help();
             parse_sched(argv[1]);
             argc--;
             argv++;
@@ -146,7 +148,8 @@ main(int argc, char **argv)
 	}
 	
    try {
-      run_program(argc, argv, program, margs, data_file);
+      machine mac(program, num_threads, margs, data_file == NULL ? string("") : string(data_file));
+      run_program(mac);
    } catch(vm::load_file_error& err) {
       cerr << "File error: " << err.what() << endl;
       exit(EXIT_FAILURE);

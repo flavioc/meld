@@ -78,6 +78,7 @@ ifeq ($(JIT), true)
 	FLAGS += -DJIT
 	LIBS += -L /usr/local/lib/x86_64/ -ljit
 endif
+target: FLAGS += -DCOMPILED
 
 WARNINGS = -Wall -Wextra
 
@@ -173,6 +174,11 @@ Makefile.externs:	conf.mk
 
 meld: $(OBJS) meld.o
 	$(COMPILE) meld.o -o meld $(LDFLAGS)
+
+.PHONY: target
+target: $(OBJS) $(PROGRAM)
+	$(CXX) $(CXXFLAGS) -c $(PROGRAM) -o $(patsubst %.cpp,%.o,$(PROGRAM))
+	$(COMPILE) $(patsubst %.cpp,%.o,$(PROGRAM)) target.cpp -o target $(LDFLAGS)
 
 print: $(OBJS) print.o
 	$(COMPILE) print.o -o print $(LDFLAGS)

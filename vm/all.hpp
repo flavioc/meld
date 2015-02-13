@@ -34,6 +34,7 @@ class all
    std::vector<sched::threads_sched*> SCHEDS;
 	machine_arguments ARGS;
    std::vector<runtime::rstring::ptr> ARGUMENTS;
+   std::string DATA_FILE;
 #ifdef INSTRUMENTATION
    std::vector<mem::pool*> THREAD_POOLS;
 #endif

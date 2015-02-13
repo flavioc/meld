@@ -12,8 +12,12 @@ using namespace std;
 using namespace runtime;
 using namespace utils;
 
+//#define DEBUG_DB
 //#define DEBUG_RULES
 //#define DEBUG_INDEXING
+
+extern void run_rule(state *s, db::node *n, db::node *t, size_t);
+extern void run_predicate(state *s, vm::tuple *, db::node *n, db::node *t, const vm::predicate_id);
 
 namespace vm
 {
@@ -59,7 +63,6 @@ void
 state::cleanup(void)
 {
    purge_runtime_objects();
-   removed.clear();
 }
 
 void
@@ -231,7 +234,7 @@ state::add_to_aggregate(db::node *node, full_tuple *stpl)
 }
 
 void
-state::process_persistent_tuple(db::node *node, full_tuple *stpl, vm::tuple *tpl)
+state::process_persistent_tuple(db::node *target_node, full_tuple *stpl, vm::tuple *tpl)
 {
    predicate *pred(stpl->get_predicate());
 
@@ -247,17 +250,21 @@ state::process_persistent_tuple(db::node *node, full_tuple *stpl, vm::tuple *tpl
 #ifdef CORE_STATISTICS
                execution_time::scope s(stat.db_insertion_time_predicate[pred->get_id()]);
 #endif
-               is_new = node->pers_store.add_tuple(tpl, pred, depth);
+               is_new = target_node->pers_store.add_tuple(tpl, pred, depth);
             }
 
             if(is_new) {
                setup(pred, POSITIVE_DERIVATION, stpl->get_depth());
-               if(theProgram->has_process(pred))
+               if(pred->has_code)
+#ifdef COMPILED
+                  run_predicate(this, tpl, node, sched->thread_node, pred->get_id());
+#else
                   execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
+#endif
             }
 
             if(pred->is_reused_pred())
-               node->add_linear_fact(stpl->get_tuple(), pred);
+               target_node->add_linear_fact(stpl->get_tuple(), pred);
             else {
                matcher->new_persistent_fact(pred);
 
@@ -271,17 +278,25 @@ state::process_persistent_tuple(db::node *node, full_tuple *stpl, vm::tuple *tpl
      case NEGATIVE_DERIVATION:
          if(pred->is_reused_pred()) {
             setup(pred, NEGATIVE_DERIVATION, stpl->get_depth());
-            if(theProgram->has_process(pred))
+            if(pred->has_code)
+#ifdef COMPILED
+               run_predicate(this, tpl, node, sched->thread_node, pred->get_id());
+#else
                execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
+#endif
          } else {
-            auto deleter(node->pers_store.delete_tuple(tpl, pred, stpl->get_depth()));
+            auto deleter(target_node->pers_store.delete_tuple(tpl, pred, stpl->get_depth()));
 
             if(!deleter.is_valid()) {
                // do nothing... it does not exist
             } else if(deleter.to_delete()) { // to be removed
                setup(pred, NEGATIVE_DERIVATION, stpl->get_depth());
-               if(theProgram->has_process(pred))
+               if(pred->has_code)
+#ifdef COMPILED
+                  run_predicate(this, tpl, node, sched->thread_node, pred->get_id());
+#else
                   execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
+#endif
                deleter.perform_delete(pred, gc_nodes);
             } else if(pred->is_cycle_pred()) {
                depth_counter *dc(deleter.get_depth_counter());
@@ -291,8 +306,12 @@ state::process_persistent_tuple(db::node *node, full_tuple *stpl, vm::tuple *tpl
                   deleter.delete_depths_above(stpl->get_depth());
                   if(deleter.to_delete()) {
                      setup(pred, stpl->get_dir(), stpl->get_depth());
-                     if(theProgram->has_process(pred))
+                     if(pred->has_code)
+#ifdef COMPILED
+                        run_predicate(this, tpl, node, sched->thread_node, pred->get_id());
+#else
                         execute_process(theProgram->get_predicate_bytecode(pred->get_id()), *this, tpl, pred);
+#endif
                      deleter.perform_delete(pred, gc_nodes);
                   }
                }
@@ -604,6 +623,9 @@ state::run_node(db::node *node)
    cout << "===                                                         ===\n";
    cout << "===                  NODE " << node->get_id() << "                                ===\n";
    cout << "===                                                         ===\n";
+#ifdef DEBUG_DB
+   node->print(cout);
+#endif
    cout << "===============================================================\n";
 #endif
 
@@ -647,7 +669,12 @@ state::run_node(db::node *node)
 #endif
 
 		setup(nullptr, POSITIVE_DERIVATION, 0);
+      generated_facts = false;
+#ifdef COMPILED
+      run_rule(this, node, sched->thread_node, rule);
+#else
 		execute_rule(rule, *this);
+#endif
 
       // move from generated tuples to linear store
       if(generated_facts) {
@@ -673,6 +700,10 @@ state::run_node(db::node *node)
          node->unprocessed_facts = true;
          break;
       }
+
+#ifdef DEBUG_DB
+      node->print(cout);
+#endif
 	}
 
    // unmark all thread facts and save state in 'thread_node'.

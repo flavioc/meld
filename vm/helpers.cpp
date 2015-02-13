@@ -1,12 +1,25 @@
 
 static inline void
+execute_add_linear0(db::node *node, tuple *tuple, predicate *pred, state& state)
+{
+#ifdef DEBUG_SENDS
+   std::cout << "\tadd linear ";
+   tuple->print(std::cout, pred);
+   std::cout << std::endl;
+#endif
+
+   node->add_linear_fact(tuple, pred);
+   state.linear_facts_generated++;
+}
+
+static inline void
 execute_enqueue_linear0(db::node *node, vm::tuple *tuple, predicate *pred, state& state)
 {
    assert(pred->is_linear_pred());
 #ifdef DEBUG_SENDS
-   cout << "\tenqueue ";
-   tuple->print(cout, pred);
-   cout << endl;
+   std::cout << "\tenqueue ";
+   tuple->print(std::cout, pred);
+   std::cout << std::endl;
 #endif
 
    node->store.add_generated(tuple, pred);
@@ -18,9 +31,9 @@ static inline void
 execute_add_persistent0(db::node *node, vm::tuple *tpl, predicate *pred, state& state)
 {
 #ifdef DEBUG_SENDS
-   cout << "\tadd persistent ";
-   tpl->print(cout, pred);
-   cout << endl;
+   std::cout << "\tadd persistent ";
+   tpl->print(std::cout, pred);
+   std::cout << std::endl;
 #endif
 
    assert(pred->is_persistent_pred() || pred->is_reused_pred());
@@ -83,18 +96,13 @@ execute_send0(db::node *node, const vm::node_val dest_val, vm::tuple *tuple, vm:
 #endif
 
 #ifdef DEBUG_SENDS
-   {
-      MUTEX_LOCK_GUARD(print_mtx, print_lock);
-      ostringstream ss;
-      node_val print_val(dest_val);
+   vm::node_val print_val(dest_val);
 #ifdef USE_REAL_NODES
-      print_val = ((db::node*)print_val)->get_id();
+   print_val = ((db::node*)print_val)->get_id();
 #endif
-      ss << "\t";
-      tuple->print(ss, pred);
-      ss << " " << (state.direction == POSITIVE_DERIVATION ? "+" : "-") << " -> " << print_val << " (" << state.depth << ")" << endl;
-      cout << ss.str();
-   }
+   std::cout << "\tsend ";
+   tuple->print(std::cout, pred);
+   std::cout << " to " << print_val << std::endl;
 #endif
 #ifdef USE_REAL_NODES
    if(node == (db::node*)dest_val)
@@ -102,6 +110,10 @@ execute_send0(db::node *node, const vm::node_val dest_val, vm::tuple *tuple, vm:
    if(state.node->get_id() == dest_val)
 #endif
    {
+      std::cout << "\tlocal send ";
+      tuple->print(std::cout, pred);
+      std::cout << std::endl;
+
       // same node
       if(pred->is_action_pred())
          execute_run_action0(tuple, pred, state);
@@ -135,3 +147,118 @@ execute_send0(db::node *node, const vm::node_val dest_val, vm::tuple *tuple, vm:
    }
 }
 
+static inline tuple_field
+axiom_read_data(pcounter& pc, type *t, const bool lookup_nodes)
+{
+   tuple_field f;
+
+   switch(t->get_type()) {
+      case FIELD_INT:
+         SET_FIELD_INT(f, vm::instr::pcounter_int(pc));
+         vm::instr::pcounter_move_int(&pc);
+         break;
+      case FIELD_FLOAT:
+         SET_FIELD_FLOAT(f, vm::instr::pcounter_float(pc));
+         vm::instr::pcounter_move_float(&pc);
+         break;
+      case FIELD_NODE: {
+         vm::node_val val(vm::instr::pcounter_node(pc));
+#ifdef USE_REAL_NODES
+         if(lookup_nodes)
+            val = (vm::node_val)All->DATABASE->find_node(val);
+#endif
+         SET_FIELD_NODE(f, val);
+         vm::instr::pcounter_move_node(&pc);
+      }
+      break;
+      case FIELD_LIST:
+         if(*pc == 0) {
+            pc++;
+            SET_FIELD_CONS(f, runtime::cons::null_list());
+         } else if(*pc == 1) {
+            pc++;
+            list_type *lt((list_type*)t);
+            tuple_field head(axiom_read_data(pc, lt->get_subtype(), lookup_nodes));
+            tuple_field tail(axiom_read_data(pc, t, lookup_nodes));
+            runtime::cons *c(FIELD_CONS(tail));
+            runtime::cons *nc(runtime::cons::create(c, head, lt));
+            SET_FIELD_CONS(f, nc);
+         } else {
+            assert(false);
+         }
+         break;
+
+      default: assert(false);
+   }
+
+   return f;
+}
+
+static inline void
+tuple_set_field(vm::tuple *tpl, vm::type *t, const field_num i, const tuple_field field)
+{
+   switch(t->get_type()) {
+      case FIELD_LIST:
+         tpl->set_cons(i, FIELD_CONS(field));
+         break;
+      case FIELD_STRUCT:
+         tpl->set_struct(i, FIELD_STRUCT(field));
+         break;
+      case FIELD_NODE:
+         tpl->set_node(i, FIELD_NODE(field));
+         break;
+      case FIELD_INT:
+      case FIELD_FLOAT:
+         tpl->set_field(i, field);
+         break;
+      case FIELD_STRING:
+         tpl->set_string(i, FIELD_STRING(field));
+         break;
+      default:
+         abort();
+         break;
+   }
+}
+
+static inline void
+add_new_axioms(state& state, db::node *node, pcounter pc, const pcounter end, const bool lookup_nodes)
+{
+   while(pc < end) {
+      // read axions until the end!
+      predicate_id pid(vm::instr::predicate_get(pc, 0));
+      predicate *pred(theProgram->get_predicate(pid));
+      tuple *tpl(vm::tuple::create(pred));
+#ifdef FACT_STATISTICS
+      state.facts_derived++;
+#endif
+
+      pc++;
+
+      for(size_t i(0), num_fields(pred->num_fields());
+            i != num_fields;
+            ++i)
+      {
+         tuple_field field(axiom_read_data(pc, pred->get_field_type(i), lookup_nodes));
+
+         tuple_set_field(tpl, pred->get_field_type(i), i, field);
+      }
+
+      if(pred->is_action_pred())
+         execute_run_action0(tpl, pred, state);
+      else if(pred->is_reused_pred() || pred->is_persistent_pred())
+         execute_add_persistent0(node, tpl, pred, state);
+      else
+         execute_add_linear0(node, tpl, pred, state);
+   }
+}
+
+static inline void
+read_new_axioms(state& state, db::node *node, const size_t start, const size_t len)
+{
+   std::ifstream fp(All->DATA_FILE.c_str(), std::ios::in | std::ios::binary);
+   fp.seekg(start, std::ios_base::cur);
+   utils::byte data[len];
+   fp.read((char*)data, sizeof(utils::byte)*len);
+   add_new_axioms(state, node, data, data + len, true);
+   fp.close();
+}

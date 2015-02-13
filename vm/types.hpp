@@ -104,7 +104,8 @@ class list_type: public type
          type(FIELD_LIST), sub_type(_sub_type)
       {}
 
-      virtual ~list_type(void) { delete sub_type; }
+      // sub types must be deleted elsewhere.
+      virtual ~list_type(void) { }
 };
 
 class struct_type: public type
@@ -165,6 +166,19 @@ class struct_type: public type
          types.resize(_size);
       }
 
+      explicit struct_type(const std::vector<type*>& _types):
+         type(FIELD_STRUCT),
+         types(_types)
+      {
+         for(type *t : types) {
+            if(reference_type(t->get_type())) {
+               simple = false;
+               break;
+            }
+         }
+      }
+
+      // sub types must be deleted elsewhere.
       virtual ~struct_type(void)
       {
       }
@@ -202,6 +216,7 @@ class array_type: public type
          base(_base)
       {}
 
+      // sub types must be deleted elsewhere.
       virtual ~array_type()
       {}
 };
