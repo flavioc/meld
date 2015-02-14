@@ -564,14 +564,6 @@ threads_sched::init(const size_t)
    }
 
    threads_synchronize();
-
-#ifdef JIT
-   if(id == 0) {
-      theProgram->jit_compile();
-   }
-
-   threads_synchronize();
-#endif
 }
 
 #ifdef INSTRUMENTATION

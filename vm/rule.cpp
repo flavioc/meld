@@ -4,7 +4,6 @@
 #include "vm/predicate.hpp"
 #include "vm/program.hpp"
 #include "vm/instr.hpp"
-#include "jit/build.hpp"
 
 using namespace std;
 
@@ -34,9 +33,6 @@ rule::print(ostream& out, const vm::program *const prog) const
 void
 rule::jit_compile()
 {
-#ifdef JIT
-   jit::jit_compile(code, code_size);
-#endif
 }
 
 }

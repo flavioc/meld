@@ -8,6 +8,7 @@
 #include "vm/state.hpp"
 #include "vm/defs.hpp"
 #include "vm/instr.hpp"
+#include "incbin.h"
 
 namespace vm
 {

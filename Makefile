@@ -74,10 +74,6 @@ endif
 ifeq ($(GC_NODES), true)
 	FLAGS += -DGC_NODES
 endif
-ifeq ($(JIT), true)
-	FLAGS += -DJIT
-	LIBS += -L /usr/local/lib/x86_64/ -ljit
-endif
 target: FLAGS += -DCOMPILED
 
 WARNINGS = -Wall -Wextra
@@ -151,9 +147,6 @@ ifeq ($(INSTRUMENTATION), true)
 endif
 ifeq ($(CORE_STATISTICS), true)
 	SRCS += vm/stat.cpp
-endif
-ifeq ($(JIT), true)
-	SRCS += jit/build.cpp
 endif
 
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))

@@ -15,7 +15,6 @@
 #include "vm/priority.hpp"
 #include "interface.hpp"
 #include "version.hpp"
-#include "jit/build.hpp"
 
 using namespace std;
 using namespace db;

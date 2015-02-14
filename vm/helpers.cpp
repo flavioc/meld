@@ -252,11 +252,11 @@ add_new_axioms(state& state, db::node *node, pcounter pc, const pcounter end, co
    }
 }
 
+INCBIN_EXTERN(Axioms);
+
 static inline void
 read_new_axioms(state& state, db::node *node, const size_t start, const size_t len)
 {
-   state.data_fp.seekg(start, std::ios_base::beg);
-   utils::byte data[len];
-   state.data_fp.read((char*)data, sizeof(utils::byte)*len);
+   utils::byte *data = ((utils::byte*)gAxiomsData) + start;
    add_new_axioms(state, node, data, data + len, true);
 }
