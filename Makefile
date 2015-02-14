@@ -20,6 +20,9 @@ else
 	DEBUG = -g
 	OPTIMIZATIONS = -O0
 endif
+ifeq ($(DEBUG_RULES), true)
+	FLAGS += -DDEBUG_RULES -DDEBUG_SENDS -DDEBUG_ITERS -DDEBUG_REMOVE
+endif
 ifeq ($(FREE_OBJS), true)
 	FLAGS += -DFREE_OBJS
 endif

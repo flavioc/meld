@@ -102,9 +102,6 @@ public:
    uint64_t facts_consumed{0};
    uint64_t facts_sent{0};
 #endif
-#ifdef COMPILED
-   std::ifstream data_fp;
-#endif
 
 #define define_get(WHAT, RET, BODY) \
    inline RET get_ ## WHAT (const reg_num& num) const { BODY; }

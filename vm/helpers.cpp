@@ -252,6 +252,7 @@ add_new_axioms(state& state, db::node *node, pcounter pc, const pcounter end, co
    }
 }
 
+#ifdef COMPILED
 INCBIN_EXTERN(Axioms);
 
 static inline void
@@ -260,3 +261,5 @@ read_new_axioms(state& state, db::node *node, const size_t start, const size_t l
    utils::byte *data = ((utils::byte*)gAxiomsData) + start;
    add_new_axioms(state, node, data, data + len, true);
 }
+
+#endif

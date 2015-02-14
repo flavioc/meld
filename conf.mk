@@ -17,6 +17,8 @@ USE_ADDRESSES = true
 TASK_STEALING = true
 # enable node collection if the node is no longer referenced anywhere.
 GC_NODES = true
+# Activate debugging for rules and derivations.
+DEBUG_RULES = false
 
 # statistics flags.
 FACT_STATISTICS = false

@@ -13,7 +13,6 @@ using namespace runtime;
 using namespace utils;
 
 //#define DEBUG_DB
-//#define DEBUG_RULES
 //#define DEBUG_INDEXING
 
 extern void run_rule(state *s, db::node *n, db::node *t, size_t);
@@ -769,9 +768,6 @@ state::state(sched::threads_sched *_sched):
 #ifdef CORE_STATISTICS
    , stat()
 #endif
-#ifdef COMPILED
-   , data_fp(All->DATA_FILE.c_str(), ios::in | ios::binary)
-#endif
 {
    match_counter = create_counter(theProgram->get_total_arguments());
 #ifdef DYNAMIC_INDEXING
@@ -803,9 +799,6 @@ state::~state(void)
    }
    for(utils::byte *obj : allocated_match_objects)
       mem::allocator<utils::byte>().deallocate(obj, MATCH_OBJECT_SIZE * All->NUM_THREADS);
-#ifdef COMPILED
-   data_fp.close();
-#endif
 }
 
 }

@@ -14,17 +14,8 @@
 #include "utils/mutex.hpp"
 #include "thread/threads.hpp"
 #include "vm/priority.hpp"
-#ifdef USE_JIT
-#include "jit/build.hpp"
-#endif
 
-#if 0
-#define DEBUG_RULES
-#define DEBUG_INSTRS
-#define DEBUG_SENDS
-#define DEBUG_REMOVE
-#define DEBUG_ITERS
-#endif
+//#define DEBUG_INSTRS
 
 #define COMPUTED_GOTOS
 

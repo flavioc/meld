@@ -12,7 +12,7 @@ using namespace utils;
 namespace db
 {
    
-database::database(ifstream& fp)
+database::database(istream& fp)
 {
    int_val num_nodes;
    node::node_id fake_id;

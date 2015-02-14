@@ -2,6 +2,7 @@
 #include <signal.h>
 #include <unistd.h>
 
+#include "incbin.h"
 #include "machine.hpp"
 #include "vm/program.hpp"
 #include "vm/state.hpp"
@@ -255,7 +256,11 @@ machine::check_args(const machine_arguments& margs) const
       throw machine_error(string("this program requires ") + utils::to_string(all->PROGRAM->num_args_needed()) + " arguments");
 }
 
-machine::machine(const size_t th, const machine_arguments& margs, const string& data_file)
+#ifdef COMPILED
+INCBIN_EXTERN(Axioms);
+#endif
+
+machine::machine(const size_t th, const machine_arguments& margs)
 #ifdef INSTRUMENTATION
    : slices(th)
 #endif
@@ -266,9 +271,8 @@ machine::machine(const size_t th, const machine_arguments& margs, const string& 
    theProgram = all->PROGRAM = new vm::program();
 
    check_args(margs);
-   all->DATA_FILE = data_file;
-   ifstream fp(data_file.c_str(), ios::in | ios::binary);
-   all->DATABASE = new database(fp);
+   std::istrstream iss(compiled_database_stream());
+   all->DATABASE = new database(iss);
    setup_threads(th);
 #endif
 }

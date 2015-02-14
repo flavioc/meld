@@ -79,7 +79,7 @@ public:
    
    void print(std::ostream&) const;
    
-   explicit database(std::ifstream&);
+   explicit database(std::istream&);
    
    void wipeout(vm::candidate_gc_nodes&);
 

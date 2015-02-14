@@ -4,6 +4,7 @@
 
 #include <stdexcept>
 #include <vector>
+#include <strstream>
 
 #include "vm/state.hpp"
 #include "vm/defs.hpp"
@@ -29,5 +30,9 @@ class vm_exec_error : public std::runtime_error {
 };
 
 }
+
+#ifdef COMPILED
+std::istrstream compiled_database_stream();
+#endif
 
 #endif
