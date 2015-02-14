@@ -1,0 +1,10 @@
+
+type linear a(node, int).
+type linear b(node, int).
+type linear added(node, int).
+
+a(@0, 1).
+
+a(A, N), N > 100000 -o 1.
+a(A, N) -o b(A, N + 1), added(A, N + 1).
+b(A, N) -o a(A, N + 1), added(A, N + 1).

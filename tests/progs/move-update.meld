@@ -1,0 +1,6 @@
+
+type linear a(node, list int, int).
+
+a(@0, [1, 2, 3, 0], 1).
+
+a(A, L, 1) -o a(A, lsort(L), 0).

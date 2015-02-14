@@ -1,0 +1,6 @@
+
+type linear a(node, list float).
+
+const ls = [1.2, 2.5, 3.1].
+
+a(@0, ls).
