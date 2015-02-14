@@ -110,9 +110,11 @@ execute_send0(db::node *node, const vm::node_val dest_val, vm::tuple *tuple, vm:
    if(state.node->get_id() == dest_val)
 #endif
    {
+#ifdef DEBUG_SENDS
       std::cout << "\tlocal send ";
       tuple->print(std::cout, pred);
       std::cout << std::endl;
+#endif
 
       // same node
       if(pred->is_action_pred())
