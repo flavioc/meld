@@ -255,10 +255,8 @@ add_new_axioms(state& state, db::node *node, pcounter pc, const pcounter end, co
 static inline void
 read_new_axioms(state& state, db::node *node, const size_t start, const size_t len)
 {
-   std::ifstream fp(All->DATA_FILE.c_str(), std::ios::in | std::ios::binary);
-   fp.seekg(start, std::ios_base::cur);
+   state.data_fp.seekg(start, std::ios_base::beg);
    utils::byte data[len];
-   fp.read((char*)data, sizeof(utils::byte)*len);
+   state.data_fp.read((char*)data, sizeof(utils::byte)*len);
    add_new_axioms(state, node, data, data + len, true);
-   fp.close();
 }
