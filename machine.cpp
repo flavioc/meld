@@ -249,13 +249,6 @@ machine::start(void)
 #endif
 }
 
-void
-machine::check_args(const machine_arguments& margs) const
-{
-   if(margs.size() < this->all->PROGRAM->num_args_needed())
-      throw machine_error(string("this program requires ") + utils::to_string(all->PROGRAM->num_args_needed()) + " arguments");
-}
-
 #ifdef COMPILED
 INCBIN_EXTERN(Axioms);
 #endif
@@ -270,10 +263,12 @@ machine::machine(const size_t th, const machine_arguments& margs)
 
    theProgram = all->PROGRAM = new vm::program();
 
-   check_args(margs);
    std::istrstream iss(compiled_database_stream());
    all->DATABASE = new database(iss);
    setup_threads(th);
+#else
+   (void)th;
+   (void)margs;
 #endif
 }
 
@@ -327,7 +322,7 @@ machine::machine(const string& file, const size_t th,
       }
    }
 
-   check_args(margs);
+   all->check_arguments(theProgram->num_args_needed());
    ifstream fp(program::bypass_bytecode_header(added_data_file ? data_file : filename));
    all->DATABASE = new database(fp);
    fp.close();

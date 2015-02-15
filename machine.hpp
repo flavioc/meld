@@ -36,7 +36,6 @@ private:
    void slice_function(void);
    void set_timer(void);
    void setup_threads(const size_t);
-   void check_args(const vm::machine_arguments&) const;
    void init(const vm::machine_arguments&);
 
    inline size_t total_nodes(void) const
@@ -75,13 +74,6 @@ public:
    explicit machine(const size_t, const vm::machine_arguments&);
                
    ~machine(void);
-};
-
-class machine_error : public std::runtime_error {
- public:
-    explicit machine_error(const std::string& msg) :
-         std::runtime_error(msg)
-    {}
 };
 
 }

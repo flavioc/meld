@@ -1579,25 +1579,15 @@ execute_new_axioms(db::node *node, pcounter pc, state& state)
 static inline bool
 perform_remote_update(utils::intrusive_list<vm::tuple> *local_tuples, predicate *pred_target, const size_t common, tuple_field *regs, state& state)
 {
-   tuple *match_tuple{nullptr};
-   bool found{false};
    for(auto it(local_tuples->begin()), end(local_tuples->end()); it != end; it++) {
-      match_tuple = *it;
-      bool ok{true};
+      tuple *match_tuple(*it);
       for(size_t i(0); i < common; ++i) {
          vm::type *t(pred_target->get_field_type(i));
          match_field m = {true, t, regs[i]};
-         if(!do_rec_match(m, match_tuple->get_field(i), t)) {
-            ok = false;
-            break;
-         }
+         if(!do_rec_match(m, match_tuple->get_field(i), t))
+            goto continue2;
       }
-      if(ok) {
-         found = true;
-         break;
-      }
-   }
-   if(found && match_tuple) {
+
       // update tuple.
       for(size_t i(common); i < pred_target->num_fields(); ++i) {
          const tuple_field old(match_tuple->get_field(i));
@@ -1607,6 +1597,8 @@ perform_remote_update(utils::intrusive_list<vm::tuple> *local_tuples, predicate 
             runtime::do_decrement_runtime(old, ftype->get_type(), state.gc_nodes);
       }
       return true;
+
+continue2: continue;
    }
    return false;
 }

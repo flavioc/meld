@@ -3,13 +3,26 @@
 #define VM_ALL_HPP
 
 #include "vm/program.hpp"
+#include "utils/utils.hpp"
 
 #define MAX_CONSTS 32
 
 // forward declaration
 namespace db { class database; }
-namespace process { class machine; }
 namespace sched { class threads_sched; }
+
+namespace process {
+
+class machine;
+
+class machine_error : public std::runtime_error {
+ public:
+    explicit machine_error(const std::string& msg) :
+         std::runtime_error(msg)
+    {}
+};
+
+}
 
 namespace vm
 {
@@ -81,6 +94,12 @@ class all
       for(size_t i(0); i < args.size(); ++i) {
          ARGUMENTS[i] = nullptr;
       }
+   }
+
+   inline void check_arguments(const size_t needed)
+   {
+      if(ARGUMENTS.size() < needed)
+         throw process::machine_error(std::string("this program requires ") + utils::to_string(needed) + " arguments");
    }
 	
    explicit all(void) {}

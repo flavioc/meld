@@ -485,17 +485,13 @@ program::read_node_references(byte_code code, code_reader& read)
 #endif
 }
 
-#ifdef USE_REAL_NODES
+#if defined(USE_REAL_NODES) && !defined(COMPILED)
 void
 program::fix_node_address(db::node *n)
 {
-#ifdef COMPILED
-   return;
-#else
    vector<byte_code, mem::allocator<byte_code>>& vec(node_references[n->get_id()]);
    for(byte_code code : vec)
       pcounter_set_node(code, (node_val)n);
-#endif
 }
 #endif
 
