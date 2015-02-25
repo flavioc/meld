@@ -323,9 +323,8 @@ machine::machine(const string& file, const size_t th,
    }
 
    all->check_arguments(theProgram->num_args_needed());
-   ifstream fp(program::bypass_bytecode_header(added_data_file ? data_file : filename));
-   all->DATABASE = new database(fp);
-   fp.close();
+   auto fp(program::bypass_bytecode_header(added_data_file ? data_file : filename));
+   all->DATABASE = new database(*fp);
    setup_threads(th);
 }
 

@@ -70,15 +70,15 @@ program::program()
 #endif
 }
 
-ifstream
+std::unique_ptr<ifstream>
 program::bypass_bytecode_header(const string& filename)
 {
-   ifstream fp(filename.c_str(), ios::in | ios::binary);
+   std::unique_ptr<ifstream> fp(new ifstream(filename.c_str(), ios::in | ios::binary));
 
-   fp.seekg(vm::MAGIC_SIZE, ios_base::cur); // skip magic
-   fp.seekg(2*sizeof(uint32_t), ios_base::cur); // skip version
+   fp->seekg(vm::MAGIC_SIZE, ios_base::cur); // skip magic
+   fp->seekg(2*sizeof(uint32_t), ios_base::cur); // skip version
    
-   fp.seekg(sizeof(byte), ios_base::cur); // skip number of definitions
+   fp->seekg(sizeof(byte), ios_base::cur); // skip number of definitions
    return fp;
 }
 
