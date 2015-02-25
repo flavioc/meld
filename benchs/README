@@ -4,5 +4,8 @@ To run all multithreaded benchmarks, run:
 To benchmark some specific program, run:
    make <program>
 
+To benchmark compiled programs, run:
+   COMPILED=true make <program>
+
 To instrumentalize execution:
    make INSTRUMENT=yes <target>

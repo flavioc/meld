@@ -11,6 +11,8 @@ type linear update(page).
 type linear new-neighbor-rank(page, page, float).
 type linear sum-ranks(page, float).
 
+index neighbor-rank/2.
+
 //priority @cluster @static.
 
 const damping = 0.15.

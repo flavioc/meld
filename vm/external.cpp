@@ -198,6 +198,8 @@ init_external_functions(void)
 #define EXTERNAL4(NAME, RET, ARG1, ARG2, ARG3, ARG4) external4(EXTERN(NAME), RET, ARG1, ARG2, ARG3, ARG4, #NAME)
 #define EXTERNAL5(NAME, RET, ARG1, ARG2, ARG3, ARG4, ARG5) external5(EXTERN(NAME), RET, ARG1, ARG2, ARG3, ARG4, ARG5, #NAME)
 #define EXTERNAL6(NAME, RET, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6) external6(EXTERN(NAME), RET, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, #NAME)
+   (void)external5;
+   (void)external6;
 
    if(external_functions_initiated)
       return;

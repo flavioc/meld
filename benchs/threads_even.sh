@@ -1,14 +1,15 @@
 #!/bin/bash
 
-FILE="${1}"
-SCHEDULER="${2}"
-STEP="${3}"
-MIN="${4}"
-MAX="${5}"
-RUNS="${6}"
+EXEC="${1}"
+NAME="${2}"
+SCHEDULER="${3}"
+STEP="${4}"
+MIN="${5}"
+MAX="${6}"
+RUNS="${7}"
 
-if [ -z "${SCHEDULER}" ] || [ -z "${FILE}" ]; then
-	echo "Usage: threads_even.sh <file> <scheduler> [step=even|power] [min=1] [max=32] [runs=3]"
+if [ -z "${SCHEDULER}" ]; then
+	echo "Usage: threads_even.sh <exec> <name> <scheduler> [step=even|power] [min=1] [max=32] [runs=3]"
 	exit 1
 fi
 
@@ -24,10 +25,6 @@ fi
 if [ -z "${RUNS}" ]; then
    RUNS=3
 fi
-if [ ! -r "${FILE}" ]; then
-   echo "Code file $FILE does not exist."
-   exit 1
-fi
 
 source $PWD/lib/common.sh
 if [ -z $RESULTS_FILE ]; then
@@ -37,13 +34,13 @@ fi
 do_run ()
 {
 	NUM_THREADS="${1}"
-	TO_RUN="${EXEC} ${FILE} -c ${SCHEDULER}${NUM_THREADS}"
+	TO_RUN="${EXEC} -t -c ${SCHEDULER}${NUM_THREADS}"
    if [ ! -z "$INSTRUMENT" ]; then
-      dir="$INSTRUMENT_DIR/$(basename $FILE .m)/$NUM_THREADS"
+      dir="$INSTRUMENT_DIR/$NAME/$NUM_THREADS"
       mkdir -p $dir
       TO_RUN="$TO_RUN -i $dir/data"
    fi
-	time_run_n "${TO_RUN}" "$(basename ${FILE} .m)" ${SCHEDULER} ${NUM_THREADS}
+	time_run_n "${TO_RUN}" "$NAME" ${SCHEDULER} ${NUM_THREADS}
 }
 
 run_thread ()
@@ -60,7 +57,7 @@ run_thread ()
    fi
 }
 
-echo -n "`basename ${FILE} .m` $SCHEDULER" >> $RESULTS_FILE
+echo -n "$NAME $SCHEDULER" >> $RESULTS_FILE
 if [ "$STEP" = "even" ]; then
    for x in 1 2 4 6 8 10 12 14 16 20 24 28 32; do
       run_thread $x

@@ -3,6 +3,8 @@ VM = ../meld -d -f
 
 .PHONY: test clean
 
+ARGS = 1
+
 all: ARGS = 1
 all: serial thread
 

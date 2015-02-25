@@ -1,12 +1,12 @@
 #!/bin/bash
 
-EXEC="../meld -d"
-TEST=${1}
-TYPE="${2}"
-RUNS="${3}"
+EXEC=${1}
+BT="${2}"
+TYPE="${3}"
+RUNS="${4}"
 
-if test -z "${TEST}" -o -z "${TYPE}"; then
-	echo "Usage: test.sh <code file> <test type: th, thp, ...>"
+if test -z "${BT}" -o -z "${TYPE}"; then
+	echo "Usage: test.sh <program> <test file> <test type: th, thp, ...>"
 	exit 1
 fi
 
@@ -18,19 +18,19 @@ to_exclude () {
    [[ ! -z `grep "^$1$" "blacklist.exclude"` ]]
 }
 
-FILE="files/$(basename $TEST .m).test"
-ARGS="args/$(basename $TEST .m)"
-NODES=$(python ./number_nodes.py $TEST)
+FILE="files/$BT.test"
+ARGS="args/$BT"
+NODES=$(python ./number_nodes.py code/$BT.m)
 
 if [ -f $ARGS ]; then
    . $ARGS
 fi
 
-if dynamic_test $(basename $TEST .m); then
+if dynamic_test "$BT"; then
    # We can actually use more than 1 thread.
    NODES=64
 fi
-if to_exclude $(basename $TEST .m); then
+if to_exclude "$BT"; then
    exit 0
 fi
 
@@ -71,7 +71,7 @@ run_diff ()
       for tst in $failed_tests; do
          echo $tst
          diff -u ${tst} test.out
-         echo "!!!!!! DIFFERENCES IN FILE ${TEST} ($TO_RUN)"
+         echo "!!!!!! DIFFERENCES IN FILE ${BT} ($TO_RUN)"
       done
    fi
 	rm test.out
@@ -81,7 +81,7 @@ run_diff ()
 do_serial ()
 {
 	SCHED=${1}
-	TO_RUN="${EXEC} -f ${TEST} -c ${SCHED}"
+	TO_RUN="${EXEC} -d -c ${SCHED}"
 	
 	run_diff "${TO_RUN}"
 }
@@ -90,7 +90,7 @@ do_test ()
 {
 	NTHREADS=${1}
 	SCHED=${2}
-	TO_RUN="${EXEC} -f ${TEST} -c ${SCHED}${NTHREADS}"
+	TO_RUN="${EXEC} -d -c ${SCHED}${NTHREADS}"
 
 	run_diff "${TO_RUN}"
 }
@@ -100,7 +100,7 @@ run_serial_n ()
 	SCHED=${1}
 	TIMES=${2}
 
-	echo -n "Running ${TEST} ${TIMES} times (SCHED: ${SCHED})..."
+	echo -n "Running ${BT} ${TIMES} times (SCHED: ${SCHED})..."
 	for((I=1; I <= ${TIMES}; I++)); do
 		if ! do_serial ${SCHED}; then
          return 1
@@ -115,7 +115,7 @@ run_test_n ()
 	NTHREADS=${1}
 	TIMES=${2}
 	SCHED=${3}
-	echo -n "Running ${TEST} ${TIMES} times with ${NTHREADS} threads (SCHED: ${SCHED})..."
+	echo -n "Running ${BT} ${TIMES} times with ${NTHREADS} threads (SCHED: ${SCHED})..."
 	for((I=1; I <= ${TIMES}; I++)); do
 		do_test ${NTHREADS} ${SCHED}
 	done
@@ -123,7 +123,6 @@ run_test_n ()
    return 0
 }
 
-[ -f "${TEST}" ] || do_exit "Test code ${TEST} not found"
 [ -f "${FILE}" ] || do_exit "Test file ${FILE} not found"
 
 loop_sched ()

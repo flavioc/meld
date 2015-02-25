@@ -1,5 +1,4 @@
 
-EXEC="../meld -t -f"
 INSTRUMENT_DIR=$PWD/instrumentation_files
 
 time_run ()
@@ -40,4 +39,39 @@ time_run_n ()
 	average=`expr ${total} / ${#time[@]}`
 	echo " -> ${average}"
    export BENCHMARK_TIME=${average}
+}
+
+compile_test () {
+   BT="$1"
+   CPP="code/$BT.cpp"
+   TARGET="build/$BT"
+   mkdir -p build
+   if [ ! -f "$CPP" ]; then
+      echo "Cannot find file $CPP"
+      exit 1
+   fi
+   if [ -f "$TARGET" ]; then
+      if [ "$TARGET" -nt "$CPP" ]; then
+         return
+      fi
+   fi
+   echo "=> Compiling $BT.cpp into $TARGET..."
+   CURRENT_DIR="$PWD"
+   cd ..
+   make clean 2>&1 > /dev/null || exit 1
+   make PROGRAM="$CURRENT_DIR/$CPP" target 2>&1 > /dev/null || exit 1
+   mv target $CURRENT_DIR/$TARGET
+   cd $CURRENT_DIR
+}
+
+ensure_vm () {
+   if [ -x "../meld" ]; then
+      return
+   fi
+   CURRENT_DIR="$PWD"
+   echo "=> Compiling the virtual machine..."
+   cd ..
+   make clean 2>&1 > /dev/null || exit 1
+   make 2>&1 > /dev/null || exit 1
+   cd $CURRENT_DIR
 }
