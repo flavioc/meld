@@ -344,6 +344,7 @@ program::program(const string& _filename):
 	
 	read.read_type<byte>(&global_info);
 
+   priority_order = PRIORITY_DESC;
    initial_priority = initial_priority_value0(true);
    priority_static = false;
 
@@ -370,8 +371,6 @@ program::program(const string& _filename):
          priority_static = (asc_desc & 0x02) ? true : false;
 
          read.read_type<float_val>(&initial_priority);
-         if(initial_priority <= 0.0)
-            initial_priority = initial_priority_value0(priority_order == PRIORITY_DESC);
       }
       break;
       case 0x03: { // data file
@@ -379,7 +378,6 @@ program::program(const string& _filename):
       }
       break;
       default:
-         priority_order = PRIORITY_DESC;
       break;
    }
 

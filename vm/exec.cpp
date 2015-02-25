@@ -1304,9 +1304,6 @@ execute_schedule_next(pcounter& pc, state& state)
 #else
    nodep = All->DATABASE->find_node(node);
 #endif
-#ifdef DEBUG_SENDS
-   cout << "\tSCHEDULE NEXT " << nodep->get_id() << endl;
-#endif
 
    state.sched->schedule_next(nodep);
 }

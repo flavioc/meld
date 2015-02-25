@@ -189,7 +189,16 @@ axiom_read_data(pcounter& pc, type *t, const bool lookup_nodes)
             assert(false);
          }
          break;
-
+      case FIELD_STRUCT: {
+         struct_type *st((struct_type*)t);
+         runtime::struct1 *s(runtime::struct1::create(st));
+         for(size_t i(0); i < st->get_size(); ++i) {
+            tuple_field data(axiom_read_data(pc, st->get_type(i), lookup_nodes));
+            s->set_data(i, data);
+         }
+         SET_FIELD_STRUCT(f, s);
+      }
+      break;
       default: assert(false);
    }
 

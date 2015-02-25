@@ -7,32 +7,26 @@ type linear new-distance(node, int, list node).
 type linear distance(node, int, list node).
 
 priority @order @asc.
+priority @initial 9999.
 
-const endx = 99.
-const endy = 99.
+const endx = 4.
+const endy = 4.
+const inf = 99999.
 
 fun abs(int X) : int = if X >= 0 then X else 0 - X end.
 
 new-distance(@0, 0, [@0]).
-
-new-distance(A, X1, P1), new-distance(A, X2, P2),
-X1 <= X2
-   -o new-distance(A, X1, P1).
-
-new-distance(A, X1, P1), distance(A, X2, P2),
-X1 < X2
-   -o new-distance(A, X1, P1).
-
-new-distance(A, X1, P1), distance(A, X2, P2),
-X1 >= X2
-   -o distance(A, X2, P2).
+distance(A, inf, []).
 
 new-distance(A, T, P),
+distance(A, inf, []),
 !coord(A, endx, endy)
    -o stop-program(A), distance(A, T, P).
 
-new-distance(A, D, P),
+distance(A, D1, P1), new-distance(A, D2, P2), D2 < D1,
 !coord(A, X, Y)
-   -o {B, W | !edge(A, B, W) | new-distance(B, D + W, [ B | P]), set-priority(B, float(abs(endx - X)) + float(abs(endy - Y)))},
-      distance(A, X, P).
+   -o {B, W | !edge(A, B, W) | new-distance(B, D2 + W, [B | P2]), set-priority(B, float(abs(endx - X)) + float(abs(endy - Y)))},
+      distance(A, D2, P2).
 
+distance(A, D1, P1), new-distance(A, D2, P2), D2 >= D1
+   -o distance(A, D1, P1).

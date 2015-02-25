@@ -1,6 +1,7 @@
 type linear path(node, node, int, int).
 
 priority @order @asc.
+priority @initial 9999.
 index path/2.
 
 const used = 1.

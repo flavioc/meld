@@ -15,6 +15,7 @@ run_test () {
    RUNS="$2"
    if [ -z "$COMPILED" ]; then
       EXEC="../meld -f code/$BT.m"
+      ensure_vm
    else
       compile_test "$BT"
       EXEC="build/$BT"
