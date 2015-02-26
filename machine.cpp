@@ -260,11 +260,9 @@ machine::machine(const size_t th, const machine_arguments& margs)
 {
 #ifdef COMPILED
    init(margs);
-
    theProgram = all->PROGRAM = new vm::program();
-
-   std::istrstream iss(compiled_database_stream());
-   all->DATABASE = new database(iss);
+   auto iss(compiled_database_stream());
+   all->DATABASE = new database(*iss);
    setup_threads(th);
 #else
    (void)th;

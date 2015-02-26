@@ -752,6 +752,7 @@ state::sync(db::node *node)
    }
    set_priorities.clear();
 #endif
+   (void)node;
    return ret;
 }
 

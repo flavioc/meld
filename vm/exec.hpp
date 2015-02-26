@@ -2,6 +2,7 @@
 #ifndef VM_EXEC_HPP
 #define VM_EXEC_HPP
 
+#include <memory>
 #include <stdexcept>
 #include <vector>
 #include <strstream>
@@ -32,7 +33,7 @@ class vm_exec_error : public std::runtime_error {
 }
 
 #ifdef COMPILED
-std::istrstream compiled_database_stream();
+std::unique_ptr<std::istrstream> compiled_database_stream();
 #endif
 
 #endif
