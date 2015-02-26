@@ -29,13 +29,13 @@
 #endif
 
 #ifdef __APPLE__
-#  define INCBIN_SECTION         ".const_data\n"
+#  define INCBIN_SECTION         ".data\n"
 #  define INCBIN_GLOBAL(NAME)    ".globl " #NAME "\n"
 #  define INCBIN_INT             ".long "
 #  define INCBIN_MANGLE          "_"
 #  define INCBIN_TYPE(...)
 #else
-#  define INCBIN_SECTION         ".section .rodata\n"
+#  define INCBIN_SECTION         ".section .data\n"
 #  define INCBIN_GLOBAL(NAME)    ".global " #NAME "\n"
 #  define INCBIN_INT             ".int "
 #  define INCBIN_MANGLE
