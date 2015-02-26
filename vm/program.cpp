@@ -24,6 +24,7 @@ using namespace process;
 using namespace utils;
 
 extern void add_definitions(program*);
+extern void compiled_fix_nodes(db::node *);
 
 namespace vm {
 
@@ -483,15 +484,17 @@ program::read_node_references(byte_code code, code_reader& read)
 #endif
 }
 
-#if defined(USE_REAL_NODES) && !defined(COMPILED)
 void
 program::fix_node_address(db::node *n)
 {
+#ifdef COMPILED
+   compiled_fix_nodes(n);
+#else
    vector<byte_code, mem::allocator<byte_code>>& vec(node_references[n->get_id()]);
    for(byte_code code : vec)
       pcounter_set_node(code, (node_val)n);
-}
 #endif
+}
 
 void
 program::jit_compile()

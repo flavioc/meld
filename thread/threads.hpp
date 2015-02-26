@@ -362,11 +362,7 @@ public:
    db::node* init_node(db::database::map_nodes::iterator it)
    {
       db::node *node(vm::All->DATABASE->create_node_iterator(it));
-#ifndef COMPILED
-#ifdef USE_REAL_NODES
       vm::theProgram->fix_node_address(node);
-#endif
-#endif
 #ifdef GC_NODES
       // initial nodes never get deleted.
       node->refs++;

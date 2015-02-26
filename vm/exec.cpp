@@ -820,11 +820,11 @@ execute_linear_iter_list(const reg_num reg, match* m, const pcounter first, stat
                if (tbl) {
                   // may need to re hash tuple
                   // it is not a problem if the tuple gets in the same bucket (will appear at the end of the list)
-                  it = local_tuples->erase(it);
+                  //it = local_tuples->erase(it);
                   // add the tuple to the back of the bucket
                   // that way, we do not see it again if it's added to the same bucket
-                  tbl->insert(match_tuple);
-                  next_iter = false;
+                  //tbl->insert(match_tuple);
+                  //next_iter = false;
                }
             }
          } else {
@@ -1570,7 +1570,7 @@ execute_new_axioms(db::node *node, pcounter pc, state& state)
    const pcounter end(pc + new_axioms_jump(pc));
    pc += NEW_AXIOMS_BASE;
 
-   add_new_axioms(state, node, pc, end, false);
+   add_new_axioms(state, node, pc, end);
 }
 
 static inline bool

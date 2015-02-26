@@ -150,7 +150,7 @@ execute_send0(db::node *node, const vm::node_val dest_val, vm::tuple *tuple, vm:
 }
 
 static inline tuple_field
-axiom_read_data(pcounter& pc, type *t, const bool lookup_nodes)
+axiom_read_data(pcounter& pc, type *t)
 {
    tuple_field f;
 
@@ -165,10 +165,6 @@ axiom_read_data(pcounter& pc, type *t, const bool lookup_nodes)
          break;
       case FIELD_NODE: {
          vm::node_val val(vm::instr::pcounter_node(pc));
-#ifdef USE_REAL_NODES
-         if(lookup_nodes)
-            val = (vm::node_val)All->DATABASE->find_node(val);
-#endif
          SET_FIELD_NODE(f, val);
          vm::instr::pcounter_move_node(&pc);
       }
@@ -180,8 +176,8 @@ axiom_read_data(pcounter& pc, type *t, const bool lookup_nodes)
          } else if(*pc == 1) {
             pc++;
             list_type *lt((list_type*)t);
-            tuple_field head(axiom_read_data(pc, lt->get_subtype(), lookup_nodes));
-            tuple_field tail(axiom_read_data(pc, t, lookup_nodes));
+            tuple_field head(axiom_read_data(pc, lt->get_subtype()));
+            tuple_field tail(axiom_read_data(pc, t));
             runtime::cons *c(FIELD_CONS(tail));
             runtime::cons *nc(runtime::cons::create(c, head, lt));
             SET_FIELD_CONS(f, nc);
@@ -193,7 +189,7 @@ axiom_read_data(pcounter& pc, type *t, const bool lookup_nodes)
          struct_type *st((struct_type*)t);
          runtime::struct1 *s(runtime::struct1::create(st));
          for(size_t i(0); i < st->get_size(); ++i) {
-            tuple_field data(axiom_read_data(pc, st->get_type(i), lookup_nodes));
+            tuple_field data(axiom_read_data(pc, st->get_type(i)));
             s->set_data(i, data);
          }
          SET_FIELD_STRUCT(f, s);
@@ -232,7 +228,7 @@ tuple_set_field(vm::tuple *tpl, vm::type *t, const field_num i, const tuple_fiel
 }
 
 static inline void
-add_new_axioms(state& state, db::node *node, pcounter pc, const pcounter end, const bool lookup_nodes)
+add_new_axioms(state& state, db::node *node, pcounter pc, const pcounter end)
 {
    while(pc < end) {
       // read axions until the end!
@@ -249,7 +245,7 @@ add_new_axioms(state& state, db::node *node, pcounter pc, const pcounter end, co
             i != num_fields;
             ++i)
       {
-         tuple_field field(axiom_read_data(pc, pred->get_field_type(i), lookup_nodes));
+         tuple_field field(axiom_read_data(pc, pred->get_field_type(i)));
 
          tuple_set_field(tpl, pred->get_field_type(i), i, field);
       }
@@ -270,7 +266,17 @@ static inline void
 read_new_axioms(state& state, db::node *node, const size_t start, const size_t len)
 {
    utils::byte *data = ((utils::byte*)gAxiomsData) + start;
-   add_new_axioms(state, node, data, data + len, true);
+   add_new_axioms(state, node, data, data + len);
 }
 
+static inline void
+do_fix_nodes(db::node *n, const size_t start, const size_t len)
+{
+   utils::byte *data = ((utils::byte*)gAxiomsData);
+   for(size_t i(start); i < start + len; i += sizeof(vm::code_offset_t)) {
+      vm::code_offset_t off(*(vm::code_offset_t*)(data + i));
+      vm::node_val *p((vm::node_val*)(data + off));
+      vm::instr::pcounter_set_node((utils::byte*)p, (node_val)n);
+   }
+}
 #endif

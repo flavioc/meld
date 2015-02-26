@@ -55,19 +55,6 @@ database::wipeout(candidate_gc_nodes& gc_nodes)
 }
 
 node*
-database::find_node(const node::node_id id) const
-{
-   map_nodes::const_iterator it(nodes.find(id));
-
-   if(it == nodes.end()) {
-      cerr << "Could not find node with id " << id << endl;
-      abort();
-   }
-   
-   return it->second;
-}
-
-node*
 database::create_node_id(const db::node::node_id id)
 {
    MUTEX_LOCK_GUARD(mtx, main_db_lock);

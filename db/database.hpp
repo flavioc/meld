@@ -68,7 +68,16 @@ public:
          nodes[it->first] = it->second;
    }
 
-   node* find_node(const node::node_id) const;
+   node* find_node(const node::node_id id) const
+   {
+      auto it(nodes.find(id));
+
+      if(it == nodes.end())
+         abort();
+      
+      return it->second;
+   }
+
    std::pair<node::node_id, node::node_id> allocate_ids(const size_t);
    node* create_node_id(const node::node_id);
    node* create_node_iterator(map_nodes::iterator);
