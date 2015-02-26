@@ -15,6 +15,8 @@
 #include "thread/threads.hpp"
 #include "vm/priority.hpp"
 
+#ifndef COMPILED
+
 //#define DEBUG_INSTRS
 
 #define COMPUTED_GOTOS
@@ -3707,3 +3709,5 @@ execute_rule(const rule_id rule_id, state& state)
 }
 
 }
+
+#endif // !COMPILED

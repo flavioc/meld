@@ -1,4 +1,6 @@
 
+#include <strstream>
+
 static inline void
 execute_add_linear0(db::node *node, tuple *tuple, predicate *pred, state& state)
 {
@@ -288,4 +290,11 @@ do_fix_nodes(db::node *n, const size_t start, const size_t len)
       vm::instr::pcounter_set_node((utils::byte*)p, (node_val)n);
    }
 }
+
+std::unique_ptr<std::istrstream>
+compiled_database_stream()
+{
+   return std::unique_ptr<std::istrstream>(new std::istrstream((const char *)gAxiomsData, gAxiomsSize));
+}
+
 #endif
