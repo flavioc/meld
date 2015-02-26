@@ -252,9 +252,12 @@ add_new_axioms(state& state, db::node *node, pcounter pc, const pcounter end)
 
       if(pred->is_action_pred())
          execute_run_action0(tpl, pred, state);
-      else if(pred->is_reused_pred() || pred->is_persistent_pred())
-         execute_add_persistent0(node, tpl, pred, state);
-      else
+      else if(pred->is_reused_pred() || pred->is_persistent_pred()) {
+         if(pred->is_persistent_pred() && !pred->has_code)
+            node->pers_store.add_tuple(tpl, pred, state.depth);
+         else
+            execute_add_persistent0(node, tpl, pred, state);
+      } else
          execute_add_linear0(node, tpl, pred, state);
    }
 }
