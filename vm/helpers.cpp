@@ -36,10 +36,15 @@ execute_add_persistent0(db::node *node, vm::tuple *tpl, predicate *pred, state& 
    std::cout << std::endl;
 #endif
 
+   state.persistent_facts_generated++;
    assert(pred->is_persistent_pred() || pred->is_reused_pred());
+   if(state.direction == POSITIVE_DERIVATION && pred->is_persistent_pred() && !pred->has_code && !pred->is_aggregate_pred()) {
+      node->pers_store.add_tuple(tpl, pred, state.depth);
+      node->matcher.new_persistent_fact(pred);
+      return;
+   }
    full_tuple *stuple(new full_tuple(tpl, pred, state.direction, state.depth));
    node->store.persistent_tuples.push_back(stuple);
-   state.persistent_facts_generated++;
 }
 
 static inline void
@@ -253,9 +258,10 @@ add_new_axioms(state& state, db::node *node, pcounter pc, const pcounter end)
       if(pred->is_action_pred())
          execute_run_action0(tpl, pred, state);
       else if(pred->is_reused_pred() || pred->is_persistent_pred()) {
-         if(pred->is_persistent_pred() && !pred->has_code)
+         if(pred->is_persistent_pred() && !pred->has_code && !pred->is_aggregate_pred()) {
             node->pers_store.add_tuple(tpl, pred, state.depth);
-         else
+            node->matcher.new_persistent_fact(pred);
+         } else
             execute_add_persistent0(node, tpl, pred, state);
       } else
          execute_add_linear0(node, tpl, pred, state);
