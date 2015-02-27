@@ -274,20 +274,39 @@ add_new_axioms(state& state, db::node *node, pcounter pc, const pcounter end)
 INCBIN_EXTERN(Axioms);
 
 static inline void
-read_new_axioms(state& state, db::node *node, const size_t start, const size_t len)
+read_axioms(state& state, db::node *node, const size_t table)
 {
-   utils::byte *data = ((utils::byte*)gAxiomsData) + start;
+   uint32_t *tbl = (uint32_t*)(((utils::byte*)gAxiomsData) + table);
+
+   tbl += node->get_id() * 2;
+   const uint32_t start = *tbl;
+   const uint32_t len = *(tbl + 1);
+
+   if(start == 0 || len == 0)
+      return;
+
+   utils::byte *data = (utils::byte*)gAxiomsData + start;
+
    add_new_axioms(state, node, data, data + len);
 }
 
 static inline void
-do_fix_nodes(db::node *n, const size_t start, const size_t len)
+do_fix_nodes(db::node *node, const size_t table)
 {
+   uint32_t *tbl = (uint32_t*)(((utils::byte*)gAxiomsData) + table);
+
+   tbl += node->get_id() * 2;
+   const uint32_t start = *tbl;
+   const uint32_t len = *(tbl + 1);
+
+   if(start == 0 || len == 0)
+      return;
+
    utils::byte *data = ((utils::byte*)gAxiomsData);
    for(size_t i(start); i < start + len; i += sizeof(vm::code_offset_t)) {
       vm::code_offset_t off(*(vm::code_offset_t*)(data + i));
       vm::node_val *p((vm::node_val*)(data + off));
-      vm::instr::pcounter_set_node((utils::byte*)p, (node_val)n);
+      vm::instr::pcounter_set_node((utils::byte*)p, (node_val)node);
    }
 }
 

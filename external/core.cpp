@@ -226,6 +226,7 @@ facts_proved(EXTERNAL_ARG(id))
 #else
    tn = All->DATABASE->find_node(id);
 #endif
+   (void)tn;
 
    int_val total(0);
    // this is actually implemented by an instruction
