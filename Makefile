@@ -192,5 +192,20 @@ test: unit_tests/run
 depend:
 	makedepend -- $(CXXFLAGS) -- $(shell find . -name '*.cpp')
 
+modernize:
+	clang-modernize-3.5 -style=google -include . \
+		$(SRCS) \
+		$(shell find vm -name '*.hpp') \
+		$(shell find db -name '*.hpp') \
+		runtime/objs.hpp \
+		$(shell find external -name '*.hpp') \
+		$(shell find mem -name '*.hpp') \
+		$(shell find stat -name '*.hpp') \
+		$(shell find sched -name '*.hpp') \
+		$(shell find thread -name '*.hpp') \
+		$(shell find utils -name '*.hpp') \
+		-exclude=vm/jump_table.hpp \
+		-- $(CXXFLAGS) $(LDFLAGS)
+
 # DO NOT DELETE
 

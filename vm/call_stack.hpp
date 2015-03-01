@@ -4,6 +4,7 @@
 
 #include "vm/defs.hpp"
 #include "mem/allocator.hpp"
+#include "vm/instr.hpp"
 
 namespace vm
 {

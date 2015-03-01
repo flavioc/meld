@@ -10,6 +10,7 @@
 #include "utils/mutex.hpp"
 #include "mem/base.hpp"
 #include "vm/defs.hpp"
+#include "vm/all.hpp"
 #include "vm/bitmap.hpp"
 #include "utils/intrusive_list.hpp"
 #include "db/hash_table.hpp"
@@ -77,8 +78,8 @@ struct linear_store
             tuple_list *bucket_ls(*it);
             ++it;
 
-            for(tuple_list::iterator it2(bucket_ls->begin()), end(bucket_ls->end()); it2 != end; ++it2) {
-               vm::tuple *tpl(*it2);
+            for(auto tpl : *bucket_ls) {
+               
 
                new_hash.insert(tpl);
             }

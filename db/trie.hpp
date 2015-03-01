@@ -67,8 +67,8 @@ public:
    
    trie_node *insert(const vm::tuple_field&, vm::type*, vm::match_stack&);
    
-   explicit trie_node(const vm::tuple_field& _data):
-      data(_data)
+   explicit trie_node(vm::tuple_field  _data):
+      data(std::move(_data))
    {
       assert(next == nullptr && prev == nullptr && parent == nullptr &&
             child == nullptr && hashed == false);
@@ -171,7 +171,7 @@ class depth_counter: public mem::base
 
       inline vm::ref_count get_count(const vm::depth_t depth) const
       {
-         map_count::const_iterator it(counts.find(depth));
+         auto it(counts.find(depth));
          if(it == counts.end())
             return 0;
          else
@@ -183,7 +183,7 @@ class depth_counter: public mem::base
 
       inline vm::depth_t max_depth(void) const
       {
-         map_count::const_reverse_iterator it(counts.rbegin());
+         auto it(counts.rbegin());
          if(it == counts.rend())
             return 0;
          return it->first;
@@ -191,7 +191,7 @@ class depth_counter: public mem::base
 
       inline vm::depth_t min_depth(void) const
       {
-         map_count::const_iterator it(counts.begin());
+         auto it(counts.begin());
          if(it == counts.end())
             return 0;
          return it->first;
@@ -201,7 +201,7 @@ class depth_counter: public mem::base
       {
          assert(count > 0);
 
-         map_count::iterator it(counts.find(depth));
+         auto it(counts.find(depth));
 
          if(it == counts.end()) {
             counts[depth] = count;
@@ -216,7 +216,7 @@ class depth_counter: public mem::base
       // returns true if the count of such depth has gone to 0
       inline bool sub(const vm::depth_t depth, const vm::ref_count count)
       {
-         map_count::iterator it(counts.find(depth));
+         auto it(counts.find(depth));
 
          assert(count > 0);
          
@@ -243,7 +243,7 @@ class depth_counter: public mem::base
       {
          vm::ref_count ret(0);
          while(true) {
-            map_count::reverse_iterator it(counts.rbegin());
+            auto it(counts.rbegin());
 
             if(it == counts.rend())
                return ret;
@@ -277,7 +277,7 @@ public:
 
 	inline vm::tuple *get_underlying_tuple(void) const { return tpl; }
 	
-   virtual inline vm::ref_count get_count(void) const { return count; }
+   virtual inline vm::ref_count get_count(void) const override { return count; }
 
    inline bool has_depth_counter(void) const { return depths != nullptr; }
 
@@ -326,7 +326,7 @@ public:
    }
    
    virtual inline void add_new(const vm::depth_t depth,
-         const vm::ref_count many)
+         const vm::ref_count many) override
    {
       assert(many > 0);
       count += many;
@@ -344,7 +344,7 @@ public:
    }
 
    virtual inline void sub(const vm::depth_t depth,
-         const vm::ref_count many)
+         const vm::ref_count many) override
    {
       assert(many > 0);
       if(many > count)
@@ -355,7 +355,7 @@ public:
          depths->sub(depth, many);
    }
    
-   virtual inline bool to_delete(void) const { return count == 0; }
+   virtual inline bool to_delete(void) const override { return count == 0; }
    
    explicit tuple_trie_leaf(vm::tuple *_tpl, vm::predicate *pred, const vm::ref_count count, const vm::depth_t depth):
       trie_leaf(),
@@ -368,7 +368,7 @@ public:
       add_new(depth, count);
    }
 
-   virtual void destroy(vm::predicate *pred, vm::candidate_gc_nodes& gc_nodes)
+   virtual void destroy(vm::predicate *pred, vm::candidate_gc_nodes& gc_nodes) override
    {
       if(depths)
          delete depths;
@@ -548,7 +548,7 @@ class tuple_trie: public trie, public mem::base
 {
 private:
 
-   virtual trie_leaf* create_leaf(void *data, vm::predicate *pred, const vm::ref_count many, const vm::depth_t depth)
+   virtual trie_leaf* create_leaf(void *data, vm::predicate *pred, const vm::ref_count many, const vm::depth_t depth) override
    {
       return new tuple_trie_leaf((vm::tuple*)data, pred, many, depth);
    }
@@ -698,14 +698,14 @@ public:
    
    inline agg_configuration *get_conf(void) const { return conf; }
    
-   virtual inline vm::ref_count get_count(void) const { return count; }
+   virtual inline vm::ref_count get_count(void) const override { return count; }
    
-   virtual inline void add_new(const vm::depth_t, const vm::ref_count) { }
-   virtual inline void sub(const vm::depth_t, const vm::ref_count) { }
+   virtual inline void add_new(const vm::depth_t, const vm::ref_count) override { }
+   virtual inline void sub(const vm::depth_t, const vm::ref_count) override { }
    
    inline void set_zero_refs(void) { count = 0; }
 
-   virtual inline bool to_delete(void) const { return count == 0; }
+   virtual inline bool to_delete(void) const override { return count == 0; }
    
    explicit agg_trie_leaf(agg_configuration *_conf):
       trie_leaf(),
@@ -769,7 +769,7 @@ class agg_trie: public trie, public mem::base
 {
 private:
    
-   virtual trie_leaf* create_leaf(void *, vm::predicate *, const vm::ref_count, const vm::depth_t)
+   virtual trie_leaf* create_leaf(void *, vm::predicate *, const vm::ref_count, const vm::depth_t) override
    {
       return new agg_trie_leaf(nullptr);
    }

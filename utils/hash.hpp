@@ -2,6 +2,9 @@
 #ifndef UTILS_HASH_HPP
 #define UTILS_HASH_HPP
 
+#include <cstring>
+#include <cmath>
+
 namespace utils
 {
 

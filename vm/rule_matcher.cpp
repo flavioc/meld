@@ -8,11 +8,9 @@
 
 using namespace std;
 
-namespace vm
-{
+namespace vm {
 
-rule_matcher::rule_matcher(void)
-{
+rule_matcher::rule_matcher(void) {
    rules = mem::allocator<utils::byte>().allocate(theProgram->num_rules());
    memset(rules, 0, sizeof(utils::byte) * theProgram->num_rules());
 
@@ -23,11 +21,9 @@ rule_matcher::rule_matcher(void)
    predicate_existence.clear(theProgram->num_predicates_next_uint());
 }
 
-rule_matcher::~rule_matcher(void)
-{
+rule_matcher::~rule_matcher(void) {
    mem::allocator<utils::byte>().deallocate(rules, theProgram->num_rules());
    bitmap::destroy(rule_queue, theProgram->num_rules_next_uint());
    bitmap::destroy(predicate_existence, theProgram->num_predicates_next_uint());
 }
-
 }

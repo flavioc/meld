@@ -13,7 +13,7 @@ persistent_store::get_storage(predicate* pred)
    
    if(it == tuples.end()) {
       //cout << "New trie for " << *pred << endl;
-      tuple_trie *tr(new tuple_trie());
+      auto  tr(new tuple_trie());
       tuples[pred->get_id()] = tr;
       return tr;
    } else
@@ -42,7 +42,7 @@ persistent_store::add_agg_tuple(vm::tuple *tuple, predicate *pred,
       const depth_t depth, candidate_gc_nodes& gc_nodes, const derivation_direction dir)
 {
    predicate_id pred_id(pred->get_id());
-   aggregate_map::iterator it(aggs.find(pred_id));
+   auto it(aggs.find(pred_id));
    tuple_aggregate *agg;
    
    if(it == aggs.end()) {
@@ -67,17 +67,15 @@ persistent_store::end_iteration()
    // generate possible aggregates
    full_tuple_list ret;
    
-   for(aggregate_map::iterator it(aggs.begin());
-      it != aggs.end();
-      ++it)
+   for(auto & elem : aggs)
    {
-      tuple_aggregate *agg(it->second);
+      tuple_aggregate *agg(elem.second);
       
       full_tuple_list ls(agg->generate());
 
-      for(auto jt(ls.begin()), end(ls.end()); jt != end; ++jt) {
-         (*jt)->set_as_aggregate();
-         ret.push_back(*jt);
+      for(auto && l : ls) {
+         (l)->set_as_aggregate();
+         ret.push_back(l);
       }
    }
    
@@ -87,7 +85,7 @@ persistent_store::end_iteration()
 tuple_trie::tuple_search_iterator
 persistent_store::match_predicate(const predicate_id id) const
 {
-   pers_tuple_map::const_iterator it(tuples.find(id));
+   auto it(tuples.find(id));
    
    if(it == tuples.end())
       return tuple_trie::tuple_search_iterator();
@@ -100,7 +98,7 @@ persistent_store::match_predicate(const predicate_id id) const
 tuple_trie::tuple_search_iterator
 persistent_store::match_predicate(const predicate_id id, const match* m) const
 {
-   pers_tuple_map::const_iterator it(tuples.find(id));
+   auto it(tuples.find(id));
    
    if(it == tuples.end())
       return tuple_trie::tuple_search_iterator();
@@ -130,8 +128,8 @@ persistent_store::delete_by_leaf(predicate *pred, tuple_trie_leaf *leaf, const d
 void
 persistent_store::assert_tries(void)
 {
-   for(auto it(tuples.begin()), end(tuples.end()); it != end; ++it) {
-      tuple_trie *tr(it->second);
+   for(auto & elem : tuples) {
+      tuple_trie *tr(elem.second);
       tr->assert_used();
    }
 }
@@ -143,7 +141,7 @@ persistent_store::delete_by_index(predicate *pred, const match& m, candidate_gc_
    
    tr->delete_by_index(pred, m, gc_nodes);
    
-   aggregate_map::iterator it(aggs.find(pred->get_id()));
+   auto it(aggs.find(pred->get_id()));
    
    if(it != aggs.end()) {
       tuple_aggregate *agg(it->second);
@@ -167,14 +165,14 @@ persistent_store::count_total(const predicate* pred) const
 void
 persistent_store::wipeout(candidate_gc_nodes& gc_nodes)
 {
-   for(auto it(tuples.begin()), end(tuples.end()); it != end; it++) {
-      tuple_trie *tr(it->second);
-      predicate *pred(theProgram->get_predicate(it->first));
+   for(auto & elem : tuples) {
+      tuple_trie *tr(elem.second);
+      predicate *pred(theProgram->get_predicate(elem.first));
       tr->wipeout(pred, gc_nodes);
-      delete it->second;
+      delete elem.second;
    }
-   for(aggregate_map::iterator it(aggs.begin()), end(aggs.end()); it != end; it++) {
-      tuple_aggregate *agg(it->second);
+   for(auto & elem : aggs) {
+      tuple_aggregate *agg(elem.second);
       agg->wipeout(gc_nodes);
       delete agg;
    }

@@ -8,59 +8,48 @@
 
 #include "vm/defs.hpp"
 
-namespace vm
-{
+namespace vm {
 
 class program;
 
-class rule
-{
+class rule {
    private:
-
-      rule_id id;
-      const std::string str;
-      byte_code code{nullptr};
-		code_size_t code_size{0};
-      using predicate_vector =
-		   std::vector<predicate_id, mem::allocator<predicate_id>>;
-      predicate_vector predicates;
+   rule_id id;
+   const std::string str;
+   byte_code code{nullptr};
+   code_size_t code_size{0};
+   using predicate_vector =
+       std::vector<predicate_id, mem::allocator<predicate_id>>;
+   predicate_vector predicates;
 
    public:
-	
-		void print(std::ostream&, const vm::program * const) const;
-		
-      inline rule_id get_id(void) const { return id; }
-		inline const std::string get_string(void) const { return str; }
+   void print(std::ostream&, const vm::program* const) const;
 
-      inline void add_predicate(const predicate_id id) {
-         predicates.push_back(id);
-      }
+   inline rule_id get_id(void) const { return id; }
+   inline const std::string get_string(void) const { return str; }
 
-      inline void set_bytecode(code_size_t _size, byte_code _code) {
-			code_size = _size;
-			code = _code;
-		}
-		
-      inline code_size_t get_codesize(void) const { return code_size; }
-		inline byte_code get_bytecode(void) const { return code; }
-		inline size_t num_predicates(void) const { return predicates.size(); }
+   inline void add_predicate(const predicate_id id) {
+      predicates.push_back(id);
+   }
 
-      void jit_compile();
+   inline void set_bytecode(code_size_t _size, byte_code _code) {
+      code_size = _size;
+      code = _code;
+   }
 
-      explicit rule(const rule_id _id, const std::string& _str):
-         id(_id), str(_str)
-      {
-      }
+   inline code_size_t get_codesize(void) const { return code_size; }
+   inline byte_code get_bytecode(void) const { return code; }
+   inline size_t num_predicates(void) const { return predicates.size(); }
 
-      inline void destroy()
-      {
+   explicit rule(const rule_id _id, std::string  _str)
+       : id(_id), str(std::move(_str)) {}
+
+   inline void destroy() {
 #ifndef COMPILED
-         if(code_size > 0)
-            delete []code;
+      if (code_size > 0) delete[] code;
 #endif
-      }
+   }
 };
-
 }
 
 #endif

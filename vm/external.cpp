@@ -39,9 +39,9 @@ external_function::set_arg_type(const size_t arg, type *typ)
 external_function::external_function(external_function_ptr _ptr,
          const size_t _num_args,
          type *_ret,
-         const string& _name):
+         string  _name):
    num_args(_num_args),
-   name(_name),
+   name(std::move(_name)),
    ptr(_ptr), ret(_ret),
    spec(new type*[_num_args])
 {
@@ -80,8 +80,8 @@ lookup_external_function_by_name(const string& name)
    if(!external_functions_initiated)
       init_external_functions();
 
-   for(hash_external_type::iterator it(hash_external.begin()), end(hash_external.end()); it != end; it++) {
-      external_function *f(it->second);
+   for(auto & elem : hash_external) {
+      external_function *f(elem.second);
       if(f->get_name() == name)
          return f;
    }
@@ -171,8 +171,8 @@ external6(external_function_ptr ptr, type *ret, type *arg1, type *arg2, type *ar
 static void
 cleanup_externals(void)
 {
-   for(hash_external_type::iterator it(hash_external.begin()), end(hash_external.end()); it != end; it++)
-      delete it->second;
+   for(auto & elem : hash_external)
+      delete elem.second;
 }
 
 void

@@ -6,6 +6,7 @@
 
 #include "mem/base.hpp"
 #include "vm/program.hpp"
+#include "vm/all.hpp"
 #include "vm/predicate.hpp"
 #include "vm/full_tuple.hpp"
 #include "utils/intrusive_list.hpp"

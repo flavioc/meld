@@ -150,7 +150,7 @@ public:
       if(pred->is_action_pred())
          store.add_action_fact(new vm::full_tuple(tpl, pred, dir, depth));
       else if(pred->is_persistent_pred() || pred->is_reused_pred()) {
-         vm::full_tuple *stpl(new vm::full_tuple(tpl, pred, dir, depth));
+         auto          stpl(new vm::full_tuple(tpl, pred, dir, depth));
          store.add_persistent_fact(stpl);
       } else
          add_linear_fact(tpl, pred);
@@ -167,8 +167,8 @@ public:
    inline void add_work_myself(vm::tuple_array& arr)
    {
       unprocessed_facts = true;
-      for(auto it(arr.begin()), end(arr.end()); it != end; ++it) {
-         vm::full_tuple info(*it);
+      for(auto info : arr) {
+         
          inner_add_work_myself(info.get_tuple(), info.get_predicate(), info.get_dir(), info.get_depth());
       }
    }
@@ -197,10 +197,10 @@ public:
          const vm::derivation_direction dir = vm::POSITIVE_DERIVATION, const vm::depth_t depth = 0)
    {
       if(pred->is_action_pred()) {
-         vm::full_tuple *stpl(new vm::full_tuple(tpl, pred, dir, depth));
+         auto          stpl(new vm::full_tuple(tpl, pred, dir, depth));
          store.incoming_action_tuples.push_back(stpl);
       } else if(pred->is_persistent_pred() || pred->is_reused_pred()) {
-         vm::full_tuple *stpl(new vm::full_tuple(tpl, pred, dir, depth));
+         auto          stpl(new vm::full_tuple(tpl, pred, dir, depth));
          store.incoming_persistent_tuples.push_back(stpl);
       } else
          store.add_incoming(tpl, pred);
@@ -217,8 +217,8 @@ public:
    inline void add_work_others(vm::tuple_array& arr)
    {
       unprocessed_facts = true;
-      for(auto it(arr.begin()), end(arr.end()); it != end; ++it) {
-         vm::full_tuple info(*it);
+      for(auto info : arr) {
+         
          inner_add_work_others(info.get_tuple(), info.get_predicate(), info.get_dir(), info.get_depth());
       }
    }

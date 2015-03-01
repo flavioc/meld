@@ -23,9 +23,9 @@ class import
          out << imp << " as " << as << " from " << file;
       }
 
-      explicit import(const std::string& _imp, const std::string& _as,
-            const std::string& _file):
-         imp(_imp), as(_as), file(_file)
+      explicit import(std::string  _imp, std::string  _as,
+            std::string  _file):
+         imp(std::move(_imp)), as(std::move(_as)), file(std::move(_file))
       {
       }
 };

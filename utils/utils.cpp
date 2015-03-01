@@ -32,14 +32,14 @@ write_strings(const vector<string>& v, ostream& out, const size_t tab)
    int left_to_write(SIZE_LINE);
    bool starting = true;
 
-   for(vector<string>::const_iterator it(v.begin()), end(v.end()); it != end; ++it) {
+   for(const auto & elem : v) {
       if(starting) {
          for(size_t i(0); i < tab; ++i)
             out << "\t";
          starting = false;
       }
-      out << *it;
-      left_to_write -= it->length();
+      out << elem;
+      left_to_write -= elem.length();
       if(left_to_write <= 0) {
          left_to_write = SIZE_LINE;
          starting = true;

@@ -67,7 +67,7 @@ public:
    
    void set_arg_type(const size_t, type*);
    
-   explicit external_function(external_function_ptr, const size_t, type*, const std::string&);
+   explicit external_function(external_function_ptr, const size_t, type*, std::string );
    
    ~external_function(void);
 };

@@ -45,7 +45,7 @@ execute_add_persistent0(db::node *node, vm::tuple *tpl, predicate *pred, state& 
       node->matcher.new_persistent_fact(pred);
       return;
    }
-   full_tuple *stuple(new full_tuple(tpl, pred, state.direction, state.depth));
+   auto        stuple(new full_tuple(tpl, pred, state.direction, state.depth));
    node->store.persistent_tuples.push_back(stuple);
 }
 

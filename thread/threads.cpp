@@ -543,8 +543,8 @@ threads_sched::init(const size_t)
       prios.stati.set_type(HEAP_ASC);
    }
 
-   database::map_nodes::iterator it(All->DATABASE->get_node_iterator(All->MACHINE->find_first_node(id)));
-   database::map_nodes::iterator end(All->DATABASE->get_node_iterator(All->MACHINE->find_last_node(id)));
+   auto it(All->DATABASE->get_node_iterator(All->MACHINE->find_first_node(id)));
+   auto end(All->DATABASE->get_node_iterator(All->MACHINE->find_last_node(id)));
    const priority_t initial(theProgram->get_initial_priority());
 
    if(initial == no_priority_value() || !scheduling_mechanism) {

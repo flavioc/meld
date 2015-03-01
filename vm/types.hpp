@@ -81,16 +81,16 @@ class list_type: public type
 
    public:
 
-      virtual bool is_reference() const { return true; }
+      virtual bool is_reference() const override { return true; }
 
       inline type *get_subtype(void) const { return sub_type; }
 
-      virtual std::string string(void) const
+      virtual std::string string(void) const override
       {
          return type::string() + " " + sub_type->string();
       }
 
-      virtual bool equal(type *other) const
+      virtual bool equal(type *other) const override
       {
          if(!type::equal(other))
             return false;
@@ -117,7 +117,7 @@ class struct_type: public type
 
    public:
 
-      virtual bool is_reference() const { return true; }
+      virtual bool is_reference() const override { return true; }
 
       inline size_t get_size(void) const { return types.size(); }
 
@@ -131,7 +131,7 @@ class struct_type: public type
 
       inline bool simple_composed_type(void) const { return simple; }
 
-      virtual bool equal(type *other) const
+      virtual bool equal(type *other) const override
       {
          if(!type::equal(other))
             return false;
@@ -149,7 +149,7 @@ class struct_type: public type
          return false;
       }
 
-      virtual std::string string(void) const
+      virtual std::string string(void) const override
       {
          std::string ret(type::string());
 
@@ -166,9 +166,9 @@ class struct_type: public type
          types.resize(_size);
       }
 
-      explicit struct_type(const std::vector<type*>& _types):
+      explicit struct_type(std::vector<type*>  _types):
          type(FIELD_STRUCT),
-         types(_types)
+         types(std::move(_types))
       {
          for(type *t : types) {
             if(reference_type(t->get_type())) {
@@ -192,16 +192,16 @@ class array_type: public type
 
    public:
 
-      virtual bool is_reference() const { return true; }
+      virtual bool is_reference() const override { return true; }
 
       inline type *get_base() const { return base; }
 
-      virtual std::string string(void) const
+      virtual std::string string(void) const override
       {
          return type::string() + " " + base->string();
       }
 
-      virtual bool equal(type *other) const
+      virtual bool equal(type *other) const override
       {
          if(!type::equal(other))
             return false;

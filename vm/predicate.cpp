@@ -48,7 +48,7 @@ read_type_from_reader(code_reader& read, vm::program *prog)
          byte size;
          byte id;
          read.read_type<byte>(&size);
-         struct_type *ret = new struct_type((size_t)size);
+         auto  ret = new struct_type((size_t)size);
          for(size_t i(0); i < ret->get_size(); ++i) {
             read.read_type<byte>(&id);
             ret->set_type(i, prog->get_type(id));
@@ -82,7 +82,7 @@ predicate*
 predicate::make_predicate_simple(const predicate_id id, const string& name, const bool linear,
       const vector<type*>& types)
 {
-   predicate *pred = new predicate();
+   auto  pred = new predicate();
    
    pred->id = id;
 
@@ -99,7 +99,7 @@ predicate::make_predicate_from_reader(code_reader& read, code_size_t *code_size,
       const uint32_t major_version, const uint32_t minor_version,
       const vector<type*, mem::allocator<type*>>& types)
 {
-   predicate *pred = new predicate();
+   auto  pred = new predicate();
    
    pred->id = id;
 

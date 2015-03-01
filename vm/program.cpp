@@ -83,8 +83,8 @@ program::bypass_bytecode_header(const string& filename)
    return fp;
 }
 
-program::program(const string& _filename):
-   filename(_filename),
+program::program(string  _filename):
+   filename(std::move(_filename)),
    init(nullptr)
 {
    code_reader read(filename);
@@ -257,7 +257,7 @@ program::program(const string& _filename):
       code_size_t fun_size;
 
       read.read_type<code_size_t>(&fun_size);
-      byte_code fun_code(new byte_code_el[fun_size]);
+      auto   fun_code(new byte_code_el[fun_size]);
       read.read_any(fun_code, fun_size);
 
       functions[i] = new vm::function(fun_code, fun_size);
@@ -450,13 +450,13 @@ program::~program(void)
    }
    if(data_rule != nullptr)
       delete data_rule;
-   for(size_t i(0); i < functions.size(); ++i) {
-      delete functions[i];
+   for(auto & elem : functions) {
+      delete elem;
    }
    if(const_code)
       delete []const_code;
-   for(size_t i(0); i < imported_predicates.size(); ++i) {
-      delete imported_predicates[i];
+   for(auto & elem : imported_predicates) {
+      delete elem;
    }
    MAX_STRAT_LEVEL = 0;
 #ifdef USE_REAL_NODES
@@ -494,13 +494,6 @@ program::fix_node_address(db::node *n)
    for(byte_code code : vec)
       pcounter_set_node(code, (node_val)n);
 #endif
-}
-
-void
-program::jit_compile()
-{
-   for(size_t i(1); i < number_rules; ++i)
-      rules[i]->jit_compile();
 }
 
 predicate*
@@ -600,11 +593,11 @@ program::print_predicates(ostream& cout) const
    for(size_t i(0); i < num_predicates(); ++i)
       cout << *predicates[i] << endl;
    cout << ">> Imported Predicates:" << endl;
-   for(size_t i(0); i < imported_predicates.size(); i++)
-      cout << *imported_predicates[i] << endl;
+   for(auto & elem : imported_predicates)
+      cout << *elem << endl;
    cout << ">> Exported Predicates:" << endl;
-   for(size_t i(0); i < exported_predicates.size(); i++)
-      cout << exported_predicates[i] << endl;
+   for(auto & elem : exported_predicates)
+      cout << elem << endl;
    cout << ">> Priorities: " << (priority_order == PRIORITY_ASC ? "ascending" : "descending") << "\n";
    if(priority_static)
       cout << ">> No work stealing" << endl;

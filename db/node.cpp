@@ -11,16 +11,12 @@ using namespace std;
 using namespace vm;
 using namespace utils;
 
-namespace db
-{
+namespace db {
 
-size_t
-node::count_total(const predicate *pred) const
-{
-   if(pred->is_persistent_pred())
-      return pers_store.count_total(pred);
+size_t node::count_total(const predicate *pred) const {
+   if (pred->is_persistent_pred()) return pers_store.count_total(pred);
 
-   if(linear.stored_as_hash_table(pred)) {
+   if (linear.stored_as_hash_table(pred)) {
       const hash_table *table(linear.get_hash_table(pred->get_id()));
       return table->get_total_size();
    }
@@ -29,31 +25,25 @@ node::count_total(const predicate *pred) const
    return ls->get_size();
 }
 
-size_t
-node::count_total_all(void) const
-{
+size_t node::count_total_all(void) const {
    size_t total(0);
-   for(auto it(theProgram->begin_predicates()), end(theProgram->end_predicates()); it != end; ++it)
+   for (auto it(theProgram->begin_predicates()),
+        end(theProgram->end_predicates());
+        it != end; ++it)
       total += count_total(*it);
    return total;
 }
 
-void
-node::assert_end(void) const
-{
-}
+void node::assert_end(void) const {}
 
-node::node(const node_id _id, const node_id _trans):
-   refs(0),
-   id(_id), translation(_trans),
-   default_priority_level(no_priority_value()),
-   priority_level(theProgram->get_initial_priority())
-{
-}
+node::node(const node_id _id, const node_id _trans)
+    : refs(0),
+      id(_id),
+      translation(_trans),
+      default_priority_level(no_priority_value()),
+      priority_level(theProgram->get_initial_priority()) {}
 
-void
-node::wipeout(candidate_gc_nodes& gc_nodes)
-{
+void node::wipeout(candidate_gc_nodes &gc_nodes) {
    linear.destroy(gc_nodes);
    pers_store.wipeout(gc_nodes);
 
@@ -61,82 +51,84 @@ node::wipeout(candidate_gc_nodes& gc_nodes)
    mem::allocator<node>().deallocate(this, 1);
 }
 
-void
-node::dump(ostream& cout) const
-{
+void node::dump(ostream &cout) const {
    cout << get_id() << endl;
-   
-   for(size_t i(0); i < theProgram->num_predicates(); ++i) {
+
+   for (size_t i(0); i < theProgram->num_predicates(); ++i) {
       predicate *pred(theProgram->get_sorted_predicate(i));
 
       vector<string> vec;
-      if(pred->is_persistent_pred())
+      if (pred->is_persistent_pred())
          vec = pers_store.dump(pred);
       else {
-         if(linear.stored_as_hash_table(pred)) {
+         if (linear.stored_as_hash_table(pred)) {
             const hash_table *table(linear.get_hash_table(pred->get_id()));
-            for(hash_table::iterator it(table->begin()); !it.end(); ++it) {
+            for (hash_table::iterator it(table->begin()); !it.end(); ++it) {
                const intrusive_list<vm::tuple> *ls(*it);
-               if(!ls->empty()) {
-                  for(intrusive_list<vm::tuple>::const_iterator it(ls->begin()), end(ls->end());
-                        it != end; ++it)
+               if (!ls->empty()) {
+                  for (intrusive_list<vm::tuple>::const_iterator
+                           it(ls->begin()),
+                       end(ls->end());
+                       it != end; ++it)
                      vec.push_back((*it)->to_str(pred));
                }
             }
          } else {
-            const intrusive_list<vm::tuple> *ls(linear.get_linked_list(pred->get_id()));
-            if(ls && !ls->empty()) {
-               for(intrusive_list<vm::tuple>::const_iterator it(ls->begin()), end(ls->end());
-                     it != end; ++it)
+            const intrusive_list<vm::tuple> *ls(
+                linear.get_linked_list(pred->get_id()));
+            if (ls && !ls->empty()) {
+               for (intrusive_list<vm::tuple>::const_iterator it(ls->begin()),
+                    end(ls->end());
+                    it != end; ++it)
                   vec.push_back(to_string((*it)->to_str(pred)));
             }
          }
       }
 
-      if(!vec.empty()) {
+      if (!vec.empty()) {
          sort(vec.begin(), vec.end());
 
-         for(size_t i(0); i < vec.size(); ++i)
-            cout << vec[i] << endl;
+         for (auto & elem : vec) cout << elem << endl;
       }
    }
 }
 
-void
-node::print(ostream& cout) const
-{
-   cout << "--> node " << get_translated_id() << "/(id " << get_id()
-        << ") <--" << endl;
-   
-   for(size_t i(0); i < theProgram->num_predicates(); ++i) {
+void node::print(ostream &cout) const {
+   cout << "--> node " << get_translated_id() << "/(id " << get_id() << ") <--"
+        << endl;
+
+   for (size_t i(0); i < theProgram->num_predicates(); ++i) {
       predicate *pred(theProgram->get_sorted_predicate(i));
 
       vector<string> vec;
-      if(pred->is_persistent_pred())
+      if (pred->is_persistent_pred())
          vec = pers_store.print(pred);
       else {
-         if(linear.stored_as_hash_table(pred)) {
+         if (linear.stored_as_hash_table(pred)) {
             const hash_table *table(linear.get_hash_table(pred->get_id()));
-            for(hash_table::iterator it(table->begin()); !it.end(); ++it) {
+            for (hash_table::iterator it(table->begin()); !it.end(); ++it) {
                const intrusive_list<vm::tuple> *ls(*it);
-               if(!ls->empty()) {
-                  for(intrusive_list<vm::tuple>::const_iterator it(ls->begin()), end(ls->end());
-                        it != end; ++it)
+               if (!ls->empty()) {
+                  for (intrusive_list<vm::tuple>::const_iterator
+                           it(ls->begin()),
+                       end(ls->end());
+                       it != end; ++it)
                      vec.push_back((*it)->to_str(pred));
                }
             }
          } else {
-            const intrusive_list<vm::tuple> *ls(linear.get_linked_list(pred->get_id()));
-            if(ls && !ls->empty()) {
-               for(intrusive_list<vm::tuple>::iterator it(ls->begin()), end(ls->end());
-                     it != end; ++it)
+            const intrusive_list<vm::tuple> *ls(
+                linear.get_linked_list(pred->get_id()));
+            if (ls && !ls->empty()) {
+               for (intrusive_list<vm::tuple>::iterator it(ls->begin()),
+                    end(ls->end());
+                    it != end; ++it)
                   vec.push_back((*it)->to_str(pred));
             }
          }
       }
 
-      if(vec.empty())
-         continue;
+      if (vec.empty()) continue;
 
       cout << " ";
       pred->print_simple(cout);
@@ -147,11 +139,8 @@ node::print(ostream& cout) const
    }
 }
 
-ostream&
-operator<<(ostream& cout, const node& node)
-{
+ostream &operator<<(ostream &cout, const node &node) {
    node.print(cout);
    return cout;
 }
-
 }

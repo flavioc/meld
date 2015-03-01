@@ -402,7 +402,7 @@ agg_configuration::print(ostream& cout, predicate *pred) const
       cout << leaf->get_count();
       if(leaf->has_depth_counter()) {
          cout << " - ";
-         for(depth_counter::const_iterator it(leaf->get_depth_begin()), end(leaf->get_depth_end());
+         for(auto it(leaf->get_depth_begin()), end(leaf->get_depth_end());
                it != end;
                ++it)
          {

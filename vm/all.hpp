@@ -106,9 +106,9 @@ class all
 
    virtual ~all(void)
    {
-      for(size_t i(0); i < ARGUMENTS.size(); ++i) {
-         if(ARGUMENTS[i] != nullptr) {
-            ARGUMENTS[i]->dec_refs();
+      for(auto & elem : ARGUMENTS) {
+         if(elem != nullptr) {
+            elem->dec_refs();
          }
       }
    }

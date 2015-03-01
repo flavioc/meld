@@ -3,6 +3,7 @@
 #define MEM_CHUNKGROUP_HPP
 
 #include <limits>
+#include <assert.h>
 
 #include "mem/chunk.hpp"
 

@@ -4,6 +4,8 @@
 
 #include <iostream>
 
+#include "vm/predicate.hpp"
+
 namespace utils
 {
 

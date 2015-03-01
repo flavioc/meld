@@ -3,6 +3,7 @@
 #define UTILS_TREE_BARRIER_HPP
 
 #include <stdio.h>
+#include <assert.h>
 #include <atomic>
 
 #include "utils/utils.hpp"
@@ -89,7 +90,7 @@ private:
       if(depth == 0)
          node[this_id] = new inner_node(this, parent, 0, this_id);
       else {
-         inner_node *my_node(new inner_node(this, parent, radix, this_id));
+         auto         my_node(new inner_node(this, parent, radix, this_id));
          node[this_id] = my_node;
          
          size_t num_children(0);

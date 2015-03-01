@@ -64,8 +64,8 @@ public:
    
    void add_node_set(map_nodes& set)
    {
-      for(auto it(set.begin()), end(set.end()); it != end; ++it)
-         nodes[it->first] = it->second;
+      for(auto & elem : set)
+         nodes[elem.first] = elem.second;
    }
 
    node* find_node(const node::node_id id) const

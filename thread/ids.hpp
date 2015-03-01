@@ -5,6 +5,9 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "db/database.hpp"
+#include "db/node.hpp"
+
 #define ALLOCATED_IDS 1024
 
 namespace sched

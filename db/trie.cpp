@@ -334,7 +334,7 @@ trie_node::convert_hash(type *type)
    assert(!is_hashed());
    
    trie_node *next(get_child());
-   trie_hash *hash(new trie_hash(type, this));
+   auto  hash(new trie_hash(type, this));
    size_t total(0);
    
    while (next != nullptr) {

@@ -24,7 +24,7 @@ public:
    {
       if(is_header)
          out << "# ";
-      for(std::vector<std::string>::const_iterator it(data.begin()); it != data.end(); ++it) {
+      for(auto it(data.begin()); it != data.end(); ++it) {
          if(it != data.begin())
             out << " ";
          out << *it;

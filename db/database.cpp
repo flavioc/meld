@@ -48,8 +48,8 @@ void
 database::wipeout(candidate_gc_nodes& gc_nodes)
 {
    deleting = true;
-   for(auto it(nodes.begin()); it != nodes.end(); ++it) {
-      db::node *n(it->second);
+   for(auto & elem : nodes) {
+      db::node *n(elem.second);
       n->wipeout(gc_nodes);
    }
 }
@@ -106,8 +106,8 @@ size_t
 database::total_facts(void) const
 {
    size_t total(0);
-   for(map_nodes::const_iterator it(nodes.begin()); it != nodes.end(); ++it) {
-      db::node *n(it->second);
+   for(const auto & elem : nodes) {
+      db::node *n(elem.second);
       total += n->count_total_all();
    }
    return total;
@@ -119,27 +119,23 @@ database::print_db(ostream& cout) const
    std::vector<db::node*> arr(num_nodes(), nullptr);
 
    size_t i(0);
-   for(map_nodes::const_iterator it(nodes.begin());
-      it != nodes.end();
-      ++it)
+   for(const auto & elem : nodes)
    {
-      arr[i++] = it->second;
+      arr[i++] = elem.second;
    }
 
    sort(arr.begin(), arr.end(), node_sorter);
-   for(size_t i(0); i < arr.size(); ++i) {
-      cout << *arr[i] << endl;
+   for(auto & elem : arr) {
+      cout << *elem << endl;
    }
 }
 
 void
 database::dump_db(ostream& cout) const
 {
-   for(map_nodes::const_iterator it(nodes.begin());
-      it != nodes.end();
-      ++it)
+   for(const auto & elem : nodes)
    {
-      it->second->dump(cout);
+      elem.second->dump(cout);
    }
 }
 
@@ -147,7 +143,7 @@ void
 database::print(ostream& cout) const
 {
    cout << "{";
-   for(map_nodes::const_iterator it(nodes.begin());
+   for(auto it(nodes.begin());
       it != nodes.end();
       ++it)
    {

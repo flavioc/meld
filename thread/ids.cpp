@@ -14,20 +14,20 @@ namespace sched
 void
 ids::merge(ids& other)
 {
-   for(auto it(other.added_nodes.begin()), end(other.added_nodes.end()); it != end; ++it) {
-      auto it2(removed_nodes.find(it->first));
+   for(auto & elem : other.added_nodes) {
+      auto it2(removed_nodes.find(elem.first));
       if(it2 == removed_nodes.end())
-         added_nodes.insert(*it);
+         added_nodes.insert(elem);
       else
          removed_nodes.erase(it2);
    }
    other.added_nodes.clear();
 
-   for(auto it(other.removed_nodes.begin()), end(other.removed_nodes.end()); it != end; ++it) {
-      auto it2(added_nodes.find(*it));
+   for(const auto & elem : other.removed_nodes) {
+      auto it2(added_nodes.find(elem));
 
       if(it2 == added_nodes.end())
-         removed_nodes.insert(*it);
+         removed_nodes.insert(elem);
       else
          added_nodes.erase(it2);
    }

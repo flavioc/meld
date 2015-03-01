@@ -47,7 +47,7 @@ public:
    inline const_pointer address(const_reference r) { return &r; }
    
    inline pointer allocate(size_type cnt,
-      typename std::allocator<void>::const_pointer = 0)
+      typename std::allocator<void>::const_pointer = nullptr)
    {
       return reinterpret_cast<pointer>(mem::center::allocate(cnt, sizeof(T)));
    }

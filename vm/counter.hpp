@@ -2,9 +2,11 @@
 #ifndef VM_COUNTER_HPP
 #define VM_COUNTER_HPP
 
+#include <assert.h>
 #include <iostream>
 
 #include "utils/types.hpp"
+#include "mem/allocator.hpp"
 
 namespace vm
 {

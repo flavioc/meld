@@ -192,11 +192,10 @@ public:
 #ifdef USE_REAL_NODES
    void fix_node_address(db::node *);
 #endif
-   void jit_compile();
 
    static std::unique_ptr<std::ifstream> bypass_bytecode_header(const std::string&);
    
-   explicit program(const std::string&);
+   explicit program(std::string );
    explicit program(void); // add compiled program
    
    ~program(void);

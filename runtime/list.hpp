@@ -81,7 +81,7 @@ struct cons
             tail->print(cout, false, print);
       }
 
-      static inline list_ptr null_list(void) { return (list_ptr)0; }
+      static inline list_ptr null_list(void) { return (list_ptr)nullptr; }
 
       static inline bool is_null(cons const * ls) { return ls == null_list(); }
 
@@ -369,8 +369,8 @@ from_vector_to_reverse_list(TVector& vec, vm::tuple_field (*conv)(const Convert)
 {
    cons *ptr(cons::null_list());
 
-   for(typename TVector::iterator it(vec.begin()), end(vec.end()); it != end; ++it) {
-      ptr = cons::create(ptr, conv(*it), t);
+   for(auto & elem : vec) {
+      ptr = cons::create(ptr, conv(elem), t);
    }
 
    return ptr;
