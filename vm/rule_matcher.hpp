@@ -19,8 +19,7 @@ struct rule_matcher {
    void register_predicate_unavailability(const predicate *pred) {
       predicate_existence.unset_bit(pred->get_id());
 
-      for (auto it(pred->begin_linear_rules()),
-           end(pred->end_linear_rules());
+      for (auto it(pred->begin_linear_rules()), end(pred->end_linear_rules());
            it != end; it++) {
          const vm::rule *rule(*it);
 
@@ -34,8 +33,7 @@ struct rule_matcher {
 
    void register_predicate_availability(const predicate *pred) {
       predicate_existence.set_bit(pred->get_id());
-      for (auto it(pred->begin_linear_rules()),
-           end(pred->end_linear_rules());
+      for (auto it(pred->begin_linear_rules()), end(pred->end_linear_rules());
            it != end; it++) {
          const vm::rule *rule(*it);
 
@@ -52,8 +50,7 @@ struct rule_matcher {
    inline void register_predicate_update(const predicate *pred) {
       assert(predicate_existence.get_bit(pred->get_id()));
 
-      for (auto it(pred->begin_linear_rules()),
-           end(pred->end_linear_rules());
+      for (auto it(pred->begin_linear_rules()), end(pred->end_linear_rules());
            it != end; it++) {
          const vm::rule *rule(*it);
 

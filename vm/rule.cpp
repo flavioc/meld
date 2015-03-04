@@ -14,7 +14,6 @@ void rule::print(ostream &out, const vm::program *const prog) const {
    assert(theProgram);
 
    for (auto id : predicates) {
-      
       const predicate *pred(theProgram->get_predicate(id));
 
       assert(pred);
@@ -24,5 +23,4 @@ void rule::print(ostream &out, const vm::program *const prog) const {
 
    instrs_print(code, code_size, 0, prog, out);
 }
-
 }

@@ -41,7 +41,7 @@ class rule {
    inline byte_code get_bytecode(void) const { return code; }
    inline size_t num_predicates(void) const { return predicates.size(); }
 
-   explicit rule(const rule_id _id, std::string  _str)
+   explicit rule(const rule_id _id, std::string _str)
        : id(_id), str(std::move(_str)) {}
 
    inline void destroy() {
