@@ -240,6 +240,7 @@ facts_consumed(EXTERNAL_ARG(id))
    DECLARE_NODE(id);
 
    node *tn(nullptr);
+   (void)tn;
 #ifdef USE_REAL_NODES
    tn = (node*)id;
 #else
