@@ -12,7 +12,7 @@
 #include "db/node.hpp"
 #include "stat/slice_set.hpp"
 #include "vm/state.hpp"
-#include "thread/threads.hpp"
+#include "thread/thread.hpp"
 
 namespace process
 {
@@ -62,7 +62,7 @@ public:
    
    vm::all *get_all(void) const { return this->all; }
    
-   void run_action(sched::threads_sched *, vm::tuple *, vm::predicate *,
+   void run_action(sched::thread *, vm::tuple *, vm::predicate *,
          vm::candidate_gc_nodes&);
    
    void start(void);

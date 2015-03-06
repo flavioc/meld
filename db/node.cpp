@@ -21,7 +21,7 @@ size_t node::count_total(const predicate *pred) const {
       return table->get_total_size();
    }
 
-   const intrusive_list<vm::tuple> *ls(linear.get_linked_list(pred->get_id()));
+   const intrusive_list<vm::tuple> *ls(linear.get_linked_list(pred->get_linear_id()));
    return ls->get_size();
 }
 
@@ -75,7 +75,7 @@ void node::dump(ostream &cout) const {
             }
          } else {
             const intrusive_list<vm::tuple> *ls(
-                linear.get_linked_list(pred->get_id()));
+                linear.get_linked_list(pred->get_linear_id()));
             if (ls && !ls->empty()) {
                for (intrusive_list<vm::tuple>::const_iterator it(ls->begin()),
                     end(ls->end());
@@ -118,7 +118,7 @@ void node::print(ostream &cout) const {
             }
          } else {
             const intrusive_list<vm::tuple> *ls(
-                linear.get_linked_list(pred->get_id()));
+                linear.get_linked_list(pred->get_linear_id()));
             if (ls && !ls->empty()) {
                for (intrusive_list<vm::tuple>::iterator it(ls->begin()),
                     end(ls->end());

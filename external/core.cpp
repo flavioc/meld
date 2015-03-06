@@ -2,7 +2,7 @@
 #include <algorithm>
 
 #include "external/core.hpp"
-#include "thread/threads.hpp"
+#include "thread/thread.hpp"
 #include "db/database.hpp"
 
 using namespace sched;
@@ -73,7 +73,7 @@ cpu_static(EXTERNAL_ARG(id))
 #endif
    assert(tn != nullptr);
 
-   threads_sched *owner(static_cast<threads_sched*>(tn->get_owner()));
+   thread *owner(static_cast<thread*>(tn->get_owner()));
 
    ret = owner->num_static_nodes();
 

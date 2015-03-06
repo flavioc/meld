@@ -1,5 +1,5 @@
 
-#include "thread/threads.hpp"
+#include "thread/thread.hpp"
 #include "interface.hpp"
 
 using namespace db;
@@ -16,7 +16,7 @@ is_higher_priority(const priority_t priority, db::node *tn)
 }
 
 void
-threads_sched::schedule_next(node *n)
+thread::schedule_next(node *n)
 {
    const priority_t prio(max_priority_value());
 
@@ -26,7 +26,7 @@ threads_sched::schedule_next(node *n)
    LOCK_STACK(nodelock);
    NODE_LOCK(n, nodelock, schedule_next_lock);
 
-   threads_sched *other(n->get_owner());
+   thread *other(n->get_owner());
    if(other == this)
       do_set_node_priority(n, prio, true);
 
@@ -37,10 +37,10 @@ threads_sched::schedule_next(node *n)
 }
 
 void
-threads_sched::add_node_priority_other(node *n, const priority_t priority)
+thread::add_node_priority_other(node *n, const priority_t priority)
 {
 #ifdef SEND_OTHERS
-   threads_sched *other(n->get_owner());
+   thread *other(n->get_owner());
 
    priority_add_item item;
    item.typ = ADD_PRIORITY;
@@ -57,7 +57,7 @@ threads_sched::add_node_priority_other(node *n, const priority_t priority)
 
 #ifndef DIRECT_PRIORITIES
 void
-threads_sched::check_priority_buffer(void)
+thread::check_priority_buffer(void)
 {
 #ifdef SEND_OTHERS
    if(priority_buffer.size() == 0)
@@ -95,11 +95,11 @@ threads_sched::check_priority_buffer(void)
 #endif
 
 void
-threads_sched::set_node_priority_other(node *n, const priority_t priority)
+thread::set_node_priority_other(node *n, const priority_t priority)
 {
 #ifdef SEND_OTHERS
    // will potentially change
-   threads_sched *other(n->get_owner());
+   thread *other(n->get_owner());
    priority_add_item item;
    item.typ = SET_PRIORITY;
    item.val = priority;
@@ -113,7 +113,7 @@ threads_sched::set_node_priority_other(node *n, const priority_t priority)
 }
 
 void
-threads_sched::add_node_priority(node *tn, const priority_t priority)
+thread::add_node_priority(node *tn, const priority_t priority)
 {
    if(!scheduling_mechanism)
       return;
@@ -128,7 +128,7 @@ threads_sched::add_node_priority(node *tn, const priority_t priority)
 #ifdef TASK_STEALING
    LOCK_STACK(nodelock);
    NODE_LOCK(tn, nodelock, add_priority_lock);
-   threads_sched *other(tn->get_owner());
+   thread *other(tn->get_owner());
    if(other == this)
       do_set_node_priority(tn, tn->get_priority() + priority);
    else
@@ -139,7 +139,7 @@ threads_sched::add_node_priority(node *tn, const priority_t priority)
 #endif
    NODE_UNLOCK(tn, nodelock);
 #else
-   threads_sched *other(tn->get_owner());
+   thread *other(tn->get_owner());
    if(other == this) {
       const priority_t old_prio(tn->get_priority());
       set_node_priority(n, old_prio + priority);
@@ -148,7 +148,7 @@ threads_sched::add_node_priority(node *tn, const priority_t priority)
 }
 
 void
-threads_sched::set_default_node_priority(node *tn, const priority_t priority)
+thread::set_default_node_priority(node *tn, const priority_t priority)
 {
    if(!scheduling_mechanism)
       return;
@@ -161,7 +161,7 @@ threads_sched::set_default_node_priority(node *tn, const priority_t priority)
 }
 
 void
-threads_sched::do_remove_node_priority(node *tn)
+thread::do_remove_node_priority(node *tn)
 {
    switch(tn->node_state()) {
       case STATE_STEALING:
@@ -194,11 +194,11 @@ threads_sched::do_remove_node_priority(node *tn)
 }
 
 void
-threads_sched::do_remove_node_priority_other(node *tn)
+thread::do_remove_node_priority_other(node *tn)
 {
    // we know that the owner of node is not this.
    queue_id_t state(tn->node_state());
-   threads_sched *owner(tn->get_owner());
+   thread *owner(tn->get_owner());
 
    switch(state) {
       case STATE_STEALING:
@@ -231,7 +231,7 @@ threads_sched::do_remove_node_priority_other(node *tn)
 }
 
 void
-threads_sched::remove_node_priority(node *tn)
+thread::remove_node_priority(node *tn)
 {
    if(!scheduling_mechanism)
       return;
@@ -246,7 +246,7 @@ threads_sched::remove_node_priority(node *tn)
 #ifdef TASK_STEALING
    LOCK_STACK(nodelock);
    NODE_LOCK(tn, nodelock, set_priority_lock);
-   threads_sched *other(tn->get_owner());
+   thread *other(tn->get_owner());
    if(other == this)
       do_remove_node_priority(tn);
    else
@@ -257,7 +257,7 @@ threads_sched::remove_node_priority(node *tn)
 #endif
    NODE_UNLOCK(tn, nodelock);
 #else
-   threads_sched *other(tn->get_owner());
+   thread *other(tn->get_owner());
    if(other == this)
       do_remove_node_priority(tn);
 #endif
@@ -265,7 +265,7 @@ threads_sched::remove_node_priority(node *tn)
 }
 
 void
-threads_sched::set_node_priority(node *tn, const priority_t priority)
+thread::set_node_priority(node *tn, const priority_t priority)
 {
    if(!scheduling_mechanism)
       return;
@@ -285,7 +285,7 @@ threads_sched::set_node_priority(node *tn, const priority_t priority)
       NODE_UNLOCK(tn, nodelock);
       return;
    }
-   threads_sched *other(tn->get_owner());
+   thread *other(tn->get_owner());
    if(other == this)
       do_set_node_priority(tn, priority);
    else
@@ -298,21 +298,21 @@ threads_sched::set_node_priority(node *tn, const priority_t priority)
 #else
    if(!is_higher_priority(priority, tn))
       return;
-   threads_sched *other(tn->get_owner());
+   thread *other(tn->get_owner());
    if(other == this)
       do_set_node_priority(tn, priority);
 #endif
 }
 
 void
-threads_sched::do_set_node_priority_other(db::node *node, const priority_t priority)
+thread::do_set_node_priority_other(db::node *node, const priority_t priority)
 {
 #ifdef INSTRUMENTATION
    priority_nodes_others++;
 #endif
    // we know that the owner of node is not this.
    queue_id_t state(node->node_state());
-   threads_sched *owner(node->get_owner());
+   thread *owner(node->get_owner());
 
    switch(state) {
       case STATE_STEALING:
@@ -353,7 +353,7 @@ threads_sched::do_set_node_priority_other(db::node *node, const priority_t prior
 }
 
 void
-threads_sched::do_set_node_priority(node *tn, const priority_t priority, const bool force_queue)
+thread::do_set_node_priority(node *tn, const priority_t priority, const bool force_queue)
 {
 #ifdef INSTRUMENTATION
    priority_nodes_thread++;
@@ -407,7 +407,7 @@ threads_sched::do_set_node_priority(node *tn, const priority_t priority, const b
 }
 
 void
-threads_sched::set_node_static(db::node *tn)
+thread::set_node_static(db::node *tn)
 {
    if(!scheduling_mechanism)
       return;
@@ -455,7 +455,7 @@ threads_sched::set_node_static(db::node *tn)
 }
 
 void
-threads_sched::set_node_moving(db::node *tn)
+thread::set_node_moving(db::node *tn)
 {
    if(!scheduling_mechanism)
       return;
@@ -502,14 +502,14 @@ threads_sched::set_node_moving(db::node *tn)
 }
 
 void
-threads_sched::move_node_to_new_owner(db::node *tn, threads_sched *new_owner)
+thread::move_node_to_new_owner(db::node *tn, thread *new_owner)
 {
    new_owner->add_to_queue(tn);
    comm_threads.set_bit(new_owner->get_id());
 }
 
 void
-threads_sched::set_node_cpu(db::node *node, const int_val val)
+thread::set_node_cpu(db::node *node, const int_val val)
 {
    if(!scheduling_mechanism)
       return;
@@ -519,13 +519,13 @@ threads_sched::set_node_cpu(db::node *node, const int_val val)
       return;
    }
 
-   threads_sched *new_owner(static_cast<threads_sched*>(All->SCHEDS[val]));
+   thread *new_owner(static_cast<thread*>(All->SCHEDS[val]));
 
    set_node_owner(node, new_owner);
 }
 
 void
-threads_sched::set_node_owner(db::node *tn, threads_sched *new_owner)
+thread::set_node_owner(db::node *tn, thread *new_owner)
 {
    LOCK_STACK(nodelock);
 
@@ -589,11 +589,11 @@ threads_sched::set_node_owner(db::node *tn, threads_sched *new_owner)
 }
 
 void
-threads_sched::set_node_affinity(db::node *node, db::node *affinity)
+thread::set_node_affinity(db::node *node, db::node *affinity)
 {
    if(!scheduling_mechanism)
       return;
-   threads_sched *new_owner(affinity->get_owner());
+   thread *new_owner(affinity->get_owner());
    set_node_owner(node, new_owner);
 }
 

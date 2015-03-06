@@ -328,7 +328,15 @@ program::program(string  _filename):
       pred->set_argument_position(total_arguments);
       pred->has_code = code_size[i] > 0;
       total_arguments += pred->num_fields();
+      if(pred->is_linear_pred()) {
+         pred->id2 = num_linear_predicates();
+         linear_predicates.push_back(pred);
+      } else {
+         pred->id2 = num_persistent_predicates();
+         persistent_predicates.push_back(pred);
+      }
    }
+   num_linear_predicates_uint = next_multiple_of_uint(num_linear_predicates());
 
    sort_predicates();
 

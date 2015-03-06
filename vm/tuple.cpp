@@ -270,7 +270,7 @@ tuple::destructor(predicate *pred, candidate_gc_nodes& gc_nodes)
                if(!All->DATABASE->is_initial_node(n)) {
                   assert(n->refs > 0);
                   if(n->try_garbage_collect())
-                     gc_nodes.insert(get_node(i));
+                     gc_nodes.insert((vm::node_val)n);
                }
             }
 #else
@@ -282,7 +282,7 @@ tuple::destructor(predicate *pred, candidate_gc_nodes& gc_nodes)
          case FIELD_FLOAT:
             break;
          default:
-            throw type_error("unsupport field type in tuple::destructor");
+            throw type_error("unsupported field type in tuple::destructor");
             break;
       }
    }

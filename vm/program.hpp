@@ -60,8 +60,11 @@ public:
    std::vector<function*, mem::allocator<function*>> functions;
    
    std::vector<predicate*, mem::allocator<predicate*>> predicates;
+   std::vector<predicate*, mem::allocator<predicate*>> persistent_predicates;
+   std::vector<predicate*, mem::allocator<predicate*>> linear_predicates;
    std::vector<predicate*, mem::allocator<predicate*>> sorted_predicates;
    size_t num_predicates_uint{0};
+   size_t num_linear_predicates_uint{0};
   
    std::vector<byte_code, mem::allocator<byte_code>> code;
    std::vector<code_size_t, mem::allocator<code_size_t>> code_size;
@@ -175,9 +178,12 @@ public:
 	inline type* get_const_type(const const_id& id) const { return const_types[id]; }
    
    size_t num_predicates() const { return predicates.size(); }
+   size_t num_persistent_predicates() const { return persistent_predicates.size(); }
+   size_t num_linear_predicates() const { return linear_predicates.size(); }
    size_t num_route_predicates() const { return route_predicates.size(); }
    size_t num_thread_predicates() const { return thread_predicates.size(); }
    size_t num_predicates_next_uint() const { return num_predicates_uint; }
+   size_t num_linear_predicates_next_uint() const { return num_linear_predicates_uint; }
 
 	inline runtime::rstring::ptr get_default_string(const size_t i) const
 	{

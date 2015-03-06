@@ -77,7 +77,7 @@ endif
 ifeq ($(GC_NODES), true)
 	FLAGS += -DGC_NODES
 endif
-target: FLAGS += -DCOMPILED
+target: FLAGS += -DCOMPILED -DCOMPILED_HEADER=\"$(PROGRAM:.cpp=.hpp)\"
 
 WARNINGS = -Wall -Wextra
 
@@ -131,7 +131,7 @@ SRCS = utils/utils.cpp \
 			mem/stat.cpp \
 			runtime/objs.cpp \
 			thread/ids.cpp \
-			thread/threads.cpp \
+			thread/thread.cpp \
 			thread/coord.cpp \
 			external/math.cpp \
 			external/lists.cpp \

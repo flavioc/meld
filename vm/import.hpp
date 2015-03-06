@@ -5,39 +5,27 @@
 #include <string>
 #include <ostream>
 
-namespace vm
-{
+namespace vm {
 
-class import
-{
+class import {
    private:
+   std::string imp;
+   std::string as;
+   std::string file;
 
-      std::string imp;
-      std::string as;
-      std::string file;
+   public:
+   inline void print(std::ostream& out) const {
+      out << imp << " as " << as << " from " << file;
+   }
 
-  public:
-
-      inline void print(std::ostream& out) const
-      {
-         out << imp << " as " << as << " from " << file;
-      }
-
-      explicit import(std::string  _imp, std::string  _as,
-            std::string  _file):
-         imp(std::move(_imp)), as(std::move(_as)), file(std::move(_file))
-      {
-      }
+   explicit import(std::string _imp, std::string _as, std::string _file)
+       : imp(std::move(_imp)), as(std::move(_as)), file(std::move(_file)) {}
 };
 
-inline std::ostream&
-operator<<(std::ostream& out, const import& imp)
-{
+inline std::ostream& operator<<(std::ostream& out, const import& imp) {
    imp.print(out);
    return out;
 }
-
-
 }
 
 #endif

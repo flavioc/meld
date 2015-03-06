@@ -192,7 +192,7 @@ state::process_incoming_tuples(db::node *node)
       utils::intrusive_list<vm::tuple> *ls(node->store.incoming + i);
       if(!ls->empty()) {
          vm::predicate *pred(theProgram->get_predicate(i));
-         matcher->new_linear_fact(pred);
+         matcher->new_linear_fact(i);
          node->linear.increment_database(pred, ls);
       }
    }
@@ -265,7 +265,7 @@ state::process_persistent_tuple(db::node *target_node, full_tuple *stpl, vm::tup
             if(pred->is_reused_pred())
                target_node->add_linear_fact(stpl->get_tuple(), pred);
             else {
-               matcher->new_persistent_fact(pred);
+               matcher->new_persistent_fact(pred->get_id());
 
                if(!is_new)
                   vm::tuple::destroy(tpl, pred, gc_nodes);
@@ -315,7 +315,7 @@ state::process_persistent_tuple(db::node *target_node, full_tuple *stpl, vm::tup
                   }
                }
             }
-            matcher->new_persistent_count(pred, deleter.trie_size());
+            matcher->new_persistent_count(pred->get_id(), deleter.trie_size());
          }
          vm::full_tuple::wipeout(stpl, gc_nodes);
          break;
@@ -384,7 +384,7 @@ compute_entropy(db::node *node, const predicate *pred, const size_t arg)
    if(node->linear.stored_as_hash_table(pred)) {
       // XXX TODO
    } else {
-      utils::intrusive_list<tuple> *ls(node->linear.get_linked_list(pred->get_id()));
+      utils::intrusive_list<tuple> *ls(node->linear.get_linked_list(pred->get_linear_id()));
 
       for(vm::tuple *tpl : *ls) {
          total++;
@@ -682,10 +682,10 @@ state::run_node(db::node *node)
             if(!gen->empty()) {
                vm::predicate *pred(theProgram->get_predicate(i));
                if(pred->is_thread_pred()) {
-                  matcher->new_linear_fact(pred);
+                  matcher->new_linear_fact(pred->get_id());
                   sched->thread_node->linear.increment_database(pred, gen);
                } else {
-                  matcher->new_linear_fact(pred);
+                  matcher->new_linear_fact(pred->get_id());
                   node->linear.increment_database(pred, gen);
                }
             }
@@ -764,7 +764,7 @@ state::reset_counters()
    linear_facts_consumed = 0;
 }
 
-state::state(sched::threads_sched *_sched):
+state::state(sched::thread *_sched):
    sched(_sched)
 #ifdef CORE_STATISTICS
    , stat()

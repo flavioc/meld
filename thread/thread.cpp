@@ -2,7 +2,7 @@
 #include <climits>
 #include <thread>
 
-#include "thread/threads.hpp"
+#include "thread/thread.hpp"
 #include "db/database.hpp"
 #include "vm/state.hpp"
 #include "interface.hpp"
@@ -26,42 +26,36 @@ static atomic<size_t> prio_nodes_compared(0);
 static atomic<size_t> prio_nodes_changed(0);
 #endif
 
-namespace sched
-{
+namespace sched {
 
-tree_barrier* threads_sched::thread_barrier(nullptr);
-termination_barrier* threads_sched::term_barrier(nullptr);
+tree_barrier *thread::thread_barrier(nullptr);
+termination_barrier *thread::term_barrier(nullptr);
 #ifdef TASK_STEALING
-std::atomic<int> *threads_sched::steal_states(nullptr);
+std::atomic<int> *thread::steal_states(nullptr);
 #endif
 
-std::atomic<bool> threads_sched::stop_flag(false);
+std::atomic<bool> thread::stop_flag(false);
 
-void
-threads_sched::do_loop(void)
-{
+void thread::do_loop(void) {
    db::node *node(nullptr);
 
-   while(true) {
+   while (true) {
       node = get_work();
-      if(node == nullptr)
-         break;
+      if (node == nullptr) break;
       assert(node != nullptr);
       state.run_node(node);
-      if(stop_flag) {
+      if (stop_flag) {
          killed_while_active();
          return;
       }
    }
-   if(stop_flag) {
+   if (stop_flag) {
       killed_while_active();
       return;
    }
 }
-	
-void
-threads_sched::loop(void)
-{
+
+void thread::loop(void) {
    init(All->NUM_THREADS);
 
    do_loop();
@@ -71,38 +65,32 @@ threads_sched::loop(void)
    // cout << "DONE " << id << endl;
 }
 
-void
-threads_sched::init_barriers(const size_t num_threads)
-{
+void thread::init_barriers(const size_t num_threads) {
    thread_barrier = new tree_barrier(num_threads);
    term_barrier = new termination_barrier(num_threads);
 #ifdef TASK_STEALING
    steal_states = new std::atomic<int>[num_threads];
-   for(size_t i(0); i < num_threads; ++i)
-      steal_states[i] = 1;
+   for (size_t i(0); i < num_threads; ++i) steal_states[i] = 1;
 #endif
 }
-   
-void
-threads_sched::assert_end(void) const
-{
+
+void thread::assert_end(void) const {
    assert(is_inactive());
    assert(all_threads_finished());
 }
 
-void
-threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
-{
+void thread::new_work_list(db::node *from, db::node *to,
+                                  vm::tuple_array &arr) {
    assert(is_active());
    (void)from;
 
    LOCK_STACK(nodelock);
 
    NODE_LOCK(to, nodelock, node_lock);
-   
-   threads_sched *owner(to->get_owner());
 
-   if(owner == this) {
+   thread *owner(to->get_owner());
+
+   if (owner == this) {
 #ifdef FACT_STATISTICS
       count_add_work_self++;
 #endif
@@ -114,14 +102,13 @@ threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
       sent_facts_same_thread += arr.size();
       all_transactions++;
 #endif
-      if(!to->active_node())
-         add_to_queue(to);
+      if (!to->active_node()) add_to_queue(to);
    } else {
 #ifdef FACT_STATISTICS
       count_add_work_other += arr.size();
 #endif
       LOCK_STACK(databaselock);
-      if(to->database_lock.try_lock1(LOCK_STACK_USE(databaselock))) {
+      if (to->database_lock.try_lock1(LOCK_STACK_USE(databaselock))) {
          LOCKING_STAT(database_lock_ok);
          to->add_work_myself(arr);
 #ifdef INSTRUMENTATION
@@ -139,7 +126,7 @@ threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
          thread_transactions++;
 #endif
       }
-      if(!to->active_node()) {
+      if (!to->active_node()) {
          owner->add_to_queue(to);
          comm_threads.set_bit(owner->get_id());
       }
@@ -148,17 +135,18 @@ threads_sched::new_work_list(db::node *from, db::node *to, vm::tuple_array& arr)
    NODE_UNLOCK(to, nodelock);
 }
 
-void
-threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pred, const derivation_direction dir, const depth_t depth)
-{
+void thread::new_work(node *from, node *to, vm::tuple *tpl,
+                             vm::predicate *pred,
+                             const derivation_direction dir,
+                             const depth_t depth) {
    assert(is_active());
    (void)from;
-   
+
    LOCK_STACK(nodelock);
    NODE_LOCK(to, nodelock, node_lock);
-   
-   threads_sched *owner(to->get_owner());
-   if(owner == this) {
+
+   thread *owner(to->get_owner());
+   if (owner == this) {
 #ifdef FACT_STATISTICS
       count_add_work_self++;
 #endif
@@ -170,15 +158,14 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
       sent_facts_same_thread++;
       all_transactions++;
 #endif
-      if(!to->active_node())
-         add_to_queue(to);
+      if (!to->active_node()) add_to_queue(to);
    } else {
 #ifdef FACT_STATISTICS
       count_add_work_other++;
 #endif
       LOCK_STACK(databaselock);
 
-      if(to->database_lock.try_lock1(LOCK_STACK_USE(databaselock))) {
+      if (to->database_lock.try_lock1(LOCK_STACK_USE(databaselock))) {
          LOCKING_STAT(database_lock_ok);
          to->add_work_myself(tpl, pred, dir, depth);
 #ifdef INSTRUMENTATION
@@ -196,7 +183,7 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
          thread_transactions++;
 #endif
       }
-      if(!to->active_node()) {
+      if (!to->active_node()) {
          owner->add_to_queue(to);
          comm_threads.set_bit(owner->get_id());
       }
@@ -206,11 +193,8 @@ threads_sched::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pre
 }
 
 #ifdef TASK_STEALING
-bool
-threads_sched::go_steal_nodes(void)
-{
-   if(All->NUM_THREADS == 1)
-      return false;
+bool thread::go_steal_nodes(void) {
+   if (All->NUM_THREADS == 1) return false;
 
    ins_sched;
    assert(is_active());
@@ -224,22 +208,18 @@ threads_sched::go_steal_nodes(void)
 
    memcpy(state_buffer, steal_states, sizeof(int) * All->NUM_THREADS);
 
-   for(size_t i(0); i < All->NUM_THREADS; ++i) {
+   for (size_t i(0); i < All->NUM_THREADS; ++i) {
       size_t tid((next_thread + i) % All->NUM_THREADS);
-      if(tid == get_id())
-         continue;
+      if (tid == get_id()) continue;
 
-      if(state_buffer[tid] == 0)
-         continue;
+      if (state_buffer[tid] == 0) continue;
 
-      threads_sched *target((threads_sched*)All->SCHEDS[tid]);
+      thread *target((thread *)All->SCHEDS[tid]);
 
-      if(!target->is_active() || !target->has_work())
-         continue;
+      if (!target->is_active() || !target->has_work()) continue;
       size_t stolen(target->steal_nodes(node_buffer, NODE_BUFFER_SIZE));
 
-      if(stolen == 0)
-         continue;
+      if (stolen == 0) continue;
 #ifdef FACT_STATISTICS
       count_stolen_nodes += stolen;
 #endif
@@ -247,19 +227,20 @@ threads_sched::go_steal_nodes(void)
       stolen_total += stolen;
 #endif
 
-      for(size_t i(0); i < stolen; ++i) {
+      for (size_t i(0); i < stolen; ++i) {
          db::node *node(node_buffer[i]);
 
          LOCK_STACK(nodelock);
          NODE_LOCK(node, nodelock, node_lock);
-         if(node->node_state() != STATE_STEALING) {
+         if (node->node_state() != STATE_STEALING) {
             // node was put in the queue again, give up.
             NODE_UNLOCK(node, nodelock);
             continue;
          }
-         if(node->is_static()) {
-            if(node->get_owner() != target) {
-               // set-affinity was used and the node was changed to another scheduler
+         if (node->is_static()) {
+            if (node->get_owner() != target) {
+               // set-affinity was used and the node was changed to another
+               // scheduler
                move_node_to_new_owner(node, node->get_owner());
                NODE_UNLOCK(node, nodelock);
                continue;
@@ -281,47 +262,42 @@ threads_sched::go_steal_nodes(void)
    return false;
 }
 
-size_t
-threads_sched::steal_nodes(db::node **buffer, const size_t max)
-{
+size_t thread::steal_nodes(db::node **buffer, const size_t max) {
    steal_flag = !steal_flag;
    size_t stolen = 0;
 
 #ifdef STEAL_ONE
-   if(max == 0)
-      return 0;
+   if (max == 0) return 0;
 
    db::node *node(nullptr);
-   if(steal_flag) {
-      if(!queues.moving.empty()) {
-         if(queues.moving.pop_tail(node, STATE_STEALING)) {
+   if (steal_flag) {
+      if (!queues.moving.empty()) {
+         if (queues.moving.pop_tail(node, STATE_STEALING)) {
             buffer[stolen++] = node;
          }
-      } else if(!prios.moving.empty()) {
+      } else if (!prios.moving.empty()) {
          node = prios.moving.pop(STATE_STEALING);
-         if(node)
-            buffer[stolen++] = node;
+         if (node) buffer[stolen++] = node;
       }
    } else {
-      if(!prios.moving.empty()) {
+      if (!prios.moving.empty()) {
          node = prios.moving.pop(STATE_STEALING);
-         if(node)
-            buffer[stolen++] = node;
-      } else if(!queues.moving.empty()) {
-         if(queues.moving.pop_head(node, STATE_STEALING))
+         if (node) buffer[stolen++] = node;
+      } else if (!queues.moving.empty()) {
+         if (queues.moving.pop_head(node, STATE_STEALING))
             buffer[stolen++] = node;
       }
    }
 #elif defined(STEAL_HALF)
-   if(steal_flag) {
-      if(!queues.moving.empty())
+   if (steal_flag) {
+      if (!queues.moving.empty())
          stolen = queues.moving.pop_tail_half(buffer, max, STATE_STEALING);
-      else if(!prios.moving.empty())
+      else if (!prios.moving.empty())
          stolen = prios.moving.pop_half(buffer, max, STATE_STEALING);
    } else {
-      if(!prios.moving.empty())
+      if (!prios.moving.empty())
          stolen = prios.moving.pop_half(buffer, max, STATE_STEALING);
-      else if(!queues.moving.empty())
+      else if (!queues.moving.empty())
          stolen = queues.moving.pop_tail_half(buffer, max, STATE_STEALING);
    }
 #else
@@ -331,20 +307,15 @@ threads_sched::steal_nodes(db::node **buffer, const size_t max)
 }
 #endif
 
-void
-threads_sched::killed_while_active(void)
-{
+void thread::killed_while_active(void) {
    MUTEX_LOCK_GUARD(lock, thread_lock);
-   if(is_active())
-      set_inactive();
+   if (is_active()) set_inactive();
 }
 
-bool
-threads_sched::busy_wait(void)
-{
+bool thread::busy_wait(void) {
 #ifdef TASK_STEALING
-   if(!theProgram->is_static_priority()) {
-      if(work_stealing && go_steal_nodes()) {
+   if (!theProgram->is_static_priority()) {
+      if (work_stealing && go_steal_nodes()) {
          ins_active;
          return true;
       }
@@ -354,17 +325,17 @@ threads_sched::busy_wait(void)
 #ifdef TASK_STEALING
    size_t count(0);
 #endif
-   
-   while(!has_work()) {
+
+   while (!has_work()) {
 #ifdef TASK_STEALING
 #define STEALING_ROUND_MIN 16
 #define STEALING_ROUND_MAX 4096
-      if(!theProgram->is_static_priority() && work_stealing) {
+      if (!theProgram->is_static_priority() && work_stealing) {
          count++;
-         if(count == backoff) {
+         if (count == backoff) {
             count = 0;
             set_active_if_inactive();
-            if(go_steal_nodes()) {
+            if (go_steal_nodes()) {
                ins_active;
                backoff = max(backoff >> 1, (size_t)STEALING_ROUND_MIN);
                return true;
@@ -373,47 +344,42 @@ threads_sched::busy_wait(void)
          }
       }
 #endif
-      if(is_active() && !has_work()) {
+      if (is_active() && !has_work()) {
          MUTEX_LOCK_GUARD(lock, thread_lock);
-         if(!has_work()) {
-            if(is_active())
-               set_inactive();
-         } else break;
+         if (!has_work()) {
+            if (is_active()) set_inactive();
+         } else
+            break;
       }
       ins_idle;
-      if(all_threads_finished() || stop_flag) {
+      if (all_threads_finished() || stop_flag) {
          assert(is_inactive());
          return false;
       }
       cpu_relax();
       std::this_thread::yield();
    }
-   
+
    // since queue pushing and state setting are done in
    // different exclusive regions, this may be needed
    set_active_if_inactive();
    ins_active;
    assert(is_active());
-   
+
    return true;
 }
 
-void
-threads_sched::make_current_node_inactive(void)
-{
+void thread::make_current_node_inactive(void) {
    current_node->make_inactive();
    current_node->remove_temporary_priority();
 #ifdef GC_NODES
-   if(current_node->garbage_collect())
-      delete_node(current_node);
+   if (current_node->garbage_collect()) delete_node(current_node);
 #endif
 }
 
-bool
-threads_sched::check_if_current_useless(void)
-{
+bool thread::check_if_current_useless(void) {
    LOCK_STACK(curlock);
-   if(current_node->has_new_owner()) {
+   if (current_node->has_new_owner()) {
       NODE_LOCK(current_node, curlock, node_lock);
       // the node has changed to another scheduler!
       assert(current_node->get_static() != this);
@@ -424,10 +390,10 @@ threads_sched::check_if_current_useless(void)
       NODE_UNLOCK(current_node, curlock);
       current_node = nullptr;
       return true;
-   } else if(!current_node->unprocessed_facts) {
+   } else if (!current_node->unprocessed_facts) {
       NODE_LOCK(current_node, curlock, node_lock);
-      
-      if(!current_node->unprocessed_facts) {
+
+      if (!current_node->unprocessed_facts) {
          make_current_node_inactive();
          NODE_UNLOCK(current_node, curlock);
          current_node = nullptr;
@@ -435,58 +401,53 @@ threads_sched::check_if_current_useless(void)
       }
       NODE_UNLOCK(current_node, curlock);
    }
-   
+
    assert(current_node->unprocessed_facts);
    return false;
 }
 
-bool
-threads_sched::set_next_node(void)
-{
+bool thread::set_next_node(void) {
 #ifndef DIRECT_PRIORITIES
    check_priority_buffer();
 #endif
 
-   if(current_node != nullptr)
-      check_if_current_useless();
-   
-   while (current_node == nullptr) {   
-      if(scheduling_mechanism) {
+   if (current_node != nullptr) check_if_current_useless();
+
+   while (current_node == nullptr) {
+      if (scheduling_mechanism) {
          current_node = prios.moving.pop_best(prios.stati, STATE_WORKING);
-         if(current_node) {
-            //cout << "Got node " << current_node->get_id() << " with prio " << current_node->get_priority() << endl;
+         if (current_node) {
+            // cout << "Got node " << current_node->get_id() << " with prio " <<
+            // current_node->get_priority() << endl;
             break;
          }
       }
 
-      if(pop_node_from_queues()) {
-         //cout << "Got node " << current_node->get_id() << endl;
+      if (pop_node_from_queues()) {
+         // cout << "Got node " << current_node->get_id() << endl;
          break;
       }
-      if(!has_work()) {
-         for(auto it(comm_threads.begin(All->NUM_THREADS)); !it.end(); ++it) {
+      if (!has_work()) {
+         for (auto it(comm_threads.begin(All->NUM_THREADS)); !it.end(); ++it) {
             const size_t id(*it);
-            threads_sched *target(static_cast<threads_sched*>(All->SCHEDS[id]));
+            thread *target(
+                static_cast<thread *>(All->SCHEDS[id]));
             target->activate_thread();
          }
          comm_threads.clear(All->NUM_THREADS_NEXT_UINT);
-         if(!busy_wait())
-            return false;
+         if (!busy_wait()) return false;
       }
    }
-   
+
    ins_active;
-   
+
    assert(current_node != nullptr);
-   
+
    return true;
 }
 
-node*
-threads_sched::get_work(void)
-{  
-   if(!set_next_node())
-      return nullptr;
+node *thread::get_work(void) {
+   if (!set_next_node()) return nullptr;
 
    set_active_if_inactive();
    ins_active;
@@ -496,46 +457,43 @@ threads_sched::get_work(void)
    node_difference += current_node->get_translated_id() - last_node;
    last_node = current_node->get_translated_id();
 #endif
-   
+
    return current_node;
 }
 
-void
-threads_sched::end(void)
-{
+void thread::end(void) {
 #if defined(DEBUG_PRIORITIES) && defined(PROFILE_QUEUE)
-	cout << "prio_immediate: " << prio_immediate << endl;
-	cout << "prio_marked: " << prio_marked << endl;
-	cout << "prio_count: " << prio_count << endl;
+   cout << "prio_immediate: " << prio_immediate << endl;
+   cout << "prio_marked: " << prio_marked << endl;
+   cout << "prio_count: " << prio_count << endl;
 #endif
-	
+
 #if defined(DEBUG_PRIORITIES)
-	size_t total_prioritized(0);
-	size_t total_nonprioritized(0);
-	
-   database::map_nodes::iterator it(state::DATABASE->get_node_iterator(All->MACHINE->find_first_node(id)));
-   database::map_nodes::iterator end(state::DATABASE->get_node_iterator(All->MACHINE->find_last_node(id)));
-   
-   for(; it != end; ++it)
-   {
+   size_t total_prioritized(0);
+   size_t total_nonprioritized(0);
+
+   database::map_nodes::iterator it(
+       state::DATABASE->get_node_iterator(All->MACHINE->find_first_node(id)));
+   database::map_nodes::iterator end(
+       state::DATABASE->get_node_iterator(All->MACHINE->find_last_node(id)));
+
+   for (; it != end; ++it) {
       db::node *cur_node(it->second);
-		
-		if(cur_node->has_been_prioritized)
-			++total_prioritized;
-		else
-			++total_nonprioritized;
-	}
-	
-	cout << "Number of prioritized nodes: " << total_prioritized << endl;
-	cout << "Number of non prioritized nodes: " << total_nonprioritized << endl;
+
+      if (cur_node->has_been_prioritized)
+         ++total_prioritized;
+      else
+         ++total_nonprioritized;
+   }
+
+   cout << "Number of prioritized nodes: " << total_prioritized << endl;
+   cout << "Number of non prioritized nodes: " << total_nonprioritized << endl;
 #endif
 }
 
-void
-threads_sched::init(const size_t)
-{
+void thread::init(const size_t) {
    // normal priorities
-   if(theProgram->is_priority_desc()) {
+   if (theProgram->is_priority_desc()) {
       prios.moving.set_type(HEAP_DESC);
       prios.stati.set_type(HEAP_DESC);
    } else {
@@ -547,16 +505,15 @@ threads_sched::init(const size_t)
    auto end(All->DATABASE->get_node_iterator(All->MACHINE->find_last_node(id)));
    const priority_t initial(theProgram->get_initial_priority());
 
-   if(initial == no_priority_value() || !scheduling_mechanism) {
-      for(; it != end; ++it)
-      {
+   if (initial == no_priority_value() || !scheduling_mechanism) {
+      for (; it != end; ++it) {
          db::node *cur_node(init_node(it));
-      	queues.moving.push_tail(cur_node);
+         queues.moving.push_tail(cur_node);
       }
    } else {
       prios.moving.start_initial_insert(All->MACHINE->find_owned_nodes(id));
 
-      for(size_t i(0); it != end; ++it, ++i) {
+      for (size_t i(0); it != end; ++it, ++i) {
          db::node *cur_node(init_node(it));
 
          prios.moving.initial_fast_insert(cur_node, initial, i);
@@ -567,21 +524,19 @@ threads_sched::init(const size_t)
 }
 
 #ifdef INSTRUMENTATION
-void
-threads_sched::write_slice(statistics::slice& sl)
-{
+void thread::write_slice(statistics::slice &sl) {
    sl.state = ins_state;
    sl.consumed_facts = state.instr_facts_consumed.exchange(0);
    sl.derived_facts = state.instr_facts_derived.exchange(0);
    sl.rules_run = state.instr_rules_run.exchange(0);
-   
+
    sl.work_queue = queue_size();
    sl.sent_facts_same_thread = sent_facts_same_thread.exchange(0);
    sl.sent_facts_other_thread = sent_facts_other_thread.exchange(0);
    sl.sent_facts_other_thread_now = sent_facts_other_thread_now.exchange(0);
    sl.priority_nodes_thread = priority_nodes_thread.exchange(0);
    sl.priority_nodes_others = priority_nodes_others.exchange(0);
-   if(All->THREAD_POOLS[get_id()])
+   if (All->THREAD_POOLS[get_id()])
       sl.bytes_used = All->THREAD_POOLS[get_id()]->bytes_in_use;
    else
       sl.bytes_used = 0;
@@ -597,34 +552,34 @@ threads_sched::write_slice(statistics::slice& sl)
 }
 #endif
 
-threads_sched::threads_sched(const vm::process_id _id):
-   id(_id),
-   state(this)
+thread::thread(const vm::process_id _id)
+    : id(_id),
+      state(this)
 #ifdef TASK_STEALING
-   , rand(_id * 1000)
-   , next_thread(rand(All->NUM_THREADS))
-   , backoff(STEALING_ROUND_MIN)
+      ,
+      rand(_id * 1000),
+      next_thread(rand(All->NUM_THREADS)),
+      backoff(STEALING_ROUND_MIN)
 #endif
 #ifndef DIRECT_PRIORITIES
-   , priority_buffer(std::min(PRIORITY_BUFFER_SIZE,
-                     vm::All->DATABASE->num_nodes() / vm::All->NUM_THREADS))
+      ,
+      priority_buffer(
+          std::min(PRIORITY_BUFFER_SIZE,
+                   vm::All->DATABASE->num_nodes() / vm::All->NUM_THREADS))
 #endif
 {
    bitmap::create(comm_threads, All->NUM_THREADS_NEXT_UINT);
    comm_threads.clear(All->NUM_THREADS_NEXT_UINT);
-   if(theProgram->has_thread_predicates()) {
+   if (theProgram->has_thread_predicates()) {
       thread_node = node_handler.create_node();
       setup_thread_node();
    }
 }
 
-threads_sched::~threads_sched(void)
-{
+thread::~thread(void) {
    bitmap::destroy(comm_threads, All->NUM_THREADS_NEXT_UINT);
    assert(tstate == THREAD_INACTIVE);
-   if(theProgram->has_thread_predicates())
+   if (theProgram->has_thread_predicates())
       node_handler.delete_node(thread_node);
 }
-   
 }
-

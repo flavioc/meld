@@ -15,8 +15,7 @@ class chunkgroup
 public:
    // next pointer used by mem/pool.
    chunkgroup *next;
-   // size of each object.
-   const size_t size;
+   size_t size;
    
 private:
 
@@ -32,7 +31,7 @@ private:
 
 public:
 
-   inline void* allocate(void)
+   inline void* allocate()
    {
       void *ret;
       

@@ -787,7 +787,6 @@ void trie::delete_by_leaf(trie_leaf *leaf, predicate *pred, const depth_t depth,
                           candidate_gc_nodes &gc_nodes) {
    sanity_check();
    --number_of_references;
-   assert(number_of_references >= 0);
    inner_delete_by_leaf(leaf, pred, 1, depth, gc_nodes);
    sanity_check();
 }
@@ -796,10 +795,8 @@ void trie::delete_by_leaf(trie_leaf *leaf, predicate *pred, const depth_t depth,
 void trie::inner_delete_by_leaf(trie_leaf *leaf, predicate *pred,
                                 const ref_count count, const depth_t depth,
                                 candidate_gc_nodes &gc_nodes) {
-   assert(count >= 0);
-   if (count != 0) {
+   if (count != 0)
       leaf->sub(depth, count);
-   }
 
    if (!leaf->to_delete()) {
       return;
@@ -881,7 +878,6 @@ void trie::delete_by_index(predicate *pred, const match &m,
 
    // update number of tuples in this trie
    number_of_references -= delete_branch(node, pred, gc_nodes);
-   assert(number_of_references >= 0);
    delete_path(node);
 
    basic_invariants();
@@ -983,10 +979,6 @@ vector<string> tuple_trie::get_print_strings(const predicate *pred) const {
 void tuple_trie::print(ostream &cout, const predicate *pred) const {
    assert(!empty());
    utils::write_strings(get_print_strings(pred), cout, 1);
-}
-
-tuple_trie::tuple_search_iterator tuple_trie::match_predicate(void) const {
-   return tuple_search_iterator((tuple_trie_leaf *)first_leaf);
 }
 
 void tuple_trie::do_visit(trie_node *n, const int tab, stack<type *> &s) const {
@@ -1303,9 +1295,8 @@ match_succeeded:
 
 tuple_trie::tuple_search_iterator tuple_trie::match_predicate(
     const match *m) const {
-   if (!m->any_exact) return match_predicate();
-
-   if (number_of_references == 0) return tuple_search_iterator();
+   if(!m || !m->any_exact)
+      return tuple_search_iterator((tuple_trie_leaf*)first_leaf);
 
    const size_t stack_size(m->size() + STACK_EXTRA_SIZE);
    trie_continuation_frame first_frm = {match_stack(stack_size), root,
@@ -1314,7 +1305,6 @@ tuple_trie::tuple_search_iterator tuple_trie::match_predicate(
    // initialize stacks
    m->get_match_stack(first_frm.mstack);
 
-   // dump(cout);
    // if it was a leaf, m would have no exact match
    assert(!root->is_leaf());
 

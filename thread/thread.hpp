@@ -64,7 +64,7 @@ typedef struct {
    db::node *target;
 } priority_add_item;
 
-class threads_sched: public mem::base
+class thread: public mem::base
 {
 private:
    
@@ -262,11 +262,11 @@ private:
    // number of static nodes owned by this thread.
    std::atomic<uint64_t> static_nodes{0};
 
-   inline void make_node_static(db::node *tn, threads_sched *target)
+   inline void make_node_static(db::node *tn, thread *target)
    {
       assert(target);
 
-      threads_sched *old(tn->get_static());
+      thread *old(tn->get_static());
 
       if(old != nullptr)
          old->static_nodes--;
@@ -277,7 +277,7 @@ private:
 
    inline void make_node_moving(db::node *tn)
    {
-      threads_sched *old(tn->get_static());
+      thread *old(tn->get_static());
 
       if(old != nullptr)
          old->static_nodes--;
@@ -310,7 +310,7 @@ private:
       return queues.has_work() || prios.has_work();
    }
 
-   void move_node_to_new_owner(db::node *, threads_sched *);
+   void move_node_to_new_owner(db::node *, thread *);
    void do_set_node_priority_other(db::node *, const vm::priority_t);
    void do_remove_node_priority_other(db::node *);
 
@@ -320,7 +320,7 @@ private:
    void do_remove_node_priority(db::node *);
    void add_node_priority_other(db::node *, const vm::priority_t);
    void set_node_priority_other(db::node *, const vm::priority_t);
-   void set_node_owner(db::node *, threads_sched *);
+   void set_node_owner(db::node *, thread *);
 
    inline void setup_thread_node()
    {
@@ -383,7 +383,7 @@ public:
       node_handler.delete_node(node);
    }
 
-   inline void merge_new_nodes(threads_sched& b)
+   inline void merge_new_nodes(thread& b)
    {
       node_handler.merge(b.node_handler);
    }
@@ -437,9 +437,9 @@ public:
 
    static void init_barriers(const size_t);
    
-   explicit threads_sched(const vm::process_id);
+   explicit thread(const vm::process_id);
    
-   ~threads_sched(void);
+   ~thread(void);
 };
 
 }

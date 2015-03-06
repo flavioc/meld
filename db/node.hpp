@@ -25,7 +25,7 @@
 #include "queue/intrusive.hpp"
 #include "db/persistent_store.hpp"
 
-namespace sched { class threads_sched; }
+namespace sched { class thread; }
 
 namespace db {
 
@@ -45,11 +45,11 @@ private:
    
 private:
 
-   sched::threads_sched *owner = nullptr;
+   sched::thread *owner = nullptr;
 
    // marker that indicates if the node should not be stolen.
    // when not nullptr it indicates which scheduler it needs to be on.
-   sched::threads_sched *static_node = nullptr;
+   sched::thread *static_node = nullptr;
 	
    vm::priority_t default_priority_level;
    vm::priority_t priority_level;
@@ -59,8 +59,8 @@ public:
    inline node_id get_id(void) const { return id; }
    inline node_id get_translated_id(void) const { return translation; }
 
-   inline void set_owner(sched::threads_sched *_owner) { owner = _owner; }
-   inline sched::threads_sched *get_owner(void) const { return owner; }
+   inline void set_owner(sched::thread *_owner) { owner = _owner; }
+   inline sched::thread *get_owner(void) const { return owner; }
    
    void assert_end(void) const;
    
@@ -96,8 +96,8 @@ public:
       return get_priority() != vm::no_priority_value();
    }
 
-   inline sched::threads_sched* get_static(void) const { return static_node; }
-   inline void set_static(sched::threads_sched *b) { static_node = b; }
+   inline sched::thread* get_static(void) const { return static_node; }
+   inline void set_static(sched::thread *b) { static_node = b; }
    inline void set_moving(void) { static_node = nullptr; }
    inline bool is_static(void) const { return static_node != nullptr; }
    inline bool is_moving(void) const { return static_node == nullptr; }
@@ -140,7 +140,7 @@ public:
 
    inline void add_linear_fact(vm::tuple *tpl, vm::predicate *pred)
    {
-      matcher.new_linear_fact(pred);
+      matcher.new_linear_fact(pred->get_id());
       linear.add_fact(tpl, pred);
    }
 

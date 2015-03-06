@@ -12,7 +12,6 @@
 #include "stat/stat.hpp"
 #include "utils/fs.hpp"
 #include "interface.hpp"
-#include "thread/threads.hpp"
 #include "runtime/objs.hpp"
 
 using namespace process;
@@ -26,7 +25,7 @@ using namespace statistics;
 
 namespace process {
 
-void machine::run_action(sched::threads_sched* sched, vm::tuple* tpl,
+void machine::run_action(sched::thread* sched, vm::tuple* tpl,
                          vm::predicate* pred, candidate_gc_nodes& gc_nodes) {
    (void)sched;
 
@@ -133,7 +132,7 @@ void machine::init_sched(const process_id id) {
    utils::_stat = utils::all_stats[id];
 #endif
 
-   all->SCHEDS[id] = new sched::threads_sched(id);
+   all->SCHEDS[id] = new sched::thread(id);
    all->SCHEDS[id]->loop();
 }
 
@@ -150,14 +149,14 @@ void machine::start(void) {
       alarm_thread = new thread(bind(&machine::slice_function, this));
 #endif
 
-   sched::threads_sched::init_barriers(all->NUM_THREADS);
+   sched::thread::init_barriers(all->NUM_THREADS);
 #ifdef LOCK_STATISTICS
    utils::all_stats.resize(all->NUM_THREADS, NULL);
 #endif
 
-   thread* threads[all->NUM_THREADS];
+   std::thread* threads[all->NUM_THREADS];
    for (process_id i(1); i < all->NUM_THREADS; ++i) {
-      threads[i] = new thread(&machine::init_sched, this, i);
+      threads[i] = new std::thread(&machine::init_sched, this, i);
    }
    init_sched(0);
 

@@ -6,18 +6,23 @@ using namespace db;
 using namespace vm;
 using namespace std;
 
-tuple_trie*
-persistent_store::get_storage(predicate* pred)
+persistent_store::persistent_store()
 {
-   auto it(tuples.find(pred->get_id()));
-   
-   if(it == tuples.end()) {
-      //cout << "New trie for " << *pred << endl;
-      auto  tr(new tuple_trie());
-      tuples[pred->get_id()] = tr;
-      return tr;
-   } else
-      return it->second;
+#ifndef COMPILED
+   tuples = mem::allocator<tuple_trie>().allocate(vm::theProgram->num_persistent_predicates());
+   for(size_t i(0); i < vm::theProgram->num_persistent_predicates(); ++i)
+      mem::allocator<tuple_trie>().construct(tuples + i);
+#endif
+}
+
+tuple_trie*
+persistent_store::get_storage(const predicate* pred) const
+{
+#ifdef COMPILED
+   return (tuple_trie*)(&tuples[pred->get_persistent_id()]);
+#else
+   return tuples + pred->get_persistent_id();
+#endif
 }
 
 bool
@@ -82,56 +87,12 @@ persistent_store::end_iteration()
    return ret;
 }
 
-tuple_trie::tuple_search_iterator
-persistent_store::match_predicate(const predicate_id id) const
-{
-   auto it(tuples.find(id));
-   
-   if(it == tuples.end())
-      return tuple_trie::tuple_search_iterator();
-   
-   const tuple_trie *tr(it->second);
-   
-   return tr->match_predicate();
-}
-
-tuple_trie::tuple_search_iterator
-persistent_store::match_predicate(const predicate_id id, const match* m) const
-{
-   auto it(tuples.find(id));
-   
-   if(it == tuples.end())
-      return tuple_trie::tuple_search_iterator();
-   
-   const tuple_trie *tr(it->second);
-   
-   if(m)
-      return tr->match_predicate(m);
-   else
-      return tr->match_predicate();
-}
-
-void
-persistent_store::delete_all(const predicate*)
-{
-   assert(false);
-}
-
 void
 persistent_store::delete_by_leaf(predicate *pred, tuple_trie_leaf *leaf, const depth_t depth, candidate_gc_nodes& gc_nodes)
 {
    tuple_trie *tr(get_storage(pred));
 
    tr->delete_by_leaf(leaf, pred, depth, gc_nodes);
-}
-
-void
-persistent_store::assert_tries(void)
-{
-   for(auto & elem : tuples) {
-      tuple_trie *tr(elem.second);
-      tr->assert_used();
-   }
 }
 
 void
@@ -152,12 +113,7 @@ persistent_store::delete_by_index(predicate *pred, const match& m, candidate_gc_
 size_t
 persistent_store::count_total(const predicate* pred) const
 {
-   auto it(tuples.find(pred->get_id()));
-
-   if(it == tuples.end())
-      return 0;
-
-   const tuple_trie *tr(it->second);
+   tuple_trie *tr(get_storage(pred));
 
    return tr->size();
 }
@@ -165,41 +121,37 @@ persistent_store::count_total(const predicate* pred) const
 void
 persistent_store::wipeout(candidate_gc_nodes& gc_nodes)
 {
-   for(auto & elem : tuples) {
-      tuple_trie *tr(elem.second);
-      predicate *pred(theProgram->get_predicate(elem.first));
+   for(auto *pred : vm::theProgram->persistent_predicates) {
+      tuple_trie *tr(get_storage(pred));
       tr->wipeout(pred, gc_nodes);
-      delete elem.second;
+#ifndef COMPILED
+      mem::allocator<tuple_trie>().destroy(tr);
+#endif
    }
    for(auto & elem : aggs) {
       tuple_aggregate *agg(elem.second);
       agg->wipeout(gc_nodes);
       delete agg;
    }
+#ifndef COMPILED
+   mem::allocator<tuple_trie>().deallocate(tuples, vm::theProgram->num_persistent_predicates());
+#endif
 }
 
 vector<string>
 persistent_store::dump(const predicate *pred) const
 {
-   auto it(tuples.find(pred->get_id()));
-   tuple_trie *tr = nullptr;
-   if(it != tuples.end()) {
-      tr = it->second;
-      if(tr && !tr->empty())
-         return tr->get_print_strings(pred);
-   }
+   tuple_trie *tr(get_storage(pred));
+   if(!tr->empty())
+      return tr->get_print_strings(pred);
    return vector<string>();
 }
 
 vector<string>
 persistent_store::print(const predicate *pred) const
 {
-   auto it(tuples.find(pred->get_id()));
-   tuple_trie *tr = nullptr;
-   if(it != tuples.end()) {
-      tr = it->second;
-      if(tr && !tr->empty())
+   tuple_trie *tr(get_storage(pred));
+   if(!tr->empty())
          return tr->get_print_strings(pred);
-   }
    return vector<string>();
 }

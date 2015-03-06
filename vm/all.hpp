@@ -12,7 +12,7 @@ namespace db {
 class database;
 }
 namespace sched {
-class threads_sched;
+class thread;
 }
 
 namespace process {
@@ -41,7 +41,7 @@ class all {
    size_t NUM_THREADS;
    size_t NUM_THREADS_NEXT_UINT;
    size_t NUM_NODES_PER_PROCESS;
-   std::vector<sched::threads_sched*> SCHEDS;
+   std::vector<sched::thread*> SCHEDS;
    machine_arguments ARGS;
    std::vector<runtime::rstring::ptr> ARGUMENTS;
 #ifdef INSTRUMENTATION

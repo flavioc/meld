@@ -12,7 +12,7 @@
 #include "vm/full_tuple.hpp"
 #include "machine.hpp"
 #include "utils/mutex.hpp"
-#include "thread/threads.hpp"
+#include "thread/thread.hpp"
 #include "vm/priority.hpp"
 
 #ifndef COMPILED
@@ -514,10 +514,9 @@ static inline return_type execute_pers_iter(const reg_num reg, match* m,
    const bool old_is_linear(state.is_linear);
    const bool this_is_linear(false);
 
-   tuple_trie::tuple_search_iterator tuples_it =
-       node->pers_store.match_predicate(pred->get_id(), m);
-   for (tuple_trie::tuple_search_iterator end(tuple_trie::match_end());
-        tuples_it != end; ++tuples_it) {
+   for (auto tuples_it(
+            node->pers_store.match_predicate(pred->get_persistent_id(), m));
+        !tuples_it.end(); ++tuples_it) {
       tuple_trie_leaf* tuple_leaf(*tuples_it);
 
       // we get the tuple later since the previous leaf may have been deleted
@@ -561,7 +560,7 @@ static inline return_type execute_olinear_iter(const reg_num reg, match* m,
    vector_iter tpls;
 
    utils::intrusive_list<vm::tuple>* local_tuples(
-       node->linear.get_linked_list(pred->get_id()));
+       node->linear.get_linked_list(pred->get_linear_id()));
 #ifdef CORE_STATISTICS
    execution_time::scope s(state.stat.ts_search_time_predicate[pred->get_id()]);
 #endif
@@ -634,7 +633,7 @@ static inline return_type execute_orlinear_iter(const reg_num reg, match* m,
    vector_iter tpls;
 
    utils::intrusive_list<vm::tuple>* local_tuples(
-       node->linear.get_linked_list(pred->get_id()));
+       node->linear.get_linked_list(pred->get_linear_id()));
 #ifdef CORE_STATISTICS
    execution_time::scope s(state.stat.ts_search_time_predicate[pred->get_id()]);
 #endif
@@ -699,11 +698,9 @@ static inline return_type execute_opers_iter(const reg_num reg, match* m,
 
    vector_leaves leaves;
 
-   tuple_trie::tuple_search_iterator tuples_it =
-       node->pers_store.match_predicate(pred->get_id(), m);
-
-   for (tuple_trie::tuple_search_iterator end(tuple_trie::match_end());
-        tuples_it != end; ++tuples_it) {
+   for(auto tuples_it(
+       node->pers_store.match_predicate(pred->get_persistent_id(), m));
+        !tuples_it.end(); ++tuples_it) {
       tuple_trie_leaf* tuple_leaf(*tuples_it);
 #ifdef TRIE_MATCHING_ASSERT
       assert(do_matches(m, tuple_leaf->get_underlying_tuple(), pred));
@@ -816,10 +813,10 @@ static inline return_type execute_linear_iter_list(
             vm::tuple::destroy(match_tuple, pred, state.gc_nodes);
             if (tbl) {
                if (local_tuples->empty() && tbl->empty())
-                  state.node->matcher.empty_predicate(pred);
+                  state.node->matcher.empty_predicate(pred->get_id());
             } else {
                if (local_tuples->empty())
-                  state.node->matcher.empty_predicate(pred);
+                  state.node->matcher.empty_predicate(pred->get_id());
             }
             next_iter = false;
          }
@@ -841,7 +838,7 @@ static inline return_type execute_linear_iter(const reg_num reg, match* m,
                                               db::node* node) {
    if (node->linear.stored_as_hash_table(pred)) {
       const field_num hashed(pred->get_hashed_field());
-      hash_table* table(node->linear.get_hash_table(pred->get_id()));
+      hash_table* table(node->linear.get_hash_table(pred->get_linear_id()));
 
       if (table == nullptr) return RETURN_NO_RETURN;
 
@@ -864,7 +861,7 @@ static inline return_type execute_linear_iter(const reg_num reg, match* m,
       }
    } else {
       utils::intrusive_list<vm::tuple>* local_tuples(
-          node->linear.get_linked_list(pred->get_id()));
+          node->linear.get_linked_list(pred->get_linear_id()));
       return execute_linear_iter_list(reg, m, first, state, pred, node,
                                       local_tuples);
    }
@@ -878,8 +875,6 @@ static inline return_type execute_rlinear_iter_list(
    const depth_t old_depth(state.depth);
 
    for (auto match_tuple : *local_tuples) {
-      
-
       if (match_tuple->must_be_deleted()) continue;
 
       {
@@ -918,7 +913,7 @@ static inline return_type execute_rlinear_iter(const reg_num reg, match* m,
                                                db::node* node) {
    if (node->linear.stored_as_hash_table(pred)) {
       const field_num hashed(pred->get_hashed_field());
-      hash_table* table(node->linear.get_hash_table(pred->get_id()));
+      hash_table* table(node->linear.get_hash_table(pred->get_linear_id()));
 
       if (m && m->has_match(hashed)) {
          const match_field mf(m->get_match(hashed));
@@ -938,7 +933,7 @@ static inline return_type execute_rlinear_iter(const reg_num reg, match* m,
       }
    } else {
       utils::intrusive_list<vm::tuple>* local_tuples(
-          node->linear.get_linked_list(pred->get_id()));
+          node->linear.get_linked_list(pred->get_linear_id()));
       return execute_rlinear_iter_list(reg, m, first, state, pred,
                                        local_tuples);
    }
@@ -1022,7 +1017,7 @@ static inline void execute_update(db::node* node, pcounter pc, state& state) {
    tpl->print(cout, pred);
    cout << endl;
 #endif
-   node->matcher.register_predicate_update(pred);
+   node->matcher.register_predicate_update(pred->get_id());
 }
 
 static inline void set_call_return(const reg_num reg, const bool gc,
@@ -1352,7 +1347,7 @@ static inline void execute_cpu_id(pcounter& pc, state& state) {
    db::node* node(All->DATABASE->find_node(nodeval));
 #endif
 
-   sched::threads_sched* owner(node->get_owner());
+   sched::thread* owner(node->get_owner());
    state.set_int(dest_reg, owner->get_id());
 }
 
@@ -1365,8 +1360,7 @@ static inline void execute_cpu_static(pcounter& pc, state& state) {
 #else
    db::node* node(All->DATABASE->find_node(nodeval));
 #endif
-   sched::threads_sched* owner(
-       static_cast<sched::threads_sched*>(node->get_owner()));
+   sched::thread* owner(static_cast<sched::thread*>(node->get_owner()));
 
    state.set_int(dest_reg, owner->num_static_nodes());
 }
@@ -1499,7 +1493,6 @@ static inline bool perform_remote_update(
     utils::intrusive_list<vm::tuple>* local_tuples, predicate* pred_target,
     const size_t common, tuple_field* regs, state& state) {
    for (auto match_tuple : *local_tuples) {
-      
       for (size_t i(0); i < common; ++i) {
          vm::type* t(pred_target->get_field_type(i));
          match_field m = {true, t, regs[i]};
@@ -1548,7 +1541,7 @@ static inline void execute_remote_update(pcounter& pc, state& state) {
    if (n->database_lock.try_lock1(LOCK_STACK_USE(internal_lock_data))) {
       if (n->linear.stored_as_hash_table(pred_target)) {
          const field_num h(pred_target->get_hashed_field());
-         hash_table* table(n->linear.get_hash_table(pred_target->get_id()));
+         hash_table* table(n->linear.get_hash_table(pred_target->get_linear_id()));
 
          if (table) {
             if (h < common)
@@ -1565,7 +1558,7 @@ static inline void execute_remote_update(pcounter& pc, state& state) {
          }
       } else
          updated = perform_remote_update(
-             n->linear.get_linked_list(pred_target->get_id()), pred_target,
+             n->linear.get_linked_list(pred_target->get_linear_id()), pred_target,
              common, regs, state);
       MUTEX_UNLOCK(n->database_lock, internal_lock_data);
    }
@@ -3337,7 +3330,7 @@ static inline return_type execute(pcounter pc, state& state, const reg_num reg,
 
    CASE(STOP_PROG_INSTR)
    JUMP(stop_program, STOP_PROG_BASE)
-   if (scheduling_mechanism) sched::threads_sched::stop_flag = true;
+   if (scheduling_mechanism) sched::thread::stop_flag = true;
    ADVANCE()
    ENDOP()
 

@@ -23,7 +23,7 @@ BP = belief-propagation-400
 SPLASH_BP = splash-bp-400
 QUEENS = 8queens-13 8queens-13-top 8queens-13-top-static 8queens-13-bottom 8queens-13-bottom-static
 SIMPLE = simple16 simple32 simple64
-MINMAX = min-max-tictactoe-big
+MINMAX = min-max-tictactoe
 SHORTEST = shortest-usairports500 shortest-uspowergrid \
 			  shortest-celegans shortest-1000 \
 			  shortest-oclinks

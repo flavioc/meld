@@ -24,7 +24,7 @@
 #endif
 
 // forward declaration
-namespace sched { class threads_sched; }
+namespace sched { class thread; }
 
 namespace vm {
 	
@@ -53,7 +53,7 @@ public:
    vm::rule_matcher *matcher;
    derivation_direction direction;
    vm::depth_t depth;
-   sched::threads_sched *sched;
+   sched::thread *sched;
    bool is_linear;
 	utils::randgen randgen;
    size_t current_rule;
@@ -164,7 +164,7 @@ public:
    void setup(vm::predicate *, const vm::derivation_direction, const vm::depth_t);
    void cleanup(void);
 
-   explicit state(sched::threads_sched *);
+   explicit state(sched::thread *);
 	explicit state(void);
    ~state(void);
 };

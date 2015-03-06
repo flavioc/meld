@@ -8,6 +8,9 @@
 #include "vm/bitmap.hpp"
 #include "vm/all.hpp"
 #include "db/linear_store.hpp"
+#ifdef COMPILED
+#include COMPILED_HEADER
+#endif
 
 namespace vm {
 
@@ -16,10 +19,13 @@ struct rule_matcher {
    utils::byte *rules;  // availability statistics per rule
    bitmap predicate_existence;
 
-   void register_predicate_unavailability(const predicate *pred) {
-      predicate_existence.unset_bit(pred->get_id());
-
-      for (auto it(pred->begin_linear_rules()), end(pred->end_linear_rules());
+   void register_predicate_unavailability(const predicate_id id) {
+      predicate_existence.unset_bit(id);
+#ifdef COMPILED
+      compiled_register_predicate_unavailability(rules, rule_queue, id);
+#else
+      for (auto it(theProgram->get_predicate(id)->begin_linear_rules()),
+           end(theProgram->get_predicate(id)->end_linear_rules());
            it != end; it++) {
          const vm::rule *rule(*it);
 
@@ -29,11 +35,16 @@ struct rule_matcher {
          assert(rules[rule->get_id()] > 0);
          rules[rule->get_id()]--;
       }
+#endif
    }
 
-   void register_predicate_availability(const predicate *pred) {
-      predicate_existence.set_bit(pred->get_id());
-      for (auto it(pred->begin_linear_rules()), end(pred->end_linear_rules());
+   void register_predicate_availability(const predicate_id id) {
+      predicate_existence.set_bit(id);
+#ifdef COMPILED
+      compiled_register_predicate_availability(rules, rule_queue, id);
+#else
+      for (auto it(theProgram->get_predicate(id)->begin_linear_rules()),
+           end(theProgram->get_predicate(id)->end_linear_rules());
            it != end; it++) {
          const vm::rule *rule(*it);
 
@@ -42,46 +53,51 @@ struct rule_matcher {
          if (rules[rule->get_id()] == rule->num_predicates())
             rule_queue.set_bit(rule->get_id());
       }
+#endif
    }
 
    public:
    bitmap rule_queue;  // rules next to run
 
-   inline void register_predicate_update(const predicate *pred) {
-      assert(predicate_existence.get_bit(pred->get_id()));
-
-      for (auto it(pred->begin_linear_rules()), end(pred->end_linear_rules());
+   inline void register_predicate_update(const predicate_id id) {
+      assert(predicate_existence.get_bit(id));
+#ifdef COMPILED
+      compiled_register_predicate_update(rules, rule_queue, id);
+#else
+      for (auto it(theProgram->get_predicate(id)->begin_linear_rules()),
+           end(theProgram->get_predicate(id)->end_linear_rules());
            it != end; it++) {
          const vm::rule *rule(*it);
 
          if (rules[rule->get_id()] == rule->num_predicates())
             rule_queue.set_bit(rule->get_id());
       }
+#endif
    }
 
-   inline void new_linear_fact(const vm::predicate *pred) {
-      if (predicate_existence.get_bit(pred->get_id()))
-         register_predicate_update(pred);
+   inline void new_linear_fact(const vm::predicate_id id) {
+      if (predicate_existence.get_bit(id))
+         register_predicate_update(id);
       else
-         register_predicate_availability(pred);
+         register_predicate_availability(id);
    }
 
-   inline void new_persistent_fact(const vm::predicate *pred) {
-      new_linear_fact(pred);
+   inline void new_persistent_fact(const vm::predicate_id id) {
+      new_linear_fact(id);
    }
 
-   inline void new_persistent_count(const vm::predicate *pred,
+   inline void new_persistent_count(const vm::predicate_id id,
                                     const size_t count) {
       if (count == 0) {
-         if (predicate_existence.get_bit(pred->get_id()))
-            register_predicate_unavailability(pred);
+         if (predicate_existence.get_bit(id))
+            register_predicate_unavailability(id);
       } else if (count > 0)
-         new_persistent_fact(pred);
+         new_persistent_fact(id);
    }
 
-   inline void empty_predicate(const vm::predicate *pred) {
-      if (predicate_existence.get_bit(pred->get_id()))
-         register_predicate_unavailability(pred);
+   inline void empty_predicate(const vm::predicate_id id) {
+      if (predicate_existence.get_bit(id))
+         register_predicate_unavailability(id);
    }
 
    inline bool is_empty(void) const {
@@ -94,7 +110,7 @@ struct rule_matcher {
                theProgram->num_predicates()));
            !it.end(); ++it) {
          const size_t pred(*it);
-         new_linear_fact(theProgram->get_predicate(pred));
+         new_linear_fact(pred);
       }
    }
 
@@ -115,7 +131,7 @@ struct rule_matcher {
            !it.end(); ++it) {
          const size_t id(*it);
          if (predicate_existence.get_bit(id))
-            register_predicate_unavailability(theProgram->get_predicate(*it));
+            register_predicate_unavailability(*it);
       }
    }
 

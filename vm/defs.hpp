@@ -13,10 +13,7 @@
 
 namespace vm {
 
-typedef enum {
-   POSITIVE_DERIVATION,
-   NEGATIVE_DERIVATION
-} derivation_direction;
+typedef enum { POSITIVE_DERIVATION, NEGATIVE_DERIVATION } derivation_direction;
 
 typedef unsigned short field_num;
 typedef uint32_t uint_val;
@@ -44,16 +41,16 @@ typedef double priority_t;
 static const ptr_val null_ptr_val = 0;
 
 static_assert(sizeof(ptr_val) == sizeof(vm::node_val),
-      "ptr_val and node_val must have the same size.");
+              "ptr_val and node_val must have the same size.");
 static_assert(sizeof(ptr_val) == sizeof(void*),
-      "ptr_val and void* must have the same size.");
+              "ptr_val and void* must have the same size.");
 
 union tuple_field {
    bool_val bool_field;
-	int_val int_field;
-	float_val float_field;
-	node_val node_field;
-	ptr_val ptr_field;
+   int_val int_field;
+   float_val float_field;
+   node_val node_field;
+   ptr_val ptr_field;
 };
 
 #define FIELD_BOOL(F) ((F).bool_field)
@@ -85,9 +82,9 @@ static const size_t NUM_REGS = 32;
 
 #define MATCH_OBJECT_SIZE 256
 
-typedef std::unordered_set<vm::node_val, std::hash<vm::node_val>, std::equal_to<vm::node_val>,
-        mem::allocator<vm::node_val>> candidate_gc_nodes;
-
+typedef std::unordered_set<vm::node_val, std::hash<vm::node_val>,
+                           std::equal_to<vm::node_val>,
+                           mem::allocator<vm::node_val>> candidate_gc_nodes;
 }
 
 #endif
