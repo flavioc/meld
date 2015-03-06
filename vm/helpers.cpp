@@ -140,21 +140,13 @@ static inline void execute_send0(db::node *node, const vm::node_val dest_val,
          All->MACHINE->run_action(state.sched, tuple, pred, state.gc_nodes);
       else {
 #ifdef FACT_BUFFERING
-         if(state.direction == POSITIVE_DERIVATION || state.depth > 0) {
+         if(state.direction != POSITIVE_DERIVATION || state.depth > 0) {
             state.sched->new_work(state.node, node, tuple, pred, state.direction,
                                   state.depth);
             return;
          }
 
-         auto it(state.facts_to_send.find(node));
-         tuple_array *arr;
-         if (it == state.facts_to_send.end()) {
-            state.facts_to_send.insert(make_pair(node, tuple_array()));
-            it = state.facts_to_send.find(node);
-         }
-         arr = &(it->second);
-         full_tuple info(tuple, pred, state.direction, state.depth);
-         arr->push_back(info);
+         state.facts_to_send.add(node, tuple, pred);
 #else
          state.sched->new_work(state.node, node, tuple, pred, state.direction,
                                state.depth);

@@ -180,23 +180,14 @@ state::process_action_tuples(db::node *node)
 void
 state::process_incoming_tuples(db::node *node)
 {
-#ifdef UNIQUE_INCOMING_LIST
-   while(!node->store.incoming.empty()) {
-      vm::tuple *tpl(node->store.incoming.pop_front());
-      vm::predicate *pred(tpl->get_predicate());
-      node->store.register_tuple_fact(pred, 1);
-      node->linear.add_fact(tpl, pred, matcher);
-   }
-#else
-   for(size_t i(0); i < theProgram->num_predicates(); ++i) {
-      utils::intrusive_list<vm::tuple> *ls(node->store.incoming + i);
+   for(size_t i(0); i < theProgram->num_linear_predicates(); ++i) {
+      utils::intrusive_list<vm::tuple> *ls(node->store.get_incoming(i));
       if(!ls->empty()) {
-         vm::predicate *pred(theProgram->get_predicate(i));
+         vm::predicate *pred(theProgram->get_linear_predicate(i));
          matcher->new_linear_fact(i);
          node->linear.increment_database(pred, ls);
       }
    }
-#endif
    if(!node->store.incoming_persistent_tuples.empty())
       node->store.persistent_tuples.splice_back(node->store.incoming_persistent_tuples);
 }
@@ -677,10 +668,10 @@ state::run_node(db::node *node)
 
       // move from generated tuples to linear store
       if(generated_facts) {
-         for(size_t i(0); i < theProgram->num_predicates(); ++i) {
-            utils::intrusive_list<vm::tuple> *gen(node->store.generated + i);
+         for(size_t i(0); i < theProgram->num_linear_predicates(); ++i) {
+            utils::intrusive_list<vm::tuple> *gen(node->store.get_generated(i));
             if(!gen->empty()) {
-               vm::predicate *pred(theProgram->get_predicate(i));
+               vm::predicate *pred(theProgram->get_linear_predicate(i));
                if(pred->is_thread_pred()) {
                   matcher->new_linear_fact(pred->get_id());
                   sched->thread_node->linear.increment_database(pred, gen);
@@ -737,8 +728,8 @@ state::sync(db::node *node)
    bool ret(false);
 #ifdef FACT_BUFFERING
    // send all facts to nodes.
-   for(auto p : facts_to_send) {
-      tuple_array& ls(p.second);
+   for(auto p : facts_to_send.facts) {
+      buffer_node& ls(p.second);
       db::node *target((db::node*)p.first);
       sched->new_work_list(node, target, ls);
       ret = true;

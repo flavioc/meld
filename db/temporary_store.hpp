@@ -11,11 +11,12 @@
 #include "vm/full_tuple.hpp"
 #include "utils/intrusive_list.hpp"
 #include "vm/bitmap.hpp"
+#ifdef COMPILED
+#include COMPILED_HEADER
+#endif
 
 namespace db
 {
-
-//#define UNIQUE_INCOMING_LIST
 
 struct temporary_store
 {
@@ -24,20 +25,26 @@ struct temporary_store
       using tuple_list = vm::tuple_list;
 
       // incoming linear tuples
-#ifdef UNIQUE_INCOMING_LIST
-      tuple_list incoming;
+#ifdef COMPILED
+      tuple_list incoming[COMPILED_NUM_LINEAR];
 #else
       tuple_list *incoming;
 #endif
 
       // incoming persistent tuples
+      // XXX add tuple_list for depth=0 and POSITIVE_DERIVATION
+      // Add separate lists per predicate
       vm::full_tuple_list incoming_persistent_tuples;
 
       // incoming action tuples
       vm::full_tuple_list incoming_action_tuples;
 
       // generated linear facts
+#ifdef COMPILED
+      tuple_list generated[COMPILED_NUM_LINEAR];
+#else
       tuple_list *generated;
+#endif
 
       // new action facts
       vm::full_tuple_list action_tuples;
@@ -47,30 +54,31 @@ struct temporary_store
 
       inline tuple_list* get_generated(const vm::predicate_id p)
       {
+         assert(p < vm::theProgram->num_linear_predicates());
          return generated + p;
       }
 
-#ifndef UNIQUE_INCOMING_LIST
       inline tuple_list* get_incoming(const vm::predicate_id p)
       {
+         assert(p < vm::theProgram->num_linear_predicates());
          return incoming + p;
       }
-#endif
       inline void add_incoming(vm::tuple *tpl, vm::predicate *pred)
       {
-#ifdef UNIQUE_INCOMING_LIST
-         (void)pred;
-         incoming.push_back(tpl);
-#else
-         tuple_list *ls(get_incoming(pred->get_id()));
+         tuple_list *ls(get_incoming(pred->get_linear_id()));
 
          ls->push_back(tpl);
-#endif
+      }
+      inline void add_incoming_list(vm::tuple_list& other, vm::predicate *pred)
+      {
+         tuple_list *ls(get_incoming(pred->get_linear_id()));
+
+         ls->splice_back(other);
       }
 
       inline void add_generated(vm::tuple *tpl, vm::predicate *pred)
       {
-         tuple_list *ls(get_generated(pred->get_id()));
+         tuple_list *ls(get_generated(pred->get_linear_id()));
          ls->push_back(tpl);
       }
 
@@ -86,26 +94,26 @@ struct temporary_store
 
       explicit temporary_store(void)
       {
-#ifndef UNIQUE_INCOMING_LIST
-         incoming = mem::allocator<tuple_list>().allocate(vm::theProgram->num_predicates());
-         for(size_t i(0); i < vm::theProgram->num_predicates(); ++i)
+#ifndef COMPILED
+         incoming = mem::allocator<tuple_list>().allocate(vm::theProgram->num_linear_predicates());
+         for(size_t i(0); i < vm::theProgram->num_linear_predicates(); ++i)
             mem::allocator<tuple_list>().construct(incoming + i);
-#endif
-         generated = mem::allocator<tuple_list>().allocate(vm::theProgram->num_predicates());
-         for(size_t i(0); i < vm::theProgram->num_predicates(); ++i)
+         generated = mem::allocator<tuple_list>().allocate(vm::theProgram->num_linear_predicates());
+         for(size_t i(0); i < vm::theProgram->num_linear_predicates(); ++i)
             mem::allocator<tuple_list>().construct(generated + i);
+#endif
       }
 
       ~temporary_store(void)
       {
-#ifndef UNIQUE_INCOMING_LIST
-         for(size_t i(0); i < vm::theProgram->num_predicates(); ++i)
+#ifdef COMPILED
+         for(size_t i(0); i < vm::theProgram->num_linear_predicates(); ++i)
             mem::allocator<tuple_list>().destroy(incoming + i);
-         mem::allocator<tuple_list>().deallocate(incoming, vm::theProgram->num_predicates());
-#endif
-         for(size_t i(0); i < vm::theProgram->num_predicates(); ++i)
+         mem::allocator<tuple_list>().deallocate(incoming, vm::theProgram->num_linear_predicates());
+         for(size_t i(0); i < vm::theProgram->num_linear_predicates(); ++i)
             mem::allocator<tuple_list>().destroy(generated + i);
-         mem::allocator<tuple_list>().deallocate(generated, vm::theProgram->num_predicates());
+         mem::allocator<tuple_list>().deallocate(generated, vm::theProgram->num_linear_predicates());
+#endif
       }
 };
 

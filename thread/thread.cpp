@@ -80,7 +80,7 @@ void thread::assert_end(void) const {
 }
 
 void thread::new_work_list(db::node *from, db::node *to,
-                                  vm::tuple_array &arr) {
+                                  vm::buffer_node &b) {
    assert(is_active());
    (void)from;
 
@@ -96,35 +96,35 @@ void thread::new_work_list(db::node *from, db::node *to,
 #endif
       {
          MUTEX_LOCK_GUARD(to->database_lock, database_lock);
-         to->add_work_myself(arr);
+         to->add_work_myself(b);
       }
 #ifdef INSTRUMENTATION
-      sent_facts_same_thread += arr.size();
+      sent_facts_same_thread += b.size();
       all_transactions++;
 #endif
       if (!to->active_node()) add_to_queue(to);
    } else {
 #ifdef FACT_STATISTICS
-      count_add_work_other += arr.size();
+      count_add_work_other += b.size();
 #endif
       LOCK_STACK(databaselock);
       if (to->database_lock.try_lock1(LOCK_STACK_USE(databaselock))) {
          LOCKING_STAT(database_lock_ok);
-         to->add_work_myself(arr);
+         to->add_work_myself(b);
 #ifdef INSTRUMENTATION
-         sent_facts_other_thread_now += arr.size();
+         sent_facts_other_thread_now += b.size();
          all_transactions++;
          thread_transactions++;
 #endif
          MUTEX_UNLOCK(to->database_lock, databaselock);
       } else {
          LOCKING_STAT(database_lock_fail);
-         to->add_work_others(arr);
 #ifdef INSTRUMENTATION
-         sent_facts_other_thread += arr.size();
+         sent_facts_other_thread += b.size();
          all_transactions++;
          thread_transactions++;
 #endif
+         to->add_work_others(b);
       }
       if (!to->active_node()) {
          owner->add_to_queue(to);

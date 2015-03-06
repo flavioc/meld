@@ -22,12 +22,13 @@
 #ifdef CORE_STATISTICS
 #include "vm/stat.hpp"
 #endif
+#include "vm/buffer.hpp"
 
 // forward declaration
 namespace sched { class thread; }
 
 namespace vm {
-	
+
 struct state
 {
 private:
@@ -58,12 +59,7 @@ public:
 	utils::randgen randgen;
    size_t current_rule;
 #ifdef FACT_BUFFERING
-   using map_sends = std::unordered_map<const db::node*, tuple_array,
-         db::node_hash,
-         std::equal_to<const db::node*>,
-         mem::allocator<std::pair<const db::node* const, tuple_array>>>;
-
-   map_sends facts_to_send;
+   vm::buffer facts_to_send;
 #endif
 #ifdef COORDINATION_BUFFERING
    using map_set_priority = std::unordered_map<const db::node*, vm::priority_t,

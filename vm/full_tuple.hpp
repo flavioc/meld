@@ -87,7 +87,6 @@ std::ostream &operator<<(std::ostream &, const full_tuple &);
 typedef utils::intrusive_list<
     full_tuple, utils::indirect_intrusive_next<full_tuple>,
     utils::indirect_intrusive_prev<full_tuple>> full_tuple_list;
-typedef std::vector<full_tuple, mem::allocator<full_tuple>> tuple_array;
 }
 
 #endif

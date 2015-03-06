@@ -161,10 +161,49 @@ struct linear_store
 
       inline bool stored_as_hash_table(const vm::predicate *pred) const { return types.get_bit(pred->get_linear_id()); }
 
-      inline void add_fact_list(vm::tuple *tpl, const vm::predicate_id id)
+      inline void add_fact_to_list(vm::tuple *tpl, const vm::predicate_id id)
       {
          tuple_list *ls(get_list(id));
          ls->push_back(tpl);
+      }
+
+      inline void add_fact_list(vm::tuple_list& ls, const vm::predicate *pred)
+      {
+         if(pred->is_hash_table()) {
+            if(stored_as_hash_table(pred)) {
+               hash_table *table(get_table(pred->get_linear_id()));
+               for(auto it(ls.begin()), end(ls.end()); it != end; ++it) {
+                  vm::tuple *tpl(*it);
+                  size_t size_bucket(table->insert(tpl));
+                  if(!table->next_expand && size_bucket >= CREATE_HASHTABLE_THREADSHOLD) {
+                     if(decide_if_expand(table)) {
+                        assert(!table->next_expand);
+                        table->next_expand = expand;
+                        expand = table;
+                     }
+                  }
+               }
+            } else {
+               // still using a list
+               tuple_list *mine(get_list(pred->get_linear_id()));
+
+               if(mine->get_size() + ls.get_size() >= CREATE_HASHTABLE_THREADSHOLD) {
+                  hash_table *table(transform_list_to_hash_table(mine, pred));
+                  for(auto it(ls.begin()), end(ls.end()); it != end; ++it)
+                     table->insert(*it);
+               } else
+                  mine->splice_back(ls);
+            }
+         } else {
+            if(stored_as_hash_table(pred)) {
+               hash_table *table(get_table(pred->get_linear_id()));
+               for(auto it(ls.begin()), end(ls.end()); it != end; ++it)
+                  table->insert(*it);
+            } else {
+               tuple_list *mine(get_list(pred->get_linear_id()));
+               mine->splice_back(ls);
+            }
+         }
       }
 
       inline void add_fact(vm::tuple *tpl, vm::predicate *pred)
@@ -195,7 +234,7 @@ struct linear_store
                hash_table *table(get_table(pred->get_linear_id()));
                table->insert(tpl);
             } else
-               add_fact_list(tpl, pred->get_linear_id());
+               add_fact_to_list(tpl, pred->get_linear_id());
          }
       }
 
