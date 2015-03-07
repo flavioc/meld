@@ -1,0 +1,81 @@
+const size = 4.
+!coord(@0, 0, 0).
+!down-right(@0, @6).
+!down-left(@0, @0).
+!left(@0, @0).
+!right(@0, @1).
+!coord(@1, 0, 1).
+!down-right(@1, @7).
+!down-left(@1, @1).
+!left(@1, @0).
+!right(@1, @2).
+!coord(@2, 0, 2).
+!down-right(@2, @2).
+!down-left(@2, @4).
+!left(@2, @1).
+!right(@2, @3).
+!coord(@3, 0, 3).
+!down-right(@3, @3).
+!down-left(@3, @5).
+!left(@3, @2).
+!right(@3, @3).
+!coord(@4, 1, 0).
+!down-right(@4, @10).
+!down-left(@4, @4).
+!left(@4, @4).
+!right(@4, @5).
+!coord(@5, 1, 1).
+!down-right(@5, @11).
+!down-left(@5, @5).
+!left(@5, @4).
+!right(@5, @6).
+!coord(@6, 1, 2).
+!down-right(@6, @6).
+!down-left(@6, @8).
+!left(@6, @5).
+!right(@6, @7).
+!coord(@7, 1, 3).
+!down-right(@7, @7).
+!down-left(@7, @9).
+!left(@7, @6).
+!right(@7, @7).
+!coord(@8, 2, 0).
+!down-right(@8, @14).
+!down-left(@8, @8).
+!left(@8, @8).
+!right(@8, @9).
+!coord(@9, 2, 1).
+!down-right(@9, @15).
+!down-left(@9, @9).
+!left(@9, @8).
+!right(@9, @10).
+!coord(@10, 2, 2).
+!down-right(@10, @10).
+!down-left(@10, @12).
+!left(@10, @9).
+!right(@10, @11).
+!coord(@11, 2, 3).
+!down-right(@11, @11).
+!down-left(@11, @13).
+!left(@11, @10).
+!right(@11, @11).
+!coord(@12, 3, 0).
+!down-right(@12, @12).
+!down-left(@12, @12).
+!left(@12, @12).
+!right(@12, @13).
+!coord(@13, 3, 1).
+!down-right(@13, @13).
+!down-left(@13, @13).
+!left(@13, @12).
+!right(@13, @14).
+!coord(@14, 3, 2).
+!down-right(@14, @14).
+!down-left(@14, @14).
+!left(@14, @13).
+!right(@14, @15).
+!coord(@15, 3, 3).
+!down-right(@15, @15).
+!down-left(@15, @15).
+!left(@15, @14).
+!right(@15, @15).
