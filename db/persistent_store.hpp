@@ -33,7 +33,11 @@ struct persistent_store {
 
    tuple_trie *get_storage(const vm::predicate *) const;
 
-   bool add_tuple(vm::tuple *, vm::predicate *, const vm::depth_t);
+   inline bool add_tuple(vm::tuple *tpl, vm::predicate *pred,
+                         const vm::depth_t depth) {
+      return get_storage(pred)->insert_tuple(tpl, pred, depth);
+   }
+
    delete_info delete_tuple(vm::tuple *, vm::predicate *, const vm::depth_t);
 
    db::agg_configuration *add_agg_tuple(

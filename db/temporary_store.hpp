@@ -32,8 +32,6 @@ struct temporary_store
 #endif
 
       // incoming persistent tuples
-      // XXX add tuple_list for depth=0 and POSITIVE_DERIVATION
-      // Add separate lists per predicate
       vm::full_tuple_list incoming_persistent_tuples;
 
       // incoming action tuples

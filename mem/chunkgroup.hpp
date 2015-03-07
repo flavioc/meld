@@ -70,11 +70,26 @@ public:
       new_node->next = free_objs;
       free_objs = new_node;
    }
+
+   static inline size_t num_elems_chunk(const size_t size) { return size < 128 ? 64 : 16; }
+
+   inline void init(const size_t _size)
+   {
+      size = _size;
+      first_chunk = nullptr;
+      new_chunk = nullptr;
+      free_objs = nullptr;
+      num_elems_per_chunk = num_elems_chunk(_size);
+   }
+
+   explicit chunkgroup()
+   {
+   }
    
    explicit chunkgroup(const size_t _size):
       size(_size), first_chunk(nullptr),
       new_chunk(nullptr), free_objs(nullptr),
-      num_elems_per_chunk(_size <= 128 ? 64 : 16)
+      num_elems_per_chunk(num_elems_chunk(_size))
    {
       assert(_size >= sizeof(mem_node));
    }

@@ -25,15 +25,6 @@ persistent_store::get_storage(const predicate* pred) const
 #endif
 }
 
-bool
-persistent_store::add_tuple(vm::tuple *tpl, vm::predicate *pred, const depth_t depth)
-{
-   tuple_trie *tr(get_storage(pred));
-   
-   bool ret = tr->insert_tuple(tpl, pred, depth);
-   return ret;
-}
-
 persistent_store::delete_info
 persistent_store::delete_tuple(vm::tuple *tuple, vm::predicate *pred, const depth_t depth)
 {

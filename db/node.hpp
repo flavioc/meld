@@ -38,11 +38,15 @@ struct node {
 
    typedef vm::node_val node_id;
 
+   private:
+
+   node_id id;
+   node_id translation;
+
+   public:
    DECLARE_DOUBLE_QUEUE_NODE(node);
 
    private:
-   node_id id;
-   node_id translation;
 
    private:
    sched::thread *owner = nullptr;

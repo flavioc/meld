@@ -316,6 +316,8 @@ machine::~machine(void) {
 
    delete all->PROGRAM;
 
+//   mem::dump_pool();
+
 #ifdef INSTRUMENTATION
    if (alarm_thread) delete alarm_thread;
 #endif

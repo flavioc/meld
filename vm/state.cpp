@@ -728,11 +728,19 @@ state::sync(db::node *node)
    bool ret(false);
 #ifdef FACT_BUFFERING
    // send all facts to nodes.
-   for(auto p : facts_to_send.facts) {
-      buffer_node& ls(p.second);
-      db::node *target((db::node*)p.first);
+   for(size_t i(0); i < facts_to_send.size_initial; ++i) {
+      buffer_node& ls(facts_to_send.initial[i].b);
+      db::node *target(facts_to_send.initial[i].node);
       sched->new_work_list(node, target, ls);
       ret = true;
+   }
+   if(facts_to_send.lots_of_nodes()) {
+      for(auto p : facts_to_send.facts) {
+         buffer_node& ls(p.second);
+         db::node *target((db::node*)p.first);
+         sched->new_work_list(node, target, ls);
+         ret = true;
+      }
    }
    facts_to_send.clear();
 #endif

@@ -12,6 +12,11 @@
 namespace vm
 {
 
+struct buffer_pair {
+   db::node *node;
+   buffer_node b;
+};
+
 struct buffer
 {
 #if 0
@@ -24,16 +29,16 @@ struct buffer
          std::less<const db::node*>,
          mem::allocator<std::pair<const db::node* const, buffer_node>>>;
 
+#define MAX_VM_BUFFER 8
+
+   buffer_pair initial[MAX_VM_BUFFER];
+   size_t size_initial;
    map_sends facts;
 
-   inline void add(db::node *n, vm::tuple *tpl, vm::predicate *pred)
+   inline bool lots_of_nodes() const { return size_initial == MAX_VM_BUFFER; }
+
+   inline void add_into_buffer_node(buffer_node &bn, vm::tuple *tpl, vm::predicate *pred)
    {
-      auto it(facts.find(n));
-      if(it == facts.end()) {
-         auto i(facts.insert(std::make_pair(n, buffer_node())));
-         it = i.first;
-      }
-      buffer_node& bn(it->second);
       for(buffer_item &item : bn.ls) {
          if(item.pred == pred) {
             item.ls.push_front(tpl);
@@ -46,9 +51,39 @@ struct buffer
       bn.ls.push_back(ni);
    }
 
+   inline void add(db::node *n, vm::tuple *tpl, vm::predicate *pred)
+   {
+      for(size_t i(0); i < size_initial; ++i) {
+         if(initial[i].node == n) {
+            buffer_node &bn(initial[i].b);
+            add_into_buffer_node(bn, tpl, pred);
+            return;
+         }
+      }
+      if(lots_of_nodes()) {
+         auto it(facts.find(n));
+         if(it == facts.end()) {
+            auto i(facts.insert(std::make_pair(n, buffer_node())));
+            it = i.first;
+         }
+         buffer_node& bn(it->second);
+         add_into_buffer_node(bn, tpl, pred);
+      } else {
+         // add new initial
+         const size_t idx(size_initial);
+         size_initial++;
+         initial[idx].node = n;
+         buffer_node &bn(initial[idx].b);
+         bn.clear();
+         add_into_buffer_node(bn, tpl, pred);
+      }
+   }
+
    inline void clear()
    {
-      facts.clear();
+      if(lots_of_nodes())
+         facts.clear();
+      size_initial = 0;
    }
 };
 

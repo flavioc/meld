@@ -18,8 +18,8 @@ class pool
 {
 private:
    
-   chunkgroup **chunk_table;
-   size_t size_table = 127; // default table size
+   chunkgroup *chunk_table;
+   size_t size_table = 19; // default table size
 
    // number of chunkgroups to allocate per page.
    static const size_t NUM_CHUNK_PAGES = 64;
@@ -27,6 +27,7 @@ private:
    // available page for chunkgroups.
    chunkgroup *available_groups;
    chunkgroup *end_groups;
+   chunkgroup *free_groups{nullptr};
 
    inline void create_new_chunkgroup_page(void)
    {
@@ -37,6 +38,12 @@ private:
 
    inline chunkgroup *new_chunkgroup(const size_t size)
    {
+      if(free_groups) {
+         chunkgroup *ret(free_groups);
+         free_groups = free_groups->next;
+         ret->init(size);
+         return ret;
+      }
       if(available_groups == end_groups)
          create_new_chunkgroup_page();
       chunkgroup *next(available_groups);
@@ -45,22 +52,57 @@ private:
       return next;
    }
 
+   inline chunkgroup *new_chunkgroup()
+   {
+      if(free_groups) {
+         chunkgroup *ret(free_groups);
+         free_groups = free_groups->next;
+         return ret;
+      }
+      if(available_groups == end_groups)
+         create_new_chunkgroup_page();
+      chunkgroup *next(available_groups);
+      available_groups++;
+      ::new((void *)next) chunkgroup();
+      return next;
+   }
+
    inline void expand_chunk_table(void)
    {
-      chunkgroup **old_table(chunk_table);
+      chunkgroup *old_table(chunk_table);
       const size_t old_size(size_table);
+      std::cout << "expand\n";
 
       size_table *= 2;
-      chunk_table = new chunkgroup*[size_table];
-      memset(chunk_table, 0, sizeof(chunkgroup*)*size_table);
+      chunk_table = new chunkgroup[size_table];
+      memset(chunk_table, 0, sizeof(chunkgroup)*size_table);
 
       for(size_t i(0); i < old_size; ++i) {
-         chunkgroup *bucket(old_table[i]);
+         chunkgroup *bucket(old_table + i);
+         bool first{true};
          while(bucket) {
             chunkgroup *next(bucket->next);
-            const size_t new_index(bucket->size % size_table);
-            bucket->next = chunk_table[new_index];
-            chunk_table[new_index] = bucket;
+            const size_t new_index(hash_size(bucket->size) % size_table);
+            chunkgroup *new_bucket(chunk_table + new_index);
+            if(new_bucket->size == 0) {
+               memcpy(new_bucket, bucket, sizeof(chunkgroup));
+               new_bucket->next = NULL;
+               if(!first) {
+                  bucket->next = free_groups;
+                  free_groups = bucket;
+               }
+            } else {
+               if(first) {
+                  chunkgroup *copy(new_chunkgroup());
+                  memcpy(copy, bucket, sizeof(chunkgroup));
+                  copy->next = new_bucket->next;
+                  new_bucket->next = copy;
+               } else {
+                  bucket->next = new_bucket->next;
+                  new_bucket->next = bucket;
+               }
+            }
+            first = false;
 
             bucket = next;
          }
@@ -72,32 +114,34 @@ private:
    inline chunkgroup *find_insert_chunkgroup(const size_t size)
    {
       // tries to find the chunkgroup, if not add it.
-      const size_t index(size % size_table);
+      const size_t index(hash_size(size) % size_table);
+      chunkgroup *place(chunk_table + index);
       
-      if(chunk_table[index] == nullptr) {
-         chunkgroup *cg(new_chunkgroup(size));
-         chunk_table[index] = cg;
-         cg->next = nullptr;
-         return cg;
+      if(place->size == 0) {
+         place->init(size);
+         return place;
       } else {
-         chunkgroup *cg(chunk_table[index]);
          size_t count(0);
 
-         while(cg) {
-            if(cg->size == size)
-               return cg;
+         while(place) {
+            if(place->size == size)
+               return place;
             count++;
-            cg = cg->next;
+            place = place->next;
          }
 
-         chunkgroup *ncg(new_chunkgroup(size));
-         ncg->next = chunk_table[index];
-         chunk_table[index] = ncg;
-
+#if 0
          if(count > 8) // time to expand table
          {
             expand_chunk_table();
          }
+         XXX
+#endif
+
+         chunkgroup *ncg(new_chunkgroup(size));
+         ncg->next = chunk_table[index].next;
+         chunk_table[index].next = ncg;
+
          return ncg;
       }
    }
@@ -108,6 +152,11 @@ private:
       chunkgroup *cg(find_insert_chunkgroup(size));
       assert(cg != nullptr);
       return cg;
+   }
+
+   inline size_t hash_size(const size_t size)
+   {
+      return (size >> 2) - 1;
    }
 
    inline size_t make_size(const size_t size)
@@ -144,11 +193,28 @@ public:
    explicit pool(void)
    {
       create_new_chunkgroup_page();
-      chunk_table = new chunkgroup*[size_table];
-      memset(chunk_table, 0, sizeof(chunkgroup*)*size_table);
+      chunk_table = new chunkgroup[size_table];
+      memset(chunk_table, 0, sizeof(chunkgroup)*size_table);
+   }
+
+   void dump()
+   {
+      std::cout << "--> SIZE TABLE " << size_table << " <--\n";
+      for(size_t i(0); i < size_table; ++i) {
+         chunkgroup *bucket = chunk_table + i;
+         if(bucket->size == 0)
+            continue;
+         std::cout << "bucket " << i << std::endl;
+         std::cout << "\t";
+         while(bucket) {
+            std::cout << bucket->size << " ";
+            bucket = bucket->next;
+         }
+         std::cout << "\n";
+      }
    }
 };
-
+ 
 }
 
 #endif

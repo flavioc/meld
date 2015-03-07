@@ -17,11 +17,12 @@ size_t node::count_total(const predicate *pred) const {
    if (pred->is_persistent_pred()) return pers_store.count_total(pred);
 
    if (linear.stored_as_hash_table(pred)) {
-      const hash_table *table(linear.get_hash_table(pred->get_id()));
+      const hash_table *table(linear.get_hash_table(pred->get_linear_id()));
       return table->get_total_size();
    }
 
-   const intrusive_list<vm::tuple> *ls(linear.get_linked_list(pred->get_linear_id()));
+   const intrusive_list<vm::tuple> *ls(
+       linear.get_linked_list(pred->get_linear_id()));
    return ls->get_size();
 }
 
@@ -62,7 +63,7 @@ void node::dump(ostream &cout) const {
          vec = pers_store.dump(pred);
       else {
          if (linear.stored_as_hash_table(pred)) {
-            const hash_table *table(linear.get_hash_table(pred->get_id()));
+            const hash_table *table(linear.get_hash_table(pred->get_linear_id()));
             for (hash_table::iterator it(table->begin()); !it.end(); ++it) {
                const intrusive_list<vm::tuple> *ls(*it);
                if (!ls->empty()) {
@@ -88,7 +89,7 @@ void node::dump(ostream &cout) const {
       if (!vec.empty()) {
          sort(vec.begin(), vec.end());
 
-         for (auto & elem : vec) cout << elem << endl;
+         for (auto &elem : vec) cout << elem << endl;
       }
    }
 }
@@ -105,7 +106,8 @@ void node::print(ostream &cout) const {
          vec = pers_store.print(pred);
       else {
          if (linear.stored_as_hash_table(pred)) {
-            const hash_table *table(linear.get_hash_table(pred->get_id()));
+            const hash_table *table(
+                linear.get_hash_table(pred->get_linear_id()));
             for (hash_table::iterator it(table->begin()); !it.end(); ++it) {
                const intrusive_list<vm::tuple> *ls(*it);
                if (!ls->empty()) {

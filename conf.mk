@@ -17,6 +17,8 @@ USE_ADDRESSES = true
 TASK_STEALING = true
 # enable node collection if the node is no longer referenced anywhere.
 GC_NODES = true
+# activate fact buffering (only send facts after the node has completed running)
+FACT_BUFFERING = true
 # Activate debugging for rules and derivations.
 DEBUG_RULES = false
 
@@ -29,8 +31,6 @@ INSTRUMENTATION = false
 CORE_STATISTICS = false
 # activate this to collect statistics on memory use
 MEMORY_STATISTICS = false
-# activate fact buffering (only send facts after the node has completed running)
-FACT_BUFFERING = true
 # activate buffering for coordination.
 COORDINATION_BUFFERING = false
 

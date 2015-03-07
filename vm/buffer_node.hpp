@@ -17,7 +17,7 @@ struct buffer_item
 };
 
 struct buffer_node {
-   std::list<buffer_item, mem::allocator<buffer_item>> ls;
+   std::vector<buffer_item, mem::allocator<buffer_item>> ls;
 
    inline size_t size() const
    {
@@ -26,6 +26,14 @@ struct buffer_node {
          count += i.ls.get_size();
       }
       return count;
+   }
+
+   inline void clear() {
+      ls.clear();
+   }
+
+   explicit buffer_node() {
+      ls.reserve(8);
    }
 };
 }

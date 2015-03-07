@@ -16,6 +16,13 @@ inline void ensure_pool(void)
       mem_pool = new pool();
 #endif
 }
+
+inline void dump_pool()
+{
+#ifdef POOL_ALLOCATOR
+   mem_pool->dump();
+#endif
+}
   
 }
 

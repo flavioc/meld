@@ -10,36 +10,6 @@ using namespace std;
 namespace db
 {
 
-uint_val
-hash_table::hash_field(const tuple_field field) const
-{
-   switch(hash_type) {
-      case FIELD_INT: return (uint_val)FIELD_INT(field);
-      case FIELD_FLOAT: return (uint_val)FIELD_FLOAT(field);
-      case FIELD_NODE:
-#ifdef USE_REAL_NODES
-         return ((node*)FIELD_PTR(field))->get_id();
-#else
-         return FIELD_NODE(field);
-#endif
-      case FIELD_LIST:
-         if(FIELD_PTR(field) == 0)
-            return 0;
-         else
-            return 1;
-      default: assert(false); return 0;
-   }
-}
-
-size_t
-hash_table::insert(vm::tuple *item)
-{
-   const uint_val id(hash_tuple(item));
-   tuple_list *bucket(table + (id % size_table));
-   bucket->push_back(item);
-   return bucket->get_size();
-}
-
 size_t
 hash_table::insert_front(vm::tuple *item)
 {
