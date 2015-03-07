@@ -18,7 +18,8 @@ static inline void execute_add_linear0(db::node *node, vm::tuple *tuple,
 }
 
 static inline void execute_enqueue_linear0(db::node *node, vm::tuple *tuple,
-                                           vm::predicate *pred, vm::state &state) {
+                                           vm::predicate *pred,
+                                           vm::state &state) {
    assert(pred->is_linear_pred());
 #ifdef DEBUG_SENDS
    std::cout << "\tenqueue ";
@@ -32,7 +33,8 @@ static inline void execute_enqueue_linear0(db::node *node, vm::tuple *tuple,
 }
 
 static inline void execute_add_persistent0(db::node *node, vm::tuple *tpl,
-                                           vm::predicate *pred, vm::state &state) {
+                                           vm::predicate *pred,
+                                           vm::state &state) {
 #ifdef DEBUG_SENDS
    std::cout << "\tadd persistent ";
    tpl->print(std::cout, pred);
@@ -41,8 +43,9 @@ static inline void execute_add_persistent0(db::node *node, vm::tuple *tpl,
 
    state.persistent_facts_generated++;
    assert(pred->is_persistent_pred() || pred->is_reused_pred());
-   if (state.direction == vm::POSITIVE_DERIVATION && pred->is_persistent_pred() &&
-       !pred->has_code && !pred->is_aggregate_pred()) {
+   if (state.direction == vm::POSITIVE_DERIVATION &&
+       pred->is_persistent_pred() && !pred->has_code &&
+       !pred->is_aggregate_pred()) {
       node->pers_store.add_tuple(tpl, pred, state.depth);
       node->matcher.new_persistent_fact(pred->get_id());
       return;
@@ -140,12 +143,12 @@ static inline void execute_send0(db::node *node, const vm::node_val dest_val,
          All->MACHINE->run_action(state.sched, tuple, pred, state.gc_nodes);
       else {
 #ifdef FACT_BUFFERING
-         if(pred->is_persistent_pred() || pred->is_reused_pred() || state.direction != POSITIVE_DERIVATION) {
-            state.sched->new_work(state.node, node, tuple, pred, state.direction,
-                                  state.depth);
-         } else {
+         if (pred->is_persistent_pred() || pred->is_reused_pred() ||
+             state.direction != POSITIVE_DERIVATION) {
+            state.sched->new_work(state.node, node, tuple, pred,
+                                  state.direction, state.depth);
+         } else
             state.facts_to_send.add(node, tuple, pred);
-         }
 #else
          state.sched->new_work(state.node, node, tuple, pred, state.direction,
                                state.depth);
