@@ -71,7 +71,6 @@ private:
    {
       chunkgroup *old_table(chunk_table);
       const size_t old_size(size_table);
-      std::cout << "expand\n";
 
       size_table *= 2;
       chunk_table = new chunkgroup[size_table];

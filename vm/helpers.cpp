@@ -140,13 +140,12 @@ static inline void execute_send0(db::node *node, const vm::node_val dest_val,
          All->MACHINE->run_action(state.sched, tuple, pred, state.gc_nodes);
       else {
 #ifdef FACT_BUFFERING
-         if(state.direction != POSITIVE_DERIVATION || state.depth > 0) {
+         if(pred->is_persistent_pred() || pred->is_reused_pred() || state.direction != POSITIVE_DERIVATION) {
             state.sched->new_work(state.node, node, tuple, pred, state.direction,
                                   state.depth);
-            return;
+         } else {
+            state.facts_to_send.add(node, tuple, pred);
          }
-
-         state.facts_to_send.add(node, tuple, pred);
 #else
          state.sched->new_work(state.node, node, tuple, pred, state.direction,
                                state.depth);

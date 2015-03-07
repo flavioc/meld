@@ -173,10 +173,14 @@ struct node {
       unprocessed_facts = true;
       for (auto i : b.ls) {
          vm::predicate *pred(i.pred);
-         if (pred->is_persistent_pred() || pred->is_reused_pred()) {
-            for (auto it(i.ls.begin()), end(i.ls.end()); it != end; ++it) {
+         if (pred->is_action_pred()) {
+            assert(false);
+         } else if (pred->is_persistent_pred() || pred->is_reused_pred()) {
+            for (auto it(i.ls.begin()), end(i.ls.end()); it != end;) {
+               vm::tuple *tpl(*it);
+               ++it;
                auto stpl(
-                   new vm::full_tuple(*it, pred, vm::POSITIVE_DERIVATION, 0));
+                   new vm::full_tuple(tpl, pred, vm::POSITIVE_DERIVATION, 0));
                store.add_persistent_fact(stpl);
             }
          } else {
@@ -234,15 +238,19 @@ struct node {
          vm::predicate *pred(i.pred);
          vm::tuple_list &ls(i.ls);
          if (pred->is_action_pred()) {
-            for (auto it(ls.begin()), end(ls.end()); it != end; ++it) {
+            for (auto it(ls.begin()), end(ls.end()); it != end; ) {
+               vm::tuple *tpl(*it);
+               ++it;
                auto stpl(
-                   new vm::full_tuple(*it, pred, vm::POSITIVE_DERIVATION, 0));
+                   new vm::full_tuple(tpl, pred, vm::POSITIVE_DERIVATION, 0));
                store.incoming_action_tuples.push_back(stpl);
             }
          } else if (pred->is_persistent_pred() || pred->is_reused_pred()) {
-            for (auto it(ls.begin()), end(ls.end()); it != end; ++it) {
+            for (auto it(ls.begin()), end(ls.end()); it != end; ) {
+               vm::tuple *tpl(*it);
+               ++it;
                auto stpl(
-                   new vm::full_tuple(*it, pred, vm::POSITIVE_DERIVATION, 0));
+                   new vm::full_tuple(tpl, pred, vm::POSITIVE_DERIVATION, 0));
                store.incoming_persistent_tuples.push_back(stpl);
             }
          } else {

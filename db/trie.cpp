@@ -1298,6 +1298,9 @@ tuple_trie::tuple_search_iterator tuple_trie::match_predicate(
    if(!m || !m->any_exact)
       return tuple_search_iterator((tuple_trie_leaf*)first_leaf);
 
+   if(number_of_references == 0)
+      return tuple_search_iterator(nullptr);
+
    const size_t stack_size(m->size() + STACK_EXTRA_SIZE);
    trie_continuation_frame first_frm = {match_stack(stack_size), root,
                                         root->child};
