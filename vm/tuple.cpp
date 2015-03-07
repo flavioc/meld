@@ -173,7 +173,8 @@ print_tuple_type(ostream& cout, const tuple_field& field, type *t, const bool in
          break;
       case FIELD_ARRAY: {
          runtime::array *a(FIELD_ARRAY(field));
-         vm::type *at(a->get_type());
+         array_type *typ((array_type*)t);
+         type *at(typ->get_base());
          cout << "#[";
 
          for(size_t i(0); i < a->get_size(); ++i) {
@@ -262,7 +263,7 @@ tuple::destructor(predicate *pred, candidate_gc_nodes& gc_nodes)
          case FIELD_LIST: cons::dec_refs(get_cons(i), gc_nodes); break;
          case FIELD_STRING: get_string(i)->dec_refs(); break;
          case FIELD_STRUCT: get_struct(i)->dec_refs(gc_nodes); break;
-         case FIELD_ARRAY: get_array(i)->dec_refs(gc_nodes); break;
+         case FIELD_ARRAY: get_array(i)->dec_refs(((array_type*)pred->get_field_type(i))->get_base(), gc_nodes); break;
          case FIELD_NODE:
 #ifdef GC_NODES
             {
@@ -311,7 +312,7 @@ tuple::set_field_ref(const field_num& field, const tuple_field& newval,
    if(newval.ptr_field == oldval.ptr_field)
       return;
    runtime::do_increment_runtime(newval, ftype);
-   runtime::do_decrement_runtime(oldval, ftype, gc_nodes);
+   runtime::do_decrement_runtime(oldval, typ, gc_nodes);
 }
 
 size_t

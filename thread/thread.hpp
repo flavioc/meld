@@ -286,14 +286,14 @@ private:
    }
 
    void assert_end(void) const;
-   bool set_next_node(void);
+   inline bool set_next_node(void);
    void make_current_node_inactive(void);
-   bool check_if_current_useless();
+   inline bool check_if_current_useless();
    void make_active(void);
    void make_inactive(void);
    bool busy_wait(void);
    
-   void add_to_queue(db::node *node)
+   inline void add_to_queue(db::node *node) __attribute__((always_inline))
    {
 		if(node->has_priority())
 			add_to_priority_queue(node);

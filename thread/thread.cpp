@@ -79,8 +79,7 @@ void thread::assert_end(void) const {
    assert(all_threads_finished());
 }
 
-void thread::new_work_list(db::node *from, db::node *to,
-                                  vm::buffer_node &b) {
+void thread::new_work_list(db::node *from, db::node *to, vm::buffer_node &b) {
    assert(is_active());
    (void)from;
 
@@ -135,10 +134,8 @@ void thread::new_work_list(db::node *from, db::node *to,
    NODE_UNLOCK(to, nodelock);
 }
 
-void thread::new_work(node *from, node *to, vm::tuple *tpl,
-                             vm::predicate *pred,
-                             const derivation_direction dir,
-                             const depth_t depth) {
+void thread::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pred,
+                      const derivation_direction dir, const depth_t depth) {
    assert(is_active());
    (void)from;
 
@@ -377,7 +374,7 @@ void thread::make_current_node_inactive(void) {
 #endif
 }
 
-bool thread::check_if_current_useless(void) {
+inline bool thread::check_if_current_useless(void) {
    LOCK_STACK(curlock);
    if (current_node->has_new_owner()) {
       NODE_LOCK(current_node, curlock, node_lock);
@@ -406,7 +403,7 @@ bool thread::check_if_current_useless(void) {
    return false;
 }
 
-bool thread::set_next_node(void) {
+inline bool thread::set_next_node(void) {
 #ifndef DIRECT_PRIORITIES
    check_priority_buffer();
 #endif
@@ -430,8 +427,7 @@ bool thread::set_next_node(void) {
       if (!has_work()) {
          for (auto it(comm_threads.begin(All->NUM_THREADS)); !it.end(); ++it) {
             const size_t id(*it);
-            thread *target(
-                static_cast<thread *>(All->SCHEDS[id]));
+            thread *target(static_cast<thread *>(All->SCHEDS[id]));
             target->activate_thread();
          }
          comm_threads.clear(All->NUM_THREADS_NEXT_UINT);

@@ -16,10 +16,14 @@ namespace vm {
 
 struct rule_matcher {
    private:
+#ifdef COMPILED
+   utils::byte rules[COMPILED_NUM_RULES];
+#else
    utils::byte *rules;  // availability statistics per rule
+#endif
    bitmap predicate_existence;
 
-   void register_predicate_unavailability(const predicate_id id) {
+   inline void register_predicate_unavailability(const predicate_id id) {
       predicate_existence.unset_bit(id);
 #ifdef COMPILED
       compiled_register_predicate_unavailability(rules, rule_queue, id);
@@ -38,7 +42,7 @@ struct rule_matcher {
 #endif
    }
 
-   void register_predicate_availability(const predicate_id id) {
+   inline void register_predicate_availability(const predicate_id id) {
       predicate_existence.set_bit(id);
 #ifdef COMPILED
       compiled_register_predicate_availability(rules, rule_queue, id);
@@ -75,7 +79,7 @@ struct rule_matcher {
 #endif
    }
 
-   inline void new_linear_fact(const vm::predicate_id id) {
+   inline void new_linear_fact(const vm::predicate_id id) __attribute__((always_inline)) {
       if (predicate_existence.get_bit(id))
          register_predicate_update(id);
       else
@@ -135,8 +139,31 @@ struct rule_matcher {
       }
    }
 
-   rule_matcher(void);
-   ~rule_matcher(void);
+   inline explicit rule_matcher() {
+#ifdef COMPILED
+      for(size_t i(0); i < COMPILED_NUM_RULES; ++i)
+         rules[i] = 0;
+#else
+      rules = mem::allocator<utils::byte>().allocate(theProgram->num_rules());
+      memset(rules, 0, sizeof(utils::byte) * theProgram->num_rules());
+#endif
+
+      bitmap::create(rule_queue, theProgram->num_rules_next_uint());
+      rule_queue.clear(theProgram->num_rules_next_uint());
+
+      bitmap::create(predicate_existence,
+                     theProgram->num_predicates_next_uint());
+      predicate_existence.clear(theProgram->num_predicates_next_uint());
+   }
+
+   ~rule_matcher() {
+#ifndef COMPILED
+      mem::allocator<utils::byte>().deallocate(rules, theProgram->num_rules());
+#endif
+      bitmap::destroy(rule_queue, theProgram->num_rules_next_uint());
+      bitmap::destroy(predicate_existence,
+                      theProgram->num_predicates_next_uint());
+   }
 };
 }
 

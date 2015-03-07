@@ -7,6 +7,7 @@
 #include "db/trie.hpp"
 #include "vm/predicate.hpp"
 #include "db/tuple_aggregate.hpp"
+#include "vm/all.hpp"
 #ifdef COMPILED
 #include COMPILED_HEADER
 #endif
@@ -29,7 +30,11 @@ struct persistent_store {
 #endif
 
    // sets of tuple aggregates
+#ifdef COMPILED
+   tuple_aggregate* aggs[COMPILED_NUM_TRIES];
+#else
    aggregate_map aggs;
+#endif
 
    tuple_trie *get_storage(const vm::predicate *) const;
 
@@ -40,6 +45,7 @@ struct persistent_store {
 
    delete_info delete_tuple(vm::tuple *, vm::predicate *, const vm::depth_t);
 
+#ifndef COMPILED_NO_AGGREGATES
    db::agg_configuration *add_agg_tuple(
        vm::tuple *, vm::predicate *, const vm::depth_t,
        vm::candidate_gc_nodes &,
@@ -47,6 +53,7 @@ struct persistent_store {
    db::agg_configuration *remove_agg_tuple(vm::tuple *, vm::predicate *,
                                            const vm::depth_t,
                                            vm::candidate_gc_nodes &);
+#endif
    void delete_by_index(vm::predicate *, const vm::match &,
                         vm::candidate_gc_nodes &);
    void delete_by_leaf(vm::predicate *, tuple_trie_leaf *, const vm::depth_t,
@@ -69,7 +76,14 @@ struct persistent_store {
 
    size_t count_total(const vm::predicate *) const;
 
-   explicit persistent_store();
+   explicit inline persistent_store() {
+#ifndef COMPILED
+      tuples = mem::allocator<tuple_trie>().allocate(
+          vm::theProgram->num_persistent_predicates());
+      for (size_t i(0); i < vm::theProgram->num_persistent_predicates(); ++i)
+         mem::allocator<tuple_trie>().construct(tuples + i);
+#endif
+   }
 
    void wipeout(vm::candidate_gc_nodes &);
 

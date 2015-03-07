@@ -51,7 +51,7 @@ struct buffer
       bn.ls.push_back(ni);
    }
 
-   inline void add(db::node *n, vm::tuple *tpl, vm::predicate *pred)
+   inline void add(db::node *n, vm::tuple *tpl, vm::predicate *pred) __attribute__((always_inline))
    {
       for(size_t i(0); i < size_initial; ++i) {
          if(initial[i].node == n) {

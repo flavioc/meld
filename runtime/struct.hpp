@@ -37,7 +37,7 @@ struct struct1
       {
          if(!typ->simple_composed_type()) {
             for(size_t i(0); i < get_size(); ++i)
-               decrement_runtime_data(get_data(i), typ->get_type(i)->get_type(), gc_nodes);
+               decrement_runtime_data(get_data(i), typ->get_type(i), gc_nodes);
          }
          remove(this);
       }

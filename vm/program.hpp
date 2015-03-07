@@ -22,61 +22,57 @@
 #endif
 
 namespace db {
-   class database;
-   struct node;
+class database;
+struct node;
 }
 
 namespace vm {
 
-typedef enum {
-   PRIORITY_ASC,
-   PRIORITY_DESC
-} priority_type;
+typedef enum { PRIORITY_ASC, PRIORITY_DESC } priority_type;
 
 const size_t INIT_PREDICATE_ID(0);
 const size_t INIT_THREAD_PREDICATE_ID(1);
 
-#define VERSION_AT_LEAST(MAJ, MIN) (major_version > (MAJ) || \
-      (major_version == (MAJ) && minor_version >= (MIN)))
+#define VERSION_AT_LEAST(MAJ, MIN) \
+   (major_version > (MAJ) || (major_version == (MAJ) && minor_version >= (MIN)))
 
-class program
-{
-public:
-
+class program {
+   public:
    const std::string filename;
    uint32_t major_version, minor_version;
 
-   std::vector<type*, mem::allocator<type*>> types;
+   std::vector<type *, mem::allocator<type *>> types;
 
-   std::vector<import*, mem::allocator<import*>> imported_predicates;
+   std::vector<import *, mem::allocator<import *>> imported_predicates;
    std::vector<std::string, mem::allocator<std::string>> exported_predicates;
 
-	size_t num_args{0};
+   size_t num_args{0};
    size_t number_rules{0};
    size_t number_rules_uint{0};
 
-   std::vector<rule*, mem::allocator<rule*>> rules;
+   std::vector<rule *, mem::allocator<rule *>> rules;
 
-   std::vector<function*, mem::allocator<function*>> functions;
-   
-   std::vector<predicate*, mem::allocator<predicate*>> predicates;
-   std::vector<predicate*, mem::allocator<predicate*>> persistent_predicates;
-   std::vector<predicate*, mem::allocator<predicate*>> linear_predicates;
-   std::vector<predicate*, mem::allocator<predicate*>> sorted_predicates;
+   std::vector<function *, mem::allocator<function *>> functions;
+
+   std::vector<predicate *, mem::allocator<predicate *>> predicates;
+   std::vector<predicate *, mem::allocator<predicate *>> persistent_predicates;
+   std::vector<predicate *, mem::allocator<predicate *>> linear_predicates;
+   std::vector<predicate *, mem::allocator<predicate *>> sorted_predicates;
    size_t num_predicates_uint{0};
    size_t num_linear_predicates_uint{0};
-  
+
    std::vector<byte_code, mem::allocator<byte_code>> code;
    std::vector<code_size_t, mem::allocator<code_size_t>> code_size;
 
-	code_size_t const_code_size{0};
-	byte_code const_code{nullptr};
-	std::vector<type*, mem::allocator<type*>> const_types;
-   
-   std::vector<predicate*, mem::allocator<predicate*>> route_predicates;
-   // predicates that are instantiated at the thread level
-   std::vector<predicate*, mem::allocator<predicate*>> thread_predicates;
+   code_size_t const_code_size{0};
+   byte_code const_code{nullptr};
+   std::vector<type *, mem::allocator<type *>> const_types;
 
+   std::vector<predicate *, mem::allocator<predicate *>> route_predicates;
+   // predicates that are instantiated at the thread level
+   std::vector<predicate *, mem::allocator<predicate *>> thread_predicates;
+
+   bool has_aggregates_flag{false};
    bool safe{true};
    bool is_data_file{false};
 
@@ -84,11 +80,11 @@ public:
 
    mutable predicate *init{nullptr}, *init_thread{nullptr};
 
-   using string_store = 
-      std::vector<runtime::rstring::ptr, mem::allocator<runtime::rstring::ptr>>;
-	
-	string_store default_strings;
-	
+   using string_store = std::vector<runtime::rstring::ptr,
+                                    mem::allocator<runtime::rstring::ptr>>;
+
+   string_store default_strings;
+
    strat_level priority_strat_level{0};
    vm::priority_type priority_order;
    bool priority_static{false};
@@ -101,26 +97,32 @@ public:
 
    size_t total_arguments{0};
 
-   void print_predicate_code(std::ostream&, predicate*) const;
-   void read_node_references(byte_code, code_reader&);
-   
+   void print_predicate_code(std::ostream &, predicate *) const;
+   void read_node_references(byte_code, code_reader &);
+
    using predicate_iterator =
-      std::vector<predicate*, mem::allocator<predicate*>>::iterator;
+       std::vector<predicate *, mem::allocator<predicate *>>::iterator;
 
    vm::bitmap thread_predicates_map;
-   
+
    strat_level MAX_STRAT_LEVEL;
 
    inline size_t num_types(void) const { return types.size(); }
 
    inline void add_type(type *t) { types.push_back(t); }
-   inline type* get_type(const size_t i) const { assert(i < types.size()); return types[i]; }
-   inline void add_predicate(vm::predicate *pred) { predicates.push_back(pred); sorted_predicates.push_back(pred); }
+   inline type *get_type(const size_t i) const {
+      assert(i < types.size());
+      return types[i];
+   }
+   inline void add_predicate(vm::predicate *pred) {
+      predicates.push_back(pred);
+      sorted_predicates.push_back(pred);
+   }
    void sort_predicates();
 
    inline size_t num_rules(void) const { return number_rules; }
    inline size_t num_rules_next_uint(void) const { return number_rules_uint; }
-	inline size_t num_args_needed(void) const { return num_args; }
+   inline size_t num_args_needed(void) const { return num_args; }
 
    inline std::string get_name(void) const { return filename; }
 
@@ -136,78 +138,116 @@ public:
 
    inline size_t get_total_arguments(void) const { return total_arguments; }
 
-   inline strat_level get_priority_strat_level(void) const { return priority_strat_level; }
-	inline bool is_priority_asc(void) const { return priority_order == PRIORITY_ASC; }
-	inline bool is_priority_desc(void) const { return priority_order == PRIORITY_DESC; }
+   inline strat_level get_priority_strat_level(void) const {
+      return priority_strat_level;
+   }
+   inline bool is_priority_asc(void) const {
+      return priority_order == PRIORITY_ASC;
+   }
+   inline bool is_priority_desc(void) const {
+      return priority_order == PRIORITY_DESC;
+   }
 
    inline double get_initial_priority(void) const { return initial_priority; }
    inline bool is_static_priority(void) const { return priority_static; }
 
+   inline bool has_aggregates() const { return has_aggregates_flag; }
+
    predicate_iterator begin_predicates(void) { return predicates.begin(); }
    predicate_iterator end_predicates(void) { return predicates.end(); }
 
-   predicate_iterator begin_thread_predicates() { return thread_predicates.begin(); }
-   predicate_iterator end_thread_predicates() { return thread_predicates.end(); }
-	
-   predicate *get_predicate_by_name(const std::string&) const;
-   
-   predicate *get_init_predicate(void) const;
+   predicate_iterator begin_thread_predicates() {
+      return thread_predicates.begin();
+   }
+   predicate_iterator end_thread_predicates() {
+      return thread_predicates.end();
+   }
+
+   predicate *get_predicate_by_name(const std::string &) const;
+
+   inline predicate *get_init_predicate(void) const {
+      if (init == nullptr) {
+         init = get_predicate(INIT_PREDICATE_ID);
+         if (init->get_name() != "_init") {
+            std::cerr << "_init program should be predicate #"
+                 << (int)INIT_PREDICATE_ID << std::endl;
+            init = get_predicate_by_name("_init");
+         }
+         assert(init->get_name() == "_init");
+      }
+
+      assert(init != nullptr);
+
+      return init;
+   }
+
    predicate *get_init_thread_predicate(void) const;
    predicate *get_edge_predicate(void) const;
 
-   inline bool has_thread_predicates() const { return !thread_predicates.empty(); }
-   
-   void print_bytecode(std::ostream&) const;
-   void print_predicates(std::ostream&) const;
-   void print_rules(std::ostream&) const;
-   void print_program(std::ostream&) const;
-   void print_bytecode_by_predicate(std::ostream&, const std::string&) const;
-   
-   predicate* get_predicate(const predicate_id i) const { return predicates[i]; }
-   predicate* get_linear_predicate(const predicate_id i) const { return linear_predicates[i]; }
-   predicate* get_sorted_predicate(const size_t i) const {
+   inline bool has_thread_predicates() const {
+      return !thread_predicates.empty();
+   }
+
+   void print_bytecode(std::ostream &) const;
+   void print_predicates(std::ostream &) const;
+   void print_rules(std::ostream &) const;
+   void print_program(std::ostream &) const;
+   void print_bytecode_by_predicate(std::ostream &, const std::string &) const;
+
+   predicate *get_predicate(const predicate_id i) const {
+      return predicates[i];
+   }
+   predicate *get_linear_predicate(const predicate_id i) const {
+      return linear_predicates[i];
+   }
+   predicate *get_sorted_predicate(const size_t i) const {
       assert(i < num_predicates());
       return sorted_predicates[i];
    }
-   predicate* get_route_predicate(const size_t&) const;
-   
+   predicate *get_route_predicate(const size_t &) const;
+
    byte_code get_predicate_bytecode(const predicate_id id) const {
       assert(id < num_predicates());
       return code[id];
    }
-	inline byte_code get_const_bytecode() const { return const_code; }
-	inline type* get_const_type(const const_id& id) const { return const_types[id]; }
-   
+   inline byte_code get_const_bytecode() const { return const_code; }
+   inline type *get_const_type(const const_id &id) const {
+      return const_types[id];
+   }
+
    size_t num_predicates() const { return predicates.size(); }
-   size_t num_persistent_predicates() const { return persistent_predicates.size(); }
+   size_t num_persistent_predicates() const {
+      return persistent_predicates.size();
+   }
    size_t num_linear_predicates() const { return linear_predicates.size(); }
    size_t num_route_predicates() const { return route_predicates.size(); }
    size_t num_thread_predicates() const { return thread_predicates.size(); }
    size_t num_predicates_next_uint() const { return num_predicates_uint; }
-   size_t num_linear_predicates_next_uint() const { return num_linear_predicates_uint; }
+   size_t num_linear_predicates_next_uint() const {
+      return num_linear_predicates_uint;
+   }
 
-	inline runtime::rstring::ptr get_default_string(const size_t i) const
-	{
+   inline runtime::rstring::ptr get_default_string(const size_t i) const {
       assert(i < default_strings.size());
-		return default_strings[i];
-	}
-   
+      return default_strings[i];
+   }
+
    inline bool is_safe(void) const { return safe; }
    inline bool is_data(void) const { return is_data_file; }
 
-   bool add_data_file(vm::program&);
+   bool add_data_file(vm::program &);
 #ifdef USE_REAL_NODES
    void fix_node_address(db::node *);
 #endif
 
-   static std::unique_ptr<std::ifstream> bypass_bytecode_header(const std::string&);
-   
-   explicit program(std::string );
-   explicit program(void); // add compiled program
-   
+   static std::unique_ptr<std::ifstream> bypass_bytecode_header(
+       const std::string &);
+
+   explicit program(std::string);
+   explicit program(void);  // add compiled program
+
    ~program(void);
 };
-
 }
 
 #endif

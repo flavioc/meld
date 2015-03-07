@@ -37,21 +37,6 @@ size_t node::count_total_all(void) const {
 
 void node::assert_end(void) const {}
 
-node::node(const node_id _id, const node_id _trans)
-    : refs(0),
-      id(_id),
-      translation(_trans),
-      default_priority_level(no_priority_value()),
-      priority_level(theProgram->get_initial_priority()) {}
-
-void node::wipeout(candidate_gc_nodes &gc_nodes) {
-   linear.destroy(gc_nodes);
-   pers_store.wipeout(gc_nodes);
-
-   mem::allocator<node>().destroy(this);
-   mem::allocator<node>().deallocate(this, 1);
-}
-
 void node::dump(ostream &cout) const {
    cout << get_id() << endl;
 
@@ -63,7 +48,8 @@ void node::dump(ostream &cout) const {
          vec = pers_store.dump(pred);
       else {
          if (linear.stored_as_hash_table(pred)) {
-            const hash_table *table(linear.get_hash_table(pred->get_linear_id()));
+            const hash_table *table(
+                linear.get_hash_table(pred->get_linear_id()));
             for (hash_table::iterator it(table->begin()); !it.end(); ++it) {
                const intrusive_list<vm::tuple> *ls(*it);
                if (!ls->empty()) {

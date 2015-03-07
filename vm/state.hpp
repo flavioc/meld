@@ -36,7 +36,7 @@ private:
 	std::list<runtime::cons*, mem::allocator<runtime::cons*> > free_cons;
 	std::list<runtime::rstring::ptr, mem::allocator<runtime::rstring::ptr> > free_rstring;
    std::list<runtime::struct1*, mem::allocator<runtime::struct1*> > free_struct1;
-   std::list<runtime::array*, mem::allocator<runtime::array*> > free_array;
+   std::list<std::pair<runtime::array*, vm::type*>, mem::allocator<std::pair<runtime::array*, vm::type*>>> free_array;
    
    void purge_runtime_objects();
    full_tuple* search_for_negative_tuple(db::node *, full_tuple *);
@@ -143,7 +143,7 @@ public:
 	void copy_reg2const(const reg_num&, const const_id&);
    
    inline void add_cons(runtime::cons *ls) { ls->inc_refs(); free_cons.push_back(ls); }
-   inline void add_array(runtime::array *x) { x->inc_refs(); free_array.push_back(x); }
+   inline void add_array(runtime::array *x, vm::type *t) { x->inc_refs(); free_array.push_back(std::make_pair(x, t)); }
 	inline void add_string(runtime::rstring::ptr str) { str->inc_refs();
                                                        free_rstring.push_back(str); }
    inline void add_struct(runtime::struct1 *s) { s->inc_refs();

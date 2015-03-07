@@ -34,12 +34,11 @@ namespace db {
 
 struct node {
    public:
-   std::atomic<vm::ref_count> refs;
+   std::atomic<vm::ref_count> refs{0};
 
    typedef vm::node_val node_id;
 
    private:
-
    node_id id;
    node_id translation;
 
@@ -47,7 +46,6 @@ struct node {
    DECLARE_DOUBLE_QUEUE_NODE(node);
 
    private:
-
    private:
    sched::thread *owner = nullptr;
 
@@ -142,7 +140,8 @@ struct node {
 
    inline void make_inactive(void) { __INTRUSIVE_QUEUE(this) = queue_no_queue; }
 
-   inline void add_linear_fact(vm::tuple *tpl, vm::predicate *pred) {
+   inline void add_linear_fact(vm::tuple *tpl, vm::predicate *pred)
+       __attribute__((always_inline)) {
       matcher.new_linear_fact(pred->get_id());
       linear.add_fact(tpl, pred);
    }
@@ -163,13 +162,14 @@ struct node {
    inline void add_work_myself(
        vm::tuple *tpl, vm::predicate *pred,
        const vm::derivation_direction dir = vm::POSITIVE_DERIVATION,
-       const vm::depth_t depth = 0) {
+       const vm::depth_t depth = 0) __attribute__((always_inline)) {
       unprocessed_facts = true;
 
       inner_add_work_myself(tpl, pred, dir, depth);
    }
 
-   inline void add_work_myself(vm::buffer_node &b) {
+   inline void add_work_myself(vm::buffer_node &b)
+       __attribute__((always_inline)) {
       unprocessed_facts = true;
       for (auto i : b.ls) {
          vm::predicate *pred(i.pred);
@@ -238,7 +238,7 @@ struct node {
          vm::predicate *pred(i.pred);
          vm::tuple_list &ls(i.ls);
          if (pred->is_action_pred()) {
-            for (auto it(ls.begin()), end(ls.end()); it != end; ) {
+            for (auto it(ls.begin()), end(ls.end()); it != end;) {
                vm::tuple *tpl(*it);
                ++it;
                auto stpl(
@@ -246,7 +246,7 @@ struct node {
                store.incoming_action_tuples.push_back(stpl);
             }
          } else if (pred->is_persistent_pred() || pred->is_reused_pred()) {
-            for (auto it(ls.begin()), end(ls.end()); it != end; ) {
+            for (auto it(ls.begin()), end(ls.end()); it != end;) {
                vm::tuple *tpl(*it);
                ++it;
                auto stpl(
@@ -259,9 +259,20 @@ struct node {
       }
    }
 
-   explicit node(const node_id, const node_id);
+   inline explicit node(const node_id _id, const node_id _trans)
+       : id(_id),
+         translation(_trans),
+         default_priority_level(vm::no_priority_value()),
+         priority_level(vm::theProgram->get_initial_priority()) {}
 
-   void wipeout(vm::candidate_gc_nodes &);
+   inline void wipeout(vm::candidate_gc_nodes &gc_nodes,
+                       const bool fast = false) {
+      linear.destroy(gc_nodes, fast);
+      pers_store.wipeout(gc_nodes);
+
+      mem::allocator<node>().destroy(this);
+      mem::allocator<node>().deallocate(this, 1);
+   }
 
    static node *create(const node_id id, const node_id translate) {
       node *p(mem::allocator<node>().allocate(1));

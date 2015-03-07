@@ -53,7 +53,9 @@ state::purge_runtime_objects(void)
    PURGE_OBJ(cons);
 	PURGE_OBJ_SIMPLE(rstring);
    PURGE_OBJ(struct1);
-   PURGE_OBJ(array);
+   for(auto p : free_array) {
+      p.first->dec_refs(p.second, gc_nodes);
+   }
 	
 #undef PURGE_OBJ
 }
@@ -195,6 +197,7 @@ state::process_incoming_tuples(db::node *node)
 void
 state::add_to_aggregate(db::node *node, full_tuple *stpl)
 {
+#ifndef COMPILED_NO_AGGREGATES
    vm::tuple *tpl(stpl->get_tuple());
    predicate *pred(stpl->get_predicate());
    agg_configuration *agg(nullptr);
@@ -221,6 +224,9 @@ state::add_to_aggregate(db::node *node, full_tuple *stpl)
       stpl->set_as_aggregate();
       node->store.persistent_tuples.push_back(stpl);
    }
+#else
+   (void)node; (void)stpl;
+#endif
 }
 
 void

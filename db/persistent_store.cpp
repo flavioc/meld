@@ -6,15 +6,6 @@ using namespace db;
 using namespace vm;
 using namespace std;
 
-persistent_store::persistent_store()
-{
-#ifndef COMPILED
-   tuples = mem::allocator<tuple_trie>().allocate(vm::theProgram->num_persistent_predicates());
-   for(size_t i(0); i < vm::theProgram->num_persistent_predicates(); ++i)
-      mem::allocator<tuple_trie>().construct(tuples + i);
-#endif
-}
-
 tuple_trie*
 persistent_store::get_storage(const predicate* pred) const
 {
@@ -33,11 +24,17 @@ persistent_store::delete_tuple(vm::tuple *tuple, vm::predicate *pred, const dept
    return tr->delete_tuple(tuple, pred, depth);
 }
 
+#ifndef COMPILED_NO_AGGREGATES
 agg_configuration*
 persistent_store::add_agg_tuple(vm::tuple *tuple, predicate *pred,
       const depth_t depth, candidate_gc_nodes& gc_nodes, const derivation_direction dir)
 {
-   predicate_id pred_id(pred->get_id());
+   predicate_id pred_id(pred->get_persistent_id());
+#ifdef COMPILED
+   tuple_aggregate *agg(aggs[pred_id]);
+   if(!agg)
+      agg = aggs[pred_id] = new tuple_aggregate(pred);
+#else
    auto it(aggs.find(pred_id));
    tuple_aggregate *agg;
    
@@ -46,6 +43,7 @@ persistent_store::add_agg_tuple(vm::tuple *tuple, predicate *pred,
       aggs[pred_id] = agg;
    } else
       agg = it->second;
+#endif
 
    return agg->add_to_set(tuple, pred, dir, depth, gc_nodes);
 }
@@ -56,13 +54,27 @@ persistent_store::remove_agg_tuple(vm::tuple *tuple, vm::predicate *pred,
 {
    return add_agg_tuple(tuple, pred, depth, gc_nodes, NEGATIVE_DERIVATION);
 }
+#endif
 
 full_tuple_list
 persistent_store::end_iteration()
 {
-   // generate possible aggregates
    full_tuple_list ret;
+#ifndef COMPILED_NO_AGGREGATES
+   // generate possible aggregates
    
+#ifdef COMPILED
+   for(size_t i(0); i < COMPILED_NUM_TRIES; ++i) {
+      tuple_aggregate *agg(aggs[i]);
+      if(aggs) {
+         full_tuple_list ls(agg->generate());
+         for(auto && l : ls) {
+            (l)->set_as_aggregate();
+            ret.push_back(l);
+         }
+      }
+   }
+#else
    for(auto & elem : aggs)
    {
       tuple_aggregate *agg(elem.second);
@@ -74,6 +86,8 @@ persistent_store::end_iteration()
          ret.push_back(l);
       }
    }
+#endif
+#endif
    
    return ret;
 }
@@ -93,12 +107,14 @@ persistent_store::delete_by_index(predicate *pred, const match& m, candidate_gc_
    
    tr->delete_by_index(pred, m, gc_nodes);
    
+#ifndef COMPILED_NO_AGGREGATES
    auto it(aggs.find(pred->get_id()));
    
    if(it != aggs.end()) {
       tuple_aggregate *agg(it->second);
       agg->delete_by_index(m, gc_nodes);
    }
+#endif
 }
 
 size_t
@@ -119,11 +135,15 @@ persistent_store::wipeout(candidate_gc_nodes& gc_nodes)
       mem::allocator<tuple_trie>().destroy(tr);
 #endif
    }
-   for(auto & elem : aggs) {
-      tuple_aggregate *agg(elem.second);
-      agg->wipeout(gc_nodes);
-      delete agg;
+#ifndef COMPILED_NO_AGGREGATES
+   if(theProgram->has_aggregates()) {
+      for(auto & elem : aggs) {
+         tuple_aggregate *agg(elem.second);
+         agg->wipeout(gc_nodes);
+         delete agg;
+      }
    }
+#endif
 #ifndef COMPILED
    mem::allocator<tuple_trie>().deallocate(tuples, vm::theProgram->num_persistent_predicates());
 #endif

@@ -179,6 +179,8 @@ minmax_points_factor(const runtime::array *a)
    return std::max((int_val)1, (int_val)(a->get_size() - num_zeros));
 }
 
+static vector<vector<int>> valid = {{0, 3, 6}, {1, 4, 7}, {2, 5, 8}, {0, 1, 2}, {3, 4, 5}, {6, 7, 8}, {0, 4, 8}, {2, 4, 6}};
+
 argument
 minimax_score2(EXTERNAL_ARG(game), EXTERNAL_ARG(player), EXTERNAL_ARG(rootplayer))
 {
@@ -188,9 +190,7 @@ minimax_score2(EXTERNAL_ARG(game), EXTERNAL_ARG(player), EXTERNAL_ARG(rootplayer
 
    int other_player(player == 1 ? 2 : 1);
 
-   static vector<vector<int>> valid = {{0, 3, 6}, {1, 4, 7}, {2, 5, 8}, {0, 1, 2}, {3, 4, 5}, {6, 7, 8}, {0, 4, 8}, {2, 4, 6}};
-
-   for(vector<int> v : valid) {
+   for(vector<int>& v : valid) {
       bool found(true);
       for(int i : v) {
          if(FIELD_INT(game->get_item(i)) != player) {

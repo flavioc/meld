@@ -24,37 +24,35 @@ using namespace process;
 using namespace utils;
 
 extern void add_definitions(program*);
-extern void compiled_fix_nodes(db::node *);
+extern void compiled_fix_nodes(db::node*);
 
 namespace vm {
 
-all* All;     // global variable that holds pointer to vm
-   // all structure.  Set by process/machine.cpp
-   // in constructor.
+all* All;  // global variable that holds pointer to vm
+           // all structure.  Set by process/machine.cpp
+           // in constructor.
 program* theProgram;
 
 // most integers in the byte-code have 4 bytes
 static_assert(sizeof(uint_val) == 4, "uint_val must be 4 bytes long.");
 
-static inline ptr_val 
-get_function_pointer(char *lib_path, char* func_name)
-{
-   void *handle = dlopen(lib_path, RTLD_LAZY);
+static inline ptr_val get_function_pointer(char* lib_path, char* func_name) {
+   void* handle = dlopen(lib_path, RTLD_LAZY);
 
-   if(!handle) {
-      cerr<<"Cannot Open Library : "<<dlerror()<<endl;
+   if (!handle) {
+      cerr << "Cannot Open Library : " << dlerror() << endl;
       return 0;
    }
 
    typedef void (*func_t)();
 
-   //reset errors
+   // reset errors
    dlerror();
 
    func_t func = (func_t)dlsym(handle, func_name);
-   const char *dlsym_error = dlerror();
+   const char* dlsym_error = dlerror();
 
-   if(dlsym_error) {
+   if (dlsym_error) {
       dlclose(handle);
       return 0;
    }
@@ -62,8 +60,7 @@ get_function_pointer(char *lib_path, char* func_name)
    return (ptr_val)func;
 }
 
-program::program()
-{
+program::program() {
 #ifdef COMPILED
    add_definitions(this);
 #else
@@ -71,47 +68,45 @@ program::program()
 #endif
 }
 
-std::unique_ptr<ifstream>
-program::bypass_bytecode_header(const string& filename)
-{
-   std::unique_ptr<ifstream> fp(new ifstream(filename.c_str(), ios::in | ios::binary));
+std::unique_ptr<ifstream> program::bypass_bytecode_header(
+    const string& filename) {
+   std::unique_ptr<ifstream> fp(
+       new ifstream(filename.c_str(), ios::in | ios::binary));
 
-   fp->seekg(vm::MAGIC_SIZE, ios_base::cur); // skip magic
-   fp->seekg(2*sizeof(uint32_t), ios_base::cur); // skip version
-   
-   fp->seekg(sizeof(byte), ios_base::cur); // skip number of definitions
+   fp->seekg(vm::MAGIC_SIZE, ios_base::cur);        // skip magic
+   fp->seekg(2 * sizeof(uint32_t), ios_base::cur);  // skip version
+
+   fp->seekg(sizeof(byte), ios_base::cur);  // skip number of definitions
    return fp;
 }
 
-program::program(string  _filename):
-   filename(std::move(_filename)),
-   init(nullptr)
-{
+program::program(string _filename)
+    : filename(std::move(_filename)), init(nullptr) {
    code_reader read(filename);
 
    // read magic
    uint32_t magic1, magic2;
    read.read_type<uint32_t>(&magic1);
    read.read_type<uint32_t>(&magic2);
-   if(magic1 != MAGIC1 || magic2 != MAGIC2)
+   if (magic1 != MAGIC1 || magic2 != MAGIC2)
       throw load_file_error(filename, "not a meld byte code file");
 
    // read version
    read.read_type<uint32_t>(&major_version);
    read.read_type<uint32_t>(&minor_version);
-   if(!VERSION_AT_LEAST(0, 11))
+   if (!VERSION_AT_LEAST(0, 11))
       throw load_file_error(filename, string("unsupported byte code version"));
 
-   if(VERSION_AT_LEAST(0, 13))
+   if (VERSION_AT_LEAST(0, 13))
       throw load_file_error(filename, string("unsupported byte code version"));
 
    // read number of predicates
    byte num_preds;
-	read.read_type<byte>(&num_preds);
-   
+   read.read_type<byte>(&num_preds);
+
    const size_t num_predicates = (size_t)num_preds;
    num_predicates_uint = next_multiple_of_uint(num_predicates);
-   
+
    predicates.resize(num_predicates);
    sorted_predicates.resize(num_predicates);
    code_size.resize(num_predicates);
@@ -119,20 +114,21 @@ program::program(string  _filename):
 
    // skip nodes
    uint_val num_nodes;
-	read.read_type<uint_val>(&num_nodes);
+   read.read_type<uint_val>(&num_nodes);
 
 #ifdef USE_REAL_NODES
-   node_references = new vector<byte_code, mem::allocator<byte_code>>[num_nodes];
+   node_references =
+       new vector<byte_code, mem::allocator<byte_code>>[num_nodes];
 #endif
 
-	read.seek(num_nodes * database::node_size);
+   read.seek(num_nodes * database::node_size);
 
    // read number of types
    byte ntypes;
    read.read_type<byte>(&ntypes);
    types.resize((size_t)ntypes);
 
-   for(size_t i(0); i < num_types(); ++i)
+   for (size_t i(0); i < num_types(); ++i)
       types[i] = read_type_from_reader(read, this);
 
    // read imported/exported predicates
@@ -140,7 +136,7 @@ program::program(string  _filename):
 
    read.read_type<uint32_t>(&number_imported_predicates);
 
-   for(uint32_t i(0); i < number_imported_predicates; ++i) {
+   for (uint32_t i(0); i < number_imported_predicates; ++i) {
       uint32_t size;
       read.read_type<uint32_t>(&size);
 
@@ -158,7 +154,8 @@ program::program(string  _filename):
       read.read_any(buf_file, size);
       buf_file[size] = '\0';
 
-      cout << "import " << buf_imp << " as " << buf_as << " from " << buf_file << endl;
+      cout << "import " << buf_imp << " as " << buf_as << " from " << buf_file
+           << endl;
 
       imported_predicates.push_back(new import(buf_imp, buf_as, buf_file));
    }
@@ -168,7 +165,7 @@ program::program(string  _filename):
 
    read.read_type<uint32_t>(&number_exported_predicates);
 
-   for(uint32_t i(0); i < number_exported_predicates; ++i) {
+   for (uint32_t i(0); i < number_exported_predicates; ++i) {
       uint32_t str_size;
       read.read_type<uint32_t>(&str_size);
       char buf[str_size + 1];
@@ -178,11 +175,11 @@ program::program(string  _filename):
    }
    assert(exported_predicates.size() == number_exported_predicates);
 
-	// get number of args needed
-	byte n_args;
+   // get number of args needed
+   byte n_args;
 
-	read.read_type<byte>(&n_args);
-	num_args = (size_t)n_args;
+   read.read_type<byte>(&n_args);
+   num_args = (size_t)n_args;
 
    // get rule information
    uint32_t n_rules;
@@ -192,7 +189,7 @@ program::program(string  _filename):
    number_rules = n_rules;
    number_rules_uint = next_multiple_of_uint(number_rules);
 
-   for(size_t i(0); i < n_rules; ++i) {
+   for (size_t i(0); i < n_rules; ++i) {
       // read rule string length
       uint32_t rule_len;
 
@@ -209,39 +206,39 @@ program::program(string  _filename):
       rules.push_back(new rule((rule_id)i, string(str)));
    }
 
-	// read string constants
-	uint32_t num_strings;
-	read.read_type<uint32_t>(&num_strings);
-	
-	default_strings.reserve(num_strings);
-	
-	for(uint32_t i(0); i < num_strings; ++i) {
-		uint32_t length;
-		
-		read.read_type<uint32_t>(&length);
-		
-		char str[length + 1];
-		read.read_any(str, length);
-		str[length] = '\0';
-		default_strings.push_back(runtime::rstring::make_default_string(str));
-	}
-	
-	// read constants code
-	uint32_t num_constants;
-	read.read_type<uint32_t>(&num_constants);
-	
-	// read constant types
-	const_types.resize(num_constants);
-	
-	for(uint_val i(0); i < num_constants; ++i) {
+   // read string constants
+   uint32_t num_strings;
+   read.read_type<uint32_t>(&num_strings);
+
+   default_strings.reserve(num_strings);
+
+   for (uint32_t i(0); i < num_strings; ++i) {
+      uint32_t length;
+
+      read.read_type<uint32_t>(&length);
+
+      char str[length + 1];
+      read.read_any(str, length);
+      str[length] = '\0';
+      default_strings.push_back(runtime::rstring::make_default_string(str));
+   }
+
+   // read constants code
+   uint32_t num_constants;
+   read.read_type<uint32_t>(&num_constants);
+
+   // read constant types
+   const_types.resize(num_constants);
+
+   for (uint_val i(0); i < num_constants; ++i) {
       const_types[i] = read_type_id_from_reader(read, types);
-	}
-	
-	// read constants code
-	read.read_type<code_size_t>(&const_code_size);
-	
-	const_code = new byte_code_el[const_code_size];
-	read.read_any(const_code, const_code_size);
+   }
+
+   // read constants code
+   read.read_type<code_size_t>(&const_code_size);
+
+   const_code = new byte_code_el[const_code_size];
+   read.read_any(const_code, const_code_size);
    read_node_references(const_code, read);
 
    MAX_STRAT_LEVEL = 0;
@@ -253,11 +250,11 @@ program::program(string  _filename):
 
    functions.resize(n_functions);
 
-   for(uint32_t i(0); i < n_functions; ++i) {
+   for (uint32_t i(0); i < n_functions; ++i) {
       code_size_t fun_size;
 
       read.read_type<code_size_t>(&fun_size);
-      auto   fun_code(new byte_code_el[fun_size]);
+      auto fun_code(new byte_code_el[fun_size]);
       read.read_any(fun_code, fun_size);
 
       functions[i] = new vm::function(fun_code, fun_size);
@@ -269,7 +266,7 @@ program::program(string  _filename):
 
    read.read_type<uint32_t>(&n_externs);
 
-   for(uint32_t i(0); i < n_externs; ++i) {
+   for (uint32_t i(0); i < n_externs; ++i) {
       uint32_t extern_id;
 
       read.read_type<uint32_t>(&extern_id);
@@ -285,42 +282,46 @@ program::program(string  _filename):
 
       read.read_type<ptr_val>(&skip_ptr);
 
-      skip_ptr = get_function_pointer(skip_filename,extern_name);
+      skip_ptr = get_function_pointer(skip_filename, extern_name);
       uint32_t num_args;
 
       read.read_type<uint32_t>(&num_args);
 
-      type *ret_type = read_type_id_from_reader(read, types);
+      type* ret_type = read_type_id_from_reader(read, types);
 
-      if(num_args) {
-         type *arg_type[num_args];
-         for(uint32_t j(0); j != num_args; ++j) {
+      if (num_args) {
+         type* arg_type[num_args];
+         for (uint32_t j(0); j != num_args; ++j) {
             arg_type[j] = read_type_id_from_reader(read, types);
          }
 
-         register_custom_external_function((external_function_ptr)skip_ptr, num_args, ret_type, arg_type, extern_name);
+         register_custom_external_function((external_function_ptr)skip_ptr,
+                                           num_args, ret_type, arg_type,
+                                           extern_name);
       } else
-         register_custom_external_function((external_function_ptr)skip_ptr, 0, ret_type, nullptr, extern_name);
+         register_custom_external_function((external_function_ptr)skip_ptr, 0,
+                                           ret_type, nullptr, extern_name);
    }
 
    // read predicate information
    total_arguments = 0;
    bitmap::create(thread_predicates_map, num_predicates_uint);
 
-   for(size_t i(0); i < num_predicates; ++i) {
+   for (size_t i(0); i < num_predicates; ++i) {
       code_size_t size;
 
       sorted_predicates[i] = predicates[i] =
-         predicate::make_predicate_from_reader(read, &size, (predicate_id)i, major_version, minor_version, types);
+          predicate::make_predicate_from_reader(read, &size, (predicate_id)i,
+                                                major_version, minor_version,
+                                                types);
       code_size[i] = size;
 
-      predicate *pred(predicates[i]);
+      predicate* pred(predicates[i]);
 
       MAX_STRAT_LEVEL = max(pred->get_strat_level() + 1, MAX_STRAT_LEVEL);
 
-      if(pred->is_route_pred())
-         route_predicates.push_back(pred);
-      if(pred->is_thread_pred()) {
+      if (pred->is_route_pred()) route_predicates.push_back(pred);
+      if (pred->is_thread_pred()) {
          thread_predicates.push_back(pred);
          thread_predicates_map.set_bit(pred->get_id());
       }
@@ -328,7 +329,7 @@ program::program(string  _filename):
       pred->set_argument_position(total_arguments);
       pred->has_code = code_size[i] > 0;
       total_arguments += pred->num_fields();
-      if(pred->is_linear_pred()) {
+      if (pred->is_linear_pred()) {
          pred->id2 = num_linear_predicates();
          linear_predicates.push_back(pred);
       } else {
@@ -341,31 +342,33 @@ program::program(string  _filename):
    sort_predicates();
 
    safe = true;
-   for(size_t i(0); i < num_predicates; ++i) {
+   for (size_t i(0); i < num_predicates; ++i) {
       predicates[i]->cache_info(this);
-      if(predicates[i]->is_aggregate_pred() && predicates[i]->is_unsafe_agg()) {
-         safe = false;
-		}
+      if (predicates[i]->is_aggregate_pred()) {
+         has_aggregates_flag = true;
+         if (predicates[i]->is_unsafe_agg()) {
+            safe = false;
+         }
+      }
    }
 
-	// get global priority information
-	byte global_info;
-	
-	read.read_type<byte>(&global_info);
+   // get global priority information
+   byte global_info;
+
+   read.read_type<byte>(&global_info);
 
    priority_order = PRIORITY_DESC;
    initial_priority = initial_priority_value0(true);
    priority_static = false;
 
    is_data_file = false;
-	
-   switch(global_info) {
-      case 0x01: { // priority by predicate
+
+   switch (global_info) {
+      case 0x01: {  // priority by predicate
          cerr << "Not supported anymore" << endl;
          abort();
-      }
-      break;
-      case 0x02: { // normal priority
+      } break;
+      case 0x02: {  // normal priority
          byte type(0x0);
          byte asc_desc;
 
@@ -373,30 +376,28 @@ program::program(string  _filename):
          assert(type == 0x01);
 
          read.read_type<byte>(&asc_desc);
-         if(asc_desc & 0x01)
+         if (asc_desc & 0x01)
             priority_order = PRIORITY_ASC;
          else
             priority_order = PRIORITY_DESC;
          priority_static = (asc_desc & 0x02) ? true : false;
 
          read.read_type<float_val>(&initial_priority);
-      }
-      break;
-      case 0x03: { // data file
+      } break;
+      case 0x03: {  // data file
          is_data_file = true;
-      }
-      break;
+      } break;
       default:
-      break;
+         break;
    }
 
-   if(!scheduling_mechanism)
+   if (!scheduling_mechanism)
       initial_priority = no_priority_value0(priority_order == PRIORITY_DESC);
-   
+
    // read predicate code
-   for(size_t i(0); i < num_predicates; ++i) {
+   for (size_t i(0); i < num_predicates; ++i) {
       const size_t size = code_size[i];
-      if(size > 0) {
+      if (size > 0) {
          code[i] = new byte_code_el[size];
          read.read_any(code[i], size);
          read_node_references(code[i], read);
@@ -405,12 +406,12 @@ program::program(string  _filename):
    }
 
    // read rules code
-	uint32_t num_rules_code;
-	read.read_type<uint32_t>(&num_rules_code);
+   uint32_t num_rules_code;
+   read.read_type<uint32_t>(&num_rules_code);
 
    assert(num_rules_code == number_rules);
 
-   for(size_t i(0); i < num_rules_code; ++i) {
+   for (size_t i(0); i < num_rules_code; ++i) {
       code_size_t code_size;
       byte_code code;
       read.read_type<code_size_t>(&code_size);
@@ -428,10 +429,10 @@ program::program(string  _filename):
 
       assert(num_preds < 10);
 
-      for(size_t j(0); j < num_preds; ++j) {
+      for (size_t j(0); j < num_preds; ++j) {
          predicate_id id;
          read.read_type<predicate_id>(&id);
-         predicate *pred(predicates[id]);
+         predicate* pred(predicates[id]);
 
          pred->add_linear_affected_rule(rules[i]);
          rules[i]->add_predicate(id);
@@ -441,48 +442,41 @@ program::program(string  _filename):
    data_rule = nullptr;
 }
 
-program::~program(void)
-{
-	for(size_t i(0); i < num_rules(); ++i) {
+program::~program(void) {
+   for (size_t i(0); i < num_rules(); ++i) {
       rules[i]->destroy();
-		delete rules[i];
-	}
-   for(size_t i(0); i < num_types(); ++i)
-      delete types[i];
-   for(size_t i(0); i < num_predicates(); ++i) {
+      delete rules[i];
+   }
+   for (size_t i(0); i < num_types(); ++i) delete types[i];
+   for (size_t i(0); i < num_predicates(); ++i) {
       predicates[i]->destroy();
       delete predicates[i];
 #ifndef COMPILED
-      delete []code[i];
+      delete[] code[i];
 #endif
    }
-   if(data_rule != nullptr)
-      delete data_rule;
-   for(auto & elem : functions) {
+   if (data_rule != nullptr) delete data_rule;
+   for (auto& elem : functions) {
       delete elem;
    }
-   if(const_code)
-      delete []const_code;
-   for(auto & elem : imported_predicates) {
+   if (const_code) delete[] const_code;
+   for (auto& elem : imported_predicates) {
       delete elem;
    }
    MAX_STRAT_LEVEL = 0;
 #ifdef USE_REAL_NODES
-   if(node_references)
-      delete []node_references;
+   if (node_references) delete[] node_references;
 #endif
    bitmap::destroy(thread_predicates_map, num_predicates_uint);
 }
 
-void
-program::read_node_references(byte_code code, code_reader& read)
-{
+void program::read_node_references(byte_code code, code_reader& read) {
    uint_val size_nodes;
    read.read_type<uint_val>(&size_nodes);
    uint_val pos[size_nodes];
    read.read_type<uint_val>(pos, size_nodes);
 #ifdef USE_REAL_NODES
-   for(uint_val i(0); i < size_nodes; ++i) {
+   for (uint_val i(0); i < size_nodes; ++i) {
       byte_code p(code + pos[i]);
       const node_val n(pcounter_node(p));
       node_references[n].push_back(p);
@@ -492,164 +486,123 @@ program::read_node_references(byte_code code, code_reader& read)
 #endif
 }
 
-void
-program::fix_node_address(db::node *n)
-{
+void program::fix_node_address(db::node* n) {
 #ifdef COMPILED
    compiled_fix_nodes(n);
 #else
-   vector<byte_code, mem::allocator<byte_code>>& vec(node_references[n->get_id()]);
-   for(byte_code code : vec)
-      pcounter_set_node(code, (node_val)n);
+   vector<byte_code, mem::allocator<byte_code>>& vec(
+       node_references[n->get_id()]);
+   for (byte_code code : vec) pcounter_set_node(code, (node_val)n);
 #endif
 }
 
-predicate*
-program::get_route_predicate(const size_t& i) const
-{
+predicate* program::get_route_predicate(const size_t& i) const {
    assert(i < num_route_predicates());
-   
+
    return route_predicates[i];
 }
 
-void
-program::print_predicate_code(ostream& out, predicate* p) const
-{
-   if(code_size[p->get_id()] == 0)
-      return;
-   out << "PROCESS " << p->get_name()
-      << " (" << code_size[p->get_id()] << "):" << endl;
+void program::print_predicate_code(ostream& out, predicate* p) const {
+   if (code_size[p->get_id()] == 0) return;
+   out << "PROCESS " << p->get_name() << " (" << code_size[p->get_id()]
+       << "):" << endl;
    instrs_print(code[p->get_id()], code_size[p->get_id()], 0, this, out);
    out << "END PROCESS;" << endl;
 }
 
-void
-program::print_bytecode(ostream& out) const
-{
+void program::print_bytecode(ostream& out) const {
    out << "VERSION " << major_version << "." << minor_version << endl << endl;
 
-	out << "CONST CODE" << endl;
-	
-	instrs_print(const_code, const_code_size, 0, this, out);
+   out << "CONST CODE" << endl;
+
+   instrs_print(const_code, const_code_size, 0, this, out);
 
    out << endl;
 
    out << "FUNCTION CODE" << endl;
-   for(size_t i(0); i < functions.size(); ++i) {
+   for (size_t i(0); i < functions.size(); ++i) {
       out << "FUNCTION " << i << endl;
-      instrs_print(functions[i]->get_bytecode(), functions[i]->get_bytecode_size(), 0, this, out);
+      instrs_print(functions[i]->get_bytecode(),
+                   functions[i]->get_bytecode_size(), 0, this, out);
       out << endl;
    }
 
    out << endl;
    out << "PREDICATE CODE" << endl;
-	
-   for(size_t i = 0; i < num_predicates(); ++i) {
+
+   for (size_t i = 0; i < num_predicates(); ++i) {
       predicate_id id = (predicate_id)i;
-      if(code_size[id] == 0)
-         continue;
-      
-      if(i != 0)
-         out << endl;
-         
+      if (code_size[id] == 0) continue;
+
+      if (i != 0) out << endl;
+
       print_predicate_code(out, get_predicate(id));
    }
 
    out << "RULES CODE" << endl;
 
-   for(size_t i(0); i < number_rules; ++i) {
+   for (size_t i(0); i < number_rules; ++i) {
       out << endl;
       out << "RULE " << i << endl;
-		rules[i]->print(out, this);
+      rules[i]->print(out, this);
    }
 }
 
-void
-program::print_bytecode_by_predicate(ostream& out, const string& name) const
-{
-	predicate *p(get_predicate_by_name(name));
-	
-	if(p == nullptr) {
-		cerr << "Predicate " << name << " not found." << endl;
-		return;
-	}
+void program::print_bytecode_by_predicate(ostream& out,
+                                          const string& name) const {
+   predicate* p(get_predicate_by_name(name));
+
+   if (p == nullptr) {
+      cerr << "Predicate " << name << " not found." << endl;
+      return;
+   }
    print_predicate_code(out, get_predicate_by_name(name));
 }
 
-void
-program::print_program(ostream& out) const
-{
-   for(size_t i(0); i < number_rules; ++i) {
+void program::print_program(ostream& out) const {
+   for (size_t i(0); i < number_rules; ++i) {
       out << rules[i]->get_string() << endl;
    }
 }
 
-void
-program::print_rules(ostream& out) const
-{
-   for(size_t i(0); i < number_rules; ++i) {
+void program::print_rules(ostream& out) const {
+   for (size_t i(0); i < number_rules; ++i) {
       out << endl;
       out << "RULE " << i << endl;
       out << rules[i]->get_string() << endl;
    }
 }
 
-void
-program::print_predicates(ostream& cout) const
-{
+void program::print_predicates(ostream& cout) const {
    cout << ">> Predicates:" << endl;
-   for(size_t i(0); i < num_predicates(); ++i)
-      cout << *predicates[i] << endl;
+   for (size_t i(0); i < num_predicates(); ++i) cout << *predicates[i] << endl;
    cout << ">> Imported Predicates:" << endl;
-   for(auto & elem : imported_predicates)
-      cout << *elem << endl;
+   for (auto& elem : imported_predicates) cout << *elem << endl;
    cout << ">> Exported Predicates:" << endl;
-   for(auto & elem : exported_predicates)
-      cout << elem << endl;
-   cout << ">> Priorities: " << (priority_order == PRIORITY_ASC ? "ascending" : "descending") << "\n";
-   if(priority_static)
-      cout << ">> No work stealing" << endl;
-   if(is_data())
-      cout << ">> Data file" << endl;
+   for (auto& elem : exported_predicates) cout << elem << endl;
+   cout << ">> Priorities: "
+        << (priority_order == PRIORITY_ASC ? "ascending" : "descending")
+        << "\n";
+   if (priority_static) cout << ">> No work stealing" << endl;
+   if (is_data()) cout << ">> Data file" << endl;
 }
 
-predicate*
-program::get_predicate_by_name(const string& name) const
-{
-   for(size_t i(0); i < num_predicates(); ++i) {
-      predicate *pred(get_predicate((predicate_id)i));
-      
-      if(pred->get_name() == name)
-         return pred;
+predicate* program::get_predicate_by_name(const string& name) const {
+   for (size_t i(0); i < num_predicates(); ++i) {
+      predicate* pred(get_predicate((predicate_id)i));
+
+      if (pred->get_name() == name) return pred;
    }
-   
+
    return nullptr;
 }
 
-predicate*
-program::get_init_predicate(void) const
-{
-   if(init == nullptr) {
-      init = get_predicate(INIT_PREDICATE_ID);
-      if(init->get_name() != "_init") {
-         cerr << "_init program should be predicate #" << (int)INIT_PREDICATE_ID << endl;
-         init = get_predicate_by_name("_init");
-      }
-      assert(init->get_name() == "_init");
-   }
-
-   assert(init != nullptr);
-      
-   return init;
-}
-
-predicate*
-program::get_init_thread_predicate() const
-{
-   if(init_thread == nullptr) {
+predicate* program::get_init_thread_predicate() const {
+   if (init_thread == nullptr) {
       init_thread = get_predicate(INIT_THREAD_PREDICATE_ID);
-      if(init_thread->get_name() != "_init_thread") {
-         cerr << "_init_thread predicate should be predicate #" << (int)INIT_THREAD_PREDICATE_ID << endl;
+      if (init_thread->get_name() != "_init_thread") {
+         cerr << "_init_thread predicate should be predicate #"
+              << (int)INIT_THREAD_PREDICATE_ID << endl;
          init_thread = get_predicate_by_name("_init_thread");
       }
       assert(init_thread->get_name() == "_init_thread");
@@ -659,31 +612,28 @@ program::get_init_thread_predicate() const
    return init_thread;
 }
 
-predicate*
-program::get_edge_predicate(void) const
-{
+predicate* program::get_edge_predicate(void) const {
    return get_predicate_by_name("edge");
 }
 
-void
-program::sort_predicates()
-{
-   sort(sorted_predicates.begin(), sorted_predicates.end(), [](predicate *a1, predicate *a2) {
-         return a1->get_name() < a2->get_name(); });
+void program::sort_predicates() {
+   sort(sorted_predicates.begin(), sorted_predicates.end(),
+        [](predicate* a1, predicate* a2) {
+      return a1->get_name() < a2->get_name();
+   });
 }
 
-bool
-program::add_data_file(program& other)
-{
-   if(num_predicates() < other.num_predicates()) {
+bool program::add_data_file(program& other) {
+   if (num_predicates() < other.num_predicates()) {
       return false;
    }
 
-   for(size_t i(0); i < other.num_predicates(); ++i) {
-      predicate *mine(predicates[i]);
-      predicate *oth(other.get_predicate(i));
-      if(*mine != *oth) {
-         cerr << "Predicates " << *mine << " and " << *oth << " are different" << endl;
+   for (size_t i(0); i < other.num_predicates(); ++i) {
+      predicate* mine(predicates[i]);
+      predicate* oth(other.get_predicate(i));
+      if (*mine != *oth) {
+         cerr << "Predicates " << *mine << " and " << *oth << " are different"
+              << endl;
          return false;
       }
    }
@@ -712,5 +662,4 @@ program::add_data_file(program& other)
    //instrs_print(init_rule->get_bytecode(), init_rule->get_codesize(), 0, this, cout);
 #endif
 }
-
 }

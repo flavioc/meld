@@ -273,8 +273,8 @@ void init_external_functions(void) {
    register_external_function(EXTERNAL2(minimax_points, i, li, i));
    register_external_function(EXTERNAL3(array_init, at, i, any, i));
    register_external_function(EXTERNAL2(array_get, any, at, i));
-   register_external_function(EXTERNAL3(array_set, at, at, i, any));
-   register_external_function(EXTERNAL2(array_add, at, at, any));
+   register_external_function(EXTERNAL4(array_set, at, at, i, any, i));
+   register_external_function(EXTERNAL3(array_add, at, at, any, i));
    register_external_function(EXTERNAL2(array_from_list, at, lt, i));
    register_external_function(EXTERNAL1(array_size, i, at));
    register_external_function(EXTERNAL3(minimax_score2, i, ai, i, i));

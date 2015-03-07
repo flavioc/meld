@@ -54,7 +54,7 @@ ids::delete_node(node *n)
       removed_nodes.insert(n->get_id());
 
    candidate_gc_nodes gc_nodes;
-   n->wipeout(gc_nodes);
+   n->wipeout(gc_nodes, true);
    assert(gc_nodes.empty());
 #endif
 }
