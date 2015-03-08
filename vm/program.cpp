@@ -36,6 +36,27 @@ program* theProgram;
 // most integers in the byte-code have 4 bytes
 static_assert(sizeof(uint_val) == 4, "uint_val must be 4 bytes long.");
 
+program::program() {
+#ifdef COMPILED
+   add_definitions(this);
+#else
+   abort();
+#endif
+}
+
+std::unique_ptr<ifstream> program::bypass_bytecode_header(
+    const string& filename) {
+   std::unique_ptr<ifstream> fp(
+       new ifstream(filename.c_str(), ios::in | ios::binary));
+
+   fp->seekg(vm::MAGIC_SIZE, ios_base::cur);        // skip magic
+   fp->seekg(2 * sizeof(uint32_t), ios_base::cur);  // skip version
+
+   fp->seekg(sizeof(byte), ios_base::cur);  // skip number of definitions
+   return fp;
+}
+
+#ifndef COMPILED
 static inline ptr_val get_function_pointer(char* lib_path, char* func_name) {
    void* handle = dlopen(lib_path, RTLD_LAZY);
 
@@ -58,26 +79,6 @@ static inline ptr_val get_function_pointer(char* lib_path, char* func_name) {
    }
 
    return (ptr_val)func;
-}
-
-program::program() {
-#ifdef COMPILED
-   add_definitions(this);
-#else
-   abort();
-#endif
-}
-
-std::unique_ptr<ifstream> program::bypass_bytecode_header(
-    const string& filename) {
-   std::unique_ptr<ifstream> fp(
-       new ifstream(filename.c_str(), ios::in | ios::binary));
-
-   fp->seekg(vm::MAGIC_SIZE, ios_base::cur);        // skip magic
-   fp->seekg(2 * sizeof(uint32_t), ios_base::cur);  // skip version
-
-   fp->seekg(sizeof(byte), ios_base::cur);  // skip number of definitions
-   return fp;
 }
 
 program::program(string _filename)
@@ -441,6 +442,7 @@ program::program(string _filename)
 
    data_rule = nullptr;
 }
+#endif
 
 program::~program(void) {
    for (size_t i(0); i < num_rules(); ++i) {
@@ -449,9 +451,9 @@ program::~program(void) {
    }
    for (size_t i(0); i < num_types(); ++i) delete types[i];
    for (size_t i(0); i < num_predicates(); ++i) {
-      predicates[i]->destroy();
-      delete predicates[i];
+      get_predicate(i)->destroy();
 #ifndef COMPILED
+      delete predicates[i];
       delete[] code[i];
 #endif
    }
@@ -502,6 +504,7 @@ predicate* program::get_route_predicate(const size_t& i) const {
    return route_predicates[i];
 }
 
+#ifndef COMPILED
 void program::print_predicate_code(ostream& out, predicate* p) const {
    if (code_size[p->get_id()] == 0) return;
    out << "PROCESS " << p->get_name() << " (" << code_size[p->get_id()]
@@ -565,6 +568,8 @@ void program::print_program(ostream& out) const {
    }
 }
 
+#endif
+
 void program::print_rules(ostream& out) const {
    for (size_t i(0); i < number_rules; ++i) {
       out << endl;
@@ -575,7 +580,7 @@ void program::print_rules(ostream& out) const {
 
 void program::print_predicates(ostream& cout) const {
    cout << ">> Predicates:" << endl;
-   for (size_t i(0); i < num_predicates(); ++i) cout << *predicates[i] << endl;
+   for (size_t i(0); i < num_predicates(); ++i) cout << *get_predicate(i) << endl;
    cout << ">> Imported Predicates:" << endl;
    for (auto& elem : imported_predicates) cout << *elem << endl;
    cout << ">> Exported Predicates:" << endl;
@@ -624,20 +629,7 @@ void program::sort_predicates() {
 }
 
 bool program::add_data_file(program& other) {
-   if (num_predicates() < other.num_predicates()) {
-      return false;
-   }
-
-   for (size_t i(0); i < other.num_predicates(); ++i) {
-      predicate* mine(predicates[i]);
-      predicate* oth(other.get_predicate(i));
-      if (*mine != *oth) {
-         cerr << "Predicates " << *mine << " and " << *oth << " are different"
-              << endl;
-         return false;
-      }
-   }
-
+   (void)other;
    return false;
 #if 0
    XXXX

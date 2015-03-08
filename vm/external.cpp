@@ -250,12 +250,12 @@ void init_external_functions(void) {
    register_external_function(EXTERNAL2(degeneratevector, li, i, i));
    register_external_function(EXTERNAL2(demergemessages, li, li, li));
    register_external_function(EXTERNAL2(intlistequal, i, i, i));
-   register_external_function(EXTERNAL2(addfloatstructs, st, st, st));
-   register_external_function(EXTERNAL1(normalizestruct, st, st));
-   register_external_function(EXTERNAL3(dampstruct, st, st, st, f));
-   register_external_function(EXTERNAL2(residualstruct, f, st, st));
-   register_external_function(EXTERNAL2(dividestruct, st, st, st));
-   register_external_function(EXTERNAL2(convolvestruct, st, st, st));
+   register_external_function(EXTERNAL3(addfloatstructs, st, st, st, i));
+   register_external_function(EXTERNAL2(normalizestruct, st, st, i));
+   register_external_function(EXTERNAL4(dampstruct, st, st, st, f, i));
+   register_external_function(EXTERNAL3(residualstruct, f, st, st, i));
+   register_external_function(EXTERNAL3(dividestruct, st, st, st, i));
+   register_external_function(EXTERNAL3(convolvestruct, st, st, st, i));
    register_external_function(EXTERNAL1(cpu_static, i, n));
    register_external_function(EXTERNAL1(is_moving, b, n));
    register_external_function(EXTERNAL1(is_static, b, n));

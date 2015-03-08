@@ -52,10 +52,12 @@ state::purge_runtime_objects(void)
 
    PURGE_OBJ(cons);
 	PURGE_OBJ_SIMPLE(rstring);
-   PURGE_OBJ(struct1);
-   for(auto p : free_array) {
+   for(auto p : free_struct1)
       p.first->dec_refs(p.second, gc_nodes);
-   }
+   free_struct1.clear();
+   for(auto p : free_array)
+      p.first->dec_refs(p.second, gc_nodes);
+   free_array.clear();
 	
 #undef PURGE_OBJ
 }
@@ -66,6 +68,7 @@ state::cleanup(void)
    purge_runtime_objects();
 }
 
+#ifndef COMPILED
 void
 state::copy_reg2const(const reg_num& reg_from, const const_id& cid)
 {
@@ -78,6 +81,7 @@ state::copy_reg2const(const reg_num& reg_from, const const_id& cid)
 		default: break;
 	}
 }
+#endif
 
 void
 state::setup(vm::predicate *pred, const derivation_direction dir, const depth_t dpt)

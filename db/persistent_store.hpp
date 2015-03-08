@@ -31,7 +31,9 @@ struct persistent_store {
 
    // sets of tuple aggregates
 #ifdef COMPILED
+#ifndef COMPILED_NO_AGGREGATES
    tuple_aggregate* aggs[COMPILED_NUM_TRIES];
+#endif
 #else
    aggregate_map aggs;
 #endif
@@ -82,6 +84,10 @@ struct persistent_store {
           vm::theProgram->num_persistent_predicates());
       for (size_t i(0); i < vm::theProgram->num_persistent_predicates(); ++i)
          mem::allocator<tuple_trie>().construct(tuples + i);
+#endif
+#if defined(COMPILED) && !defined(COMPILED_NO_AGGREGATES)
+      for(size_t i(0); i < COMPILED_NUM_TRIES; ++i)
+         aggs[i] = NULL;
 #endif
    }
 

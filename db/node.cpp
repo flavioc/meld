@@ -28,10 +28,8 @@ size_t node::count_total(const predicate *pred) const {
 
 size_t node::count_total_all(void) const {
    size_t total(0);
-   for (auto it(theProgram->begin_predicates()),
-        end(theProgram->end_predicates());
-        it != end; ++it)
-      total += count_total(*it);
+   for(size_t i(0); i < theProgram->num_predicates(); ++i)
+      total += count_total(theProgram->get_predicate(i));
    return total;
 }
 

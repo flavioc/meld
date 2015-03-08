@@ -5,6 +5,7 @@
 
 #include "runtime/objs.hpp"
 #include "external/math.hpp"
+#include "vm/all.hpp"
 
 using namespace std;
 using namespace runtime;
@@ -25,30 +26,30 @@ sigmoid(EXTERNAL_ARG(x))
 }
 
 argument
-normalizestruct(EXTERNAL_ARG(x))
+normalizestruct(EXTERNAL_ARG(x), EXTERNAL_ARG(t))
 {
    DECLARE_STRUCT(x);
-
-   assert(x->get_size() > 0);
+   DECLARE_INT(t);
+   vm::struct_type *st((struct_type*)vm::theProgram->get_type(t));
 
    float_val max_value(x->get_data(0).float_field);
-   for(size_t i(1), size(x->get_size()); i < size; ++i) {
+   for(size_t i(1), size(st->get_size()); i < size; ++i) {
       if(x->get_data(i).float_field > max_value)
          max_value = x->get_data(i).float_field;
    }
 
    float_val Z(0.0);
    
-   for(size_t i(0), size(x->get_size()); i < size; ++i) {
+   for(size_t i(0), size(st->get_size()); i < size; ++i) {
       const float_val val(x->get_data(i).float_field);
       Z += std::exp(val - max_value);
    }
 
    const float_val logZ(std::log(Z));
-   struct1 *ret(struct1::create(x->get_type()));
+   struct1 *ret(struct1::create(st));
    assert(ret);
 
-   for(size_t i(0), size(x->get_size()); i < size; ++i) {
+   for(size_t i(0), size(st->get_size()); i < size; ++i) {
       const float_val f(x->get_data(i).float_field - max_value - logZ);
       SET_FIELD_FLOAT(*(ret->get_ptr(i)), f);
    }
@@ -104,15 +105,16 @@ normalize(EXTERNAL_ARG(x))
 }
 
 argument
-dampstruct(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2), EXTERNAL_ARG(fact))
+dampstruct(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2), EXTERNAL_ARG(fact), EXTERNAL_ARG(t))
 {
    DECLARE_STRUCT(s1);
    DECLARE_STRUCT(s2);
    DECLARE_FLOAT(fact);
+   DECLARE_INT(t);
+   vm::struct_type *st((struct_type*)vm::theProgram->get_type(t));
 
-   assert(s1->get_size() == s2->get_size());
-   struct1 *ret(struct1::create(s1->get_type()));
-   for(size_t i(0), size(s1->get_size()); i < size; ++i) {
+   struct1 *ret(struct1::create(st));
+   for(size_t i(0), size(st->get_size()); i < size; ++i) {
       const float_val h1(s1->get_data(i).float_field);
       const float_val h2(s2->get_data(i).float_field);
       const float_val c(std::log(fact * std::exp(h2) +
@@ -159,14 +161,15 @@ damp(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2), EXTERNAL_ARG(fact))
 }
 
 argument
-dividestruct(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2))
+dividestruct(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2), EXTERNAL_ARG(t))
 {
    DECLARE_STRUCT(s1);
    DECLARE_STRUCT(s2);
+   DECLARE_INT(t);
+   vm::struct_type *st((struct_type*)vm::theProgram->get_type(t));
 
-   assert(s1->get_size() == s2->get_size());
-   struct1 *ret(struct1::create(s1->get_type()));
-   for(size_t i(0), size(s1->get_size()); i < size; ++i)
+   struct1 *ret(struct1::create(st));
+   for(size_t i(0), size(st->get_size()); i < size; ++i)
       ret->get_ptr(i)->float_field = s1->get_data(i).float_field - s2->get_data(i).float_field;
 
    RETURN_STRUCT(ret);
@@ -198,15 +201,15 @@ divide(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
 }
 
 argument
-convolvestruct(EXTERNAL_ARG(bin_fact), EXTERNAL_ARG(s))
+convolvestruct(EXTERNAL_ARG(bin_fact), EXTERNAL_ARG(s), EXTERNAL_ARG(t))
 {
    DECLARE_STRUCT(bin_fact);
    DECLARE_STRUCT(s);
-   const size_t length(s->get_size());
+   DECLARE_INT(t);
+   vm::struct_type *st((struct_type*)vm::theProgram->get_type(t));
+   const size_t length(st->get_size());
 
-   assert(bin_fact->get_size() == length * length);
-
-   struct1 *ret(struct1::create(s->get_type()));
+   struct1 *ret(struct1::create(st));
    for(size_t x(0); x < length; ++x) {
       float_val sum(0.0);
       for(size_t y(0); y < length; ++y) {
@@ -267,16 +270,16 @@ convolve(EXTERNAL_ARG(bin_fact), EXTERNAL_ARG(ls))
 }
 
 argument
-addfloatstructs(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2))
+addfloatstructs(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2), EXTERNAL_ARG(t))
 {
    DECLARE_STRUCT(s1);
    DECLARE_STRUCT(s2);
+   DECLARE_INT(t);
+   vm::struct_type *st((struct_type*)theProgram->get_type(t));
 
-   assert(s1->get_size() == s2->get_size());
+   struct1 *ret(struct1::create(st));
 
-   struct1 *ret(struct1::create(s1->get_type()));
-
-   for(size_t i(0), size(s1->get_size()); i < size; ++i)
+   for(size_t i(0), size(st->get_size()); i < size; ++i)
       ret->get_ptr(i)->float_field = s1->get_data(i).float_field + s2->get_data(i).float_field;
 
    RETURN_STRUCT(ret);
@@ -308,15 +311,15 @@ addfloatlists(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
 }
 
 argument
-residualstruct(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2))
+residualstruct(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2), EXTERNAL_ARG(t))
 {
    DECLARE_STRUCT(s1);
    DECLARE_STRUCT(s2);
-
-   assert(s1->get_size() == s2->get_size());
+   DECLARE_INT(t);
+   vm::struct_type *st((struct_type*)theProgram->get_type(t));
 
    float_val residual(0.0);
-   const size_t size(s1->get_size());
+   const size_t size(st->get_size());
    for(size_t i(0); i < size; ++i)
       residual += std::abs(std::exp(s1->get_data(i).float_field) - std::exp(s2->get_data(i).float_field));
 

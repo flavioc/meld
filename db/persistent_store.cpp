@@ -106,8 +106,15 @@ persistent_store::delete_by_index(predicate *pred, const match& m, candidate_gc_
    tuple_trie *tr(get_storage(pred));
    
    tr->delete_by_index(pred, m, gc_nodes);
-   
+
+#ifdef COMPILED
 #ifndef COMPILED_NO_AGGREGATES
+   auto *agg(aggs[pred->get_id()]);
+   if(agg) {
+      agg->delete_by_index(m, gc_nodes);
+   }
+#endif
+#else
    auto it(aggs.find(pred->get_id()));
    
    if(it != aggs.end()) {
@@ -135,7 +142,17 @@ persistent_store::wipeout(candidate_gc_nodes& gc_nodes)
       mem::allocator<tuple_trie>().destroy(tr);
 #endif
    }
+#ifdef COMPILED
 #ifndef COMPILED_NO_AGGREGATES
+   for(size_t i(0); i < COMPILED_NUM_TRIES; ++i) {
+      tuple_aggregate *agg(aggs[i]);
+      if(agg) {
+         agg->wipeout(gc_nodes);
+         delete agg;
+      }
+   }
+#endif
+#else
    if(theProgram->has_aggregates()) {
       for(auto & elem : aggs) {
          tuple_aggregate *agg(elem.second);

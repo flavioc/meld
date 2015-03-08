@@ -44,7 +44,7 @@ do_decrement_runtime(const vm::tuple_field& f, const vm::type *t, candidate_gc_n
       case FIELD_STRUCT:
          assert(p->refs > 0);
          if(--(p->refs) == 0)
-            ((runtime::struct1*)p)->destroy(gc_nodes);
+            ((runtime::struct1*)p)->destroy((struct_type*)t, gc_nodes);
          break;
       case FIELD_ARRAY:
          assert(p->refs > 0);

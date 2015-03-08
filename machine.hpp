@@ -68,10 +68,13 @@ public:
    void start(void);
    void init_sched(const vm::process_id);
    
+#ifdef COMPILED
+   explicit machine(const size_t, const vm::machine_arguments&);
+#else
    explicit machine(const std::string&, const size_t,
          const vm::machine_arguments& args = vm::machine_arguments(),
          const std::string& data_file = std::string());
-   explicit machine(const size_t, const vm::machine_arguments&);
+#endif
                
    ~machine(void);
 };

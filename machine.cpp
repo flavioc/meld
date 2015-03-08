@@ -232,27 +232,6 @@ void machine::start(void) {
 #endif
 }
 
-#ifdef COMPILED
-INCBIN_EXTERN(Axioms);
-#endif
-
-machine::machine(const size_t th, const machine_arguments& margs)
-#ifdef INSTRUMENTATION
-    : slices(th)
-#endif
-{
-#ifdef COMPILED
-   init(margs);
-   theProgram = all->PROGRAM = new vm::program();
-   auto iss(compiled_database_stream());
-   all->DATABASE = new database(*iss);
-   setup_threads(th);
-#else
-   (void)th;
-   (void)margs;
-#endif
-}
-
 void machine::setup_threads(const size_t th) {
    this->all->NUM_THREADS = th;
    this->all->NUM_THREADS_NEXT_UINT = next_multiple_of_uint(th);
@@ -272,6 +251,27 @@ void machine::init(const machine_arguments& margs) {
    all->set_arguments(margs);
 }
 
+#ifdef COMPILED
+INCBIN_EXTERN(Axioms);
+
+machine::machine(const size_t th, const machine_arguments& margs)
+#ifdef INSTRUMENTATION
+    : slices(th)
+#endif
+{
+#ifdef COMPILED
+   init(margs);
+   theProgram = all->PROGRAM = new vm::program();
+   auto iss(compiled_database_stream());
+   all->DATABASE = new database(*iss);
+   setup_threads(th);
+#else
+   (void)th;
+   (void)margs;
+#endif
+}
+
+#else
 machine::machine(const string& file, const size_t th,
                  const machine_arguments& margs, const string& data_file)
     : filename(file)
@@ -306,6 +306,7 @@ machine::machine(const string& file, const size_t th,
    all->DATABASE = new database(*fp);
    setup_threads(th);
 }
+#endif
 
 machine::~machine(void) {
    for (process_id i(0); i != all->NUM_THREADS; ++i) delete all->SCHEDS[i];

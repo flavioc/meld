@@ -20,6 +20,9 @@
 #ifdef USE_REAL_NODES
 #include <unordered_map>
 #endif
+#ifdef COMPILED
+#include COMPILED_HEADER
+#endif
 
 namespace db {
 class database;
@@ -41,7 +44,11 @@ class program {
    const std::string filename;
    uint32_t major_version, minor_version;
 
+#ifdef COMPILED
+   vm::type *types[COMPILED_NUM_TYPES];
+#else
    std::vector<type *, mem::allocator<type *>> types;
+#endif
 
    std::vector<import *, mem::allocator<import *>> imported_predicates;
    std::vector<std::string, mem::allocator<std::string>> exported_predicates;
@@ -54,15 +61,21 @@ class program {
 
    std::vector<function *, mem::allocator<function *>> functions;
 
+#ifdef COMPILED
+   vm::predicate predicates[COMPILED_NUM_PREDICATES];
+   vm::predicate *linear_predicates[COMPILED_NUM_LINEAR];
+   vm::predicate *persistent_predicates[COMPILED_NUM_TRIES];
+#else
    std::vector<predicate *, mem::allocator<predicate *>> predicates;
    std::vector<predicate *, mem::allocator<predicate *>> persistent_predicates;
    std::vector<predicate *, mem::allocator<predicate *>> linear_predicates;
-   std::vector<predicate *, mem::allocator<predicate *>> sorted_predicates;
-   size_t num_predicates_uint{0};
-   size_t num_linear_predicates_uint{0};
 
    std::vector<byte_code, mem::allocator<byte_code>> code;
    std::vector<code_size_t, mem::allocator<code_size_t>> code_size;
+#endif
+   std::vector<predicate *, mem::allocator<predicate *>> sorted_predicates;
+   size_t num_predicates_uint{0};
+   size_t num_linear_predicates_uint{0};
 
    code_size_t const_code_size{0};
    byte_code const_code{nullptr};
@@ -97,27 +110,33 @@ class program {
 
    size_t total_arguments{0};
 
-   void print_predicate_code(std::ostream &, predicate *) const;
    void read_node_references(byte_code, code_reader &);
-
-   using predicate_iterator =
-       std::vector<predicate *, mem::allocator<predicate *>>::iterator;
 
    vm::bitmap thread_predicates_map;
 
    strat_level MAX_STRAT_LEVEL;
 
-   inline size_t num_types(void) const { return types.size(); }
+   inline size_t num_types(void) const {
+#ifdef COMPILED
+      return COMPILED_NUM_TYPES;
+#else
+      return types.size();
+#endif
+   }
 
+#ifndef COMPILED
    inline void add_type(type *t) { types.push_back(t); }
+#endif
    inline type *get_type(const size_t i) const {
-      assert(i < types.size());
+      assert(i < num_types());
       return types[i];
    }
+#ifndef COMPILED
    inline void add_predicate(vm::predicate *pred) {
       predicates.push_back(pred);
       sorted_predicates.push_back(pred);
    }
+#endif
    void sort_predicates();
 
    inline size_t num_rules(void) const { return number_rules; }
@@ -153,8 +172,8 @@ class program {
 
    inline bool has_aggregates() const { return has_aggregates_flag; }
 
-   predicate_iterator begin_predicates(void) { return predicates.begin(); }
-   predicate_iterator end_predicates(void) { return predicates.end(); }
+   using predicate_iterator =
+       std::vector<predicate *, mem::allocator<predicate *>>::iterator;
 
    predicate_iterator begin_thread_predicates() {
       return thread_predicates.begin();
@@ -188,14 +207,21 @@ class program {
       return !thread_predicates.empty();
    }
 
+#ifndef COMPILED
+   void print_predicate_code(std::ostream &, predicate *) const;
    void print_bytecode(std::ostream &) const;
-   void print_predicates(std::ostream &) const;
-   void print_rules(std::ostream &) const;
    void print_program(std::ostream &) const;
    void print_bytecode_by_predicate(std::ostream &, const std::string &) const;
+#endif
+   void print_predicates(std::ostream &) const;
+   void print_rules(std::ostream &) const;
 
    predicate *get_predicate(const predicate_id i) const {
+#ifdef COMPILED
+      return (predicate*)predicates + i;
+#else
       return predicates[i];
+#endif
    }
    predicate *get_linear_predicate(const predicate_id i) const {
       return linear_predicates[i];
@@ -206,6 +232,17 @@ class program {
    }
    predicate *get_route_predicate(const size_t &) const;
 
+#ifdef COMPILED
+   inline size_t num_predicates() const { return COMPILED_NUM_PREDICATES; }
+   inline size_t num_persistent_predicates() const {
+      return COMPILED_NUM_TRIES;
+   }
+   inline size_t num_linear_predicates() const {
+      return COMPILED_NUM_LINEAR;
+   }
+#else
+   inline size_t num_predicates() const { return predicates.size(); }
+
    byte_code get_predicate_bytecode(const predicate_id id) const {
       assert(id < num_predicates());
       return code[id];
@@ -214,12 +251,11 @@ class program {
    inline type *get_const_type(const const_id &id) const {
       return const_types[id];
    }
-
-   size_t num_predicates() const { return predicates.size(); }
    size_t num_persistent_predicates() const {
       return persistent_predicates.size();
    }
    size_t num_linear_predicates() const { return linear_predicates.size(); }
+#endif
    size_t num_route_predicates() const { return route_predicates.size(); }
    size_t num_thread_predicates() const { return thread_predicates.size(); }
    size_t num_predicates_next_uint() const { return num_predicates_uint; }
@@ -243,7 +279,9 @@ class program {
    static std::unique_ptr<std::ifstream> bypass_bytecode_header(
        const std::string &);
 
+#ifndef COMPILED
    explicit program(std::string);
+#endif
    explicit program(void);  // add compiled program
 
    ~program(void);

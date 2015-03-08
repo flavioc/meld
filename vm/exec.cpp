@@ -1050,20 +1050,20 @@ static inline void set_call_return(const reg_num reg, const bool gc,
          cons* l(FIELD_CONS(ret));
 
          state.set_cons(reg, l);
-         if (gc && !cons::is_null(l)) state.add_cons(l);
+         if (gc && !cons::is_null(l)) state.add_cons(l, (list_type*)ret_type);
          break;
       }
       case FIELD_STRUCT: {
          struct1* s(FIELD_STRUCT(ret));
 
          state.set_struct(reg, s);
-         if (gc) state.add_struct(s);
+         if (gc) state.add_struct(s, (struct_type*)ret_type);
          break;
       }
       case FIELD_ARRAY: {
          runtime::array* a(FIELD_ARRAY(ret));
          state.set_array(reg, a);
-         if (gc) state.add_array(a);
+         if (gc) state.add_array(a, ((array_type*)ret_type)->get_base());
          break;
       }
       case FIELD_ANY:
@@ -1505,8 +1505,7 @@ static inline bool perform_remote_update(
          vm::type* ftype(pred_target->get_field_type(i));
          tuple_set_field(match_tuple, ftype, i, regs[i]);
          if (ftype->is_reference())
-            runtime::do_decrement_runtime(old, ftype->get_type(),
-                                          state.gc_nodes);
+            runtime::do_decrement_runtime(old, ftype, state.gc_nodes);
       }
       return true;
 
@@ -1576,11 +1575,11 @@ static inline void execute_make_structr(pcounter& pc, state& state) {
    struct1* s(struct1::create(st));
 
    for (size_t i(0); i < st->get_size(); ++i)
-      s->set_data(i, *state.stack.get_stack_at(i));
+      s->set_data(i, *state.stack.get_stack_at(i), st);
    state.stack.pop(st->get_size());
 
    state.set_struct(to, s);
-   state.add_struct(s);
+   state.add_struct(s, st);
 }
 
 static inline void execute_make_structf(pcounter& pc, state& state) {
@@ -1592,7 +1591,7 @@ static inline void execute_make_structf(pcounter& pc, state& state) {
    struct1* s(struct1::create(st));
 
    for (size_t i(0); i < st->get_size(); ++i)
-      s->set_data(i, *state.stack.get_stack_at(i));
+      s->set_data(i, *state.stack.get_stack_at(i), st);
    state.stack.pop(st->get_size());
 
    tuple->set_struct(field, s);
@@ -2123,7 +2122,7 @@ static inline void execute_consrrr(pcounter& pc, state& state) {
    list_type* ltype((list_type*)theProgram->get_type(cons_type(pc)));
    cons* new_list(
        cons::create(state.get_cons(tail), state.get_reg(head), ltype));
-   if (gc) state.add_cons(new_list);
+   if (gc) state.add_cons(new_list, ltype);
    state.set_cons(dest, new_list);
 }
 
@@ -2169,10 +2168,11 @@ static inline void execute_consffr(pcounter& pc, state& state) {
    const bool_val gc(
        pcounter_bool(pc + instr_size + 2 * field_size + reg_val_size));
 
+   list_type *lt((list_type*)pred->get_field_type(tail_field));
    cons* new_list(cons::create(tail->get_cons(tail_field),
                                head->get_field(head_field),
-                               (list_type*)pred->get_field_type(tail_field)));
-   if (gc) state.add_cons(new_list);
+                               lt));
+   if (gc) state.add_cons(new_list, lt);
    state.set_cons(dest, new_list);
 }
 
@@ -2199,9 +2199,9 @@ static inline void execute_consrfr(pcounter& pc, state& state) {
    const bool_val gc(pcounter_bool(pc + instr_size + reg_val_size + field_size +
                                    reg_val_size));
 
-   cons* new_list(cons::create(tail->get_cons(field), state.get_reg(head),
-                               (list_type*)pred->get_field_type(field)));
-   if (gc) state.add_cons(new_list);
+   list_type *lt((list_type*)pred->get_field_type(field));
+   cons* new_list(cons::create(tail->get_cons(field), state.get_reg(head), lt));
+   if (gc) state.add_cons(new_list, lt);
    state.set_cons(dest, new_list);
 }
 
@@ -2217,7 +2217,7 @@ static inline void execute_consfrr(pcounter& pc, state& state) {
    list_type* ltype((list_type*)theProgram->get_type(cons_type(pc)));
    cons* new_list(
        cons::create(state.get_cons(tail), head->get_field(field), ltype));
-   if (gc) state.add_cons(new_list);
+   if (gc) state.add_cons(new_list, ltype);
    state.set_cons(dest, new_list);
 }
 

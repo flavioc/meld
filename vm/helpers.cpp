@@ -195,7 +195,7 @@ static inline tuple_field axiom_read_data(pcounter &pc, type *t) {
          runtime::struct1 *s(runtime::struct1::create(st));
          for (size_t i(0); i < st->get_size(); ++i) {
             tuple_field data(axiom_read_data(pc, st->get_type(i)));
-            s->set_data(i, data);
+            s->set_data(i, data, st);
          }
          SET_FIELD_STRUCT(f, s);
       } break;

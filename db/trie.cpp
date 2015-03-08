@@ -180,7 +180,7 @@ trie_node *trie_node::match(const tuple_field &field, type *typ,
             break;
          case FIELD_STRUCT: {
             runtime::struct1 *s(FIELD_STRUCT(field));
-            struct_type *st(s->get_type());
+            struct_type *st((struct_type*)typ);
 
             if (FIELD_INT(f) == (int_val)st->get_size()) {
                for (size_t i(st->get_size()); i > 0; --i) {
@@ -251,7 +251,7 @@ trie_node *trie_node::insert(const tuple_field &field, type *t,
 
       case FIELD_STRUCT: {
          runtime::struct1 *s(FIELD_STRUCT(field));
-         struct_type *st(s->get_type());
+         struct_type *st((struct_type*)t);
 
          SET_FIELD_INT(f, st->get_size());
 

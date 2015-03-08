@@ -1,6 +1,7 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
+#include <assert.h>
 #include <cstring>
 #include <string>
 #include <stdexcept>
@@ -214,7 +215,9 @@ class array_type: public type
       explicit array_type(vm::type *_base):
          type(FIELD_ARRAY),
          base(_base)
-      {}
+      {
+         assert(base);
+      }
 
       // sub types must be deleted elsewhere.
       virtual ~array_type()
