@@ -12,6 +12,7 @@
 #include "vm/defs.hpp"
 #include "vm/all.hpp"
 #include "vm/bitmap.hpp"
+#include "vm/bitmap_static.hpp"
 #include "utils/intrusive_list.hpp"
 #include "db/hash_table.hpp"
 #ifdef COMPILED
@@ -33,11 +34,11 @@ struct linear_store {
 // contiguous
 #ifdef COMPILED
    utils::byte data[ITEM_SIZE * COMPILED_NUM_LINEAR];
+   vm::bitmap_static<COMPILED_NUM_LINEAR_UINT> types;
 #else
    utils::byte *data;
-#endif
-
    vm::bitmap types;
+#endif
 
    hash_table *expand;
 
@@ -315,7 +316,7 @@ struct linear_store {
    }
 
    inline void cleanup_index(void) {
-      for (vm::bitmap::iterator it(
+      for (auto it(
                types.begin(vm::theProgram->num_predicates()));
            !it.end(); ++it) {
          const vm::predicate_id id(*it);
@@ -366,12 +367,11 @@ struct linear_store {
    }
 
    explicit linear_store(void) {
-      vm::bitmap::create(types,
-                         vm::theProgram->num_linear_predicates_next_uint());
-      types.clear(vm::theProgram->num_linear_predicates_next_uint());
 #ifndef COMPILED
       data = mem::allocator<utils::byte>().allocate(
           ITEM_SIZE * vm::theProgram->num_linear_predicates());
+      vm::bitmap::create(types,
+                         vm::theProgram->num_linear_predicates_next_uint());
 #endif
       for (size_t i(0); i < vm::theProgram->num_linear_predicates(); ++i) {
          utils::byte *p(data + ITEM_SIZE * i);
@@ -431,9 +431,9 @@ struct linear_store {
 #ifndef COMPILED
       mem::allocator<utils::byte>().deallocate(
           data, ITEM_SIZE * vm::theProgram->num_linear_predicates());
-#endif
       vm::bitmap::destroy(types,
                           vm::theProgram->num_linear_predicates_next_uint());
+#endif
    }
 };
 }

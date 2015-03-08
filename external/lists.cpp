@@ -440,7 +440,7 @@ lremoveduplicates(EXTERNAL_ARG(ls), EXTERNAL_ARG(t))
          }
 
          for(vm::int_val v : set)
-            nl = runtime::cons::create(nl, build_from_int(v), vm::TYPE_LIST_INT);
+            nl = runtime::cons::create(nl, build_from_int(v), vm::TYPE_INT);
       }
       break;
       default:

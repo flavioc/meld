@@ -469,7 +469,9 @@ program::~program(void) {
 #ifdef USE_REAL_NODES
    if (node_references) delete[] node_references;
 #endif
+#ifndef COMPILED
    bitmap::destroy(thread_predicates_map, num_predicates_uint);
+#endif
 }
 
 void program::read_node_references(byte_code code, code_reader& read) {

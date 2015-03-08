@@ -79,61 +79,6 @@ void thread::assert_end(void) const {
    assert(all_threads_finished());
 }
 
-void thread::new_work_list(db::node *from, db::node *to, vm::buffer_node &b) {
-   assert(is_active());
-   (void)from;
-
-   LOCK_STACK(nodelock);
-
-   NODE_LOCK(to, nodelock, node_lock);
-
-   thread *owner(to->get_owner());
-
-   if (owner == this) {
-#ifdef FACT_STATISTICS
-      count_add_work_self++;
-#endif
-      {
-         MUTEX_LOCK_GUARD(to->database_lock, database_lock);
-         to->add_work_myself(b);
-      }
-#ifdef INSTRUMENTATION
-      sent_facts_same_thread += b.size();
-      all_transactions++;
-#endif
-      if (!to->active_node()) add_to_queue(to);
-   } else {
-#ifdef FACT_STATISTICS
-      count_add_work_other += b.size();
-#endif
-      LOCK_STACK(databaselock);
-      if (to->database_lock.try_lock1(LOCK_STACK_USE(databaselock))) {
-         LOCKING_STAT(database_lock_ok);
-         to->add_work_myself(b);
-#ifdef INSTRUMENTATION
-         sent_facts_other_thread_now += b.size();
-         all_transactions++;
-         thread_transactions++;
-#endif
-         MUTEX_UNLOCK(to->database_lock, databaselock);
-      } else {
-         LOCKING_STAT(database_lock_fail);
-#ifdef INSTRUMENTATION
-         sent_facts_other_thread += b.size();
-         all_transactions++;
-         thread_transactions++;
-#endif
-         to->add_work_others(b);
-      }
-      if (!to->active_node()) {
-         owner->add_to_queue(to);
-         comm_threads.set_bit(owner->get_id());
-      }
-   }
-
-   NODE_UNLOCK(to, nodelock);
-}
-
 void thread::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pred,
                       const derivation_direction dir, const depth_t depth) {
    assert(is_active());
@@ -565,7 +510,6 @@ thread::thread(const vm::process_id _id)
 #endif
 {
    bitmap::create(comm_threads, All->NUM_THREADS_NEXT_UINT);
-   comm_threads.clear(All->NUM_THREADS_NEXT_UINT);
    if (theProgram->has_thread_predicates()) {
       thread_node = node_handler.create_node();
       setup_thread_node();

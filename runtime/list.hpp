@@ -42,7 +42,7 @@ struct cons
          refs++;
       }
 
-      inline void dec_refs(vm::list_type *type, vm::candidate_gc_nodes& gc_nodes) __attribute__((always_inline))
+      inline void dec_refs(vm::list_type *type, vm::candidate_gc_nodes& gc_nodes)
       {
          assert(refs > 0);
          if(--refs == 0)
@@ -56,7 +56,7 @@ struct cons
          return ls->refs > 0;
       }
 
-      inline void destroy(vm::list_type *type, vm::candidate_gc_nodes& gc_nodes) __attribute__((always_inline))
+      inline void destroy(vm::list_type *type, vm::candidate_gc_nodes& gc_nodes)
       {
          if(!is_null(get_tail()))
             get_tail()->dec_refs(type, gc_nodes);
@@ -315,19 +315,19 @@ from_stack_to_list(TStack& stk, vm::tuple_field (*conv)(const Convert), vm::type
 static inline cons*
 from_float_stack_to_list(stack_float_list& stk)
 {
-   return from_stack_to_list<stack_float_list>(stk, build_from_float, vm::TYPE_LIST_FLOAT);
+   return from_stack_to_list<stack_float_list>(stk, build_from_float, vm::TYPE_FLOAT);
 }
 
 static inline cons*
 from_int_stack_to_list(stack_int_list& stk)
 {
-   return from_stack_to_list<stack_int_list>(stk, build_from_int, vm::TYPE_LIST_INT);
+   return from_stack_to_list<stack_int_list>(stk, build_from_int, vm::TYPE_INT);
 }
 
 static inline cons*
 from_node_stack_to_list(stack_node_list& stk)
 {
-   return from_stack_to_list<stack_node_list>(stk, build_from_node, vm::TYPE_LIST_NODE);
+   return from_stack_to_list<stack_node_list>(stk, build_from_node, vm::TYPE_NODE);
 }
 
 static inline cons*
@@ -353,7 +353,7 @@ from_stack_to_reverse_list(TStack& stk, vm::tuple_field (*conv)(const Convert), 
 static inline cons*
 from_int_stack_to_reverse_list(stack_int_list& stk)
 {
-   return from_stack_to_reverse_list<stack_int_list>(stk, build_from_int, vm::TYPE_LIST_INT);
+   return from_stack_to_reverse_list<stack_int_list>(stk, build_from_int, vm::TYPE_INT);
 }
 
 static inline cons*
@@ -379,18 +379,18 @@ from_vector_to_reverse_list(TVector& vec, vm::tuple_field (*conv)(const Convert)
 static inline cons*
 from_int_vector_to_reverse_list(vector_int_list& vec)
 {
-   return from_vector_to_reverse_list(vec, build_from_int, vm::TYPE_LIST_INT);
+   return from_vector_to_reverse_list(vec, build_from_int, vm::TYPE_INT);
 }
 
 static inline cons*
 from_float_vector_to_reverse_list(vector_float_list& vec)
 {
-   return from_vector_to_reverse_list(vec, build_from_float, vm::TYPE_LIST_FLOAT);
+   return from_vector_to_reverse_list(vec, build_from_float, vm::TYPE_FLOAT);
 }
 
 static inline cons*
 from_node_vector_to_reverse_list(vector_node_list& vec)
 {
-   return from_vector_to_reverse_list(vec, build_from_node, vm::TYPE_LIST_NODE);
+   return from_vector_to_reverse_list(vec, build_from_node, vm::TYPE_NODE);
 }
 

@@ -2121,7 +2121,7 @@ static inline void execute_consrrr(pcounter& pc, state& state) {
 
    list_type* ltype((list_type*)theProgram->get_type(cons_type(pc)));
    cons* new_list(
-       cons::create(state.get_cons(tail), state.get_reg(head), ltype));
+       cons::create(state.get_cons(tail), state.get_reg(head), ltype->get_subtype()));
    if (gc) state.add_cons(new_list, ltype);
    state.set_cons(dest, new_list);
 }
@@ -2137,7 +2137,7 @@ static inline void execute_consrff(pcounter& pc, state& state) {
        val_field_num(pc + instr_size + reg_val_size + field_size));
 
    cons* new_list(cons::create(tail->get_cons(tail_field), state.get_reg(head),
-                               (list_type*)pred->get_field_type(tail_field)));
+                               ((list_type*)pred->get_field_type(tail_field))->get_subtype()));
    dest->set_cons(dest_field, new_list);
 }
 
@@ -2154,7 +2154,7 @@ static inline void execute_consfrf(pcounter& pc, state& state) {
 
    cons* new_list(cons::create(state.get_cons(tail),
                                head->get_field(head_field),
-                               (list_type*)pred->get_field_type(dest_field)));
+                               ((list_type*)pred->get_field_type(dest_field))->get_subtype()));
    dest->set_cons(dest_field, new_list);
 }
 
@@ -2171,7 +2171,7 @@ static inline void execute_consffr(pcounter& pc, state& state) {
    list_type *lt((list_type*)pred->get_field_type(tail_field));
    cons* new_list(cons::create(tail->get_cons(tail_field),
                                head->get_field(head_field),
-                               lt));
+                               lt->get_subtype()));
    if (gc) state.add_cons(new_list, lt);
    state.set_cons(dest, new_list);
 }
@@ -2185,7 +2185,7 @@ static inline void execute_consrrf(pcounter& pc, state& state) {
    const field_num field(val_field_num(pc + instr_size + 2 * reg_val_size));
 
    cons* new_list(cons::create(state.get_cons(tail), state.get_reg(head),
-                               (list_type*)pred->get_field_type(field)));
+                               ((list_type*)pred->get_field_type(field))->get_subtype()));
    dest->set_cons(field, new_list);
 }
 
@@ -2200,7 +2200,7 @@ static inline void execute_consrfr(pcounter& pc, state& state) {
                                    reg_val_size));
 
    list_type *lt((list_type*)pred->get_field_type(field));
-   cons* new_list(cons::create(tail->get_cons(field), state.get_reg(head), lt));
+   cons* new_list(cons::create(tail->get_cons(field), state.get_reg(head), lt->get_subtype()));
    if (gc) state.add_cons(new_list, lt);
    state.set_cons(dest, new_list);
 }
@@ -2216,7 +2216,7 @@ static inline void execute_consfrr(pcounter& pc, state& state) {
 
    list_type* ltype((list_type*)theProgram->get_type(cons_type(pc)));
    cons* new_list(
-       cons::create(state.get_cons(tail), head->get_field(field), ltype));
+       cons::create(state.get_cons(tail), head->get_field(field), ltype->get_subtype()));
    if (gc) state.add_cons(new_list, ltype);
    state.set_cons(dest, new_list);
 }
@@ -2232,7 +2232,7 @@ static inline void execute_consfff(pcounter& pc, state& state) {
 
    cons* new_list(cons::create(tail->get_cons(field_tail),
                                head->get_field(field_head),
-                               (list_type*)pred->get_field_type(field_tail)));
+                               ((list_type*)pred->get_field_type(field_tail))->get_subtype()));
    dest->set_cons(field_dest, new_list);
 }
 

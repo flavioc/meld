@@ -40,6 +40,7 @@ public:
    inline void set_ ## NAME (const field_num& field, TYPE val) { VAL; }
 
    void set_node(const field_num& field, const node_val& val);
+   define_set(node_base, const vm::node_val&, SET_FIELD_NODE(getfp()[field], val));
    define_set(bool, const bool_val&, SET_FIELD_BOOL(getfp()[field], val));
    define_set(int, const int_val&, SET_FIELD_INT(getfp()[field], val));
    define_set(float, const float_val&, SET_FIELD_FLOAT(getfp()[field], val));

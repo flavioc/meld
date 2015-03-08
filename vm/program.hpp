@@ -17,6 +17,7 @@
 #include "queue/heap_implementation.hpp"
 #include "vm/import.hpp"
 #include "vm/bitmap.hpp"
+#include "vm/bitmap_static.hpp"
 #ifdef USE_REAL_NODES
 #include <unordered_map>
 #endif
@@ -112,7 +113,11 @@ class program {
 
    void read_node_references(byte_code, code_reader &);
 
+#ifdef COMPILED
+   vm::bitmap_static<COMPILED_NUM_PREDICATES_UINT> thread_predicates_map;
+#else
    vm::bitmap thread_predicates_map;
+#endif
 
    strat_level MAX_STRAT_LEVEL;
 

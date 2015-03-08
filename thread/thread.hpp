@@ -286,7 +286,7 @@ private:
    }
 
    void assert_end(void) const;
-   inline bool set_next_node(void);
+   inline bool set_next_node(void)  __attribute__((always_inline));
    void make_current_node_inactive(void);
    inline bool check_if_current_useless();
    void make_active(void);
@@ -397,7 +397,61 @@ public:
    void init(const size_t);
    
    void new_work(db::node *, db::node *, vm::tuple *, vm::predicate *, const vm::derivation_direction, const vm::depth_t);
-   void new_work_list(db::node *, db::node *, vm::buffer_node&);
+   void new_work_list(db::node *from, db::node *to, vm::buffer_node &b)  __attribute__((always_inline)) {
+      assert(is_active());
+      (void)from;
+
+      LOCK_STACK(nodelock);
+
+      NODE_LOCK(to, nodelock, node_lock);
+
+      thread *owner(to->get_owner());
+
+      if (owner == this) {
+#ifdef FACT_STATISTICS
+         count_add_work_self++;
+#endif
+         {
+            MUTEX_LOCK_GUARD(to->database_lock, database_lock);
+            to->add_work_myself(b);
+         }
+#ifdef INSTRUMENTATION
+         sent_facts_same_thread += b.size();
+         all_transactions++;
+#endif
+         if (!to->active_node()) add_to_queue(to);
+      } else {
+#ifdef FACT_STATISTICS
+         count_add_work_other += b.size();
+#endif
+         LOCK_STACK(databaselock);
+         if (to->database_lock.try_lock1(LOCK_STACK_USE(databaselock))) {
+            LOCKING_STAT(database_lock_ok);
+            to->add_work_myself(b);
+#ifdef INSTRUMENTATION
+            sent_facts_other_thread_now += b.size();
+            all_transactions++;
+            thread_transactions++;
+#endif
+            MUTEX_UNLOCK(to->database_lock, databaselock);
+         } else {
+            LOCKING_STAT(database_lock_fail);
+#ifdef INSTRUMENTATION
+            sent_facts_other_thread += b.size();
+            all_transactions++;
+            thread_transactions++;
+#endif
+            to->add_work_others(b);
+         }
+         if (!to->active_node()) {
+            owner->add_to_queue(to);
+            comm_threads.set_bit(owner->get_id());
+         }
+      }
+
+      NODE_UNLOCK(to, nodelock);
+}
+
    void new_work_delay(db::node *, db::node *, vm::tuple*, vm::predicate *,
          const vm::derivation_direction, const vm::depth_t, const vm::uint_val)
    {

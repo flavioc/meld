@@ -19,6 +19,16 @@ struct bitmap {
    bool initialized = false;
 #endif
 
+   public:
+   inline void clear(const size_t size) {
+#ifdef EXTRA_ASSERTS
+      initialized = true;
+#endif
+      first = 0;
+      if (false_likely(size > 1))
+         memset(rest, 0, sizeof(BITMAP_TYPE) * (size - 1));
+   }
+
    class iterator {
   private:
       BITMAP_TYPE* rest;
@@ -93,15 +103,6 @@ struct bitmap {
          }
          return true;
       }
-   }
-
-   inline void clear(const size_t size) {
-#ifdef EXTRA_ASSERTS
-      initialized = true;
-#endif
-      first = 0;
-      if (false_likely(size > 1))
-         memset(rest, 0, sizeof(BITMAP_TYPE) * (size - 1));
    }
 
 #define BITMAP_GET_BIT(ARR, POS) \
@@ -253,6 +254,7 @@ struct bitmap {
          b.rest = mem::allocator<BITMAP_TYPE>().allocate(size - 1);
       else
          b.rest = nullptr;
+      b.clear(size);
    }
 
    static inline void destroy(bitmap& b, const size_t size) {

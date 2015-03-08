@@ -6,6 +6,7 @@
 #include "vm/tuple.hpp"
 #include "vm/full_tuple.hpp"
 #include "vm/bitmap.hpp"
+#include "vm/bitmap_static.hpp"
 #include "vm/all.hpp"
 #include "db/linear_store.hpp"
 #ifdef COMPILED
@@ -18,12 +19,13 @@ struct rule_matcher {
    private:
 #ifdef COMPILED
    utils::byte rules[COMPILED_NUM_RULES];
+   bitmap_static<COMPILED_NUM_PREDICATES_UINT> predicate_existence;
 #else
    utils::byte *rules;  // availability statistics per rule
-#endif
    bitmap predicate_existence;
+#endif
 
-   inline void register_predicate_unavailability(const predicate_id id) {
+   inline void register_predicate_unavailability(const predicate_id id) __attribute__((always_inline)) {
       predicate_existence.unset_bit(id);
 #ifdef COMPILED
       compiled_register_predicate_unavailability(rules, rule_queue, id);
@@ -42,7 +44,7 @@ struct rule_matcher {
 #endif
    }
 
-   inline void register_predicate_availability(const predicate_id id) {
+   inline void register_predicate_availability(const predicate_id id)  __attribute__((always_inline)) {
       predicate_existence.set_bit(id);
 #ifdef COMPILED
       compiled_register_predicate_availability(rules, rule_queue, id);
@@ -61,9 +63,13 @@ struct rule_matcher {
    }
 
    public:
+#ifdef COMPILED
+   bitmap_static<COMPILED_NUM_RULES_UINT> rule_queue;
+#else
    bitmap rule_queue;  // rules next to run
+#endif
 
-   inline void register_predicate_update(const predicate_id id) {
+   inline void register_predicate_update(const predicate_id id)  __attribute__((always_inline)) {
       assert(predicate_existence.get_bit(id));
 #ifdef COMPILED
       compiled_register_predicate_update(rules, rule_queue, id);
@@ -105,7 +111,11 @@ struct rule_matcher {
    }
 
    inline bool is_empty(void) const {
+#ifdef COMPILED
+      return predicate_existence.empty();
+#else
       return predicate_existence.empty(theProgram->num_predicates_next_uint());
+#endif
    }
 
    inline void add_thread(rule_matcher &thread_matcher) {
@@ -127,9 +137,14 @@ struct rule_matcher {
    }
 
    inline void remove_thread(rule_matcher &thread_matcher) {
+#ifdef COMPILED
+      thread_matcher.predicate_existence.set_bits_of_and_result(
+            theProgram->thread_predicates_map, predicate_existence);
+#else
       thread_matcher.predicate_existence.set_bits_of_and_result(
           theProgram->thread_predicates_map, predicate_existence,
           theProgram->num_predicates_next_uint());
+#endif
       for (auto it(theProgram->thread_predicates_map.begin(
                theProgram->num_predicates()));
            !it.end(); ++it) {
@@ -148,21 +163,20 @@ struct rule_matcher {
       memset(rules, 0, sizeof(utils::byte) * theProgram->num_rules());
 #endif
 
+#ifndef COMPILED
       bitmap::create(rule_queue, theProgram->num_rules_next_uint());
-      rule_queue.clear(theProgram->num_rules_next_uint());
-
       bitmap::create(predicate_existence,
                      theProgram->num_predicates_next_uint());
-      predicate_existence.clear(theProgram->num_predicates_next_uint());
+#endif
    }
 
    ~rule_matcher() {
 #ifndef COMPILED
       mem::allocator<utils::byte>().deallocate(rules, theProgram->num_rules());
-#endif
-      bitmap::destroy(rule_queue, theProgram->num_rules_next_uint());
       bitmap::destroy(predicate_existence,
                       theProgram->num_predicates_next_uint());
+      bitmap::destroy(rule_queue, theProgram->num_rules_next_uint());
+#endif
    }
 };
 }
