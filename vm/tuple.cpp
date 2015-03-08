@@ -227,7 +227,7 @@ void tuple::destructor(predicate *pred, candidate_gc_nodes &gc_nodes) {
    for (field_num i = 0; i < pred->num_fields(); ++i) {
       switch (pred->get_field_type(i)->get_type()) {
          case FIELD_LIST:
-            cons::dec_refs(get_cons(i), gc_nodes);
+            cons::dec_refs(get_cons(i), (vm::list_type*)pred->get_field_type(i), gc_nodes);
             break;
          case FIELD_STRING:
             get_string(i)->dec_refs();

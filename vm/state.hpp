@@ -33,7 +33,7 @@ namespace vm {
 
 struct state {
    private:
-   std::list<runtime::cons *, mem::allocator<runtime::cons *>> free_cons;
+   std::list<std::pair<runtime::cons *, vm::list_type*>, mem::allocator<std::pair<runtime::cons *, vm::list_type*>>> free_cons;
    std::list<runtime::rstring::ptr, mem::allocator<runtime::rstring::ptr>>
        free_rstring;
    std::list<std::pair<runtime::struct1 *, vm::struct_type *>,
@@ -149,9 +149,8 @@ struct state {
    void copy_reg2const(const reg_num &, const const_id &);
 
    inline void add_cons(runtime::cons *ls, vm::list_type *t) {
-      (void)t;
       ls->inc_refs();
-      free_cons.push_back(ls);
+      free_cons.push_back(std::make_pair(ls, t));
    }
    inline void add_array(runtime::array *x, vm::type *t) {
       x->inc_refs();

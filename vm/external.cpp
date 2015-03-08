@@ -227,7 +227,7 @@ void init_external_functions(void) {
    register_external_function(EXTERNAL2(concatenate, s, s, s));
    register_external_function(EXTERNAL1(str2float, f, s));
    register_external_function(EXTERNAL1(str2int, i, s));
-   register_external_function(EXTERNAL2(listremove, ln, ln, n));
+   register_external_function(EXTERNAL3(listremove, ln, ln, n, i));
    register_external_function(EXTERNAL1(wastetime, i, i));
    register_external_function(EXTERNAL2(truncate, f, f, i));
    register_external_function(EXTERNAL1(float2int, i, f));
@@ -240,13 +240,13 @@ void init_external_functions(void) {
    register_external_function(EXTERNAL1(llength, i, lt));
    register_external_function(EXTERNAL2(lappend, lt, lt, lt));
    register_external_function(EXTERNAL1(priority, f, n));
-   register_external_function(EXTERNAL1(lreverse, lt, lt));
+   register_external_function(EXTERNAL2(lreverse, lt, lt, i));
    register_external_function(EXTERNAL1(listlast, n, ln));
    register_external_function(EXTERNAL1(cpu_id, i, n));
    register_external_function(EXTERNAL1(node2int, i, n));
    register_external_function(EXTERNAL2(intpower, i, i, i));
-   register_external_function(EXTERNAL1(lsort, li, li));
-   register_external_function(EXTERNAL1(lremoveduplicates, li, li));
+   register_external_function(EXTERNAL2(lsort, li, li, i));
+   register_external_function(EXTERNAL2(lremoveduplicates, li, li, i));
    register_external_function(EXTERNAL2(degeneratevector, li, i, i));
    register_external_function(EXTERNAL2(demergemessages, li, li, li));
    register_external_function(EXTERNAL2(intlistequal, i, i, i));
@@ -265,9 +265,9 @@ void init_external_functions(void) {
    register_external_function(EXTERNAL1(queue_size, i, n));
    register_external_function(EXTERNAL1(facts_proved, i, n));
    register_external_function(EXTERNAL1(facts_consumed, i, n));
-   register_external_function(EXTERNAL2(listcount, i, lt, i));
-   register_external_function(EXTERNAL2(lexists, b, lt, i));
-   register_external_function(EXTERNAL2(lexistss, b, lt, lt));
+   register_external_function(EXTERNAL3(listcount, i, lt, i, i));
+   register_external_function(EXTERNAL3(lexists, b, lt, i, i));
+   register_external_function(EXTERNAL3(lexistss, b, lt, lt, i));
    register_external_function(EXTERNAL2(queens_violation, b, i, li));
    register_external_function(EXTERNAL3(minimax_score, i, li, i, i));
    register_external_function(EXTERNAL2(minimax_points, i, li, i));

@@ -16,7 +16,7 @@ class center
 
    public:
 
-      static void* allocate(size_t cnt, size_t sz)
+      inline static void* allocate(size_t cnt, size_t sz) __attribute__((always_inline))
       {
 #ifdef TRACK_MEMORY
          bytes_used += cnt * sz;
@@ -31,7 +31,7 @@ class center
          return p;
       }
 
-      static void deallocate(void *p, size_t cnt, size_t sz)
+      inline static void deallocate(void *p, size_t cnt, size_t sz) __attribute__((always_inline))
       {
          register_deallocation(p, cnt, sz);
 #ifdef TRACK_MEMORY

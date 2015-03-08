@@ -37,12 +37,6 @@ void
 state::purge_runtime_objects(void)
 {
    using runtime::array;
-#define PURGE_OBJ(TYPE)                                                                      \
-   for(TYPE *x : free_ ## TYPE) {                                                            \
-      assert(x != nullptr);                                                                  \
-      x->dec_refs(gc_nodes);                                                                 \
-   }                                                                                         \
-   free_ ## TYPE .clear()
 #define PURGE_OBJ_SIMPLE(TYPE)                                                               \
    for(TYPE *x : free_ ## TYPE) {                                                            \
       assert(x != nullptr);                                                                     \
@@ -50,16 +44,16 @@ state::purge_runtime_objects(void)
    }                                                                                         \
    free_ ## TYPE .clear()
 
-   PURGE_OBJ(cons);
 	PURGE_OBJ_SIMPLE(rstring);
+   for(auto p : free_cons)
+      p.first->dec_refs(p.second, gc_nodes);
+   free_cons.clear();
    for(auto p : free_struct1)
       p.first->dec_refs(p.second, gc_nodes);
    free_struct1.clear();
    for(auto p : free_array)
       p.first->dec_refs(p.second, gc_nodes);
    free_array.clear();
-	
-#undef PURGE_OBJ
 }
 
 void

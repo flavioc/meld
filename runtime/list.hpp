@@ -1,7 +1,11 @@
 
 // do NOT include this file directly, please include runtime/objs.hpp
 
+#include <atomic>
 #include <iostream>
+
+#include "vm/defs.hpp"
+#include "vm/types.hpp"
 
 #ifndef RUNTIME_OBJS_HPP
 #error "Please include runtime/objs.hpp instead"
@@ -20,8 +24,6 @@ struct cons
       list_ptr tail{nullptr};
       vm::tuple_field head;
 
-      vm::list_type *type;
-
       inline void set_tail(list_ptr t)
       {
          tail = t;
@@ -34,19 +36,17 @@ struct cons
 
       const vm::tuple_field get_head(void) const { return head; }
       list_ptr get_tail(void) const { return tail; }
-      vm::list_type* get_type(void) const { return type; }
 
       inline void inc_refs(void)
       {
          refs++;
       }
 
-      inline void dec_refs(vm::candidate_gc_nodes& gc_nodes)
+      inline void dec_refs(vm::list_type *type, vm::candidate_gc_nodes& gc_nodes) __attribute__((always_inline))
       {
          assert(refs > 0);
-         if(--refs == 0) {
-            destroy(gc_nodes);
-         }
+         if(--refs == 0)
+            destroy(type, gc_nodes);
       }
 
       static inline bool has_refs(list_ptr ls)
@@ -56,10 +56,10 @@ struct cons
          return ls->refs > 0;
       }
 
-      inline void destroy(vm::candidate_gc_nodes& gc_nodes)
+      inline void destroy(vm::list_type *type, vm::candidate_gc_nodes& gc_nodes) __attribute__((always_inline))
       {
          if(!is_null(get_tail()))
-            get_tail()->dec_refs(gc_nodes);
+            get_tail()->dec_refs(type, gc_nodes);
          decrement_runtime_data(get_head(), type->get_subtype(), gc_nodes);
          remove(this);
       }
@@ -85,10 +85,10 @@ struct cons
 
       static inline bool is_null(cons const * ls) { return ls == null_list(); }
 
-      static inline void dec_refs(list_ptr ls, vm::candidate_gc_nodes& gc_nodes)
+      static inline void dec_refs(list_ptr ls, vm::list_type *type, vm::candidate_gc_nodes& gc_nodes) __attribute__((always_inline))
       {
          if(!is_null(ls))
-            ls->dec_refs(gc_nodes);
+            ls->dec_refs(type, gc_nodes);
       }
 
       static inline void inc_refs(list_ptr ls)
@@ -154,18 +154,18 @@ struct cons
       }
 
       static inline
-      list_ptr copy(list_ptr ptr)
+      list_ptr copy(list_ptr ptr, vm::list_type *type)
       {
          if(is_null(ptr))
             return null_list();
 
-         list_ptr init(cons::create(null_list(), ptr->get_head(), ptr->type));
+         list_ptr init(cons::create(null_list(), ptr->get_head(), type));
          list_ptr cur(init);
 
          ptr = ptr->get_tail();
 
          while (!is_null(ptr)) {
-            cur->set_tail(cons::create(null_list(), ptr->get_head(), ptr->type));
+            cur->set_tail(cons::create(null_list(), ptr->get_head(), type));
             cur = cur->get_tail();
             ptr = ptr->get_tail();
          }
@@ -241,16 +241,16 @@ struct cons
          return ret;
       }
 
-      static inline cons* create(list_ptr _tail, const vm::tuple_field _head, vm::list_type *_type,
-            const size_t start_refs = 0)
+      // type must be the type of the elements of the list.
+      static inline cons* create(list_ptr _tail, const vm::tuple_field _head, vm::type *_type,
+            const size_t start_refs = 0) __attribute__((always_inline))
       {
          cons *c(mem::allocator<cons>().allocate(1));
          mem::allocator<cons>().construct(c);
          c->refs = start_refs;
          c->head = _head;
-         c->type = _type;
          c->set_tail(_tail);
-         increment_runtime_data(c->head, c->type->get_subtype()->get_type());
+         increment_runtime_data(c->head, _type->get_type());
          return c;
       }
 
@@ -300,7 +300,7 @@ build_from_field(const vm::tuple_field v)
 
 template <class TStack, class Convert>
 static inline cons*
-from_stack_to_list(TStack& stk, vm::tuple_field (*conv)(const Convert), vm::list_type *t)
+from_stack_to_list(TStack& stk, vm::tuple_field (*conv)(const Convert), vm::type *t)
 {
    cons *ptr(cons::null_list());
    
@@ -331,14 +331,14 @@ from_node_stack_to_list(stack_node_list& stk)
 }
 
 static inline cons*
-from_general_stack_to_list(stack_general_list& stk, vm::list_type *t)
+from_general_stack_to_list(stack_general_list& stk, vm::type *t)
 {
    return from_stack_to_list<stack_general_list>(stk, build_from_field, t);
 }
 
 template <class TStack, class Convert>
 static inline cons*
-from_stack_to_reverse_list(TStack& stk, vm::tuple_field (*conv)(const Convert), vm::list_type *t)
+from_stack_to_reverse_list(TStack& stk, vm::tuple_field (*conv)(const Convert), vm::type *t)
 {
    TStack stk2;
 
@@ -357,7 +357,7 @@ from_int_stack_to_reverse_list(stack_int_list& stk)
 }
 
 static inline cons*
-from_general_stack_to_reverse_list(stack_general_list& stk, vm::list_type *t)
+from_general_stack_to_reverse_list(stack_general_list& stk, vm::type *t)
 {
    return from_stack_to_reverse_list<stack_general_list>(stk, build_from_field, t);
 }
@@ -365,7 +365,7 @@ from_general_stack_to_reverse_list(stack_general_list& stk, vm::list_type *t)
 /* adds elements of the vector in reverse order */
 template <class TVector, class Convert>
 static inline cons*
-from_vector_to_reverse_list(TVector& vec, vm::tuple_field (*conv)(const Convert), vm::list_type *t)
+from_vector_to_reverse_list(TVector& vec, vm::tuple_field (*conv)(const Convert), vm::type *t)
 {
    cons *ptr(cons::null_list());
 
