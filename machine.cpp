@@ -134,6 +134,7 @@ void machine::init_sched(const process_id id) {
 
    all->SCHEDS[id] = new sched::thread(id);
    all->SCHEDS[id]->loop();
+   all->SCHEDS[id]->commit_nodes();
 }
 
 void machine::start(void) {
@@ -161,11 +162,6 @@ void machine::start(void) {
    init_sched(0);
 
    for (size_t i(1); i < all->NUM_THREADS; ++i) threads[i]->join();
-
-   // join dynamic node information
-   for (size_t i(1); i < all->NUM_THREADS; ++i)
-      all->SCHEDS[0]->merge_new_nodes(*(all->SCHEDS[i]));
-   all->SCHEDS[0]->commit_nodes();
 
 #if 0
    cout << "Total Facts: " << this->all->DATABASE->total_facts() << endl;

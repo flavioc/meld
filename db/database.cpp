@@ -51,6 +51,7 @@ database::wipeout(candidate_gc_nodes& gc_nodes)
    for(auto & elem : nodes) {
       db::node *n(elem.second);
       n->wipeout(gc_nodes);
+      n->deallocate();
    }
 }
 

@@ -62,10 +62,11 @@ public:
       return n->get_id() <= original_max_node_id;
    }
    
-   void add_node_set(map_nodes& set)
+   void add_node_set(map_nodes& m)
    {
-      for(auto & elem : set)
-         nodes[elem.first] = elem.second;
+      MUTEX_LOCK_GUARD(mtx, main_db_lock);
+      for(auto& p : m)
+         nodes[p.first] = p.second;
    }
 
    node* find_node(const node::node_id id) const

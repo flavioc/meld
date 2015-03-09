@@ -519,7 +519,7 @@ trie_hash::~trie_hash(void) {
 void trie::delete_path(trie_node *node) {
    trie_node *parent(node->get_parent());
 
-   if (node == root)  // reached root
+   if (node == &root)  // reached root
    {
       assert(node->child == nullptr);
       node->hashed = false;
@@ -627,7 +627,7 @@ size_t trie::delete_branch(trie_node *node, predicate *pred,
 }
 
 void trie::sanity_check(void) const {
-   // assert(root->count_refs() == (size_t)number_of_references);
+   // assert(root.count_refs() == (size_t)number_of_references);
 }
 
 // inserts the data inside the trie
@@ -637,14 +637,14 @@ trie_node *trie::check_insert(void *data, predicate *pred,
                               bool &found) {
    if (mstk.empty()) {
       // 0-arity tuple
-      if (!root->is_leaf()) {
+      if (!root.is_leaf()) {
          // branch not found
          found = false;
          switch (dir) {
             case POSITIVE_DERIVATION: {
                trie_leaf *leaf(create_leaf(data, pred, 1, depth));
-               root->set_leaf(leaf);
-               leaf->node = root;
+               root.set_leaf(leaf);
+               leaf->node = &root;
                leaf->prev = leaf->next = nullptr;
                first_leaf = last_leaf = leaf;
             }
@@ -653,7 +653,7 @@ trie_node *trie::check_insert(void *data, predicate *pred,
          }
       } else {
          found = true;
-         trie_leaf *leaf(root->get_leaf());
+         trie_leaf *leaf(root.get_leaf());
 
          switch (dir) {
             case POSITIVE_DERIVATION:
@@ -665,10 +665,10 @@ trie_node *trie::check_insert(void *data, predicate *pred,
          }
       }
 
-      return root;
+      return &root;
    }
 
-   trie_node *parent(root);
+   trie_node *parent(&root);
 
    while (!parent->is_leaf()) {
       assert(!mstk.empty());
@@ -705,7 +705,7 @@ trie_node *trie::check_insert(void *data, predicate *pred,
 
          parent = parent->insert(field, typ, mstk);
 
-         assert(parent != root);
+         assert(parent != &root);
 
          while (!mstk.empty()) {
             f = mstk.top();
@@ -738,9 +738,9 @@ trie_node *trie::check_insert(void *data, predicate *pred,
 
          found = false;
 
-         assert(!root->is_leaf());
+         assert(!root.is_leaf());
          assert(first_leaf != nullptr);
-         assert(root->child != nullptr);
+         assert(root.child != nullptr);
 
          return parent;
       }
@@ -749,7 +749,7 @@ trie_node *trie::check_insert(void *data, predicate *pred,
    }
 
    assert(mstk.empty());
-   assert(!root->is_leaf());
+   assert(!root.is_leaf());
 
    found = true;
 
@@ -834,8 +834,8 @@ void trie::inner_delete_by_leaf(trie_leaf *leaf, predicate *pred,
    node->child = nullptr;
    delete_path(node);
 
-   assert(root->next == nullptr);
-   assert(root->prev == nullptr);
+   assert(root.next == nullptr);
+   assert(root.prev == nullptr);
 }
 
 void trie::delete_by_index(predicate *pred, const match &m,
@@ -845,7 +845,7 @@ void trie::delete_by_index(predicate *pred, const match &m,
    const size_t stack_size(m.size() + STACK_EXTRA_SIZE);
    match_stack mstk(stack_size);
 
-   trie_node *node(root);
+   trie_node *node(&root);
 
    // initialize stack
    m.get_match_stack(mstk);
@@ -884,12 +884,11 @@ void trie::delete_by_index(predicate *pred, const match &m,
 }
 
 void trie::wipeout(predicate *pred, candidate_gc_nodes &gc_nodes) {
-   delete_branch(root, pred, gc_nodes);
-   delete root;
+   delete_branch(&root, pred, gc_nodes);
    number_of_references = 0;
 }
 
-trie::trie() : root(new trie_node()) { basic_invariants(); }
+trie::trie() { basic_invariants(); }
 
 trie_node *tuple_trie::check_insert(vm::tuple *tpl, vm::predicate *pred,
                                     const derivation_direction dir,
@@ -921,7 +920,7 @@ bool tuple_trie::insert_tuple(vm::tuple *tpl, vm::predicate *pred,
    check_insert(tpl, pred, POSITIVE_DERIVATION, depth, found);
 
    if (found) {
-      assert(root->child != nullptr);
+      assert(root.child != nullptr);
       assert(number_of_references > 0);
    }
 
@@ -1302,14 +1301,14 @@ tuple_trie::tuple_search_iterator tuple_trie::match_predicate(
       return tuple_search_iterator(nullptr);
 
    const size_t stack_size(m->size() + STACK_EXTRA_SIZE);
-   trie_continuation_frame first_frm = {match_stack(stack_size), root,
-                                        root->child};
+   trie_continuation_frame first_frm = {match_stack(stack_size), (node*)&root,
+                                        root.child};
 
    // initialize stacks
    m->get_match_stack(first_frm.mstack);
 
    // if it was a leaf, m would have no exact match
-   assert(!root->is_leaf());
+   assert(!root.is_leaf());
 
    return tuple_search_iterator(first_frm);
 }

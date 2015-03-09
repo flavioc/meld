@@ -383,12 +383,7 @@ public:
       node_handler.delete_node(node);
    }
 
-   inline void merge_new_nodes(thread& b)
-   {
-      node_handler.merge(b.node_handler);
-   }
-
-   inline void commit_nodes(void)
+   inline void commit_nodes()
    {
       node_handler.commit();
    }

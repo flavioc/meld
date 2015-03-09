@@ -385,29 +385,27 @@ class trie {
    protected:
    using node = trie_node;
 
-   node *root;
+   node root;
    vm::ref_count number_of_references{0};
    trie_leaf *first_leaf{nullptr};
    trie_leaf *last_leaf{nullptr};
 
    inline void basic_invariants(void) {
-      assert(root != nullptr);
-
-      assert(root->parent == nullptr);
+      assert(root.parent == nullptr);
 
       if (number_of_references == 0) {
-         assert(root->child == nullptr);
+         assert(root.child == nullptr);
       } else {
-         assert(root->child != nullptr);
+         assert(root.child != nullptr);
       }
 
-      assert(root->prev == nullptr);
+      assert(root.prev == nullptr);
 
-      assert(root->next == nullptr);
+      assert(root.next == nullptr);
 
-      assert((root->child == nullptr && first_leaf == nullptr &&
+      assert((root.child == nullptr && first_leaf == nullptr &&
               last_leaf == nullptr) ||
-             (root->child != nullptr && first_leaf != nullptr &&
+             (root.child != nullptr && first_leaf != nullptr &&
               last_leaf != nullptr));
    }
 

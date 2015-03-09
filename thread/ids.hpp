@@ -8,7 +8,7 @@
 #include "db/database.hpp"
 #include "db/node.hpp"
 
-#define ALLOCATED_IDS 1024
+#define ALLOCATED_IDS (1024*8)
 
 namespace sched
 {
@@ -23,19 +23,16 @@ class ids
 
       db::node::node_id next_translated_id;
 
-      db::database::map_nodes added_nodes;
-
-      std::unordered_set<db::node::node_id, std::hash<db::node::node_id>,
-         std::equal_to<db::node::node_id>, mem::allocator<db::node::node_id>>
-            removed_nodes;
+      db::node *allocated_nodes{nullptr};
+      size_t total_allocated{0};
+      std::atomic<size_t> deleted_by_others{0};
 
       size_t next_allocation;
 
-      void allocate_more_ids(void);
+      void free_destroyed_nodes();
+      void allocate_more_ids();
 
    public:
-
-      void merge(ids&);
 
       void commit(void);
 

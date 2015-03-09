@@ -45,9 +45,12 @@ struct node {
    public:
    DECLARE_DOUBLE_QUEUE_NODE(node);
 
+   // for managing dynamically allocated nodes.
+   node *dyn_next{nullptr}, *dyn_prev{nullptr};
+   void *creator{nullptr};
+
    private:
-   private:
-   sched::thread *owner = nullptr;
+   sched::thread *owner{nullptr};
 
    // marker that indicates if the node should not be stolen.
    // when not nullptr it indicates which scheduler it needs to be on.
@@ -271,7 +274,15 @@ struct node {
       pers_store.wipeout(gc_nodes);
 
       mem::allocator<node>().destroy(this);
+   }
+
+   inline void deallocate() {
       mem::allocator<node>().deallocate(this, 1);
+   }
+
+   inline void set_ids(const node_id _id, const node_id _trans) {
+      id = _id;
+      translation = _trans;
    }
 
    static node *create(const node_id id, const node_id translate) {

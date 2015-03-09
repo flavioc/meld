@@ -82,9 +82,9 @@ struct intrusive_list
 {
    private:
 
-      T *head;
-      T *tail;
-      size_t size;
+      T *head{nullptr};
+      T *tail{nullptr};
+      size_t size{0};
 
    public:
 
@@ -332,8 +332,7 @@ struct intrusive_list
          //assertl();
       }
 
-      explicit intrusive_list(void):
-         head(nullptr), tail(nullptr), size(0)
+      explicit intrusive_list(void)
       {
          //assertl();
       }
