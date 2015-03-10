@@ -239,7 +239,7 @@ void init_external_functions(void) {
    register_external_function(EXTERNAL2(filecountwords, i, s, i));
    register_external_function(EXTERNAL2(residual, f, lf, lf));
    register_external_function(EXTERNAL1(llength, i, lt));
-   register_external_function(EXTERNAL2(lappend, lt, lt, lt));
+   register_external_function(EXTERNAL3(lappend, lt, lt, lt, t));
    register_external_function(EXTERNAL1(priority, f, n));
    register_external_function(EXTERNAL2(lreverse, lt, lt, i));
    register_external_function(EXTERNAL1(listlast, n, ln));
