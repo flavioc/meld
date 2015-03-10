@@ -12,34 +12,31 @@ namespace external
 {
 
 argument
-array_init(EXTERNAL_ARG(size), EXTERNAL_ARG(item), EXTERNAL_ARG(type))
+array_init(EXTERNAL_ARG(size), EXTERNAL_ARG(item), EXTERNAL_ARG(typ))
 {
    DECLARE_INT(size);
    DECLARE_ANY(item);
-   DECLARE_INT(type);
-   vm::type *typ(theProgram->get_type(type));
+   DECLARE_TYPE(typ);
 
    runtime::array* x(runtime::array::create_fill(typ, size, item));
    RETURN_ARRAY(x);
 }
 
 argument
-array_add(EXTERNAL_ARG(arr), EXTERNAL_ARG(item), EXTERNAL_ARG(t))
+array_add(EXTERNAL_ARG(arr), EXTERNAL_ARG(item), EXTERNAL_ARG(typ))
 {
    DECLARE_ARRAY(arr);
    DECLARE_ANY(item);
-   DECLARE_INT(t);
-   vm::type *typ(theProgram->get_type(t));
+   DECLARE_TYPE(typ);
 
    RETURN_ARRAY(runtime::array::mutate_add(arr, typ, item));
 }
 
 argument
-array_from_list(EXTERNAL_ARG(ls), EXTERNAL_ARG(t))
+array_from_list(EXTERNAL_ARG(ls), EXTERNAL_ARG(typ))
 {
    DECLARE_LIST(ls);
-   DECLARE_INT(t);
-   vm::type *typ(theProgram->get_type(t));
+   DECLARE_TYPE(typ);
    if(runtime::cons::is_null(ls))
       RETURN_ARRAY(runtime::array::create_empty());
 

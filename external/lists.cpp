@@ -17,11 +17,10 @@ namespace external
 {
 
 argument
-listcount(EXTERNAL_ARG(ls), EXTERNAL_ARG(i), EXTERNAL_ARG(t))
+listcount(EXTERNAL_ARG(ls), EXTERNAL_ARG(i), EXTERNAL_ARG(ty))
 {
    DECLARE_LIST(ls);
-   DECLARE_INT(t);
-   vm::type *ty(vm::theProgram->get_type(t));
+   DECLARE_TYPE(ty);
 
    int_val total(0);
    runtime::cons *p((runtime::cons *)ls);
@@ -66,11 +65,10 @@ listcount(EXTERNAL_ARG(ls), EXTERNAL_ARG(i), EXTERNAL_ARG(t))
 }
 
 argument
-lexists(EXTERNAL_ARG(ls), EXTERNAL_ARG(i), EXTERNAL_ARG(t))
+lexists(EXTERNAL_ARG(ls), EXTERNAL_ARG(i), EXTERNAL_ARG(ty))
 {
    DECLARE_LIST(ls);
-   DECLARE_INT(t);
-   vm::type *ty((vm::type*)vm::theProgram->get_type(t));
+   DECLARE_TYPE(ty);
    runtime::cons *p((runtime::cons *)ls);
    if(runtime::cons::is_null(p))
       RETURN_BOOL(false);
@@ -113,13 +111,12 @@ lexists(EXTERNAL_ARG(ls), EXTERNAL_ARG(i), EXTERNAL_ARG(t))
 }
 
 argument
-lexistss(EXTERNAL_ARG(ls), EXTERNAL_ARG(other), EXTERNAL_ARG(t))
+lexistss(EXTERNAL_ARG(ls), EXTERNAL_ARG(other), EXTERNAL_ARG(ty))
 {
    DECLARE_LIST(ls);
-   DECLARE_INT(t);
+   DECLARE_TYPE(ty);
    if(runtime::cons::is_null(ls))
       RETURN_BOOL(false);
-   vm::type *ty(vm::theProgram->get_type(t));
    DECLARE_LIST(other);
    if(runtime::cons::is_null(other))
       RETURN_BOOL(false);
@@ -245,16 +242,14 @@ lnth(EXTERNAL_ARG(ls), EXTERNAL_ARG(v))
 }
 
 argument
-listremove(EXTERNAL_ARG(ls), EXTERNAL_ARG(n), EXTERNAL_ARG(t))
+listremove(EXTERNAL_ARG(ls), EXTERNAL_ARG(n), EXTERNAL_ARG(ty))
 {
 	DECLARE_LIST(ls);
-   DECLARE_INT(t);
+   DECLARE_TYPE(ty);
    runtime::cons *p((runtime::cons*)ls);
 
    if(runtime::cons::is_null(p))
       RETURN_LIST(p);
-
-   type *ty(vm::theProgram->get_type(t));
 
    switch(ty->get_type()) {
       case FIELD_NODE: {
@@ -312,12 +307,11 @@ intlistsub(EXTERNAL_ARG(p), EXTERNAL_ARG(a), EXTERNAL_ARG(b))
 }
 
 argument
-lappend(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2), EXTERNAL_ARG(t))
+lappend(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2), EXTERNAL_ARG(ty))
 {
    DECLARE_LIST(ls1);
    DECLARE_LIST(ls2);
-   DECLARE_INT(t);
-   vm::type *ty(theProgram->get_type(t));
+   DECLARE_TYPE(ty);
 
    if(runtime::cons::is_null(ls1) && runtime::cons::is_null(ls2)) {
       RETURN_LIST(runtime::cons::null_list());
@@ -343,16 +337,14 @@ lappend(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2), EXTERNAL_ARG(t))
 }
 
 argument
-lsort(EXTERNAL_ARG(ls), EXTERNAL_ARG(t))
+lsort(EXTERNAL_ARG(ls), EXTERNAL_ARG(ty))
 {
    DECLARE_LIST(ls);
-   DECLARE_INT(t);
+   DECLARE_TYPE(ty);
 
    runtime::cons *p((runtime::cons*)ls);
    if(runtime::cons::is_null(p))
       RETURN_LIST(p);
-
-   type *ty(theProgram->get_type(t));
 
    switch(ty->get_type()) {
       case FIELD_INT: {
@@ -415,16 +407,15 @@ lsort(EXTERNAL_ARG(ls), EXTERNAL_ARG(t))
 }
 
 argument
-lremoveduplicates(EXTERNAL_ARG(ls), EXTERNAL_ARG(t))
+lremoveduplicates(EXTERNAL_ARG(ls), EXTERNAL_ARG(ty))
 {
    DECLARE_LIST(ls);
-   DECLARE_INT(t);
+   DECLARE_TYPE(ty);
 
    runtime::cons *p((runtime::cons*)ls);
    if(runtime::cons::is_null(p))
       RETURN_LIST(p);
 
-   type *ty(theProgram->get_type(t));
    runtime::cons *nl(runtime::cons::null_list());
 
    switch(ty->get_type()) {
@@ -505,11 +496,11 @@ str2intlist(EXTERNAL_ARG(str))
 }
 
 argument
-lreverse(EXTERNAL_ARG(ls), EXTERNAL_ARG(t))
+lreverse(EXTERNAL_ARG(ls), EXTERNAL_ARG(typ))
 {
    DECLARE_LIST(ls);
-   DECLARE_INT(t);
-   vm::type *typ(theProgram->get_type(t));
+   DECLARE_TYPE(typ);
+
    runtime::cons *p((runtime::cons *)ls);
    if(runtime::cons::is_null(p))
       RETURN_LIST(p);

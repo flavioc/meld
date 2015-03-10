@@ -26,13 +26,12 @@ array_get(EXTERNAL_ARG(arr), EXTERNAL_ARG(i))
 }
 
 static inline argument
-array_set(EXTERNAL_ARG(arr), EXTERNAL_ARG(i), EXTERNAL_ARG(item), EXTERNAL_ARG(t))
+array_set(EXTERNAL_ARG(arr), EXTERNAL_ARG(i), EXTERNAL_ARG(item), EXTERNAL_ARG(typ))
 {
    DECLARE_ARRAY(arr);
    DECLARE_INT(i);
    DECLARE_ANY(item);
-   DECLARE_INT(t);
-   vm::type *typ(vm::theProgram->get_type(t));
+   DECLARE_TYPE(typ);
 
    RETURN_ARRAY(runtime::array::mutate(arr, typ, i, item));
 }

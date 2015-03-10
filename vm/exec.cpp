@@ -1672,6 +1672,11 @@ static inline void execute_mvintreg(pcounter pc, state& state) {
                  pcounter_int(pc + instr_size));
 }
 
+static inline void execute_mvtypereg(pcounter pc, state& state) {
+   state.set_ptr(pcounter_reg(pc + instr_size + int_size),
+         (ptr_val)theProgram->get_type(pcounter_int(pc + instr_size)));
+}
+
 static inline void execute_mvfieldfield(pcounter pc, state& state) {
    tuple* tuple_from(get_tuple_field(state, pc + instr_size));
    tuple* tuple_to(get_tuple_field(state, pc + instr_size + field_size));
@@ -2722,6 +2727,15 @@ static inline return_type execute(pcounter pc, state& state, const reg_num reg,
    state.stat.stat_moves_executed++;
 #endif
    execute_mvintreg(pc, state);
+   ADVANCE()
+   ENDOP()
+
+   CASE(MVTYPEREG_INSTR)
+   JUMP(mvtypereg, MVTYPEREG_BASE)
+#ifdef CORE_STATISTICS
+   state.stat.stat_moves_executed++;
+#endif
+   execute_mvtypereg(pc, state);
    ADVANCE()
    ENDOP()
 

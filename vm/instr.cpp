@@ -373,6 +373,8 @@ string instr_name(const instr::instr_type code) {
          return string("STRUCT VALFFR");
       case MVINTFIELD_INSTR:
          return string("MVINTFIELD");
+      case MVTYPEREG_INSTR:
+         return string("MVTYPEREG");
       case MVFIELDFIELD_INSTR:
          return string("MVFIELDFIELD");
       case MVFIELDFIELDR_INSTR:
@@ -851,6 +853,7 @@ pcounter instr_print(pcounter pc, const bool recurse, const int tabcount,
               << field_string(pc + instr_size + count_size + field_size)
               << " (REFS)" << endl;
          break;
+      case MVTYPEREG_INSTR:
       case MVINTFIELD_INSTR: {
          const int_val i(pcounter_int(pc + instr_size));
          const string field(field_string(pc + instr_size + int_size));

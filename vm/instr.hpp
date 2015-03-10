@@ -102,6 +102,7 @@ const size_t CALLE_BASE = call_size + count_size;
 const size_t MAKE_STRUCTR_BASE = instr_size + type_size + reg_val_size;
 const size_t MVINTFIELD_BASE = instr_size + int_size + field_size;
 const size_t MVINTREG_BASE = instr_size + int_size + reg_val_size;
+const size_t MVTYPEREG_BASE = MVINTREG_BASE;
 const size_t MVFIELDFIELD_BASE = instr_size + field_size + field_size;
 const size_t MVFIELDREG_BASE = instr_size + field_size + reg_val_size;
 const size_t MVPTRREG_BASE = instr_size + ptr_size + reg_val_size;
@@ -357,6 +358,7 @@ enum instr_type {
    SCHEDULE_NEXT_INSTR = 0xB6,
    TPERS_ITER_INSTR = 0xB7,
    FABS_INSTR = 0xB8,
+   MVTYPEREG_INSTR = 0xB9,
    RETURN_LINEAR_INSTR = 0xD0,
    RETURN_DERIVED_INSTR = 0xF0
 };
@@ -1122,6 +1124,9 @@ inline pcounter advance(const pcounter pc) {
       case REMOTE_UPDATE_INSTR:
          return pc + REMOTE_UPDATE_BASE +
                 remote_update_nregs(pc) * reg_val_size;
+
+      case MVTYPEREG_INSTR:
+         return pc + MVTYPEREG_BASE;
 
       default:
          throw malformed_instr_error("unknown instruction code (advance)");

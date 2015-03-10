@@ -26,11 +26,11 @@ sigmoid(EXTERNAL_ARG(x))
 }
 
 argument
-normalizestruct(EXTERNAL_ARG(x), EXTERNAL_ARG(t))
+normalizestruct(EXTERNAL_ARG(x), EXTERNAL_ARG(ty))
 {
    DECLARE_STRUCT(x);
-   DECLARE_INT(t);
-   vm::struct_type *st((struct_type*)vm::theProgram->get_type(t));
+   DECLARE_TYPE(ty);
+   vm::struct_type *st((struct_type*)ty);
 
    float_val max_value(x->get_data(0).float_field);
    for(size_t i(1), size(st->get_size()); i < size; ++i) {
@@ -105,13 +105,13 @@ normalize(EXTERNAL_ARG(x))
 }
 
 argument
-dampstruct(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2), EXTERNAL_ARG(fact), EXTERNAL_ARG(t))
+dampstruct(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2), EXTERNAL_ARG(fact), EXTERNAL_ARG(ty))
 {
    DECLARE_STRUCT(s1);
    DECLARE_STRUCT(s2);
    DECLARE_FLOAT(fact);
-   DECLARE_INT(t);
-   vm::struct_type *st((struct_type*)vm::theProgram->get_type(t));
+   DECLARE_TYPE(ty);
+   vm::struct_type *st((struct_type*)ty);
 
    struct1 *ret(struct1::create(st));
    for(size_t i(0), size(st->get_size()); i < size; ++i) {
@@ -161,12 +161,12 @@ damp(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2), EXTERNAL_ARG(fact))
 }
 
 argument
-dividestruct(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2), EXTERNAL_ARG(t))
+dividestruct(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2), EXTERNAL_ARG(ty))
 {
    DECLARE_STRUCT(s1);
    DECLARE_STRUCT(s2);
-   DECLARE_INT(t);
-   vm::struct_type *st((struct_type*)vm::theProgram->get_type(t));
+   DECLARE_TYPE(ty);
+   vm::struct_type *st((struct_type*)ty);
 
    struct1 *ret(struct1::create(st));
    for(size_t i(0), size(st->get_size()); i < size; ++i)
@@ -201,12 +201,12 @@ divide(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
 }
 
 argument
-convolvestruct(EXTERNAL_ARG(bin_fact), EXTERNAL_ARG(s), EXTERNAL_ARG(t))
+convolvestruct(EXTERNAL_ARG(bin_fact), EXTERNAL_ARG(s), EXTERNAL_ARG(ty))
 {
    DECLARE_STRUCT(bin_fact);
    DECLARE_STRUCT(s);
-   DECLARE_INT(t);
-   vm::struct_type *st((struct_type*)vm::theProgram->get_type(t));
+   DECLARE_TYPE(ty);
+   vm::struct_type *st((struct_type*)ty);
    const size_t length(st->get_size());
 
    struct1 *ret(struct1::create(st));
@@ -270,12 +270,12 @@ convolve(EXTERNAL_ARG(bin_fact), EXTERNAL_ARG(ls))
 }
 
 argument
-addfloatstructs(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2), EXTERNAL_ARG(t))
+addfloatstructs(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2), EXTERNAL_ARG(ty))
 {
    DECLARE_STRUCT(s1);
    DECLARE_STRUCT(s2);
-   DECLARE_INT(t);
-   vm::struct_type *st((struct_type*)theProgram->get_type(t));
+   DECLARE_TYPE(ty);
+   vm::struct_type *st((struct_type*)ty);
 
    struct1 *ret(struct1::create(st));
 
@@ -311,12 +311,12 @@ addfloatlists(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2))
 }
 
 argument
-residualstruct(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2), EXTERNAL_ARG(t))
+residualstruct(EXTERNAL_ARG(s1), EXTERNAL_ARG(s2), EXTERNAL_ARG(ty))
 {
    DECLARE_STRUCT(s1);
    DECLARE_STRUCT(s2);
-   DECLARE_INT(t);
-   vm::struct_type *st((struct_type*)theProgram->get_type(t));
+   DECLARE_TYPE(ty);
+   vm::struct_type *st((struct_type*)ty);
 
    float_val residual(0.0);
    const size_t size(st->get_size());

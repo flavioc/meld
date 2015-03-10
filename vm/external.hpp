@@ -30,6 +30,7 @@ typedef external_function_ptr0 external_function_ptr;
 #define EXTERNAL_ARG(NAME) const argument __##NAME
 #define DECLARE_INT(NAME) const int_val NAME(FIELD_INT(__##NAME))
 #define DECLARE_NODE(NAME) const node_val NAME(FIELD_NODE(__##NAME))
+#define DECLARE_TYPE(NAME) vm::type *NAME((vm::type*)FIELD_PTR(__##NAME))
 #define DECLARE_FLOAT(NAME) const float_val NAME(FIELD_FLOAT(__##NAME))
 #define DECLARE_LIST(NAME) const runtime::cons *NAME(FIELD_CONS(__##NAME))
 #define DECLARE_STRING(NAME) const rstring::ptr NAME(FIELD_STRING(__##NAME))
