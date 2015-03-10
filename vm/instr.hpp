@@ -55,7 +55,7 @@ const size_t count_size = sizeof(utils::byte);
 const size_t stack_val_size = sizeof(offset_num);
 const size_t pcounter_val_size = 0;
 const size_t operation_size = instr_size + 3 * reg_val_size;
-const size_t call_size = instr_size + extern_id_size + reg_val_size + bool_size;
+const size_t call_size = instr_size + extern_id_size + reg_val_size + type_size + bool_size;
 const size_t iter_options_size = 2 * sizeof(utils::byte);
 
 const size_t SEND_BASE = instr_size + 2 * reg_val_size;
@@ -568,8 +568,11 @@ inline external_function_id call_extern_id(pcounter pc) {
 inline reg_num call_dest(pcounter pc) {
    return pcounter_reg(pc + instr_size + extern_id_size);
 }
+inline utils::byte call_type(pcounter pc) {
+   return byte_get(pc, instr_size + extern_id_size + reg_val_size);
+}
 inline size_t call_gc(pcounter pc) {
-   return pcounter_bool(pc + instr_size + extern_id_size + reg_val_size);
+   return pcounter_bool(pc + instr_size + extern_id_size + reg_val_size + type_size);
 }
 inline size_t call_num_args(pcounter pc) {
    return (size_t)byte_get(pc, call_size);
@@ -583,8 +586,11 @@ inline external_function_id calle_extern_id(pcounter pc) {
 inline reg_num calle_dest(pcounter pc) {
    return pcounter_reg(pc + instr_size + extern_id_size);
 }
+inline utils::byte calle_type(pcounter pc) {
+   return byte_get(pc, instr_size + extern_id_size + reg_val_size);
+}
 inline size_t calle_gc(pcounter pc) {
-   return pcounter_bool(pc + instr_size + extern_id_size + reg_val_size);
+   return pcounter_bool(pc + instr_size + extern_id_size + reg_val_size + type_size);
 }
 inline size_t calle_num_args(pcounter pc) {
    return (size_t)byte_get(pc, call_size);

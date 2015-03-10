@@ -1020,10 +1020,11 @@ static inline void execute_update(db::node* node, pcounter pc, state& state) {
    node->matcher.register_predicate_update(pred->get_id());
 }
 
-static inline void set_call_return(const reg_num reg, const bool gc,
+static inline void set_call_return(const reg_num reg, const utils::byte typ, const bool gc,
                                    const tuple_field ret, external_function* f,
                                    state& state) {
-   type* ret_type(f->get_return_type());
+   (void)f;
+   type* ret_type(theProgram->get_type(typ));
    assert(ret_type);
    switch (ret_type->get_type()) {
       case FIELD_BOOL:
@@ -1081,7 +1082,7 @@ static inline void execute_call0(pcounter& pc, state& state) {
    assert(f->get_num_args() == 0);
 
    argument ret = f->get_fun_ptr()();
-   set_call_return(call_dest(pc), call_gc(pc), ret, f, state);
+   set_call_return(call_dest(pc), call_type(pc), call_gc(pc), ret, f, state);
 }
 
 static inline void execute_call1(pcounter& pc, state& state) {
@@ -1092,7 +1093,7 @@ static inline void execute_call1(pcounter& pc, state& state) {
 
    argument ret = ((external_function_ptr1)f->get_fun_ptr())(
        state.get_reg(pcounter_reg(pc + call_size)));
-   set_call_return(call_dest(pc), call_gc(pc), ret, f, state);
+   set_call_return(call_dest(pc), call_type(pc), call_gc(pc), ret, f, state);
 }
 
 static inline void execute_call2(pcounter& pc, state& state) {
@@ -1104,7 +1105,7 @@ static inline void execute_call2(pcounter& pc, state& state) {
    argument ret = ((external_function_ptr2)f->get_fun_ptr())(
        state.get_reg(pcounter_reg(pc + call_size)),
        state.get_reg(pcounter_reg(pc + call_size + reg_val_size)));
-   set_call_return(call_dest(pc), call_gc(pc), ret, f, state);
+   set_call_return(call_dest(pc), call_type(pc), call_gc(pc), ret, f, state);
 }
 
 static inline void execute_call3(pcounter& pc, state& state) {
@@ -1117,7 +1118,7 @@ static inline void execute_call3(pcounter& pc, state& state) {
        state.get_reg(pcounter_reg(pc + call_size)),
        state.get_reg(pcounter_reg(pc + call_size + reg_val_size)),
        state.get_reg(pcounter_reg(pc + call_size + 2 * reg_val_size)));
-   set_call_return(call_dest(pc), call_gc(pc), ret, f, state);
+   set_call_return(call_dest(pc), call_type(pc), call_gc(pc), ret, f, state);
 }
 
 static inline argument do_call(external_function* f, argument* args) {
@@ -1165,7 +1166,7 @@ static inline void execute_call(pcounter& pc, state& state) {
 
    assert(num_args == f->get_num_args());
 
-   set_call_return(call_dest(pc), call_gc(pc), do_call(f, args), f, state);
+   set_call_return(call_dest(pc), call_type(pc), call_gc(pc), do_call(f, args), f, state);
 }
 
 static inline void execute_calle(pcounter pc, state& state) {
@@ -1183,7 +1184,7 @@ static inline void execute_calle(pcounter pc, state& state) {
 
    assert(num_args == f->get_num_args());
 
-   set_call_return(calle_dest(pc), calle_gc(pc), do_call(f, args), f, state);
+   set_call_return(calle_dest(pc), calle_type(pc), calle_gc(pc), do_call(f, args), f, state);
 }
 
 static inline void execute_set_priority(pcounter& pc, state& state) {
