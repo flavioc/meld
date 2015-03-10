@@ -40,6 +40,31 @@ ids::commit(void)
    deleted_by_others = 0;
 }
 
+db::node*
+ids::remove_node_from_allocated(db::node *n)
+{
+   node *prev(n->dyn_prev);
+   node *next(n->dyn_next);
+   if(prev)
+      prev->dyn_next = next;
+   if(next)
+      next->dyn_prev = prev;
+   if(n == allocated_nodes)
+      allocated_nodes = next;
+   if(total_freed == 10)
+      n->deallocate();
+   else {
+      total_freed++;
+      n->dyn_prev = NULL;
+      n->dyn_next = freed_nodes;
+      if(freed_nodes)
+         freed_nodes->dyn_prev = n;
+      freed_nodes = n;
+   }
+   total_allocated--;
+   return next;
+}
+
 void
 ids::delete_node(node *n)
 {
@@ -49,16 +74,7 @@ ids::delete_node(node *n)
    assert(gc_nodes.empty());
 
    if(n->creator == this) {
-      node *prev(n->dyn_prev);
-      node *next(n->dyn_next);
-      if(prev)
-         prev->dyn_next = next;
-      if(next)
-         next->dyn_prev = prev;
-      if(n == allocated_nodes)
-         allocated_nodes = next;
-      n->deallocate();
-      total_allocated--;
+      remove_node_from_allocated(n);
    } else {
       ids *creator((ids*)n->creator.load());
       n->creator = nullptr;
@@ -74,25 +90,25 @@ ids::free_destroyed_nodes()
    size_t by_others{0};
 
    while(p) {
-      if(!p->creator) {
-         node *prev(p->dyn_prev);
-         node *next(p->dyn_next);
-         if(prev)
-            prev->dyn_next = next;
-         if(next)
-            next->dyn_prev = prev;
-
-         p->deallocate();
-
-         if(p == allocated_nodes)
-            allocated_nodes = next;
-         total_allocated--;
-         by_others++;
-         p = next;
-      } else
+      if(!p->creator)
+         p = remove_node_from_allocated(p);
+      else
          p = p->dyn_next;
    }
    deleted_by_others -= by_others;
+}
+
+void
+ids::add_allocated_node(db::node *n)
+{
+   n->remove_temporary_priority();
+   n->creator = this;
+   if(allocated_nodes)
+      allocated_nodes->dyn_prev = n;
+   n->dyn_next = allocated_nodes;
+   allocated_nodes = n;
+
+   total_allocated++;
 }
 
 node*
@@ -102,22 +118,32 @@ ids::create_node(void)
          deleted_by_others > total_allocated/2)
       free_destroyed_nodes();
 
+   if(freed_nodes) {
+      total_freed--;
+      db::node *n(freed_nodes);
+      freed_nodes = n->dyn_next;
+      if(freed_nodes)
+         n->dyn_prev = nullptr;
+      n->dyn_next = nullptr;
+      n->dyn_prev = nullptr;
+      auto id(n->get_id());
+      auto translate(n->get_translated_id());
+      mem::allocator<node>().construct(n, id, translate);
+      add_allocated_node(n);
+
+      return n;
+   }
+
    if(next_available_id == end_available_id) {
       next_allocation *= 4;
       allocate_more_ids();
    }
 
    node *n(node::create(next_available_id, next_translated_id));
-   n->remove_temporary_priority();
-   n->creator = this;
-   if(allocated_nodes)
-      allocated_nodes->dyn_prev = n;
-   n->dyn_next = allocated_nodes;
-   allocated_nodes = n;
+   add_allocated_node(n);
 
    next_available_id++;
    next_translated_id++;
-   total_allocated++;
 
    return n;
 }

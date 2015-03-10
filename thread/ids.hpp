@@ -24,11 +24,15 @@ class ids
       db::node::node_id next_translated_id;
 
       db::node *allocated_nodes{nullptr};
+      db::node *freed_nodes{nullptr};
       size_t total_allocated{0};
+      size_t total_freed{0};
       std::atomic<size_t> deleted_by_others{0};
 
       size_t next_allocation;
 
+      db::node *remove_node_from_allocated(db::node *);
+      void add_allocated_node(db::node *);
       void free_destroyed_nodes();
       void allocate_more_ids();
 
