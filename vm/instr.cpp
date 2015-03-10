@@ -241,6 +241,16 @@ static inline void print_axiom_data(pcounter& p, type* t,
          if (*p == 1) cout << ", ";
          print_axiom_data(p, lt, true);
       } break;
+      case FIELD_STRUCT: {
+         struct_type *st((struct_type *)t);
+         cout << ":(";
+         for (size_t i(0); i < st->get_size(); ++i) {
+            if(i)
+               cout << ", ";
+            print_axiom_data(p, st->get_type(i));
+         }
+         cout << ")";
+      } break;
       default:
          assert(false);
    }
@@ -853,7 +863,6 @@ pcounter instr_print(pcounter pc, const bool recurse, const int tabcount,
               << field_string(pc + instr_size + count_size + field_size)
               << " (REFS)" << endl;
          break;
-      case MVTYPEREG_INSTR:
       case MVINTFIELD_INSTR: {
          const int_val i(pcounter_int(pc + instr_size));
          const string field(field_string(pc + instr_size + int_size));
@@ -869,6 +878,7 @@ pcounter instr_print(pcounter pc, const bool recurse, const int tabcount,
          const string field2(field_string(pc + instr_size + field_size));
          cout << " " << field1 << " TO " << field2 << " (REFS)" << endl;
       } break;
+      case MVTYPEREG_INSTR:
       case MVINTREG_INSTR: {
          const int_val i(pcounter_int(pc + instr_size));
          const reg_num reg(pcounter_reg(pc + instr_size + int_size));

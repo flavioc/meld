@@ -1673,8 +1673,8 @@ static inline void execute_mvintreg(pcounter pc, state& state) {
 }
 
 static inline void execute_mvtypereg(pcounter pc, state& state) {
-   state.set_ptr(pcounter_reg(pc + instr_size + int_size),
-         (ptr_val)theProgram->get_type(pcounter_int(pc + instr_size)));
+   vm::type *ty(theProgram->get_type(pcounter_int(pc + instr_size)));
+   state.set_ptr(pcounter_reg(pc + instr_size + int_size), (ptr_val)ty);
 }
 
 static inline void execute_mvfieldfield(pcounter pc, state& state) {

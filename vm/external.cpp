@@ -210,6 +210,7 @@ void init_external_functions(void) {
    static type *lt(TYPE_LIST);
    static type *at(TYPE_ARRAY);
    static type *any(TYPE_ANY);
+   static type *t(TYPE_TYPE);
    static list_type *li(TYPE_LIST_INT);
    static list_type *lf(TYPE_LIST_FLOAT);
    static list_type *ln(TYPE_LIST_NODE);
@@ -250,7 +251,7 @@ void init_external_functions(void) {
    register_external_function(EXTERNAL2(degeneratevector, li, i, i));
    register_external_function(EXTERNAL2(demergemessages, li, li, li));
    register_external_function(EXTERNAL2(intlistequal, i, i, i));
-   register_external_function(EXTERNAL3(addfloatstructs, st, st, st, i));
+   register_external_function(EXTERNAL3(addfloatstructs, st, st, st, t));
    register_external_function(EXTERNAL2(normalizestruct, st, st, i));
    register_external_function(EXTERNAL4(dampstruct, st, st, st, f, i));
    register_external_function(EXTERNAL3(residualstruct, f, st, st, i));
