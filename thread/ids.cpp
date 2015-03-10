@@ -55,10 +55,12 @@ ids::delete_node(node *n)
          prev->dyn_next = next;
       if(next)
          next->dyn_prev = prev;
+      if(n == allocated_nodes)
+         allocated_nodes = next;
       n->deallocate();
       total_allocated--;
    } else {
-      ids *creator((ids*)n->creator);
+      ids *creator((ids*)n->creator.load());
       n->creator = nullptr;
       creator->deleted_by_others++;
    }

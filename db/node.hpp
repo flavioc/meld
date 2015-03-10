@@ -47,7 +47,7 @@ struct node {
 
    // for managing dynamically allocated nodes.
    node *dyn_next{nullptr}, *dyn_prev{nullptr};
-   void *creator{nullptr};
+   std::atomic<void*> creator{nullptr};
 
    private:
    sched::thread *owner{nullptr};
