@@ -267,8 +267,8 @@ void init_external_functions(void) {
    register_external_function(EXTERNAL1(facts_proved, i, n));
    register_external_function(EXTERNAL1(facts_consumed, i, n));
    register_external_function(EXTERNAL3(listcount, i, lt, i, i));
-   register_external_function(EXTERNAL3(lexists, b, lt, i, i));
-   register_external_function(EXTERNAL3(lexistss, b, lt, lt, i));
+   register_external_function(EXTERNAL3(lexists, b, lt, i, t));
+   register_external_function(EXTERNAL3(lexistss, b, lt, lt, t));
    register_external_function(EXTERNAL2(queens_violation, b, i, li));
    register_external_function(EXTERNAL3(minimax_score, i, li, i, i));
    register_external_function(EXTERNAL2(minimax_points, i, li, i));
