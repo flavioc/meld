@@ -142,7 +142,7 @@ thread::add_node_priority(node *tn, const priority_t priority)
    thread *other(tn->get_owner());
    if(other == this) {
       const priority_t old_prio(tn->get_priority());
-      set_node_priority(n, old_prio + priority);
+      set_node_priority(tn, old_prio + priority);
    }
 #endif
 }
