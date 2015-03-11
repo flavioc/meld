@@ -135,6 +135,9 @@ void machine::init_sched(const process_id id) {
    all->SCHEDS[id] = new sched::thread(id);
    all->SCHEDS[id]->loop();
    all->SCHEDS[id]->commit_nodes();
+#ifdef MEMORY_STATISTICS
+   merge_memory_statistics();
+#endif
 }
 
 void machine::start(void) {

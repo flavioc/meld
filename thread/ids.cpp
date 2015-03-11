@@ -51,7 +51,7 @@ ids::remove_node_from_allocated(db::node *n)
       next->dyn_prev = prev;
    if(n == allocated_nodes)
       allocated_nodes = next;
-   if(total_freed == 10)
+   if(total_freed == 32)
       n->deallocate();
    else {
       total_freed++;
