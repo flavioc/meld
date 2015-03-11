@@ -184,7 +184,7 @@ state::process_incoming_tuples(db::node *node)
       utils::intrusive_list<vm::tuple> *ls(node->store.get_incoming(i));
       if(!ls->empty()) {
          vm::predicate *pred(theProgram->get_linear_predicate(i));
-         matcher->new_linear_fact(i);
+         matcher->new_linear_fact(pred->get_id());
          node->linear.increment_database(pred, ls);
       }
    }
