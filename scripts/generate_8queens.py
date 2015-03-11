@@ -80,5 +80,5 @@ if use_static:
    for x in range(0, side):
       for y in range(0, side):
          id = x * side + y
-         print "set-cpu(@" + str(map_node(id)) + ", partition-vertical(" + str(x) + ", " + str(y) + ", " + str(side) + ", " + str(side) + "))."
+         print "set-cpu(@" + str(map_node(id)) + ", partition_vertical(" + str(x) + ", " + str(y) + ", " + str(side) + ", " + str(side) + "))."
 

@@ -113,6 +113,7 @@ update-queens:
 	python ../scripts/generate_8queens.py 11 h bs > progs/data/8queens-data11-bottom-static.meld
 	python ../scripts/generate_8queens.py 12 h bs > progs/data/8queens-data12-bottom-static.meld
 	python ../scripts/generate_8queens.py 13 h bs > progs/data/8queens-data13-bottom-static.meld
+	python ../scripts/generate_8queens.py 14 h bs > progs/data/8queens-data14-bottom-static.meld
 	git add progs/data/8queens-data4-bottom-static.meld
 	git add progs/data/8queens-data5-bottom-static.meld
 	git add progs/data/8queens-data6-bottom-static.meld
@@ -123,6 +124,7 @@ update-queens:
 	git add progs/data/8queens-data11-bottom-static.meld
 	git add progs/data/8queens-data12-bottom-static.meld
 	git add progs/data/8queens-data13-bottom-static.meld
+	git add progs/data/8queens-data14-bottom-static.meld
 	touch progs/8queens-4-bottom-static.meld
 	touch progs/8queens-5-bottom-static.meld
 	touch progs/8queens-6-bottom-static.meld

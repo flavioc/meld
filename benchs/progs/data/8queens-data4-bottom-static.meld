@@ -95,19 +95,19 @@ set-default-priority(@12, 4.0).
 set-default-priority(@13, 4.0).
 set-default-priority(@14, 4.0).
 set-default-priority(@15, 4.0).
-set-cpu(@0, partition-vertical(0, 0, 4, 4)).
-set-cpu(@1, partition-vertical(0, 1, 4, 4)).
-set-cpu(@2, partition-vertical(0, 2, 4, 4)).
-set-cpu(@3, partition-vertical(0, 3, 4, 4)).
-set-cpu(@4, partition-vertical(1, 0, 4, 4)).
-set-cpu(@5, partition-vertical(1, 1, 4, 4)).
-set-cpu(@6, partition-vertical(1, 2, 4, 4)).
-set-cpu(@7, partition-vertical(1, 3, 4, 4)).
-set-cpu(@8, partition-vertical(2, 0, 4, 4)).
-set-cpu(@9, partition-vertical(2, 1, 4, 4)).
-set-cpu(@10, partition-vertical(2, 2, 4, 4)).
-set-cpu(@11, partition-vertical(2, 3, 4, 4)).
-set-cpu(@12, partition-vertical(3, 0, 4, 4)).
-set-cpu(@13, partition-vertical(3, 1, 4, 4)).
-set-cpu(@14, partition-vertical(3, 2, 4, 4)).
-set-cpu(@15, partition-vertical(3, 3, 4, 4)).
+set-cpu(@0, partition_vertical(0, 0, 4, 4)).
+set-cpu(@1, partition_vertical(0, 1, 4, 4)).
+set-cpu(@2, partition_vertical(0, 2, 4, 4)).
+set-cpu(@3, partition_vertical(0, 3, 4, 4)).
+set-cpu(@4, partition_vertical(1, 0, 4, 4)).
+set-cpu(@5, partition_vertical(1, 1, 4, 4)).
+set-cpu(@6, partition_vertical(1, 2, 4, 4)).
+set-cpu(@7, partition_vertical(1, 3, 4, 4)).
+set-cpu(@8, partition_vertical(2, 0, 4, 4)).
+set-cpu(@9, partition_vertical(2, 1, 4, 4)).
+set-cpu(@10, partition_vertical(2, 2, 4, 4)).
+set-cpu(@11, partition_vertical(2, 3, 4, 4)).
+set-cpu(@12, partition_vertical(3, 0, 4, 4)).
+set-cpu(@13, partition_vertical(3, 1, 4, 4)).
+set-cpu(@14, partition_vertical(3, 2, 4, 4)).
+set-cpu(@15, partition_vertical(3, 3, 4, 4)).
