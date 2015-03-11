@@ -1,0 +1,3 @@
+
+include #data/8queens-data14-bottom-static.meld
+include #sources/queens.meld
