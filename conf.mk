@@ -32,7 +32,7 @@ CORE_STATISTICS = false
 # activate this to collect statistics on memory use
 MEMORY_STATISTICS = false
 # activate buffering for coordination.
-COORDINATION_BUFFERING = false
+COORDINATION_BUFFERING = true
 
 # activate extra assertions.
 EXTRA_ASSERTS = false

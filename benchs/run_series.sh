@@ -17,6 +17,8 @@ if [ -z "$COMPILED" ]; then
 else
    for x in ${*:6}; do
       compile_test "$x"
-      bash threads_even.sh "./build/$x" "$x" $SCHEDULER $STEP $MIN $MAX $RUNS
+      if [ -z "$COMPILE_ONLY" ]; then
+         bash threads_even.sh "./build/$x" "$x" $SCHEDULER $STEP $MIN $MAX $RUNS
+      fi
    done
 fi

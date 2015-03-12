@@ -126,8 +126,8 @@ struct node {
    utils::mutex main_lock;
    utils::mutex database_lock;
 
-#ifdef DYNAMIC_INDEXING
    uint16_t rounds = 0;
+#ifdef DYNAMIC_INDEXING
    vm::deterministic_timestamp indexing_epoch = 0;
 #endif
 

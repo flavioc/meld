@@ -12,7 +12,7 @@
 
 namespace db {
 
-#define HASH_TABLE_INITIAL_TABLE_SIZE 8
+#define HASH_TABLE_INITIAL_TABLE_SIZE 16
 
 struct hash_table {
    private:

@@ -19,7 +19,7 @@
 #include COMPILED_HEADER
 #endif
 
-#define CREATE_HASHTABLE_THREADSHOLD 8
+#define CREATE_HASHTABLE_THREADSHOLD 4
 #define ITEM_SIZE                                                 \
    ((sizeof(hash_table) > sizeof(tuple_list) ? sizeof(hash_table) \
                                              : sizeof(tuple_list)))
@@ -317,11 +317,10 @@ struct linear_store {
 
    inline void cleanup_index(void) {
       for (auto it(
-               types.begin(vm::theProgram->num_predicates()));
+               types.begin(vm::theProgram->num_linear_predicates()));
            !it.end(); ++it) {
          const vm::predicate_id id(*it);
-         vm::predicate *pred(vm::theProgram->get_predicate(id));
-         if (!pred->is_linear_pred()) continue;
+         vm::predicate *pred(vm::theProgram->get_linear_predicate(id));
 
          hash_table *tbl(get_table(pred->get_linear_id()));
 
