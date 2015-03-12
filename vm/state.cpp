@@ -644,9 +644,7 @@ state::run_node(db::node *node)
       MUTEX_UNLOCK(node->main_lock, node_lock);
 	}
 
-#ifdef DYNAMIC_INDEXING
    node->rounds++;
-#endif
    do_persistent_tuples(node);
 
    // add linear facts to the node matcher
@@ -705,11 +703,9 @@ state::run_node(db::node *node)
       matcher->remove_thread(sched->thread_node->matcher);
 
    assert(node->store.persistent_tuples.empty());
-#ifdef DYNAMIC_INDEXING
    node->linear.improve_index();
    if(node->rounds > 0 && node->rounds % 5 == 0)
       node->linear.cleanup_index();
-#endif
    MUTEX_UNLOCK(node->database_lock, internal_lock_data);
 
    sync(node);
