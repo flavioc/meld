@@ -1,0 +1,5 @@
+
+include #sources/shortest-path-50.meld
+include #data/shortest-facebook.meld
+
+priority @cluster @static.
