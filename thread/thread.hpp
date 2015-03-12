@@ -64,6 +64,13 @@ typedef struct {
    db::node *target;
 } priority_add_item;
 
+static inline bool
+is_higher_priority(const vm::priority_t priority, db::node *tn)
+{
+   return vm::higher_priority(priority, tn->get_priority());
+}
+
+
 class thread: public mem::base
 {
 private:
@@ -316,7 +323,6 @@ private:
 
    void killed_while_active(void);
 
-   void do_set_node_priority(db::node *, const vm::priority_t, const bool force_queue=false);
    void do_remove_node_priority(db::node *);
    void add_node_priority_other(db::node *, const vm::priority_t);
    void set_node_priority_other(db::node *, const vm::priority_t);
@@ -461,10 +467,10 @@ public:
    void set_node_moving(db::node *);
    void set_node_affinity(db::node *, db::node *);
    void set_default_node_priority(db::node *, const vm::priority_t);
-   void set_node_priority(db::node *, const vm::priority_t);
 	void add_node_priority(db::node *, const vm::priority_t);
    void remove_node_priority(db::node *);
    void schedule_next(db::node *);
+#include "thread/coord-include.hpp"
 
    inline uint64_t num_static_nodes(void) const { return static_nodes; }
 #ifdef LOCK_STATISTICS
