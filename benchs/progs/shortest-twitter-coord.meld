@@ -1,5 +1,5 @@
 
-include #sources/shortest-path-500.meld
+include #sources/shortest-path-custom.meld
 include #data/shortest-twitter.meld
 
 priority @cluster @static.
