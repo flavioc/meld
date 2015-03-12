@@ -99,6 +99,7 @@ update-queens:
 	git add progs/data/8queens-data11-bottom.meld
 	git add progs/data/8queens-data12-bottom.meld
 	git add progs/data/8queens-data13-bottom.meld
+	git add progs/data/8queens-data14-bottom.meld
 	touch progs/8queens-9-bottom.meld
 	touch progs/8queens-10-bottom.meld
 	touch progs/8queens-11-bottom.meld
@@ -149,6 +150,7 @@ update-queens:
 	git add progs/data/8queens-data11-top.meld
 	git add progs/data/8queens-data12-top.meld
 	git add progs/data/8queens-data13-top.meld
+	git add progs/data/8queens-data14-top.meld
 	touch progs/8queens-9-top.meld
 	touch progs/8queens-10-top.meld
 	touch progs/8queens-11-top.meld
@@ -159,11 +161,13 @@ update-queens:
 	python ../scripts/generate_8queens.py 11 h ts > progs/data/8queens-data11-top-static.meld
 	python ../scripts/generate_8queens.py 12 h ts > progs/data/8queens-data12-top-static.meld
 	python ../scripts/generate_8queens.py 13 h ts > progs/data/8queens-data13-top-static.meld
+	python ../scripts/generate_8queens.py 14 h ts > progs/data/8queens-data14-top-static.meld
 	git add progs/data/8queens-data9-top-static.meld
 	git add progs/data/8queens-data10-top-static.meld
 	git add progs/data/8queens-data11-top-static.meld
 	git add progs/data/8queens-data12-top-static.meld
 	git add progs/data/8queens-data13-top-static.meld
+	git add progs/data/8queens-data14-top-static.meld
 	touch progs/8queens-9-top-static.meld
 	touch progs/8queens-10-top-static.meld
 	touch progs/8queens-11-top-static.meld
