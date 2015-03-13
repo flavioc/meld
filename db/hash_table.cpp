@@ -11,16 +11,16 @@ namespace db
 {
 
 size_t
-hash_table::insert_front(vm::tuple *item)
+hash_table::insert_front(vm::tuple *item, const vm::predicate *pred)
 {
-   const uint_val id(hash_tuple(item));
+   const uint_val id(hash_tuple(item, pred));
    tuple_list *bucket(table + (id % size_table));
    bucket->push_front(item);
    return bucket->get_size();
 }
 
 void
-hash_table::change_table(const size_t new_size_table)
+hash_table::change_table(const size_t new_size_table, const vm::predicate *pred)
 {
    assert(new_size_table >= HASH_TABLE_INITIAL_TABLE_SIZE);
 
@@ -34,7 +34,7 @@ hash_table::change_table(const size_t new_size_table)
          vm::tuple *tpl(*it);
          it++;
 
-         const uint_val id(hash_tuple(tpl));
+         const uint_val id(hash_tuple(tpl, pred));
          tuple_list *ls(new_table + (id % new_size_table));
 
          ls->push_back(tpl);

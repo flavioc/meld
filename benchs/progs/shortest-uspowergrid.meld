@@ -2,3 +2,4 @@
 include #sources/shortest-path-custom.meld
 include #data/shortest-uspowergrid.meld
 
+priority @cluster @static.

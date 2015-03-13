@@ -21,7 +21,6 @@ struct hash_table {
 
    tuple_list *table;
    size_t size_table;
-   vm::field_num hash_argument;
    vm::field_type hash_type;
 
    inline vm::uint_val hash_field(const vm::tuple_field field) const {
@@ -53,17 +52,15 @@ struct hash_table {
       }
    }
 
-   inline vm::uint_val hash_tuple(vm::tuple *tpl) const {
-      return hash_field(tpl->get_field(hash_argument));
+   inline vm::uint_val hash_tuple(vm::tuple *tpl, const vm::predicate* pred) const {
+      return hash_field(tpl->get_field(pred->get_hashed_field()));
    }
 
-   void change_table(const size_t);
+   void change_table(const size_t, const vm::predicate*);
 
    public:
-   hash_table *next_expand;
 
    inline size_t get_num_buckets(void) const { return size_table; }
-   inline vm::field_num get_hash_argument(void) const { return hash_argument; }
 
    class iterator {
   private:
@@ -125,14 +122,14 @@ struct hash_table {
       return true;
    }
 
-   size_t insert(vm::tuple *item) {
-      const vm::uint_val id(hash_tuple(item));
+   size_t insert(vm::tuple *item, const vm::predicate *pred) {
+      const vm::uint_val id(hash_tuple(item, pred));
       tuple_list *bucket(table + (id % size_table));
       bucket->push_back(item);
       return bucket->get_size();
    }
 
-   size_t insert_front(vm::tuple *);
+   size_t insert_front(vm::tuple *, const vm::predicate*);
 
    inline utils::intrusive_list<vm::tuple> *lookup_list(
        const vm::tuple_field field) {
@@ -154,8 +151,8 @@ struct hash_table {
       }
    }
 
-   inline void expand(void) { change_table(size_table * 2); }
-   inline void shrink(void) { change_table(size_table / 2); }
+   inline void expand(const vm::predicate *pred) { change_table(size_table * 2, pred); }
+   inline void shrink(const vm::predicate *pred) { change_table(size_table / 2, pred); }
 
    inline bool too_crowded(void) const {
       size_t crowded_buckets(0);
@@ -181,12 +178,9 @@ struct hash_table {
       return true;
    }
 
-   inline void setup(
-       const vm::field_num field, const vm::field_type type,
+   inline void setup(const vm::field_type type,
        const size_t default_table_size = HASH_TABLE_INITIAL_TABLE_SIZE) {
-      hash_argument = field;
       hash_type = type;
-      next_expand = nullptr;
       size_table = default_table_size;
       table = allocator().allocate(size_table);
       memset(table, 0, sizeof(tuple_list) * size_table);
