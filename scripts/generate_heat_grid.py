@@ -16,10 +16,8 @@ if len(sys.argv) < 8:
 	
 if WRITE_HEADER:
    print 'type inbound(node, int).'
-   print 'type route edge(node, node, float).'
    if WRITE_COORDS:
       print 'type coord(node, int, int).'
-   print 'type inner(node).'
    print 'type linear heat(node, float).'
 
 side = int(sys.argv[1])
@@ -47,6 +45,9 @@ def inside_outer(row, col):
 		return True
 
 def write_weights(id, otherid, isouter, isotherouter):
+	print "neighbor-heat(@" + str(id) + ", @" + str(otherid) + ", " + str(get_heat(otherid, isotherouter)) + ")."
+	print "neighbor-heat(@" + str(otherid) + ", @" + str(id) + ", " + str(get_heat(id, isouter)) + ")."
+	return
 	if isotherouter and isouter:
 		write_dedgew(id, otherid, outerweight)
 	elif isotherouter and not isouter:
@@ -69,6 +70,10 @@ def write_inner(id):
 
 def write_inbound(id, number):
 	print "!inbound(@" + str(id) + ", " + str(number) + ")."
+
+def get_heat(id, isouter):
+	if isouter: return outsideheat
+	else: return insideheat
 
 def do_node(row, col):
 	isouter = inside_outer(row, col)
@@ -95,12 +100,8 @@ def do_node(row, col):
 		write_inbound(id, 4)
 	if WRITE_COORDS:
 		write_coord(id, row, col)
-	if isouter:
-		write_heat(id, outsideheat)
-	else:
-		if WRITE_COORDS:
-			write_inner(id)
-		write_heat(id, insideheat)
+	write_heat(id, get_heat(id, isouter))
+	print "update(@" + str(id) + ")."
 
 def do_weights(row, col):
 	id = row * side + col
