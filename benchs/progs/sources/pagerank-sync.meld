@@ -1,6 +1,6 @@
 
-type route input(node, node, float).
-type route output(node, node, float).
+type route input(node, node).
+type route output(node, node).
 type linear pagerank(node, float, int).
 type numLinks(node, int).
 type numInput(node, int).

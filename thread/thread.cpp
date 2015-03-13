@@ -447,6 +447,7 @@ void thread::init(const size_t) {
    const priority_t initial(theProgram->get_initial_priority());
 
    if (initial == no_priority_value() || !scheduling_mechanism) {
+      cout << "here\n";
       for (; it != end; ++it) {
          db::node *cur_node(init_node(it));
          queues.moving.push_tail(cur_node);
