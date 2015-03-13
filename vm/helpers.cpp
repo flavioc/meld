@@ -56,7 +56,6 @@ static inline void execute_add_persistent0(db::node *node, vm::tuple *tpl,
 
 static inline void execute_run_action0(vm::tuple *tpl, vm::predicate *pred,
                                        vm::state &state) {
-   std::cout << "Action " << pred->get_name() << std::endl;
    assert(pred->is_action_pred());
    switch (state.direction) {
       case vm::POSITIVE_DERIVATION:

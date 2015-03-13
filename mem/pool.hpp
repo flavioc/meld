@@ -64,7 +64,6 @@ class pool {
       const size_t old_size(size_table);
 
       size_table *= 2;
-      std::cout << "expand " << size_table << "\n";
       chunk_table = new chunkgroup[size_table];
       memset(chunk_table, 0, sizeof(chunkgroup) * size_table);
 
