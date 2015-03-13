@@ -9,10 +9,11 @@
 #include "vm/tuple.hpp"
 #include "utils/intrusive_list.hpp"
 #include "mem/allocator.hpp"
+#include "utils/utils.hpp"
 
 namespace db {
 
-#define HASH_TABLE_INITIAL_TABLE_SIZE 16
+#define HASH_TABLE_INITIAL_TABLE_SIZE 13
 
 struct hash_table {
    private:
@@ -151,8 +152,16 @@ struct hash_table {
       }
    }
 
-   inline void expand(const vm::predicate *pred) { change_table(size_table * 2, pred); }
-   inline void shrink(const vm::predicate *pred) { change_table(size_table / 2, pred); }
+   inline void expand(const vm::predicate *pred) {
+      const size_t new_size(utils::next_prime(size_table * 2));
+//      std::cout << "expand " << new_size << "\n";
+      change_table(new_size, pred);
+   }
+   inline void shrink(const vm::predicate *pred) {
+      const size_t new_size(utils::next_prime(size_table / 2));
+//      std::cout << "shrink " << new_size << "\n";
+      change_table(new_size, pred);
+   }
 
    inline bool too_crowded(void) const {
       size_t crowded_buckets(0);

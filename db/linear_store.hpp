@@ -19,7 +19,7 @@
 #include COMPILED_HEADER
 #endif
 
-#define CREATE_HASHTABLE_THREADSHOLD 4
+#define CREATE_HASHTABLE_THREADSHOLD 8
 #define ITEM_SIZE                                                 \
    ((sizeof(hash_table) > sizeof(tuple_list) ? sizeof(hash_table) \
                                              : sizeof(tuple_list)))
