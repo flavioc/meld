@@ -1,8 +1,14 @@
 
 type inbound(node, int).
+type route edge(node, node, float).
+type coord(node, int, int).
+type inner(node).
 type linear heat(node, float).
 type linear neighbor-heat(node, node, float).
 type linear new-neighbor-heat(node, node, float).
+type linear initial-neighbor-heat(node, node, float).
+type linear start(node).
+type linear wait(node, int).
 type linear update(node).
 type linear update-neighbors(node, float Diff, float Heat).
 
@@ -12,15 +18,29 @@ priority @cluster @static.
 const epsilon = str2float(@arg1).
 const delta = str2float(@arg2).
 
+start(A).
+
+start(A), heat(A, H), !inbound(A, T) -o {B, W | !edge(A, B, W) | initial-neighbor-heat(B, A, H)},
+                                        wait(A, T),
+                                        heat(A, H).
+
 new-neighbor-heat(A, B, Heat),
 neighbor-heat(A, B, OldHeat)
    -o neighbor-heat(A, B, Heat).
 
 update-neighbors(A, Diff, New)
-   -o {B, C | neighbor-heat(A, B, C) | neighbor-heat(A, B, C),
-                               (if Diff <= epsilon && cpu-id(A) = cpu-id(B) then new-neighbor-heat(B, A, New) otherwise 1 end),
+   -o {B, W | !edge(A, B, W) | (if Diff <= epsilon && cpu-id(A) = cpu-id(B) then new-neighbor-heat(B, A, New) otherwise 1 end),
                                (if Diff > epsilon then new-neighbor-heat(B, A, New), update(B) otherwise 1 end),
                                (if Diff > delta then add-priority(B, Diff) otherwise 1 end)}.
+
+initial-neighbor-heat(A, B, Heat),
+wait(A, T),
+T > 0
+   -o wait(A, T - 1),
+      neighbor-heat(A, B, Heat).
+
+wait(A, 0)
+   -o update(A).
 
 update(A), update(A) -o update(A).
 update(A),
