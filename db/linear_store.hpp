@@ -304,7 +304,8 @@ struct linear_store {
          const vm::predicate_id id(*it);
          hash_table *tbl(get_table(id));
          const vm::predicate *pred(vm::theProgram->get_linear_predicate(id));
-         tbl->expand(pred);
+         if(tbl->too_crowded())
+            tbl->expand(pred);
          expand.unset_bit(id);
       }
    }

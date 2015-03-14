@@ -169,6 +169,10 @@ struct hash_table {
       return size_table == HASH_TABLE_INITIAL_TABLE_SIZE;
    }
 
+   inline bool too_crowded() const {
+      return elems > (prime*2)/3;
+   }
+
    inline bool too_sparse(void) const {
       if (elems > (prime*2)/3)
          return false;
