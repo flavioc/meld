@@ -13,7 +13,7 @@
 
 namespace db {
 
-#define HASH_TABLE_INITIAL_TABLE_SIZE 13
+#define HASH_TABLE_INITIAL_TABLE_SIZE 8
 
 struct hash_table {
    private:
@@ -27,9 +27,9 @@ struct hash_table {
    inline vm::uint_val hash_field(const vm::tuple_field field) const {
       switch (hash_type) {
          case vm::FIELD_INT:
-            return (vm::uint_val)FIELD_INT(field);
+            return utils::fnv1_hash((utils::byte*)&FIELD_INT(field), sizeof(vm::int_val));
          case vm::FIELD_FLOAT:
-            return (vm::uint_val)FIELD_FLOAT(field);
+            return utils::fnv1_hash((utils::byte*)&FIELD_FLOAT(field), sizeof(vm::float_val));
          case vm::FIELD_NODE:
 #ifdef USE_REAL_NODES
             {
@@ -37,10 +37,10 @@ struct hash_table {
                utils::byte *data((utils::byte*)FIELD_PTR(field));
                data = data + sizeof(std::atomic<vm::ref_count>);
                vm::uint_val ret =  (vm::uint_val)*(vm::node_val*)data;
-               return ret;
+               return utils::fnv1_hash((utils::byte*)&ret, sizeof(vm::uint_val));
             }
 #else
-            return FIELD_NODE(field);
+            return utils::fnv1_hash((utils::byte*)&FIELD_NODE(field), sizeof(vm::node_val));
 #endif
          case vm::FIELD_LIST:
             if (FIELD_PTR(field) == 0)
@@ -125,7 +125,7 @@ struct hash_table {
 
    size_t insert(vm::tuple *item, const vm::predicate *pred) {
       const vm::uint_val id(hash_tuple(item, pred));
-      tuple_list *bucket(table + (id % size_table));
+      tuple_list *bucket(table + (utils::mod_hash(id, size_table)));
       bucket->push_back(item);
       return bucket->get_size();
    }
@@ -135,7 +135,7 @@ struct hash_table {
    inline utils::intrusive_list<vm::tuple> *lookup_list(
        const vm::tuple_field field) {
       const vm::uint_val id(hash_field(field));
-      tuple_list *bucket(table + (id % size_table));
+      tuple_list *bucket(table + (utils::mod_hash(id, size_table)));
       return bucket;
    }
 
@@ -153,12 +153,12 @@ struct hash_table {
    }
 
    inline void expand(const vm::predicate *pred) {
-      const size_t new_size(utils::next_prime(size_table * 2));
+      const size_t new_size(size_table * 2);
 //      std::cout << "expand " << new_size << "\n";
       change_table(new_size, pred);
    }
    inline void shrink(const vm::predicate *pred) {
-      const size_t new_size(utils::next_prime(size_table / 2));
+      const size_t new_size(size_table / 2);
 //      std::cout << "shrink " << new_size << "\n";
       change_table(new_size, pred);
    }
