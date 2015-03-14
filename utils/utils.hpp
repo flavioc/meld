@@ -80,13 +80,13 @@ inline size_t next_multiple_of_uint(const size_t v) {
    return ret;
 }
 
-static inline bool is_prime(std::size_t x) {
-   std::size_t o = 4;
-   for (std::size_t i = 5; true; i += o) {
-      std::size_t q = x / i;
-      if (q < i) return true;
-      if (x == q * i) return false;
-      o ^= 6;
+static inline bool is_prime(std::size_t n) {
+   //check if n is a multiple of 2
+   if (n%2==0) return false;
+   //if not, then just check the odds
+   for(std::size_t i=3;i*i<=n;i+=2) {
+      if(n%i==0)
+         return false;
    }
    return true;
 }
@@ -111,14 +111,20 @@ static inline std::size_t next_prime(std::size_t x) {
    return x;
 }
 
-uint64_t fnv1_hash(utils::byte* key, const size_t n_bytes) {
+static inline std::size_t previous_prime(std::size_t x) {
+   for(; !is_prime(x) && x > 0; --x) {
+   }
+   return x;
+}
+
+static inline uint64_t fnv1_hash(utils::byte* key, const size_t n_bytes) {
    utils::byte* p = key;
    uint64_t h = 14695981039346656037ul;
    for (size_t i = 0; i < n_bytes; i++) h = (h * 1099511628211) ^ p[i];
    return h;
 }
 
-uint64_t mod_hash(const uint64_t hsh, const uint64_t size) {
+static inline uint64_t mod_hash(const uint64_t hsh, const uint64_t size) {
    // size must be a power of 2
    return hsh & (size - 1);
 }

@@ -1,1 +1,2 @@
+PROG_ARGS="5000"
 MELD_ARGS="-n"

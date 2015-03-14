@@ -13,7 +13,7 @@
 
 namespace db {
 
-#define HASH_TABLE_INITIAL_TABLE_SIZE 8
+#define HASH_TABLE_INITIAL_TABLE_SIZE 16
 
 struct hash_table {
    private:
@@ -21,8 +21,13 @@ struct hash_table {
    using allocator = mem::allocator<tuple_list>;
 
    tuple_list *table;
-   size_t size_table;
+   std::uint16_t prime;
+   std::uint16_t size_table;
    vm::field_type hash_type;
+
+   inline uint64_t mod_hash(const uint64_t hsh) {
+      return hsh % prime;
+   }
 
    inline vm::uint_val hash_field(const vm::tuple_field field) const {
       switch (hash_type) {
@@ -36,8 +41,8 @@ struct hash_table {
                // UGLY HACK to make this function inline
                utils::byte *data((utils::byte*)FIELD_PTR(field));
                data = data + sizeof(std::atomic<vm::ref_count>);
-               vm::uint_val ret =  (vm::uint_val)*(vm::node_val*)data;
-               return utils::fnv1_hash((utils::byte*)&ret, sizeof(vm::uint_val));
+               return (vm::uint_val)*(vm::node_val*)data;
+//               return utils::fnv1_hash((utils::byte*)&ret, sizeof(vm::uint_val));
             }
 #else
             return utils::fnv1_hash((utils::byte*)&FIELD_NODE(field), sizeof(vm::node_val));
@@ -57,7 +62,7 @@ struct hash_table {
       return hash_field(tpl->get_field(pred->get_hashed_field()));
    }
 
-   void change_table(const size_t, const vm::predicate*);
+   void change_table(const std::uint16_t, const vm::predicate*);
 
    public:
 
@@ -125,7 +130,7 @@ struct hash_table {
 
    size_t insert(vm::tuple *item, const vm::predicate *pred) {
       const vm::uint_val id(hash_tuple(item, pred));
-      tuple_list *bucket(table + (utils::mod_hash(id, size_table)));
+      tuple_list *bucket(table + mod_hash(id));
       bucket->push_back(item);
       return bucket->get_size();
    }
@@ -135,7 +140,7 @@ struct hash_table {
    inline utils::intrusive_list<vm::tuple> *lookup_list(
        const vm::tuple_field field) {
       const vm::uint_val id(hash_field(field));
-      tuple_list *bucket(table + (utils::mod_hash(id, size_table)));
+      tuple_list *bucket(table + mod_hash(id));
       return bucket;
    }
 
@@ -154,7 +159,7 @@ struct hash_table {
 
    inline void expand(const vm::predicate *pred) {
       const size_t new_size(size_table * 2);
-//      std::cout << "expand " << new_size << "\n";
+      std::cout << "expand " << new_size << "\n";
       change_table(new_size, pred);
    }
    inline void shrink(const vm::predicate *pred) {
@@ -191,6 +196,7 @@ struct hash_table {
        const size_t default_table_size = HASH_TABLE_INITIAL_TABLE_SIZE) {
       hash_type = type;
       size_table = default_table_size;
+      prime = utils::previous_prime(size_table);
       table = allocator().allocate(size_table);
       memset(table, 0, sizeof(tuple_list) * size_table);
    }
