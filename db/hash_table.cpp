@@ -16,6 +16,7 @@ hash_table::insert_front(vm::tuple *item, const vm::predicate *pred)
    const uint_val id(hash_tuple(item, pred));
    tuple_list *bucket(table + mod_hash(id));
    bucket->push_front(item);
+   elems++;
    return bucket->get_size();
 }
 

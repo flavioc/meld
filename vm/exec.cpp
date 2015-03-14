@@ -791,7 +791,10 @@ static inline return_type execute_linear_iter_list(
             if (reg > 0) {
                // if this is the first iterate, we do not need to send this to
                // the generate list
-               it = local_tuples->erase(it);
+               if(tbl)
+                  it = tbl->erase_from_list(local_tuples, it);
+               else
+                  it = local_tuples->erase(it);
                node->store.add_generated(match_tuple, pred);
                state.generated_facts = true;
                next_iter = false;
@@ -809,10 +812,13 @@ static inline return_type execute_linear_iter_list(
                }
             }
          } else {
-            it = local_tuples->erase(it);
+            if(tbl)
+               it = tbl->erase_from_list(local_tuples, it);
+            else
+               it = local_tuples->erase(it);
             vm::tuple::destroy(match_tuple, pred, state.gc_nodes);
             if (tbl) {
-               if (local_tuples->empty() && tbl->empty())
+               if(local_tuples->empty() && tbl->empty())
                   state.node->matcher.empty_predicate(pred->get_id());
             } else {
                if (local_tuples->empty())

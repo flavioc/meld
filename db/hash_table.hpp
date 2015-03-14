@@ -21,6 +21,7 @@ struct hash_table {
    using allocator = mem::allocator<tuple_list>;
 
    tuple_list *table;
+   size_t elems{0};
    std::uint16_t prime;
    std::uint16_t size_table;
    vm::field_type hash_type;
@@ -111,41 +112,37 @@ struct hash_table {
 
    inline size_t get_table_size() const { return size_table; }
 
-   inline size_t get_total_size(void) const {
-      size_t total(0);
-      for (size_t i(0); i < size_table; ++i) {
-         tuple_list *ls(table + i);
-         total += ls->get_size();
-      }
-      return total;
-   }
+   inline size_t get_total_size(void) const { return elems; }
 
-   inline bool empty(void) const {
-      for (size_t i(0); i < size_table; ++i) {
-         tuple_list *ls(table + i);
-         if (!ls->empty()) return false;
-      }
-      return true;
-   }
+   inline bool empty(void) const { return elems == 0; }
 
    size_t insert(vm::tuple *item, const vm::predicate *pred) {
       const vm::uint_val id(hash_tuple(item, pred));
       tuple_list *bucket(table + mod_hash(id));
       bucket->push_back(item);
+      elems++;
       return bucket->get_size();
    }
 
    size_t insert_front(vm::tuple *, const vm::predicate*);
 
+   inline utils::intrusive_list<vm::tuple>::iterator erase_from_list(utils::intrusive_list<vm::tuple> *ls,
+         utils::intrusive_list<vm::tuple>::iterator& it)
+   {
+      elems--;
+      return ls->erase(it);
+   }
+
    inline utils::intrusive_list<vm::tuple> *lookup_list(
-       const vm::tuple_field field) {
+       const vm::tuple_field field)
+   {
       const vm::uint_val id(hash_field(field));
       tuple_list *bucket(table + mod_hash(id));
       return bucket;
    }
 
    inline void dump(std::ostream &out, const vm::predicate *pred) const {
-      for (size_t i(0); i < size_table; ++i) {
+      for (size_t i(0); i < prime; ++i) {
          tuple_list *ls(table + i);
          out << "Bucket for " << i << ": ";
          if (ls->empty())
@@ -159,23 +156,13 @@ struct hash_table {
 
    inline void expand(const vm::predicate *pred) {
       const size_t new_size(size_table * 2);
-      std::cout << "expand " << new_size << "\n";
+//      std::cout << "expand " << new_size << "\n";
       change_table(new_size, pred);
    }
    inline void shrink(const vm::predicate *pred) {
       const size_t new_size(size_table / 2);
-//      std::cout << "shrink " << new_size << "\n";
+ //     std::cout << "shrink " << new_size << "\n";
       change_table(new_size, pred);
-   }
-
-   inline bool too_crowded(void) const {
-      size_t crowded_buckets(0);
-      for (size_t i(0); i < size_table; ++i) {
-         tuple_list *ls(table + i);
-         crowded_buckets += (ls->get_size() / 3);
-      }
-      if (crowded_buckets == 0) return false;
-      return crowded_buckets > size_table / 2;
    }
 
    inline bool smallest_possible(void) const {
@@ -183,13 +170,17 @@ struct hash_table {
    }
 
    inline bool too_sparse(void) const {
-      size_t total(0);
-      for (size_t i(0); i < size_table; ++i) {
+      if (elems > (prime*2)/3)
+         return false;
+      size_t empty_buckets{0};
+      for (size_t i(0); i < prime; ++i) {
          tuple_list *ls(table + i);
-         total += ls->get_size();
-         if (total >= size_table) return false;
+         if(ls->empty())
+            empty_buckets++;
+         if(empty_buckets >= prime/2)
+            return true;
       }
-      return true;
+      return false;
    }
 
    inline void setup(const vm::field_type type,

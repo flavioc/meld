@@ -704,7 +704,7 @@ state::run_node(db::node *node)
 
    assert(node->store.persistent_tuples.empty());
    node->linear.improve_index();
-   if(node->rounds > 0 && node->rounds % 5 == 0)
+   if(node->rounds > 0 && node->rounds % 1 == 0)
       node->linear.cleanup_index();
    MUTEX_UNLOCK(node->database_lock, internal_lock_data);
 
