@@ -114,6 +114,7 @@ struct linear_store {
 
    inline tuple_list *transform_hash_table_to_list(hash_table *tbl,
                                                    const vm::predicate *pred) {
+//      std::cout << "to list\n";
       hash_table::iterator it(tbl->begin());
       tuple_list ls;
       // cannot get list immediatelly since that would remove the pointer to the
@@ -302,10 +303,8 @@ struct linear_store {
            !it.end(); ++it) {
          const vm::predicate_id id(*it);
          hash_table *tbl(get_table(id));
-         if (tbl->too_crowded()) {
-            const vm::predicate *pred(vm::theProgram->get_linear_predicate(id));
-            tbl->expand(pred);
-         }
+         const vm::predicate *pred(vm::theProgram->get_linear_predicate(id));
+         tbl->expand(pred);
          expand.unset_bit(id);
       }
    }
@@ -317,13 +316,17 @@ struct linear_store {
          const vm::predicate_id id(*it);
          const vm::predicate *pred(vm::theProgram->get_linear_predicate(id));
 
+         if(!stored_as_hash_table(pred))
+            continue;
+
          hash_table *tbl(get_table(pred->get_linear_id()));
 
          if (tbl->too_sparse()) {
             if (tbl->smallest_possible()) {
-               //transform_hash_table_to_list(tbl, pred);
-            } else
+               transform_hash_table_to_list(tbl, pred);
+            } else {
                tbl->shrink(pred);
+            }
          }
       }
    }
@@ -388,7 +391,7 @@ struct linear_store {
                for (hash_table::iterator it(table->begin()); !it.end(); ++it) {
                   tuple_list *ls(*it);
                   for (tuple_list::iterator it2(ls->begin()), end(ls->end());
-                       it2 != end;) {
+                        it2 != end;) {
                      vm::tuple *tpl(*it2);
                      it2++;
                      vm::tuple::destroy(tpl, pred, gc_nodes);
@@ -404,7 +407,7 @@ struct linear_store {
          } else if (!fast) {
             tuple_list *ls((tuple_list *)p);
             for (tuple_list::iterator it(ls->begin()), end(ls->end());
-                 it != end;) {
+                  it != end;) {
                vm::tuple *tpl(*it);
                ++it;
                vm::tuple::destroy(tpl, pred, gc_nodes);
@@ -427,11 +430,11 @@ struct linear_store {
       }
 #ifndef COMPILED
       mem::allocator<utils::byte>().deallocate(
-          data, ITEM_SIZE * vm::theProgram->num_linear_predicates());
+            data, ITEM_SIZE * vm::theProgram->num_linear_predicates());
       vm::bitmap::destroy(types,
-                          vm::theProgram->num_linear_predicates_next_uint());
+            vm::theProgram->num_linear_predicates_next_uint());
       vm::bitmap::destroy(expand,
-                          vm::theProgram->num_linear_predicates_next_uint());
+            vm::theProgram->num_linear_predicates_next_uint());
 #endif
    }
 };
