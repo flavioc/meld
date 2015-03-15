@@ -451,7 +451,6 @@ void thread::init(const size_t) {
       }
    } else {*/
       //initial = vm::max_priority_value();
-      cout << initial << endl;
       prios.moving.start_initial_insert(All->MACHINE->find_owned_nodes(id));
 
       for (size_t i(0); it != end; ++it, ++i) {
