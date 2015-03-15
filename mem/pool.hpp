@@ -16,7 +16,7 @@ namespace mem {
 class pool {
    private:
    chunkgroup *chunk_table;
-   size_t size_table = 19;  // default table size
+   size_t size_table = 31;  // default table size
 
    // number of chunkgroups to allocate per page.
    static const size_t NUM_CHUNK_PAGES = 64;

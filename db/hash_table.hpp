@@ -25,6 +25,9 @@ struct hash_table {
    std::uint16_t prime;
    std::uint16_t size_table;
    vm::field_type hash_type;
+   mutable utils::byte flag_expanded{10};
+//   size_t expanded{0};
+//   size_t shrinked{0};
 
    inline uint64_t mod_hash(const uint64_t hsh) {
       return hsh % prime;
@@ -156,12 +159,15 @@ struct hash_table {
 
    inline void expand(const vm::predicate *pred) {
       const size_t new_size(size_table * 2);
-//      std::cout << "expand " << new_size << "\n";
+      flag_expanded += 10;
+   //   expanded++;
+  //    std::cout << "expand " << new_size << " " << elems << " " << shrinked << "/" << expanded << "\n";
       change_table(new_size, pred);
    }
    inline void shrink(const vm::predicate *pred) {
       const size_t new_size(size_table / 2);
- //     std::cout << "shrink " << new_size << "\n";
+ //     shrinked++;
+//     std::cout << "shrink " << new_size << " " << shrinked << "/" << expanded << "\n";
       change_table(new_size, pred);
    }
 
@@ -174,6 +180,10 @@ struct hash_table {
    }
 
    inline bool too_sparse(void) const {
+      if(flag_expanded) {
+         flag_expanded--;
+         return false;
+      }
       if (elems > (prime*2)/3)
          return false;
       size_t empty_buckets{0};
