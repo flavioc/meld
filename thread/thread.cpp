@@ -444,13 +444,14 @@ void thread::init(const size_t) {
    auto end(All->DATABASE->get_node_iterator(All->MACHINE->find_last_node(id)));
    priority_t initial(theProgram->get_initial_priority());
 
-/*   if (!scheduling_mechanism) {
+   /*
+   if (!scheduling_mechanism) {
       for (; it != end; ++it) {
          db::node *cur_node(init_node(it));
          queues.moving.push_tail(cur_node);
       }
-   } else {*/
-      //initial = vm::max_priority_value();
+   } else {
+   */
       prios.moving.start_initial_insert(All->MACHINE->find_owned_nodes(id));
 
       for (size_t i(0); it != end; ++it, ++i) {

@@ -20,8 +20,8 @@ struct priority_queue {
    size_t total_size{0};
    bool has_extra{false};
    vm::priority_t max_prio{0};
-#define MAX_NODES_IN_HEAP 50000
-#define NUMBER_OF_EXTRA_QUEUES 8
+#define MAX_NODES_IN_HEAP 2500000
+#define NUMBER_OF_EXTRA_QUEUES 4
    node_queue extra[NUMBER_OF_EXTRA_QUEUES];
 
    private:
@@ -31,6 +31,7 @@ struct priority_queue {
 
    inline void move_from_extra_to_heap() {
       assert(main_heap.size() <= total_size);
+      abort();
       db::node* n{nullptr};
       if (main_heap.size() >= MAX_NODES_IN_HEAP) return;
       for (size_t i(0); i < NUMBER_OF_EXTRA_QUEUES; ++i) {
@@ -84,6 +85,7 @@ struct priority_queue {
          __INTRUSIVE_EXTRA_ID(node) = 0;
          main_heap.do_insert(node, prio);
       } else {
+         abort();
          const double frac(prio / max_prio);
          const size_t idx(
              std::min((size_t)NUMBER_OF_EXTRA_QUEUES - 1,
@@ -135,7 +137,6 @@ struct priority_queue {
 
    inline size_t pop_half(db::node** buffer, const size_t max,
                           const queue_id_t new_state) {
-      return 0;
       MUTEX_LOCK_GUARD_FLAG(main_heap.mtx, priority_lock, coord_priority_lock);
       const size_t ret(main_heap.do_pop_half(buffer, max, new_state));
       total_size -= ret;
@@ -171,6 +172,7 @@ struct priority_queue {
          assert(__INTRUSIVE_POS(node) <= main_heap.size());
          main_heap.do_move_node(node, new_prio);
       } else {
+         abort();
          if (main_heap.compare(new_prio, max_prio / 2) &&
              should_move_from_extra()) {
             // must be in the 20% in order to be inserted into the heap.
@@ -183,12 +185,12 @@ struct priority_queue {
 
    void set_type(const heap_type _typ) { main_heap.set_type(_typ); }
 
-   priority_queue(const queue_id_t id) : main_heap(id) {
+   explicit priority_queue(const queue_id_t id) : main_heap(id) {
       for (size_t i(0); i < NUMBER_OF_EXTRA_QUEUES; ++i)
          extra[i].queue_number = id;
    }
 
-   priority_queue(const queue_id_t id, const heap_type _typ)
+   explicit priority_queue(const queue_id_t id, const heap_type _typ)
        : priority_queue(id) {
       set_type(_typ);
    }

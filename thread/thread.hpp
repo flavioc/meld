@@ -187,8 +187,8 @@ private:
       }
    } queues;
 
-//	using priority_queue = queue::intrusive_safe_complex_pqueue<db::node>;
-   using priority_queue = sched::priority_queue;
+	using priority_queue = queue::intrusive_safe_complex_pqueue<db::node>;
+  // using priority_queue = sched::priority_queue;
 
    struct Priorities {
       priority_queue moving;

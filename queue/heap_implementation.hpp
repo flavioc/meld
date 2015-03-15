@@ -92,13 +92,12 @@ typedef enum {
 	
 #define HEAP_SET_INDEX(IDX, OBJ)	do {								\
 	heap[IDX] = OBJ;														\
-	HEAP_SET_POS(HEAP_GET_DATA(OBJ), IDX);					      \
+	HEAP_GET_POS(OBJ) = IDX;											\
 } while(false)
 	
 #define HEAP_DEFINE_HEAPIFYDOWN										\
-	inline void heapifydown(int index)								\
+	void heapifydown(const int index)								\
 	{																			\
-start:                                                      \
 		const int l = left(index);										\
 		const int r = right(index);									\
 		const bool hasleft = (l >= 0);								\
@@ -126,7 +125,7 @@ HEAP_COMPARE(HEAP_GET_PRIORITY(heap[index]), HEAP_GET_PRIORITY(heap[l]))	\
 																				\
 		HEAP_SET_INDEX(index, heap[smaller]);						\
 		HEAP_SET_INDEX(smaller, obj);								   \
-      index = smaller; goto start;                          \
+		heapifydown(smaller);											\
 	}
 
 #endif
