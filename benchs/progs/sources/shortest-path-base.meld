@@ -1,4 +1,4 @@
-type linear path(node, node, int, int).
+type linear path(node, node, float, int).
 
 priority @order @asc.
 priority @no_initial_priorities.
@@ -11,6 +11,6 @@ path(A, U, B2, Y), path(A, U, B1, X), B1 <= B2
    -o path(A, U, B1, if B1 < B2 then X else (if Y = used then used else X end) end).
 
 path(A, X, D, notused)
-   -o {B, W | !edge(A, B, W) | path(B, X, D + W, notused), set-priority(B, float(D + W))}, path(A, X, D, used).
+   -o {B, W | !edge(A, B, W) | path(B, X, D + W, notused), set-priority(B, D + W)}, path(A, X, D, used).
 
 

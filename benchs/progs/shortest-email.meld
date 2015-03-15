@@ -1,0 +1,5 @@
+
+include #sources/shortest-path-custom.meld
+include #data/shortest-email.meld
+
+priority @cluster @static.

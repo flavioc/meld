@@ -33,10 +33,10 @@ for line in f:
       continue
    if line[0] == '#':
       continue
-   vec = line.rstrip().split(' ')
+   vec = line.rstrip().split('\t')
    id1 = map_id(int(vec[0]))
    id2 = map_id(int(vec[1]))
    if len(sys.argv) == 2:
-      write_edgew(id1, id2, int(random.randint(1, 20)))
+      write_edgew(id1, id2, int(random.randint(1, 500)))
    else:
       write_edgew(id1, id2, int(sys.argv[2]))
