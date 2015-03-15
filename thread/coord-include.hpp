@@ -28,8 +28,9 @@ do_set_node_priority(db::node *tn, const vm::priority_t priority, const bool for
          break;
       case NORMAL_QUEUE_MOVING:
          tn->set_temporary_priority_if(priority);
-         if(queues.moving.remove(tn, STATE_PRIO_CHANGE LOCKING_STAT_FLAG_FALSE))
+         if(queues.moving.remove(tn, STATE_PRIO_CHANGE LOCKING_STAT_FLAG_FALSE)) {
             prios.moving.insert(tn, tn->get_priority());
+         }
          break;
       case NORMAL_QUEUE_STATIC:
          tn->set_temporary_priority_if(priority);

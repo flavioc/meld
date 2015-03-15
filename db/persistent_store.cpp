@@ -6,16 +6,6 @@ using namespace db;
 using namespace vm;
 using namespace std;
 
-tuple_trie*
-persistent_store::get_storage(const predicate* pred) const
-{
-#ifdef COMPILED
-   return (tuple_trie*)(&tuples[pred->get_persistent_id()]);
-#else
-   return tuples + pred->get_persistent_id();
-#endif
-}
-
 persistent_store::delete_info
 persistent_store::delete_tuple(vm::tuple *tuple, vm::predicate *pred, const depth_t depth)
 {

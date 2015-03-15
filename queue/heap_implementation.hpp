@@ -11,7 +11,7 @@ typedef enum {
 
 #define HEAP_DEFINE_DATA \
 	typedef std::vector<heap_object, mem::allocator<heap_object> > heap_vector;	\
-   const queue_id_t queue_number;                                                \
+   queue_id_t queue_number;                                                \
    heap_type typ;                                                                \
 	heap_vector heap
 	
@@ -92,12 +92,13 @@ typedef enum {
 	
 #define HEAP_SET_INDEX(IDX, OBJ)	do {								\
 	heap[IDX] = OBJ;														\
-	HEAP_GET_POS(OBJ) = IDX;											\
+	HEAP_SET_POS(HEAP_GET_DATA(OBJ), IDX);					      \
 } while(false)
 	
 #define HEAP_DEFINE_HEAPIFYDOWN										\
-	void heapifydown(const int index)								\
+	inline void heapifydown(int index)								\
 	{																			\
+start:                                                      \
 		const int l = left(index);										\
 		const int r = right(index);									\
 		const bool hasleft = (l >= 0);								\
@@ -125,7 +126,7 @@ HEAP_COMPARE(HEAP_GET_PRIORITY(heap[index]), HEAP_GET_PRIORITY(heap[l]))	\
 																				\
 		HEAP_SET_INDEX(index, heap[smaller]);						\
 		HEAP_SET_INDEX(smaller, obj);								   \
-		heapifydown(smaller);											\
+      index = smaller; goto start;                          \
 	}
 
 #endif

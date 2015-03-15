@@ -38,7 +38,13 @@ struct persistent_store {
    aggregate_map aggs;
 #endif
 
-   tuple_trie *get_storage(const vm::predicate *) const;
+   inline tuple_trie *get_storage(const vm::predicate *pred) const {
+#ifdef COMPILED
+      return (tuple_trie*)(&tuples[pred->get_persistent_id()]);
+#else
+      return tuples + pred->get_persistent_id();
+#endif
+   }
 
    inline bool add_tuple(vm::tuple *tpl, vm::predicate *pred,
                          const vm::depth_t depth) {

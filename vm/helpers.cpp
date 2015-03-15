@@ -67,15 +67,16 @@ static inline void execute_run_action0(vm::tuple *tpl, vm::predicate *pred,
    }
 }
 
-static inline void execute_set_priority0(vm::node_val node, vm::priority_t prio,
-                                         vm::state &state) {
-#ifdef USE_REAL_NODES
-   db::node *n((db::node *)node);
-#else
-   db::node *n(vm::All->DATABASE->find_node(node));
-#endif
-
+static inline void set_node_priority(state &state, db::node *n,
+                                const vm::priority_t prio) {
+   if(!scheduling_mechanism)
+      return;
 #ifdef COORDINATION_BUFFERING
+   if (n->get_owner() == state.sched) {
+      state.sched->set_node_priority(n, prio);
+      return;
+   }
+
    auto it(state.set_priorities.find(n));
 
    if (it == state.set_priorities.end())
@@ -87,6 +88,16 @@ static inline void execute_set_priority0(vm::node_val node, vm::priority_t prio,
 #else
    state.sched->set_node_priority(n, prio);
 #endif
+}
+
+static inline void execute_set_priority0(vm::node_val node, vm::priority_t prio,
+                                         vm::state &state) {
+#ifdef USE_REAL_NODES
+   db::node *n((db::node *)node);
+#else
+   db::node *n(vm::All->DATABASE->find_node(node));
+#endif
+   set_node_priority(state, n, prio);
 }
 
 static inline void execute_send0(db::node *node, const vm::node_val dest_val,

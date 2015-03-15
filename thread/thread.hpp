@@ -14,6 +14,7 @@
 #include "utils/circular_buffer.hpp"
 #include "utils/tree_barrier.hpp"
 #include "vm/bitmap.hpp"
+#include "thread/priority_queue.hpp"
 #ifdef INSTRUMENTATION
 #include "stat/stat.hpp"
 #include "stat/slice.hpp"
@@ -186,7 +187,8 @@ private:
       }
    } queues;
 
-	using priority_queue = queue::intrusive_safe_complex_pqueue<db::node>;
+//	using priority_queue = queue::intrusive_safe_complex_pqueue<db::node>;
+   using priority_queue = sched::priority_queue;
 
    struct Priorities {
       priority_queue moving;

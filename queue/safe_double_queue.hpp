@@ -11,15 +11,13 @@ namespace queue
 template <class T>
 class intrusive_safe_double_queue
 {
-private:
+public:
 
 	QUEUE_DEFINE_INTRUSIVE_DOUBLE_DATA();
 
    utils::mutex mtx;
 
 	QUEUE_DEFINE_INTRUSIVE_DOUBLE_OPS();
-   
-public:
    
 	QUEUE_DEFINE_TOTAL_SIZE(); // size()
 	QUEUE_DEFINE_INTRUSIVE_DOUBLE_EMPTY(); // empty()
@@ -30,12 +28,17 @@ public:
       
 		QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP_IF_NOT_EMPTY();
    }
-   
+
+   inline bool do_pop_head(node_type& data, const queue_id_t new_state)
+   {
+		QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP();
+   }
+
    inline bool pop_head(node_type& data, const queue_id_t new_state)
    {
       MUTEX_LOCK_GUARD(mtx, normal_lock);
       
-		QUEUE_DEFINE_INTRUSIVE_DOUBLE_POP();
+      return do_pop_head(data, new_state);
    }
 
    inline bool pop_tail(node_type& data, const queue_id_t new_state)
@@ -93,18 +96,25 @@ public:
 		QUEUE_DEFINE_INTRUSIVE_MOVE_UP();
    }
 
-	inline bool remove(node_type node, const queue_id_t new_state LOCKING_STAT_FLAG)
-	{
-      MUTEX_LOCK_GUARD_FLAG(mtx, normal_lock, coord_normal_lock);
-
+   inline bool do_remove(node_type node, const queue_id_t new_state)
+   {
       if(!in_queue(node))
          return false;
 		
 		QUEUE_DEFINE_INTRUSIVE_REMOVE(node);
       return true;
+   }
+
+	inline bool remove(node_type node, const queue_id_t new_state LOCKING_STAT_FLAG)
+	{
+      MUTEX_LOCK_GUARD_FLAG(mtx, normal_lock, coord_normal_lock);
+
+      return do_remove(node, new_state);
 	}
 	
 	QUEUE_DEFINE_INTRUSIVE_CONSTRUCTOR(intrusive_safe_double_queue);
+
+   explicit intrusive_safe_double_queue() {}
    
    ~intrusive_safe_double_queue(void)
    {

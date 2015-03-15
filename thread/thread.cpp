@@ -356,17 +356,15 @@ inline bool thread::set_next_node(void) {
    if (current_node != nullptr) check_if_current_useless();
 
    while (current_node == nullptr) {
-      if (scheduling_mechanism) {
-         current_node = prios.moving.pop_best(prios.stati, STATE_WORKING);
-         if (current_node) {
-            // cout << "Got node " << current_node->get_id() << " with prio " <<
-            // current_node->get_priority() << endl;
-            break;
-         }
+      current_node = prios.moving.pop_best(prios.stati, STATE_WORKING);
+      if (current_node) {
+         //            cout << "Got node " << current_node->get_id() << endl;
+         //           cout << " with prio " << current_node->get_priority() << endl;
+         break;
       }
 
       if (pop_node_from_queues()) {
-         // cout << "Got node " << current_node->get_id() << endl;
+         //        cout << "Got node " << current_node->get_id() << endl;
          break;
       }
       if (!has_work()) {
@@ -444,14 +442,16 @@ void thread::init(const size_t) {
 
    auto it(All->DATABASE->get_node_iterator(All->MACHINE->find_first_node(id)));
    auto end(All->DATABASE->get_node_iterator(All->MACHINE->find_last_node(id)));
-   const priority_t initial(theProgram->get_initial_priority());
+   priority_t initial(theProgram->get_initial_priority());
 
-   if (initial == no_priority_value() || !scheduling_mechanism) {
+/*   if (!scheduling_mechanism) {
       for (; it != end; ++it) {
          db::node *cur_node(init_node(it));
          queues.moving.push_tail(cur_node);
       }
-   } else {
+   } else {*/
+      //initial = vm::max_priority_value();
+      cout << initial << endl;
       prios.moving.start_initial_insert(All->MACHINE->find_owned_nodes(id));
 
       for (size_t i(0); it != end; ++it, ++i) {
@@ -459,7 +459,7 @@ void thread::init(const size_t) {
 
          prios.moving.initial_fast_insert(cur_node, initial, i);
       }
-   }
+   //}
 
    threads_synchronize();
 }

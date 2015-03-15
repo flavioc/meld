@@ -7,7 +7,7 @@
 
 #define QUEUE_DEFINE_INTRUSIVE_DOUBLE_DATA() \
 	typedef T* node_type; 							\
-   const queue_id_t queue_number;     \
+   queue_id_t queue_number;     \
    T* head;						   \
 	T* tail;						   \
 	QUEUE_DEFINE_TOTAL()
