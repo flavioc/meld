@@ -20,7 +20,7 @@ struct priority_queue {
    size_t total_size{0};
    bool has_extra{false};
    vm::priority_t max_prio{0};
-#define MAX_NODES_IN_HEAP 2500000
+#define MAX_NODES_IN_HEAP 50000
 #define NUMBER_OF_EXTRA_QUEUES 4
    node_queue extra[NUMBER_OF_EXTRA_QUEUES];
 
@@ -31,7 +31,6 @@ struct priority_queue {
 
    inline void move_from_extra_to_heap() {
       assert(main_heap.size() <= total_size);
-      abort();
       db::node* n{nullptr};
       if (main_heap.size() >= MAX_NODES_IN_HEAP) return;
       for (size_t i(0); i < NUMBER_OF_EXTRA_QUEUES; ++i) {
@@ -85,7 +84,6 @@ struct priority_queue {
          __INTRUSIVE_EXTRA_ID(node) = 0;
          main_heap.do_insert(node, prio);
       } else {
-         abort();
          const double frac(prio / max_prio);
          const size_t idx(
              std::min((size_t)NUMBER_OF_EXTRA_QUEUES - 1,
@@ -172,7 +170,6 @@ struct priority_queue {
          assert(__INTRUSIVE_POS(node) <= main_heap.size());
          main_heap.do_move_node(node, new_prio);
       } else {
-         abort();
          if (main_heap.compare(new_prio, max_prio / 2) &&
              should_move_from_extra()) {
             // must be in the 20% in order to be inserted into the heap.

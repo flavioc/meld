@@ -201,8 +201,13 @@ public:
          return;
       if(__INTRUSIVE_QUEUE(node) != queue_number)
          return; // not in the queue
-		do_remove(node, queue_number);
-		do_insert(node, new_prio);
+      const size_t pos(HEAP_GET_POS(node));
+      const vm::priority_t old_prio(HEAP_GET_PRIORITY(node));
+      HEAP_GET_PRIORITY(node) = new_prio;
+      if(compare(new_prio, old_prio))
+         heapifyup(pos);
+      else
+         heapifydown(pos);
    }
 	
 	void move_node(heap_object node, const double new_prio LOCKING_STAT_FLAG)

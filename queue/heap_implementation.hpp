@@ -96,8 +96,9 @@ typedef enum {
 } while(false)
 	
 #define HEAP_DEFINE_HEAPIFYDOWN										\
-	void heapifydown(const int index)								\
+	void heapifydown(int index)								      \
 	{																			\
+start:                                                      \
 		const int l = left(index);										\
 		const int r = right(index);									\
 		const bool hasleft = (l >= 0);								\
@@ -125,7 +126,7 @@ HEAP_COMPARE(HEAP_GET_PRIORITY(heap[index]), HEAP_GET_PRIORITY(heap[l]))	\
 																				\
 		HEAP_SET_INDEX(index, heap[smaller]);						\
 		HEAP_SET_INDEX(smaller, obj);								   \
-		heapifydown(smaller);											\
+      index = smaller; goto start;                          \
 	}
 
 #endif
