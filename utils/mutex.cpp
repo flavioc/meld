@@ -38,7 +38,6 @@ utils::mutex::print_statistics(lock_stat* _stat)
 #define SHOW(NAME) cerr << #NAME ": " << _stat->NAME ## _fail << "\t/\t" << (_stat->NAME ## _ok + _stat->NAME ## _fail) << endl
    SHOW(main_db_lock);
    SHOW(node_lock);
-   SHOW(thread_lock);
    SHOW(database_lock);
    SHOW(normal_lock);
    SHOW(coord_normal_lock);

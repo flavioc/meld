@@ -14,7 +14,7 @@
 #include "utils/circular_buffer.hpp"
 #include "utils/tree_barrier.hpp"
 #include "vm/bitmap.hpp"
-#include "thread/priority_queue.hpp"
+//#include "thread/priority_queue.hpp"
 #ifdef INSTRUMENTATION
 #include "stat/stat.hpp"
 #include "stat/slice.hpp"
@@ -101,13 +101,11 @@ private:
 
 #endif
 
-   // thread state
-   enum thread_state {
-      THREAD_ACTIVE = 0,
-      THREAD_INACTIVE = 1
-   };
+#define THREAD_ACTIVE (utils::byte)0x1
+#define THREAD_INACTIVE (utils::byte)0x2
+#define THREAD_NEW_WORK (utils::byte)0x4
 
-   std::atomic<thread_state> tstate{THREAD_ACTIVE};
+   utils::byte tstate{THREAD_ACTIVE};
 
    static termination_barrier *term_barrier;
    static utils::tree_barrier *thread_barrier;
@@ -115,51 +113,96 @@ private:
    static std::atomic<int> *steal_states;
 #endif
    
-   utils::mutex lock;
-	
 #define threads_synchronize() thread_barrier->wait(get_id())
-
-   inline void set_active(void)
-   {
-      assert(tstate == THREAD_INACTIVE);
-      tstate = THREAD_ACTIVE;
-#ifdef TASK_STEALING
-      steal_states[get_id()].store(1, std::memory_order_release);
-#endif
-      term_barrier->is_active();
-   }
-   
-   inline void set_inactive(void)
-   {
-      assert(tstate == THREAD_ACTIVE);
-      tstate = THREAD_INACTIVE;
-#ifdef TASK_STEALING
-      steal_states[get_id()].store(0, std::memory_order_release);
-#endif
-      term_barrier->is_inactive();
-   }
+public:
 
    inline void activate_thread(void)
    {
-      MUTEX_LOCK_GUARD(lock, thread_lock);
-
-      if(is_inactive())
-      {
-         set_active();
-         assert(is_active());
+      utils::byte active_work(THREAD_ACTIVE | THREAD_NEW_WORK);
+      while(true) {
+         utils::byte old_val(tstate);
+         if(old_val == THREAD_INACTIVE) {
+            if(cmpxchg(&tstate, old_val, active_work) == old_val) {
+               term_barrier->is_active();
+               return;
+            }
+         } else if(old_val == THREAD_ACTIVE) {
+            if(cmpxchg(&tstate, old_val, active_work) == old_val)
+               return;
+         } else if(old_val == (THREAD_ACTIVE | THREAD_NEW_WORK)) {
+            return;
+         }
+         cpu_relax();
       }
    }
    
-   inline void set_active_if_inactive(void)
+   inline bool set_active_if_inactive(void)
    {
-      if(is_inactive())
-         activate_thread();
+      utils::byte active(THREAD_ACTIVE);
+      while(true) {
+         utils::byte old_val(tstate);
+         if(old_val == THREAD_INACTIVE) {
+            if(cmpxchg(&tstate, old_val, active) == old_val) {
+               term_barrier->is_active();
+               return true;
+            }
+         } else if(old_val == THREAD_ACTIVE) {
+            return false;
+         } else if(old_val == (THREAD_ACTIVE | THREAD_NEW_WORK)) {
+            if(cmpxchg(&tstate, old_val, active) == old_val)
+               return true;
+         }
+         cpu_relax();
+      }
    }
-   
+
+   inline bool set_inactive_if_no_work()
+   {
+      utils::byte active(THREAD_ACTIVE);
+      utils::byte inactive(THREAD_INACTIVE);
+      // return true if there is new work
+      while(true) {
+         utils::byte old_val(tstate);
+         if(old_val == inactive)
+            return false;
+         else if(old_val == THREAD_ACTIVE) {
+            if(cmpxchg(&tstate, old_val, inactive) == old_val) {
+               term_barrier->is_inactive();
+               return false;
+            }
+         } else if(old_val == (THREAD_ACTIVE | THREAD_NEW_WORK)) {
+            if(cmpxchg(&tstate, old_val, active) == old_val)
+               return true;
+         }
+         cpu_relax();
+      }
+   }
+
+   inline void set_force_inactive()
+   {
+      utils::byte active(THREAD_ACTIVE);
+      utils::byte inactive(THREAD_INACTIVE);
+      while(true) {
+         utils::byte old_val(tstate);
+         if(old_val == inactive)
+            return;
+         else if(old_val == active) {
+            if(cmpxchg(&tstate, old_val, inactive) == old_val) {
+               term_barrier->is_inactive();
+               return;
+            }
+         } else if(old_val == (active | THREAD_NEW_WORK)) {
+            if(cmpxchg(&tstate, old_val, inactive) == old_val)
+               return;
+         }
+         cpu_relax();
+      }
+   }
+
    static inline size_t num_active(void) { return term_barrier->num_active(); }
    
    inline bool is_inactive(void) const { return tstate == THREAD_INACTIVE; }
-   inline bool is_active(void) const { return tstate == THREAD_ACTIVE; }
+   inline bool is_active(void) const { return tstate & THREAD_ACTIVE; }
    
    static inline void reset_barrier(void) { term_barrier->reset(); }
    

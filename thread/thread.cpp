@@ -250,8 +250,7 @@ size_t thread::steal_nodes(db::node **buffer, const size_t max) {
 #endif
 
 void thread::killed_while_active(void) {
-   MUTEX_LOCK_GUARD(lock, thread_lock);
-   if (is_active()) set_inactive();
+   set_force_inactive();
 }
 
 bool thread::busy_wait(void) {
@@ -276,24 +275,28 @@ bool thread::busy_wait(void) {
          count++;
          if (count == backoff) {
             count = 0;
-            set_active_if_inactive();
+            const bool has_new_work(set_active_if_inactive());
             if (go_steal_nodes()) {
                ins_active;
                backoff = max(backoff >> 1, (size_t)STEALING_ROUND_MIN);
                return true;
-            } else
+            } else {
                backoff = min((size_t)STEALING_ROUND_MAX, backoff << 1);
+            }
+            if(has_new_work) {
+               ins_active;
+               return true;
+            }
          }
       }
 #endif
-      if (is_active() && !has_work()) {
-         MUTEX_LOCK_GUARD(lock, thread_lock);
-         if (!has_work()) {
-            if (is_active()) set_inactive();
-         } else
-            break;
+      const bool has_new_work(set_inactive_if_no_work());
+      if(has_new_work) {
+         ins_active;
+         return true;
+      } else {
+         ins_idle;
       }
-      ins_idle;
       if (all_threads_finished() || stop_flag) {
          assert(is_inactive());
          return false;
@@ -388,7 +391,6 @@ inline bool thread::set_next_node(void) {
 node *thread::get_work(void) {
    if (!set_next_node()) return nullptr;
 
-   set_active_if_inactive();
    ins_active;
    assert(current_node != nullptr);
 

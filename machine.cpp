@@ -150,7 +150,7 @@ void machine::start(void) {
 
    if (stat_enabled())
       // initiate alarm thread
-      alarm_thread = new thread(bind(&machine::slice_function, this));
+      alarm_thread = new std::thread(bind(&machine::slice_function, this));
 #endif
 
    sched::thread::init_barriers(all->NUM_THREADS);
