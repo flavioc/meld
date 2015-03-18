@@ -295,6 +295,8 @@ string instr_name(const instr::instr_type code) {
          return string("ALLOC");
       case FLOAT_INSTR:
          return string("FLOAT");
+      case THREAD_SEND_INSTR:
+         return string("THREAD SEND");
       case SEND_INSTR:
          return string("SEND");
       case ADDLINEAR_INSTR:
@@ -385,6 +387,10 @@ string instr_name(const instr::instr_type code) {
          return string("MVINTFIELD");
       case MVTYPEREG_INSTR:
          return string("MVTYPEREG");
+      case MVTHREADIDREG_INSTR:
+         return string("MVTHREADIDREG");
+      case MVTHREADIDFIELD_INSTR:
+         return string("MVTHREADIDFIELD");
       case MVFIELDFIELD_INSTR:
          return string("MVFIELDFIELD");
       case MVFIELDFIELDR_INSTR:
@@ -638,6 +644,7 @@ pcounter instr_print(pcounter pc, const bool recurse, const int tabcount,
               << reg_string(pcounter_reg(pc + instr_size + reg_val_size))
               << endl;
          break;
+      case THREAD_SEND_INSTR:
       case SEND_INSTR:
          cout << " " << reg_string(send_msg(pc)) << " TO "
               << reg_string(send_dest(pc)) << endl;
@@ -912,6 +919,7 @@ pcounter instr_print(pcounter pc, const bool recurse, const int tabcount,
               << field_string(pc + instr_size + reg_val_size) << " (REFS)"
               << endl;
          break;
+      case MVTHREADIDFIELD_INSTR:
       case MVHOSTFIELD_INSTR:
          cout << " TO " << field_string(pc + instr_size) << endl;
          break;
@@ -972,6 +980,7 @@ pcounter instr_print(pcounter pc, const bool recurse, const int tabcount,
          cout << " " << node_string(pcounter_node(pc + instr_size)) << " TO "
               << reg_string(pcounter_reg(pc + instr_size + node_size)) << endl;
          break;
+      case MVTHREADIDREG_INSTR:
       case MVHOSTREG_INSTR:
          cout << " TO " << reg_string(pcounter_reg(pc + instr_size)) << endl;
          break;

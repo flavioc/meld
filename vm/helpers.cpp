@@ -4,6 +4,7 @@
 #include "vm/state.hpp"
 #include "db/database.hpp"
 #include "vm/priority.hpp"
+#include "thread/thread.hpp"
 
 static inline void execute_add_linear0(db::node *node, vm::tuple *tuple,
                                        vm::predicate *pred, vm::state &state) {
@@ -59,7 +60,7 @@ static inline void execute_run_action0(vm::tuple *tpl, vm::predicate *pred,
    assert(pred->is_action_pred());
    switch (state.direction) {
       case vm::POSITIVE_DERIVATION:
-         All->MACHINE->run_action(state.sched, tpl, pred, state.gc_nodes);
+         vm::All->MACHINE->run_action(state.sched, tpl, pred, state.gc_nodes);
          break;
       case vm::NEGATIVE_DERIVATION:
          vm::tuple::destroy(tpl, pred, state.gc_nodes);
@@ -67,10 +68,9 @@ static inline void execute_run_action0(vm::tuple *tpl, vm::predicate *pred,
    }
 }
 
-static inline void set_node_priority(state &state, db::node *n,
-                                const vm::priority_t prio) {
-   if(!scheduling_mechanism)
-      return;
+static inline void set_node_priority(vm::state &state, db::node *n,
+                                     const vm::priority_t prio) {
+   if (!scheduling_mechanism) return;
 #ifdef COORDINATION_BUFFERING
    if (n->get_owner() == state.sched) {
       state.sched->set_node_priority(n, prio);
@@ -100,10 +100,21 @@ static inline void execute_set_priority0(vm::node_val node, vm::priority_t prio,
    set_node_priority(state, n, prio);
 }
 
+static inline void execute_thread_send0(sched::thread *th, vm::tuple *tpl,
+                                        vm::predicate *pred, vm::state &state) {
+   if(th == state.sched) {
+      if(pred->is_linear_pred())
+         execute_enqueue_linear0(state.node, tpl, pred, state);
+      else
+         execute_add_persistent0(th->thread_node, tpl, pred, state);
+   } else
+      state.sched->new_thread_work(th, tpl, pred);
+}
+
 static inline void execute_send0(db::node *node, const vm::node_val dest_val,
                                  vm::tuple *tuple, vm::predicate *pred,
                                  vm::state &state) {
-   if (state.direction == NEGATIVE_DERIVATION && pred->is_linear_pred() &&
+   if (state.direction == vm::NEGATIVE_DERIVATION && pred->is_linear_pred() &&
        !pred->is_reused_pred()) {
       vm::tuple::destroy(tuple, pred, state.gc_nodes);
       return;

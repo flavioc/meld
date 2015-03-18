@@ -642,13 +642,15 @@ state::run_node(db::node *node)
 #endif
       node->unprocessed_facts = false;
       MUTEX_UNLOCK(node->main_lock, node_lock);
+      // incoming facts have been processed, we release the main lock
+      // but the database locks remains locked.
 	}
 
    node->rounds++;
    do_persistent_tuples(node);
 
    // add linear facts to the node matcher
-   if(theProgram->has_thread_predicates()) {
+   if(theProgram->has_thread_predicates() && sched->thread_node != node) {
       do_persistent_tuples(sched->thread_node);
       matcher->add_thread(sched->thread_node->matcher);
    }
@@ -685,7 +687,7 @@ state::run_node(db::node *node)
          }
       }
       do_persistent_tuples(node);
-      if(theProgram->has_thread_predicates())
+      if(theProgram->has_thread_predicates() && node != sched->thread_node)
          do_persistent_tuples(sched->thread_node);
 
       if(node->has_new_owner()) {

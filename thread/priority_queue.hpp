@@ -167,7 +167,6 @@ struct priority_queue {
       const size_t id(__INTRUSIVE_EXTRA_ID(node));
       check_prio(new_prio);
       if (id == 0) {
-         assert(__INTRUSIVE_POS(node) <= main_heap.size());
          main_heap.do_move_node(node, new_prio);
       } else {
          if (main_heap.compare(new_prio, max_prio / 2) &&

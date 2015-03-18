@@ -71,10 +71,10 @@ struct full_tuple : public mem::base {
       delete stpl;
    }
 
-   explicit full_tuple(vm::tuple *_tuple, vm::predicate *_pred,
+   explicit full_tuple(vm::tuple *_tuple, const vm::predicate *_pred,
                        const derivation_direction _dir,
                        const vm::depth_t _depth = 0)
-       : data(_tuple), pred(_pred), dir(_dir), depth(_depth) {}
+       : data(_tuple), pred((vm::predicate*)_pred), dir(_dir), depth(_depth) {}
 
    explicit full_tuple(void)  // for serialization purposes
    {}

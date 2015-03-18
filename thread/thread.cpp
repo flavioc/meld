@@ -79,6 +79,27 @@ void thread::assert_end(void) const {
    assert(all_threads_finished());
 }
 
+void thread::new_thread_work(thread *to, vm::tuple *tpl, const vm::predicate *pred)
+{
+   db::node *n(to->thread_node);
+
+   LOCK_STACK(nodelock);
+   NODE_LOCK(n, nodelock, node_lock);
+
+#ifdef FACT_STATISTICS
+   count_add_work_other++;
+#endif
+   LOCKING_STAT(database_lock_fail);
+   n->add_work_others(tpl, pred, vm::POSITIVE_DERIVATION, 0);
+#ifdef INSTRUMENTATION
+   sent_facts_other_thread++;
+   all_transactions++;
+   thread_transactions++;
+#endif
+   comm_threads.set_bit(to->get_id());
+   NODE_UNLOCK(n, nodelock);
+}
+
 void thread::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pred,
                       const derivation_direction dir, const depth_t depth) {
    assert(is_active());
@@ -192,6 +213,7 @@ bool thread::go_steal_nodes(void) {
                make_node_static(node, this);
             }
          }
+// XXX add to queue at once.
          node->set_owner(this);
          add_to_queue(node);
          NODE_UNLOCK(node, nodelock);
@@ -370,6 +392,14 @@ inline bool thread::set_next_node(void) {
          //        cout << "Got node " << current_node->get_id() << endl;
          break;
       }
+
+      // process the thread node because it may have facts.
+      if(thread_node && thread_node->unprocessed_facts) {
+         // cout << "Running thread node\n";
+         current_node = thread_node;
+         break;
+      }
+
       if (!has_work()) {
          for (auto it(comm_threads.begin(All->NUM_THREADS)); !it.end(); ++it) {
             const size_t id(*it);

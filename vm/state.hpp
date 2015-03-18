@@ -118,6 +118,7 @@ struct state {
    define_get(node, vm::node_val, return FIELD_NODE(regs[num]));
    define_get(struct, runtime::struct1 *, return FIELD_STRUCT(regs[num]));
    define_get(array, runtime::array *, return FIELD_ARRAY(regs[num]));
+   define_get(thread, thread_val, return FIELD_THREAD(regs[num]));
 
 #undef define_get
 
@@ -133,6 +134,7 @@ struct state {
    define_set(cons, runtime::cons *, SET_FIELD_CONS(regs[num], val));
    define_set(tuple, vm::tuple *, set_ptr(num, (ptr_val)val));
    define_set(node, const node_val, SET_FIELD_NODE(regs[num], val));
+   define_set(thread, const thread_val, SET_FIELD_THREAD(regs[num], val));
    define_set(struct, runtime::struct1 *, SET_FIELD_STRUCT(regs[num], val));
    define_set(array, runtime::array *, SET_FIELD_ARRAY(regs[num], val));
 

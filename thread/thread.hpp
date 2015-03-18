@@ -442,6 +442,7 @@ public:
    void loop(void);
    void init(const size_t);
    
+   void new_thread_work(thread *, vm::tuple *, const vm::predicate *);
    void new_work(db::node *, db::node *, vm::tuple *, vm::predicate *, const vm::derivation_direction, const vm::depth_t);
    void new_work_list(db::node *from, db::node *to, vm::buffer_node &b)  __attribute__((always_inline)) {
       assert(is_active());

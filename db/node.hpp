@@ -213,7 +213,7 @@ struct node {
    }
 
    inline void inner_add_work_others(
-       vm::tuple *tpl, vm::predicate *pred,
+       vm::tuple *tpl, const vm::predicate *pred,
        const vm::derivation_direction dir = vm::POSITIVE_DERIVATION,
        const vm::depth_t depth = 0) {
       if (pred->is_action_pred()) {
@@ -227,7 +227,7 @@ struct node {
    }
 
    inline void add_work_others(
-       vm::tuple *tpl, vm::predicate *pred,
+       vm::tuple *tpl, const vm::predicate *pred,
        const vm::derivation_direction dir = vm::POSITIVE_DERIVATION,
        const vm::depth_t depth = 0) {
       unprocessed_facts = true;

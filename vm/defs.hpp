@@ -21,6 +21,7 @@ typedef int32_t int_val;
 typedef double float_val;
 typedef uint64_t ptr_val;
 typedef uint64_t node_val;
+typedef uint64_t thread_val;
 typedef bool bool_val;
 typedef unsigned char predicate_id;
 typedef unsigned short process_id;
@@ -50,6 +51,7 @@ union tuple_field {
    int_val int_field;
    float_val float_field;
    node_val node_field;
+   thread_val thread_field;
    ptr_val ptr_field;
 };
 
@@ -63,6 +65,7 @@ union tuple_field {
 #define FIELD_PCOUNTER(F) ((pcounter)FIELD_PTR(F))
 #define FIELD_STRUCT(F) ((runtime::struct1*)FIELD_PTR(F))
 #define FIELD_ARRAY(F) ((runtime::array*)FIELD_PTR(F))
+#define FIELD_THREAD(F) ((vm::thread_val)FIELD_PTR(F))
 // for list matches, see vm/match.hpp
 #define FIELD_LIST_MATCH(F) ((vm::list_match*)FIELD_PTR(F))
 
@@ -72,6 +75,7 @@ union tuple_field {
 #define SET_FIELD_NODE(F, N) ((F).node_field = (vm::node_val)(N))
 #define SET_FIELD_PTR(F, P) ((F).ptr_field = (vm::ptr_val)(P))
 #define SET_FIELD_CONS(F, C) (SET_FIELD_PTR(F, C))
+#define SET_FIELD_THREAD(F, T) (SET_FIELD_PTR(F, T))
 #define SET_FIELD_STRUCT(F, S) (SET_FIELD_PTR(F, S))
 #define SET_FIELD_STRING(F, S) (SET_FIELD_PTR(F, S))
 #define SET_FIELD_ARRAY(F, S) (SET_FIELD_PTR(F, S))

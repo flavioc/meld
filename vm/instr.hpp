@@ -59,6 +59,7 @@ const size_t call_size = instr_size + extern_id_size + reg_val_size + type_size 
 const size_t iter_options_size = 2 * sizeof(utils::byte);
 
 const size_t SEND_BASE = instr_size + 2 * reg_val_size;
+const size_t THREAD_SEND_BASE = SEND_BASE;
 const size_t OP_BASE = instr_size + 4;
 const size_t ITER_BASE0 = instr_size + ptr_size + predicate_size +
                           reg_val_size + bool_size + 2 * jump_size;
@@ -103,6 +104,8 @@ const size_t MAKE_STRUCTR_BASE = instr_size + type_size + reg_val_size;
 const size_t MVINTFIELD_BASE = instr_size + int_size + field_size;
 const size_t MVINTREG_BASE = instr_size + int_size + reg_val_size;
 const size_t MVTYPEREG_BASE = MVINTREG_BASE;
+const size_t MVTHREADIDREG_BASE = instr_size + reg_val_size;
+const size_t MVTHREADIDFIELD_BASE = instr_size + field_size;
 const size_t MVFIELDFIELD_BASE = instr_size + field_size + field_size;
 const size_t MVFIELDREG_BASE = instr_size + field_size + reg_val_size;
 const size_t MVPTRREG_BASE = instr_size + ptr_size + reg_val_size;
@@ -359,6 +362,9 @@ enum instr_type {
    TPERS_ITER_INSTR = 0xB7,
    FABS_INSTR = 0xB8,
    MVTYPEREG_INSTR = 0xB9,
+   MVTHREADIDREG_INSTR = 0xBA,
+   MVTHREADIDFIELD_INSTR = 0xBB,
+   THREAD_SEND_INSTR = 0xBC,
    RETURN_LINEAR_INSTR = 0xD0,
    RETURN_DERIVED_INSTR = 0xF0
 };
@@ -745,6 +751,7 @@ enum instr_argument_type { ARGUMENT_ANYTHING };
 inline pcounter advance(const pcounter pc) {
    switch (fetch(pc)) {
       case SEND_INSTR:
+      case THREAD_SEND_INSTR:
          return pc + SEND_BASE;
       case ADDLINEAR_INSTR:
          return pc + ADDLINEAR_BASE;
@@ -1133,6 +1140,12 @@ inline pcounter advance(const pcounter pc) {
 
       case MVTYPEREG_INSTR:
          return pc + MVTYPEREG_BASE;
+
+      case MVTHREADIDREG_INSTR:
+         return pc + MVTHREADIDREG_BASE;
+
+      case MVTHREADIDFIELD_INSTR:
+         return pc + MVTHREADIDFIELD_BASE;
 
       default:
          throw malformed_instr_error("unknown instruction code (advance)");

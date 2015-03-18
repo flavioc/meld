@@ -70,8 +70,9 @@ field_type_size(field_type type)
       case FIELD_LIST:
       case FIELD_STRUCT:
       case FIELD_ARRAY:
+      case FIELD_THREAD:
 			return sizeof(ptr_val);
-
+      
       default:
          throw type_error("Unrecognized field type " + to_string(type) + " (field_type_size)");
    }

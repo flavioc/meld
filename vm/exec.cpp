@@ -113,6 +113,17 @@ static inline void execute_send(db::node* node, const pcounter& pc,
    execute_send0(node, dest_val, tuple, pred, state);
 }
 
+static inline void execute_thread_send(const pcounter& pc, state& state) {
+   const reg_num msg(send_msg(pc));
+   const reg_num dest(send_dest(pc));
+   const thread_val dest_val(state.get_thread(dest));
+   predicate* pred(state.preds[msg]);
+   sched::thread *th((sched::thread*)dest_val);
+   tuple* tuple(state.get_tuple(msg));
+
+   execute_thread_send0(th, tuple, pred, state);
+}
+
 static inline void execute_send_delay(db::node* node, const pcounter& pc,
                                       state& state) {
    const reg_num msg(send_delay_msg(pc));
@@ -1758,6 +1769,19 @@ static inline void execute_mvhostfield(db::node* node, pcounter& pc,
 #endif
 }
 
+static inline void execute_mvthreadidreg(pcounter& pc, state& state) {
+   const reg_num reg(pcounter_reg(pc + instr_size));
+
+   state.set_thread(reg, (thread_val)state.sched);
+}
+
+static inline void execute_mvthreadidfield(pcounter& pc, state& state) {
+   tuple* tpl(get_tuple_field(state, pc + instr_size));
+   const field_num field(val_field_num(pc + instr_size));
+
+   tpl->set_thread(field, (thread_val)state.sched);
+}
+
 static inline void execute_mvregconst(pcounter& pc, state& state) {
    const const_id id(pcounter_const_id(pc + instr_size + reg_val_size));
    All->set_const(id, state.get_reg(pcounter_reg(pc + instr_size)));
@@ -2532,6 +2556,12 @@ static inline return_type execute(pcounter pc, state& state, const reg_num reg,
    ADVANCE()
    ENDOP()
 
+   CASE(THREAD_SEND_INSTR)
+   JUMP(thread_send, THREAD_SEND_BASE)
+   execute_thread_send(pc, state);
+   ADVANCE()
+   ENDOP()
+
    CASE(ADDLINEAR_INSTR)
    JUMP(addlinear, ADDLINEAR_BASE)
    execute_add_linear(state.node, pc, state);
@@ -2950,6 +2980,24 @@ static inline return_type execute(pcounter pc, state& state, const reg_num reg,
    state.stat.stat_moves_executed++;
 #endif
    execute_mvhostreg(state.node, pc, state);
+   ADVANCE()
+   ENDOP()
+
+   CASE(MVTHREADIDREG_INSTR)
+   JUMP(mvthreadidreg, MVTHREADIDREG_BASE)
+#ifdef CORE_STATISTICS
+   state.state.stat_moves_executed++;
+#endif
+   execute_mvthreadidreg(pc, state);
+   ADVANCE()
+   ENDOP()
+
+   CASE(MVTHREADIDFIELD_INSTR)
+   JUMP(mvthreadidfield, MVTHREADIDFIELD_BASE)
+#ifdef CORE_STATISTICS
+   state.stat.stat_moves_executed++;
+#endif
+   execute_mvthreadidfield(pc, state);
    ADVANCE()
    ENDOP()
 

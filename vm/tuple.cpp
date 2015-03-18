@@ -232,6 +232,8 @@ void tuple::destructor(predicate *pred, candidate_gc_nodes &gc_nodes) {
          case FIELD_STRING:
             get_string(i)->dec_refs();
             break;
+         case FIELD_THREAD:
+            break;
          case FIELD_STRUCT:
             get_struct(i)
                 ->dec_refs((struct_type *)pred->get_field_type(i), gc_nodes);

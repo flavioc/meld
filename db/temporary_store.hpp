@@ -61,7 +61,7 @@ struct temporary_store
          assert(p < vm::theProgram->num_linear_predicates());
          return incoming + p;
       }
-      inline void add_incoming(vm::tuple *tpl, vm::predicate *pred)
+      inline void add_incoming(vm::tuple *tpl, const vm::predicate *pred)
       {
          tuple_list *ls(get_incoming(pred->get_linear_id()));
 
