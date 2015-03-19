@@ -18,7 +18,7 @@ static inline void execute_add_linear0(db::node *node, vm::tuple *tuple,
    state.linear_facts_generated++;
 }
 
-static inline void execute_enqueue_linear0(db::node *node, vm::tuple *tuple,
+static inline void execute_enqueue_linear0(vm::tuple *tuple,
                                            vm::predicate *pred,
                                            vm::state &state) {
    assert(pred->is_linear_pred());
@@ -28,12 +28,11 @@ static inline void execute_enqueue_linear0(db::node *node, vm::tuple *tuple,
    std::cout << std::endl;
 #endif
 
-   node->store.add_generated(tuple, pred);
-   state.generated_facts = true;
+   state.add_generated(tuple, pred);
    state.linear_facts_generated++;
 }
 
-static inline void execute_add_persistent0(db::node *node, vm::tuple *tpl,
+static inline void execute_add_node_persistent0(db::node *node, vm::tuple *tpl,
                                            vm::predicate *pred,
                                            vm::state &state) {
 #ifdef DEBUG_SENDS
@@ -48,11 +47,32 @@ static inline void execute_add_persistent0(db::node *node, vm::tuple *tpl,
        pred->is_persistent_pred() && !pred->has_code &&
        !pred->is_aggregate_pred()) {
       node->pers_store.add_tuple(tpl, pred, state.depth);
-      node->matcher.new_persistent_fact(pred->get_id());
+      state.matcher->new_persistent_fact(pred->get_id());
       return;
    }
    auto stuple(new vm::full_tuple(tpl, pred, state.direction, state.depth));
-   node->store.persistent_tuples.push_back(stuple);
+   state.add_node_persistent_fact(stuple);
+}
+
+static inline void execute_add_thread_persistent0(db::node *thread_node, vm::tuple *tpl,
+                                           vm::predicate *pred, vm::state& state) {
+#ifdef DEBUG_SENDS
+   std::cout << "\tadd thread persistent ";
+   tpl->print(std::cout, pred);
+   std::cout << std::endl;
+#endif
+
+   state.persistent_facts_generated++;
+   assert(pred->is_persistent_pred() || pred->is_reused_pred());
+   if (state.direction == vm::POSITIVE_DERIVATION &&
+       pred->is_persistent_pred() && !pred->has_code &&
+       !pred->is_aggregate_pred()) {
+      thread_node->pers_store.add_tuple(tpl, pred, state.depth);
+      state.matcher->new_persistent_fact(pred->get_id());
+      return;
+   }
+   auto stuple(new vm::full_tuple(tpl, pred, state.direction, state.depth));
+   state.add_thread_persistent_fact(stuple);
 }
 
 static inline void execute_run_action0(vm::tuple *tpl, vm::predicate *pred,
@@ -104,9 +124,9 @@ static inline void execute_thread_send0(sched::thread *th, vm::tuple *tpl,
                                         vm::predicate *pred, vm::state &state) {
    if(th == state.sched) {
       if(pred->is_linear_pred())
-         execute_enqueue_linear0(state.node, tpl, pred, state);
+         execute_enqueue_linear0(tpl, pred, state);
       else
-         execute_add_persistent0(th->thread_node, tpl, pred, state);
+         execute_add_thread_persistent0(th->thread_node, tpl, pred, state);
    } else
       state.sched->new_thread_work(th, tpl, pred);
 }
@@ -152,17 +172,17 @@ static inline void execute_send0(db::node *node, const vm::node_val dest_val,
       if (pred->is_action_pred())
          execute_run_action0(tuple, pred, state);
       else if (pred->is_persistent_pred() || pred->is_reused_pred())
-         execute_add_persistent0(node, tuple, pred, state);
+         execute_add_node_persistent0(node, tuple, pred, state);
       else
-         execute_enqueue_linear0(node, tuple, pred, state);
+         execute_enqueue_linear0(tuple, pred, state);
    } else {
 #ifdef USE_REAL_NODES
       db::node *node((db::node *)dest_val);
 #else
-      db::node *node(All->DATABASE->find_node(dest_val));
+      db::node *node(vm::All->DATABASE->find_node(dest_val));
 #endif
       if (pred->is_action_pred())
-         All->MACHINE->run_action(state.sched, tuple, pred, state.gc_nodes);
+         vm::All->MACHINE->run_action(state.sched, tuple, pred, state.gc_nodes);
       else {
 #ifdef FACT_BUFFERING
          if (pred->is_persistent_pred() || pred->is_reused_pred() ||
@@ -179,11 +199,11 @@ static inline void execute_send0(db::node *node, const vm::node_val dest_val,
    }
 }
 
-static inline tuple_field axiom_read_data(pcounter &pc, type *t) {
-   tuple_field f;
+static inline vm::tuple_field axiom_read_data(vm::pcounter &pc, vm::type *t) {
+   vm::tuple_field f;
 
    switch (t->get_type()) {
-      case FIELD_INT:
+      case vm::FIELD_INT:
          SET_FIELD_INT(f, vm::instr::pcounter_int(pc));
          vm::instr::pcounter_move_int(&pc);
          break;
@@ -278,9 +298,9 @@ static inline void add_new_axioms(state &state, db::node *node, pcounter pc,
          if (pred->is_persistent_pred() && !pred->has_code &&
              !pred->is_aggregate_pred()) {
             node->pers_store.add_tuple(tpl, pred, state.depth);
-            node->matcher.new_persistent_fact(pred->get_id());
+            state.matcher->new_persistent_fact(pred->get_id());
          } else
-            execute_add_persistent0(node, tpl, pred, state);
+            execute_add_node_persistent0(node, tpl, pred, state);
       } else
          execute_add_linear0(node, tpl, pred, state);
    }

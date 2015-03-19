@@ -334,7 +334,6 @@ struct intrusive_list
 
       explicit intrusive_list(void)
       {
-         //assertl();
       }
 };
 

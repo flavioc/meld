@@ -23,6 +23,9 @@
 #include "vm/stat.hpp"
 #endif
 #include "vm/buffer.hpp"
+#ifdef COMPILED
+#include COMPILED_HEADER
+#endif
 
 // forward declaration
 namespace sched {
@@ -44,7 +47,7 @@ struct state {
        free_array;
 
    void purge_runtime_objects();
-   full_tuple *search_for_negative_tuple(db::node *, full_tuple *);
+   full_tuple *search_for_negative_tuple(vm::full_tuple_list*, full_tuple *);
 
    void indexing_state_machine(db::node *);
 
@@ -88,9 +91,41 @@ struct state {
    std::atomic<size_t> instr_rules_run{0};
 #endif
    bool generated_facts;
+   // generated linear facts
+#ifdef COMPILED
+   tuple_list generated[COMPILED_NUM_LINEAR];
+#else
+   tuple_list *generated{nullptr};
+#endif
+   vm::full_tuple_list node_persistent_tuples;
+   vm::full_tuple_list thread_persistent_tuples;
+
+   inline tuple_list* get_generated(const vm::predicate_id p)
+   {
+      assert(p < vm::theProgram->num_linear_predicates());
+      return generated + p;
+   }
+
+   inline void add_generated(vm::tuple *tpl, const vm::predicate *pred)
+   {
+      tuple_list *ls(get_generated(pred->get_linear_id()));
+      ls->push_back(tpl);
+      generated_facts = true;
+   }
+
+   inline void add_node_persistent_fact(vm::full_tuple *stpl)
+   {
+      node_persistent_tuples.push_back(stpl);
+   }
+
+   inline void add_thread_persistent_fact(vm::full_tuple *stpl)
+   {
+      thread_persistent_tuples.push_back(stpl);
+   }
+
    bool running_rule;
    bool hash_removes;
-   vm::counter *match_counter;
+   vm::counter *match_counter{nullptr};
    std::unordered_set<utils::byte *, utils::pointer_hash<utils::byte>,
                       std::equal_to<utils::byte *>,
                       mem::allocator<utils::byte *>> allocated_match_objects;
@@ -167,8 +202,8 @@ struct state {
       free_struct1.push_back(std::make_pair(s, t));
    }
 
-   void add_to_aggregate(db::node *, full_tuple *);
-   void do_persistent_tuples(db::node *);
+   void add_to_aggregate(db::node *, vm::full_tuple_list *, full_tuple *);
+   void do_persistent_tuples(db::node *, vm::full_tuple_list*);
    void process_persistent_tuple(db::node *, full_tuple *, vm::tuple *);
    void process_consumed_local_tuples(void);
    void process_action_tuples(db::node *);

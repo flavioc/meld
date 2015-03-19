@@ -37,25 +37,6 @@ struct temporary_store
       // incoming action tuples
       vm::full_tuple_list incoming_action_tuples;
 
-      // generated linear facts
-#ifdef COMPILED
-      tuple_list generated[COMPILED_NUM_LINEAR];
-#else
-      tuple_list *generated;
-#endif
-
-      // new action facts
-      vm::full_tuple_list action_tuples;
-
-      // queue of persistent tuples
-      vm::full_tuple_list persistent_tuples;
-
-      inline tuple_list* get_generated(const vm::predicate_id p)
-      {
-         assert(p < vm::theProgram->num_linear_predicates());
-         return generated + p;
-      }
-
       inline tuple_list* get_incoming(const vm::predicate_id p)
       {
          assert(p < vm::theProgram->num_linear_predicates());
@@ -74,31 +55,12 @@ struct temporary_store
          ls->splice_back(other);
       }
 
-      inline void add_generated(vm::tuple *tpl, vm::predicate *pred)
-      {
-         tuple_list *ls(get_generated(pred->get_linear_id()));
-         ls->push_back(tpl);
-      }
-
-      inline void add_action_fact(vm::full_tuple *stpl)
-      {
-         action_tuples.push_back(stpl);
-      }
-
-      inline void add_persistent_fact(vm::full_tuple *stpl)
-      {
-         persistent_tuples.push_back(stpl);
-      }
-
       explicit temporary_store(void)
       {
 #ifndef COMPILED
          incoming = mem::allocator<tuple_list>().allocate(vm::theProgram->num_linear_predicates());
          for(size_t i(0); i < vm::theProgram->num_linear_predicates(); ++i)
             mem::allocator<tuple_list>().construct(incoming + i);
-         generated = mem::allocator<tuple_list>().allocate(vm::theProgram->num_linear_predicates());
-         for(size_t i(0); i < vm::theProgram->num_linear_predicates(); ++i)
-            mem::allocator<tuple_list>().construct(generated + i);
 #endif
       }
 
@@ -108,9 +70,6 @@ struct temporary_store
          for(size_t i(0); i < vm::theProgram->num_linear_predicates(); ++i)
             mem::allocator<tuple_list>().destroy(incoming + i);
          mem::allocator<tuple_list>().deallocate(incoming, vm::theProgram->num_linear_predicates());
-         for(size_t i(0); i < vm::theProgram->num_linear_predicates(); ++i)
-            mem::allocator<tuple_list>().destroy(generated + i);
-         mem::allocator<tuple_list>().deallocate(generated, vm::theProgram->num_linear_predicates());
 #endif
       }
 };

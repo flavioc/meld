@@ -82,12 +82,20 @@ static inline void execute_add_linear(db::node* node, pcounter& pc,
    execute_add_linear0(node, tuple, pred, state);
 }
 
-static inline void execute_add_persistent(db::node* node, pcounter& pc,
+static inline void execute_add_node_persistent(db::node* node, pcounter& pc,
                                           state& state) {
    const reg_num r(pcounter_reg(pc + instr_size));
 
    // tuple is either persistent or linear reused
-   execute_add_persistent0(node, state.get_tuple(r), state.preds[r], state);
+   execute_add_node_persistent0(node, state.get_tuple(r), state.preds[r], state);
+}
+
+static inline void execute_add_thread_persistent(db::node* node, pcounter& pc,
+                                          state& state) {
+   const reg_num r(pcounter_reg(pc + instr_size));
+
+   // tuple is either persistent or linear reused
+   execute_add_thread_persistent0(node, state.get_tuple(r), state.preds[r], state);
 }
 
 static inline void execute_run_action(pcounter& pc, state& state) {
@@ -95,11 +103,11 @@ static inline void execute_run_action(pcounter& pc, state& state) {
    execute_run_action0(state.get_tuple(r), state.preds[r], state);
 }
 
-static inline void execute_enqueue_linear(db::node* node, pcounter& pc,
+static inline void execute_enqueue_linear(pcounter& pc,
                                           state& state) {
    const reg_num r(pcounter_reg(pc + instr_size));
 
-   execute_enqueue_linear0(node, state.get_tuple(r), state.preds[r], state);
+   execute_enqueue_linear0(state.get_tuple(r), state.preds[r], state);
 }
 
 static inline void execute_send(db::node* node, const pcounter& pc,
@@ -751,7 +759,7 @@ static inline return_type execute_opers_iter(const reg_num reg, match* m,
 
 static inline return_type execute_linear_iter_list(
     const reg_num reg, match* m, const pcounter first, state& state,
-    predicate* pred, db::node* node,
+    predicate* pred,
     utils::intrusive_list<vm::tuple>* local_tuples, hash_table* tbl = nullptr) {
    if (local_tuples == nullptr) return RETURN_NO_RETURN;
 
@@ -806,8 +814,7 @@ static inline return_type execute_linear_iter_list(
                   it = tbl->erase_from_list(local_tuples, it);
                else
                   it = local_tuples->erase(it);
-               node->store.add_generated(match_tuple, pred);
-               state.generated_facts = true;
+               state.add_generated(match_tuple, pred);
                next_iter = false;
             } else {
                if (tbl) {
@@ -830,10 +837,10 @@ static inline return_type execute_linear_iter_list(
             vm::tuple::destroy(match_tuple, pred, state.gc_nodes);
             if (tbl) {
                if(local_tuples->empty() && tbl->empty())
-                  state.node->matcher.empty_predicate(pred->get_id());
+                  state.matcher->empty_predicate(pred->get_id());
             } else {
                if (local_tuples->empty())
-                  state.node->matcher.empty_predicate(pred->get_id());
+                  state.matcher->empty_predicate(pred->get_id());
             }
             next_iter = false;
          }
@@ -864,14 +871,14 @@ static inline return_type execute_linear_iter(const reg_num reg, match* m,
          utils::intrusive_list<vm::tuple>* local_tuples(
              table->lookup_list(mf.field));
          return_type ret(execute_linear_iter_list(reg, m, first, state, pred,
-                                                  node, local_tuples, table));
+                                                  local_tuples, table));
          return ret;
       } else {
          // go through hash table
          for (hash_table::iterator it(table->begin()); !it.end(); ++it) {
             utils::intrusive_list<vm::tuple>* local_tuples(*it);
             return_type ret(execute_linear_iter_list(
-                reg, m, first, state, pred, node, local_tuples, table));
+                reg, m, first, state, pred, local_tuples, table));
             if (ret != RETURN_NO_RETURN) return ret;
          }
          return RETURN_NO_RETURN;
@@ -879,7 +886,7 @@ static inline return_type execute_linear_iter(const reg_num reg, match* m,
    } else {
       utils::intrusive_list<vm::tuple>* local_tuples(
           node->linear.get_linked_list(pred->get_linear_id()));
-      return execute_linear_iter_list(reg, m, first, state, pred, node,
+      return execute_linear_iter_list(reg, m, first, state, pred,
                                       local_tuples);
    }
 }
@@ -993,7 +1000,7 @@ static inline pcounter execute_select(db::node* node, pcounter pc,
    return select_hash_code(hash_start, select_hash_size(pc), hashed);
 }
 
-static inline void execute_remove(db::node* node, pcounter pc, state& state) {
+static inline void execute_remove(pcounter pc, state& state) {
    const reg_num reg(pcounter_reg(pc + instr_size));
    vm::tuple* tpl(state.get_tuple(reg));
    vm::predicate* pred(state.preds[reg]);
@@ -1010,9 +1017,13 @@ static inline void execute_remove(db::node* node, pcounter pc, state& state) {
    assert(tpl);
 
    if (state.direction == POSITIVE_DERIVATION) {
-      if (pred->is_reused_pred())
-         node->store.persistent_tuples.push_back(
-             full_tuple::remove_new(tpl, pred, state.depth));
+      if (pred->is_reused_pred()) {
+         auto stpl(full_tuple::remove_new(tpl, pred, state.depth));
+         if(pred->is_thread_pred())
+            state.add_thread_persistent_fact(stpl);
+         else
+            state.add_node_persistent_fact(stpl);
+      }
       state.linear_facts_consumed++;
 #ifdef INSTRUMENTATION
       state.instr_facts_consumed++;
@@ -1023,7 +1034,7 @@ static inline void execute_remove(db::node* node, pcounter pc, state& state) {
    }
 }
 
-static inline void execute_update(db::node* node, pcounter pc, state& state) {
+static inline void execute_update(pcounter pc, state& state) {
    const reg_num reg(pcounter_reg(pc + instr_size));
    vm::tuple* tpl(state.get_tuple(reg));
    vm::predicate* pred(state.preds[reg]);
@@ -1034,7 +1045,7 @@ static inline void execute_update(db::node* node, pcounter pc, state& state) {
    tpl->print(cout, pred);
    cout << endl;
 #endif
-   node->matcher.register_predicate_update(pred->get_id());
+   state.matcher->register_predicate_update(pred->get_id());
 }
 
 static inline void set_call_return(const reg_num reg, const utils::byte typ, const bool gc,
@@ -2534,13 +2545,13 @@ static inline return_type execute(pcounter pc, state& state, const reg_num reg,
 
    CASE(REMOVE_INSTR)
    JUMP(remove, REMOVE_BASE)
-   execute_remove(state.node, pc, state);
+   execute_remove(pc, state);
    ADVANCE()
    ENDOP()
 
    CASE(UPDATE_INSTR)
    JUMP(update, UPDATE_BASE)
-   execute_update(state.node, pc, state);
+   execute_update(pc, state);
    ADVANCE()
    ENDOP()
 
@@ -2570,7 +2581,7 @@ static inline return_type execute(pcounter pc, state& state, const reg_num reg,
 
    CASE(ADDPERS_INSTR)
    JUMP(addpers, ADDPERS_BASE)
-   execute_add_persistent(state.node, pc, state);
+   execute_add_node_persistent(state.node, pc, state);
    ADVANCE()
    ENDOP()
 
@@ -2582,7 +2593,7 @@ static inline return_type execute(pcounter pc, state& state, const reg_num reg,
 
    CASE(ENQUEUE_LINEAR_INSTR)
    JUMP(enqueue_linear, ENQUEUE_LINEAR_BASE)
-   execute_enqueue_linear(state.node, pc, state);
+   execute_enqueue_linear(pc, state);
    ADVANCE()
    ENDOP()
 
@@ -3483,7 +3494,7 @@ static inline return_type execute(pcounter pc, state& state, const reg_num reg,
 
    CASE(ADDTPERS_INSTR)
    JUMP(addtpers, ADDTPERS_BASE)
-   execute_add_persistent(state.sched->thread_node, pc, state);
+   execute_add_thread_persistent(state.sched->thread_node, pc, state);
    ADVANCE()
    ENDOP()
 
