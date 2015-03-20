@@ -22,8 +22,11 @@ run_test () {
    fi
    ./test.sh "$EXEC" "$BT" "$WHAT" "$RUNS"
    if [ $? != 0 ]; then
-      echo "TEST FAILED"
-      return 1
+      if [ -z "$IGNORE" ]; then
+         return 1
+      else
+         return 0
+      fi
    fi
    return 0
 }

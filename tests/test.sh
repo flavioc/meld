@@ -69,9 +69,18 @@ run_diff ()
    done
    if [ $done -eq 0 ]; then 
       for tst in $failed_tests; do
-         echo $tst
-         diff -u ${tst} test.out
+         diff_file="/tmp/test.$$.tmp"
+         diff -u ${tst} test.out > $diff_file
+         lines=`wc -w $diff_file | cut -d' ' -f1`
+         if [ $lines -gt 20 ]; then
+            cat $diff_file | tail -n 20
+            echo "... (difference is greater than 20 lines)"
+         else
+            cat $diff_file
+         fi
+         rm -f $diff_file
          echo "!!!!!! DIFFERENCES IN FILE ${BT} ($TO_RUN)"
+         return 1
       done
    fi
 	rm test.out
@@ -139,10 +148,10 @@ loop_sched ()
 
 if [ "${TYPE}" = "thread" ]; then
 	loop_sched th ${RUNS}
-	exit 0
+	exit $?
 fi
 
 if [ "${TYPE}" = "serial" ]; then
    run_serial_n th1 ${RUNS}
-	exit 0
+	exit $?
 fi
