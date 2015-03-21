@@ -26,7 +26,7 @@ def map_id(id):
       newid = newid + 1
       return newid - 1
 
-print "type route edge(node, node, int)."
+print "type route edge(node, node, float)."
 
 for line in f:
    if not line:

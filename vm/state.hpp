@@ -111,16 +111,19 @@ struct state {
       tuple_list *ls(get_generated(pred->get_linear_id()));
       ls->push_back(tpl);
       generated_facts = true;
+      linear_facts_generated++;
    }
 
    inline void add_node_persistent_fact(vm::full_tuple *stpl)
    {
       node_persistent_tuples.push_back(stpl);
+      persistent_facts_generated++;
    }
 
    inline void add_thread_persistent_fact(vm::full_tuple *stpl)
    {
       thread_persistent_tuples.push_back(stpl);
+      persistent_facts_generated++;
    }
 
    bool running_rule;

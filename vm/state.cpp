@@ -202,6 +202,7 @@ void state::add_to_aggregate(db::node *node, vm::full_tuple_list* ls, full_tuple
 #else
    (void)node;
    (void)stpl;
+   (void)ls;
 #endif
 }
 

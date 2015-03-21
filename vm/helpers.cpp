@@ -29,7 +29,6 @@ static inline void execute_enqueue_linear0(vm::tuple *tuple,
 #endif
 
    state.add_generated(tuple, pred);
-   state.linear_facts_generated++;
 }
 
 static inline void execute_add_node_persistent0(db::node *node, vm::tuple *tpl,
@@ -41,7 +40,6 @@ static inline void execute_add_node_persistent0(db::node *node, vm::tuple *tpl,
    std::cout << std::endl;
 #endif
 
-   state.persistent_facts_generated++;
    assert(pred->is_persistent_pred() || pred->is_reused_pred());
    if (state.direction == vm::POSITIVE_DERIVATION &&
        pred->is_persistent_pred() && !pred->has_code &&
@@ -62,7 +60,6 @@ static inline void execute_add_thread_persistent0(db::node *thread_node, vm::tup
    std::cout << std::endl;
 #endif
 
-   state.persistent_facts_generated++;
    assert(pred->is_persistent_pred() || pred->is_reused_pred());
    if (state.direction == vm::POSITIVE_DERIVATION &&
        pred->is_persistent_pred() && !pred->has_code &&
@@ -207,16 +204,16 @@ static inline vm::tuple_field axiom_read_data(vm::pcounter &pc, vm::type *t) {
          SET_FIELD_INT(f, vm::instr::pcounter_int(pc));
          vm::instr::pcounter_move_int(&pc);
          break;
-      case FIELD_FLOAT:
+      case vm::FIELD_FLOAT:
          SET_FIELD_FLOAT(f, vm::instr::pcounter_float(pc));
          vm::instr::pcounter_move_float(&pc);
          break;
-      case FIELD_NODE: {
+      case vm::FIELD_NODE: {
          vm::node_val val(vm::instr::pcounter_node(pc));
          SET_FIELD_NODE(f, val);
          vm::instr::pcounter_move_node(&pc);
       } break;
-      case FIELD_LIST:
+      case vm::FIELD_LIST:
          if (*pc == 0) {
             pc++;
             SET_FIELD_CONS(f, runtime::cons::null_list());

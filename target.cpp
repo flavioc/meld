@@ -114,16 +114,16 @@ int main(int argc, char** argv) {
    num_threads = 1;
 
    vm::machine_arguments margs(read_arguments(argc, argv));
-
-   if (show_predicates || show_rules) {
-      vm::program prog;
-      if (show_predicates) prog.print_predicates(cout);
-      if (show_rules) prog.print_rules(cout);
-      exit(EXIT_SUCCESS);
-   }
-
    try {
       machine mac(num_threads, margs);
+
+      if (show_predicates || show_rules) {
+         vm::program& prog(*(vm::All->PROGRAM));
+         if (show_predicates) prog.print_predicates(cout);
+         if (show_rules) prog.print_rules(cout);
+         exit(EXIT_SUCCESS);
+      }
+
       run_program(mac);
    } catch (vm::load_file_error& err) {
       cerr << "File error: " << err.what() << endl;
