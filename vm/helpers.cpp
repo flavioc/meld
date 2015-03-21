@@ -89,11 +89,6 @@ static inline void set_node_priority(vm::state &state, db::node *n,
                                      const vm::priority_t prio) {
    if (!scheduling_mechanism) return;
 #ifdef COORDINATION_BUFFERING
-   if (n->get_owner() == state.sched) {
-      state.sched->set_node_priority(n, prio);
-      return;
-   }
-
    auto it(state.set_priorities.find(n));
 
    if (it == state.set_priorities.end())
