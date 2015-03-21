@@ -17,8 +17,7 @@ export RESULTS_FILE=$(PWD)/results.csv
 
 GGC = greedy-graph-coloring-2000 greedy-graph-coloring-search_engines
 PAGERANK = pagerank-search_engines pagerank-5000
-HT = new-heat-transfer-80
-HT_COORD = new-heat-transfer-80-coord
+HT = new-heat-transfer-120 new-heat-transfer-120-coord0 new-heat-transfer-120-coord
 BP = belief-propagation-400
 SPLASH_BP = splash-bp-400
 QUEENS = 8queens-14 8queens-14-top 8queens-14-top-static 8queens-14-bottom 8queens-14-bottom-static
@@ -51,8 +50,6 @@ pagerank:
 	@bash $(SCRIPT) $(PAGERANK)
 ht:
 	@bash $(SCRIPT) $(HT)
-coord-ht:
-	@bash $(SCRIPT) $(HT_COORD)
 simple:
 	@bash $(SCRIPT) $(SIMPLE)
 bp:
