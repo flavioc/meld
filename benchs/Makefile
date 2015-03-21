@@ -25,17 +25,10 @@ SIMPLE = simple16 simple32 simple64
 MINMAX = min-max-tictactoe
 SHORTEST = shortest-email \
 			  shortest-email-coord \
-				shortest-slashdot \
-			  shortest-facebook \
-			  shortest-hepph \
-			  shortest-hepph-coord \
-shortest-twitter \
+			  shortest-twitter \
 			  shortest-twitter-coord \
-			  shortest-celegans shortest-1000 \
-			  shortest-oclinks
-COORD_SHORTEST = shortest-usairports500-coord shortest-uspowergrid-coord \
-					  shortest-celegans-coord shortest-1000-coord \
-					  shortest-oclinks-coord
+			  shortest-uspowergrid \
+			  shortest-uspowergrid-coord 
 
 THREAD_PROGRAMS = $(QUEENS) $(GGC) $(PAGERANK) $(HT) $(MINMAX) $(SHORTEST)
 
@@ -62,8 +55,6 @@ minmax:
 	@bash $(SCRIPT) $(MINMAX)
 shortest:
 	@bash $(SCRIPT) $(SHORTEST)
-coord-shortest:
-	@bash $(SCRIPT) $(COORD_SHORTEST)
 
 run:
 	@bash $(SCRIPT) $(TARGET)
