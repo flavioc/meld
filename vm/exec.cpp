@@ -83,19 +83,21 @@ static inline void execute_add_linear(db::node* node, pcounter& pc,
 }
 
 static inline void execute_add_node_persistent(db::node* node, pcounter& pc,
-                                          state& state) {
+                                               state& state) {
    const reg_num r(pcounter_reg(pc + instr_size));
 
    // tuple is either persistent or linear reused
-   execute_add_node_persistent0(node, state.get_tuple(r), state.preds[r], state);
+   execute_add_node_persistent0(node, state.get_tuple(r), state.preds[r],
+                                state);
 }
 
 static inline void execute_add_thread_persistent(db::node* node, pcounter& pc,
-                                          state& state) {
+                                                 state& state) {
    const reg_num r(pcounter_reg(pc + instr_size));
 
    // tuple is either persistent or linear reused
-   execute_add_thread_persistent0(node, state.get_tuple(r), state.preds[r], state);
+   execute_add_thread_persistent0(node, state.get_tuple(r), state.preds[r],
+                                  state);
 }
 
 static inline void execute_run_action(pcounter& pc, state& state) {
@@ -103,8 +105,7 @@ static inline void execute_run_action(pcounter& pc, state& state) {
    execute_run_action0(state.get_tuple(r), state.preds[r], state);
 }
 
-static inline void execute_enqueue_linear(pcounter& pc,
-                                          state& state) {
+static inline void execute_enqueue_linear(pcounter& pc, state& state) {
    const reg_num r(pcounter_reg(pc + instr_size));
 
    execute_enqueue_linear0(state.get_tuple(r), state.preds[r], state);
@@ -126,7 +127,7 @@ static inline void execute_thread_send(const pcounter& pc, state& state) {
    const reg_num dest(send_dest(pc));
    const thread_val dest_val(state.get_thread(dest));
    predicate* pred(state.preds[msg]);
-   sched::thread *th((sched::thread*)dest_val);
+   sched::thread* th((sched::thread*)dest_val);
    tuple* tuple(state.get_tuple(msg));
 
    execute_thread_send0(th, tuple, pred, state);
@@ -278,7 +279,15 @@ static void build_match_element(instr_val val, match* m, type* t,
                                 size_t& count) {
    switch (t->get_type()) {
       case FIELD_INT:
-         if (val_is_field(val)) {
+         if (val_is_reg(val)) {
+            const reg_num reg(val_reg(val));
+            const int_val i(state.get_int(reg));
+            m->match_int(mf, i);
+            const variable_match_template vmt = {reg, VARIABLE_MATCH_REG_FIELD,
+                                                 mf};
+            m->add_variable_match(vmt, count);
+            count++;
+         } else if (val_is_field(val)) {
             const reg_num reg(val_field_reg(pc));
             const tuple* tuple(state.get_tuple(reg));
             const field_num field(val_field_num(pc));
@@ -296,7 +305,7 @@ static void build_match_element(instr_val val, match* m, type* t,
          } else
             throw vm_exec_error("cannot use value for matching int");
          break;
-      case FIELD_FLOAT: {
+      case FIELD_FLOAT:
          if (val_is_field(val)) {
             const reg_num reg(val_field_reg(pc));
             const tuple* tuple(state.get_tuple(reg));
@@ -314,7 +323,7 @@ static void build_match_element(instr_val val, match* m, type* t,
             pcounter_move_float(&pc);
          } else
             throw vm_exec_error("cannot use value for matching float");
-      } break;
+         break;
       case FIELD_NODE:
          if (val_is_field(val)) {
             const reg_num reg(val_field_reg(pc));
@@ -385,7 +394,9 @@ static inline void build_match_object(match* m, pcounter pc,
 static size_t count_var_match_element(instr_val val, type* t, pcounter& pc) {
    switch (t->get_type()) {
       case FIELD_INT:
-         if (val_is_field(val)) {
+         if (val_is_reg(val))
+            return 1;
+         else if (val_is_field(val)) {
             pcounter_move_field(&pc);
             return 1;
          } else if (val_is_int(val))
@@ -394,7 +405,9 @@ static size_t count_var_match_element(instr_val val, type* t, pcounter& pc) {
             throw vm_exec_error("cannot use value for matching int");
          break;
       case FIELD_FLOAT: {
-         if (val_is_field(val)) {
+         if (val_is_reg(val))
+            return 1;
+         else if (val_is_field(val)) {
             pcounter_move_field(&pc);
             return 1;
          } else if (val_is_float(val))
@@ -494,8 +507,13 @@ static inline match* retrieve_match_object(state& state, pcounter pc,
       if (!iter_constant_match(pc)) {
          for (size_t i(0); i < mobj->var_size; ++i) {
             variable_match_template& tmp(mobj->get_variable_match(i));
-            tuple* tpl(state.get_tuple(tmp.reg));
-            tmp.match->field = tpl->get_field(tmp.field);
+            if (tmp.field == VARIABLE_MATCH_REG_FIELD)
+               // we want to retrieve a register value
+               tmp.match->field = state.get_reg(tmp.reg);
+            else {
+               tuple* tpl(state.get_tuple(tmp.reg));
+               tmp.match->field = tpl->get_field(tmp.field);
+            }
          }
       }
    }
@@ -717,8 +735,8 @@ static inline return_type execute_opers_iter(const reg_num reg, match* m,
 
    vector_leaves leaves;
 
-   for(auto tuples_it(
-       node->pers_store.match_predicate(pred->get_persistent_id(), m));
+   for (auto tuples_it(
+            node->pers_store.match_predicate(pred->get_persistent_id(), m));
         !tuples_it.end(); ++tuples_it) {
       tuple_trie_leaf* tuple_leaf(*tuples_it);
 #ifdef TRIE_MATCHING_ASSERT
@@ -759,8 +777,8 @@ static inline return_type execute_opers_iter(const reg_num reg, match* m,
 
 static inline return_type execute_linear_iter_list(
     const reg_num reg, match* m, const pcounter first, state& state,
-    predicate* pred,
-    utils::intrusive_list<vm::tuple>* local_tuples, hash_table* tbl = nullptr) {
+    predicate* pred, utils::intrusive_list<vm::tuple>* local_tuples,
+    hash_table* tbl = nullptr) {
    if (local_tuples == nullptr) return RETURN_NO_RETURN;
 
    const bool old_is_linear(state.is_linear);
@@ -810,7 +828,7 @@ static inline return_type execute_linear_iter_list(
             if (reg > 0) {
                // if this is the first iterate, we do not need to send this to
                // the generate list
-               if(tbl)
+               if (tbl)
                   it = tbl->erase_from_list(local_tuples, it);
                else
                   it = local_tuples->erase(it);
@@ -830,13 +848,13 @@ static inline return_type execute_linear_iter_list(
                }
             }
          } else {
-            if(tbl)
+            if (tbl)
                it = tbl->erase_from_list(local_tuples, it);
             else
                it = local_tuples->erase(it);
             vm::tuple::destroy(match_tuple, pred, state.gc_nodes);
             if (tbl) {
-               if(local_tuples->empty() && tbl->empty())
+               if (local_tuples->empty() && tbl->empty())
                   state.matcher->empty_predicate(pred->get_id());
             } else {
                if (local_tuples->empty())
@@ -877,8 +895,8 @@ static inline return_type execute_linear_iter(const reg_num reg, match* m,
          // go through hash table
          for (hash_table::iterator it(table->begin()); !it.end(); ++it) {
             utils::intrusive_list<vm::tuple>* local_tuples(*it);
-            return_type ret(execute_linear_iter_list(
-                reg, m, first, state, pred, local_tuples, table));
+            return_type ret(execute_linear_iter_list(reg, m, first, state, pred,
+                                                     local_tuples, table));
             if (ret != RETURN_NO_RETURN) return ret;
          }
          return RETURN_NO_RETURN;
@@ -886,8 +904,7 @@ static inline return_type execute_linear_iter(const reg_num reg, match* m,
    } else {
       utils::intrusive_list<vm::tuple>* local_tuples(
           node->linear.get_linked_list(pred->get_linear_id()));
-      return execute_linear_iter_list(reg, m, first, state, pred,
-                                      local_tuples);
+      return execute_linear_iter_list(reg, m, first, state, pred, local_tuples);
    }
 }
 
@@ -1019,7 +1036,7 @@ static inline void execute_remove(pcounter pc, state& state) {
    if (state.direction == POSITIVE_DERIVATION) {
       if (pred->is_reused_pred()) {
          auto stpl(full_tuple::remove_new(tpl, pred, state.depth));
-         if(pred->is_thread_pred())
+         if (pred->is_thread_pred())
             state.add_thread_persistent_fact(stpl);
          else
             state.add_node_persistent_fact(stpl);
@@ -1048,9 +1065,9 @@ static inline void execute_update(pcounter pc, state& state) {
    state.matcher->register_predicate_update(pred->get_id());
 }
 
-static inline void set_call_return(const reg_num reg, const utils::byte typ, const bool gc,
-                                   const tuple_field ret, external_function* f,
-                                   state& state) {
+static inline void set_call_return(const reg_num reg, const utils::byte typ,
+                                   const bool gc, const tuple_field ret,
+                                   external_function* f, state& state) {
    (void)f;
    type* ret_type(theProgram->get_type(typ));
    assert(ret_type);
@@ -1194,7 +1211,8 @@ static inline void execute_call(pcounter& pc, state& state) {
 
    assert(num_args == f->get_num_args());
 
-   set_call_return(call_dest(pc), call_type(pc), call_gc(pc), do_call(f, args), f, state);
+   set_call_return(call_dest(pc), call_type(pc), call_gc(pc), do_call(f, args),
+                   f, state);
 }
 
 static inline void execute_calle(pcounter pc, state& state) {
@@ -1212,7 +1230,8 @@ static inline void execute_calle(pcounter pc, state& state) {
 
    assert(num_args == f->get_num_args());
 
-   set_call_return(calle_dest(pc), calle_type(pc), calle_gc(pc), do_call(f, args), f, state);
+   set_call_return(calle_dest(pc), calle_type(pc), calle_gc(pc),
+                   do_call(f, args), f, state);
 }
 
 static inline void execute_set_priority(pcounter& pc, state& state) {
@@ -1569,7 +1588,8 @@ static inline void execute_remote_update(pcounter& pc, state& state) {
    if (n->database_lock.try_lock1(LOCK_STACK_USE(internal_lock_data))) {
       if (n->linear.stored_as_hash_table(pred_target)) {
          const field_num h(pred_target->get_hashed_field());
-         hash_table* table(n->linear.get_hash_table(pred_target->get_linear_id()));
+         hash_table* table(
+             n->linear.get_hash_table(pred_target->get_linear_id()));
 
          if (table) {
             if (h < common)
@@ -1586,8 +1606,8 @@ static inline void execute_remote_update(pcounter& pc, state& state) {
          }
       } else
          updated = perform_remote_update(
-             n->linear.get_linked_list(pred_target->get_linear_id()), pred_target,
-             common, regs, state);
+             n->linear.get_linked_list(pred_target->get_linear_id()),
+             pred_target, common, regs, state);
       MUTEX_UNLOCK(n->database_lock, internal_lock_data);
    }
    if (updated) return;
@@ -1702,7 +1722,7 @@ static inline void execute_mvintreg(pcounter pc, state& state) {
 }
 
 static inline void execute_mvtypereg(pcounter pc, state& state) {
-   vm::type *ty(theProgram->get_type(pcounter_int(pc + instr_size)));
+   vm::type* ty(theProgram->get_type(pcounter_int(pc + instr_size)));
    state.set_ptr(pcounter_reg(pc + instr_size + int_size), (ptr_val)ty);
 }
 
@@ -2167,8 +2187,8 @@ static inline void execute_consrrr(pcounter& pc, state& state) {
        pcounter_bool(pc + instr_size + type_size + 3 * reg_val_size));
 
    list_type* ltype((list_type*)theProgram->get_type(cons_type(pc)));
-   cons* new_list(
-       cons::create(state.get_cons(tail), state.get_reg(head), ltype->get_subtype()));
+   cons* new_list(cons::create(state.get_cons(tail), state.get_reg(head),
+                               ltype->get_subtype()));
    if (gc) state.add_cons(new_list, ltype);
    state.set_cons(dest, new_list);
 }
@@ -2183,8 +2203,9 @@ static inline void execute_consrff(pcounter& pc, state& state) {
    const field_num dest_field(
        val_field_num(pc + instr_size + reg_val_size + field_size));
 
-   cons* new_list(cons::create(tail->get_cons(tail_field), state.get_reg(head),
-                               ((list_type*)pred->get_field_type(tail_field))->get_subtype()));
+   cons* new_list(cons::create(
+       tail->get_cons(tail_field), state.get_reg(head),
+       ((list_type*)pred->get_field_type(tail_field))->get_subtype()));
    dest->set_cons(dest_field, new_list);
 }
 
@@ -2199,9 +2220,9 @@ static inline void execute_consfrf(pcounter& pc, state& state) {
    const field_num dest_field(
        val_field_num(pc + instr_size + field_size + reg_val_size));
 
-   cons* new_list(cons::create(state.get_cons(tail),
-                               head->get_field(head_field),
-                               ((list_type*)pred->get_field_type(dest_field))->get_subtype()));
+   cons* new_list(cons::create(
+       state.get_cons(tail), head->get_field(head_field),
+       ((list_type*)pred->get_field_type(dest_field))->get_subtype()));
    dest->set_cons(dest_field, new_list);
 }
 
@@ -2215,10 +2236,9 @@ static inline void execute_consffr(pcounter& pc, state& state) {
    const bool_val gc(
        pcounter_bool(pc + instr_size + 2 * field_size + reg_val_size));
 
-   list_type *lt((list_type*)pred->get_field_type(tail_field));
+   list_type* lt((list_type*)pred->get_field_type(tail_field));
    cons* new_list(cons::create(tail->get_cons(tail_field),
-                               head->get_field(head_field),
-                               lt->get_subtype()));
+                               head->get_field(head_field), lt->get_subtype()));
    if (gc) state.add_cons(new_list, lt);
    state.set_cons(dest, new_list);
 }
@@ -2231,8 +2251,9 @@ static inline void execute_consrrf(pcounter& pc, state& state) {
        state.preds[val_field_reg(pc + instr_size + 2 * reg_val_size)]);
    const field_num field(val_field_num(pc + instr_size + 2 * reg_val_size));
 
-   cons* new_list(cons::create(state.get_cons(tail), state.get_reg(head),
-                               ((list_type*)pred->get_field_type(field))->get_subtype()));
+   cons* new_list(
+       cons::create(state.get_cons(tail), state.get_reg(head),
+                    ((list_type*)pred->get_field_type(field))->get_subtype()));
    dest->set_cons(field, new_list);
 }
 
@@ -2246,8 +2267,9 @@ static inline void execute_consrfr(pcounter& pc, state& state) {
    const bool_val gc(pcounter_bool(pc + instr_size + reg_val_size + field_size +
                                    reg_val_size));
 
-   list_type *lt((list_type*)pred->get_field_type(field));
-   cons* new_list(cons::create(tail->get_cons(field), state.get_reg(head), lt->get_subtype()));
+   list_type* lt((list_type*)pred->get_field_type(field));
+   cons* new_list(cons::create(tail->get_cons(field), state.get_reg(head),
+                               lt->get_subtype()));
    if (gc) state.add_cons(new_list, lt);
    state.set_cons(dest, new_list);
 }
@@ -2262,8 +2284,8 @@ static inline void execute_consfrr(pcounter& pc, state& state) {
                                    2 * reg_val_size));
 
    list_type* ltype((list_type*)theProgram->get_type(cons_type(pc)));
-   cons* new_list(
-       cons::create(state.get_cons(tail), head->get_field(field), ltype->get_subtype()));
+   cons* new_list(cons::create(state.get_cons(tail), head->get_field(field),
+                               ltype->get_subtype()));
    if (gc) state.add_cons(new_list, ltype);
    state.set_cons(dest, new_list);
 }
@@ -2277,9 +2299,9 @@ static inline void execute_consfff(pcounter& pc, state& state) {
    tuple* dest(get_tuple_field(state, pc + instr_size + 2 * field_size));
    const field_num field_dest(val_field_num(pc + instr_size + 2 * field_size));
 
-   cons* new_list(cons::create(tail->get_cons(field_tail),
-                               head->get_field(field_head),
-                               ((list_type*)pred->get_field_type(field_tail))->get_subtype()));
+   cons* new_list(cons::create(
+       tail->get_cons(field_tail), head->get_field(field_head),
+       ((list_type*)pred->get_field_type(field_tail))->get_subtype()));
    dest->set_cons(field_dest, new_list);
 }
 

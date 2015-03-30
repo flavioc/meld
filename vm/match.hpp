@@ -15,6 +15,8 @@
 
 namespace vm {
 
+#define VARIABLE_MATCH_REG_FIELD ((vm::field_num)-1)
+
 struct match_field {
    bool exact;
    type *ty;
