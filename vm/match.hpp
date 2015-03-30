@@ -15,7 +15,11 @@
 
 namespace vm {
 
-#define VARIABLE_MATCH_REG_FIELD ((vm::field_num)-1)
+enum variable_match_type {
+   MATCH_REG = 0,
+   MATCH_FIELD = 1,
+   MATCH_HOST = 2
+};
 
 struct match_field {
    bool exact;
@@ -24,9 +28,10 @@ struct match_field {
 };
 
 struct variable_match_template {
-   reg_num reg;
-   field_num field;
    match_field *match;
+   variable_match_type type;
+   reg_num reg{0};
+   field_num field{0};
 };
 
 typedef utils::stack<match_field> match_stack;

@@ -283,8 +283,7 @@ static void build_match_element(instr_val val, match* m, type* t,
             const reg_num reg(val_reg(val));
             const int_val i(state.get_int(reg));
             m->match_int(mf, i);
-            const variable_match_template vmt = {reg, VARIABLE_MATCH_REG_FIELD,
-                                                 mf};
+            const variable_match_template vmt = {mf, MATCH_REG, reg};
             m->add_variable_match(vmt, count);
             count++;
          } else if (val_is_field(val)) {
@@ -295,7 +294,7 @@ static void build_match_element(instr_val val, match* m, type* t,
             pcounter_move_field(&pc);
             const int_val i(tuple->get_int(field));
             m->match_int(mf, i);
-            const variable_match_template vmt = {reg, field, mf};
+            const variable_match_template vmt = {mf, MATCH_FIELD, reg, field};
             m->add_variable_match(vmt, count);
             ++count;
          } else if (val_is_int(val)) {
@@ -314,7 +313,7 @@ static void build_match_element(instr_val val, match* m, type* t,
             pcounter_move_field(&pc);
             const float_val f(tuple->get_float(field));
             m->match_float(mf, f);
-            const variable_match_template vmt = {reg, field, mf};
+            const variable_match_template vmt = {mf, MATCH_FIELD, reg, field};
             m->add_variable_match(vmt, count);
             ++count;
          } else if (val_is_float(val)) {
@@ -333,7 +332,12 @@ static void build_match_element(instr_val val, match* m, type* t,
             pcounter_move_field(&pc);
             const node_val n(tuple->get_node(field));
             m->match_node(mf, n);
-            const variable_match_template vmt = {reg, field, mf};
+            const variable_match_template vmt = {mf, MATCH_FIELD, reg, field};
+            m->add_variable_match(vmt, count);
+            ++count;
+         } else if(val_is_host(val)) {
+            m->match_node(mf, (vm::node_val)state.node);
+            const variable_match_template vmt = {mf, MATCH_HOST};
             m->add_variable_match(vmt, count);
             ++count;
          } else if (val_is_node(val)) {
@@ -419,7 +423,9 @@ static size_t count_var_match_element(instr_val val, type* t, pcounter& pc) {
          if (val_is_field(val)) {
             pcounter_move_field(&pc);
             return 1;
-         } else if (val_is_node(val))
+         } else if(val_is_host(val))
+            return 1;
+         else if (val_is_node(val))
             pcounter_move_node(&pc);
          else
             throw vm_exec_error("cannot use value for matching node");
@@ -507,12 +513,20 @@ static inline match* retrieve_match_object(state& state, pcounter pc,
       if (!iter_constant_match(pc)) {
          for (size_t i(0); i < mobj->var_size; ++i) {
             variable_match_template& tmp(mobj->get_variable_match(i));
-            if (tmp.field == VARIABLE_MATCH_REG_FIELD)
-               // we want to retrieve a register value
-               tmp.match->field = state.get_reg(tmp.reg);
-            else {
-               tuple* tpl(state.get_tuple(tmp.reg));
-               tmp.match->field = tpl->get_field(tmp.field);
+            switch(tmp.type) {
+               case MATCH_FIELD:
+                  {
+                     tuple* tpl(state.get_tuple(tmp.reg));
+                     tmp.match->field = tpl->get_field(tmp.field);
+                     break;
+                  }
+               case MATCH_REG:
+                  // we want to retrieve a register value
+                  tmp.match->field = state.get_reg(tmp.reg);
+                  break;
+               case MATCH_HOST:
+                  SET_FIELD_NODE(tmp.match->field, state.node);
+                  break;
             }
          }
       }
