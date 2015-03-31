@@ -160,8 +160,8 @@ struct hash_table {
    inline void expand(const vm::predicate *pred) {
       const size_t new_size(size_table * 2);
       flag_expanded += 10;
-   //   expanded++;
-  //    std::cout << "expand " << new_size << " " << elems << " " << shrinked << "/" << expanded << "\n";
+  //   expanded++;
+//      std::cout << "expand " << new_size << " " << elems << " " << shrinked << "/" << expanded << "\n";
       change_table(new_size, pred);
    }
    inline void shrink(const vm::predicate *pred) {

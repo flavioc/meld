@@ -47,7 +47,7 @@ struct node {
 
    // for managing dynamically allocated nodes.
    node *dyn_next{nullptr}, *dyn_prev{nullptr};
-   std::atomic<void*> creator{nullptr};
+   std::atomic<void *> creator{nullptr};
 
    private:
    sched::thread *owner{nullptr};
@@ -154,7 +154,8 @@ struct node {
        const vm::derivation_direction dir = vm::POSITIVE_DERIVATION,
        const vm::depth_t depth = 0) {
       if (pred->is_action_pred())
-         store.incoming_action_tuples.push_back(new vm::full_tuple(tpl, pred, dir, depth));
+         store.incoming_action_tuples.push_back(
+             new vm::full_tuple(tpl, pred, dir, depth));
       else if (pred->is_persistent_pred() || pred->is_reused_pred()) {
          auto stpl(new vm::full_tuple(tpl, pred, dir, depth));
          store.incoming_persistent_tuples.push_back(stpl);
@@ -262,6 +263,12 @@ struct node {
       }
    }
 
+   inline void manage_index() {
+      linear.improve_index();
+      rounds++;
+      if (rounds > 0 && rounds % 1 == 0) linear.cleanup_index();
+   }
+
    inline explicit node(const node_id _id, const node_id _trans)
        : id(_id),
          translation(_trans),
@@ -276,9 +283,7 @@ struct node {
       mem::allocator<node>().destroy(this);
    }
 
-   inline void deallocate() {
-      mem::allocator<node>().deallocate(this, 1);
-   }
+   inline void deallocate() { mem::allocator<node>().deallocate(this, 1); }
 
    inline void set_ids(const node_id _id, const node_id _trans) {
       id = _id;

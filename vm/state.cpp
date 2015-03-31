@@ -172,7 +172,8 @@ void state::process_incoming_tuples(db::node *node) {
    }
 }
 
-void state::add_to_aggregate(db::node *node, vm::full_tuple_list* ls, full_tuple *stpl) {
+void state::add_to_aggregate(db::node *node, vm::full_tuple_list *ls,
+                             full_tuple *stpl) {
 #ifndef COMPILED_NO_AGGREGATES
    vm::tuple *tpl(stpl->get_tuple());
    predicate *pred(stpl->get_predicate());
@@ -633,7 +634,8 @@ void state::run_node(db::node *node) {
    {
       process_action_tuples(node);
       process_incoming_tuples(node);
-      node_persistent_tuples.splice_back(node->store.incoming_persistent_tuples);
+      node_persistent_tuples.splice_back(
+          node->store.incoming_persistent_tuples);
 #ifdef DYNAMIC_INDEXING
       if (node->indexing_epoch != indexing_epoch) {
          node->linear.rebuild_index();
@@ -644,7 +646,6 @@ void state::run_node(db::node *node) {
       MUTEX_UNLOCK(node->main_lock, node_lock);
       // incoming facts have been processed, we release the main lock
       // but the database locks remains locked.
-      node->rounds++;
       do_persistent_tuples(node, &node_persistent_tuples);
    }
 
@@ -712,9 +713,10 @@ void state::run_node(db::node *node) {
 
    assert(node_persistent_tuples.empty());
    assert(thread_persistent_tuples.empty());
-   node->linear.improve_index();
-   if (node->rounds > 0 && node->rounds % 1 == 0) node->linear.cleanup_index();
+   node->manage_index();
    MUTEX_UNLOCK(node->database_lock, internal_lock_data);
+   if (theProgram->has_thread_predicates() && sched->thread_node != node)
+      sched->thread_node->manage_index();
 
    sync(node);
 
