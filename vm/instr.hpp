@@ -69,6 +69,7 @@ const size_t PERS_ITER_BASE = ITER_BASE;
 const size_t TPERS_ITER_BASE = ITER_BASE;
 const size_t LINEAR_ITER_BASE = ITER_BASE;
 const size_t TLINEAR_ITER_BASE = ITER_BASE;
+const size_t TRLINEAR_ITER_BASE = ITER_BASE;
 const size_t RLINEAR_ITER_BASE = ITER_BASE;
 const size_t OPERS_ITER_BASE = OITER_BASE;
 const size_t OLINEAR_ITER_BASE = OITER_BASE;
@@ -365,6 +366,7 @@ enum instr_type {
    MVTHREADIDREG_INSTR = 0xBA,
    MVTHREADIDFIELD_INSTR = 0xBB,
    THREAD_SEND_INSTR = 0xBC,
+   TRLINEAR_ITER_INSTR = 0xBD,
    RETURN_LINEAR_INSTR = 0xD0,
    RETURN_DERIVED_INSTR = 0xF0
 };
@@ -771,6 +773,7 @@ inline pcounter advance(const pcounter pc) {
       case OPERS_ITER_INSTR:
       case LINEAR_ITER_INSTR:
       case TLINEAR_ITER_INSTR:
+      case TRLINEAR_ITER_INSTR:
       case RLINEAR_ITER_INSTR:
       case OLINEAR_ITER_INSTR:
       case ORLINEAR_ITER_INSTR:

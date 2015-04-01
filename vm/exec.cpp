@@ -2513,6 +2513,19 @@ static inline return_type execute(pcounter pc, state& state, const reg_num reg,
    }
    ENDOP()
 
+   CASE(TRLINEAR_ITER_INSTR)
+   COMPLEX_JUMP(trlinear_iter) {
+      predicate* pred(theProgram->get_predicate(iter_predicate(pc)));
+      const reg_num reg(iter_reg(pc));
+      match *mobj(retrieve_match_object(state, pc, pred, TRLINEAR_ITER_BASE));
+
+      const return_type ret(
+            execute_rlinear_iter(reg, mobj, pc + iter_inner_jump(pc), state, pred, state.sched->thread_node));
+
+      DECIDE_NEXT_ITER_INSTR();
+   }
+   ENDOP()
+
    CASE(TPERS_ITER_INSTR)
    COMPLEX_JUMP(tpers_iter) {
       predicate* pred(theProgram->get_predicate(iter_predicate(pc)));

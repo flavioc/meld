@@ -327,6 +327,8 @@ string instr_name(const instr::instr_type code) {
          return string("LINEAR ITERATE");
       case TLINEAR_ITER_INSTR:
          return string("THREAD LINEAR ITERATE");
+      case TRLINEAR_ITER_INSTR:
+         return string("THREAD LINEAR(R) ITERATE");
       case RLINEAR_ITER_INSTR:
          return string("LINEAR(R) ITERATE");
       case OPERS_ITER_INSTR:
@@ -666,6 +668,7 @@ pcounter instr_print(pcounter pc, const bool recurse, const int tabcount,
       case TPERS_ITER_INSTR:
       case LINEAR_ITER_INSTR:
       case TLINEAR_ITER_INSTR:
+      case TRLINEAR_ITER_INSTR:
       case RLINEAR_ITER_INSTR:
          cout << " OVER " << prog->get_predicate(iter_predicate(pc))->get_name()
               << " MATCHING TO " << reg_string(iter_reg(pc)) << endl;
