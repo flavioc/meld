@@ -655,6 +655,7 @@ void state::run_node(db::node *node) {
       MUTEX_LOCK(sched->thread_node->main_lock, thread_node_lock, node_lock);
       thread_persistent_tuples.splice_back(
           sched->thread_node->store.incoming_persistent_tuples);
+      sched->thread_node->unprocessed_facts = false;
       MUTEX_UNLOCK(sched->thread_node->main_lock, node_lock);
       do_persistent_tuples(sched->thread_node, &thread_persistent_tuples);
       matcher->add_thread(sched->thread_node->matcher);
@@ -708,7 +709,7 @@ void state::run_node(db::node *node) {
    }
 
    // unmark all thread facts and save state in 'thread_node'.
-   if (theProgram->has_thread_predicates())
+   if (theProgram->has_thread_predicates() && sched->thread_node != node)
       matcher->remove_thread(sched->thread_node->matcher);
 
    assert(node_persistent_tuples.empty());

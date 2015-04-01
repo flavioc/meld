@@ -380,7 +380,7 @@ public:
       vm::predicate *init_thread_pred(vm::theProgram->get_init_thread_predicate());
       vm::tuple *init_tuple(vm::tuple::create(init_thread_pred));
       thread_node->add_linear_fact(init_tuple, init_thread_pred);
-      thread_node->unprocessed_facts = false;
+      thread_node->unprocessed_facts = true;
    }
 
    inline void setup_node(db::node *node)

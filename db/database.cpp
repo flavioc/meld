@@ -22,11 +22,8 @@ database::database(istream& fp)
    
    nodes_total = num_nodes;
    
-   if(nodes_total == 0)
-      throw database_error("The program has no nodes to run.");
-   
-   max_node_id = 0;
-   max_translated_id = 0;
+   max_node_id = -1;
+   max_translated_id = -1;
       
    for(size_t i(0); i < nodes_total; ++i) {
       fp.read((char*)&fake_id, sizeof(node::node_id));
@@ -35,9 +32,9 @@ database::database(istream& fp)
       // nodes themselves are created by each thread in sched/init_node.
       nodes[fake_id] = (db::node*)user_id;
 
-      if(fake_id > max_node_id)
+      if(fake_id > max_node_id || max_node_id == -1)
          max_node_id = fake_id;
-      if(user_id > max_translated_id)
+      if(user_id > max_translated_id || max_translated_id == -1)
          max_translated_id = user_id;
    }
    
