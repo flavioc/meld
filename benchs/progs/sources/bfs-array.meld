@@ -1,0 +1,26 @@
+
+type route edge(node, node).
+type linear value(node, int).
+type linear search(node, int, int, array node).
+type linear found(node, int, int).
+
+index search/2.
+
+search(A, Val, Id, P2),
+search(A, Val, Id, P1)
+   -o search(A, Val, Id, if array_size(P1) < array_size(P2) then P2 else P1 end).
+
+found(A, Val, Id),
+search(A, Val, Id, Paths)
+   -o found(A, Val, Id).
+
+value(A, Val),
+search(A, Val, Id, Paths)
+   -o value(A, Val),
+      found(A, Val, Id).
+
+value(A, Val1),
+search(A, Val2, Id, Paths),
+Val1 <> Val2
+   -o value(A, Val1),
+      {B | !edge(A, B), ~ array_exists(Paths, B) | search(B, Val2, Id, array_add(Paths, B))}.
