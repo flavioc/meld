@@ -49,6 +49,8 @@ void state::purge_runtime_objects(void) {
    free_struct1.clear();
    for (auto p : free_array) p.first->dec_refs(p.second, gc_nodes);
    free_array.clear();
+   for (auto p : free_set) p.first->dec_refs(p.second, gc_nodes);
+   free_set.clear();
 }
 
 void state::cleanup(void) { purge_runtime_objects(); }

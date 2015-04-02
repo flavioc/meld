@@ -49,6 +49,7 @@ public:
    define_set(cons, runtime::cons*, SET_FIELD_CONS(getfp()[field], val); runtime::cons::inc_refs(val));
    define_set(struct, runtime::struct1*, SET_FIELD_STRUCT(getfp()[field], val); val->inc_refs());
    define_set(array, runtime::array*, SET_FIELD_ARRAY(getfp()[field], val); val->inc_refs());
+   define_set(set, runtime::set*, SET_FIELD_SET(getfp()[field], val); val->inc_refs());
    define_set(thread, const vm::thread_val&, set_ptr(field, (vm::ptr_val)val));
 
    inline void set_nil(const field_num& field) { SET_FIELD_CONS(getfp()[field], runtime::cons::null_list()); }
@@ -80,6 +81,7 @@ public:
    define_get(runtime::cons*, cons, FIELD_CONS(getfp()[field]));
    define_get(runtime::struct1*, struct, FIELD_STRUCT(getfp()[field]));
    define_get(runtime::array*, array, FIELD_ARRAY(getfp()[field]));
+   define_get(runtime::set*, set, FIELD_SET(getfp()[field]));
    define_get(thread_val, thread, (vm::thread_val)get_ptr(field))
 
 #undef define_get

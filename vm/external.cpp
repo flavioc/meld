@@ -12,6 +12,7 @@
 #include "external/others.hpp"
 #include "external/core.hpp"
 #include "external/array.hpp"
+#include "external/set.hpp"
 
 using namespace std;
 
@@ -209,6 +210,7 @@ void init_external_functions(void) {
    static type *st(TYPE_STRUCT);
    static type *lt(TYPE_LIST);
    static type *at(TYPE_ARRAY);
+   static type *set(TYPE_SET);
    static type *any(TYPE_ANY);
    static type *t(TYPE_TYPE);
    static list_type *li(TYPE_LIST_INT);
@@ -281,6 +283,11 @@ void init_external_functions(void) {
    register_external_function(EXTERNAL3(minimax_score2, i, ai, i, i));
    register_external_function(EXTERNAL2(minimax_points2, i, ai, i));
    register_external_function(EXTERNAL1(myfabs, f, f));
+   register_external_function(EXTERNAL1(set_size, i, set));
+   register_external_function(EXTERNAL3(set_exists, b, set, any, t));
+   register_external_function(EXTERNAL3(set_add, set, set, any, t));
+   register_external_function(EXTERNAL2(set_from_list, set, lt, t));
+   register_external_function(EXTERNAL3(array_exists, b, at, any, t));
 
    atexit(cleanup_externals);
 

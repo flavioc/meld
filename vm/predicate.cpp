@@ -58,6 +58,11 @@ type* read_type_from_reader(code_reader& read, vm::program* prog) {
          read.read_type<byte>(&id);
          return new array_type(prog->get_type(id));
       }
+      case FIELD_SET: {
+         byte id;
+         read.read_type<byte>(&id);
+         return new set_type(prog->get_type(id));
+      }
       default:
          assert(false);
          abort();

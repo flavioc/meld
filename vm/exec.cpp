@@ -1126,6 +1126,12 @@ static inline void set_call_return(const reg_num reg, const utils::byte typ,
          if (gc) state.add_array(a, ((array_type*)ret_type)->get_base());
          break;
       }
+      case FIELD_SET: {
+         runtime::set* a(FIELD_SET(ret));
+         state.set_set(reg, a);
+         if (gc) state.add_set(a, ((set_type*)ret_type)->get_base());
+         break;
+      }
       case FIELD_ANY:
          state.set_reg(reg, ret);
          break;

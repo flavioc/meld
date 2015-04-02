@@ -10,6 +10,7 @@
 #include "utils/intrusive_list.hpp"
 #include "mem/allocator.hpp"
 #include "utils/utils.hpp"
+#include "utils/hash.hpp"
 
 namespace db {
 

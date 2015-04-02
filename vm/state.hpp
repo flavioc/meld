@@ -45,6 +45,9 @@ struct state {
    std::list<std::pair<runtime::array *, vm::type *>,
              mem::allocator<std::pair<runtime::array *, vm::type *>>>
        free_array;
+   std::list<std::pair<runtime::set *, vm::type *>,
+             mem::allocator<std::pair<runtime::set *, vm::type *>>>
+       free_set;
 
    void purge_runtime_objects();
    full_tuple *search_for_negative_tuple(vm::full_tuple_list*, full_tuple *);
@@ -175,6 +178,7 @@ struct state {
    define_set(thread, const thread_val, SET_FIELD_THREAD(regs[num], val));
    define_set(struct, runtime::struct1 *, SET_FIELD_STRUCT(regs[num], val));
    define_set(array, runtime::array *, SET_FIELD_ARRAY(regs[num], val));
+   define_set(set, runtime::set *, SET_FIELD_SET(regs[num], val));
 
 #undef define_set
 
@@ -195,6 +199,10 @@ struct state {
    inline void add_array(runtime::array *x, vm::type *t) {
       x->inc_refs();
       free_array.push_back(std::make_pair(x, t));
+   }
+   inline void add_set(runtime::set *x, vm::type *t) {
+      x->inc_refs();
+      free_set.push_back(std::make_pair(x, t));
    }
    inline void add_string(runtime::rstring::ptr str) {
       str->inc_refs();

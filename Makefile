@@ -136,6 +136,7 @@ SRCS = utils/utils.cpp \
 			external/math.cpp \
 			external/lists.cpp \
 			external/array.cpp \
+			external/set.cpp \
 			external/utils.cpp \
 			external/strings.cpp \
 			external/others.cpp \

@@ -65,6 +65,7 @@ union tuple_field {
 #define FIELD_PCOUNTER(F) ((pcounter)FIELD_PTR(F))
 #define FIELD_STRUCT(F) ((runtime::struct1*)FIELD_PTR(F))
 #define FIELD_ARRAY(F) ((runtime::array*)FIELD_PTR(F))
+#define FIELD_SET(F) ((runtime::set*)FIELD_PTR(F))
 #define FIELD_THREAD(F) ((vm::thread_val)FIELD_PTR(F))
 // for list matches, see vm/match.hpp
 #define FIELD_LIST_MATCH(F) ((vm::list_match*)FIELD_PTR(F))
@@ -79,6 +80,7 @@ union tuple_field {
 #define SET_FIELD_STRUCT(F, S) (SET_FIELD_PTR(F, S))
 #define SET_FIELD_STRING(F, S) (SET_FIELD_PTR(F, S))
 #define SET_FIELD_ARRAY(F, S) (SET_FIELD_PTR(F, S))
+#define SET_FIELD_SET(F, S) (SET_FIELD_PTR(F, S))
 // for list matches, see vm/match.hpp
 #define SET_FIELD_LIST_MATCH(F, S) (SET_FIELD_PTR(F, S))
 

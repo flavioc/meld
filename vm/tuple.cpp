@@ -163,6 +163,21 @@ static inline void print_tuple_type(ostream &cout, const tuple_field &field,
          }
          cout << "]";
       } break;
+      case FIELD_SET: {
+         runtime::set *a(FIELD_SET(field));
+         set_type *typ((set_type *)t);
+         type *at(typ->get_base());
+         cout << "{";
+         size_t i{0};
+         for(const auto p : *a) {
+            if(i > 0) cout << ", ";
+            vm::tuple_field f;
+            f.ptr_field = p;
+            print_tuple_type(cout, f, at);
+            ++i;
+         }
+         cout << "}";
+      } break;
       case FIELD_STRUCT: {
          runtime::struct1 *s(FIELD_STRUCT(field));
          struct_type *st((struct_type*)t);
@@ -241,6 +256,10 @@ void tuple::destructor(predicate *pred, candidate_gc_nodes &gc_nodes) {
          case FIELD_ARRAY:
             get_array(i)->dec_refs(
                 ((array_type *)pred->get_field_type(i))->get_base(), gc_nodes);
+            break;
+         case FIELD_SET:
+            get_set(i)->dec_refs(
+                  ((set_type *)pred->get_field_type(i))->get_base(), gc_nodes);
             break;
          case FIELD_NODE:
 #ifdef GC_NODES

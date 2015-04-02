@@ -117,13 +117,6 @@ static inline std::size_t previous_prime(std::size_t x) {
    return x;
 }
 
-static inline uint64_t fnv1_hash(utils::byte* key, const size_t n_bytes) {
-   utils::byte* p = key;
-   uint64_t h = 14695981039346656037ul;
-   for (size_t i = 0; i < n_bytes; i++) h = (h * 1099511628211) ^ p[i];
-   return h;
-}
-
 static inline uint64_t mod_hash(const uint64_t hsh, const uint64_t size) {
    // size must be a power of 2
    return hsh & (size - 1);
