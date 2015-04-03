@@ -246,6 +246,18 @@ intlistsub(EXTERNAL_ARG(p), EXTERNAL_ARG(a), EXTERNAL_ARG(b))
 }
 
 argument
+ltake(EXTERNAL_ARG(ls), EXTERNAL_ARG(n))
+{
+   DECLARE_LIST(ls);
+   DECLARE_INT(n);
+   runtime::cons *p((runtime::cons*)ls);
+
+   while(n > 0 && !runtime::cons::is_null(p))
+      p = p->get_tail();
+   RETURN_LIST(p);
+}
+
+argument
 lappend(EXTERNAL_ARG(ls1), EXTERNAL_ARG(ls2), EXTERNAL_ARG(ty))
 {
    DECLARE_LIST(ls1);

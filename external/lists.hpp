@@ -85,6 +85,7 @@ argument lnth(const argument, const argument);
 argument lsort(const argument, const argument);
 argument lremoveduplicates(const argument, const argument);
 argument listremove(const argument, const argument, const argument);
+argument ltake(const argument, const argument);
 
 argument intlistdiff(const argument, const argument);
 argument intlistsub(const argument, const argument, const argument);

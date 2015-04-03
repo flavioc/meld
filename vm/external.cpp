@@ -288,6 +288,7 @@ void init_external_functions(void) {
    register_external_function(EXTERNAL3(set_add, set, set, any, t));
    register_external_function(EXTERNAL2(set_from_list, set, lt, t));
    register_external_function(EXTERNAL3(array_exists, b, at, any, t));
+   register_external_function(EXTERNAL2(ltake, lt, lt, i));
 
    atexit(cleanup_externals);
 

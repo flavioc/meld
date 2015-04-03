@@ -1,0 +1,92 @@
+
+type route edge(node, node).
+type linear value(node, int).
+type linear search(node, int, int, list node, list node).
+type linear do-search(node, int, int, list node, list node, int).
+type linear do-search2(node, int, int, list node, list node, int, list node).
+type linear found(node, int, int).
+type linear not-found(node, int, int).
+type linear cache(thread, int, node, int).
+type linear total(thread, int, int).
+type linear num-searches(thread, int).
+type linear delete-from-cache(thread).
+
+index search/2.
+index cache/1.
+
+const maxtotalthread = 3000.
+const maxsearches = 20.
+
+total(T, 0, 0).
+num-searches(T, 0).
+
+total(T, N, HitsTotal),
+delete-from-cache(T),
+Below = HitsTotal/3
+   -o [sum => RemovedHits, count => Total | Val, Node | cache(T, Val, Node, RemovedHits), RemovedHits <= Below
+         | | total(T, N - Total, HitsTotal - RemovedHits)].
+
+search(A, Val, Id, Paths1, Next1),
+search(A, Val, Id, Paths2, Next2),
+num-searches(T, NSearches)
+   -o search(A, Val, Id, Paths1, Next1),
+      num-searches(T, NSearches - 1).
+
+search(A, Val, Id, Paths, Next),
+num-searches(T, NSearches),
+found(A, Val, Id)
+   -o found(A, Val, Id),
+      num-searches(T, NSearches - 1).
+
+value(A, Val),
+search(A, Val, Id, Paths, Next),
+cache(T, Val, B, Hits),
+total(T, Total, HitsTotal),
+num-searches(T, NSearches)
+   -o value(A, Val),
+      found(A, Val, Id),
+      total(T, Total, HitsTotal + 1),
+      num-searches(T, NSearches - 1),
+      cache(T, Val, B, Hits + 1).
+
+value(A, Val),
+search(A, Val, Id, Paths, Next),
+num-searches(T, NSearches),
+total(T, Total, HitsTotal)
+   -o value(A, Val),
+      found(A, Val, Id),
+      total(T, Total + 1, HitsTotal + 1),
+      (if Total >= maxtotalthread then delete-from-cache(T) otherwise 1 end),
+      cache(T, Val, A, 1),
+      num-searches(T, NSearches - 1).
+
+search(A, Val, Id, Paths, Next),
+cache(T, Val, Node, Hits),
+total(T, Total, HitsTotal)
+   -o cache(T, Val, Node, Hits + 1),
+      total(T, Total, HitsTotal + 1),
+      search(Node, Val, Id, Paths, Next).
+
+value(A, Val1),
+search(A, Val2, Id, Paths, Next),
+num-searches(T, NSearches),
+Val1 <> Val2
+   -o value(A, Val1),
+      [collect => B | !edge(A, B), ~ B in Paths | | do-search(A, Val2, Id, Paths, Next ++ B, if (maxsearches - NSearches) > 0 then (maxsearches - NSearches) else 0 end)],
+      num-searches(T, NSearches).
+
+do-search(A, Val, Id, Paths, [], _)
+   -o not-found(A, Val, Id).
+do-search(A, Val, Id, Paths, [B | Next], Left)
+   -o search(B, Val, Id, [B | Paths], ltake(Next, Left)),
+      add-priority(B, 1.0),
+      do-search2(A, Val, Id, Paths, Next, Left, ltake(Next, Left)).
+      
+do-search2(A, Val, Id, Paths, [], _, _) -o 1.
+do-search2(A, Val, Id, Paths, _, 0, _) -o 1.
+do-search2(A, Val, Id, Paths, [B | Next], Left, OtherNext),
+num-searches(T, NSearches)
+      -o num-searches(T, NSearches + 1),
+         search(B, Val, Id, [B | Paths], OtherNext),
+         do-search2(A, Val, Id, Paths, Next, Left - 1, OtherNext).
+
