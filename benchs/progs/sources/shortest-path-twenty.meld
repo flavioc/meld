@@ -1,3 +1,0 @@
-include #shortest-path-base.meld
-
-node2int(A) % 20 = 0 -o path(A, A, 0, 0), set-priority(A, 0.1).

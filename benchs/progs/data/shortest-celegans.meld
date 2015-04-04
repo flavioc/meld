@@ -1,4 +1,4 @@
-type route edge(node, node, int).
+type route edge(node, node, float).
 !edge(@1,@51,1).
 !edge(@1,@72,2).
 !edge(@1,@77,1).

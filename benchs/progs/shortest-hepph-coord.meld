@@ -1,5 +1,6 @@
 
 include #sources/shortest-path-custom.meld
-include #data/shortest-hepph.meld
+type route edge(node, node, float).
 
 priority @cluster @static.
+data stanford-snap "data/shortest-hepph.txt".
