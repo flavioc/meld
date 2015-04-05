@@ -1,0 +1,89 @@
+
+node generator.
+node consumer.
+
+type linear capacity(generator, int Total, int Used).
+type linear connected-to(generator, consumer, int).
+type linear connected-to-list(generator, list consumer).
+type power(consumer, int).
+type linear disconnected(consumer).
+type linear connected(consumer, generator).
+type generators(consumer, list generator).
+type linear fails(generator, int).
+type linear random-reconnect(generator).
+
+type linear reconnect(consumer).
+type linear connect(generator, consumer, int).
+type linear disconnect(consumer, generator).
+
+const all-generators = [@0, @1, @2, @9].
+const num-generators = 4.
+const maxfails = 10.
+
+fun imax(int A, int B) : int = if A > B then A else B end.
+
+capacity(@0, 8, 0).
+capacity(@1, 0, 0).
+capacity(@2, 10, 0).
+capacity(@9, 10, 0).
+!power(@4, 5).
+!power(@5, 2).
+!power(@6, 10).
+!power(@7, 1).
+!power(@8, 10).
+
+connected-to-list(G, []).
+fails(G, 0).
+disconnected(C).
+reconnect(C).
+!generators(C, all-generators).
+
+capacity(G, Total, Used),
+fails(G, Fails),
+random-reconnect(G),
+connected-to-list(G, L),
+C = lnth(L, randint(llength(L))),
+connected-to(G, C, Power)
+   -o fails(G, 0),
+      capacity(G, Total, Used - Power),
+      connected-to-list(G, lremove(L, C)),
+      disconnect(C, G).
+
+capacity(G, Total, Used),
+fails(G, Fails),
+random-reconnect(G)
+   -o capacity(G, Total, Used),
+      fails(G, 0).
+
+connect(G, C, Power),
+capacity(G, Total, Used),
+fails(G, Fails),
+connected-to-list(G, L),
+Used + Power <= Total
+   -o capacity(G, Total, Used + Power),
+      fails(G, imax(Fails - 1, 0)),
+      connected-to(G, C, Power),
+      connected-to-list(G, [C | L]).
+
+connect(G, C, Power),
+capacity(G, Total, Used),
+Used + Power > Total,
+fails(G, Fails)
+   -o capacity(G, Total, Used),
+      disconnect(C, G),
+      fails(G, Fails + 1),
+      (if Fails > maxfails then random-reconnect(G) otherwise 1 end).
+
+!generators(C, L),
+!power(C, Power),
+reconnect(C),
+disconnected(C),
+G = lnth(L, randint(num-generators))
+   -o connected(C, G),
+      connect(G, C, Power).
+
+disconnect(C, G),
+connected(C, G)
+   -o disconnected(C),
+      reconnect(C).
+
