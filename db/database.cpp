@@ -32,9 +32,9 @@ database::database(istream& fp)
       // nodes themselves are created by each thread in sched/init_node.
       nodes[fake_id] = (db::node*)user_id;
 
-      if(fake_id > max_node_id || max_node_id == -1)
+      if(fake_id > max_node_id || max_node_id == (db::node::node_id)-1)
          max_node_id = fake_id;
-      if(user_id > max_translated_id || max_translated_id == -1)
+      if(user_id > max_translated_id || max_translated_id == (db::node::node_id)-1)
          max_translated_id = user_id;
    }
    
