@@ -230,7 +230,7 @@ void init_external_functions(void) {
    register_external_function(EXTERNAL2(concatenate, s, s, s));
    register_external_function(EXTERNAL1(str2float, f, s));
    register_external_function(EXTERNAL1(str2int, i, s));
-   register_external_function(EXTERNAL3(listremove, ln, ln, n, i));
+   register_external_function(EXTERNAL3(lremove, ln, ln, n, i));
    register_external_function(EXTERNAL1(wastetime, i, i));
    register_external_function(EXTERNAL2(truncate, f, f, i));
    register_external_function(EXTERNAL1(float2int, i, f));

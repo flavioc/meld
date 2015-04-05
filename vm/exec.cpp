@@ -324,7 +324,14 @@ static void build_match_element(instr_val val, match* m, type* t,
             throw vm_exec_error("cannot use value for matching float");
          break;
       case FIELD_NODE:
-         if (val_is_field(val)) {
+         if (val_is_reg(val)) {
+            const reg_num reg(val_reg(val));
+            const node_val n(state.get_node(reg));
+            m->match_node(mf, n);
+            const variable_match_template vmt = {mf, MATCH_REG, reg};
+            m->add_variable_match(vmt, count);
+            ++count;
+         } else if (val_is_field(val)) {
             const reg_num reg(val_field_reg(pc));
             const tuple* tuple(state.get_tuple(reg));
             const field_num field(val_field_num(pc));
@@ -420,7 +427,9 @@ static size_t count_var_match_element(instr_val val, type* t, pcounter& pc) {
             throw vm_exec_error("cannot use value for matching float");
       } break;
       case FIELD_NODE:
-         if (val_is_field(val)) {
+         if (val_is_reg(val))
+            return 1;
+         else if (val_is_field(val)) {
             pcounter_move_field(&pc);
             return 1;
          } else if(val_is_host(val))

@@ -181,7 +181,7 @@ lnth(EXTERNAL_ARG(ls), EXTERNAL_ARG(v))
 }
 
 argument
-listremove(EXTERNAL_ARG(ls), EXTERNAL_ARG(n), EXTERNAL_ARG(ty))
+lremove(EXTERNAL_ARG(ls), EXTERNAL_ARG(n), EXTERNAL_ARG(ty))
 {
 	DECLARE_LIST(ls);
    DECLARE_TYPE(ty);
