@@ -108,19 +108,6 @@ void machine::slice_function(void) {
 }
 #endif
 
-void machine::execute_const_code(void) {
-#ifdef COMPILED
-   return;
-#else
-   state st;
-
-   // no node or tuple whatsoever
-   st.setup(nullptr, POSITIVE_DERIVATION, 0);
-
-   execute_process(all->PROGRAM->get_const_bytecode(), st, nullptr, nullptr);
-#endif
-}
-
 void machine::init_sched(const process_id id) {
    // ensure own memory pool
    mem::ensure_pool();
@@ -141,9 +128,6 @@ void machine::init_sched(const process_id id) {
 }
 
 void machine::start(void) {
-   // execute constants code
-   execute_const_code();
-
    deactivate_signals();
 #ifdef INSTRUMENTATION
    all->THREAD_POOLS.resize(all->NUM_THREADS, NULL);

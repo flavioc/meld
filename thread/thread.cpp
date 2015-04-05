@@ -7,6 +7,7 @@
 #include "vm/state.hpp"
 #include "interface.hpp"
 #include "vm/priority.hpp"
+#include "vm/exec.hpp"
 #include "machine.hpp"
 
 using namespace std;
@@ -383,13 +384,13 @@ inline bool thread::set_next_node(void) {
    while (current_node == nullptr) {
       current_node = prios.moving.pop_best(prios.stati, STATE_WORKING);
       if (current_node) {
-         //            cout << "Got node " << current_node->get_id() << endl;
+                     //cout << "Got node " << current_node->get_id() << endl;
          //           cout << " with prio " << current_node->get_priority() << endl;
          break;
       }
 
       if (pop_node_from_queues()) {
-         //        cout << "Got node " << current_node->get_id() << endl;
+                 //cout << "Got node " << current_node->get_id() << endl;
          break;
       }
 
@@ -462,6 +463,17 @@ void thread::end(void) {
 #endif
 }
 
+#ifndef COMPILED
+void thread::execute_const_code(void) {
+   theProgram->fix_const_references();
+
+   // no node or tuple whatsoever
+   state.setup(nullptr, POSITIVE_DERIVATION, 0);
+
+   execute_process(theProgram->get_const_bytecode(), state, nullptr, nullptr);
+}
+#endif
+
 void thread::init(const size_t) {
    // normal priorities
    if (theProgram->is_priority_desc()) {
@@ -494,6 +506,15 @@ void thread::init(const size_t) {
    //}
 
    threads_synchronize();
+#ifndef COMPILED
+   if(get_id() == 0)
+      theProgram->cleanup_node_references();
+   if(theProgram->has_const_code()) {
+      if(get_id() == 0)
+         execute_const_code();
+      threads_synchronize();
+   }
+#endif
 }
 
 #ifdef INSTRUMENTATION

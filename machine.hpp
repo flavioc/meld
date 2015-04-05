@@ -31,7 +31,6 @@ private:
    statistics::slice_set slices;
 #endif
 
-	void execute_const_code(void);
    void deactivate_signals(void);
    void slice_function(void);
    void set_timer(void);

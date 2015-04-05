@@ -104,14 +104,23 @@ class program {
    bool priority_static{false};
    vm::priority_t initial_priority;
 
+#ifndef COMPILED
 #ifdef USE_REAL_NODES
+   using node_ref_vector = std::vector<byte_code, mem::allocator<byte_code>>;
    // node references in the byte code
-   std::vector<byte_code, mem::allocator<byte_code>> *node_references{nullptr};
+   node_ref_vector *node_references{nullptr};
+   // node references in constant code
+   using const_ref_vector =
+      std::vector<std::pair<vm::node_val, byte_code>,
+                  mem::allocator<std::pair<vm::node_val, byte_code>>>;
+   const_ref_vector const_node_references;
+#endif
 #endif
 
    size_t total_arguments{0};
 
    void read_node_references(byte_code, code_reader &);
+   void const_read_node_references(byte_code, code_reader &);
 
 #ifdef COMPILED
    vm::bitmap_static<COMPILED_NUM_PREDICATES_UINT> thread_predicates_map;
@@ -252,6 +261,7 @@ class program {
       assert(id < num_predicates());
       return code[id];
    }
+   inline bool has_const_code() const { return const_code_size != 0; }
    inline byte_code get_const_bytecode() const { return const_code; }
    inline type *get_const_type(const const_id &id) const {
       return const_types[id];
@@ -279,6 +289,8 @@ class program {
    bool add_data_file(vm::program &);
 #ifdef USE_REAL_NODES
    void fix_node_address(db::node *);
+   void fix_const_references();
+   void cleanup_node_references() { if(node_references) delete []node_references; }
 #endif
 
    static std::unique_ptr<std::ifstream> bypass_bytecode_header(

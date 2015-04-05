@@ -439,7 +439,8 @@ public:
       node_handler.commit();
    }
 
-   void loop(void);
+   void loop();
+	void execute_const_code();
    void init(const size_t);
    
    void new_thread_work(thread *, vm::tuple *, const vm::predicate *);

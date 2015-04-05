@@ -119,7 +119,7 @@ program::program(string _filename)
 
 #ifdef USE_REAL_NODES
    node_references =
-       new vector<byte_code, mem::allocator<byte_code>>[num_nodes];
+       new node_ref_vector[num_nodes];
 #endif
 
    read.seek(num_nodes * database::node_size);
@@ -240,7 +240,7 @@ program::program(string _filename)
 
    const_code = new byte_code_el[const_code_size];
    read.read_any(const_code, const_code_size);
-   read_node_references(const_code, read);
+   const_read_node_references(const_code, read);
 
    MAX_STRAT_LEVEL = 0;
 
@@ -466,9 +466,6 @@ program::~program(void) {
       delete elem;
    }
    MAX_STRAT_LEVEL = 0;
-#ifdef USE_REAL_NODES
-   if (node_references) delete[] node_references;
-#endif
 #ifndef COMPILED
    bitmap::destroy(thread_predicates_map, num_predicates_uint);
 #endif
@@ -490,6 +487,22 @@ void program::read_node_references(byte_code code, code_reader& read) {
 #endif
 }
 
+void program::const_read_node_references(byte_code code, code_reader& read) {
+   uint_val size_nodes;
+   read.read_type<uint_val>(&size_nodes);
+   uint_val pos[size_nodes];
+   read.read_type<uint_val>(pos, size_nodes);
+#ifdef USE_REAL_NODES
+   for (uint_val i(0); i < size_nodes; ++i) {
+      byte_code p(code + pos[i]);
+      const node_val n(pcounter_node(p));
+      const_node_references.push_back(std::make_pair(n, p));
+   }
+#else
+   (void)code;
+#endif
+}
+
 void program::fix_node_address(db::node* n) {
 #ifdef COMPILED
    compiled_fix_nodes(n);
@@ -497,6 +510,17 @@ void program::fix_node_address(db::node* n) {
    vector<byte_code, mem::allocator<byte_code>>& vec(
        node_references[n->get_id()]);
    for (byte_code code : vec) pcounter_set_node(code, (node_val)n);
+#endif
+}
+
+void program::fix_const_references() {
+#ifndef COMPILED
+   for(auto p : const_node_references) {
+      auto node = p.first;
+      auto code = p.second;
+      pcounter_set_node(code, (node_val)All->DATABASE->find_node(node));
+   }
+   const_node_references.clear();
 #endif
 }
 
