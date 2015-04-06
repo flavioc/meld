@@ -25,8 +25,11 @@ for gen in generators[1:]:
 print "]."
 print "const num-generators = " + str(len(generators)) + "."
 
+count = 0
 for consumer, p in zip(consumers, power):
    print "!power(@" + str(consumer) + ", " + str(p) + ")."
+   print "!consumer-id(@" + str(consumer) + ", " + str(count) + ")."
+   count = count + 1
 
 rempower = power
 conspergen = max(int(float(numcons)/float(numgen)), 1)
@@ -38,6 +41,7 @@ if len(sys.argv) > 3:
 else:
    factor = 1.1
 for gen in generators:
+   print "!generator-id(@" + str(gen) + ", " + str(count) + ")."
    count = count + 1
    if count == len(generators):
       num = len(rempower)

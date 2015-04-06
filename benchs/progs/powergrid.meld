@@ -3,6 +3,8 @@ include #data/powergrid.meld
 node generator.
 node consumer.
 
+type generator-id(generator, int).
+type consumer-id(consumer, int).
 type linear capacity(generator, int Total, int Used).
 type linear connected-to(generator, consumer, int).
 type linear connected-to-list(generator, list consumer).
@@ -24,6 +26,8 @@ fails(G, 0).
 disconnected(C).
 reconnect(C).
 !generators(C, all-generators).
+
+
 
 capacity(G, Total, Used),
 fails(G, Fails),
