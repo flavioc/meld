@@ -1,3 +1,4 @@
+include #data/powergrid.meld
 
 node generator.
 node consumer.
@@ -16,21 +17,9 @@ type linear reconnect(consumer).
 type linear connect(generator, consumer, int).
 type linear disconnect(consumer, generator).
 
-const all-generators = [@0, @1, @2, @9].
-const num-generators = 4.
 const maxfails = 10.
 
 fun imax(int A, int B) : int = if A > B then A else B end.
-
-capacity(@0, 8, 0).
-capacity(@1, 0, 0).
-capacity(@2, 10, 0).
-capacity(@9, 10, 0).
-!power(@4, 5).
-!power(@5, 2).
-!power(@6, 10).
-!power(@7, 1).
-!power(@8, 10).
 
 connected-to-list(G, []).
 fails(G, 0).

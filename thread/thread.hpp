@@ -266,8 +266,8 @@ public:
       return queues.moving.pop_head(current_node, STATE_WORKING);
    }
 
-#ifdef TASK_STEALING
    mutable utils::randgen rand;
+#ifdef TASK_STEALING
    size_t next_thread;
    size_t backoff;
    bool steal_flag;
@@ -403,6 +403,8 @@ public:
    static std::atomic<bool> stop_flag;
 
    inline vm::process_id get_id(void) const { return id; }
+   inline utils::randgen *get_random() { return &rand; }
+   inline utils::randgen *get_random() const { return &rand; }
    
    inline bool leader_thread(void) const { return get_id() == 0; }
 

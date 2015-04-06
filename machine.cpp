@@ -11,6 +11,7 @@
 #include "mem/stat.hpp"
 #include "stat/stat.hpp"
 #include "utils/fs.hpp"
+#include "utils/random.hpp"
 #include "interface.hpp"
 #include "runtime/objs.hpp"
 
@@ -118,8 +119,8 @@ void machine::init_sched(const process_id id) {
    utils::all_stats[id] = new utils::lock_stat();
    utils::_stat = utils::all_stats[id];
 #endif
-
    all->SCHEDS[id] = new sched::thread(id);
+   utils::set_random_generator(all->SCHEDS[id]->get_random());
    all->SCHEDS[id]->loop();
    all->SCHEDS[id]->commit_nodes();
 #ifdef MEMORY_STATISTICS

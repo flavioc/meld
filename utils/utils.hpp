@@ -7,6 +7,7 @@
 #include <string>
 
 #include "utils/types.hpp"
+#include "utils/random.hpp"
 
 namespace utils {
 
@@ -16,6 +17,7 @@ namespace utils {
 #define BITMAP_TYPE uint64_t
 #define BITMAP_BITS (sizeof(BITMAP_TYPE) * 8)
 
+void set_random_generator(randgen *);
 size_t number_cpus(void);
 
 template <typename T>

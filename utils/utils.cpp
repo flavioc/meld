@@ -1,16 +1,25 @@
 
+#include <iostream>
 #include <fstream>
 #include <random>
 #include <unistd.h>
+#include <assert.h>
 
-#include "utils.hpp"
+#include "utils/utils.hpp"
+#include "utils/random.hpp"
 
 using namespace std;
 
 namespace utils
 {
    
-static std::mt19937 gen(0);
+__thread randgen *gen{nullptr};
+
+void
+set_random_generator(randgen *_gen)
+{
+   gen = _gen;
+}
 
 size_t
 number_cpus(void)
@@ -21,8 +30,8 @@ number_cpus(void)
 size_t
 random_unsigned(const size_t lim)
 {
-   std::uniform_int_distribution<size_t> dist(0, lim-1);
-   return dist(gen);
+   assert(gen);
+   return gen->operator()(lim);
 }
 
 void
