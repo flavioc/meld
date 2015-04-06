@@ -117,12 +117,15 @@ struct node {
    void print(std::ostream &) const;
    void dump(std::ostream &) const;
 
+   void just_moved();
+   void just_moved_buffer();
+
    // internal databases of the node.
    persistent_store pers_store;
    linear_store linear;
    temporary_store store;
    vm::rule_matcher matcher;
-   bool unprocessed_facts = false;
+   bool unprocessed_facts{false};
    utils::mutex main_lock;
    utils::mutex database_lock;
 

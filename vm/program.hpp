@@ -18,6 +18,7 @@
 #include "vm/import.hpp"
 #include "vm/bitmap.hpp"
 #include "vm/bitmap_static.hpp"
+#include "vm/special_facts.hpp"
 #ifdef USE_REAL_NODES
 #include <unordered_map>
 #endif
@@ -93,6 +94,8 @@ class program {
    rule *data_rule;
 
    mutable predicate *init{nullptr}, *init_thread{nullptr};
+
+   special_facts_id special;
 
    using string_store = std::vector<runtime::rstring::ptr,
                                     mem::allocator<runtime::rstring::ptr>>;
@@ -220,6 +223,9 @@ class program {
    inline bool has_thread_predicates() const {
       return !thread_predicates.empty();
    }
+
+   inline bool has_special_fact(const vm::special_facts::flag_type f) { return special.has(f); }
+   inline vm::predicate *get_special_fact(const vm::special_facts::flag_type f) { return get_predicate(special.get(f)); }
 
 #ifndef COMPILED
    void print_predicate_code(std::ostream &, predicate *) const;

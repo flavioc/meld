@@ -318,6 +318,9 @@ program::program(string _filename)
       code_size[i] = size;
 
       predicate* pred(predicates[i]);
+      
+      if(pred->get_name() == "just-moved")
+         special.mark(special_facts::JUST_MOVED, i);
 
       MAX_STRAT_LEVEL = max(pred->get_strat_level() + 1, MAX_STRAT_LEVEL);
 

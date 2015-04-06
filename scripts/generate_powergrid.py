@@ -26,7 +26,6 @@ print "const num-generators = " + str(len(generators)) + "."
 
 for consumer, p in zip(consumers, power):
    print "!power(@" + str(consumer) + ", " + str(p) + ")."
-   print "set-default-priority(@" + str(consumer) + ", 5.0)."
 
 rempower = power
 conspergen = max(int(float(numcons)/float(numgen)), 1)

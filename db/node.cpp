@@ -125,6 +125,26 @@ void node::print(ostream &cout) const {
    }
 }
 
+void
+node::just_moved()
+{
+   if(theProgram->has_special_fact(vm::special_facts::JUST_MOVED)) {
+      vm::predicate *pred(theProgram->get_special_fact(vm::special_facts::JUST_MOVED));
+      vm::tuple *tpl(vm::tuple::create(pred));
+      add_linear_fact(tpl, pred);
+   }
+}
+
+void
+node::just_moved_buffer()
+{
+   if(theProgram->has_special_fact(vm::special_facts::JUST_MOVED)) {
+      vm::predicate *pred(theProgram->get_special_fact(vm::special_facts::JUST_MOVED));
+      vm::tuple *tpl(vm::tuple::create(pred));
+      inner_add_work_others(tpl, pred);
+   }
+}
+
 ostream &operator<<(ostream &cout, const node &node) {
    node.print(cout);
    return cout;
