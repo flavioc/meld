@@ -442,7 +442,9 @@ public:
    }
 
    void loop();
+#ifndef COMPILED
 	void execute_const_code();
+#endif
    void init(const size_t);
    
    void new_thread_work(thread *, vm::tuple *, const vm::predicate *);

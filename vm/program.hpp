@@ -225,7 +225,7 @@ class program {
    }
 
    inline bool has_special_fact(const vm::special_facts::flag_type f) { return special.has(f); }
-   inline vm::predicate *get_special_fact(const vm::special_facts::flag_type f) { return get_predicate(special.get(f)); }
+   inline vm::predicate *get_special_fact(const vm::special_facts::flag_type f) { return special.get(f); }
 
 #ifndef COMPILED
    void print_predicate_code(std::ostream &, predicate *) const;
@@ -293,8 +293,8 @@ class program {
    inline bool is_data(void) const { return is_data_file; }
 
    bool add_data_file(vm::program &);
-#ifdef USE_REAL_NODES
    void fix_node_address(db::node *);
+#ifndef COMPILED
    void fix_const_references();
    void cleanup_node_references() { if(node_references) delete []node_references; }
 #endif

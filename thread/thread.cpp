@@ -27,6 +27,8 @@ static atomic<size_t> prio_nodes_compared(0);
 static atomic<size_t> prio_nodes_changed(0);
 #endif
 
+extern void execute_const_code();
+
 namespace sched {
 
 tree_barrier *thread::thread_barrier(nullptr);
@@ -506,11 +508,15 @@ void thread::init(const size_t) {
    //}
 
    threads_synchronize();
-#ifndef COMPILED
-   if(get_id() == 0)
+#ifdef COMPILED
+   if(leader_thread())
+      execute_const_code();
+   threads_synchronize();
+#else
+   if(leader_thread())
       theProgram->cleanup_node_references();
    if(theProgram->has_const_code()) {
-      if(get_id() == 0)
+      if(leader_thread())
          execute_const_code();
       threads_synchronize();
    }

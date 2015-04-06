@@ -320,7 +320,7 @@ program::program(string _filename)
       predicate* pred(predicates[i]);
       
       if(pred->get_name() == "just-moved")
-         special.mark(special_facts::JUST_MOVED, i);
+         special.mark(special_facts::JUST_MOVED, pred);
 
       MAX_STRAT_LEVEL = max(pred->get_strat_level() + 1, MAX_STRAT_LEVEL);
 
@@ -474,20 +474,17 @@ program::~program(void) {
 #endif
 }
 
+#ifndef COMPILED
 void program::read_node_references(byte_code code, code_reader& read) {
    uint_val size_nodes;
    read.read_type<uint_val>(&size_nodes);
    uint_val pos[size_nodes];
    read.read_type<uint_val>(pos, size_nodes);
-#ifdef USE_REAL_NODES
    for (uint_val i(0); i < size_nodes; ++i) {
       byte_code p(code + pos[i]);
       const node_val n(pcounter_node(p));
       node_references[n].push_back(p);
    }
-#else
-   (void)code;
-#endif
 }
 
 void program::const_read_node_references(byte_code code, code_reader& read) {
@@ -495,16 +492,22 @@ void program::const_read_node_references(byte_code code, code_reader& read) {
    read.read_type<uint_val>(&size_nodes);
    uint_val pos[size_nodes];
    read.read_type<uint_val>(pos, size_nodes);
-#ifdef USE_REAL_NODES
    for (uint_val i(0); i < size_nodes; ++i) {
       byte_code p(code + pos[i]);
       const node_val n(pcounter_node(p));
       const_node_references.push_back(std::make_pair(n, p));
    }
-#else
-   (void)code;
-#endif
 }
+
+void program::fix_const_references() {
+   for(auto p : const_node_references) {
+      auto node = p.first;
+      auto code = p.second;
+      pcounter_set_node(code, (node_val)All->DATABASE->find_node(node));
+   }
+   const_node_references.clear();
+}
+#endif
 
 void program::fix_node_address(db::node* n) {
 #ifdef COMPILED
@@ -513,17 +516,6 @@ void program::fix_node_address(db::node* n) {
    vector<byte_code, mem::allocator<byte_code>>& vec(
        node_references[n->get_id()]);
    for (byte_code code : vec) pcounter_set_node(code, (node_val)n);
-#endif
-}
-
-void program::fix_const_references() {
-#ifndef COMPILED
-   for(auto p : const_node_references) {
-      auto node = p.first;
-      auto code = p.second;
-      pcounter_set_node(code, (node_val)All->DATABASE->find_node(node));
-   }
-   const_node_references.clear();
 #endif
 }
 

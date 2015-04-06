@@ -5,6 +5,7 @@
 #include <cstdint>
 
 #include "vm/defs.hpp"
+#include "vm/predicate.hpp"
 
 namespace vm
 {
@@ -29,17 +30,17 @@ struct special_facts_id
 {
    special_facts flags;
    static const size_t MAX_SPECIAL_PREDICATE_IDS{16};
-   vm::predicate_id ids[MAX_SPECIAL_PREDICATE_IDS];
+   vm::predicate *ids[MAX_SPECIAL_PREDICATE_IDS];
 
-   inline void mark(const special_facts::flag_type f, const vm::predicate_id id) {
+   inline void mark(const special_facts::flag_type f, const vm::predicate *p) {
       assert(f < MAX_SPECIAL_PREDICATE_IDS);
-      ids[f] = id;
+      ids[f] = (vm::predicate*)p;
       flags.mark(f);
    }
 
    inline bool has(const special_facts::flag_type f) { return flags.has(f); }
 
-   inline vm::predicate_id get(const special_facts::flag_type f) { return ids[f]; }
+   inline vm::predicate* get(const special_facts::flag_type f) const { return ids[f]; }
 };
 
 }
