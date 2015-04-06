@@ -18,6 +18,7 @@ consumers = [n + numgen for n in range(numcons)]
 power = [random.randint(1, 100) for _ in consumers]
 total_power = sum(p for p in power)
 
+print "const maxfails = " + str(numcons / 2) + "."
 print "const all-generators = [@" + str(generators[0]),
 for gen in generators[1:]:
    print ", @" + str(gen),
