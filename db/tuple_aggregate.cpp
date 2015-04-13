@@ -17,7 +17,8 @@ tuple_aggregate::create_configuration(void) const
    
 agg_configuration*
 tuple_aggregate::add_to_set(vm::tuple *tpl, vm::predicate *pred,
-      const derivation_direction dir, const depth_t depth, candidate_gc_nodes& gc_nodes)
+      const derivation_direction dir, const depth_t depth,
+      mem::node_allocator *alloc, candidate_gc_nodes& gc_nodes)
 {
    agg_trie_leaf *leaf(vals.find_configuration(tpl, pred));
    agg_configuration *conf;
@@ -33,7 +34,7 @@ tuple_aggregate::add_to_set(vm::tuple *tpl, vm::predicate *pred,
    cout << "----> Before:" << endl;
    conf->print(cout);
 #endif
-   conf->add_to_set(tpl, pred, dir, depth, gc_nodes);
+   conf->add_to_set(tpl, pred, dir, depth, alloc, gc_nodes);
 #ifdef DEBUG_AGGS
    cout << "Add " << *tpl << " " << many << " with depth " << depth << endl;
    conf->print(cout);
@@ -43,7 +44,7 @@ tuple_aggregate::add_to_set(vm::tuple *tpl, vm::predicate *pred,
 }
 
 full_tuple_list
-tuple_aggregate::generate()
+tuple_aggregate::generate(mem::node_allocator *alloc)
 {
    const aggregate_type typ(pred->get_aggregate_type());
    const field_num field(pred->get_aggregate_field());
@@ -57,13 +58,13 @@ tuple_aggregate::generate()
       assert(conf != nullptr);
       
       if(conf->has_changed())
-         conf->generate(pred, typ, field, ls);
+         conf->generate(pred, typ, field, ls, alloc);
       
       assert(!conf->has_changed());
       
       if(conf->is_empty()) {
          candidate_gc_nodes gc_nodes;
-         it = vals.erase(it, pred, gc_nodes);
+         it = vals.erase(it, pred, alloc, gc_nodes);
          assert(gc_nodes.empty());
       } else
          it++;
@@ -89,9 +90,9 @@ tuple_aggregate::no_changes(void) const
 }
 
 void
-tuple_aggregate::delete_by_index(const match& m, candidate_gc_nodes& gc_nodes)
+tuple_aggregate::delete_by_index(const match& m, mem::node_allocator *alloc, candidate_gc_nodes& gc_nodes)
 {
-   vals.delete_by_index(pred, m, gc_nodes);
+   vals.delete_by_index(pred, m, alloc, gc_nodes);
 }
 
 tuple_aggregate::~tuple_aggregate(void)
@@ -99,7 +100,7 @@ tuple_aggregate::~tuple_aggregate(void)
 }
 
 void
-tuple_aggregate::wipeout(candidate_gc_nodes& gc_nodes)
+tuple_aggregate::wipeout(mem::node_allocator *alloc, candidate_gc_nodes& gc_nodes)
 {
    for(agg_trie::const_iterator it(vals.begin());
       it != vals.end();
@@ -107,9 +108,9 @@ tuple_aggregate::wipeout(candidate_gc_nodes& gc_nodes)
    {
       agg_configuration *conf(*it);
       assert(conf != nullptr);
-      conf->wipeout(pred, gc_nodes);
+      conf->wipeout(pred, alloc, gc_nodes);
    }
-   vals.wipeout(pred, gc_nodes);
+   vals.wipeout(pred, alloc, gc_nodes);
 }
 
 void

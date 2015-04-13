@@ -15,6 +15,7 @@
 #include "vm/bitmap_static.hpp"
 #include "utils/intrusive_list.hpp"
 #include "db/hash_table.hpp"
+#include "mem/node.hpp"
 #ifdef COMPILED
 #include COMPILED_HEADER
 #endif
@@ -376,8 +377,8 @@ struct linear_store {
       }
    }
 
-   inline void destroy(vm::candidate_gc_nodes &gc_nodes,
-                       const bool fast = false) {
+   inline void destroy(mem::node_allocator *alloc,
+                       vm::candidate_gc_nodes &gc_nodes, const bool fast = false) {
       for (size_t i(0); i < vm::theProgram->num_linear_predicates(); ++i) {
          vm::predicate *pred(vm::theProgram->get_linear_predicate(i));
          utils::byte *p(data + ITEM_SIZE * i);
@@ -390,7 +391,7 @@ struct linear_store {
                        it2 != end;) {
                      vm::tuple *tpl(*it2);
                      it2++;
-                     vm::tuple::destroy(tpl, pred, gc_nodes);
+                     vm::tuple::destroy(tpl, pred, alloc, gc_nodes);
                   }
                }
             }
@@ -406,7 +407,7 @@ struct linear_store {
                  it != end;) {
                vm::tuple *tpl(*it);
                ++it;
-               vm::tuple::destroy(tpl, pred, gc_nodes);
+               vm::tuple::destroy(tpl, pred, alloc, gc_nodes);
             }
             ls->clear();
          }

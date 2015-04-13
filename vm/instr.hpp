@@ -74,7 +74,7 @@ const size_t RLINEAR_ITER_BASE = ITER_BASE;
 const size_t OPERS_ITER_BASE = OITER_BASE;
 const size_t OLINEAR_ITER_BASE = OITER_BASE;
 const size_t ORLINEAR_ITER_BASE = OITER_BASE;
-const size_t ALLOC_BASE = instr_size + 2;
+const size_t ALLOC_BASE = instr_size + predicate_size + 2 * reg_val_size;
 const size_t CALL_BASE = call_size + count_size;
 const size_t IF_BASE = instr_size + 1 + jump_size;
 const size_t TESTNIL_BASE = instr_size + reg_val_size + reg_val_size;
@@ -561,11 +561,15 @@ inline bool iter_options_to_delete(const utils::byte b) { return b & 0x02; }
 
 /* ALLOC pred to reg */
 
-inline predicate_id alloc_predicate(pcounter pc) {
+inline predicate_id alloc_predicate(const pcounter pc) {
    return predicate_get(pc, instr_size);
 }
-inline reg_num alloc_reg(pcounter pc) {
+inline reg_num alloc_reg(const pcounter pc) {
    return pcounter_reg(pc + instr_size + predicate_size);
+}
+
+inline reg_num alloc_dest(const pcounter pc) {
+   return pcounter_reg(pc + instr_size + predicate_size + reg_val_size);
 }
 
 /* CALL */

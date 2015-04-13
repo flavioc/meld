@@ -27,7 +27,8 @@ using namespace statistics;
 namespace process {
 
 void machine::run_action(sched::thread* sched, vm::tuple* tpl,
-                         vm::predicate* pred, candidate_gc_nodes& gc_nodes) {
+                         vm::predicate* pred, mem::node_allocator *alloc,
+                         candidate_gc_nodes& gc_nodes) {
    (void)sched;
 
    assert(pred->is_action_pred());
@@ -46,7 +47,7 @@ void machine::run_action(sched::thread* sched, vm::tuple* tpl,
       assert(false);
    }
 
-   vm::tuple::destroy(tpl, pred, gc_nodes);
+   vm::tuple::destroy(tpl, pred, alloc, gc_nodes);
 }
 
 void machine::deactivate_signals(void) {

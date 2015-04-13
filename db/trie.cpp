@@ -568,6 +568,7 @@ void trie::delete_path(trie_node *node) {
 
 // deletes everything below the 'node'
 size_t trie::delete_branch(trie_node *node, predicate *pred,
+                           mem::node_allocator *alloc,
                            candidate_gc_nodes &gc_nodes) {
    size_t count;
 
@@ -582,7 +583,7 @@ size_t trie::delete_branch(trie_node *node, predicate *pred,
 
       count = leaf->get_count();
 
-      leaf->destroy(pred, gc_nodes);
+      leaf->destroy(pred, alloc, gc_nodes);
       delete leaf;
       node->child = nullptr;
 
@@ -603,7 +604,7 @@ size_t trie::delete_branch(trie_node *node, predicate *pred,
             while (next != nullptr) {
                trie_node *tmp(next->next);
 
-               count += delete_branch(next, pred, gc_nodes);
+               count += delete_branch(next, pred, alloc, gc_nodes);
                delete next;
 
                next = tmp;
@@ -614,7 +615,7 @@ size_t trie::delete_branch(trie_node *node, predicate *pred,
       while (next != nullptr) {
          trie_node *tmp(next->get_next());
 
-         count += delete_branch(next, pred, gc_nodes);
+         count += delete_branch(next, pred, alloc, gc_nodes);
          delete next;
 
          next = tmp;
@@ -774,26 +775,28 @@ trie_node *trie::check_insert(void *data, predicate *pred,
 
 void trie::commit_delete(trie_node *node, predicate *pred,
                          const vm::ref_count dec,
+                         mem::node_allocator *alloc,
                          candidate_gc_nodes &gc_nodes) {
    assert(dec > 0);
    assert(node->is_leaf());
    assert(dec <= number_of_references);
    number_of_references -= dec;
-   inner_delete_by_leaf(node->get_leaf(), pred, 0, 0, gc_nodes);
+   inner_delete_by_leaf(node->get_leaf(), pred, 0, 0, alloc, gc_nodes);
    basic_invariants();
 }
 
 void trie::delete_by_leaf(trie_leaf *leaf, predicate *pred, const depth_t depth,
-                          candidate_gc_nodes &gc_nodes) {
+                          mem::node_allocator *alloc, candidate_gc_nodes &gc_nodes) {
    sanity_check();
    --number_of_references;
-   inner_delete_by_leaf(leaf, pred, 1, depth, gc_nodes);
+   inner_delete_by_leaf(leaf, pred, 1, depth, alloc, gc_nodes);
    sanity_check();
 }
 
 // we assume that number_of_references was decrement previous to this
 void trie::inner_delete_by_leaf(trie_leaf *leaf, predicate *pred,
                                 const ref_count count, const depth_t depth,
+                                mem::node_allocator *alloc,
                                 candidate_gc_nodes &gc_nodes) {
    if (count != 0)
       leaf->sub(depth, count);
@@ -829,7 +832,7 @@ void trie::inner_delete_by_leaf(trie_leaf *leaf, predicate *pred,
    // cout << this << " Total " << total << " root " << root << " node " << node
    // << endl;
 
-   leaf->destroy(pred, gc_nodes);
+   leaf->destroy(pred, alloc, gc_nodes);
    delete leaf;
    node->child = nullptr;
    delete_path(node);
@@ -839,6 +842,7 @@ void trie::inner_delete_by_leaf(trie_leaf *leaf, predicate *pred,
 }
 
 void trie::delete_by_index(predicate *pred, const match &m,
+                           mem::node_allocator *alloc,
                            candidate_gc_nodes &gc_nodes) {
    basic_invariants();
 
@@ -877,14 +881,14 @@ void trie::delete_by_index(predicate *pred, const match &m,
    assert(node != nullptr);
 
    // update number of tuples in this trie
-   number_of_references -= delete_branch(node, pred, gc_nodes);
+   number_of_references -= delete_branch(node, pred, alloc, gc_nodes);
    delete_path(node);
 
    basic_invariants();
 }
 
-void trie::wipeout(predicate *pred, candidate_gc_nodes &gc_nodes) {
-   delete_branch(&root, pred, gc_nodes);
+void trie::wipeout(predicate *pred, mem::node_allocator *alloc, candidate_gc_nodes &gc_nodes) {
+   delete_branch(&root, pred, alloc, gc_nodes);
    number_of_references = 0;
 }
 
@@ -1338,13 +1342,14 @@ agg_trie_leaf *agg_trie::find_configuration(vm::tuple *tpl,
 }
 
 agg_trie_iterator agg_trie::erase(agg_trie_iterator &it, predicate *pred,
+                                  mem::node_allocator *alloc,
                                   candidate_gc_nodes &gc_nodes) {
    agg_trie_leaf *leaf(it.current_leaf);
    agg_trie_leaf *next_leaf((agg_trie_leaf *)leaf->next);
    trie_node *node(leaf->node);
 
    leaf->set_zero_refs();
-   commit_delete(node, pred, 1, gc_nodes);
+   commit_delete(node, pred, 1, alloc, gc_nodes);
 
    return agg_trie_iterator(next_leaf);
 }

@@ -62,7 +62,7 @@ public:
    vm::all *get_all(void) const { return this->all; }
    
    void run_action(sched::thread *, vm::tuple *, vm::predicate *,
-         vm::candidate_gc_nodes&);
+         mem::node_allocator *, vm::candidate_gc_nodes&);
    
    void start(void);
    void init_sched(const vm::process_id);

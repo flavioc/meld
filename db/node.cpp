@@ -130,7 +130,7 @@ node::just_moved()
 {
    if(theProgram->has_special_fact(vm::special_facts::JUST_MOVED)) {
       vm::predicate *pred(theProgram->get_special_fact(vm::special_facts::JUST_MOVED));
-      vm::tuple *tpl(vm::tuple::create(pred));
+      vm::tuple *tpl(vm::tuple::create(pred, &alloc));
       add_linear_fact(tpl, pred);
    }
 }
@@ -140,7 +140,7 @@ node::just_moved_buffer()
 {
    if(theProgram->has_special_fact(vm::special_facts::JUST_MOVED)) {
       vm::predicate *pred(theProgram->get_special_fact(vm::special_facts::JUST_MOVED));
-      vm::tuple *tpl(vm::tuple::create(pred));
+      vm::tuple *tpl(vm::tuple::create(pred, &alloc));
       inner_add_work_others(tpl, pred);
    }
 }

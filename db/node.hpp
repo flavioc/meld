@@ -24,6 +24,7 @@
 #include "vm/priority.hpp"
 #include "queue/intrusive.hpp"
 #include "db/persistent_store.hpp"
+#include "mem/node.hpp"
 #include "vm/buffer_node.hpp"
 
 namespace sched {
@@ -44,6 +45,8 @@ struct node {
 
    public:
    DECLARE_DOUBLE_QUEUE_NODE(node);
+
+   mem::node_allocator alloc;
 
    // for managing dynamically allocated nodes.
    node *dyn_next{nullptr}, *dyn_prev{nullptr};
@@ -280,8 +283,8 @@ struct node {
 
    inline void wipeout(vm::candidate_gc_nodes &gc_nodes,
                        const bool fast = false) {
-      linear.destroy(gc_nodes, fast);
-      pers_store.wipeout(gc_nodes);
+      linear.destroy(&alloc, gc_nodes, fast);
+      pers_store.wipeout(&alloc, gc_nodes);
 
       mem::allocator<node>().destroy(this);
    }

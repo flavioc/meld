@@ -11,6 +11,7 @@
 #include "utils/types.hpp"
 #include "utils/mutex.hpp"
 #include "utils/intrusive_list.hpp"
+#include "mem/node.hpp"
 
 namespace vm
 {
@@ -65,7 +66,7 @@ public:
 
    void copy_runtime(const vm::predicate*);
    
-   static tuple* unpack(utils::byte *, const size_t, int *, vm::program *);
+   static tuple* unpack(utils::byte *, const size_t, int *, vm::program *, mem::node_allocator *alloc);
 
    inline tuple_field get_field(const field_num& field) const { return getfp()[field]; }
    
@@ -89,8 +90,8 @@ public:
    std::string to_str(const vm::predicate *) const;
    void print(std::ostream&, const vm::predicate*) const;
    
-   tuple *copy_except(vm::predicate *, const field_num) const;
-   tuple *copy(vm::predicate *) const;
+   tuple *copy_except(vm::predicate *, const field_num, mem::node_allocator *) const;
+   tuple *copy(vm::predicate *, mem::node_allocator *) const;
 
 #ifndef COMPILED
 #define TUPLE_DELETE_FLAG 0x01
@@ -103,19 +104,20 @@ public:
    inline bool is_updated(void) const { return flags & TUPLE_UPDATED_FLAG; }
 #endif
 
-   inline static tuple* create(const predicate* pred) {
+   inline static tuple* create(const predicate* pred, mem::node_allocator *alloc) {
       const size_t size(sizeof(vm::tuple) + sizeof(tuple_field) * pred->num_fields());
       LOG_NEW_FACT();
-      vm::tuple *ptr((vm::tuple*)mem::center::allocate(size, 1));
+      vm::tuple *ptr((vm::tuple*)alloc->allocate_obj(size));
       ptr->init(pred);
       return ptr;
    }
 
-   inline static void destroy(tuple *tpl, vm::predicate *pred, candidate_gc_nodes& gc_nodes)
+   inline static void destroy(tuple *tpl, vm::predicate *pred, mem::node_allocator *alloc,
+         candidate_gc_nodes& gc_nodes)
    {
       const size_t size(sizeof(vm::tuple) + sizeof(tuple_field) * pred->num_fields());
       tpl->destructor(pred, gc_nodes);
-      mem::allocator<utils::byte>().deallocate((utils::byte*)tpl, size);
+      alloc->deallocate_obj((utils::byte*)tpl, size);
    }
    
 private:

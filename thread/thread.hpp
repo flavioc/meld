@@ -378,7 +378,7 @@ public:
       thread_node->set_owner(this);
 
       vm::predicate *init_thread_pred(vm::theProgram->get_init_thread_predicate());
-      vm::tuple *init_tuple(vm::tuple::create(init_thread_pred));
+      vm::tuple *init_tuple(vm::tuple::create(init_thread_pred, &(thread_node->alloc)));
       thread_node->add_linear_fact(init_tuple, init_thread_pred);
       thread_node->unprocessed_facts = true;
    }
@@ -386,7 +386,7 @@ public:
    inline void setup_node(db::node *node)
    {
       vm::predicate *init_pred(vm::theProgram->get_init_predicate());
-      vm::tuple *init_tuple(vm::tuple::create(init_pred));
+      vm::tuple *init_tuple(vm::tuple::create(init_pred, &(node->alloc)));
 #ifdef FACT_STATISTICS
       state.facts_derived++;
 #endif

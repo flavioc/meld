@@ -129,8 +129,8 @@ void state::do_persistent_tuples(db::node *node, vm::full_tuple_list *ls) {
             assert(stpl != stpl2);
             assert(stpl2->get_tuple() != stpl->get_tuple());
             assert(stpl2->get_predicate() == stpl->get_predicate());
-            full_tuple::wipeout(stpl, gc_nodes);
-            full_tuple::wipeout(stpl2, gc_nodes);
+            full_tuple::wipeout(stpl, &(node->alloc), gc_nodes);
+            full_tuple::wipeout(stpl2, &(node->alloc), gc_nodes);
             continue;
          }
       }
@@ -157,7 +157,7 @@ void state::process_action_tuples(db::node *node) {
    for (full_tuple *stpl : node->store.incoming_action_tuples) {
       vm::tuple *tpl(stpl->get_tuple());
       vm::predicate *pred(stpl->get_predicate());
-      All->MACHINE->run_action(sched, tpl, pred, gc_nodes);
+      All->MACHINE->run_action(sched, tpl, pred, &(node->alloc), gc_nodes);
       delete stpl;
    }
    node->store.incoming_action_tuples.clear();
@@ -184,18 +184,20 @@ void state::add_to_aggregate(db::node *node, vm::full_tuple_list *ls,
    switch (stpl->get_dir()) {
       case vm::NEGATIVE_DERIVATION:
          agg = node->pers_store.remove_agg_tuple(tpl, stpl->get_predicate(),
-                                                 stpl->get_depth(), gc_nodes);
+                                                 stpl->get_depth(),
+                                                 &(node->alloc), gc_nodes);
          break;
       case vm::POSITIVE_DERIVATION:
          agg = node->pers_store.add_agg_tuple(tpl, stpl->get_predicate(),
-                                              stpl->get_depth(), gc_nodes);
+                                              stpl->get_depth(), vm::POSITIVE_DERIVATION,
+                                              &(node->alloc), gc_nodes);
          break;
    }
 
    full_tuple_list list;
 
    agg->generate(pred, pred->get_aggregate_type(), pred->get_aggregate_field(),
-                 list);
+                 list, &(node->alloc));
 
    for (full_tuple_list::iterator it(list.begin()); it != list.end(); ++it) {
       full_tuple *stpl(*it);
@@ -232,8 +234,7 @@ void state::process_persistent_tuple(db::node *target_node, full_tuple *stpl,
             setup(pred, POSITIVE_DERIVATION, stpl->get_depth());
             if (pred->has_code)
 #ifdef COMPILED
-               run_predicate(this, tpl, node, sched->thread_node,
-                             pred->get_id());
+               run_predicate(this, tpl, node, sched->thread_node, pred->get_id());
 #else
                execute_process(
                    theProgram->get_predicate_bytecode(pred->get_id()), *this,
@@ -246,7 +247,7 @@ void state::process_persistent_tuple(db::node *target_node, full_tuple *stpl,
          else {
             matcher->new_persistent_fact(pred->get_id());
 
-            if (!is_new) vm::tuple::destroy(tpl, pred, gc_nodes);
+            if (!is_new) vm::tuple::destroy(tpl, pred, &(target_node->alloc), gc_nodes);
          }
 
          delete stpl;
@@ -280,7 +281,7 @@ void state::process_persistent_tuple(db::node *target_node, full_tuple *stpl,
                       theProgram->get_predicate_bytecode(pred->get_id()), *this,
                       tpl, pred);
 #endif
-               deleter.perform_delete(pred, gc_nodes);
+               deleter.perform_delete(pred, &(target_node->alloc), gc_nodes);
             } else if (pred->is_cycle_pred()) {
                depth_counter *dc(deleter.get_depth_counter());
                assert(dc != nullptr);
@@ -298,13 +299,13 @@ void state::process_persistent_tuple(db::node *target_node, full_tuple *stpl,
                             theProgram->get_predicate_bytecode(pred->get_id()),
                             *this, tpl, pred);
 #endif
-                     deleter.perform_delete(pred, gc_nodes);
+                     deleter.perform_delete(pred, &(target_node->alloc), gc_nodes);
                   }
                }
             }
             matcher->new_persistent_count(pred->get_id(), deleter.trie_size());
          }
-         vm::full_tuple::wipeout(stpl, gc_nodes);
+         vm::full_tuple::wipeout(stpl, &(target_node->alloc), gc_nodes);
          break;
    }
 }

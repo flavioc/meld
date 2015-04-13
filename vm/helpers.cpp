@@ -77,10 +77,10 @@ static inline void execute_run_action0(vm::tuple *tpl, vm::predicate *pred,
    assert(pred->is_action_pred());
    switch (state.direction) {
       case vm::POSITIVE_DERIVATION:
-         vm::All->MACHINE->run_action(state.sched, tpl, pred, state.gc_nodes);
+         vm::All->MACHINE->run_action(state.sched, tpl, pred, &(state.node->alloc), state.gc_nodes);
          break;
       case vm::NEGATIVE_DERIVATION:
-         vm::tuple::destroy(tpl, pred, state.gc_nodes);
+         vm::tuple::destroy(tpl, pred, &(state.node->alloc), state.gc_nodes);
          break;
    }
 }
@@ -123,12 +123,18 @@ static inline void execute_thread_send0(sched::thread *th, vm::tuple *tpl,
       state.sched->new_thread_work(th, tpl, pred);
 }
 
-static inline void execute_send0(db::node *node, const vm::node_val dest_val,
+static inline void execute_send0(db::node *from, const vm::node_val dest_val,
                                  vm::tuple *tuple, vm::predicate *pred,
                                  vm::state &state) {
    if (state.direction == vm::NEGATIVE_DERIVATION && pred->is_linear_pred() &&
-       !pred->is_reused_pred()) {
-      vm::tuple::destroy(tuple, pred, state.gc_nodes);
+       !pred->is_reused_pred())
+   {
+      mem::node_allocator *alloc;
+      if((db::node*)dest_val == (db::node*)tuple)
+         alloc = &(from->alloc);
+      else
+         alloc = &(((db::node*)dest_val)->alloc);
+      vm::tuple::destroy(tuple, pred, alloc, state.gc_nodes);
       return;
    }
 
@@ -148,43 +154,34 @@ static inline void execute_send0(db::node *node, const vm::node_val dest_val,
    tuple->print(std::cout, pred);
    std::cout << " to " << print_val << std::endl;
 #endif
-#ifdef USE_REAL_NODES
-   if (node == (db::node *)dest_val)
-#else
-   if (state.node->get_id() == dest_val)
-#endif
+   if ((db::node*)tuple == (db::node *)dest_val)
    {
 #ifdef DEBUG_SENDS
       std::cout << "\tlocal send ";
       tuple->print(std::cout, pred);
       std::cout << std::endl;
 #endif
-
       // same node
       if (pred->is_action_pred())
          execute_run_action0(tuple, pred, state);
       else if (pred->is_persistent_pred() || pred->is_reused_pred())
-         execute_add_node_persistent0(node, tuple, pred, state);
+         execute_add_node_persistent0(from, tuple, pred, state);
       else
          execute_enqueue_linear0(tuple, pred, state);
    } else {
-#ifdef USE_REAL_NODES
-      db::node *node((db::node *)dest_val);
-#else
-      db::node *node(vm::All->DATABASE->find_node(dest_val));
-#endif
+      db::node *dest((db::node *)dest_val);
       if (pred->is_action_pred())
-         vm::All->MACHINE->run_action(state.sched, tuple, pred, state.gc_nodes);
+         vm::All->MACHINE->run_action(state.sched, tuple, pred, &(state.node->alloc), state.gc_nodes);
       else {
 #ifdef FACT_BUFFERING
          if (pred->is_persistent_pred() || pred->is_reused_pred() ||
              state.direction != POSITIVE_DERIVATION) {
-            state.sched->new_work(state.node, node, tuple, pred,
+            state.sched->new_work(state.node, dest, tuple, pred,
                                   state.direction, state.depth);
          } else
-            state.facts_to_send.add(node, tuple, pred);
+            state.facts_to_send.add(dest, tuple, pred);
 #else
-         state.sched->new_work(state.node, node, tuple, pred, state.direction,
+         state.sched->new_work(state.node, dest, tuple, pred, state.direction,
                                state.depth);
 #endif
       }
@@ -271,7 +268,7 @@ static inline void add_new_axioms(state &state, db::node *node, pcounter pc,
       // read axions until the end!
       predicate_id pid(vm::instr::predicate_get(pc, 0));
       predicate *pred(theProgram->get_predicate(pid));
-      tuple *tpl(vm::tuple::create(pred));
+      tuple *tpl(vm::tuple::create(pred, &(node->alloc)));
 #ifdef FACT_STATISTICS
       state.facts_derived++;
 #endif

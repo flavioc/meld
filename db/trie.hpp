@@ -14,6 +14,7 @@
 #include "vm/full_tuple.hpp"
 #include "vm/predicate.hpp"
 #include "vm/match.hpp"
+#include "mem/node.hpp"
 #include "vm/types.hpp"
 
 namespace db {
@@ -138,7 +139,7 @@ class trie_leaf : public mem::base {
 
    explicit trie_leaf(void) {}
 
-   virtual void destroy(vm::predicate *, vm::candidate_gc_nodes &) {}
+   virtual void destroy(vm::predicate *, mem::node_allocator *, vm::candidate_gc_nodes &) {}
 };
 
 class depth_counter : public mem::base {
@@ -334,10 +335,10 @@ class tuple_trie_leaf : public trie_leaf {
       add_new(depth, count);
    }
 
-   virtual void destroy(vm::predicate *pred,
+   virtual void destroy(vm::predicate *pred, mem::node_allocator *alloc,
                         vm::candidate_gc_nodes &gc_nodes) override {
       if (depths) delete depths;
-      vm::tuple::destroy(tpl, pred, gc_nodes);
+      vm::tuple::destroy(tpl, pred, alloc, gc_nodes);
    }
 };
 
@@ -410,8 +411,8 @@ class trie {
    }
 
    void commit_delete(trie_node *, vm::predicate *, const vm::ref_count,
-                      vm::candidate_gc_nodes &);
-   size_t delete_branch(trie_node *, vm::predicate *, vm::candidate_gc_nodes &);
+                      mem::node_allocator *, vm::candidate_gc_nodes &);
+   size_t delete_branch(trie_node *, vm::predicate *, mem::node_allocator *, vm::candidate_gc_nodes &);
    void delete_path(trie_node *);
    void sanity_check(void) const;
 
@@ -419,7 +420,8 @@ class trie {
                                   const vm::ref_count many,
                                   const vm::depth_t depth) = 0;
    void inner_delete_by_leaf(trie_leaf *, vm::predicate *, const vm::ref_count,
-                             const vm::depth_t, vm::candidate_gc_nodes &);
+                             const vm::depth_t, mem::node_allocator *,
+                             vm::candidate_gc_nodes &);
 
    trie_node *check_insert(void *, vm::predicate *,
                            const vm::derivation_direction, const vm::depth_t,
@@ -441,8 +443,9 @@ class trie {
       }
 
       void perform_delete(vm::predicate *pred,
+                          mem::node_allocator *alloc,
                           vm::candidate_gc_nodes &gc_nodes) {
-         tr->commit_delete(tr_node, pred, decrease, gc_nodes);
+         tr->commit_delete(tr_node, pred, decrease, alloc, gc_nodes);
       }
 
       inline depth_counter *get_depth_counter(void) const {
@@ -475,10 +478,10 @@ class trie {
 
    // if second argument is 0, the leaf is ensured to be deleted
    void delete_by_leaf(trie_leaf *, vm::predicate *, const vm::depth_t,
-                       vm::candidate_gc_nodes &);
+                       mem::node_allocator *, vm::candidate_gc_nodes &);
    void delete_by_index(vm::predicate *, const vm::match &,
-                        vm::candidate_gc_nodes &);
-   virtual void wipeout(vm::predicate *, vm::candidate_gc_nodes &);
+                        mem::node_allocator *, vm::candidate_gc_nodes &);
+   virtual void wipeout(vm::predicate *, mem::node_allocator *, vm::candidate_gc_nodes &);
 
    explicit trie(void);
 };
@@ -730,7 +733,7 @@ class agg_trie : public trie, public mem::base {
    inline iterator begin(void) { return iterator((agg_trie_leaf *)first_leaf); }
    inline iterator end(void) { return iterator(); }
 
-   iterator erase(iterator &it, vm::predicate *, vm::candidate_gc_nodes &);
+   iterator erase(iterator &it, vm::predicate *, mem::node_allocator *alloc, vm::candidate_gc_nodes &);
 
    explicit agg_trie(void) {}
 

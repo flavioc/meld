@@ -89,10 +89,10 @@ void tuple::copy_field(type *ty, tuple *ret, const field_num i) const {
    }
 }
 
-tuple *tuple::copy(vm::predicate *pred) const {
+tuple *tuple::copy(vm::predicate *pred, mem::node_allocator *alloc) const {
    assert(pred != nullptr);
 
-   tuple *ret(tuple::create(pred));
+   tuple *ret(tuple::create(pred, alloc));
 
    for (size_t i(0); i < pred->num_fields(); ++i)
       copy_field(pred->get_field_type(i), ret, i);
@@ -100,10 +100,10 @@ tuple *tuple::copy(vm::predicate *pred) const {
    return ret;
 }
 
-tuple *tuple::copy_except(predicate *pred, const field_num field) const {
+tuple *tuple::copy_except(predicate *pred, const field_num field, mem::node_allocator *alloc) const {
    assert(pred != nullptr);
 
-   tuple *ret(tuple::create(pred));
+   tuple *ret(tuple::create(pred, alloc));
 
    for (size_t i(0); i < pred->num_fields(); ++i) {
       if (i != field) copy_field(pred->get_field_type(i), ret, i);
@@ -388,13 +388,13 @@ void tuple::load(vm::predicate *pred, byte *buf, const size_t buf_size,
 }
 
 tuple *tuple::unpack(byte *buf, const size_t buf_size, int *pos,
-                     vm::program *prog) {
+                     vm::program *prog, mem::node_allocator *alloc) {
    predicate_id pred_id;
 
    utils::unpack<predicate_id>(buf, buf_size, pos, &pred_id, 1);
 
    predicate *pred(prog->get_predicate(pred_id));
-   tuple *ret(tuple::create(pred));
+   tuple *ret(tuple::create(pred, alloc));
 
    ret->load(pred, buf, buf_size, pos);
 

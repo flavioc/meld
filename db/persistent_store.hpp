@@ -56,16 +56,18 @@ struct persistent_store {
 #ifndef COMPILED_NO_AGGREGATES
    db::agg_configuration *add_agg_tuple(
        vm::tuple *, vm::predicate *, const vm::depth_t,
-       vm::candidate_gc_nodes &,
-       const vm::derivation_direction dir = vm::POSITIVE_DERIVATION);
+       const vm::derivation_direction dir,
+       mem::node_allocator *,
+       vm::candidate_gc_nodes &);
    db::agg_configuration *remove_agg_tuple(vm::tuple *, vm::predicate *,
                                            const vm::depth_t,
+                                           mem::node_allocator *,
                                            vm::candidate_gc_nodes &);
 #endif
    void delete_by_index(vm::predicate *, const vm::match &,
-                        vm::candidate_gc_nodes &);
+                        mem::node_allocator *, vm::candidate_gc_nodes &);
    void delete_by_leaf(vm::predicate *, tuple_trie_leaf *, const vm::depth_t,
-                       vm::candidate_gc_nodes &);
+                       mem::node_allocator *, vm::candidate_gc_nodes &);
 
    db::tuple_trie::tuple_iterator match_predicate(
        const vm::predicate_id id) const {
@@ -80,7 +82,7 @@ struct persistent_store {
       return tr->match_predicate(m);
    }
 
-   vm::full_tuple_list end_iteration();
+   vm::full_tuple_list end_iteration(mem::node_allocator *);
 
    size_t count_total(const vm::predicate *) const;
 
@@ -97,7 +99,7 @@ struct persistent_store {
 #endif
    }
 
-   void wipeout(vm::candidate_gc_nodes &);
+   void wipeout(mem::node_allocator *, vm::candidate_gc_nodes &);
 
    std::vector<std::string> dump(const vm::predicate *) const;
    std::vector<std::string> print(const vm::predicate *) const;

@@ -55,8 +55,14 @@ static inline tuple* get_tuple_field(state& state, const pcounter& pc) {
 
 static inline void execute_alloc(const pcounter& pc, state& state) {
    predicate* pred(theProgram->get_predicate(alloc_predicate(pc)));
-   tuple* tuple(vm::tuple::create(pred));
+   const reg_num dest(alloc_dest(pc));
    const reg_num reg(alloc_reg(pc));
+   mem::node_allocator *alloc;
+   if(dest == reg)
+      alloc = &(state.node->alloc);
+   else
+      alloc = &(((db::node*)state.get_node(dest))->alloc);
+   tuple* tuple(vm::tuple::create(pred, alloc));
 
    state.preds[reg] = pred;
 
@@ -666,7 +672,7 @@ static inline return_type execute_olinear_iter(const reg_num reg, match* m,
       if (TO_FINISH(ret)) {
          utils::intrusive_list<vm::tuple>::iterator it(p.iterator);
          ls->erase(it);
-         vm::tuple::destroy(match_tuple, pred, state.gc_nodes);
+         vm::tuple::destroy(match_tuple, pred, &(node->alloc), state.gc_nodes);
          if (ret == RETURN_LINEAR) return RETURN_LINEAR;
          if (ret == RETURN_DERIVED && old_is_linear) return RETURN_DERIVED;
       } else
@@ -799,7 +805,7 @@ static inline return_type execute_opers_iter(const reg_num reg, match* m,
 }
 
 static inline return_type execute_linear_iter_list(
-    const reg_num reg, match* m, const pcounter first, state& state,
+    db::node *node, const reg_num reg, match* m, const pcounter first, state& state,
     predicate* pred, utils::intrusive_list<vm::tuple>* local_tuples,
     hash_table* tbl = nullptr) {
    if (local_tuples == nullptr) return RETURN_NO_RETURN;
@@ -875,7 +881,7 @@ static inline return_type execute_linear_iter_list(
                it = tbl->erase_from_list(local_tuples, it);
             else
                it = local_tuples->erase(it);
-            vm::tuple::destroy(match_tuple, pred, state.gc_nodes);
+            vm::tuple::destroy(match_tuple, pred, &(node->alloc), state.gc_nodes);
             if (tbl) {
                if (local_tuples->empty() && tbl->empty())
                   state.matcher->empty_predicate(pred->get_id());
@@ -911,14 +917,14 @@ static inline return_type execute_linear_iter(const reg_num reg, match* m,
          const match_field mf(m->get_match(hashed));
          utils::intrusive_list<vm::tuple>* local_tuples(
              table->lookup_list(mf.field));
-         return_type ret(execute_linear_iter_list(reg, m, first, state, pred,
+         return_type ret(execute_linear_iter_list(node, reg, m, first, state, pred,
                                                   local_tuples, table));
          return ret;
       } else {
          // go through hash table
          for (hash_table::iterator it(table->begin()); !it.end(); ++it) {
             utils::intrusive_list<vm::tuple>* local_tuples(*it);
-            return_type ret(execute_linear_iter_list(reg, m, first, state, pred,
+            return_type ret(execute_linear_iter_list(node, reg, m, first, state, pred,
                                                      local_tuples, table));
             if (ret != RETURN_NO_RETURN) return ret;
          }
@@ -927,7 +933,7 @@ static inline return_type execute_linear_iter(const reg_num reg, match* m,
    } else {
       utils::intrusive_list<vm::tuple>* local_tuples(
           node->linear.get_linked_list(pred->get_linear_id()));
-      return execute_linear_iter_list(reg, m, first, state, pred, local_tuples);
+      return execute_linear_iter_list(node, reg, m, first, state, pred, local_tuples);
    }
 }
 
@@ -1640,7 +1646,7 @@ static inline void execute_remote_update(pcounter& pc, state& state) {
       MUTEX_UNLOCK(n->database_lock, internal_lock_data);
    }
    if (updated) return;
-   tuple* tuple(vm::tuple::create(pred_edit));
+   tuple* tuple(vm::tuple::create(pred_edit, &(n->alloc)));
    for (size_t i(0); i < pred_edit->num_fields(); ++i)
       tuple_set_field(tuple, pred_edit->get_field_type(i), i, regs[i]);
    execute_send0(state.node, n0, tuple, pred_edit, state);
