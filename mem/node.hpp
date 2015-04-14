@@ -5,6 +5,10 @@
 #include "mem/allocator.hpp"
 #include "utils/types.hpp"
 #include "utils/mutex.hpp"
+#include "vm/bitmap_static.hpp"
+#ifdef COMPILED
+#include COMPILED_HEADER
+#endif
 
 #define NODE_ALLOCATOR
 
@@ -15,62 +19,68 @@ struct node_allocator
 {
 #ifdef NODE_ALLOCATOR
    utils::byte *current_page{nullptr};
-   utils::byte *free_list{nullptr};
    std::size_t page_ptr{0};
    std::size_t page_size{0};
    utils::mutex mtx;
-
    struct object {
       object *next;
-      std::size_t size;
    };
+   struct free_size {
+      std::size_t size;
+      object *list;
+   };
+#ifdef COMPILED
+#define NODE_ALLOCATOR_SIZES COMPILED_NUM_PREDICATES
+#else
+#define NODE_ALLOCATOR_SIZES 32
+#endif
+   std::size_t num_free{0};
+   free_size frees[NODE_ALLOCATOR_SIZES];
+
 #define MIN_SIZE_OBJ sizeof(object)
 #define START_PAGE_SIZE (MIN_SIZE_OBJ * 64)
 
    inline void allocate_new_page()
    {
       page_size *= 4;
-      //std::cout << "Page size " << page_size << "\n";
       current_page = allocator<utils::byte>().allocate(page_size);
       page_ptr = 0;
    }
 
-   inline utils::byte *find_free_object(const std::size_t size)
+   inline free_size *get_free_size(const size_t size)
    {
-      if(!free_list)
-         return nullptr;
-      object *p((object*)free_list);
-      object *prev{nullptr};
+      int left(0);
+      int right(static_cast<int>(num_free) - 1);
 
-      //int c{0};
-      while(p) {
-         //c++;
-         if(p->size == size) {
-            if(prev)
-               prev->next = p->next;
-            else
-               free_list = (utils::byte*)p->next;
-            //std::cout << "Took " << c << "\n";
-            return (utils::byte*)p;
-         } else if(p->size == size * 2) {
-            // free object is twice the size of the object we want
-            utils::byte *x1((utils::byte*)p);
-            utils::byte *x2(x1 + size);
-            object *o2((object*)x2);
-            o2->next = p->next;
-            o2->size = size;
-            if(prev)
-               prev->next = o2;
-            else
-               free_list = (utils::byte*)o2;
-            //std::cout << "Took/2 " << c << "\n";
-            return x1;
-         }
-         prev = p;
-         p = p->next;
+      while(left <= right) {
+         std::size_t middle(left + (right - left)/2);
+         const std::size_t found(frees[middle].size);
+
+         if(found == size)
+            return frees + middle;
+         else if(left == right) {
+            // need to add it here.
+            if(size > found)
+               middle++;
+//            std::cout << "Shifting for " << size << " middle: " << middle << "/" << num_free << " " << (num_free - middle) << "\n";
+            memmove(frees + middle + 1, frees + middle, (num_free - middle) * sizeof(free_size));
+            frees[middle].size = size;
+            frees[middle].list = nullptr;
+            num_free++;
+            assert(num_free <= NODE_ALLOCATOR_SIZES);
+            return frees + middle;
+         } else if(found < size)
+            left = middle + 1;
+         else
+            right = middle - 1;
       }
-      return nullptr;
+      // empty array.
+      frees[0].size = size;
+      frees[0].list = nullptr;
+      num_free++;
+      return frees;
    }
+
 #endif
 
    inline utils::byte *allocate_obj(std::size_t size)
@@ -78,12 +88,28 @@ struct node_allocator
 #ifdef NODE_ALLOCATOR
       MUTEX_LOCK_GUARD(mtx, allocator_lock);
       size = std::max(MIN_SIZE_OBJ, size);
-      utils::byte *obj(find_free_object(size));
-      if(obj)
-         return obj;
+      int left(0);
+      int right(static_cast<int>(num_free) - 1);
+
+      while(left <= right) {
+         int middle{left + (right - left)/2};
+         std::size_t found(frees[middle].size);
+
+         if(found == size) {
+            if(frees[middle].list) {
+               object *p(frees[middle].list);
+               frees[middle].list = p->next;
+               return (utils::byte*)p;
+            }
+            break;
+         } else if(found < size)
+            left = middle + 1;
+         else
+            right = middle - 1;
+      }
       if(page_ptr + size > page_size)
          allocate_new_page();
-      obj = current_page + page_ptr;
+      utils::byte *obj = current_page + page_ptr;
       page_ptr += size;
       return obj;
 #else
@@ -97,9 +123,9 @@ struct node_allocator
       MUTEX_LOCK_GUARD(mtx, allocator_lock);
       size = std::max(MIN_SIZE_OBJ, size);
       object *x((object*)p);
-      x->size = size;
-      x->next = (object*)free_list;
-      free_list = p;
+      free_size *f(get_free_size(size));
+      x->next = f->list;
+      f->list = x;
 #else
       mem::allocator<utils::byte>().deallocate(p, size);
 #endif
@@ -114,6 +140,7 @@ struct node_allocator
 };
 #undef MIN_SIZE_OBJ
 #undef START_PAGE_SIZE
+#undef NODE_ALLOCATOR_SIZES
 
 };
 
