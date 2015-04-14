@@ -191,6 +191,22 @@ lremove(EXTERNAL_ARG(ls), EXTERNAL_ARG(n), EXTERNAL_ARG(ty))
       RETURN_LIST(p);
 
    switch(ty->get_type()) {
+      case FIELD_INT: {
+         DECLARE_INT(n);
+
+         stack_int_list s;
+
+         while(!runtime::cons::is_null(p)) {
+            if(FIELD_INT(p->get_head()) != n)
+               s.push(FIELD_NODE(p->get_head()));
+            p = p->get_tail();
+         }
+         runtime::cons *ptr(from_int_stack_to_list(s));
+      
+         RETURN_LIST(ptr);
+      }
+      break;
+
       case FIELD_NODE: {
          DECLARE_NODE(n);
 
