@@ -1534,6 +1534,13 @@ static inline void execute_node_priority(pcounter& pc, state& state) {
    state.set_float(dest_reg, node->get_priority());
 }
 
+static inline void execute_mark_rule(const pcounter& pc, state& state) {
+   const size_t rule_id(rule_get_id(pc));
+   rule *r(theProgram->get_rule(rule_id));
+   if(state.matcher->rules[rule_id] == r->num_predicates())
+      state.matcher->rule_queue.set_bit(rule_id);
+}
+
 static inline void execute_rule(const pcounter& pc, state& state) {
    const size_t rule_id(rule_get_id(pc));
 
@@ -3591,6 +3598,12 @@ static inline return_type execute(pcounter pc, state& state, const reg_num reg,
    pc += REMOTE_UPDATE_BASE + remote_update_nregs(pc) * reg_val_size;
    JUMP_NEXT();
    ENDOP()
+
+   CASE(MARK_RULE_INSTR)
+   JUMP(mark_rule, MARK_RULE_BASE)
+   execute_mark_rule(pc, state);
+   ADVANCE();
+   ENDOP();
 
    COMPLEX_JUMP(not_found)
 #ifndef COMPUTED_GOTOS

@@ -359,6 +359,8 @@ string instr_name(const instr::instr_type code) {
          return string("SELECT BY NODE");
       case RULE_INSTR:
          return string("RULE");
+      case MARK_RULE_INSTR:
+         return string("MARK RULE");
       case RULE_DONE_INSTR:
          return string("RULE DONE");
       case NEW_NODE_INSTR:
@@ -782,6 +784,7 @@ pcounter instr_print(pcounter pc, const bool recurse, const int tabcount,
             return pc + select_size(pc);
          }
          break;
+      case MARK_RULE_INSTR:
       case RULE_INSTR: {
          const size_t rule_id(rule_get_id(pc));
 

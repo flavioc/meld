@@ -55,7 +55,8 @@ const size_t count_size = sizeof(utils::byte);
 const size_t stack_val_size = sizeof(offset_num);
 const size_t pcounter_val_size = 0;
 const size_t operation_size = instr_size + 3 * reg_val_size;
-const size_t call_size = instr_size + extern_id_size + reg_val_size + type_size + bool_size;
+const size_t call_size =
+    instr_size + extern_id_size + reg_val_size + type_size + bool_size;
 const size_t iter_options_size = 2 * sizeof(utils::byte);
 
 const size_t SEND_BASE = instr_size + 2 * reg_val_size;
@@ -203,6 +204,7 @@ const size_t JUMP_BASE = instr_size + jump_size;
 const size_t FABS_BASE = instr_size + 2 * reg_val_size;
 const size_t REMOTE_UPDATE_BASE =
     instr_size + reg_val_size + 2 * predicate_size + 2 * count_size;
+const size_t MARK_RULE_BASE = instr_size + uint_size;
 
 enum instr_type {
    RETURN_INSTR = 0x00,
@@ -368,6 +370,7 @@ enum instr_type {
    THREAD_SEND_INSTR = 0xBC,
    TRLINEAR_ITER_INSTR = 0xBD,
    RETURN_LINEAR_INSTR = 0xD0,
+   MARK_RULE_INSTR = 0xD1,
    RETURN_DERIVED_INSTR = 0xF0
 };
 
@@ -584,7 +587,8 @@ inline utils::byte call_type(pcounter pc) {
    return byte_get(pc, instr_size + extern_id_size + reg_val_size);
 }
 inline size_t call_gc(pcounter pc) {
-   return pcounter_bool(pc + instr_size + extern_id_size + reg_val_size + type_size);
+   return pcounter_bool(pc + instr_size + extern_id_size + reg_val_size +
+                        type_size);
 }
 inline size_t call_num_args(pcounter pc) {
    return (size_t)byte_get(pc, call_size);
@@ -602,7 +606,8 @@ inline utils::byte calle_type(pcounter pc) {
    return byte_get(pc, instr_size + extern_id_size + reg_val_size);
 }
 inline size_t calle_gc(pcounter pc) {
-   return pcounter_bool(pc + instr_size + extern_id_size + reg_val_size + type_size);
+   return pcounter_bool(pc + instr_size + extern_id_size + reg_val_size +
+                        type_size);
 }
 inline size_t calle_num_args(pcounter pc) {
    return (size_t)byte_get(pc, call_size);
@@ -1153,6 +1158,9 @@ inline pcounter advance(const pcounter pc) {
 
       case MVTHREADIDFIELD_INSTR:
          return pc + MVTHREADIDFIELD_BASE;
+
+      case MARK_RULE_INSTR:
+         return pc + MARK_RULE_BASE;
 
       default:
          throw malformed_instr_error("unknown instruction code (advance)");

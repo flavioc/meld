@@ -16,7 +16,6 @@
 namespace vm {
 
 struct rule_matcher {
-   private:
 #ifdef COMPILED
    utils::byte rules[COMPILED_NUM_RULES];
    bitmap_static<COMPILED_NUM_PREDICATES_UINT> predicate_existence;
@@ -62,7 +61,6 @@ struct rule_matcher {
 #endif
    }
 
-   public:
 #ifdef COMPILED
    bitmap_static<COMPILED_NUM_RULES_UINT> rule_queue;
 #else
