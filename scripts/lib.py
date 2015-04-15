@@ -43,6 +43,17 @@ def write_winout(a, b, w):
     print "!output(@" + str(a) + ", @" + str(b) + ", " + str("%.7f" % w) + ")."
     print "!input(@" + str(b) + ", @" + str(a) + ", " + str("%.7f" % w) + ")."
 
+def write_list(ls):
+    s = "["
+    first = True
+    for x in ls:
+        if first:
+            first = False
+        else:
+           s = s + ", "
+        s = s + str(x)
+    return s + "]"
+
 def list_has(list, x):
     try:
         list.index(x)

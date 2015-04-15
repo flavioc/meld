@@ -19,7 +19,9 @@
 
 //#define DEBUG_INSTRS
 
+#ifndef DEBUG_INSTRS
 #define COMPUTED_GOTOS
+#endif
 
 #if defined(DEBUG_SENDS)
 static utils::mutex print_mtx;
