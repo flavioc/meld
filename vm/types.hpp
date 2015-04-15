@@ -291,7 +291,7 @@ class array_type: public type
 extern type *TYPE_INT, *TYPE_BOOL, *TYPE_FLOAT, *TYPE_NODE, *TYPE_THREAD,
             *TYPE_STRING, *TYPE_ANY, *TYPE_STRUCT, *TYPE_LIST, *TYPE_ARRAY,
             *TYPE_SET, *TYPE_TYPE;
-extern list_type *TYPE_LIST_FLOAT, *TYPE_LIST_INT, *TYPE_LIST_NODE;
+extern list_type *TYPE_LIST_FLOAT, *TYPE_LIST_INT, *TYPE_LIST_NODE, *TYPE_LIST_THREAD;
 extern array_type *TYPE_ARRAY_INT;
 
 void init_types(void);

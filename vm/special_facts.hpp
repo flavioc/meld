@@ -14,6 +14,9 @@ struct special_facts
 {
    using flag_type = std::uint32_t;
    static const flag_type JUST_MOVED{0x1};
+   static const flag_type THREAD_LIST{0x2};
+   static const flag_type OTHER_THREAD{0x4};
+   static const flag_type LEADER_THREAD{0x8};
    flag_type special_facts_flag{0};
 #define MARK_SPECIAL_FACT(FLAG) special_facts_flag |= (FLAG)
 #define UNMARK_SPECIAL_FACT(FLAG) special_facts_flag &= ~(FLAG)

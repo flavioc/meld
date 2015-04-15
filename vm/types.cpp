@@ -27,6 +27,7 @@ type *TYPE_TYPE(nullptr);
 list_type *TYPE_LIST_INT(nullptr);
 list_type *TYPE_LIST_FLOAT(nullptr);
 list_type *TYPE_LIST_NODE(nullptr);
+list_type *TYPE_LIST_THREAD(nullptr);
 array_type *TYPE_ARRAY_INT(nullptr);
 static bool types_initiated(false);
 
@@ -53,6 +54,7 @@ init_types(void)
    TYPE_LIST_INT = new list_type(TYPE_INT);
    TYPE_LIST_FLOAT = new list_type(TYPE_FLOAT);
    TYPE_LIST_NODE = new list_type(TYPE_NODE);
+   TYPE_LIST_THREAD = new list_type(TYPE_THREAD);
    TYPE_ARRAY_INT = new array_type(TYPE_INT);
 }
    
@@ -91,6 +93,7 @@ field_type_string(field_type type)
       case FIELD_INT: return string("int");
       case FIELD_FLOAT: return string("float");
       case FIELD_NODE: return string("node");
+      case FIELD_THREAD: return string("thread");
 		case FIELD_STRING: return string("string");
       case FIELD_LIST: return string("list");
       case FIELD_STRUCT: return string("struct");

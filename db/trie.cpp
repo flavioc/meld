@@ -4,6 +4,7 @@
 #include "utils/utils.hpp"
 #include "db/trie.hpp"
 #include "db/node.hpp"
+#include "thread/thread.hpp"
 #include "db/agg_configuration.hpp"
 
 using namespace vm;
@@ -145,6 +146,9 @@ trie_node *trie_node::match(const tuple_field &field, type *typ,
          case FIELD_NODE:
             next = hash->get_node(FIELD_NODE(field));
             break;
+         case FIELD_THREAD:
+            next = hash->get_thread(FIELD_THREAD(field));
+            break;
          case FIELD_STRING:
             next = hash->get_uint(FIELD_PTR(field));
             break;
@@ -154,7 +158,9 @@ trie_node *trie_node::match(const tuple_field &field, type *typ,
             break;
          }
          default:
+            abort();
             assert(false);
+            break;
       }
    }
 
@@ -174,6 +180,9 @@ trie_node *trie_node::match(const tuple_field &field, type *typ,
             break;
          case FIELD_NODE:
             if (FIELD_NODE(f) == FIELD_NODE(field)) return next;
+            break;
+         case FIELD_THREAD:
+            if (FIELD_THREAD(f) == FIELD_THREAD(field)) return next;
             break;
          case FIELD_STRING:
             if (FIELD_STRING(f) == FIELD_STRING(field)) return next;
@@ -211,7 +220,9 @@ trie_node *trie_node::match(const tuple_field &field, type *typ,
          } break;
 
          default:
+            abort();
             assert(false);
+            break;
       }
 
       next = next->get_next();
@@ -267,9 +278,11 @@ trie_node *trie_node::insert(const tuple_field &field, type *t,
       case FIELD_INT:
       case FIELD_FLOAT:
       case FIELD_NODE:
+      case FIELD_THREAD:
          f = field;
          break;
       default:
+         abort();
          assert(false);
          break;
    }
@@ -308,8 +321,13 @@ trie_node *trie_node::insert(const tuple_field &field, type *t,
          case FIELD_NODE:
             hash->insert_node(FIELD_NODE(f), new_child);
             break;
+         case FIELD_THREAD:
+            hash->insert_thread(FIELD_THREAD(f), new_child);
+            break;
          default:
+            abort();
             assert(false);
+            break;
       }
    } else {
       new_child->next = child;
@@ -357,8 +375,13 @@ void trie_node::convert_hash(type *type) {
          case FIELD_NODE:
             hash->insert_node(FIELD_NODE(next->data), next);
             break;
+         case FIELD_THREAD:
+            hash->insert_thread(FIELD_THREAD(next->data), next);
+            break;
          default:
+            abort();
             assert(false);
+            break;
       }
 
       ++total;
@@ -383,6 +406,7 @@ trie_node::~trie_node(void) {}
 #else
 #define HASH_NODE(VAL) (std::hash<node_val>()(VAL))
 #endif
+#define HASH_THREAD(VAL) (thread_hash()((sched::thread*)VAL))
 
 trie_node *trie_hash::get_int(const int_val &val) const {
    return buckets[hash_item(HASH_INT(val))];
@@ -394,6 +418,10 @@ trie_node *trie_hash::get_float(const float_val &val) const {
 
 trie_node *trie_hash::get_node(const node_val &val) const {
    return buckets[hash_item(HASH_NODE(val))];
+}
+
+trie_node *trie_hash::get_thread(const node_val &val) const {
+   return buckets[hash_item(HASH_THREAD(val))];
 }
 
 trie_node *trie_hash::get_uint(const uint_val &val) const {
@@ -462,6 +490,21 @@ void trie_hash::insert_node(const node_val &val, trie_node *node) {
    buckets[bucket] = node;
 }
 
+void trie_hash::insert_thread(const thread_val& val, trie_node *node) {
+   const size_t bucket(hash_item(HASH_THREAD(val)));
+
+   assert(bucket < num_buckets);
+
+   trie_node *old(buckets[bucket]);
+
+   node->prev = nullptr;
+   node->next = old;
+   if (old) old->prev = node;
+   node->bucket = buckets + bucket;
+
+   buckets[bucket] = node;
+}
+
 void trie_hash::expand(void) {
    const size_t old_num_buckets(num_buckets);
    trie_node **old_buckets(buckets);
@@ -494,6 +537,7 @@ void trie_hash::expand(void) {
                insert_node(FIELD_NODE(next->data), next);
                break;
             default:
+               abort();
                assert(false);
                break;
          }
@@ -638,6 +682,7 @@ trie_node *trie::check_insert(void *data, predicate *pred,
                               bool &found) {
    if (mstk.empty()) {
       // 0-arity tuple
+      assert(pred->num_fields() == 0);
       if (!root.is_leaf()) {
          // branch not found
          found = false;
@@ -873,7 +918,9 @@ void trie::delete_by_index(predicate *pred, const match &m,
             node = node->get_by_node(FIELD_NODE(mfield));
             break;
          default:
+            abort();
             assert(false);
+            break;
       }
       if (node == nullptr) return;  // not found
    }
@@ -1020,7 +1067,9 @@ void tuple_trie::do_visit(trie_node *n, const int tab, stack<type *> &s) const {
       } break;
       default:
          cout << "bad type " << endl;
+         abort();
          assert(false);
+         break;
    }
 
    if (!n->is_leaf()) {
@@ -1193,7 +1242,9 @@ match_begin:
             }
             goto try_again;
          default:
+            abort();
             assert(false);
+            break;
       }
    } else {
       if (parent->is_hashed()) {

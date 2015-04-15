@@ -102,11 +102,13 @@ class trie_hash : public mem::base {
    void insert_uint(const vm::uint_val &, trie_node *);
    void insert_float(const vm::float_val &, trie_node *);
    void insert_node(const vm::node_val &, trie_node *);
+   void insert_thread(const vm::thread_val &, trie_node *);
 
    trie_node *get_int(const vm::int_val &) const;
    trie_node *get_float(const vm::float_val &) const;
    trie_node *get_node(const vm::node_val &) const;
    trie_node *get_uint(const vm::uint_val &) const;
+   trie_node *get_thread(const vm::thread_val &) const;
 
    void expand(void);
 
@@ -139,7 +141,8 @@ class trie_leaf : public mem::base {
 
    explicit trie_leaf(void) {}
 
-   virtual void destroy(vm::predicate *, mem::node_allocator *, vm::candidate_gc_nodes &) {}
+   virtual void destroy(vm::predicate *, mem::node_allocator *,
+                        vm::candidate_gc_nodes &) {}
 };
 
 class depth_counter : public mem::base {
@@ -412,7 +415,8 @@ class trie {
 
    void commit_delete(trie_node *, vm::predicate *, const vm::ref_count,
                       mem::node_allocator *, vm::candidate_gc_nodes &);
-   size_t delete_branch(trie_node *, vm::predicate *, mem::node_allocator *, vm::candidate_gc_nodes &);
+   size_t delete_branch(trie_node *, vm::predicate *, mem::node_allocator *,
+                        vm::candidate_gc_nodes &);
    void delete_path(trie_node *);
    void sanity_check(void) const;
 
@@ -442,8 +446,7 @@ class trie {
          return tr != nullptr && leaf != nullptr;
       }
 
-      void perform_delete(vm::predicate *pred,
-                          mem::node_allocator *alloc,
+      void perform_delete(vm::predicate *pred, mem::node_allocator *alloc,
                           vm::candidate_gc_nodes &gc_nodes) {
          tr->commit_delete(tr_node, pred, decrease, alloc, gc_nodes);
       }
@@ -481,7 +484,8 @@ class trie {
                        mem::node_allocator *, vm::candidate_gc_nodes &);
    void delete_by_index(vm::predicate *, const vm::match &,
                         mem::node_allocator *, vm::candidate_gc_nodes &);
-   virtual void wipeout(vm::predicate *, mem::node_allocator *, vm::candidate_gc_nodes &);
+   virtual void wipeout(vm::predicate *, mem::node_allocator *,
+                        vm::candidate_gc_nodes &);
 
    explicit trie(void);
 };
@@ -733,7 +737,8 @@ class agg_trie : public trie, public mem::base {
    inline iterator begin(void) { return iterator((agg_trie_leaf *)first_leaf); }
    inline iterator end(void) { return iterator(); }
 
-   iterator erase(iterator &it, vm::predicate *, mem::node_allocator *alloc, vm::candidate_gc_nodes &);
+   iterator erase(iterator &it, vm::predicate *, mem::node_allocator *alloc,
+                  vm::candidate_gc_nodes &);
 
    explicit agg_trie(void) {}
 

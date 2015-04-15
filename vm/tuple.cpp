@@ -11,6 +11,7 @@
 #include "vm/state.hpp"
 #include "utils/serialization.hpp"
 #include "db/node.hpp"
+#include "thread/thread.hpp"
 
 using namespace vm;
 using namespace std;
@@ -28,6 +29,8 @@ static inline bool value_equal(type *t, const tuple_field &v1,
          return FIELD_FLOAT(v1) == FIELD_FLOAT(v2);
       case FIELD_NODE:
          return FIELD_NODE(v1) == FIELD_NODE(v2);
+      case FIELD_THREAD:
+         return FIELD_THREAD(v1) == FIELD_THREAD(v2);
       case FIELD_LIST: {
          list_type *lt((list_type *)t);
          type *st(lt->get_subtype());
@@ -80,6 +83,9 @@ void tuple::copy_field(type *ty, tuple *ret, const field_num i) const {
       case FIELD_NODE:
          ret->set_node(i, get_node(i));
          break;
+      case FIELD_THREAD:
+         ret->set_thread(i, get_thread(i));
+         break;
       case FIELD_LIST:
          ret->set_cons(i, get_cons(i));
          break;
@@ -129,6 +135,10 @@ static inline void print_node(ostream &out, const tuple_field &val) {
 #endif
 }
 
+static inline void print_thread(ostream& out, const tuple_field &val) {
+   out << "#T" << ((sched::thread*)FIELD_THREAD(val))->get_id();
+}
+
 static inline void print_bool(ostream &out, const tuple_field &val) {
    out << (FIELD_BOOL(val) ? "true" : "false");
 }
@@ -147,6 +157,9 @@ static inline void print_tuple_type(ostream &cout, const tuple_field &field,
          break;
       case FIELD_NODE:
          print_node(cout, field);
+         break;
+      case FIELD_THREAD:
+         print_thread(cout, field);
          break;
       case FIELD_STRING:
          cout << '"' << FIELD_STRING(field)->get_content() << '"';

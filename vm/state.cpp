@@ -656,6 +656,8 @@ void state::run_node(db::node *node) {
    if (theProgram->has_thread_predicates() && sched->thread_node != node) {
       LOCK_STACK(thread_node_lock);
       MUTEX_LOCK(sched->thread_node->main_lock, thread_node_lock, node_lock);
+      process_action_tuples(sched->thread_node);
+      process_incoming_tuples(sched->thread_node);
       thread_persistent_tuples.splice_back(
           sched->thread_node->store.incoming_persistent_tuples);
       sched->thread_node->unprocessed_facts = false;

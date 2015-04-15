@@ -373,15 +373,7 @@ public:
    void set_node_priority_other(db::node *, const vm::priority_t);
    void set_node_owner(db::node *, thread *);
 
-   inline void setup_thread_node()
-   {
-      thread_node->set_owner(this);
-
-      vm::predicate *init_thread_pred(vm::theProgram->get_init_thread_predicate());
-      vm::tuple *init_tuple(vm::tuple::create(init_thread_pred, &(thread_node->alloc)));
-      thread_node->add_linear_fact(init_tuple, init_thread_pred);
-      thread_node->unprocessed_facts = true;
-   }
+   void setup_thread_node();
 
    inline void setup_node(db::node *node)
    {
@@ -549,5 +541,11 @@ public:
 };
 
 }
+
+struct thread_hash {
+   size_t operator()(const sched::thread *x) const {
+      return std::hash<vm::process_id>()(x->get_id());
+   }
+};
 
 #endif

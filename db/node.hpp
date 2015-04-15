@@ -155,6 +155,14 @@ struct node {
       linear.add_fact(tpl, pred);
    }
 
+   inline void add_persistent_fact(vm::tuple *tpl, vm::predicate *pred,
+         const vm::derivation_direction dir = vm::POSITIVE_DERIVATION,
+         const vm::depth_t depth = 0)
+   {
+      auto stpl(new vm::full_tuple(tpl, pred, dir, depth));
+      store.incoming_persistent_tuples.push_back(stpl);
+   }
+
    inline void inner_add_work_myself(
        vm::tuple *tpl, vm::predicate *pred,
        const vm::derivation_direction dir = vm::POSITIVE_DERIVATION,
@@ -162,10 +170,9 @@ struct node {
       if (pred->is_action_pred())
          store.incoming_action_tuples.push_back(
              new vm::full_tuple(tpl, pred, dir, depth));
-      else if (pred->is_persistent_pred() || pred->is_reused_pred()) {
-         auto stpl(new vm::full_tuple(tpl, pred, dir, depth));
-         store.incoming_persistent_tuples.push_back(stpl);
-      } else
+      else if (pred->is_persistent_pred() || pred->is_reused_pred())
+         add_persistent_fact(tpl, pred, dir, depth);
+      else
          add_linear_fact(tpl, pred);
    }
 

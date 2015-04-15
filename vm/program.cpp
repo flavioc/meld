@@ -321,6 +321,12 @@ program::program(string _filename)
       
       if(pred->get_name() == "just-moved")
          special.mark(special_facts::JUST_MOVED, pred);
+      else if(pred->get_name() == "thread-list")
+         special.mark(special_facts::THREAD_LIST, pred);
+      else if(pred->get_name() == "other-thread")
+         special.mark(special_facts::OTHER_THREAD, pred);
+      else if(pred->get_name() == "leader-thread")
+         special.mark(special_facts::LEADER_THREAD, pred);
 
       MAX_STRAT_LEVEL = max(pred->get_strat_level() + 1, MAX_STRAT_LEVEL);
 

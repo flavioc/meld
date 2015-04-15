@@ -58,10 +58,19 @@ static inline void execute_alloc(const pcounter& pc, state& state) {
    const reg_num dest(alloc_dest(pc));
    const reg_num reg(alloc_reg(pc));
    mem::node_allocator *alloc;
-   if(dest == reg)
-      alloc = &(state.node->alloc);
-   else
-      alloc = &(((db::node*)state.get_node(dest))->alloc);
+   if(pred->is_thread_pred()) {
+      if(dest == reg)
+         alloc = &(state.sched->thread_node->alloc);
+      else {
+         sched::thread *s((sched::thread*)state.get_thread(dest));
+         alloc = &(s->thread_node->alloc);
+      }
+   } else {
+      if(dest == reg)
+         alloc = &(state.node->alloc);
+      else
+         alloc = &(((db::node*)state.get_node(dest))->alloc);
+   }
    tuple* tuple(vm::tuple::create(pred, alloc));
 
    state.preds[reg] = pred;

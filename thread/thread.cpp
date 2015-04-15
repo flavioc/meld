@@ -92,7 +92,6 @@ void thread::new_thread_work(thread *to, vm::tuple *tpl, const vm::predicate *pr
 #ifdef FACT_STATISTICS
    count_add_work_other++;
 #endif
-   LOCKING_STAT(database_lock_fail);
    n->add_work_others(tpl, pred, vm::POSITIVE_DERIVATION, 0);
 #ifdef INSTRUMENTATION
    sent_facts_other_thread++;
@@ -508,20 +507,77 @@ void thread::init(const size_t) {
    //}
 
    threads_synchronize();
+   bool sync{false};
+   if (theProgram->has_thread_predicates()) {
+      thread_node = node_handler.create_node();
+      setup_thread_node();
+      sync = true;
+   }
 #ifdef COMPILED
-   if(leader_thread())
-      execute_const_code();
-   threads_synchronize();
+   if(theProgram->has_const_code()) {
+      sync = true;
+      if(leader_thread())
+         execute_const_code();
+   }
 #else
    if(leader_thread())
       theProgram->cleanup_node_references();
    if(theProgram->has_const_code()) {
+      sync = true;
       if(leader_thread())
          execute_const_code();
-      threads_synchronize();
    }
 #endif
+   if(sync)
+      threads_synchronize();
 }
+
+void
+thread::setup_thread_node()
+{
+   thread_node->set_owner(this);
+
+   vm::predicate *init_thread_pred(vm::theProgram->get_init_thread_predicate());
+   vm::tuple *init_tuple(vm::tuple::create(init_thread_pred, &(thread_node->alloc)));
+   thread_node->add_linear_fact(init_tuple, init_thread_pred);
+
+   if(vm::theProgram->has_special_fact(vm::special_facts::THREAD_LIST)) {
+      vm::predicate *tlist_pred(vm::theProgram->get_special_fact(vm::special_facts::THREAD_LIST));
+      vm::tuple *tpl(vm::tuple::create(tlist_pred, &(thread_node->alloc)));
+      runtime::cons *ls(runtime::cons::null_list());
+      for(size_t i(vm::All->NUM_THREADS); i > 0; --i) {
+         thread *x(vm::All->SCHEDS[i - 1]);
+         vm::tuple_field f;
+         f.ptr_field = (vm::ptr_val)x;
+         assert(x);
+         ls = runtime::cons::create(ls, f, vm::TYPE_THREAD);
+      }
+      tpl->set_cons(0, ls);
+      thread_node->add_persistent_fact(tpl, tlist_pred);
+   }
+
+   if(vm::theProgram->has_special_fact(vm::special_facts::OTHER_THREAD)) {
+      vm::predicate *other_pred(vm::theProgram->get_special_fact(vm::special_facts::OTHER_THREAD));
+      for(size_t i(0); i < vm::All->NUM_THREADS; ++i) {
+         if(get_id() == i)
+            continue;
+         vm::tuple *tpl(vm::tuple::create(other_pred, &(thread_node->alloc)));
+         tpl->set_thread(0, (vm::thread_val)All->SCHEDS[i]);
+         tpl->set_int(1, i);
+         thread_node->add_persistent_fact(tpl, other_pred);
+      }
+   }
+
+   if(vm::theProgram->has_special_fact(vm::special_facts::LEADER_THREAD)) {
+      vm::predicate *leader_thread(vm::theProgram->get_special_fact(vm::special_facts::LEADER_THREAD));
+      vm::tuple *tpl(vm::tuple::create(leader_thread, &(thread_node->alloc)));
+      tpl->set_thread(0, (vm::thread_val)All->SCHEDS[0]);
+      thread_node->add_persistent_fact(tpl, leader_thread);
+   }
+
+   thread_node->unprocessed_facts = true;
+}
+
 
 #ifdef INSTRUMENTATION
 void thread::write_slice(statistics::slice &sl) {
@@ -569,10 +625,6 @@ thread::thread(const vm::process_id _id)
 #endif
 {
    bitmap::create(comm_threads, All->NUM_THREADS_NEXT_UINT);
-   if (theProgram->has_thread_predicates()) {
-      thread_node = node_handler.create_node();
-      setup_thread_node();
-   }
 }
 
 thread::~thread(void) {
