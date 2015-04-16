@@ -211,11 +211,11 @@ static inline vm::tuple_field axiom_read_data(vm::pcounter &pc, vm::type *t) {
             SET_FIELD_CONS(f, runtime::cons::null_list());
          } else if (*pc == 1) {
             pc++;
-            list_type *lt((list_type *)t);
-            tuple_field head(axiom_read_data(pc, lt->get_subtype()));
-            tuple_field tail(axiom_read_data(pc, t));
+            vm::list_type *lt((vm::list_type *)t);
+            vm::tuple_field head(axiom_read_data(pc, lt->get_subtype()));
+            vm::tuple_field tail(axiom_read_data(pc, t));
             runtime::cons *c(FIELD_CONS(tail));
-            runtime::cons *nc(runtime::cons::create(c, head, lt));
+            runtime::cons *nc(runtime::cons::create(c, head, lt->get_subtype()));
             SET_FIELD_CONS(f, nc);
          } else {
             assert(false);
@@ -265,14 +265,13 @@ static inline void tuple_set_field(vm::tuple *tpl, vm::type *t,
 static inline void add_new_axioms(state &state, db::node *node, pcounter pc,
                                   const pcounter end) {
    while (pc < end) {
-      // read axions until the end!
+      // read axioms until the end!
       predicate_id pid(vm::instr::predicate_get(pc, 0));
       predicate *pred(theProgram->get_predicate(pid));
       tuple *tpl(vm::tuple::create(pred, &(node->alloc)));
 #ifdef FACT_STATISTICS
       state.facts_derived++;
 #endif
-
       pc++;
 
       for (size_t i(0), num_fields(pred->num_fields()); i != num_fields; ++i) {
