@@ -56,9 +56,8 @@ Rest = lremove(ToFind, Val)
       (if Owner <> T then remove-thread-search(Owner, Id, Val) otherwise 1 end),
       (if Owner = T && Rest = [] then empty(T, Id) otherwise 1 end),
       {B | Rest <> [], !edge(A, B) | do-search(B, Id)},
-      do-search2(A, Id),
       visited(A, Id).
 
-do-search(A, Id),
+do-search(A, Id)
    -o visited(A, Id),
       {B | !edge(A, B) | do-search(B, Id)}.
