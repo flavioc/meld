@@ -1,0 +1,55 @@
+
+type route edge(node, node).
+type linear value(node, int).
+type linear search(node, int, list int).
+type linear do-search(node, int).
+type linear do-search2(node, int).
+type linear found(node, int).
+type linear not-found(node, int).
+type linear thread-search(thread, int, list int, list int).
+type linear remove-thread-search(thread, int, int).
+type linear visited(node, int).
+
+index thread-search/2.
+index visited/2.
+index do-search/2.
+
+remove-thread-search(A, Id, Val),
+thread-search(A, Id, ToFind, Done)
+   -o thread-search(A, Id, lremove(ToFind, Val), [Val | Done]).
+
+search(A, Id, ToFind),
+T = @thread
+   -o {T2, Tid | !other-thread(T, T2, Tid) | thread-search(T2, Id, ToFind, [])},
+      thread-search(T, Id, ToFind, []),
+      do-search(A, Id).
+
+do-search(A, Id), do-search(A, Id) -o do-search(A, Id).
+
+do-search(A, Id),
+visited(A, Id)
+   -o visited(A, Id).
+
+do-search(A, Id),
+thread-search(T, Id, ToFind, Done),
+ToFind <> [],
+value(A, Val),
+Val in ToFind
+   -o value(A, Val),
+      thread-search(T, Id, lremove(ToFind, Val), [Val | Done]),
+      {T2, Tid | !other-thread(T, T2, Tid) | remove-thread-search(T2, Id, Val)},
+      do-search2(A, Id),
+      visited(A, Id).
+
+do-search(A, Id) -o visited(A, Id), do-search2(A, Id).
+
+thread-search(T, Id, ToFind, Done),
+ToFind = [],
+do-search2(A, Id)
+   -o thread-search(T, Id, ToFind, Done).
+
+do-search2(A, Id),
+thread-search(T, Id, ToFind, Done),
+ToFind <> []
+   -o {B | !edge(A, B) | do-search(B, Id)},
+      thread-search(T, Id, ToFind, Done).
