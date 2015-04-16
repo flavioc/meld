@@ -1,4 +1,4 @@
 include #sources/search.meld
 
 priority @cluster @static.
-data stanford-snap-search "data/shortest-facebook.txt" ["50" "5"].
+data stanford-snap-search "data/shortest-facebook.txt" ["100" "5"].
