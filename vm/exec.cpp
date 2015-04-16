@@ -300,7 +300,10 @@ static void build_match_element(instr_val val, match* m, type* t,
             const reg_num reg(val_reg(val));
             const int_val i(state.get_int(reg));
             m->match_int(mf, i);
-            const variable_match_template vmt = {mf, MATCH_REG, reg};
+            variable_match_template vmt;
+            vmt.match = mf;
+            vmt.type = MATCH_REG;
+            vmt.reg = reg;
             m->add_variable_match(vmt, count);
             count++;
          } else if (val_is_field(val)) {
@@ -311,7 +314,11 @@ static void build_match_element(instr_val val, match* m, type* t,
             pcounter_move_field(&pc);
             const int_val i(tuple->get_int(field));
             m->match_int(mf, i);
-            const variable_match_template vmt = {mf, MATCH_FIELD, reg, field};
+            variable_match_template vmt;
+            vmt.match = mf;
+            vmt.type = MATCH_FIELD;
+            vmt.reg = reg;
+            vmt.field = field;
             m->add_variable_match(vmt, count);
             ++count;
          } else if (val_is_int(val)) {
@@ -330,7 +337,11 @@ static void build_match_element(instr_val val, match* m, type* t,
             pcounter_move_field(&pc);
             const float_val f(tuple->get_float(field));
             m->match_float(mf, f);
-            const variable_match_template vmt = {mf, MATCH_FIELD, reg, field};
+            variable_match_template vmt;
+            vmt.match = mf;
+            vmt.type = MATCH_FIELD;
+            vmt.reg = reg;
+            vmt.field = field;
             m->add_variable_match(vmt, count);
             ++count;
          } else if (val_is_float(val)) {
@@ -345,7 +356,10 @@ static void build_match_element(instr_val val, match* m, type* t,
             const reg_num reg(val_reg(val));
             const node_val n(state.get_node(reg));
             m->match_node(mf, n);
-            const variable_match_template vmt = {mf, MATCH_REG, reg};
+            variable_match_template vmt;
+            vmt.match = mf;
+            vmt.type = MATCH_REG;
+            vmt.reg = reg;
             m->add_variable_match(vmt, count);
             ++count;
          } else if (val_is_field(val)) {
@@ -356,12 +370,18 @@ static void build_match_element(instr_val val, match* m, type* t,
             pcounter_move_field(&pc);
             const node_val n(tuple->get_node(field));
             m->match_node(mf, n);
-            const variable_match_template vmt = {mf, MATCH_FIELD, reg, field};
+            variable_match_template vmt;
+            vmt.match = mf;
+            vmt.type = MATCH_FIELD;
+            vmt.reg = reg;
+            vmt.field = field;
             m->add_variable_match(vmt, count);
             ++count;
          } else if(val_is_host(val)) {
             m->match_node(mf, (vm::node_val)state.node);
-            const variable_match_template vmt = {mf, MATCH_HOST};
+            variable_match_template vmt;
+            vmt.match = mf;
+            vmt.type = MATCH_HOST;
             m->add_variable_match(vmt, count);
             ++count;
          } else if (val_is_node(val)) {
