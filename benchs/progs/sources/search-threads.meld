@@ -54,7 +54,7 @@ Val in ToFind,
 Rest = lremove(ToFind, Val)
    -o value(A, Val),
       thread-search(T, Id, Rest, [Val | Done], Owner),
-      (if @cpus > 1 then remove-thread-search(Owner, Id, Val) otherwise 1 end),
+      (if Owner <> T then remove-thread-search(Owner, Id, Val) otherwise 1 end),
       do-search2(A, Id),
       visited(A, Id).
 
