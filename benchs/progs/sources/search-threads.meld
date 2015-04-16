@@ -55,16 +55,10 @@ Rest = lremove(ToFind, Val)
       thread-search(T, Id, Rest, [Val | Done], Owner),
       (if Owner <> T then remove-thread-search(Owner, Id, Val) otherwise 1 end),
       (if Owner = T && Rest = [] then empty(T, Id) otherwise 1 end),
+      {B | Rest <> [], !edge(A, B) | do-search(B, Id)},
       do-search2(A, Id),
       visited(A, Id).
 
-do-search(A, Id) -o visited(A, Id), do-search2(A, Id).
-
-do-search2(A, Id),
-thread-search(T, Id, ToFind, Done, Owner),
-ToFind <> []
-   -o {B | !edge(A, B) | do-search(B, Id)},
-      thread-search(T, Id, ToFind, Done, Owner).
-
-do-search2(A, Id) -o 1.
-
+do-search(A, Id),
+   -o visited(A, Id),
+      {B | !edge(A, B) | do-search(B, Id)}.
