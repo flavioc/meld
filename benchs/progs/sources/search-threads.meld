@@ -31,11 +31,10 @@ empty(T, Id)
    -o thread-search(T, Id, [], Done, Owner).
 
 search(A, Id, ToFind),
-Owner = @thread
-//!thread-list(T, L),
-//Owner = lnth(L, Id % @cpus)
-   -o {T2, Tid | !other-thread(Owner, T2, Tid) | thread-search(T2, Id, ToFind, [], Owner)},
-      thread-search(Owner, Id, ToFind, [], Owner),
+!thread-list(T, L),
+Owner = lnth(L, Id % @cpus)
+   -o {T2, Tid | !other-thread(T, T2, Tid) | thread-search(T2, Id, ToFind, [], Owner)},
+      thread-search(T, Id, ToFind, [], Owner),
       do-search(A, Id).
 
 do-search(A, Id), do-search(A, Id) -o do-search(A, Id).

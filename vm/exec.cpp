@@ -1144,6 +1144,9 @@ static inline void set_call_return(const reg_num reg, const utils::byte typ,
       case FIELD_NODE:
          state.set_node(reg, FIELD_NODE(ret));
          break;
+      case FIELD_THREAD:
+         state.set_thread(reg, FIELD_THREAD(ret));
+         break;
       case FIELD_STRING: {
          rstring::ptr s(FIELD_STRING(ret));
 
