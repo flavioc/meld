@@ -6,6 +6,7 @@ type linear do-search(node, int, node, list int).
 type linear lookup(node, int, list int, list int).
 type linear new-lookup(node, int, int).
 type linear visited(node, int).
+type linear found(node, int, list int).
 
 index visited/2.
 index do-search/2.
@@ -18,6 +19,9 @@ search(A, Id, ToFind)
 lookup(A, Id, ToFind, Found),
 new-lookup(A, Id, Val)
    -o lookup(A, Id, lremove(ToFind, Val), [Val | Found]).
+
+lookup(A, Id, [], Found)
+   -o found(A, Id, Found).
 
 do-search(A, Id, Node, ToFind),
 do-search(A, Id, _, _)
