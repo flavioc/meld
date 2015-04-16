@@ -1,0 +1,2 @@
+priority @cluster @static.
+data stanford-snap-search "shortest-facebook.txt" ["100" "5"].

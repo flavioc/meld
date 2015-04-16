@@ -1,4 +1,0 @@
-include #sources/search-v2.meld
-
-priority @cluster @static.
-data stanford-snap-search "data/shortest-facebook.txt" ["20" "2"].
