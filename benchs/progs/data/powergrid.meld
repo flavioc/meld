@@ -1,0 +1,603 @@
+const maxfails = 100.
+const all-generators = [@0 , @1 , @2 , @3 , @4 , @5 , @6 , @7 , @8 , @9 , @10 , @11 , @12 , @13 , @14 , @15 , @16 , @17 , @18 , @19 , @20 , @21 , @22 , @23 , @24 , @25 , @26 , @27 , @28 , @29 , @30 , @31 , @32 , @33 , @34 , @35 , @36 , @37 , @38 , @39 , @40 , @41 , @42 , @43 , @44 , @45 , @46 , @47 , @48 , @49 , @50 , @51 , @52 , @53 , @54 , @55 , @56 , @57 , @58 , @59 , @60 , @61 , @62 , @63 , @64 , @65 , @66 , @67 , @68 , @69 , @70 , @71 , @72 , @73 , @74 , @75 , @76 , @77 , @78 , @79 , @80 , @81 , @82 , @83 , @84 , @85 , @86 , @87 , @88 , @89 , @90 , @91 , @92 , @93 , @94 , @95 , @96 , @97 , @98 , @99 ].
+const num-generators = 100.
+!power(@100, 21).
+!consumer-id(@100, 0).
+!power(@101, 7).
+!consumer-id(@101, 1).
+!power(@102, 86).
+!consumer-id(@102, 2).
+!power(@103, 37).
+!consumer-id(@103, 3).
+!power(@104, 24).
+!consumer-id(@104, 4).
+!power(@105, 6).
+!consumer-id(@105, 5).
+!power(@106, 65).
+!consumer-id(@106, 6).
+!power(@107, 44).
+!consumer-id(@107, 7).
+!power(@108, 68).
+!consumer-id(@108, 8).
+!power(@109, 50).
+!consumer-id(@109, 9).
+!power(@110, 2).
+!consumer-id(@110, 10).
+!power(@111, 57).
+!consumer-id(@111, 11).
+!power(@112, 12).
+!consumer-id(@112, 12).
+!power(@113, 16).
+!consumer-id(@113, 13).
+!power(@114, 59).
+!consumer-id(@114, 14).
+!power(@115, 11).
+!consumer-id(@115, 15).
+!power(@116, 72).
+!consumer-id(@116, 16).
+!power(@117, 81).
+!consumer-id(@117, 17).
+!power(@118, 62).
+!consumer-id(@118, 18).
+!power(@119, 73).
+!consumer-id(@119, 19).
+!power(@120, 86).
+!consumer-id(@120, 20).
+!power(@121, 82).
+!consumer-id(@121, 21).
+!power(@122, 50).
+!consumer-id(@122, 22).
+!power(@123, 34).
+!consumer-id(@123, 23).
+!power(@124, 1).
+!consumer-id(@124, 24).
+!power(@125, 10).
+!consumer-id(@125, 25).
+!power(@126, 55).
+!consumer-id(@126, 26).
+!power(@127, 68).
+!consumer-id(@127, 27).
+!power(@128, 61).
+!consumer-id(@128, 28).
+!power(@129, 1).
+!consumer-id(@129, 29).
+!power(@130, 83).
+!consumer-id(@130, 30).
+!power(@131, 66).
+!consumer-id(@131, 31).
+!power(@132, 17).
+!consumer-id(@132, 32).
+!power(@133, 86).
+!consumer-id(@133, 33).
+!power(@134, 76).
+!consumer-id(@134, 34).
+!power(@135, 20).
+!consumer-id(@135, 35).
+!power(@136, 13).
+!consumer-id(@136, 36).
+!power(@137, 76).
+!consumer-id(@137, 37).
+!power(@138, 68).
+!consumer-id(@138, 38).
+!power(@139, 47).
+!consumer-id(@139, 39).
+!power(@140, 56).
+!consumer-id(@140, 40).
+!power(@141, 1).
+!consumer-id(@141, 41).
+!power(@142, 60).
+!consumer-id(@142, 42).
+!power(@143, 36).
+!consumer-id(@143, 43).
+!power(@144, 86).
+!consumer-id(@144, 44).
+!power(@145, 15).
+!consumer-id(@145, 45).
+!power(@146, 80).
+!consumer-id(@146, 46).
+!power(@147, 35).
+!consumer-id(@147, 47).
+!power(@148, 85).
+!consumer-id(@148, 48).
+!power(@149, 24).
+!consumer-id(@149, 49).
+!power(@150, 69).
+!consumer-id(@150, 50).
+!power(@151, 3).
+!consumer-id(@151, 51).
+!power(@152, 35).
+!consumer-id(@152, 52).
+!power(@153, 56).
+!consumer-id(@153, 53).
+!power(@154, 25).
+!consumer-id(@154, 54).
+!power(@155, 42).
+!consumer-id(@155, 55).
+!power(@156, 4).
+!consumer-id(@156, 56).
+!power(@157, 36).
+!consumer-id(@157, 57).
+!power(@158, 7).
+!consumer-id(@158, 58).
+!power(@159, 2).
+!consumer-id(@159, 59).
+!power(@160, 76).
+!consumer-id(@160, 60).
+!power(@161, 43).
+!consumer-id(@161, 61).
+!power(@162, 3).
+!consumer-id(@162, 62).
+!power(@163, 41).
+!consumer-id(@163, 63).
+!power(@164, 86).
+!consumer-id(@164, 64).
+!power(@165, 73).
+!consumer-id(@165, 65).
+!power(@166, 72).
+!consumer-id(@166, 66).
+!power(@167, 96).
+!consumer-id(@167, 67).
+!power(@168, 82).
+!consumer-id(@168, 68).
+!power(@169, 21).
+!consumer-id(@169, 69).
+!power(@170, 18).
+!consumer-id(@170, 70).
+!power(@171, 45).
+!consumer-id(@171, 71).
+!power(@172, 80).
+!consumer-id(@172, 72).
+!power(@173, 65).
+!consumer-id(@173, 73).
+!power(@174, 64).
+!consumer-id(@174, 74).
+!power(@175, 39).
+!consumer-id(@175, 75).
+!power(@176, 30).
+!consumer-id(@176, 76).
+!power(@177, 31).
+!consumer-id(@177, 77).
+!power(@178, 88).
+!consumer-id(@178, 78).
+!power(@179, 59).
+!consumer-id(@179, 79).
+!power(@180, 77).
+!consumer-id(@180, 80).
+!power(@181, 3).
+!consumer-id(@181, 81).
+!power(@182, 53).
+!consumer-id(@182, 82).
+!power(@183, 40).
+!consumer-id(@183, 83).
+!power(@184, 63).
+!consumer-id(@184, 84).
+!power(@185, 35).
+!consumer-id(@185, 85).
+!power(@186, 29).
+!consumer-id(@186, 86).
+!power(@187, 7).
+!consumer-id(@187, 87).
+!power(@188, 28).
+!consumer-id(@188, 88).
+!power(@189, 1).
+!consumer-id(@189, 89).
+!power(@190, 31).
+!consumer-id(@190, 90).
+!power(@191, 71).
+!consumer-id(@191, 91).
+!power(@192, 19).
+!consumer-id(@192, 92).
+!power(@193, 10).
+!consumer-id(@193, 93).
+!power(@194, 8).
+!consumer-id(@194, 94).
+!power(@195, 38).
+!consumer-id(@195, 95).
+!power(@196, 100).
+!consumer-id(@196, 96).
+!power(@197, 73).
+!consumer-id(@197, 97).
+!power(@198, 49).
+!consumer-id(@198, 98).
+!power(@199, 34).
+!consumer-id(@199, 99).
+!power(@200, 98).
+!consumer-id(@200, 100).
+!power(@201, 38).
+!consumer-id(@201, 101).
+!power(@202, 58).
+!consumer-id(@202, 102).
+!power(@203, 91).
+!consumer-id(@203, 103).
+!power(@204, 49).
+!consumer-id(@204, 104).
+!power(@205, 99).
+!consumer-id(@205, 105).
+!power(@206, 69).
+!consumer-id(@206, 106).
+!power(@207, 2).
+!consumer-id(@207, 107).
+!power(@208, 59).
+!consumer-id(@208, 108).
+!power(@209, 13).
+!consumer-id(@209, 109).
+!power(@210, 23).
+!consumer-id(@210, 110).
+!power(@211, 35).
+!consumer-id(@211, 111).
+!power(@212, 93).
+!consumer-id(@212, 112).
+!power(@213, 64).
+!consumer-id(@213, 113).
+!power(@214, 44).
+!consumer-id(@214, 114).
+!power(@215, 15).
+!consumer-id(@215, 115).
+!power(@216, 91).
+!consumer-id(@216, 116).
+!power(@217, 84).
+!consumer-id(@217, 117).
+!power(@218, 47).
+!consumer-id(@218, 118).
+!power(@219, 22).
+!consumer-id(@219, 119).
+!power(@220, 31).
+!consumer-id(@220, 120).
+!power(@221, 51).
+!consumer-id(@221, 121).
+!power(@222, 100).
+!consumer-id(@222, 122).
+!power(@223, 8).
+!consumer-id(@223, 123).
+!power(@224, 44).
+!consumer-id(@224, 124).
+!power(@225, 85).
+!consumer-id(@225, 125).
+!power(@226, 65).
+!consumer-id(@226, 126).
+!power(@227, 82).
+!consumer-id(@227, 127).
+!power(@228, 24).
+!consumer-id(@228, 128).
+!power(@229, 62).
+!consumer-id(@229, 129).
+!power(@230, 68).
+!consumer-id(@230, 130).
+!power(@231, 62).
+!consumer-id(@231, 131).
+!power(@232, 64).
+!consumer-id(@232, 132).
+!power(@233, 6).
+!consumer-id(@233, 133).
+!power(@234, 7).
+!consumer-id(@234, 134).
+!power(@235, 67).
+!consumer-id(@235, 135).
+!power(@236, 55).
+!consumer-id(@236, 136).
+!power(@237, 92).
+!consumer-id(@237, 137).
+!power(@238, 84).
+!consumer-id(@238, 138).
+!power(@239, 20).
+!consumer-id(@239, 139).
+!power(@240, 66).
+!consumer-id(@240, 140).
+!power(@241, 9).
+!consumer-id(@241, 141).
+!power(@242, 34).
+!consumer-id(@242, 142).
+!power(@243, 97).
+!consumer-id(@243, 143).
+!power(@244, 32).
+!consumer-id(@244, 144).
+!power(@245, 96).
+!consumer-id(@245, 145).
+!power(@246, 39).
+!consumer-id(@246, 146).
+!power(@247, 6).
+!consumer-id(@247, 147).
+!power(@248, 65).
+!consumer-id(@248, 148).
+!power(@249, 82).
+!consumer-id(@249, 149).
+!power(@250, 70).
+!consumer-id(@250, 150).
+!power(@251, 93).
+!consumer-id(@251, 151).
+!power(@252, 86).
+!consumer-id(@252, 152).
+!power(@253, 74).
+!consumer-id(@253, 153).
+!power(@254, 5).
+!consumer-id(@254, 154).
+!power(@255, 48).
+!consumer-id(@255, 155).
+!power(@256, 53).
+!consumer-id(@256, 156).
+!power(@257, 61).
+!consumer-id(@257, 157).
+!power(@258, 41).
+!consumer-id(@258, 158).
+!power(@259, 17).
+!consumer-id(@259, 159).
+!power(@260, 57).
+!consumer-id(@260, 160).
+!power(@261, 94).
+!consumer-id(@261, 161).
+!power(@262, 97).
+!consumer-id(@262, 162).
+!power(@263, 27).
+!consumer-id(@263, 163).
+!power(@264, 27).
+!consumer-id(@264, 164).
+!power(@265, 71).
+!consumer-id(@265, 165).
+!power(@266, 73).
+!consumer-id(@266, 166).
+!power(@267, 39).
+!consumer-id(@267, 167).
+!power(@268, 48).
+!consumer-id(@268, 168).
+!power(@269, 97).
+!consumer-id(@269, 169).
+!power(@270, 76).
+!consumer-id(@270, 170).
+!power(@271, 47).
+!consumer-id(@271, 171).
+!power(@272, 92).
+!consumer-id(@272, 172).
+!power(@273, 29).
+!consumer-id(@273, 173).
+!power(@274, 54).
+!consumer-id(@274, 174).
+!power(@275, 97).
+!consumer-id(@275, 175).
+!power(@276, 3).
+!consumer-id(@276, 176).
+!power(@277, 99).
+!consumer-id(@277, 177).
+!power(@278, 78).
+!consumer-id(@278, 178).
+!power(@279, 13).
+!consumer-id(@279, 179).
+!power(@280, 32).
+!consumer-id(@280, 180).
+!power(@281, 10).
+!consumer-id(@281, 181).
+!power(@282, 77).
+!consumer-id(@282, 182).
+!power(@283, 97).
+!consumer-id(@283, 183).
+!power(@284, 52).
+!consumer-id(@284, 184).
+!power(@285, 94).
+!consumer-id(@285, 185).
+!power(@286, 37).
+!consumer-id(@286, 186).
+!power(@287, 28).
+!consumer-id(@287, 187).
+!power(@288, 94).
+!consumer-id(@288, 188).
+!power(@289, 76).
+!consumer-id(@289, 189).
+!power(@290, 76).
+!consumer-id(@290, 190).
+!power(@291, 36).
+!consumer-id(@291, 191).
+!power(@292, 6).
+!consumer-id(@292, 192).
+!power(@293, 76).
+!consumer-id(@293, 193).
+!power(@294, 52).
+!consumer-id(@294, 194).
+!power(@295, 77).
+!consumer-id(@295, 195).
+!power(@296, 78).
+!consumer-id(@296, 196).
+!power(@297, 36).
+!consumer-id(@297, 197).
+!power(@298, 8).
+!consumer-id(@298, 198).
+!power(@299, 67).
+!consumer-id(@299, 199).
+!generator-id(@0, 0).
+capacity(@0, 136, 0).
+!generator-id(@1, 1).
+capacity(@1, 44, 0).
+!generator-id(@2, 2).
+capacity(@2, 36, 0).
+!generator-id(@3, 3).
+capacity(@3, 78, 0).
+!generator-id(@4, 4).
+capacity(@4, 52, 0).
+!generator-id(@5, 5).
+capacity(@5, 144, 0).
+!generator-id(@6, 6).
+capacity(@6, 68, 0).
+!generator-id(@7, 7).
+capacity(@7, 104, 0).
+!generator-id(@8, 8).
+capacity(@8, 99, 0).
+!generator-id(@9, 9).
+capacity(@9, 171, 0).
+!generator-id(@10, 10).
+capacity(@10, 190, 0).
+!generator-id(@11, 11).
+capacity(@11, 98, 0).
+!generator-id(@12, 12).
+capacity(@12, 102, 0).
+!generator-id(@13, 13).
+capacity(@13, 12, 0).
+!generator-id(@14, 14).
+capacity(@14, 147, 0).
+!generator-id(@15, 15).
+capacity(@15, 174, 0).
+!generator-id(@16, 16).
+capacity(@16, 99, 0).
+!generator-id(@17, 17).
+capacity(@17, 194, 0).
+!generator-id(@18, 18).
+capacity(@18, 24, 0).
+!generator-id(@19, 19).
+capacity(@19, 188, 0).
+!generator-id(@20, 20).
+capacity(@20, 124, 0).
+!generator-id(@21, 21).
+capacity(@21, 72, 0).
+!generator-id(@22, 22).
+capacity(@22, 146, 0).
+!generator-id(@23, 23).
+capacity(@23, 114, 0).
+!generator-id(@24, 24).
+capacity(@24, 172, 0).
+!generator-id(@25, 25).
+capacity(@25, 128, 0).
+!generator-id(@26, 26).
+capacity(@26, 147, 0).
+!generator-id(@27, 27).
+capacity(@27, 4, 0).
+!generator-id(@28, 28).
+capacity(@28, 54, 0).
+!generator-id(@29, 29).
+capacity(@29, 142, 0).
+!generator-id(@30, 30).
+capacity(@30, 156, 0).
+!generator-id(@31, 31).
+capacity(@31, 174, 0).
+!generator-id(@32, 32).
+capacity(@32, 213, 0).
+!generator-id(@33, 33).
+capacity(@33, 25, 0).
+!generator-id(@34, 34).
+capacity(@34, 75, 0).
+!generator-id(@35, 35).
+capacity(@35, 174, 0).
+!generator-id(@36, 36).
+capacity(@36, 123, 0).
+!generator-id(@37, 37).
+capacity(@37, 73, 0).
+!generator-id(@38, 38).
+capacity(@38, 268, 0).
+!generator-id(@39, 39).
+capacity(@39, 3, 0).
+!generator-id(@40, 40).
+capacity(@40, 187, 0).
+!generator-id(@41, 41).
+capacity(@41, 85, 0).
+!generator-id(@42, 42).
+capacity(@42, 33, 0).
+!generator-id(@43, 43).
+capacity(@43, 1, 0).
+!generator-id(@44, 44).
+capacity(@44, 145, 0).
+!generator-id(@45, 45).
+capacity(@45, 21, 0).
+!generator-id(@46, 46).
+capacity(@46, 253, 0).
+!generator-id(@47, 47).
+capacity(@47, 99, 0).
+!generator-id(@48, 48).
+capacity(@48, 163, 0).
+!generator-id(@49, 49).
+capacity(@49, 237, 0).
+!generator-id(@50, 50).
+capacity(@50, 118, 0).
+!generator-id(@51, 51).
+capacity(@51, 82, 0).
+!generator-id(@52, 52).
+capacity(@52, 2, 0).
+!generator-id(@53, 53).
+capacity(@53, 86, 0).
+!generator-id(@54, 54).
+capacity(@54, 181, 0).
+!generator-id(@55, 55).
+capacity(@55, 76, 0).
+!generator-id(@56, 56).
+capacity(@56, 52, 0).
+!generator-id(@57, 57).
+capacity(@57, 127, 0).
+!generator-id(@58, 58).
+capacity(@58, 157, 0).
+!generator-id(@59, 59).
+capacity(@59, 63, 0).
+!generator-id(@60, 60).
+capacity(@60, 181, 0).
+!generator-id(@61, 61).
+capacity(@61, 164, 0).
+!generator-id(@62, 62).
+capacity(@62, 205, 0).
+!generator-id(@63, 63).
+capacity(@63, 74, 0).
+!generator-id(@64, 64).
+capacity(@64, 156, 0).
+!generator-id(@65, 65).
+capacity(@65, 92, 0).
+!generator-id(@66, 66).
+capacity(@66, 146, 0).
+!generator-id(@67, 67).
+capacity(@67, 110, 0).
+!generator-id(@68, 68).
+capacity(@68, 124, 0).
+!generator-id(@69, 69).
+capacity(@69, 130, 0).
+!generator-id(@70, 70).
+capacity(@70, 116, 0).
+!generator-id(@71, 71).
+capacity(@71, 38, 0).
+!generator-id(@72, 72).
+capacity(@72, 115, 0).
+!generator-id(@73, 73).
+capacity(@73, 46, 0).
+!generator-id(@74, 74).
+capacity(@74, 85, 0).
+!generator-id(@75, 75).
+capacity(@75, 98, 0).
+!generator-id(@76, 76).
+capacity(@76, 84, 0).
+!generator-id(@77, 77).
+capacity(@77, 303, 0).
+!generator-id(@78, 78).
+capacity(@78, 63, 0).
+!generator-id(@79, 79).
+capacity(@79, 136, 0).
+!generator-id(@80, 80).
+capacity(@80, 138, 0).
+!generator-id(@81, 81).
+capacity(@81, 229, 0).
+!generator-id(@82, 82).
+capacity(@82, 32, 0).
+!generator-id(@83, 83).
+capacity(@83, 205, 0).
+!generator-id(@84, 84).
+capacity(@84, 46, 0).
+!generator-id(@85, 85).
+capacity(@85, 57, 0).
+!generator-id(@86, 86).
+capacity(@86, 207, 0).
+!generator-id(@87, 87).
+capacity(@87, 166, 0).
+!generator-id(@88, 88).
+capacity(@88, 34, 0).
+!generator-id(@89, 89).
+capacity(@89, 64, 0).
+!generator-id(@90, 90).
+capacity(@90, 238, 0).
+!generator-id(@91, 91).
+capacity(@91, 147, 0).
+!generator-id(@92, 92).
+capacity(@92, 104, 0).
+!generator-id(@93, 93).
+capacity(@93, 291, 0).
+!generator-id(@94, 94).
+capacity(@94, 44, 0).
+!generator-id(@95, 95).
+capacity(@95, 33, 0).
+!generator-id(@96, 96).
+capacity(@96, 112, 0).
+!generator-id(@97, 97).
+capacity(@97, 182, 0).
+!generator-id(@98, 98).
+capacity(@98, 50, 0).
+!generator-id(@99, 99).
+capacity(@99, 472, 0).
