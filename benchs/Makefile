@@ -24,7 +24,8 @@ SPLASH_BP = splash-bp-400
 QUEENS = 8queens-13 8queens-13-top 8queens-13-top-static 8queens-13-bottom 8queens-13-bottom-static
 SIMPLE = simple16 simple32 simple64
 MINMAX = min-max-tictactoe
-SEARCH = search-parallel-random search-threads-random
+SEARCH_RANDOM = search-parallel-random search-threads-random
+SEARCH_FACEBOOK = search-parallel-facebook search-threads-facebook
 SHORTEST = shortest-email \
 			  shortest-email-coord \
 				shortest-slashdot \
@@ -48,8 +49,10 @@ thread:
 
 ggc:
 	@bash $(SCRIPT) $(GGC)
-search:
-	@bash $(SCRIPT) $(SEARCH)
+search-random:
+	@bash $(SCRIPT) $(SEARCH_RANDOM)
+search-facebook:
+	@bash $(SCRIPT) $(SEARCH_FACEBOOK)
 pagerank:
 	@bash $(SCRIPT) $(PAGERANK)
 ht:
