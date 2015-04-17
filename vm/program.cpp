@@ -484,10 +484,10 @@ program::~program(void) {
 void program::read_node_references(byte_code code, code_reader& read) {
    uint_val size_nodes;
    read.read_type<uint_val>(&size_nodes);
-   uint_val pos[size_nodes];
-   read.read_type<uint_val>(pos, size_nodes);
    for (uint_val i(0); i < size_nodes; ++i) {
-      byte_code p(code + pos[i]);
+      uint_val place;
+      read.read_type<uint_val>(&place);
+      byte_code p(code + place);
       const node_val n(pcounter_node(p));
       node_references[n].push_back(p);
    }

@@ -24,6 +24,7 @@ SPLASH_BP = splash-bp-400
 QUEENS = 8queens-13 8queens-13-top 8queens-13-top-static 8queens-13-bottom 8queens-13-bottom-static
 SIMPLE = simple16 simple32 simple64
 MINMAX = min-max-tictactoe
+SEARCH = search-parallel-random search-threads-random
 SHORTEST = shortest-email \
 			  shortest-email-coord \
 				shortest-slashdot \
@@ -47,6 +48,8 @@ thread:
 
 ggc:
 	@bash $(SCRIPT) $(GGC)
+search:
+	@bash $(SCRIPT) $(SEARCH)
 pagerank:
 	@bash $(SCRIPT) $(PAGERANK)
 ht:
@@ -200,6 +203,10 @@ plots:
 
 state_plots:
 	@python ../scripts/plots/plot_state_statistics.py instrumentation_files state_statistics
+
+generate-search-random:
+	PYTHONPATH=../scripts python ../scripts/threads/generate_bfs.py 50000 20 100 5 > progs/data/search-random.meld
+	touch progs/search-*-random.meld
 
 clean:
 	rm -f $(RESULTS_FILE)
