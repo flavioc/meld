@@ -1,0 +1,2 @@
+priority @cluster @static.
+data stanford-snap-search "shortest-twitter.txt" ["50" "1"].
