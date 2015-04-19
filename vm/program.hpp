@@ -246,6 +246,9 @@ class program {
    predicate *get_linear_predicate(const predicate_id i) const {
       return linear_predicates[i];
    }
+   predicate *get_persistent_predicate(const predicate_id i) const {
+      return persistent_predicates[i];
+   }
    predicate *get_sorted_predicate(const size_t i) const {
       assert(i < num_predicates());
       return sorted_predicates[i];
@@ -267,7 +270,6 @@ class program {
       assert(id < num_predicates());
       return code[id];
    }
-   inline bool has_const_code() const { return const_code_size != 0; }
    inline byte_code get_const_bytecode() const { return const_code; }
    inline type *get_const_type(const const_id &id) const {
       return const_types[id];
@@ -277,6 +279,7 @@ class program {
    }
    size_t num_linear_predicates() const { return linear_predicates.size(); }
 #endif
+   inline bool has_const_code() const { return const_code_size != 0; }
    size_t num_route_predicates() const { return route_predicates.size(); }
    size_t num_thread_predicates() const { return thread_predicates.size(); }
    size_t num_predicates_next_uint() const { return num_predicates_uint; }

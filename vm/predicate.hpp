@@ -58,6 +58,7 @@ struct predicate {
    bool is_reused{false};
    bool is_cycle{false};
    bool is_thread{false};
+   bool is_compact{false};
    bool has_code{true};
 
    std::vector<const rule*, mem::allocator<const rule*>> affected_rules;
@@ -98,6 +99,8 @@ struct predicate {
    inline rule_iterator end_linear_rules() const { return linear_rules.end(); }
 
    inline bool is_aggregate_pred(void) const { return agg_info != nullptr; }
+
+   inline bool is_compact_pred() const { return is_compact; }
 
    inline aggregate_safeness get_agg_safeness(void) const {
       return agg_info->safeness;

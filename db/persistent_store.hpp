@@ -7,6 +7,7 @@
 #include "db/trie.hpp"
 #include "vm/predicate.hpp"
 #include "db/tuple_aggregate.hpp"
+#include "db/array.hpp"
 #include "vm/all.hpp"
 #ifdef COMPILED
 #include COMPILED_HEADER
@@ -21,6 +22,8 @@ struct persistent_store {
        vm::predicate_id, tuple_aggregate *, std::hash<vm::predicate_id>,
        std::equal_to<vm::predicate_id>,
        mem::allocator<std::pair<const vm::predicate_id, tuple_aggregate *>>>;
+
+   static_assert(sizeof(tuple_trie) >= sizeof(array), "Tuple tries must be greater than array types.");
 
 // tuple database
 #ifdef COMPILED
@@ -37,6 +40,11 @@ struct persistent_store {
 #else
    aggregate_map aggs;
 #endif
+
+   inline array *get_array(const vm::predicate *pred) {
+      assert(pred->is_compact_pred());
+      return (db::array*)(get_storage(pred));
+   }
 
    inline tuple_trie *get_storage(const vm::predicate *pred) const {
 #ifdef COMPILED
@@ -90,12 +98,21 @@ struct persistent_store {
 #ifndef COMPILED
       tuples = mem::allocator<tuple_trie>().allocate(
           vm::theProgram->num_persistent_predicates());
-      for (size_t i(0); i < vm::theProgram->num_persistent_predicates(); ++i)
-         mem::allocator<tuple_trie>().construct(tuples + i);
+      for (size_t i(0); i < vm::theProgram->num_persistent_predicates(); ++i) {
+         vm::predicate *pred(vm::theProgram->get_persistent_predicate(i));
+         if(pred->is_compact_pred())
+            mem::allocator<array>().construct((db::array*)(tuples + i));
+         else
+            mem::allocator<tuple_trie>().construct(tuples + i);
+      }
 #endif
 #if defined(COMPILED) && !defined(COMPILED_NO_AGGREGATES)
-      for(size_t i(0); i < COMPILED_NUM_TRIES; ++i)
+      for(size_t i(0); i < COMPILED_NUM_TRIES; ++i) {
+         vm::predicate *pred(vm::theProgram->get_persistent_predicate(i));
          aggs[i] = NULL;
+         if(pred->is_compact_pred())
+            mem::allocator<array>().construct((db::array*)(tuples + i));
+      }
 #endif
    }
 

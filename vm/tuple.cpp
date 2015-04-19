@@ -251,7 +251,7 @@ void tuple::print(ostream &cout, const vm::predicate *pred) const {
    cout << ")";
 }
 
-void tuple::destructor(predicate *pred, candidate_gc_nodes &gc_nodes) {
+void tuple::destructor(const predicate *pred, candidate_gc_nodes &gc_nodes) {
    for (field_num i = 0; i < pred->num_fields(); ++i) {
       switch (pred->get_field_type(i)->get_type()) {
          case FIELD_LIST:

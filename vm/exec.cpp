@@ -14,6 +14,7 @@
 #include "utils/mutex.hpp"
 #include "thread/thread.hpp"
 #include "vm/priority.hpp"
+#include "db/array.hpp"
 
 #ifndef COMPILED
 
@@ -610,6 +611,29 @@ static inline return_type execute_pers_iter(const reg_num reg, match* m,
    const depth_t old_depth(state.depth);
    const bool old_is_linear(state.is_linear);
    const bool this_is_linear(false);
+
+   if(pred->is_compact_pred()) {
+      db::array *a(node->pers_store.get_array(pred));
+      for(auto it(a->begin(pred)), end(a->end(pred)); it != end; ++it) {
+         vm::tuple *match_tuple(*it);
+         if(!do_matches(m, match_tuple, pred))
+            continue;
+         PUSH_CURRENT_STATE(match_tuple, nullptr, nullptr, (vm::depth_t)0);
+#ifdef DEBUG_ITERS
+         cout << "\titerate ";
+         match_tuple->print(cout, pred);
+         cout << "\n";
+#endif
+
+         return_type ret = execute(first, state, reg, match_tuple, pred);
+
+         POP_STATE();
+
+         if (ret == RETURN_LINEAR) return ret;
+         if (ret == RETURN_DERIVED && state.is_linear) return RETURN_DERIVED;
+      }
+      return RETURN_NO_RETURN;
+   }
 
    for (auto tuples_it(
             node->pers_store.match_predicate(pred->get_persistent_id(), m));

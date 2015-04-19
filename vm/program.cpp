@@ -98,7 +98,7 @@ program::program(string _filename)
    if (!VERSION_AT_LEAST(0, 11))
       throw load_file_error(filename, string("unsupported byte code version"));
 
-   if (VERSION_AT_LEAST(0, 13))
+   if (VERSION_AT_LEAST(0, 14))
       throw load_file_error(filename, string("unsupported byte code version"));
 
    // read number of predicates

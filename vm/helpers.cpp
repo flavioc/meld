@@ -5,6 +5,7 @@
 #include "db/database.hpp"
 #include "vm/priority.hpp"
 #include "thread/thread.hpp"
+#include "vm/instr.hpp"
 
 static inline void execute_add_linear0(db::node *node, vm::tuple *tuple,
                                        vm::predicate *pred, vm::state &state) {
@@ -266,34 +267,46 @@ static inline void add_new_axioms(state &state, db::node *node, pcounter pc,
                                   const pcounter end) {
    while (pc < end) {
       // read axioms until the end!
-      const vm::uint_val num(pcounter_int(pc));
-      pcounter_move_int(&pc);
+      const vm::uint_val num(vm::instr::pcounter_int(pc));
+      vm::instr::pcounter_move_int(&pc);
       predicate_id pid(vm::instr::predicate_get(pc, 0));
       predicate *pred(theProgram->get_predicate(pid));
-      pcounter_move_byte(&pc);
-      for(size_t j(0); j < num; ++j) {
-         tuple *tpl(vm::tuple::create(pred, &(node->alloc)));
-#ifdef FACT_STATISTICS
-         state.facts_derived++;
-#endif
-         for (size_t i(0), num_fields(pred->num_fields()); i != num_fields; ++i) {
-            tuple_field field(axiom_read_data(pc, pred->get_field_type(i)));
-
-            tuple_set_field(tpl, pred->get_field_type(i), i, field);
+      vm::instr::pcounter_move_byte(&pc);
+      if(pred->is_persistent_pred() && pred->is_compact_pred()) {
+         db::array *s(node->pers_store.get_array(pred));
+         s->init(num, pred);
+         for(size_t j(0); j < num; ++j) {
+            tuple *tpl(s->add_next(pred, j));
+            for (size_t i(0), num_fields(pred->num_fields()); i != num_fields; ++i) {
+               tuple_field field(axiom_read_data(pc, pred->get_field_type(i)));
+               tuple_set_field(tpl, pred->get_field_type(i), i, field);
+            }
          }
-         if (pred->is_action_pred())
-            execute_run_action0(tpl, pred, state);
-         else if (pred->is_reused_pred() || pred->is_persistent_pred()) {
-            if (pred->is_persistent_pred() && !pred->has_code &&
-                !pred->is_aggregate_pred()) {
-               node->pers_store.add_tuple(tpl, pred, state.depth);
-               state.matcher->new_persistent_fact(pred->get_id());
-            } else
-               execute_add_node_persistent0(node, tpl, pred, state);
-         } else
-            execute_add_linear0(node, tpl, pred, state);
-      }
+         state.matcher->new_persistent_fact(pred->get_id());
+      } else {
+         for(size_t j(0); j < num; ++j) {
+            tuple *tpl(vm::tuple::create(pred, &(node->alloc)));
+#ifdef FACT_STATISTICS
+            state.facts_derived++;
+#endif
+            for (size_t i(0), num_fields(pred->num_fields()); i != num_fields; ++i) {
+               tuple_field field(axiom_read_data(pc, pred->get_field_type(i)));
+               tuple_set_field(tpl, pred->get_field_type(i), i, field);
+            }
 
+            if (pred->is_action_pred())
+               execute_run_action0(tpl, pred, state);
+            else if (pred->is_reused_pred() || pred->is_persistent_pred()) {
+               if (pred->is_persistent_pred() && !pred->has_code &&
+                     !pred->is_aggregate_pred()) {
+                  node->pers_store.add_tuple(tpl, pred, state.depth);
+                  state.matcher->new_persistent_fact(pred->get_id());
+               } else
+                  execute_add_node_persistent0(node, tpl, pred, state);
+            } else
+               execute_add_linear0(node, tpl, pred, state);
+         }
+      }
    }
 }
 

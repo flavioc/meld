@@ -28,10 +28,10 @@ private:
 
    void copy_field(type *, tuple *, const field_num) const;
 
+public:
+
    inline tuple_field *getfp(void) { return (tuple_field*)(this + 1); }
    inline const tuple_field *getfp(void) const { return (tuple_field*)(this + 1); }
-
-public:
 
    bool field_equal(type *, const tuple&, const field_num) const;
 
@@ -120,8 +120,6 @@ public:
       alloc->deallocate_obj((utils::byte*)tpl, size);
    }
    
-private:
-
    inline void init(const predicate *pred)
    {
 #ifndef COMPILED
@@ -135,7 +133,7 @@ private:
 #endif
    }
 
-   void destructor(vm::predicate*, candidate_gc_nodes&);
+   void destructor(const vm::predicate*, candidate_gc_nodes&);
 };
 
 typedef utils::intrusive_list<vm::tuple> tuple_list;
