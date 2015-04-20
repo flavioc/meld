@@ -274,7 +274,7 @@ static inline void add_new_axioms(state &state, db::node *node, pcounter pc,
       vm::instr::pcounter_move_byte(&pc);
       if(pred->is_persistent_pred() && pred->is_compact_pred()) {
          db::array *s(node->pers_store.get_array(pred));
-         s->init(num, pred);
+         s->init(num, pred, &(node->alloc));
          for(size_t j(0); j < num; ++j) {
             tuple *tpl(s->add_next(pred, j));
             for (size_t i(0), num_fields(pred->num_fields()); i != num_fields; ++i) {

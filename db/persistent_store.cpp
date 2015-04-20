@@ -134,7 +134,7 @@ persistent_store::wipeout(mem::node_allocator *alloc, candidate_gc_nodes& gc_nod
    for(auto *pred : vm::theProgram->persistent_predicates) {
       tuple_trie *tr(get_storage(pred));
       if(pred->is_compact_pred())
-         ((array*)tr)->wipeout(pred, gc_nodes);
+         ((array*)tr)->wipeout(pred, alloc, gc_nodes);
       else
          tr->wipeout(pred, alloc, gc_nodes);
 #ifndef COMPILED
