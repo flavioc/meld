@@ -27,6 +27,7 @@ MINMAX = min-max-tictactoe
 SEARCH_RANDOM = search-parallel-random search-threads-random
 SEARCH_FACEBOOK = search-parallel-facebook search-threads-facebook
 SEARCH_TWITTER = search-parallel-twitter search-threads-twitter
+SEARCH_POKEC = search-parallel-pokec search-threads-pokec
 SHORTEST = shortest-email \
 			  shortest-email-coord \
 				shortest-slashdot \
@@ -56,6 +57,8 @@ search-facebook:
 	@bash $(SCRIPT) $(SEARCH_FACEBOOK)
 search-twitter:
 	@bash $(SCRIPT) $(SEARCH_TWITTER)
+search-pokec:
+	@bash $(SCRIPT) $(SEARCH_POKEC)
 pagerank:
 	@bash $(SCRIPT) $(PAGERANK)
 ht:
