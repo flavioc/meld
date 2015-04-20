@@ -801,22 +801,26 @@ pcounter instr_print(pcounter pc, const bool recurse, const int tabcount,
 
          while (p < end) {
             // read axions until the end!
+            const uint_val num(pcounter_int(p));
+            pcounter_move_int(&p);
             predicate_id pid(predicate_get(p, 0));
             predicate* pred(prog->get_predicate(pid));
-            print_tab(tabcount + 1);
-            if (pred->is_persistent_pred()) cout << "!";
-            cout << pred->get_name() << "(";
-
             p++;
 
-            for (size_t i(0), num_fields(pred->num_fields()); i != num_fields;
-                 ++i) {
-               type* t(pred->get_field_type(i));
-               print_axiom_data(p, t);
+            for(size_t j(0); j != num; ++j) {
+               print_tab(tabcount + 1);
+               if (pred->is_persistent_pred()) cout << "!";
+               cout << pred->get_name() << "(";
 
-               if (i != num_fields - 1) cout << ", ";
+               for (size_t i(0), num_fields(pred->num_fields()); i != num_fields;
+                     ++i) {
+                  type* t(pred->get_field_type(i));
+                  print_axiom_data(p, t);
+
+                  if (i != num_fields - 1) cout << ", ";
+               }
+               cout << ")" << endl;
             }
-            cout << ")" << endl;
          }
       } break;
       case SEND_DELAY_INSTR:

@@ -24,6 +24,9 @@ type linear thread-total-capacity(thread, int, int).
 index thread-capacity/2.
 index thread-connected-to/3.
 index thread-connected-to-list/2.
+compact generator-id.
+compact consumer-id.
+compact power.
 
 fun imax(int A, int B) : int = if A > B then A else B end.
 

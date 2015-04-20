@@ -17,6 +17,10 @@ type linear reconnect(consumer).
 type linear connect(generator, consumer, int).
 type linear disconnect(consumer, generator).
 
+compact generator-id.
+compact consumer-id.
+compact power.
+
 fun imax(int A, int B) : int = if A > B then A else B end.
 
 connected-to-list(G, []).

@@ -15,13 +15,14 @@ namespace db
 
 struct array {
    vm::tuple_field *data{nullptr};
-   size_t num_tuples;
+   size_t num_tuples{0};
 
    struct iterator {
       vm::tuple_field *ptr{nullptr};
       size_t step{0};
 
       inline vm::tuple *operator*() {
+         assert(ptr);
          vm::tuple *tpl((vm::tuple*)(((utils::byte*)ptr)-sizeof(vm::tuple)));
          assert(tpl->getfp() == ptr);
          return tpl;
@@ -39,18 +40,20 @@ struct array {
 
       inline iterator& operator++()
       {
+         assert(ptr);
          ptr += step;
          return *this;
       }
 
       inline iterator operator++(int)
       {
+         assert(ptr);
          ptr += step;
          return *this;
       }
 
       explicit inline iterator(const size_t start, const size_t num_args, vm::tuple_field *data):
-         ptr(data + num_args * start),
+         ptr(data ? (data + num_args * start) : nullptr),
          step(num_args)
       {
       }
@@ -94,6 +97,9 @@ struct array {
    explicit array() {}
 
    inline void wipeout(const vm::predicate *pred, mem::node_allocator *alloc, vm::candidate_gc_nodes& gc_nodes) {
+      if(!data)
+         return;
+
       for(auto it(begin(pred)), e(end(pred)); it != e; ++it) {
          vm::tuple *tpl(*it);
          tpl->destructor(pred, gc_nodes);

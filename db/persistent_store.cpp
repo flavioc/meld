@@ -135,11 +135,12 @@ persistent_store::wipeout(mem::node_allocator *alloc, candidate_gc_nodes& gc_nod
       tuple_trie *tr(get_storage(pred));
       if(pred->is_compact_pred())
          ((array*)tr)->wipeout(pred, alloc, gc_nodes);
-      else
+      else {
          tr->wipeout(pred, alloc, gc_nodes);
 #ifndef COMPILED
-      mem::allocator<tuple_trie>().destroy(tr);
+         mem::allocator<tuple_trie>().destroy(tr);
 #endif
+      }
    }
 #ifdef COMPILED
 #ifndef COMPILED_NO_AGGREGATES
