@@ -64,10 +64,13 @@ struct array {
    inline void init(const size_t _size, const vm::predicate *pred, mem::node_allocator *alloc) {
       const size_t total(pred->num_fields() * _size);
       num_tuples = _size;
+#if 0
       if(num_tuples < 16)
          data = (vm::tuple_field*)alloc->allocate_obj(total * sizeof(vm::tuple_field));
       else
-         data = mem::allocator<vm::tuple_field>().allocate(total);
+#endif
+      (void)alloc;
+      data = mem::allocator<vm::tuple_field>().allocate(total);
    }
 
    inline vm::tuple *add_next(const vm::predicate *pred, const size_t i)
@@ -95,10 +98,13 @@ struct array {
          vm::tuple *tpl(*it);
          tpl->destructor(pred, gc_nodes);
       }
+#if 0
       if(num_tuples < 16)
          alloc->deallocate_obj((utils::byte*)data, num_tuples * pred->num_fields() * sizeof(vm::tuple_field));
       else
-         mem::allocator<vm::tuple_field>().deallocate(data, num_tuples * pred->num_fields());
+#endif
+      (void)alloc;
+      mem::allocator<vm::tuple_field>().deallocate(data, num_tuples * pred->num_fields());
    }
 };
 
