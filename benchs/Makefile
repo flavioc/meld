@@ -217,6 +217,9 @@ generate-search-random:
 	PYTHONPATH=../scripts python ../scripts/threads/generate_bfs.py 50000 20 100 5 > progs/data/search-random.meld
 	touch progs/search-*-random.meld
 
+generate-powergrid:
+	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 2000 50000 1.02 > progs/data/powergrid-50000.meld
+
 clean:
 	rm -f $(RESULTS_FILE)
 	rm -rf output
