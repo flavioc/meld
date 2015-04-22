@@ -59,6 +59,10 @@ search-twitter:
 	@bash $(SCRIPT) $(SEARCH_TWITTER)
 search-pokec:
 	@bash $(SCRIPT) $(SEARCH_POKEC)
+powergrid-50000:
+	@bash $(SCRIPT) powergrid-50000 powergrid-50000-coord
+powergrid-100000:
+	@bash $(SCRIPT) powergrid-100000 powergrid-100000-coord
 pagerank:
 	@bash $(SCRIPT) $(PAGERANK)
 ht:
@@ -218,7 +222,8 @@ generate-search-random:
 	touch progs/search-*-random.meld
 
 generate-powergrid:
-	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 2000 50000 1.02 > progs/data/powergrid-50000.meld
+	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 2000 50000 1.008 > progs/data/powergrid-50000.meld
+	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 2000 100000 1.004 > progs/data/powergrid-100000.meld
 
 clean:
 	rm -f $(RESULTS_FILE)
