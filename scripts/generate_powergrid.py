@@ -10,6 +10,7 @@ if len(sys.argv) < 3:
 	print "usage: python generate_powergrid.py <#Generators> <#Consumers>"
 	sys.exit(1)
 
+random.seed(0)
 numgen = int(sys.argv[1])
 numcons = int(sys.argv[2])
 
