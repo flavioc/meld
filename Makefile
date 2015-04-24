@@ -86,8 +86,6 @@ CFLAGS = -std=c++11 $(ARCH) $(PROFILING) \
 			$(INCLUDE_DIRS) $(FLAGS) #-fno-gcse -fno-crossjumping
 LIBRARIES = -lm -lreadline -ldl $(LIBS) -pthread
 
-CXX = g++
-
 GCC_MINOR    := $(shell $(CXX) -v 2>&1 | \
 													grep " version " | cut -d' ' -f3  | cut -d'.' -f2)
 
