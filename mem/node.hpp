@@ -26,7 +26,7 @@ struct node_allocator
       object *next;
    };
    struct free_size {
-      std::size_t size;
+      uint8_t size;
       object *list;
    };
 #ifdef COMPILED
@@ -34,7 +34,7 @@ struct node_allocator
 #else
 #define NODE_ALLOCATOR_SIZES 32
 #endif
-   std::size_t num_free{0};
+   uint8_t num_free{0};
    free_size frees[NODE_ALLOCATOR_SIZES];
 
 #define MIN_SIZE_OBJ sizeof(object)
