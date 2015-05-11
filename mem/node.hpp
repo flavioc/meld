@@ -18,36 +18,49 @@ namespace mem
 struct node_allocator
 {
 #ifdef NODE_ALLOCATOR
-   utils::byte *current_page{nullptr};
-   std::size_t page_ptr{0};
-   std::size_t page_size{0};
-   utils::mutex mtx;
-   struct object {
-      object *next;
-   };
    struct free_size {
       uint8_t size;
-      object *list;
+      void *list;
    };
 #ifdef COMPILED
 #define NODE_ALLOCATOR_SIZES COMPILED_NUM_PREDICATES
 #else
 #define NODE_ALLOCATOR_SIZES 32
 #endif
-   uint8_t num_free{0};
-   free_size frees[NODE_ALLOCATOR_SIZES];
-
+   struct page {
+      uint16_t refcount{0};
+      page *next;
+      page *prev;
+      std::size_t ptr{0};
+      std::size_t size{0};
+      uint8_t num_free{0};
+      free_size frees[NODE_ALLOCATOR_SIZES];
+   };
+   page *first_page{nullptr};
+   page *current_page{nullptr};
+   utils::mutex mtx;
+   struct object {
+      page *page_ptr;
+      object *next;
+   };
+#define ADD_SIZE_OBJ sizeof(void*)
 #define MIN_SIZE_OBJ sizeof(object)
 #define START_PAGE_SIZE (MIN_SIZE_OBJ * 64)
 
    inline void allocate_new_page()
    {
-      page_size *= 4;
-      current_page = allocator<utils::byte>().allocate(page_size);
-      page_ptr = 0;
+      page *old_page(current_page);
+      const size_t new_size(old_page->size * 4);
+      current_page = (page*)allocator<utils::byte>().allocate(new_size);
+      old_page->prev = current_page;
+      current_page->next = old_page;
+      current_page->size = new_size;
+      current_page->refcount = 0;
+      current_page->num_free = 0;
+      current_page->ptr = sizeof(page);
    }
 
-   inline free_size *get_free_size(const size_t size)
+   inline free_size *get_free_size(free_size *frees, uint8_t& num_free, const size_t size, const bool create)
    {
       int left(0);
       int right(static_cast<int>(num_free) - 1);
@@ -59,6 +72,8 @@ struct node_allocator
          if(found == size)
             return frees + middle;
          else if(left == right) {
+            if(!create)
+               return nullptr;
             // need to add it here.
             if(size > found)
                middle++;
@@ -74,6 +89,8 @@ struct node_allocator
          else
             right = middle - 1;
       }
+      if(!create)
+         return nullptr;
       // empty array.
       frees[0].size = size;
       frees[0].list = nullptr;
@@ -81,37 +98,43 @@ struct node_allocator
       return frees;
    }
 
+   inline utils::byte *cast_object_to_ptr(object *o)
+   {
+      utils::byte *p((utils::byte*)o);
+
+      return p + sizeof(void*);
+   }
+
+   inline object* cast_ptr_to_object(utils::byte *p)
+   {
+      return (object*)(p - sizeof(void*));
+   }
 #endif
 
    inline utils::byte *allocate_obj(std::size_t size)
    {
 #ifdef NODE_ALLOCATOR
       MUTEX_LOCK_GUARD(mtx, allocator_lock);
-      size = std::max(MIN_SIZE_OBJ, size);
-      int left(0);
-      int right(static_cast<int>(num_free) - 1);
-
-      while(left <= right) {
-         int middle{left + (right - left)/2};
-         std::size_t found(frees[middle].size);
-
-         if(found == size) {
-            if(frees[middle].list) {
-               object *p(frees[middle].list);
-               frees[middle].list = p->next;
-               return (utils::byte*)p;
-            }
-            break;
-         } else if(found < size)
-            left = middle + 1;
-         else
-            right = middle - 1;
+      size = std::max(MIN_SIZE_OBJ, size + ADD_SIZE_OBJ);
+      page *pg(current_page);
+      while(pg) {
+         // start from the top page so that smaller pages are reclaimed faster.
+         free_size *f(get_free_size(pg->frees, pg->num_free, size, false));
+         if(f && f->list) {
+            object *p((object*)f->list);
+            f->list = p->next;
+            p->page_ptr->refcount++;
+            return cast_object_to_ptr(p);
+         }
+         pg = pg->next;
       }
-      if(page_ptr + size > page_size)
+      if(current_page->ptr + size > current_page->size)
          allocate_new_page();
-      utils::byte *obj = current_page + page_ptr;
-      page_ptr += size;
-      return obj;
+      object *obj = (object*)(((utils::byte*)current_page) + current_page->ptr);
+      current_page->ptr += size;
+      obj->page_ptr = current_page;
+      obj->page_ptr->refcount++;
+      return cast_object_to_ptr(obj);
 #else
       return mem::allocator<utils::byte>().allocate(size);
 #endif
@@ -121,10 +144,24 @@ struct node_allocator
    {
 #ifdef NODE_ALLOCATOR
       MUTEX_LOCK_GUARD(mtx, allocator_lock);
-      size = std::max(MIN_SIZE_OBJ, size);
-      object *x((object*)p);
-      free_size *f(get_free_size(size));
-      x->next = f->list;
+      size = std::max(MIN_SIZE_OBJ, size + ADD_SIZE_OBJ);
+      object *x(cast_ptr_to_object(p));
+      page *pg(x->page_ptr);
+      if(--(pg->refcount) == 0 && current_page != first_page) {
+         page *prev(pg->prev);
+         page *next(pg->next);
+         if(prev)
+            prev->next = next;
+         if(next)
+            next->prev = prev;
+         if(pg == first_page)
+            first_page = prev;
+         if(pg == current_page)
+            current_page = next;
+         return;
+      }
+      free_size *f(get_free_size(pg->frees, pg->num_free, size, true));
+      x->next = (object*)f->list;
       f->list = x;
 #else
       mem::allocator<utils::byte>().deallocate(p, size);
@@ -133,8 +170,13 @@ struct node_allocator
 
    inline node_allocator() {
 #ifdef NODE_ALLOCATOR
-      current_page = allocator<utils::byte>().allocate(START_PAGE_SIZE);
-      page_size = START_PAGE_SIZE;
+      current_page = (page*)allocator<utils::byte>().allocate(START_PAGE_SIZE);
+      current_page->refcount = 0;
+      current_page->prev = current_page->next = nullptr;
+      current_page->ptr = sizeof(page);
+      current_page->size = START_PAGE_SIZE;
+      current_page->num_free = 0;
+      first_page = current_page;
 #endif
    }
 };
