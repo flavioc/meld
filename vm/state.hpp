@@ -57,8 +57,11 @@ struct state {
    public:
    using reg = tuple_field;
 
+#ifndef COMPILED
    reg regs[NUM_REGS];
    vm::predicate *preds[NUM_REGS];
+   vm::tuple *iterate_tuples[NUM_REGS];
+   vm::bitmap_static<1> updated_map;
    call_stack stack;
    db::node *node;
    vm::rule_matcher *matcher;
@@ -68,6 +71,14 @@ struct state {
    bool is_linear;
    utils::randgen randgen;
    size_t current_rule;
+
+   bool running_rule;
+   bool hash_removes;
+   vm::counter *match_counter{nullptr};
+   std::unordered_set<utils::byte *, utils::pointer_hash<utils::byte>,
+                      std::equal_to<utils::byte *>,
+                      mem::allocator<utils::byte *>> allocated_match_objects;
+#endif
 #ifdef FACT_BUFFERING
    vm::buffer facts_to_send;
 #endif
@@ -129,12 +140,6 @@ struct state {
       persistent_facts_generated++;
    }
 
-   bool running_rule;
-   bool hash_removes;
-   vm::counter *match_counter{nullptr};
-   std::unordered_set<utils::byte *, utils::pointer_hash<utils::byte>,
-                      std::equal_to<utils::byte *>,
-                      mem::allocator<utils::byte *>> allocated_match_objects;
    candidate_gc_nodes gc_nodes;
 #ifdef CORE_STATISTICS
    core_statistics stat;

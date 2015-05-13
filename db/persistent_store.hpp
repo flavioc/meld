@@ -74,7 +74,9 @@ struct persistent_store {
    }
 
    inline bool add_tuple(vm::tuple *tpl, vm::predicate *pred,
-                         const vm::depth_t depth) {
+                         const vm::depth_t depth)
+   {
+      assert(!pred->is_compact_pred());
       return get_trie(pred)->insert_tuple(tpl, pred, depth);
    }
 

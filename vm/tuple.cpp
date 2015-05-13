@@ -218,7 +218,7 @@ static inline void print_tuple_type(ostream &cout, const tuple_field &field,
          tuple_field arg;
          SET_FIELD_CONS(arg, tail);
          print_tuple_type(cout, head, lt->get_subtype(), false);
-         if (!runtime::cons::is_null(tail)) cout << ", ";
+         if (!runtime::cons::is_null(tail)) cout << ",";
          print_tuple_type(cout, arg, t, true);
          break;
       }

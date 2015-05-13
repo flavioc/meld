@@ -61,24 +61,33 @@ static inline void execute_alloc(const pcounter& pc, state& state) {
    const reg_num dest(alloc_dest(pc));
    const reg_num reg(alloc_reg(pc));
    mem::node_allocator *alloc;
+   db::node *target_node;
    if(pred->is_thread_pred()) {
-      if(dest == reg)
-         alloc = &(state.sched->thread_node->alloc);
-      else {
+      if(dest == reg) {
+         target_node = state.sched->thread_node;
+         alloc = &(target_node->alloc);
+      } else {
          sched::thread *s((sched::thread*)state.get_thread(dest));
          alloc = &(s->thread_node->alloc);
       }
    } else {
-      if(dest == reg)
-         alloc = &(state.node->alloc);
-      else
+      if(dest == reg) {
+         target_node = state.node;
+         alloc = &(target_node->alloc);
+      } else
          alloc = &(((db::node*)state.get_node(dest))->alloc);
    }
-   tuple* tuple(vm::tuple::create(pred, alloc));
+   tuple *tpl;
+   if(pred->is_compact_pred()) {
+      assert(dest == reg);
+      assert(target_node);
+      tpl = target_node->pers_store.get_array(pred)->expand(pred, alloc);
+   } else
+      tpl = vm::tuple::create(pred, alloc);
 
    state.preds[reg] = pred;
 
-   state.set_tuple(reg, tuple);
+   state.set_tuple(reg, tpl);
 
 #ifdef FACT_STATISTICS
    state.facts_derived++;
@@ -906,9 +915,9 @@ static inline return_type execute_linear_iter_list(
       bool next_iter = true;
 
       if (TO_FINISH(ret)) {
-         if (match_tuple->is_updated()) {
+         if(state.updated_map.get_bit(reg)) {
+            state.updated_map.unset_bit(reg);
             match_tuple->will_not_delete();
-            match_tuple->set_not_updated();
             if (reg > 0) {
                // if this is the first iterate, we do not need to send this to
                // the generate list
@@ -1140,7 +1149,7 @@ static inline void execute_update(pcounter pc, state& state) {
    vm::tuple* tpl(state.get_tuple(reg));
    vm::predicate* pred(state.preds[reg]);
 
-   tpl->set_updated();
+   state.updated_map.set_bit(reg);
 #ifdef DEBUG_SENDS
    cout << "\tupdate ";
    tpl->print(cout, pred);

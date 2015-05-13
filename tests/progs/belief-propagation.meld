@@ -18,6 +18,10 @@ type linear sum-messages(node, list float).
 type linear update-messages(node, list float).
 type linear check-residual(node, node, float, list float).
 
+compact coord.
+compact edge.
+compact potential.
+
 const global-potential =  [-0.0, -2.0, -4, -6, -8, -2, -0, -2, -4, -6, -4, -2, -0, -2, -4, -6, -4, -2, -0, -2, -8, -6, -4, -2, -0].
 const initial-message = [-1.60944, -1.60944, -1.60944, -1.60944, -1.60944].
 const initial-belief = [-1.609438, -1.609438, -1.609438, -1.609438, -1.609438].

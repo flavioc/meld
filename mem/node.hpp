@@ -53,6 +53,7 @@ struct node_allocator
       const size_t new_size(old_page->size * 4);
       current_page = (page*)allocator<utils::byte>().allocate(new_size);
       old_page->prev = current_page;
+      current_page->prev = nullptr;
       current_page->next = old_page;
       current_page->size = new_size;
       current_page->refcount = 0;
@@ -77,7 +78,6 @@ struct node_allocator
             // need to add it here.
             if(size > found)
                middle++;
-//            std::cout << "Shifting for " << size << " middle: " << middle << "/" << num_free << " " << (num_free - middle) << "\n";
             memmove(frees + middle + 1, frees + middle, (num_free - middle) * sizeof(free_size));
             frees[middle].size = size;
             frees[middle].list = nullptr;
@@ -183,6 +183,7 @@ struct node_allocator
 #undef MIN_SIZE_OBJ
 #undef START_PAGE_SIZE
 #undef NODE_ALLOCATOR_SIZES
+#undef ADD_SIZE_OBJ
 
 };
 

@@ -99,9 +99,6 @@ public:
    inline bool must_be_deleted(void) const { return flags & TUPLE_DELETE_FLAG; }
    inline void will_delete(void) { flags |= TUPLE_DELETE_FLAG; }
    inline void will_not_delete(void) { flags &= ~TUPLE_DELETE_FLAG; }
-   inline void set_updated(void) { flags |= TUPLE_UPDATED_FLAG; }
-   inline void set_not_updated(void) { flags &= ~TUPLE_UPDATED_FLAG; }
-   inline bool is_updated(void) const { return flags & TUPLE_UPDATED_FLAG; }
 #endif
 
    inline static tuple* create(const predicate* pred, mem::node_allocator *alloc) {
@@ -112,11 +109,16 @@ public:
       return ptr;
    }
 
-   inline static void destroy(tuple *tpl, vm::predicate *pred, mem::node_allocator *alloc,
+   inline static void destroy(tuple *tpl, const vm::predicate *pred, mem::node_allocator *alloc,
          candidate_gc_nodes& gc_nodes)
    {
-      const size_t size(sizeof(vm::tuple) + sizeof(tuple_field) * pred->num_fields());
       tpl->destructor(pred, gc_nodes);
+      deallocate(tpl, pred, alloc);
+   }
+
+   inline static void deallocate(tuple *tpl, const vm::predicate *pred, mem::node_allocator *alloc)
+   {
+      const size_t size(sizeof(vm::tuple) + sizeof(tuple_field) * pred->num_fields());
       alloc->deallocate_obj((utils::byte*)tpl, size);
    }
    

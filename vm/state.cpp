@@ -53,7 +53,11 @@ void state::purge_runtime_objects(void) {
    free_set.clear();
 }
 
-void state::cleanup(void) { purge_runtime_objects(); }
+void state::cleanup(void)
+{
+   purge_runtime_objects();
+   memset(iterate_tuples, 0, sizeof(vm::tuple*) * NUM_REGS);
+}
 
 #ifndef COMPILED
 void state::copy_reg2const(const reg_num &reg_from, const const_id &cid) {
@@ -188,9 +192,9 @@ void state::add_to_aggregate(db::node *node, vm::full_tuple_list *ls,
                                                  &(node->alloc), gc_nodes);
          break;
       case vm::POSITIVE_DERIVATION:
-         agg = node->pers_store.add_agg_tuple(tpl, stpl->get_predicate(),
-                                              stpl->get_depth(), vm::POSITIVE_DERIVATION,
-                                              &(node->alloc), gc_nodes);
+         agg = node->pers_store.add_agg_tuple(
+             tpl, stpl->get_predicate(), stpl->get_depth(),
+             vm::POSITIVE_DERIVATION, &(node->alloc), gc_nodes);
          break;
    }
 
@@ -234,7 +238,8 @@ void state::process_persistent_tuple(db::node *target_node, full_tuple *stpl,
             setup(pred, POSITIVE_DERIVATION, stpl->get_depth());
             if (pred->has_code)
 #ifdef COMPILED
-               run_predicate(this, tpl, node, sched->thread_node, pred->get_id());
+               run_predicate(this, tpl, node, sched->thread_node,
+                             pred->get_id());
 #else
                execute_process(
                    theProgram->get_predicate_bytecode(pred->get_id()), *this,
@@ -247,7 +252,8 @@ void state::process_persistent_tuple(db::node *target_node, full_tuple *stpl,
          else {
             matcher->new_persistent_fact(pred->get_id());
 
-            if (!is_new) vm::tuple::destroy(tpl, pred, &(target_node->alloc), gc_nodes);
+            if (!is_new)
+               vm::tuple::destroy(tpl, pred, &(target_node->alloc), gc_nodes);
          }
 
          delete stpl;
@@ -299,7 +305,8 @@ void state::process_persistent_tuple(db::node *target_node, full_tuple *stpl,
                             theProgram->get_predicate_bytecode(pred->get_id()),
                             *this, tpl, pred);
 #endif
-                     deleter.perform_delete(pred, &(target_node->alloc), gc_nodes);
+                     deleter.perform_delete(pred, &(target_node->alloc),
+                                            gc_nodes);
                   }
                }
             }
@@ -427,8 +434,8 @@ static inline double compute_entropy(db::node *node, const predicate *pred,
          count_ints.clear();
       } break;
       case FIELD_FLOAT: {
-         for (unordered_map<float_val, size_t>::iterator
-                  it(count_floats.begin()),
+         for (unordered_map<float_val, size_t>::iterator it(
+                  count_floats.begin()),
               end(count_floats.end());
               it != end; ++it) {
             double items((double)it->second);
@@ -798,6 +805,7 @@ state::state(sched::thread *_sched)
       }
    }
 #endif
+   cleanup();
 }
 
 state::state() : state(nullptr) {}
