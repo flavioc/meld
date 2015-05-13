@@ -1,0 +1,10 @@
+
+type linear a(node, int).
+type route edge(node, node).
+type linear i-moved(node).
+
+a(@0, 1).
+!edge(@0, @1).
+
+a(A, N) -o set-cpu(A, cpu-id(A)).
+just-moved(A) -o i-moved(A).

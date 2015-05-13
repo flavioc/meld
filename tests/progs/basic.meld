@@ -1,0 +1,4 @@
+
+type linear a(node, list node).
+
+a(@0, [@1, @2]).
