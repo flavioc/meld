@@ -22,9 +22,6 @@ public:
    DECLARE_LIST_INTRUSIVE(tuple);
 
 private:
-#ifndef COMPILED
-   utils::byte flags;
-#endif
 
    void copy_field(type *, tuple *, const field_num) const;
 
@@ -93,14 +90,6 @@ public:
    tuple *copy_except(vm::predicate *, const field_num, mem::node_allocator *) const;
    tuple *copy(vm::predicate *, mem::node_allocator *) const;
 
-#ifndef COMPILED
-#define TUPLE_DELETE_FLAG 0x01
-#define TUPLE_UPDATED_FLAG 0x02
-   inline bool must_be_deleted(void) const { return flags & TUPLE_DELETE_FLAG; }
-   inline void will_delete(void) { flags |= TUPLE_DELETE_FLAG; }
-   inline void will_not_delete(void) { flags &= ~TUPLE_DELETE_FLAG; }
-#endif
-
    inline static tuple* create(const predicate* pred, mem::node_allocator *alloc) {
       const size_t size(sizeof(vm::tuple) + sizeof(tuple_field) * pred->num_fields());
       LOG_NEW_FACT();
@@ -124,9 +113,6 @@ public:
    
    inline void init(const predicate *pred)
    {
-#ifndef COMPILED
-      flags = 0x00;
-#endif
       assert(pred != nullptr);
 #ifndef COMPILED
       memset(getfp(), 0, sizeof(tuple_field) * pred->num_fields());

@@ -698,7 +698,7 @@ static inline return_type execute_olinear_iter(const reg_num reg, match* m,
         end(local_tuples->end());
         it != end; ++it) {
       tuple* tpl(*it);
-      if (!tpl->must_be_deleted() && do_matches(m, tpl, pred)) {
+      if (!state.tuple_is_used(tpl, reg) && do_matches(m, tpl, pred)) {
          iter_object obj;
          obj.tpl = tpl;
          obj.iterator = it;
@@ -723,9 +723,8 @@ static inline return_type execute_olinear_iter(const reg_num reg, match* m,
 
       tuple* match_tuple(p.tpl);
 
-      if (match_tuple->must_be_deleted()) goto next_tuple;
-
-      match_tuple->will_delete();
+      if (state.tuple_is_used(match_tuple, reg))
+         goto next_tuple;
 
       PUSH_CURRENT_STATE(match_tuple, nullptr, match_tuple, (vm::depth_t)0);
 
@@ -739,8 +738,7 @@ static inline return_type execute_olinear_iter(const reg_num reg, match* m,
          vm::tuple::destroy(match_tuple, pred, &(node->alloc), state.gc_nodes);
          if (ret == RETURN_LINEAR) return RETURN_LINEAR;
          if (ret == RETURN_DERIVED && old_is_linear) return RETURN_DERIVED;
-      } else
-         match_tuple->will_not_delete();
+      }
    next_tuple:
       // removed item from the list because it is no longer needed
       it = tpls.erase(it);
@@ -771,7 +769,7 @@ static inline return_type execute_orlinear_iter(const reg_num reg, match* m,
         end(local_tuples->end());
         it != end; ++it) {
       tuple* tpl(*it);
-      if (!tpl->must_be_deleted() && do_matches(m, tpl, pred)) {
+      if (!state.tuple_is_used(tpl, reg) && do_matches(m, tpl, pred)) {
          iter_object obj;
          obj.tpl = tpl;
          obj.iterator = it;
@@ -794,17 +792,14 @@ static inline return_type execute_orlinear_iter(const reg_num reg, match* m,
 
       tuple* match_tuple(p.tpl);
 
-      if (match_tuple->must_be_deleted()) goto next_tuple;
-
-      match_tuple->will_delete();
+      if (state.tuple_is_used(match_tuple, reg))
+         goto next_tuple;
 
       PUSH_CURRENT_STATE(match_tuple, nullptr, match_tuple, (vm::depth_t)0);
 
       ret = execute(first, state, reg, match_tuple, pred);
 
       POP_STATE();
-
-      match_tuple->will_not_delete();
 
       if (ret == RETURN_LINEAR) return RETURN_LINEAR;
       if (ret == RETURN_DERIVED && old_is_linear) return RETURN_DERIVED;
@@ -883,7 +878,7 @@ static inline return_type execute_linear_iter_list(
         it != end;) {
       tuple* match_tuple(*it);
 
-      if (match_tuple->must_be_deleted()) {
+      if(state.tuple_is_used(match_tuple, reg)) {
          it++;
          continue;
       }
@@ -906,8 +901,6 @@ static inline return_type execute_linear_iter_list(
       cout << "\n";
 #endif
 
-      match_tuple->will_delete();  // this will avoid future uses of this tuple!
-
       const return_type ret(execute(first, state, reg, match_tuple, pred));
 
       POP_STATE();
@@ -917,7 +910,6 @@ static inline return_type execute_linear_iter_list(
       if (TO_FINISH(ret)) {
          if(state.updated_map.get_bit(reg)) {
             state.updated_map.unset_bit(reg);
-            match_tuple->will_not_delete();
             if (reg > 0) {
                // if this is the first iterate, we do not need to send this to
                // the generate list
@@ -959,10 +951,8 @@ static inline return_type execute_linear_iter_list(
 
       if (ret == RETURN_LINEAR) return RETURN_LINEAR;
       if (old_is_linear && ret == RETURN_DERIVED) return RETURN_DERIVED;
-      if (next_iter) {
-         match_tuple->will_not_delete();
+      if (next_iter)
          it++;
-      }
    }
    return RETURN_NO_RETURN;
 }
@@ -1008,8 +998,10 @@ static inline return_type execute_rlinear_iter_list(
    const bool this_is_linear(false);
    const depth_t old_depth(state.depth);
 
-   for (auto match_tuple : *local_tuples) {
-      if (match_tuple->must_be_deleted()) continue;
+   for(auto it(local_tuples->begin()), e(local_tuples->end()); it != e; ++it) {
+      vm::tuple *match_tuple(*it);
+      if(state.tuple_is_used(match_tuple, reg))
+         continue;
 
       {
 #ifdef CORE_STATISTICS
@@ -1026,13 +1018,9 @@ static inline return_type execute_rlinear_iter_list(
       cout << "\n";
 #endif
 
-      match_tuple->will_delete();  // this will avoid future uses of this tuple!
-
       const return_type ret(execute(first, state, reg, match_tuple, pred));
 
       POP_STATE();
-
-      match_tuple->will_not_delete();
 
       if (ret == RETURN_LINEAR) return RETURN_LINEAR;
       if (old_is_linear && ret == RETURN_DERIVED) return RETURN_DERIVED;
@@ -1146,7 +1134,6 @@ static inline void execute_remove(pcounter pc, state& state) {
 
 static inline void execute_update(pcounter pc, state& state) {
    const reg_num reg(pcounter_reg(pc + instr_size));
-   vm::tuple* tpl(state.get_tuple(reg));
    vm::predicate* pred(state.preds[reg]);
 
    state.updated_map.set_bit(reg);
@@ -2452,6 +2439,7 @@ static inline return_type execute(pcounter pc, state& state, const reg_num reg,
                                   tuple* tpl, predicate* pred) {
    if (tpl != nullptr) {
       state.set_tuple(reg, tpl);
+      state.tuple_regs.set_bit((size_t)reg);
       state.preds[reg] = pred;
 #ifdef CORE_STATISTICS
       state.stat.stat_tuples_used++;

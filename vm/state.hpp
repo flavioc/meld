@@ -54,14 +54,15 @@ struct state {
 
    void indexing_state_machine(db::node *);
 
-   public:
-   using reg = tuple_field;
+public:
 
 #ifndef COMPILED
+   using reg = tuple_field;
+
    reg regs[NUM_REGS];
    vm::predicate *preds[NUM_REGS];
-   vm::tuple *iterate_tuples[NUM_REGS];
    vm::bitmap_static<1> updated_map;
+   vm::bitmap_static<1> tuple_regs;
    call_stack stack;
    db::node *node;
    vm::rule_matcher *matcher;
@@ -78,6 +79,18 @@ struct state {
    std::unordered_set<utils::byte *, utils::pointer_hash<utils::byte>,
                       std::equal_to<utils::byte *>,
                       mem::allocator<utils::byte *>> allocated_match_objects;
+
+   inline bool tuple_is_used(const vm::tuple *tpl, const reg_num r)
+   {
+      for(auto it(tuple_regs.begin(NUM_REGS)); !it.end(); ++it) {
+         const size_t x(*it);
+         if(x >= (size_t)r)
+            return false;
+         if(get_tuple(x) == tpl)
+            return true;
+      }
+      return false;
+   }
 #endif
 #ifdef FACT_BUFFERING
    vm::buffer facts_to_send;

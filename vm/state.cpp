@@ -56,7 +56,8 @@ void state::purge_runtime_objects(void) {
 void state::cleanup(void)
 {
    purge_runtime_objects();
-   memset(iterate_tuples, 0, sizeof(vm::tuple*) * NUM_REGS);
+   updated_map.clear();
+   tuple_regs.clear();
 }
 
 #ifndef COMPILED
