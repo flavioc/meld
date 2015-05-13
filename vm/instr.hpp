@@ -205,6 +205,7 @@ const size_t FABS_BASE = instr_size + 2 * reg_val_size;
 const size_t REMOTE_UPDATE_BASE =
     instr_size + reg_val_size + 2 * predicate_size + 2 * count_size;
 const size_t MARK_RULE_BASE = instr_size + uint_size;
+const size_t LITERAL_CONS_BASE = instr_size + reg_val_size + type_size + jump_size;
 
 enum instr_type {
    RETURN_INSTR = 0x00,
@@ -369,6 +370,7 @@ enum instr_type {
    MVTHREADIDFIELD_INSTR = 0xBB,
    THREAD_SEND_INSTR = 0xBC,
    TRLINEAR_ITER_INSTR = 0xBD,
+   LITERAL_CONS_INSTR = 0xBE,
    RETURN_LINEAR_INSTR = 0xD0,
    MARK_RULE_INSTR = 0xD1,
    RETURN_DERIVED_INSTR = 0xF0
@@ -753,6 +755,20 @@ inline size_t remote_update_common(const pcounter pc) {
 inline size_t remote_update_nregs(const pcounter pc) {
    return (size_t)byte_get(
        pc, instr_size + reg_val_size + 2 * predicate_size + count_size);
+}
+
+// LITERAL CONS
+
+inline code_offset_t literal_cons_jump(pcounter pc) {
+   return jump_get(pc, LITERAL_CONS_BASE - jump_size);
+}
+
+inline utils::byte literal_cons_type(pcounter pc) {
+   return byte_get(pc, LITERAL_CONS_BASE - jump_size - type_size);
+}
+
+inline reg_num literal_cons_dest(const pcounter& pc) {
+   return reg_get(pc, instr_size);
 }
 
 /* advance function */
@@ -1161,6 +1177,9 @@ inline pcounter advance(const pcounter pc) {
 
       case MARK_RULE_INSTR:
          return pc + MARK_RULE_BASE;
+
+      case LITERAL_CONS_INSTR:
+         return pc + literal_cons_jump(pc);
 
       default:
          throw malformed_instr_error("unknown instruction code (advance)");

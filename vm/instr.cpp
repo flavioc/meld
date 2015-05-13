@@ -353,6 +353,8 @@ string instr_name(const instr::instr_type code) {
          return string("UPDATE");
       case NOT_INSTR:
          return string("NOT");
+      case LITERAL_CONS_INSTR:
+         return string("LITERAL CONS");
       case RETURN_SELECT_INSTR:
          return string("RETURN SELECT");
       case SELECT_INSTR:
@@ -759,6 +761,16 @@ pcounter instr_print(pcounter pc, const bool recurse, const int tabcount,
       case NOT_INSTR:
          cout << " " << reg_string(not_op(pc)) << " TO "
               << reg_string(not_dest(pc)) << endl;
+         break;
+      case LITERAL_CONS_INSTR: {
+            pcounter m = pc + LITERAL_CONS_BASE;
+            utils::byte id(literal_cons_type(pc));
+            vm::type *t(prog->get_type(id));
+            cout << " " << literal_cons_jump(pc) << " ";
+
+            print_axiom_data(m, t);
+            cout << endl;
+         }
          break;
       case RETURN_SELECT_INSTR:
          cout << " " << return_select_jump(pc) << endl;

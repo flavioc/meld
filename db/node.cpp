@@ -108,8 +108,10 @@ void node::print(ostream &cout) const {
             if (ls && !ls->empty()) {
                for (intrusive_list<vm::tuple>::iterator it(ls->begin()),
                     end(ls->end());
-                    it != end; ++it)
-                  vec.push_back((*it)->to_str(pred));
+                    it != end; ++it) {
+                  auto s((*it)->to_str(pred));
+                  vec.push_back(s);
+               }
             }
          }
       }

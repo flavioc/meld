@@ -9,7 +9,7 @@ using namespace std;
 persistent_store::delete_info
 persistent_store::delete_tuple(vm::tuple *tuple, vm::predicate *pred, const depth_t depth)
 {
-   tuple_trie *tr(get_storage(pred));
+   tuple_trie *tr(get_trie(pred));
    
    return tr->delete_tuple(tuple, pred, depth);
 }
@@ -87,7 +87,7 @@ void
 persistent_store::delete_by_leaf(predicate *pred, tuple_trie_leaf *leaf, const depth_t depth,
       mem::node_allocator *alloc, candidate_gc_nodes& gc_nodes)
 {
-   tuple_trie *tr(get_storage(pred));
+   tuple_trie *tr(get_trie(pred));
 
    tr->delete_by_leaf(leaf, pred, depth, alloc, gc_nodes);
 }
@@ -96,7 +96,7 @@ void
 persistent_store::delete_by_index(predicate *pred, const match& m,
       mem::node_allocator *alloc, candidate_gc_nodes& gc_nodes)
 {
-   tuple_trie *tr(get_storage(pred));
+   tuple_trie *tr(get_trie(pred));
    
    tr->delete_by_index(pred, m, alloc, gc_nodes);
 
@@ -120,22 +120,20 @@ persistent_store::delete_by_index(predicate *pred, const match& m,
 size_t
 persistent_store::count_total(const predicate* pred) const
 {
-   tuple_trie *tr(get_storage(pred));
-
    if(pred->is_compact_pred())
-      return ((db::array*)tr)->size();
+      return get_array(pred)->size();
    else
-      return tr->size();
+      return get_trie(pred)->size();
 }
 
 void
 persistent_store::wipeout(mem::node_allocator *alloc, candidate_gc_nodes& gc_nodes)
 {
    for(auto *pred : vm::theProgram->persistent_predicates) {
-      tuple_trie *tr(get_storage(pred));
       if(pred->is_compact_pred())
-         ((array*)tr)->wipeout(pred, alloc, gc_nodes);
+         get_array(pred)->wipeout(pred, alloc, gc_nodes);
       else {
+         tuple_trie *tr(get_trie(pred));
          tr->wipeout(pred, alloc, gc_nodes);
 #ifndef COMPILED
          mem::allocator<tuple_trie>().destroy(tr);
@@ -169,11 +167,11 @@ persistent_store::wipeout(mem::node_allocator *alloc, candidate_gc_nodes& gc_nod
 vector<string>
 persistent_store::dump(const predicate *pred) const
 {
-   tuple_trie *tr(get_storage(pred));
    if(pred->is_compact_pred()) {
-      array *a((array*)tr);
+      array *a(get_array(pred));
       return a->get_print_strings(pred);
    } else {
+      tuple_trie *tr(get_trie(pred));
       if(!tr->empty())
          return tr->get_print_strings(pred);
    }
@@ -183,10 +181,10 @@ persistent_store::dump(const predicate *pred) const
 vector<string>
 persistent_store::print(const predicate *pred) const
 {
-   tuple_trie *tr(get_storage(pred));
    if(pred->is_compact_pred())
-      return ((array*)tr)->get_print_strings(pred);
+      return get_array(pred)->get_print_strings(pred);
    else {
+      tuple_trie *tr(get_trie(pred));
       if(!tr->empty())
             return tr->get_print_strings(pred);
    }

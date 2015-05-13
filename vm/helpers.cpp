@@ -345,6 +345,12 @@ static inline void do_fix_nodes(db::node *node, const size_t table) {
    }
 }
 
+static inline vm::tuple_field instantiate_data(const uint32_t s, vm::type *typ)
+{
+   pcounter p((pcounter)(((utils::byte *)gAxiomsData) + s));
+   return axiom_read_data(p, typ);
+}
+
 std::unique_ptr<std::istrstream> compiled_database_stream() {
    return std::unique_ptr<std::istrstream>(
        new std::istrstream((const char *)gAxiomsData, gAxiomsSize));

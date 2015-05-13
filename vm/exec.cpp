@@ -1588,6 +1588,14 @@ static inline void execute_mark_rule(const pcounter& pc, state& state) {
       state.matcher->rule_queue.set_bit(rule_id);
 }
 
+static inline void execute_literal_cons(pcounter pc, state& state) {
+   const utils::byte tid(literal_cons_type(pc));
+   const reg_num dest(literal_cons_dest(pc));
+   pc += LITERAL_CONS_BASE;
+   vm::tuple_field data(axiom_read_data(pc, vm::theProgram->get_type(tid)));
+   state.set_cons(dest, FIELD_CONS(data));
+}
+
 static inline void execute_rule(const pcounter& pc, state& state) {
    const size_t rule_id(rule_get_id(pc));
 
@@ -3650,6 +3658,13 @@ static inline return_type execute(pcounter pc, state& state, const reg_num reg,
    JUMP(mark_rule, MARK_RULE_BASE)
    execute_mark_rule(pc, state);
    ADVANCE();
+   ENDOP();
+
+   CASE(LITERAL_CONS_INSTR)
+   COMPLEX_JUMP(literal_cons)
+   execute_literal_cons(pc, state);
+   pc += literal_cons_jump(pc);
+   JUMP_NEXT();
    ENDOP();
 
    COMPLEX_JUMP(not_found)
