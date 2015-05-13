@@ -24,6 +24,7 @@ set_exists(EXTERNAL_ARG(s), EXTERNAL_ARG(item), EXTERNAL_ARG(typ))
    DECLARE_SET(s);
    DECLARE_ANY(item);
    DECLARE_TYPE(typ);
+   (void)typ;
 
    RETURN_BOOL(s->exists(item));
 }
