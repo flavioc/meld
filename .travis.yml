@@ -21,3 +21,5 @@ install:
   # clang 3.4
   - if [ "$CXX" == "clang++" ]; then sudo apt-get install --allow-unauthenticated -qq clang-3.4; fi
   - if [ "$CXX" == "clang++" ]; then export CXX="clang++-3.4"; fi
+
+  - apt-get install libcppunit-dev
