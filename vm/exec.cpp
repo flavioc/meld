@@ -61,7 +61,7 @@ static inline void execute_alloc(const pcounter& pc, state& state) {
    const reg_num dest(alloc_dest(pc));
    const reg_num reg(alloc_reg(pc));
    mem::node_allocator *alloc;
-   db::node *target_node;
+   db::node *target_node{nullptr};
    if(pred->is_thread_pred()) {
       if(dest == reg) {
          target_node = state.sched->thread_node;

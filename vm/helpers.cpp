@@ -195,7 +195,7 @@ static inline void execute_send0(db::node *from, const vm::node_val dest_val,
 }
 
 static inline vm::tuple_field axiom_read_data(vm::pcounter &pc, vm::type *t) {
-   vm::tuple_field f;
+   vm::tuple_field f{0};
 
    switch (t->get_type()) {
       case vm::FIELD_INT:
@@ -239,6 +239,7 @@ static inline vm::tuple_field axiom_read_data(vm::pcounter &pc, vm::type *t) {
       } break;
       default:
          assert(false);
+         abort();
    }
 
    return f;

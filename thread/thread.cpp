@@ -16,6 +16,8 @@ using namespace vm;
 using namespace db;
 using namespace utils;
 
+//#define DEBUG_QUEUE
+
 #ifdef PROFILE_QUEUE
 static atomic<size_t> prio_count(0);
 static atomic<size_t> prio_immediate(0);
@@ -65,7 +67,6 @@ void thread::loop(void) {
 
    assert_end();
    end();
-   // cout << "DONE " << id << endl;
 }
 
 void thread::init_barriers(const size_t num_threads) {
@@ -385,19 +386,25 @@ inline bool thread::set_next_node(void) {
    while (current_node == nullptr) {
       current_node = prios.moving.pop_best(prios.stati, STATE_WORKING);
       if (current_node) {
-                     //cout << "Got node " << current_node->get_id() << endl;
-         //           cout << " with prio " << current_node->get_priority() << endl;
+#ifdef DEBUG_QUEUE
+         cout << "Got node " << current_node->get_id()
+              << " with prio " << current_node->get_priority() << endl;
+#endif
          break;
       }
 
       if (pop_node_from_queues()) {
-                 //cout << "Got node " << current_node->get_id() << endl;
+#ifdef DEBUG_QUEUE
+         cout << "Got node " << current_node->get_id() << endl;
+#endif
          break;
       }
 
       // process the thread node because it may have facts.
       if(thread_node && thread_node->unprocessed_facts) {
-         // cout << "Running thread node\n";
+#ifdef DEBUG_QUEUE
+         cout << "Running thread node\n";
+#endif
          current_node = thread_node;
          break;
       }
