@@ -14,7 +14,7 @@ class execution_time
 private:
    
    std::chrono::milliseconds dur;
-   std::chrono::time_point<std::chrono::steady_clock> before;
+   std::chrono::time_point<std::chrono::high_resolution_clock> before;
 
 public:
    
@@ -31,11 +31,11 @@ public:
       ~scope(void) { t.stop(); }
    };
    
-   void start(void) { before = std::chrono::steady_clock::now(); }
+   void start(void) { before = std::chrono::high_resolution_clock::now(); }
    
    void stop(void)
    {
-      dur += std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - before);
+      dur += std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - before);
    }
    
    inline size_t milliseconds(void) const { return dur.count(); }
