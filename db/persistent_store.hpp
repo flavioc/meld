@@ -129,7 +129,7 @@ struct persistent_store {
             mem::allocator<tuple_trie>().construct(get_trie(pred));
       }
 #endif
-#ifdef COMPILED
+#if defined(COMPILED) && (COMPILED_NUM_TRIES != 0)
       for(size_t i(0); i < COMPILED_NUM_TRIES; ++i) {
          vm::predicate *pred(vm::theProgram->get_persistent_predicate(i));
 #ifndef COMPILED_NO_AGGREGATES

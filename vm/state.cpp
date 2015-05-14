@@ -56,8 +56,10 @@ void state::purge_runtime_objects(void) {
 void state::cleanup(void)
 {
    purge_runtime_objects();
+#ifndef COMPILED
    updated_map.clear();
    tuple_regs.clear();
+#endif
 }
 
 #ifndef COMPILED
@@ -86,10 +88,12 @@ void state::setup(vm::predicate *pred, const derivation_direction dir,
          depth = 0;
    } else
       depth = 0;
+#ifndef COMPILED
    if (pred != nullptr)
       is_linear = pred->is_linear_pred();
    else
       is_linear = false;
+#endif
 #ifdef CORE_STATISTICS
    stat.start_matching();
 #endif

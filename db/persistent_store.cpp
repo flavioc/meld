@@ -51,14 +51,15 @@ full_tuple_list
 persistent_store::end_iteration(mem::node_allocator *alloc)
 {
    full_tuple_list ret;
+   (void)alloc;
 #ifndef COMPILED_NO_AGGREGATES
    // generate possible aggregates
    
 #ifdef COMPILED
    for(size_t i(0); i < COMPILED_NUM_TRIES; ++i) {
       tuple_aggregate *agg(aggs[i]);
-      if(aggs) {
-         full_tuple_list ls(agg->generate());
+      if(agg) {
+         full_tuple_list ls(agg->generate(alloc));
          for(auto && l : ls) {
             (l)->set_as_aggregate();
             ret.push_back(l);
@@ -102,9 +103,9 @@ persistent_store::delete_by_index(predicate *pred, const match& m,
 
 #ifdef COMPILED
 #ifndef COMPILED_NO_AGGREGATES
-   auto *agg(aggs[pred->get_id()]);
+   auto *agg(aggs[pred->get_persistent_id()]);
    if(agg) {
-      agg->delete_by_index(m, gc_nodes);
+      agg->delete_by_index(m, alloc, gc_nodes);
    }
 #endif
 #else
@@ -145,7 +146,7 @@ persistent_store::wipeout(mem::node_allocator *alloc, candidate_gc_nodes& gc_nod
    for(size_t i(0); i < COMPILED_NUM_TRIES; ++i) {
       tuple_aggregate *agg(aggs[i]);
       if(agg) {
-         agg->wipeout(gc_nodes);
+         agg->wipeout(alloc, gc_nodes);
          delete agg;
       }
    }

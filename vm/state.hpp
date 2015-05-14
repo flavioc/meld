@@ -56,6 +56,12 @@ struct state {
 
 public:
 
+   db::node *node;
+   sched::thread *sched;
+   vm::rule_matcher *matcher;
+   vm::counter *match_counter{nullptr};
+   vm::depth_t depth;
+   derivation_direction direction;
 #ifndef COMPILED
    using reg = tuple_field;
 
@@ -64,18 +70,12 @@ public:
    vm::bitmap_static<1> updated_map;
    vm::bitmap_static<1> tuple_regs;
    call_stack stack;
-   db::node *node;
-   vm::rule_matcher *matcher;
-   derivation_direction direction;
-   vm::depth_t depth;
-   sched::thread *sched;
    bool is_linear;
    utils::randgen randgen;
    size_t current_rule;
 
    bool running_rule;
    bool hash_removes;
-   vm::counter *match_counter{nullptr};
    std::unordered_set<utils::byte *, utils::pointer_hash<utils::byte>,
                       std::equal_to<utils::byte *>,
                       mem::allocator<utils::byte *>> allocated_match_objects;
@@ -91,6 +91,54 @@ public:
       }
       return false;
    }
+
+#define define_get(WHAT, RET, BODY) \
+   inline RET get_##WHAT(const reg_num &num) const { BODY; }
+
+   define_get(reg, reg, return regs[num]);
+   define_get(int, int_val, return FIELD_INT(regs[num]));
+   define_get(float, float_val, return FIELD_FLOAT(regs[num]));
+   define_get(ptr, ptr_val, return FIELD_PTR(regs[num]));
+   define_get(bool, bool_val, return FIELD_BOOL(regs[num]));
+   define_get(string, runtime::rstring::ptr, return FIELD_STRING(regs[num]););
+   define_get(cons, runtime::cons *, return FIELD_CONS(regs[num]));
+   define_get(tuple, vm::tuple *, return (vm::tuple *)get_ptr(num));
+   define_get(node, vm::node_val, return FIELD_NODE(regs[num]));
+   define_get(struct, runtime::struct1 *, return FIELD_STRUCT(regs[num]));
+   define_get(array, runtime::array *, return FIELD_ARRAY(regs[num]));
+   define_get(thread, thread_val, return FIELD_THREAD(regs[num]));
+
+#undef define_get
+
+#define define_set(WHAT, ARG, BODY) \
+   inline void set_##WHAT(const reg_num &num, ARG val) { BODY; };
+
+   define_set(float, const float_val &, SET_FIELD_FLOAT(regs[num], val));
+   define_set(int, const int_val &, SET_FIELD_INT(regs[num], val));
+   define_set(ptr, const ptr_val &, SET_FIELD_PTR(regs[num], val));
+   define_set(bool, const bool_val &, SET_FIELD_BOOL(regs[num], val));
+   define_set(string, const runtime::rstring::ptr,
+              SET_FIELD_STRING(regs[num], val));
+   define_set(cons, runtime::cons *, SET_FIELD_CONS(regs[num], val));
+   define_set(tuple, vm::tuple *, set_ptr(num, (ptr_val)val));
+   define_set(node, const node_val, SET_FIELD_NODE(regs[num], val));
+   define_set(thread, const thread_val, SET_FIELD_THREAD(regs[num], val));
+   define_set(struct, runtime::struct1 *, SET_FIELD_STRUCT(regs[num], val));
+   define_set(array, runtime::array *, SET_FIELD_ARRAY(regs[num], val));
+   define_set(set, runtime::set *, SET_FIELD_SET(regs[num], val));
+
+#undef define_set
+
+   inline void set_reg(const reg_num &num, const reg val) { regs[num] = val; }
+   inline void set_nil(const reg_num &num) { set_ptr(num, null_ptr_val); }
+   inline reg get_reg(const reg_num &num) { return regs[num]; }
+
+   inline void copy_reg(const reg_num &reg_from, const reg_num &reg_to) {
+      regs[reg_to] = regs[reg_from];
+   }
+
+   void copy_reg2const(const reg_num &, const const_id &);
+
 #endif
 #ifdef FACT_BUFFERING
    vm::buffer facts_to_send;
@@ -162,53 +210,6 @@ public:
    uint64_t facts_consumed{0};
    uint64_t facts_sent{0};
 #endif
-
-#define define_get(WHAT, RET, BODY) \
-   inline RET get_##WHAT(const reg_num &num) const { BODY; }
-
-   define_get(reg, reg, return regs[num]);
-   define_get(int, int_val, return FIELD_INT(regs[num]));
-   define_get(float, float_val, return FIELD_FLOAT(regs[num]));
-   define_get(ptr, ptr_val, return FIELD_PTR(regs[num]));
-   define_get(bool, bool_val, return FIELD_BOOL(regs[num]));
-   define_get(string, runtime::rstring::ptr, return FIELD_STRING(regs[num]););
-   define_get(cons, runtime::cons *, return FIELD_CONS(regs[num]));
-   define_get(tuple, vm::tuple *, return (vm::tuple *)get_ptr(num));
-   define_get(node, vm::node_val, return FIELD_NODE(regs[num]));
-   define_get(struct, runtime::struct1 *, return FIELD_STRUCT(regs[num]));
-   define_get(array, runtime::array *, return FIELD_ARRAY(regs[num]));
-   define_get(thread, thread_val, return FIELD_THREAD(regs[num]));
-
-#undef define_get
-
-#define define_set(WHAT, ARG, BODY) \
-   inline void set_##WHAT(const reg_num &num, ARG val) { BODY; };
-
-   define_set(float, const float_val &, SET_FIELD_FLOAT(regs[num], val));
-   define_set(int, const int_val &, SET_FIELD_INT(regs[num], val));
-   define_set(ptr, const ptr_val &, SET_FIELD_PTR(regs[num], val));
-   define_set(bool, const bool_val &, SET_FIELD_BOOL(regs[num], val));
-   define_set(string, const runtime::rstring::ptr,
-              SET_FIELD_STRING(regs[num], val));
-   define_set(cons, runtime::cons *, SET_FIELD_CONS(regs[num], val));
-   define_set(tuple, vm::tuple *, set_ptr(num, (ptr_val)val));
-   define_set(node, const node_val, SET_FIELD_NODE(regs[num], val));
-   define_set(thread, const thread_val, SET_FIELD_THREAD(regs[num], val));
-   define_set(struct, runtime::struct1 *, SET_FIELD_STRUCT(regs[num], val));
-   define_set(array, runtime::array *, SET_FIELD_ARRAY(regs[num], val));
-   define_set(set, runtime::set *, SET_FIELD_SET(regs[num], val));
-
-#undef define_set
-
-   inline void set_reg(const reg_num &num, const reg val) { regs[num] = val; }
-   inline void set_nil(const reg_num &num) { set_ptr(num, null_ptr_val); }
-   inline reg get_reg(const reg_num &num) { return regs[num]; }
-
-   inline void copy_reg(const reg_num &reg_from, const reg_num &reg_to) {
-      regs[reg_to] = regs[reg_from];
-   }
-
-   void copy_reg2const(const reg_num &, const const_id &);
 
    inline void add_cons(runtime::cons *ls, vm::list_type *t) {
       ls->inc_refs();
