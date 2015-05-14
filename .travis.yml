@@ -1,5 +1,5 @@
 language: cpp
-script: make
+script: make -j8
 compiler: g++
 before_install:
   # g++4.8.1
