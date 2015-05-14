@@ -25,11 +25,12 @@ class DbTrieTests : public TestFixture {
 
       void testTrie(void)
       {
+         mem::node_allocator alloc;
          // insert three tuples
 
          CPPUNIT_ASSERT(trie->size() == 0);
          CPPUNIT_ASSERT(trie->begin() == trie->end());
-         vm::tuple *f1(vm::tuple::create(f));
+         vm::tuple *f1(vm::tuple::create(f, &alloc));
          f1->set_int(0, 1);
          f1->set_int(1, 2);
          CPPUNIT_ASSERT(f1);
@@ -48,14 +49,14 @@ class DbTrieTests : public TestFixture {
          CPPUNIT_ASSERT(!trie->insert_tuple(f1, f));
          CPPUNIT_ASSERT(trie->size() == 5);
 
-         vm::tuple *f2(vm::tuple::create(f));
+         vm::tuple *f2(vm::tuple::create(f, &alloc));
          f2->set_int(0, 1);
          f2->set_int(1, 3);
          CPPUNIT_ASSERT(trie->insert_tuple(f2, f));
          CPPUNIT_ASSERT(!trie->insert_tuple(f2, f));
          CPPUNIT_ASSERT(trie->size() == 7);
 
-         vm::tuple *f3(vm::tuple::create(f));
+         vm::tuple *f3(vm::tuple::create(f, &alloc));
          f3->set_int(0, 2);
          f3->set_int(1, 3);
          CPPUNIT_ASSERT(trie->insert_tuple(f3, f));
@@ -72,7 +73,7 @@ class DbTrieTests : public TestFixture {
          CPPUNIT_ASSERT(inf2.is_valid());
          CPPUNIT_ASSERT(inf2.to_delete());
          vm::candidate_gc_nodes gc_nodes;
-         inf2.perform_delete(f, gc_nodes);
+         inf2.perform_delete(f, &alloc, gc_nodes);
          CPPUNIT_ASSERT(trie->size() == 7);
 
          db::trie::delete_info inf3(trie->delete_tuple(f2, f));
@@ -83,7 +84,7 @@ class DbTrieTests : public TestFixture {
          db::trie::delete_info inf4(trie->delete_tuple(f2, f));
          CPPUNIT_ASSERT(inf4.is_valid());
          CPPUNIT_ASSERT(inf4.to_delete());
-         inf4.perform_delete(f, gc_nodes);
+         inf4.perform_delete(f, &alloc, gc_nodes);
          CPPUNIT_ASSERT(trie->size() == 5);
 
          db::trie::delete_info inf5(trie->delete_tuple(f1, f));
@@ -106,7 +107,7 @@ class DbTrieTests : public TestFixture {
          db::trie::delete_info inf9(trie->delete_tuple(f1, f));
          CPPUNIT_ASSERT(inf9.is_valid());
          CPPUNIT_ASSERT(inf9.to_delete());
-         inf9.perform_delete(f, gc_nodes);
+         inf9.perform_delete(f, &alloc, gc_nodes);
          CPPUNIT_ASSERT(trie->size() == 0);
          CPPUNIT_ASSERT(trie->empty());
       }
