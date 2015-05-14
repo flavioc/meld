@@ -297,6 +297,7 @@ void predicate::print(ostream& cout) const {
    if (is_reused) cout << ",reused";
    if (is_cycle) cout << ",cycle";
    if (is_thread) cout << ",thread";
+   if (is_compact) cout << ",compact";
 
    cout << "]";
 

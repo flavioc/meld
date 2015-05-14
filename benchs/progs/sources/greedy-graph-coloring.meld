@@ -1,4 +1,5 @@
 
+type route edge(node, node).
 type linear neighbor-color(node, node, int, int).
 type linear new-neighbor-color(node, node, int).
 type linear color(node, int).
@@ -11,6 +12,7 @@ type linear to-select-color(node, node, int, int).
 type linear new-color(node, int).
 type linear update-neighbors(node, int).
 
+compact edge.
 const number-colors = 15.
 const invalid-color = 0.
 

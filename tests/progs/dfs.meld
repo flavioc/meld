@@ -13,6 +13,8 @@ type linear stop(node).
 type linear ack(node, node).
 type linear first-time(node).
 
+compact edge.
+
 !edge(@1, @2). unvisited(@1, @2). flag(@1, @2, 0).
 !edge(@1, @6). unvisited(@1, @6). flag(@1, @6, 0).
 

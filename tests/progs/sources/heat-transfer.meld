@@ -4,6 +4,7 @@ type linear neighborchanged(node, node, float, float).
 type linear delta(node, float, float).
 type linear count(node, int).
 
+compact edge.
 priority @order @desc.
 
 const epsilon = 0.1. //str2float(@arg1).
