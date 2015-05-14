@@ -12,6 +12,10 @@ type linear wait(node, int).
 type linear update(node).
 type linear update-neighbors(node, float Diff, float Heat).
 
+compact inner.
+compact coord.
+compact edge.
+compact inbound.
 priority @order @desc.
 priority @cluster @static.
 index neighbor-heat/2.

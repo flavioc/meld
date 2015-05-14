@@ -22,6 +22,8 @@ type linear expand-tree(thread, tree, tree).
 type linear first-phase(thread, tree, tree).
 type linear second-phase(thread, tree).
 
+compact edge.
+compact potential.
 priority @initial 100.
 priority @static.
 priority @cluster @static.

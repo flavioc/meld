@@ -12,6 +12,7 @@ type linear visited(node, int).
 type linear signal-thread(thread, int).
 type linear empty(thread, int).
 
+compact edge.
 index do-search/2.
 index thread-search/2.
 index visited/2.

@@ -8,6 +8,7 @@ type linear new-lookup(node, int, int).
 type linear visited(node, int).
 type linear found(node, int, list int).
 
+compact edge.
 index visited/2.
 index do-search/2.
 index lookup/2.

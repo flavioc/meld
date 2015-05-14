@@ -9,6 +9,9 @@ type linear do-lookup(node, int Key, int Iteration).
 type linear found-next(node, int Value, int NextIteration).
 type linear found(node, int Value).
 
+compact left.
+compact right.
+
 replace(A, Key, NewValue, It),
 value(A, Key, Value)
    -o found-next(A, NewValue, It),
