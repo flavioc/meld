@@ -27,6 +27,7 @@ SEARCH_RANDOM = search-parallel-random search-threads-random
 SEARCH_FACEBOOK = search-parallel-facebook search-threads-facebook
 SEARCH_TWITTER = search-parallel-twitter search-threads-twitter
 SEARCH_POKEC = search-parallel-pokec search-threads-pokec
+SHORTEST_USAIRPORTS = shortest-usairports500 shortest-usairports500-coord
 SHORTEST = shortest-email \
 			  shortest-email-coord \
 			  shortest-twitter \
@@ -71,6 +72,8 @@ minmax:
 	@bash $(SCRIPT) $(MINMAX)
 shortest:
 	@bash $(SCRIPT) $(SHORTEST)
+shortest-usairports:
+	@bash $(SCRIPT) $(SHORTEST_USAIRPORTS)
 
 run:
 	@bash $(SCRIPT) $(TARGET)
