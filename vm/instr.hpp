@@ -55,7 +55,8 @@ const size_t count_size = sizeof(utils::byte);
 const size_t stack_val_size = sizeof(offset_num);
 const size_t pcounter_val_size = 0;
 const size_t operation_size = instr_size + 3 * reg_val_size;
-const size_t call_size = instr_size + extern_id_size + reg_val_size + type_size + bool_size;
+const size_t call_size =
+    instr_size + extern_id_size + reg_val_size + type_size + bool_size;
 const size_t iter_options_size = 2 * sizeof(utils::byte);
 
 const size_t SEND_BASE = instr_size + 2 * reg_val_size;
@@ -69,11 +70,12 @@ const size_t PERS_ITER_BASE = ITER_BASE;
 const size_t TPERS_ITER_BASE = ITER_BASE;
 const size_t LINEAR_ITER_BASE = ITER_BASE;
 const size_t TLINEAR_ITER_BASE = ITER_BASE;
+const size_t TRLINEAR_ITER_BASE = ITER_BASE;
 const size_t RLINEAR_ITER_BASE = ITER_BASE;
 const size_t OPERS_ITER_BASE = OITER_BASE;
 const size_t OLINEAR_ITER_BASE = OITER_BASE;
 const size_t ORLINEAR_ITER_BASE = OITER_BASE;
-const size_t ALLOC_BASE = instr_size + 2;
+const size_t ALLOC_BASE = instr_size + predicate_size + 2 * reg_val_size;
 const size_t CALL_BASE = call_size + count_size;
 const size_t IF_BASE = instr_size + 1 + jump_size;
 const size_t TESTNIL_BASE = instr_size + reg_val_size + reg_val_size;
@@ -202,6 +204,8 @@ const size_t JUMP_BASE = instr_size + jump_size;
 const size_t FABS_BASE = instr_size + 2 * reg_val_size;
 const size_t REMOTE_UPDATE_BASE =
     instr_size + reg_val_size + 2 * predicate_size + 2 * count_size;
+const size_t MARK_RULE_BASE = instr_size + uint_size;
+const size_t LITERAL_CONS_BASE = instr_size + reg_val_size + type_size + jump_size;
 
 enum instr_type {
    RETURN_INSTR = 0x00,
@@ -365,7 +369,10 @@ enum instr_type {
    MVTHREADIDREG_INSTR = 0xBA,
    MVTHREADIDFIELD_INSTR = 0xBB,
    THREAD_SEND_INSTR = 0xBC,
+   TRLINEAR_ITER_INSTR = 0xBD,
+   LITERAL_CONS_INSTR = 0xBE,
    RETURN_LINEAR_INSTR = 0xD0,
+   MARK_RULE_INSTR = 0xD1,
    RETURN_DERIVED_INSTR = 0xF0
 };
 
@@ -559,11 +566,15 @@ inline bool iter_options_to_delete(const utils::byte b) { return b & 0x02; }
 
 /* ALLOC pred to reg */
 
-inline predicate_id alloc_predicate(pcounter pc) {
+inline predicate_id alloc_predicate(const pcounter pc) {
    return predicate_get(pc, instr_size);
 }
-inline reg_num alloc_reg(pcounter pc) {
+inline reg_num alloc_reg(const pcounter pc) {
    return pcounter_reg(pc + instr_size + predicate_size);
+}
+
+inline reg_num alloc_dest(const pcounter pc) {
+   return pcounter_reg(pc + instr_size + predicate_size + reg_val_size);
 }
 
 /* CALL */
@@ -578,7 +589,8 @@ inline utils::byte call_type(pcounter pc) {
    return byte_get(pc, instr_size + extern_id_size + reg_val_size);
 }
 inline size_t call_gc(pcounter pc) {
-   return pcounter_bool(pc + instr_size + extern_id_size + reg_val_size + type_size);
+   return pcounter_bool(pc + instr_size + extern_id_size + reg_val_size +
+                        type_size);
 }
 inline size_t call_num_args(pcounter pc) {
    return (size_t)byte_get(pc, call_size);
@@ -596,7 +608,8 @@ inline utils::byte calle_type(pcounter pc) {
    return byte_get(pc, instr_size + extern_id_size + reg_val_size);
 }
 inline size_t calle_gc(pcounter pc) {
-   return pcounter_bool(pc + instr_size + extern_id_size + reg_val_size + type_size);
+   return pcounter_bool(pc + instr_size + extern_id_size + reg_val_size +
+                        type_size);
 }
 inline size_t calle_num_args(pcounter pc) {
    return (size_t)byte_get(pc, call_size);
@@ -744,6 +757,20 @@ inline size_t remote_update_nregs(const pcounter pc) {
        pc, instr_size + reg_val_size + 2 * predicate_size + count_size);
 }
 
+// LITERAL CONS
+
+inline code_offset_t literal_cons_jump(pcounter pc) {
+   return jump_get(pc, LITERAL_CONS_BASE - jump_size);
+}
+
+inline utils::byte literal_cons_type(pcounter pc) {
+   return byte_get(pc, LITERAL_CONS_BASE - jump_size - type_size);
+}
+
+inline reg_num literal_cons_dest(const pcounter& pc) {
+   return reg_get(pc, instr_size);
+}
+
 /* advance function */
 
 enum instr_argument_type { ARGUMENT_ANYTHING };
@@ -771,6 +798,7 @@ inline pcounter advance(const pcounter pc) {
       case OPERS_ITER_INSTR:
       case LINEAR_ITER_INSTR:
       case TLINEAR_ITER_INSTR:
+      case TRLINEAR_ITER_INSTR:
       case RLINEAR_ITER_INSTR:
       case OLINEAR_ITER_INSTR:
       case ORLINEAR_ITER_INSTR:
@@ -1146,6 +1174,12 @@ inline pcounter advance(const pcounter pc) {
 
       case MVTHREADIDFIELD_INSTR:
          return pc + MVTHREADIDFIELD_BASE;
+
+      case MARK_RULE_INSTR:
+         return pc + MARK_RULE_BASE;
+
+      case LITERAL_CONS_INSTR:
+         return pc + literal_cons_jump(pc);
 
       default:
          throw malformed_instr_error("unknown instruction code (advance)");

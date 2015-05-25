@@ -1,0 +1,27 @@
+
+type route edge(node, node).
+type linear value(node, int).
+type linear search(node, int, list int).
+type linear do-search(node, int, list int, list int, list node, list node).
+type linear do-search2(node, int, list int, list int, list node, list node).
+type linear found(node, int, list int).
+type linear not-found(node, int, list int).
+
+search(A, Id, ToFind)
+   -o do-search(A, Id, ToFind, [], [], []).
+
+do-search(A, Id, ToFind, Found, Visited, Next),
+value(A, Val),
+Val in ToFind,
+Removed = lremove(ToFind, Val),
+NFound = [Val | Found]
+   -o value(A, Val),
+      [collect => B | !edge(A, B), ~B in Visited, ~B in Next | | do-search2(A, Id, Removed, NFound, Visited, B ++ Next)].
+
+do-search(A, Id, ToFind, Found, Visited, Next)
+   -o [collect => B | !edge(A, B), ~B in Visited, ~B in Next | | do-search2(A, Id, ToFind, Found, Visited, B ++ Next)].
+
+do-search2(A, Id, [], Found, Visited, []) -o found(A, Id, Found).
+do-search2(A, Id, ToFind, Found, Visited, []) -o not-found(A, Id, Found).
+do-search2(A, Id, ToFind, Found, Visited, [B | Next])
+   -o do-search(B, Id, ToFind, Found, [A | Visited], Next).

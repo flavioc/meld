@@ -7,6 +7,7 @@
 #include <string>
 
 #include "utils/types.hpp"
+#include "utils/random.hpp"
 
 namespace utils {
 
@@ -16,6 +17,7 @@ namespace utils {
 #define BITMAP_TYPE uint64_t
 #define BITMAP_BITS (sizeof(BITMAP_TYPE) * 8)
 
+void set_random_generator(randgen *);
 size_t number_cpus(void);
 
 template <typename T>
@@ -115,13 +117,6 @@ static inline std::size_t previous_prime(std::size_t x) {
    for(; !is_prime(x) && x > 0; --x) {
    }
    return x;
-}
-
-static inline uint64_t fnv1_hash(utils::byte* key, const size_t n_bytes) {
-   utils::byte* p = key;
-   uint64_t h = 14695981039346656037ul;
-   for (size_t i = 0; i < n_bytes; i++) h = (h * 1099511628211) ^ p[i];
-   return h;
 }
 
 static inline uint64_t mod_hash(const uint64_t hsh, const uint64_t size) {

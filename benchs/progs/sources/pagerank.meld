@@ -15,6 +15,9 @@ index neighbor-rank/2.
 
 //priority @cluster @static.
 
+compact input.
+compact output.
+
 const damping = 0.15.
 const bound = str2float(@arg1).
 const pages = @world.

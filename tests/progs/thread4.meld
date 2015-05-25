@@ -1,0 +1,9 @@
+
+type linear f1(thread, int).
+type linear f2(thread, int).
+type linear f3(thread, int).
+
+f1(T, 20).
+f2(T, 3).
+
+f1(T, N), f2(T, M) -o f1(T, N), f3(T, M + N).

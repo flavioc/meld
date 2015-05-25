@@ -404,6 +404,8 @@ thread::set_node_moving(db::node *tn)
 void
 thread::move_node_to_new_owner(db::node *tn, thread *new_owner)
 {
+   // this must be called while helding the node lock.
+   tn->just_moved_buffer();
    new_owner->add_to_queue(tn);
    comm_threads.set_bit(new_owner->get_id());
 }
@@ -432,6 +434,8 @@ thread::set_node_owner(db::node *tn, thread *new_owner)
    if(tn == current_node) {
       // we will change the owner field once we are done with the node.
       NODE_LOCK(tn, nodelock, set_affinity_lock);
+      if(new_owner == this)
+         tn->just_moved();
       make_node_static(tn, new_owner);
       NODE_UNLOCK(tn, nodelock);
       return;
@@ -440,49 +444,61 @@ thread::set_node_owner(db::node *tn, thread *new_owner)
    NODE_LOCK(tn, nodelock, set_affinity_lock);
    make_node_static(tn, new_owner);
    if(tn->get_owner() == new_owner) {
+      tn->just_moved_buffer();
       NODE_UNLOCK(tn, nodelock);
       return;
    }
 
-   switch(tn->node_state()) {
-      case STATE_STEALING:
-         // node is being stolen right now!
-         // change both owner and is_static
-         tn->set_owner(new_owner);
-         break;
-      case NORMAL_QUEUE_STATIC:
-         if(queues.stati.remove(tn, STATE_AFFINITY_CHANGE LOCKING_STAT_FLAG_FALSE)) {
+   bool done = false;
+   while (!done) {
+      switch(tn->node_state()) {
+         case STATE_STEALING:
+            // node is being stolen right now!
+            // change both owner and is_static
             tn->set_owner(new_owner);
-            move_node_to_new_owner(tn, new_owner);
-         }
-         break;
-      case NORMAL_QUEUE_MOVING:
-         if(queues.moving.remove(tn, STATE_AFFINITY_CHANGE LOCKING_STAT_FLAG_FALSE)) {
+            done = true;
+            break;
+         case NORMAL_QUEUE_STATIC:
+            if(queues.stati.remove(tn, STATE_AFFINITY_CHANGE LOCKING_STAT_FLAG_FALSE)) {
+               tn->set_owner(new_owner);
+               move_node_to_new_owner(tn, new_owner);
+               done = true;
+            }
+            break;
+         case NORMAL_QUEUE_MOVING:
+            if(queues.moving.remove(tn, STATE_AFFINITY_CHANGE LOCKING_STAT_FLAG_FALSE)) {
+               tn->set_owner(new_owner);
+               move_node_to_new_owner(tn, new_owner);
+               done = true;
+            }
+            break;
+         case PRIORITY_MOVING:
+            if(prios.moving.remove(tn, STATE_AFFINITY_CHANGE LOCKING_STAT_FLAG_FALSE)) {
+               tn->set_owner(new_owner);
+               move_node_to_new_owner(tn, new_owner);
+               done = true;
+            }
+            break;
+         case PRIORITY_STATIC:
+            if(prios.stati.remove(tn, STATE_AFFINITY_CHANGE LOCKING_STAT_FLAG_FALSE)) {
+               tn->set_owner(new_owner);
+               move_node_to_new_owner(tn, new_owner);
+               done = true;
+            }
+            break;
+         case STATE_WORKING:
+            // we set static to the new owner
+            // the scheduler using that node right now will
+            // change its owner once it finishes processing the node
+            done = true;
+            break;
+         case STATE_IDLE:
             tn->set_owner(new_owner);
-            move_node_to_new_owner(tn, new_owner);
-         }
-         break;
-      case PRIORITY_MOVING:
-         if(prios.moving.remove(tn, STATE_AFFINITY_CHANGE LOCKING_STAT_FLAG_FALSE)) {
-            tn->set_owner(new_owner);
-            move_node_to_new_owner(tn, new_owner);
-         }
-         break;
-      case PRIORITY_STATIC:
-         if(prios.stati.remove(tn, STATE_AFFINITY_CHANGE LOCKING_STAT_FLAG_FALSE)) {
-            tn->set_owner(new_owner);
-            move_node_to_new_owner(tn, new_owner);
-         }
-         break;
-      case STATE_WORKING:
-         // we set static to the new owner
-         // the scheduler using that node right now will
-         // change its owner once it finishes processing the node
-         break;
-      case STATE_IDLE:
-         tn->set_owner(new_owner);
-         break;
-      default: assert(false); break; 
+            tn->just_moved_buffer();
+            done = true;
+            break;
+         default: assert(false); break; 
+      }
    }
 
    NODE_UNLOCK(tn, nodelock);

@@ -1,0 +1,115 @@
+
+type left(node, node).
+type right(node, node).
+type linear value(node, int Key, int Value).
+type linear lookup(node, int Key, int Iteration).
+type linear replace(node, int Key, int NewValue, int Iteration).
+type linear do-replace(node, int Key, int NewValue, int Iteration).
+type linear do-lookup(node, int Key, int Iteration).
+type linear found-next(node, int Value, int NextIteration).
+type linear found(node, int Value).
+type linear cache(thread, int, node, int).
+type linear total(thread, int, int).
+type linear delete-from-cache(thread).
+
+index cache/2.
+
+const maxtotalthread = 3000.
+
+total(T, 0, 0).
+
+total(T, N, HitsTotal),
+delete-from-cache(T),
+Below = HitsTotal/3
+   -o [sum => RemovedHits, count => Total | Key, Node | cache(T, Key, Node, RemovedHits), RemovedHits <= Below
+         | | total(T, N - Total, HitsTotal - RemovedHits)].
+
+replace(A, Key, NewValue, It),
+value(A, Key, Value)
+   -o found-next(A, NewValue, It),
+      value(A, Key, NewValue).
+
+replace(A, Key, Value, It),
+cache(T, Key, Node, Hits),
+A <> Node
+   -o cache(T, Key, Node, Hits + 1),
+      replace(Node, Key, Value, It).
+
+replace(A, MyKey, NewValue, It),
+value(A, Key, Value),
+!left(A, L),
+MyKey < Key
+   -o replace(L, MyKey, NewValue, It),
+      value(A, Key, Value).
+
+replace(A, MyKey, NewValue, It),
+value(A, Key, Value),
+!right(A, R),
+MyKey > Key
+   -o replace(R, MyKey, NewValue, It),
+      value(A, Key, Value).
+
+lookup(A, Key, It),
+value(A, Key, Value)
+   -o found-next(A, Value, It),
+      value(A, Key, Value).
+
+lookup(A, Key, It),
+cache(T, Key, Node, Hits),
+total(T, Total, HitsTotal),
+A <> Node
+   -o lookup(Node, Key, It),
+      total(T, Total, HitsTotal + 1),
+      cache(T, Key, Node, Hits + 1).
+
+lookup(A, MyKey, It),
+value(A, Key, Value),
+!left(A, L),
+MyKey < Key
+   -o lookup(L, MyKey, It),
+      value(A, Key, Value).
+
+lookup(A, MyKey, It),
+value(A, Key, Value),
+!right(A, R),
+MyKey > Key
+   -o lookup(R, MyKey, It),
+      value(A, Key, Value).
+
+found-next(A, B, It),
+cache(T, Key, A, Hits),
+total(T, Total, HitsTotal),
+do-lookup(A, Key, It + 1)
+   -o found(A, B),
+      cache(T, Key, A, Hits + 1),
+      total(T, Total, HitsTotal + 1),
+      (if Total >= maxtotalthread then delete-from-cache(T) otherwise 1 end),
+      lookup(A, Key, It + 1).
+
+found-next(A, B, It),
+do-lookup(A, X, It + 1),
+total(T, Total, HitsTotal)
+   -o found(A, B),
+      lookup(@0, X, It + 1),
+      cache(T, X, A, 0),
+      total(T, Total + 1, HitsTotal).
+
+found-next(A, B, It),
+do-replace(A, Key, New, It + 1),
+total(T, Total, HitsTotal),
+cache(T, Key, A, Hits)
+   -o found(A, B),
+      cache(T, Key, A, Hits + 1),
+      total(T, Total, HitsTotal + 1),
+      replace(A, Key, New, It + 1).
+
+found-next(A, B, It),
+do-replace(A, X, New, It + 1),
+total(T, Total, HitsTotal)
+   -o found(A, B),
+      cache(T, X, A, 0),
+      replace(@0, X, New, It + 1),
+      (if Total >= maxtotalthread then delete-from-cache(T) otherwise 1 end),
+      total(T, Total + 1, HitsTotal).
+
+found-next(A, B, It) -o found(A, B).

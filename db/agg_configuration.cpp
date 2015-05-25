@@ -10,7 +10,8 @@ namespace db
 
 void
 agg_configuration::add_to_set(vm::tuple *tpl, vm::predicate *pred,
-      const derivation_direction dir, const depth_t depth, candidate_gc_nodes& gc_nodes)
+      const derivation_direction dir, const depth_t depth, mem::node_allocator *alloc,
+      candidate_gc_nodes& gc_nodes)
 {
    changed = true; // this is important
 
@@ -22,7 +23,7 @@ agg_configuration::add_to_set(vm::tuple *tpl, vm::predicate *pred,
       case POSITIVE_DERIVATION:
          if(!vals.insert_tuple(tpl, pred, depth)) {
             // repeated tuple
-            vm::tuple::destroy(tpl, pred, gc_nodes);
+            vm::tuple::destroy(tpl, pred, alloc, gc_nodes);
          }
 
          assert(vals.size() == start_size + 1);
@@ -33,7 +34,7 @@ agg_configuration::add_to_set(vm::tuple *tpl, vm::predicate *pred,
          if(!deleter.is_valid()) {
             changed = false;
          } else if(deleter.to_delete()) {
-            deleter.perform_delete(pred, gc_nodes);
+            deleter.perform_delete(pred, alloc, gc_nodes);
          } else if(pred->is_cycle_pred()) {
             depth_counter *dc(deleter.get_depth_counter());
             assert(dc != nullptr);
@@ -45,12 +46,12 @@ agg_configuration::add_to_set(vm::tuple *tpl, vm::predicate *pred,
                vm::ref_count deleted(deleter.delete_depths_above(depth));
                (void)deleted;
                if(deleter.to_delete())
-                  deleter.perform_delete(pred, gc_nodes);
+                  deleter.perform_delete(pred, alloc, gc_nodes);
                assert(vals.size() == old_size-deleted);
             }
          }
          
-         vm::tuple::destroy(tpl, pred, gc_nodes);
+         vm::tuple::destroy(tpl, pred, alloc, gc_nodes);
          break;
    }
 }
@@ -96,7 +97,8 @@ agg_configuration::matches_first_int_arg(predicate *pred, const int_val val) con
 }
 
 vm::tuple*
-agg_configuration::generate_max_int(predicate *pred, const field_num field, vm::depth_t& depth) const
+agg_configuration::generate_max_int(predicate *pred, const field_num field, vm::depth_t& depth,
+      mem::node_allocator *alloc) const
 {
    assert(!vals.empty());
 
@@ -121,11 +123,12 @@ agg_configuration::generate_max_int(predicate *pred, const field_num field, vm::
       }
    }
 
-   return max_tpl->copy(pred);
+   return max_tpl->copy(pred, alloc);
 }
 
 vm::tuple*
-agg_configuration::generate_min_int(predicate *pred, const field_num field, vm::depth_t& depth) const
+agg_configuration::generate_min_int(predicate *pred, const field_num field, vm::depth_t& depth,
+      mem::node_allocator *alloc) const
 {
    assert(!vals.empty());
    
@@ -149,11 +152,12 @@ agg_configuration::generate_min_int(predicate *pred, const field_num field, vm::
       }
    }
 
-   return min_tpl->copy(pred);
+   return min_tpl->copy(pred, alloc);
 }
 
 vm::tuple*
-agg_configuration::generate_sum_int(predicate *pred, const field_num field, vm::depth_t& depth) const
+agg_configuration::generate_sum_int(predicate *pred, const field_num field, vm::depth_t& depth,
+      mem::node_allocator *alloc) const
 {
    assert(!vals.empty());
    (void)pred;
@@ -161,7 +165,7 @@ agg_configuration::generate_sum_int(predicate *pred, const field_num field, vm::
    const_iterator end(vals.end());
    const_iterator it(vals.begin());
    int_val sum_val = 0;
-   vm::tuple *ret((*it)->get_underlying_tuple()->copy(pred));
+   vm::tuple *ret((*it)->get_underlying_tuple()->copy(pred, alloc));
 
    for(; it != end; ++it) {
       tuple_trie_leaf *s(*it);
@@ -176,7 +180,8 @@ agg_configuration::generate_sum_int(predicate *pred, const field_num field, vm::
 }
 
 vm::tuple*
-agg_configuration::generate_sum_float(predicate *pred, const field_num field, vm::depth_t& depth) const
+agg_configuration::generate_sum_float(predicate *pred, const field_num field, vm::depth_t& depth,
+      mem::node_allocator *alloc) const
 {
    assert(!vals.empty());
    (void)pred;
@@ -184,7 +189,7 @@ agg_configuration::generate_sum_float(predicate *pred, const field_num field, vm
    const_iterator end(vals.end());
    const_iterator it(vals.begin());
    float_val sum_val = 0;
-   vm::tuple *ret((*it)->get_underlying_tuple()->copy(pred));
+   vm::tuple *ret((*it)->get_underlying_tuple()->copy(pred, alloc));
 
    for(; it != vals.end(); ++it) {
       tuple_trie_leaf *s(*it);
@@ -200,7 +205,7 @@ agg_configuration::generate_sum_float(predicate *pred, const field_num field, vm
 }
 
 vm::tuple*
-agg_configuration::generate_first(predicate *pred, vm::depth_t& depth) const
+agg_configuration::generate_first(predicate *pred, vm::depth_t& depth, mem::node_allocator *alloc) const
 {
    assert(!vals.empty());
    
@@ -216,11 +221,12 @@ agg_configuration::generate_first(predicate *pred, vm::depth_t& depth) const
       depth = max(depth, sother->get_max_depth());
    }
 
-   return s->get_underlying_tuple()->copy(pred);
+   return s->get_underlying_tuple()->copy(pred, alloc);
 }
 
 vm::tuple*
-agg_configuration::generate_max_float(predicate *pred, const field_num field, vm::depth_t& depth) const
+agg_configuration::generate_max_float(predicate *pred, const field_num field, vm::depth_t& depth,
+      mem::node_allocator *alloc) const
 {
    assert(!vals.empty());
    
@@ -244,11 +250,12 @@ agg_configuration::generate_max_float(predicate *pred, const field_num field, vm
       }
    }
 
-   return max_tpl->copy(pred);
+   return max_tpl->copy(pred, alloc);
 }
 
 vm::tuple*
-agg_configuration::generate_min_float(predicate *pred, const field_num field, vm::depth_t& depth) const
+agg_configuration::generate_min_float(predicate *pred, const field_num field, vm::depth_t& depth,
+      mem::node_allocator *alloc) const
 {
    assert(!vals.empty());
    
@@ -272,11 +279,12 @@ agg_configuration::generate_min_float(predicate *pred, const field_num field, vm
       }
    }
 
-   return min_tpl->copy(pred);
+   return min_tpl->copy(pred, alloc);
 }
 
 vm::tuple*
-agg_configuration::generate_sum_list_float(predicate *pred, const field_num field, vm::depth_t& depth) const
+agg_configuration::generate_sum_list_float(predicate *pred, const field_num field, vm::depth_t& depth,
+      mem::node_allocator *alloc) const
 {
    assert(!vals.empty());
    
@@ -287,7 +295,7 @@ agg_configuration::generate_sum_list_float(predicate *pred, const field_num fiel
    const size_t len(cons::length(first));
    const size_t num_lists(vals.size());
    cons *lists[num_lists];
-   vm::tuple *ret(first_tpl->copy_except(pred, field));
+   vm::tuple *ret(first_tpl->copy_except(pred, field, alloc));
    
    for(size_t i(0); it != end; ++it) {
       tuple_trie_leaf *stpl(*it);
@@ -327,28 +335,29 @@ agg_configuration::generate_sum_list_float(predicate *pred, const field_num fiel
 }
 
 vm::tuple*
-agg_configuration::do_generate(predicate *pred, const aggregate_type typ, const field_num field, vm::depth_t& depth)
+agg_configuration::do_generate(predicate *pred, const aggregate_type typ, const field_num field,
+      vm::depth_t& depth, mem::node_allocator *alloc)
 {
    if(vals.empty())
       return nullptr;
 
    switch(typ) {
       case AGG_FIRST:
-         return generate_first(pred, depth);
+         return generate_first(pred, depth, alloc);
       case AGG_MAX_INT:
-         return generate_max_int(pred, field, depth);
+         return generate_max_int(pred, field, depth, alloc);
       case AGG_MIN_INT:
-         return generate_min_int(pred, field, depth);
+         return generate_min_int(pred, field, depth, alloc);
       case AGG_SUM_INT:
-         return generate_sum_int(pred, field, depth);
+         return generate_sum_int(pred, field, depth, alloc);
       case AGG_SUM_FLOAT:
-         return generate_sum_float(pred, field, depth);
+         return generate_sum_float(pred, field, depth, alloc);
       case AGG_MAX_FLOAT:
-         return generate_max_float(pred, field, depth);
+         return generate_max_float(pred, field, depth, alloc);
       case AGG_MIN_FLOAT:
-         return generate_min_float(pred, field, depth);
+         return generate_min_float(pred, field, depth, alloc);
       case AGG_SUM_LIST_FLOAT:
-         return generate_sum_list_float(pred, field, depth);
+         return generate_sum_list_float(pred, field, depth, alloc);
    }
    
    assert(false);
@@ -357,17 +366,17 @@ agg_configuration::do_generate(predicate *pred, const aggregate_type typ, const 
 
 void
 agg_configuration::generate(predicate *pred, const aggregate_type typ, const field_num field,
-   full_tuple_list& cont)
+   full_tuple_list& cont, mem::node_allocator *alloc)
 {
    vm::depth_t depth(0);
-   vm::tuple* generated(do_generate(pred, typ, field, depth));
+   vm::tuple* generated(do_generate(pred, typ, field, depth, alloc));
    
    changed = false;
 
    if(corresponds == nullptr) {
       // new
       if(generated != nullptr) {
-         cont.push_back(full_tuple::create_new(generated->copy(pred), pred, depth));
+         cont.push_back(full_tuple::create_new(generated->copy(pred, alloc), pred, depth));
          last_depth = depth;
          corresponds = generated;
       }
@@ -381,7 +390,7 @@ agg_configuration::generate(predicate *pred, const aggregate_type typ, const fie
    } else {
       if(!(corresponds->equal(*generated, pred))) {
          cont.push_back(full_tuple::remove_new(corresponds, pred, last_depth));
-         cont.push_back(full_tuple::create_new(generated->copy(pred), pred, depth));
+         cont.push_back(full_tuple::create_new(generated->copy(pred, alloc), pred, depth));
          last_depth = depth;
          corresponds = generated;
       }

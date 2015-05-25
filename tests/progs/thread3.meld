@@ -1,0 +1,14 @@
+
+type linear a(node, int).
+type linear b(node, thread).
+type linear c(thread, int).
+type linear d(thread, int).
+
+a(@0, 5).
+
+a(A, N), T = @thread
+   -o b(A, T).
+
+b(A, T) -o c(T, 2).
+
+c(A, N) -o d(A, N * 2).

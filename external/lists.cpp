@@ -65,52 +65,6 @@ listcount(EXTERNAL_ARG(ls), EXTERNAL_ARG(i), EXTERNAL_ARG(ty))
 }
 
 argument
-lexists(EXTERNAL_ARG(ls), EXTERNAL_ARG(i), EXTERNAL_ARG(ty))
-{
-   DECLARE_LIST(ls);
-   DECLARE_TYPE(ty);
-   runtime::cons *p((runtime::cons *)ls);
-   if(runtime::cons::is_null(p))
-      RETURN_BOOL(false);
-
-   switch(ty->get_type()) {
-      case FIELD_INT: {
-            DECLARE_INT(i);
-            while(!runtime::cons::is_null(p)) {
-               if(FIELD_INT(p->get_head()) == i)
-                  RETURN_BOOL(true);
-               p = p->get_tail();
-            }
-         }
-         break;
-      case FIELD_FLOAT: {
-            DECLARE_FLOAT(i);
-            while(!runtime::cons::is_null(p)) {
-               if(FIELD_FLOAT(p->get_head()) == i)
-                  RETURN_BOOL(true);
-               p = p->get_tail();
-            }
-         }
-         break;
-      case FIELD_NODE: {
-            DECLARE_NODE(i);
-            while(!runtime::cons::is_null(p)) {
-               if(FIELD_NODE(p->get_head()) == i)
-                  RETURN_BOOL(true);
-               p = p->get_tail();
-            }
-         }
-         break;
-      default:
-         cerr << "cannot count types in listexists\n";
-         abort();
-         break;
-   }
-
-   RETURN_BOOL(false);
-}
-
-argument
 lexistss(EXTERNAL_ARG(ls), EXTERNAL_ARG(other), EXTERNAL_ARG(ty))
 {
    DECLARE_LIST(ls);
@@ -164,21 +118,6 @@ lexistss(EXTERNAL_ARG(ls), EXTERNAL_ARG(other), EXTERNAL_ARG(ty))
    RETURN_BOOL(false);
 }
    
-argument
-llength(EXTERNAL_ARG(ls))
-{
-	DECLARE_LIST(ls);
-   int_val total(0);
-   runtime::cons *p((runtime::cons *)ls);
-
-   while(!runtime::cons::is_null(p)) {
-      total++;
-      p = p->get_tail();
-   }
-
-	RETURN_INT(total);
-}
-
 static bool inline
 has_value(const runtime::cons *_l, int_val v)
 {
@@ -242,7 +181,7 @@ lnth(EXTERNAL_ARG(ls), EXTERNAL_ARG(v))
 }
 
 argument
-listremove(EXTERNAL_ARG(ls), EXTERNAL_ARG(n), EXTERNAL_ARG(ty))
+lremove(EXTERNAL_ARG(ls), EXTERNAL_ARG(n), EXTERNAL_ARG(ty))
 {
 	DECLARE_LIST(ls);
    DECLARE_TYPE(ty);
@@ -252,6 +191,22 @@ listremove(EXTERNAL_ARG(ls), EXTERNAL_ARG(n), EXTERNAL_ARG(ty))
       RETURN_LIST(p);
 
    switch(ty->get_type()) {
+      case FIELD_INT: {
+         DECLARE_INT(n);
+
+         stack_int_list s;
+
+         while(!runtime::cons::is_null(p)) {
+            if(FIELD_INT(p->get_head()) != n)
+               s.push(FIELD_NODE(p->get_head()));
+            p = p->get_tail();
+         }
+         runtime::cons *ptr(from_int_stack_to_list(s));
+      
+         RETURN_LIST(ptr);
+      }
+      break;
+
       case FIELD_NODE: {
          DECLARE_NODE(n);
 
@@ -304,6 +259,18 @@ intlistsub(EXTERNAL_ARG(p), EXTERNAL_ARG(a), EXTERNAL_ARG(b))
    runtime::cons *ptr(from_int_stack_to_list(s));
 
    RETURN_LIST(ptr);
+}
+
+argument
+ltake(EXTERNAL_ARG(ls), EXTERNAL_ARG(n))
+{
+   DECLARE_LIST(ls);
+   DECLARE_INT(n);
+   runtime::cons *p((runtime::cons*)ls);
+
+   while(n > 0 && !runtime::cons::is_null(p))
+      p = p->get_tail();
+   RETURN_LIST(p);
 }
 
 argument

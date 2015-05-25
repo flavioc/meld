@@ -7,6 +7,7 @@
 #include "vm/state.hpp"
 #include "interface.hpp"
 #include "vm/priority.hpp"
+#include "vm/exec.hpp"
 #include "machine.hpp"
 
 using namespace std;
@@ -14,6 +15,8 @@ using namespace process;
 using namespace vm;
 using namespace db;
 using namespace utils;
+
+//#define DEBUG_QUEUE
 
 #ifdef PROFILE_QUEUE
 static atomic<size_t> prio_count(0);
@@ -25,6 +28,8 @@ static atomic<size_t> prio_removed_pqueue(0);
 static atomic<size_t> prio_nodes_compared(0);
 static atomic<size_t> prio_nodes_changed(0);
 #endif
+
+extern void execute_const_code();
 
 namespace sched {
 
@@ -62,7 +67,6 @@ void thread::loop(void) {
 
    assert_end();
    end();
-   // cout << "DONE " << id << endl;
 }
 
 void thread::init_barriers(const size_t num_threads) {
@@ -89,7 +93,6 @@ void thread::new_thread_work(thread *to, vm::tuple *tpl, const vm::predicate *pr
 #ifdef FACT_STATISTICS
    count_add_work_other++;
 #endif
-   LOCKING_STAT(database_lock_fail);
    n->add_work_others(tpl, pred, vm::POSITIVE_DERIVATION, 0);
 #ifdef INSTRUMENTATION
    sent_facts_other_thread++;
@@ -383,19 +386,25 @@ inline bool thread::set_next_node(void) {
    while (current_node == nullptr) {
       current_node = prios.moving.pop_best(prios.stati, STATE_WORKING);
       if (current_node) {
-         //            cout << "Got node " << current_node->get_id() << endl;
-         //           cout << " with prio " << current_node->get_priority() << endl;
+#ifdef DEBUG_QUEUE
+         cout << "Got node " << current_node->get_id()
+              << " with prio " << current_node->get_priority() << endl;
+#endif
          break;
       }
 
       if (pop_node_from_queues()) {
-         //        cout << "Got node " << current_node->get_id() << endl;
+#ifdef DEBUG_QUEUE
+         cout << "Got node " << current_node->get_id() << endl;
+#endif
          break;
       }
 
       // process the thread node because it may have facts.
       if(thread_node && thread_node->unprocessed_facts) {
-         // cout << "Running thread node\n";
+#ifdef DEBUG_QUEUE
+         cout << "Running thread node\n";
+#endif
          current_node = thread_node;
          break;
       }
@@ -462,6 +471,17 @@ void thread::end(void) {
 #endif
 }
 
+#ifndef COMPILED
+void thread::execute_const_code(void) {
+   theProgram->fix_const_references();
+
+   // no node or tuple whatsoever
+   state.setup(nullptr, POSITIVE_DERIVATION, 0);
+
+   execute_process(theProgram->get_const_bytecode(), state, nullptr, nullptr);
+}
+#endif
+
 void thread::init(const size_t) {
    // normal priorities
    if (theProgram->is_priority_desc()) {
@@ -476,14 +496,14 @@ void thread::init(const size_t) {
    auto end(All->DATABASE->get_node_iterator(All->MACHINE->find_last_node(id)));
    priority_t initial(theProgram->get_initial_priority());
 
-   /*
+#if 0
    if (!scheduling_mechanism) {
       for (; it != end; ++it) {
          db::node *cur_node(init_node(it));
          queues.moving.push_tail(cur_node);
       }
    } else {
-   */
+#endif
       prios.moving.start_initial_insert(All->MACHINE->find_owned_nodes(id));
 
       for (size_t i(0); it != end; ++it, ++i) {
@@ -491,10 +511,82 @@ void thread::init(const size_t) {
 
          prios.moving.initial_fast_insert(cur_node, initial, i);
       }
-   //}
+#if 0
+   }
+#endif
 
    threads_synchronize();
+   bool sync{false};
+   if (theProgram->has_thread_predicates()) {
+      thread_node = node_handler.create_node();
+      setup_thread_node();
+      sync = true;
+   }
+#ifdef COMPILED
+   if(theProgram->has_const_code()) {
+      sync = true;
+      if(leader_thread())
+         execute_const_code();
+   }
+#else
+   if(leader_thread())
+      theProgram->cleanup_node_references();
+   if(theProgram->has_const_code()) {
+      sync = true;
+      if(leader_thread())
+         execute_const_code();
+   }
+#endif
+   if(sync)
+      threads_synchronize();
 }
+
+void
+thread::setup_thread_node()
+{
+   thread_node->set_owner(this);
+
+   vm::predicate *init_thread_pred(vm::theProgram->get_init_thread_predicate());
+   vm::tuple *init_tuple(vm::tuple::create(init_thread_pred, &(thread_node->alloc)));
+   thread_node->add_linear_fact(init_tuple, init_thread_pred);
+
+   if(vm::theProgram->has_special_fact(vm::special_facts::THREAD_LIST)) {
+      vm::predicate *tlist_pred(vm::theProgram->get_special_fact(vm::special_facts::THREAD_LIST));
+      vm::tuple *tpl(vm::tuple::create(tlist_pred, &(thread_node->alloc)));
+      runtime::cons *ls(runtime::cons::null_list());
+      for(size_t i(vm::All->NUM_THREADS); i > 0; --i) {
+         thread *x(vm::All->SCHEDS[i - 1]);
+         vm::tuple_field f;
+         f.ptr_field = (vm::ptr_val)x;
+         assert(x);
+         ls = runtime::cons::create(ls, f, vm::TYPE_THREAD);
+      }
+      tpl->set_cons(0, ls);
+      thread_node->add_persistent_fact(tpl, tlist_pred);
+   }
+
+   if(vm::theProgram->has_special_fact(vm::special_facts::OTHER_THREAD)) {
+      vm::predicate *other_pred(vm::theProgram->get_special_fact(vm::special_facts::OTHER_THREAD));
+      for(size_t i(0); i < vm::All->NUM_THREADS; ++i) {
+         if(get_id() == i)
+            continue;
+         vm::tuple *tpl(vm::tuple::create(other_pred, &(thread_node->alloc)));
+         tpl->set_thread(0, (vm::thread_val)All->SCHEDS[i]);
+         tpl->set_int(1, i);
+         thread_node->add_persistent_fact(tpl, other_pred);
+      }
+   }
+
+   if(vm::theProgram->has_special_fact(vm::special_facts::LEADER_THREAD)) {
+      vm::predicate *leader_thread(vm::theProgram->get_special_fact(vm::special_facts::LEADER_THREAD));
+      vm::tuple *tpl(vm::tuple::create(leader_thread, &(thread_node->alloc)));
+      tpl->set_thread(0, (vm::thread_val)All->SCHEDS[0]);
+      thread_node->add_persistent_fact(tpl, leader_thread);
+   }
+
+   thread_node->unprocessed_facts = true;
+}
+
 
 #ifdef INSTRUMENTATION
 void thread::write_slice(statistics::slice &sl) {
@@ -542,10 +634,6 @@ thread::thread(const vm::process_id _id)
 #endif
 {
    bitmap::create(comm_threads, All->NUM_THREADS_NEXT_UINT);
-   if (theProgram->has_thread_predicates()) {
-      thread_node = node_handler.create_node();
-      setup_thread_node();
-   }
 }
 
 thread::~thread(void) {

@@ -14,6 +14,8 @@ type linear output-rank(node, node, float).
 type linear output-rank-copy(node, node, float).
 type linear new-output-rank(node, node, float).
 
+compact input.
+compact output.
 priority @initial 100.
 //priority @cluster @static.
 

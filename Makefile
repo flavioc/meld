@@ -86,8 +86,6 @@ CFLAGS = -std=c++1y $(ARCH) $(PROFILING) \
 			$(INCLUDE_DIRS) $(FLAGS) #-fno-gcse -fno-crossjumping
 LIBRARIES = -lm -lreadline -ldl $(LIBS) -pthread
 
-CXX = g++
-
 GCC_MINOR    := $(shell $(CXX) -v 2>&1 | \
 													grep " version " | cut -d' ' -f3  | cut -d'.' -f2)
 
@@ -136,6 +134,7 @@ SRCS = utils/utils.cpp \
 			external/math.cpp \
 			external/lists.cpp \
 			external/array.cpp \
+			external/set.cpp \
 			external/utils.cpp \
 			external/strings.cpp \
 			external/others.cpp \

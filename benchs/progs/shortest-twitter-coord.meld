@@ -1,6 +1,7 @@
 
 include #sources/shortest-path-custom.meld
-include #data/shortest-twitter.meld
+type route edge(node, node, float).
 
 priority @cluster @static.
 priority @no_initial_priorities.
+data stanford-snap "data/shortest-twitter.txt".

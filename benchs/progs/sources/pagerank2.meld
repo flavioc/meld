@@ -14,6 +14,10 @@ type linear check-residual(node, float, float).
 type numOutput(node, int).
 type numInput(node, int).
 
+compact input.
+compact output.
+compact numOutput.
+compact numInput.
 priority @initial 100.
 
 const damping = 0.85.

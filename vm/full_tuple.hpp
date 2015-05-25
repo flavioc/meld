@@ -11,6 +11,7 @@
 #include "vm/tuple.hpp"
 #include "mem/allocator.hpp"
 #include "mem/base.hpp"
+#include "mem/node.hpp"
 #include "utils/types.hpp"
 
 namespace vm {
@@ -54,7 +55,7 @@ struct full_tuple : public mem::base {
    void pack(utils::byte *, const size_t, int *) const;
 
    static full_tuple *unpack(vm::predicate *, utils::byte *, const size_t,
-                             int *, vm::program *);
+                             int *, vm::program *, mem::node_allocator *alloc);
 
    static full_tuple *create_new(vm::tuple *tuple, vm::predicate *pred,
                                  const vm::depth_t depth) {
@@ -66,8 +67,8 @@ struct full_tuple : public mem::base {
       return new full_tuple(tuple, pred, NEGATIVE_DERIVATION, depth);
    }
 
-   static void wipeout(full_tuple *stpl, candidate_gc_nodes &gc_nodes) {
-      vm::tuple::destroy(stpl->get_tuple(), stpl->get_predicate(), gc_nodes);
+   static void wipeout(full_tuple *stpl, mem::node_allocator *alloc, candidate_gc_nodes &gc_nodes) {
+      vm::tuple::destroy(stpl->get_tuple(), stpl->get_predicate(), alloc, gc_nodes);
       delete stpl;
    }
 

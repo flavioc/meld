@@ -266,8 +266,8 @@ public:
       return queues.moving.pop_head(current_node, STATE_WORKING);
    }
 
-#ifdef TASK_STEALING
    mutable utils::randgen rand;
+#ifdef TASK_STEALING
    size_t next_thread;
    size_t backoff;
    bool steal_flag;
@@ -373,20 +373,12 @@ public:
    void set_node_priority_other(db::node *, const vm::priority_t);
    void set_node_owner(db::node *, thread *);
 
-   inline void setup_thread_node()
-   {
-      thread_node->set_owner(this);
-
-      vm::predicate *init_thread_pred(vm::theProgram->get_init_thread_predicate());
-      vm::tuple *init_tuple(vm::tuple::create(init_thread_pred));
-      thread_node->add_linear_fact(init_tuple, init_thread_pred);
-      thread_node->unprocessed_facts = false;
-   }
+   void setup_thread_node();
 
    inline void setup_node(db::node *node)
    {
       vm::predicate *init_pred(vm::theProgram->get_init_predicate());
-      vm::tuple *init_tuple(vm::tuple::create(init_pred));
+      vm::tuple *init_tuple(vm::tuple::create(init_pred, &(node->alloc)));
 #ifdef FACT_STATISTICS
       state.facts_derived++;
 #endif
@@ -403,6 +395,8 @@ public:
    static std::atomic<bool> stop_flag;
 
    inline vm::process_id get_id(void) const { return id; }
+   inline utils::randgen *get_random() { return &rand; }
+   inline utils::randgen *get_random() const { return &rand; }
    
    inline bool leader_thread(void) const { return get_id() == 0; }
 
@@ -439,7 +433,10 @@ public:
       node_handler.commit();
    }
 
-   void loop(void);
+   void loop();
+#ifndef COMPILED
+	void execute_const_code();
+#endif
    void init(const size_t);
    
    void new_thread_work(thread *, vm::tuple *, const vm::predicate *);
@@ -544,5 +541,11 @@ public:
 };
 
 }
+
+struct thread_hash {
+   size_t operator()(const sched::thread *x) const {
+      return std::hash<vm::process_id>()(x->get_id());
+   }
+};
 
 #endif

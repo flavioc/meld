@@ -98,7 +98,7 @@ program::program(string _filename)
    if (!VERSION_AT_LEAST(0, 11))
       throw load_file_error(filename, string("unsupported byte code version"));
 
-   if (VERSION_AT_LEAST(0, 13))
+   if (VERSION_AT_LEAST(0, 14))
       throw load_file_error(filename, string("unsupported byte code version"));
 
    // read number of predicates
@@ -119,7 +119,7 @@ program::program(string _filename)
 
 #ifdef USE_REAL_NODES
    node_references =
-       new vector<byte_code, mem::allocator<byte_code>>[num_nodes];
+       new node_ref_vector[num_nodes];
 #endif
 
    read.seek(num_nodes * database::node_size);
@@ -240,7 +240,7 @@ program::program(string _filename)
 
    const_code = new byte_code_el[const_code_size];
    read.read_any(const_code, const_code_size);
-   read_node_references(const_code, read);
+   const_read_node_references(const_code, read);
 
    MAX_STRAT_LEVEL = 0;
 
@@ -318,6 +318,15 @@ program::program(string _filename)
       code_size[i] = size;
 
       predicate* pred(predicates[i]);
+      
+      if(pred->get_name() == "just-moved")
+         special.mark(special_facts::JUST_MOVED, pred);
+      else if(pred->get_name() == "thread-list")
+         special.mark(special_facts::THREAD_LIST, pred);
+      else if(pred->get_name() == "other-thread")
+         special.mark(special_facts::OTHER_THREAD, pred);
+      else if(pred->get_name() == "leader-thread")
+         special.mark(special_facts::LEADER_THREAD, pred);
 
       MAX_STRAT_LEVEL = max(pred->get_strat_level() + 1, MAX_STRAT_LEVEL);
 
@@ -466,29 +475,45 @@ program::~program(void) {
       delete elem;
    }
    MAX_STRAT_LEVEL = 0;
-#ifdef USE_REAL_NODES
-   if (node_references) delete[] node_references;
-#endif
 #ifndef COMPILED
    bitmap::destroy(thread_predicates_map, num_predicates_uint);
 #endif
 }
 
+#ifndef COMPILED
 void program::read_node_references(byte_code code, code_reader& read) {
+   uint_val size_nodes;
+   read.read_type<uint_val>(&size_nodes);
+   for (uint_val i(0); i < size_nodes; ++i) {
+      uint_val place;
+      read.read_type<uint_val>(&place);
+      byte_code p(code + place);
+      const node_val n(pcounter_node(p));
+      node_references[n].push_back(p);
+   }
+}
+
+void program::const_read_node_references(byte_code code, code_reader& read) {
    uint_val size_nodes;
    read.read_type<uint_val>(&size_nodes);
    uint_val pos[size_nodes];
    read.read_type<uint_val>(pos, size_nodes);
-#ifdef USE_REAL_NODES
    for (uint_val i(0); i < size_nodes; ++i) {
       byte_code p(code + pos[i]);
       const node_val n(pcounter_node(p));
-      node_references[n].push_back(p);
+      const_node_references.push_back(std::make_pair(n, p));
    }
-#else
-   (void)code;
-#endif
 }
+
+void program::fix_const_references() {
+   for(auto p : const_node_references) {
+      auto node = p.first;
+      auto code = p.second;
+      pcounter_set_node(code, (node_val)All->DATABASE->find_node(node));
+   }
+   const_node_references.clear();
+}
+#endif
 
 void program::fix_node_address(db::node* n) {
 #ifdef COMPILED

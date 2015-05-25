@@ -2,6 +2,7 @@ type linear path(node, int, int).
 
 priority @order @asc.
 
+compact edge.
 const finalnode = @1.
 const startnode = @4.
 const used = 1.

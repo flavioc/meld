@@ -327,6 +327,8 @@ string instr_name(const instr::instr_type code) {
          return string("LINEAR ITERATE");
       case TLINEAR_ITER_INSTR:
          return string("THREAD LINEAR ITERATE");
+      case TRLINEAR_ITER_INSTR:
+         return string("THREAD LINEAR(R) ITERATE");
       case RLINEAR_ITER_INSTR:
          return string("LINEAR(R) ITERATE");
       case OPERS_ITER_INSTR:
@@ -351,12 +353,16 @@ string instr_name(const instr::instr_type code) {
          return string("UPDATE");
       case NOT_INSTR:
          return string("NOT");
+      case LITERAL_CONS_INSTR:
+         return string("LITERAL CONS");
       case RETURN_SELECT_INSTR:
          return string("RETURN SELECT");
       case SELECT_INSTR:
          return string("SELECT BY NODE");
       case RULE_INSTR:
          return string("RULE");
+      case MARK_RULE_INSTR:
+         return string("MARK RULE");
       case RULE_DONE_INSTR:
          return string("RULE DONE");
       case NEW_NODE_INSTR:
@@ -666,6 +672,7 @@ pcounter instr_print(pcounter pc, const bool recurse, const int tabcount,
       case TPERS_ITER_INSTR:
       case LINEAR_ITER_INSTR:
       case TLINEAR_ITER_INSTR:
+      case TRLINEAR_ITER_INSTR:
       case RLINEAR_ITER_INSTR:
          cout << " OVER " << prog->get_predicate(iter_predicate(pc))->get_name()
               << " MATCHING TO " << reg_string(iter_reg(pc)) << endl;
@@ -755,6 +762,16 @@ pcounter instr_print(pcounter pc, const bool recurse, const int tabcount,
          cout << " " << reg_string(not_op(pc)) << " TO "
               << reg_string(not_dest(pc)) << endl;
          break;
+      case LITERAL_CONS_INSTR: {
+            pcounter m = pc + LITERAL_CONS_BASE;
+            utils::byte id(literal_cons_type(pc));
+            vm::type *t(prog->get_type(id));
+            cout << " " << literal_cons_jump(pc) << " ";
+
+            print_axiom_data(m, t);
+            cout << endl;
+         }
+         break;
       case RETURN_SELECT_INSTR:
          cout << " " << return_select_jump(pc) << endl;
          break;
@@ -779,6 +796,7 @@ pcounter instr_print(pcounter pc, const bool recurse, const int tabcount,
             return pc + select_size(pc);
          }
          break;
+      case MARK_RULE_INSTR:
       case RULE_INSTR: {
          const size_t rule_id(rule_get_id(pc));
 
@@ -795,22 +813,26 @@ pcounter instr_print(pcounter pc, const bool recurse, const int tabcount,
 
          while (p < end) {
             // read axions until the end!
+            const uint_val num(pcounter_int(p));
+            pcounter_move_int(&p);
             predicate_id pid(predicate_get(p, 0));
             predicate* pred(prog->get_predicate(pid));
-            print_tab(tabcount + 1);
-            if (pred->is_persistent_pred()) cout << "!";
-            cout << pred->get_name() << "(";
-
             p++;
 
-            for (size_t i(0), num_fields(pred->num_fields()); i != num_fields;
-                 ++i) {
-               type* t(pred->get_field_type(i));
-               print_axiom_data(p, t);
+            for(size_t j(0); j != num; ++j) {
+               print_tab(tabcount + 1);
+               if (pred->is_persistent_pred()) cout << "!";
+               cout << pred->get_name() << "(";
 
-               if (i != num_fields - 1) cout << ", ";
+               for (size_t i(0), num_fields(pred->num_fields()); i != num_fields;
+                     ++i) {
+                  type* t(pred->get_field_type(i));
+                  print_axiom_data(p, t);
+
+                  if (i != num_fields - 1) cout << ", ";
+               }
+               cout << ")" << endl;
             }
-            cout << ")" << endl;
          }
       } break;
       case SEND_DELAY_INSTR:

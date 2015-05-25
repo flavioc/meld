@@ -39,6 +39,7 @@ array_set(EXTERNAL_ARG(arr), EXTERNAL_ARG(i), EXTERNAL_ARG(item), EXTERNAL_ARG(t
 argument array_add(const argument, const argument, const argument);
 argument array_from_list(const argument, const argument);
 argument array_size(const argument);
+argument array_exists(const argument, const argument, const argument);
 
 }
 

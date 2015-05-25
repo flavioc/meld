@@ -24,6 +24,7 @@
 #include "vm/priority.hpp"
 #include "queue/intrusive.hpp"
 #include "db/persistent_store.hpp"
+#include "mem/node.hpp"
 #include "vm/buffer_node.hpp"
 
 namespace sched {
@@ -45,9 +46,11 @@ struct node {
    public:
    DECLARE_DOUBLE_QUEUE_NODE(node);
 
+   mem::node_allocator alloc;
+
    // for managing dynamically allocated nodes.
    node *dyn_next{nullptr}, *dyn_prev{nullptr};
-   std::atomic<void*> creator{nullptr};
+   std::atomic<void *> creator{nullptr};
 
    private:
    sched::thread *owner{nullptr};
@@ -117,12 +120,15 @@ struct node {
    void print(std::ostream &) const;
    void dump(std::ostream &) const;
 
+   void just_moved();
+   void just_moved_buffer();
+
    // internal databases of the node.
    persistent_store pers_store;
    linear_store linear;
    temporary_store store;
    vm::rule_matcher matcher;
-   bool unprocessed_facts = false;
+   bool unprocessed_facts{false};
    utils::mutex main_lock;
    utils::mutex database_lock;
 
@@ -149,16 +155,24 @@ struct node {
       linear.add_fact(tpl, pred);
    }
 
+   inline void add_persistent_fact(vm::tuple *tpl, vm::predicate *pred,
+         const vm::derivation_direction dir = vm::POSITIVE_DERIVATION,
+         const vm::depth_t depth = 0)
+   {
+      auto stpl(new vm::full_tuple(tpl, pred, dir, depth));
+      store.incoming_persistent_tuples.push_back(stpl);
+   }
+
    inline void inner_add_work_myself(
        vm::tuple *tpl, vm::predicate *pred,
        const vm::derivation_direction dir = vm::POSITIVE_DERIVATION,
        const vm::depth_t depth = 0) {
       if (pred->is_action_pred())
-         store.incoming_action_tuples.push_back(new vm::full_tuple(tpl, pred, dir, depth));
-      else if (pred->is_persistent_pred() || pred->is_reused_pred()) {
-         auto stpl(new vm::full_tuple(tpl, pred, dir, depth));
-         store.incoming_persistent_tuples.push_back(stpl);
-      } else
+         store.incoming_action_tuples.push_back(
+             new vm::full_tuple(tpl, pred, dir, depth));
+      else if (pred->is_persistent_pred() || pred->is_reused_pred())
+         add_persistent_fact(tpl, pred, dir, depth);
+      else
          add_linear_fact(tpl, pred);
    }
 
@@ -262,6 +276,12 @@ struct node {
       }
    }
 
+   inline void manage_index() {
+      linear.improve_index();
+      rounds++;
+      if (rounds > 0 && rounds % 1 == 0) linear.cleanup_index();
+   }
+
    inline explicit node(const node_id _id, const node_id _trans)
        : id(_id),
          translation(_trans),
@@ -270,15 +290,13 @@ struct node {
 
    inline void wipeout(vm::candidate_gc_nodes &gc_nodes,
                        const bool fast = false) {
-      linear.destroy(gc_nodes, fast);
-      pers_store.wipeout(gc_nodes);
+      linear.destroy(&alloc, gc_nodes, fast);
+      pers_store.wipeout(&alloc, gc_nodes);
 
       mem::allocator<node>().destroy(this);
    }
 
-   inline void deallocate() {
-      mem::allocator<node>().deallocate(this, 1);
-   }
+   inline void deallocate() { mem::allocator<node>().deallocate(this, 1); }
 
    inline void set_ids(const node_id _id, const node_id _trans) {
       id = _id;

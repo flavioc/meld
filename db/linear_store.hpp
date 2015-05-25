@@ -15,6 +15,7 @@
 #include "vm/bitmap_static.hpp"
 #include "utils/intrusive_list.hpp"
 #include "db/hash_table.hpp"
+#include "mem/node.hpp"
 #ifdef COMPILED
 #include COMPILED_HEADER
 #endif
@@ -76,8 +77,7 @@ struct linear_store {
       const size_t size_table(tbl->get_num_buckets());
       hash_table new_hash;
       const vm::field_num field(pred->get_hashed_field());
-      new_hash.setup(pred->get_field_type(field)->get_type(),
-                     size_table);
+      new_hash.setup(pred->get_field_type(field)->get_type(), size_table);
 
       hash_table::iterator it(tbl->begin());
 
@@ -180,7 +180,7 @@ struct linear_store {
                vm::tuple *tpl(*it);
                ++it;
                size_t size_bucket(table->insert(tpl, pred));
-               if(!expand.get_bit(pred->get_linear_id()) &&
+               if (!expand.get_bit(pred->get_linear_id()) &&
                    size_bucket >= CREATE_HASHTABLE_THREADSHOLD) {
                   if (decide_if_expand(table))
                      expand.set_bit(pred->get_linear_id());
@@ -298,27 +298,23 @@ struct linear_store {
    }
 
    inline void improve_index() {
-      for (auto it(
-               expand.begin(vm::theProgram->num_linear_predicates()));
+      for (auto it(expand.begin(vm::theProgram->num_linear_predicates()));
            !it.end(); ++it) {
          const vm::predicate_id id(*it);
          hash_table *tbl(get_table(id));
          const vm::predicate *pred(vm::theProgram->get_linear_predicate(id));
-         if(tbl->too_crowded())
-            tbl->expand(pred);
+         if (tbl->too_crowded()) tbl->expand(pred);
          expand.unset_bit(id);
       }
    }
 
    inline void cleanup_index() {
-      for (auto it(
-               types.begin(vm::theProgram->num_linear_predicates()));
+      for (auto it(types.begin(vm::theProgram->num_linear_predicates()));
            !it.end(); ++it) {
          const vm::predicate_id id(*it);
          const vm::predicate *pred(vm::theProgram->get_linear_predicate(id));
 
-         if(!stored_as_hash_table(pred))
-            continue;
+         if (!stored_as_hash_table(pred)) continue;
 
          hash_table *tbl(get_table(pred->get_linear_id()));
 
@@ -381,8 +377,8 @@ struct linear_store {
       }
    }
 
-   inline void destroy(vm::candidate_gc_nodes &gc_nodes,
-                       const bool fast = false) {
+   inline void destroy(mem::node_allocator *alloc,
+                       vm::candidate_gc_nodes &gc_nodes, const bool fast = false) {
       for (size_t i(0); i < vm::theProgram->num_linear_predicates(); ++i) {
          vm::predicate *pred(vm::theProgram->get_linear_predicate(i));
          utils::byte *p(data + ITEM_SIZE * i);
@@ -392,10 +388,10 @@ struct linear_store {
                for (hash_table::iterator it(table->begin()); !it.end(); ++it) {
                   tuple_list *ls(*it);
                   for (tuple_list::iterator it2(ls->begin()), end(ls->end());
-                        it2 != end;) {
+                       it2 != end;) {
                      vm::tuple *tpl(*it2);
                      it2++;
-                     vm::tuple::destroy(tpl, pred, gc_nodes);
+                     vm::tuple::destroy(tpl, pred, alloc, gc_nodes);
                   }
                }
             }
@@ -408,10 +404,10 @@ struct linear_store {
          } else if (!fast) {
             tuple_list *ls((tuple_list *)p);
             for (tuple_list::iterator it(ls->begin()), end(ls->end());
-                  it != end;) {
+                 it != end;) {
                vm::tuple *tpl(*it);
                ++it;
-               vm::tuple::destroy(tpl, pred, gc_nodes);
+               vm::tuple::destroy(tpl, pred, alloc, gc_nodes);
             }
             ls->clear();
          }
@@ -431,11 +427,11 @@ struct linear_store {
       }
 #ifndef COMPILED
       mem::allocator<utils::byte>().deallocate(
-            data, ITEM_SIZE * vm::theProgram->num_linear_predicates());
+          data, ITEM_SIZE * vm::theProgram->num_linear_predicates());
       vm::bitmap::destroy(types,
-            vm::theProgram->num_linear_predicates_next_uint());
+                          vm::theProgram->num_linear_predicates_next_uint());
       vm::bitmap::destroy(expand,
-            vm::theProgram->num_linear_predicates_next_uint());
+                          vm::theProgram->num_linear_predicates_next_uint());
 #endif
    }
 };

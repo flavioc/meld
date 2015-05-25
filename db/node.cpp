@@ -108,8 +108,10 @@ void node::print(ostream &cout) const {
             if (ls && !ls->empty()) {
                for (intrusive_list<vm::tuple>::iterator it(ls->begin()),
                     end(ls->end());
-                    it != end; ++it)
-                  vec.push_back((*it)->to_str(pred));
+                    it != end; ++it) {
+                  auto s((*it)->to_str(pred));
+                  vec.push_back(s);
+               }
             }
          }
       }
@@ -122,6 +124,26 @@ void node::print(ostream &cout) const {
 
       sort(vec.begin(), vec.end());
       write_strings(vec, cout, 1);
+   }
+}
+
+void
+node::just_moved()
+{
+   if(theProgram->has_special_fact(vm::special_facts::JUST_MOVED)) {
+      vm::predicate *pred(theProgram->get_special_fact(vm::special_facts::JUST_MOVED));
+      vm::tuple *tpl(vm::tuple::create(pred, &alloc));
+      add_linear_fact(tpl, pred);
+   }
+}
+
+void
+node::just_moved_buffer()
+{
+   if(theProgram->has_special_fact(vm::special_facts::JUST_MOVED)) {
+      vm::predicate *pred(theProgram->get_special_fact(vm::special_facts::JUST_MOVED));
+      vm::tuple *tpl(vm::tuple::create(pred, &alloc));
+      inner_add_work_others(tpl, pred);
    }
 }
 

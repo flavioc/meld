@@ -105,6 +105,8 @@ public:
 
    inline void start_initial_insert(const size_t many)
    {
+      if(many == 0)
+         return;
       heap.resize(many);
    }
 

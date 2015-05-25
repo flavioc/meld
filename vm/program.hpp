@@ -18,6 +18,7 @@
 #include "vm/import.hpp"
 #include "vm/bitmap.hpp"
 #include "vm/bitmap_static.hpp"
+#include "vm/special_facts.hpp"
 #ifdef USE_REAL_NODES
 #include <unordered_map>
 #endif
@@ -94,6 +95,8 @@ class program {
 
    mutable predicate *init{nullptr}, *init_thread{nullptr};
 
+   special_facts_id special;
+
    using string_store = std::vector<runtime::rstring::ptr,
                                     mem::allocator<runtime::rstring::ptr>>;
 
@@ -104,14 +107,23 @@ class program {
    bool priority_static{false};
    vm::priority_t initial_priority;
 
+#ifndef COMPILED
 #ifdef USE_REAL_NODES
+   using node_ref_vector = std::vector<byte_code, mem::allocator<byte_code>>;
    // node references in the byte code
-   std::vector<byte_code, mem::allocator<byte_code>> *node_references{nullptr};
+   node_ref_vector *node_references{nullptr};
+   // node references in constant code
+   using const_ref_vector =
+      std::vector<std::pair<vm::node_val, byte_code>,
+                  mem::allocator<std::pair<vm::node_val, byte_code>>>;
+   const_ref_vector const_node_references;
+#endif
 #endif
 
    size_t total_arguments{0};
 
    void read_node_references(byte_code, code_reader &);
+   void const_read_node_references(byte_code, code_reader &);
 
 #ifdef COMPILED
    vm::bitmap_static<COMPILED_NUM_PREDICATES_UINT> thread_predicates_map;
@@ -212,6 +224,9 @@ class program {
       return !thread_predicates.empty();
    }
 
+   inline bool has_special_fact(const vm::special_facts::flag_type f) { return special.has(f); }
+   inline vm::predicate *get_special_fact(const vm::special_facts::flag_type f) { return special.get(f); }
+
 #ifndef COMPILED
    void print_predicate_code(std::ostream &, predicate *) const;
    void print_bytecode(std::ostream &) const;
@@ -230,6 +245,9 @@ class program {
    }
    predicate *get_linear_predicate(const predicate_id i) const {
       return linear_predicates[i];
+   }
+   predicate *get_persistent_predicate(const predicate_id i) const {
+      return persistent_predicates[i];
    }
    predicate *get_sorted_predicate(const size_t i) const {
       assert(i < num_predicates());
@@ -261,6 +279,7 @@ class program {
    }
    size_t num_linear_predicates() const { return linear_predicates.size(); }
 #endif
+   inline bool has_const_code() const { return const_code_size != 0; }
    size_t num_route_predicates() const { return route_predicates.size(); }
    size_t num_thread_predicates() const { return thread_predicates.size(); }
    size_t num_predicates_next_uint() const { return num_predicates_uint; }
@@ -277,8 +296,10 @@ class program {
    inline bool is_data(void) const { return is_data_file; }
 
    bool add_data_file(vm::program &);
-#ifdef USE_REAL_NODES
    void fix_node_address(db::node *);
+#ifndef COMPILED
+   void fix_const_references();
+   void cleanup_node_references() { if(node_references) delete []node_references; }
 #endif
 
    static std::unique_ptr<std::ifstream> bypass_bytecode_header(

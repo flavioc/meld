@@ -1,0 +1,25 @@
+
+type route edge(node, node).
+type linear value(node, int).
+type linear search(node, int, int, list node, list node).
+type linear do-search(node, int, int, list node, list node).
+type linear found(node, int, int).
+type linear not-found(node, int, int).
+
+index search/2.
+
+value(A, Val),
+search(A, Val, Id, Paths, Next)
+   -o value(A, Val),
+      found(A, Val, Id).
+
+value(A, Val1),
+search(A, Val2, Id, Paths, Next),
+Val1 <> Val2
+   -o value(A, Val1),
+      [collect => B | !edge(A, B), ~ B in Paths | | do-search(A, Val2, Id, Paths, Next ++ B)].
+
+do-search(A, Val, Id, Paths, [])
+   -o not-found(A, Val, Id).
+do-search(A, Val, Id, Paths, [B | Next])
+   -o search(B, Val, Id, [B | Paths], Next).

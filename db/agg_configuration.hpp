@@ -9,6 +9,7 @@
 #include "vm/defs.hpp"
 #include "vm/types.hpp"
 #include "db/trie.hpp"
+#include "mem/node.hpp"
 
 namespace db
 {
@@ -24,27 +25,28 @@ private:
    vm::tuple *corresponds;
    vm::depth_t last_depth;
    
-   vm::tuple *generate_max_int(vm::predicate *, const vm::field_num, vm::depth_t&) const;
-   vm::tuple *generate_min_int(vm::predicate *, const vm::field_num, vm::depth_t&) const;
-   vm::tuple *generate_sum_int(vm::predicate *, const vm::field_num, vm::depth_t&) const;
-   vm::tuple *generate_sum_float(vm::predicate *, const vm::field_num, vm::depth_t&) const;
-   vm::tuple *generate_first(vm::predicate *, vm::depth_t&) const;
-   vm::tuple *generate_max_float(vm::predicate *, const vm::field_num, vm::depth_t&) const;
-   vm::tuple *generate_min_float(vm::predicate *, const vm::field_num, vm::depth_t&) const;
-   vm::tuple *generate_sum_list_float(vm::predicate *, const vm::field_num, vm::depth_t&) const;
+   vm::tuple *generate_max_int(vm::predicate *, const vm::field_num, vm::depth_t&, mem::node_allocator *) const;
+   vm::tuple *generate_min_int(vm::predicate *, const vm::field_num, vm::depth_t&, mem::node_allocator *) const;
+   vm::tuple *generate_sum_int(vm::predicate *, const vm::field_num, vm::depth_t&, mem::node_allocator *) const;
+   vm::tuple *generate_sum_float(vm::predicate *, const vm::field_num, vm::depth_t&, mem::node_allocator *) const;
+   vm::tuple *generate_first(vm::predicate *, vm::depth_t&, mem::node_allocator *) const;
+   vm::tuple *generate_max_float(vm::predicate *, const vm::field_num, vm::depth_t&, mem::node_allocator *) const;
+   vm::tuple *generate_min_float(vm::predicate *, const vm::field_num, vm::depth_t&, mem::node_allocator *) const;
+   vm::tuple *generate_sum_list_float(vm::predicate *, const vm::field_num, vm::depth_t&, mem::node_allocator *) const;
    
 protected:
    
    tuple_trie vals;
 
    virtual vm::tuple *do_generate(vm::predicate *, const vm::aggregate_type,
-         const vm::field_num, vm::depth_t&);
+         const vm::field_num, vm::depth_t&, mem::node_allocator *);
 
 public:
 
    void print(std::ostream&, vm::predicate *) const;
 
-   void generate(vm::predicate *, const vm::aggregate_type, const vm::field_num, vm::full_tuple_list&);
+   void generate(vm::predicate *, const vm::aggregate_type, const vm::field_num,
+         vm::full_tuple_list&, mem::node_allocator *);
 
    bool test(vm::predicate *, vm::tuple *, const vm::field_num) const;
 
@@ -53,7 +55,7 @@ public:
    inline size_t size(void) const { return vals.size(); }
 
    virtual void add_to_set(vm::tuple *, vm::predicate *, const vm::derivation_direction,
-         const vm::depth_t, vm::candidate_gc_nodes&);
+         const vm::depth_t, mem::node_allocator *, vm::candidate_gc_nodes&);
    
    bool matches_first_int_arg(vm::predicate *, const vm::int_val) const;
 
@@ -64,11 +66,11 @@ public:
       assert(!changed);
    }
 
-   inline void wipeout(vm::predicate *pred, vm::candidate_gc_nodes& gc_nodes)
+   inline void wipeout(vm::predicate *pred, mem::node_allocator *alloc, vm::candidate_gc_nodes& gc_nodes)
    {
-      vals.wipeout(pred, gc_nodes);
+      vals.wipeout(pred, alloc, gc_nodes);
       if(corresponds) {
-         vm::tuple::destroy(corresponds, pred, gc_nodes);
+         vm::tuple::destroy(corresponds, pred, alloc, gc_nodes);
          corresponds = nullptr;
       }
    }

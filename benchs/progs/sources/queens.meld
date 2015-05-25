@@ -10,6 +10,11 @@ type linear send-down(node, list int).
 type linear final-state(node, list int).
 
 priority @cluster @static.
+compact left.
+compact right.
+compact coord.
+compact down-right.
+compact down-left.
 
 propagate-right(@0, []).
 

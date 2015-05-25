@@ -23,6 +23,10 @@ SPLASH_BP = splash-bp-400
 QUEENS = 8queens-14 8queens-14-top 8queens-14-top-static 8queens-14-bottom 8queens-14-bottom-static
 SIMPLE = simple16 simple32 simple64
 MINMAX = min-max-tictactoe
+SEARCH_RANDOM = search-parallel-random search-threads-random
+SEARCH_FACEBOOK = search-parallel-facebook search-threads-facebook
+SEARCH_TWITTER = search-parallel-twitter search-threads-twitter
+SEARCH_POKEC = search-parallel-pokec search-threads-pokec
 SHORTEST = shortest-email \
 			  shortest-email-coord \
 			  shortest-twitter \
@@ -39,6 +43,18 @@ thread:
 
 ggc:
 	@bash $(SCRIPT) $(GGC)
+search-random:
+	@bash $(SCRIPT) $(SEARCH_RANDOM)
+search-facebook:
+	@bash $(SCRIPT) $(SEARCH_FACEBOOK)
+search-twitter:
+	@bash $(SCRIPT) $(SEARCH_TWITTER)
+search-pokec:
+	@bash $(SCRIPT) $(SEARCH_POKEC)
+powergrid-50000:
+	@bash $(SCRIPT) powergrid-50000 powergrid-50000-coord
+powergrid-100000:
+	@bash $(SCRIPT) powergrid-100000 powergrid-100000-coord
 pagerank:
 	@bash $(SCRIPT) $(PAGERANK)
 ht:
@@ -188,6 +204,14 @@ plots:
 
 state_plots:
 	@python ../scripts/plots/plot_state_statistics.py instrumentation_files state_statistics
+
+generate-search-random:
+	PYTHONPATH=../scripts python ../scripts/threads/generate_bfs.py 50000 20 100 5 > progs/data/search-random.meld
+	touch progs/search-*-random.meld
+
+generate-powergrid:
+	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 2000 50000 1.008 > progs/data/powergrid-50000.meld
+	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 2000 100000 1.004 > progs/data/powergrid-100000.meld
 
 clean:
 	rm -f $(RESULTS_FILE)

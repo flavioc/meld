@@ -6,6 +6,8 @@ type coord(node, int, int).
 type linear new-distance(node, int, list node).
 type linear distance(node, int, list node).
 
+compact edge. compact coord.
+
 priority @order @asc.
 priority @initial 9999.
 

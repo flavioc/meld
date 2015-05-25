@@ -37,6 +37,7 @@ typedef external_function_ptr0 external_function_ptr;
 #define DECLARE_STRUCT(NAME) \
    const runtime::struct1 *NAME(FIELD_STRUCT(__##NAME))
 #define DECLARE_ARRAY(NAME) const runtime::array *NAME(FIELD_ARRAY(__##NAME))
+#define DECLARE_SET(NAME) const runtime::set *NAME(FIELD_SET(__##NAME))
 #define DECLARE_ANY(NAME) const argument NAME(__##NAME)
 #define RETURN_PTR(X)         \
    {                          \
@@ -72,6 +73,7 @@ typedef external_function_ptr0 external_function_ptr;
 #define RETURN_STRING(X) RETURN_PTR(X)
 #define RETURN_STRUCT(X) RETURN_PTR(X)
 #define RETURN_ARRAY(X) RETURN_PTR(X)
+#define RETURN_SET(X) RETURN_PTR(X)
 
 class external_function {
    private:

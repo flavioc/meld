@@ -8,6 +8,8 @@
 #include <vector>
 #include <iostream>
 
+#include "vm/defs.hpp"
+
 namespace vm {
    
 enum field_type {
@@ -19,9 +21,31 @@ enum field_type {
    FIELD_BOOL = 0x5,
    FIELD_THREAD = 0x6,
    FIELD_ARRAY = 0x7,
+   FIELD_SET = 0x8,
 	FIELD_STRING = 0x9,
    FIELD_ANY = 0xA
 };
+
+inline size_t lookup_type_size(const field_type typ)
+{
+   switch(typ) {
+      case FIELD_LIST:
+      case FIELD_STRUCT:
+      case FIELD_STRING:
+      case FIELD_NODE:
+      case FIELD_ARRAY:
+      case FIELD_SET:
+         return sizeof(vm::ptr_val);
+      case FIELD_INT:
+         return sizeof(vm::int_val);
+      case FIELD_FLOAT:
+         return sizeof(vm::float_val);
+      default:
+         abort();
+         return -1;
+   }
+
+}
 
 inline bool reference_type(const field_type typ)
 {
@@ -31,6 +55,7 @@ inline bool reference_type(const field_type typ)
       case FIELD_STRING:
       case FIELD_NODE:
       case FIELD_ARRAY:
+      case FIELD_SET:
          return true;
       default:
          return false;
@@ -185,6 +210,45 @@ class struct_type: public type
       }
 };
 
+class set_type: public type
+{
+   private:
+
+      type *base;
+
+   public:
+
+      virtual bool is_reference() const override { return true; }
+
+      inline type *get_base() const { return base; }
+
+      virtual std::string string() const override
+      {
+         return type::string() + " " + base->string();
+      }
+
+      virtual bool equal(type *other) const override
+      {
+         if(!type::equal(other))
+            return false;
+
+         if(set_type *sother = dynamic_cast<set_type*>(other))
+            return base->equal(sother->base);
+         return false;
+      }
+
+      explicit set_type(vm::type *_base):
+         type(FIELD_SET),
+         base(_base)
+      {
+         assert(base);
+      }
+
+      // sub types must be deleted elsewhere.
+      virtual ~set_type()
+      {}
+};
+
 class array_type: public type
 {
    private:
@@ -226,8 +290,8 @@ class array_type: public type
 
 extern type *TYPE_INT, *TYPE_BOOL, *TYPE_FLOAT, *TYPE_NODE, *TYPE_THREAD,
             *TYPE_STRING, *TYPE_ANY, *TYPE_STRUCT, *TYPE_LIST, *TYPE_ARRAY,
-            *TYPE_TYPE;
-extern list_type *TYPE_LIST_FLOAT, *TYPE_LIST_INT, *TYPE_LIST_NODE;
+            *TYPE_SET, *TYPE_TYPE;
+extern list_type *TYPE_LIST_FLOAT, *TYPE_LIST_INT, *TYPE_LIST_NODE, *TYPE_LIST_THREAD;
 extern array_type *TYPE_ARRAY_INT;
 
 void init_types(void);

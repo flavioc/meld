@@ -9,6 +9,10 @@ type linear newrank(node, node, float, int).
 type linear start(node).
 type linear gen-acc(node).
 
+compact input.
+compact output.
+compact numInput.
+compact numLinks.
 const damping = 0.85.
 const iterations = 10. //str2int(@arg1).
 const pages = @world.

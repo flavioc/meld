@@ -16,14 +16,14 @@ void full_tuple::pack(byte *buf, const size_t buf_size, int *pos) const {
 
 full_tuple *full_tuple::unpack(vm::predicate *pred, byte *buf,
                                const size_t buf_size, int *pos,
-                               vm::program *prog) {
+                               vm::program *prog, mem::node_allocator *alloc) {
    derivation_direction dir;
    depth_t depth;
 
    utils::unpack<derivation_direction>(buf, buf_size, pos, &dir, 1);
    utils::unpack<vm::depth_t>(buf, buf_size, pos, &depth, 1);
 
-   vm::tuple *tpl(vm::tuple::unpack(buf, buf_size, pos, prog));
+   vm::tuple *tpl(vm::tuple::unpack(buf, buf_size, pos, prog, alloc));
 
    return new full_tuple(tpl, pred, dir, depth);
 }

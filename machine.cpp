@@ -11,6 +11,7 @@
 #include "mem/stat.hpp"
 #include "stat/stat.hpp"
 #include "utils/fs.hpp"
+#include "utils/random.hpp"
 #include "interface.hpp"
 #include "runtime/objs.hpp"
 
@@ -26,7 +27,8 @@ using namespace statistics;
 namespace process {
 
 void machine::run_action(sched::thread* sched, vm::tuple* tpl,
-                         vm::predicate* pred, candidate_gc_nodes& gc_nodes) {
+                         vm::predicate* pred, mem::node_allocator *alloc,
+                         candidate_gc_nodes& gc_nodes) {
    (void)sched;
 
    assert(pred->is_action_pred());
@@ -45,7 +47,7 @@ void machine::run_action(sched::thread* sched, vm::tuple* tpl,
       assert(false);
    }
 
-   vm::tuple::destroy(tpl, pred, gc_nodes);
+   vm::tuple::destroy(tpl, pred, alloc, gc_nodes);
 }
 
 void machine::deactivate_signals(void) {
@@ -108,19 +110,6 @@ void machine::slice_function(void) {
 }
 #endif
 
-void machine::execute_const_code(void) {
-#ifdef COMPILED
-   return;
-#else
-   state st;
-
-   // no node or tuple whatsoever
-   st.setup(nullptr, POSITIVE_DERIVATION, 0);
-
-   execute_process(all->PROGRAM->get_const_bytecode(), st, nullptr, nullptr);
-#endif
-}
-
 void machine::init_sched(const process_id id) {
    // ensure own memory pool
    mem::ensure_pool();
@@ -131,8 +120,8 @@ void machine::init_sched(const process_id id) {
    utils::all_stats[id] = new utils::lock_stat();
    utils::_stat = utils::all_stats[id];
 #endif
-
    all->SCHEDS[id] = new sched::thread(id);
+   utils::set_random_generator(all->SCHEDS[id]->get_random());
    all->SCHEDS[id]->loop();
    all->SCHEDS[id]->commit_nodes();
 #ifdef MEMORY_STATISTICS
@@ -141,9 +130,6 @@ void machine::init_sched(const process_id id) {
 }
 
 void machine::start(void) {
-   // execute constants code
-   execute_const_code();
-
    deactivate_signals();
 #ifdef INSTRUMENTATION
    all->THREAD_POOLS.resize(all->NUM_THREADS, NULL);

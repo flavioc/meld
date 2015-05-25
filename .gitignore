@@ -22,3 +22,5 @@ tests/build/*
 gmon.out
 /*.m
 tags
+tests/code/*pp
+tests/code/*.data

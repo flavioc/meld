@@ -1,0 +1,23 @@
+
+type linear f(thread, int).
+type linear g(thread, int, list thread).
+type linear h(thread).
+type linear l(thread, int).
+type linear coiso(thread, int).
+type linear total(thread, int).
+
+f(T, 1).
+total(T, 0).
+
+f(T, N),
+!thread-list(T, L)
+   -o g(T, N, L),
+      h(T).
+
+coiso(T, N),
+total(T, Total)
+   -o total(T, Total + N).
+
+g(T, N, L) -o {T2, Id | !other-thread(T, T2, Id) | coiso(T2, 1)}.
+h(T), leader-thread(T, Leader)
+   -o l(Leader, 0).

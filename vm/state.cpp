@@ -49,9 +49,18 @@ void state::purge_runtime_objects(void) {
    free_struct1.clear();
    for (auto p : free_array) p.first->dec_refs(p.second, gc_nodes);
    free_array.clear();
+   for (auto p : free_set) p.first->dec_refs(p.second, gc_nodes);
+   free_set.clear();
 }
 
-void state::cleanup(void) { purge_runtime_objects(); }
+void state::cleanup(void)
+{
+   purge_runtime_objects();
+#ifndef COMPILED
+   updated_map.clear();
+   tuple_regs.clear();
+#endif
+}
 
 #ifndef COMPILED
 void state::copy_reg2const(const reg_num &reg_from, const const_id &cid) {
@@ -79,10 +88,12 @@ void state::setup(vm::predicate *pred, const derivation_direction dir,
          depth = 0;
    } else
       depth = 0;
+#ifndef COMPILED
    if (pred != nullptr)
       is_linear = pred->is_linear_pred();
    else
       is_linear = false;
+#endif
 #ifdef CORE_STATISTICS
    stat.start_matching();
 #endif
@@ -127,8 +138,8 @@ void state::do_persistent_tuples(db::node *node, vm::full_tuple_list *ls) {
             assert(stpl != stpl2);
             assert(stpl2->get_tuple() != stpl->get_tuple());
             assert(stpl2->get_predicate() == stpl->get_predicate());
-            full_tuple::wipeout(stpl, gc_nodes);
-            full_tuple::wipeout(stpl2, gc_nodes);
+            full_tuple::wipeout(stpl, &(node->alloc), gc_nodes);
+            full_tuple::wipeout(stpl2, &(node->alloc), gc_nodes);
             continue;
          }
       }
@@ -155,7 +166,7 @@ void state::process_action_tuples(db::node *node) {
    for (full_tuple *stpl : node->store.incoming_action_tuples) {
       vm::tuple *tpl(stpl->get_tuple());
       vm::predicate *pred(stpl->get_predicate());
-      All->MACHINE->run_action(sched, tpl, pred, gc_nodes);
+      All->MACHINE->run_action(sched, tpl, pred, &(node->alloc), gc_nodes);
       delete stpl;
    }
    node->store.incoming_action_tuples.clear();
@@ -172,7 +183,8 @@ void state::process_incoming_tuples(db::node *node) {
    }
 }
 
-void state::add_to_aggregate(db::node *node, vm::full_tuple_list* ls, full_tuple *stpl) {
+void state::add_to_aggregate(db::node *node, vm::full_tuple_list *ls,
+                             full_tuple *stpl) {
 #ifndef COMPILED_NO_AGGREGATES
    vm::tuple *tpl(stpl->get_tuple());
    predicate *pred(stpl->get_predicate());
@@ -181,18 +193,20 @@ void state::add_to_aggregate(db::node *node, vm::full_tuple_list* ls, full_tuple
    switch (stpl->get_dir()) {
       case vm::NEGATIVE_DERIVATION:
          agg = node->pers_store.remove_agg_tuple(tpl, stpl->get_predicate(),
-                                                 stpl->get_depth(), gc_nodes);
+                                                 stpl->get_depth(),
+                                                 &(node->alloc), gc_nodes);
          break;
       case vm::POSITIVE_DERIVATION:
-         agg = node->pers_store.add_agg_tuple(tpl, stpl->get_predicate(),
-                                              stpl->get_depth(), gc_nodes);
+         agg = node->pers_store.add_agg_tuple(
+             tpl, stpl->get_predicate(), stpl->get_depth(),
+             vm::POSITIVE_DERIVATION, &(node->alloc), gc_nodes);
          break;
    }
 
    full_tuple_list list;
 
    agg->generate(pred, pred->get_aggregate_type(), pred->get_aggregate_field(),
-                 list);
+                 list, &(node->alloc));
 
    for (full_tuple_list::iterator it(list.begin()); it != list.end(); ++it) {
       full_tuple *stpl(*it);
@@ -243,7 +257,8 @@ void state::process_persistent_tuple(db::node *target_node, full_tuple *stpl,
          else {
             matcher->new_persistent_fact(pred->get_id());
 
-            if (!is_new) vm::tuple::destroy(tpl, pred, gc_nodes);
+            if (!is_new)
+               vm::tuple::destroy(tpl, pred, &(target_node->alloc), gc_nodes);
          }
 
          delete stpl;
@@ -277,7 +292,7 @@ void state::process_persistent_tuple(db::node *target_node, full_tuple *stpl,
                       theProgram->get_predicate_bytecode(pred->get_id()), *this,
                       tpl, pred);
 #endif
-               deleter.perform_delete(pred, gc_nodes);
+               deleter.perform_delete(pred, &(target_node->alloc), gc_nodes);
             } else if (pred->is_cycle_pred()) {
                depth_counter *dc(deleter.get_depth_counter());
                assert(dc != nullptr);
@@ -295,13 +310,14 @@ void state::process_persistent_tuple(db::node *target_node, full_tuple *stpl,
                             theProgram->get_predicate_bytecode(pred->get_id()),
                             *this, tpl, pred);
 #endif
-                     deleter.perform_delete(pred, gc_nodes);
+                     deleter.perform_delete(pred, &(target_node->alloc),
+                                            gc_nodes);
                   }
                }
             }
             matcher->new_persistent_count(pred->get_id(), deleter.trie_size());
          }
-         vm::full_tuple::wipeout(stpl, gc_nodes);
+         vm::full_tuple::wipeout(stpl, &(target_node->alloc), gc_nodes);
          break;
    }
 }
@@ -423,8 +439,8 @@ static inline double compute_entropy(db::node *node, const predicate *pred,
          count_ints.clear();
       } break;
       case FIELD_FLOAT: {
-         for (unordered_map<float_val, size_t>::iterator
-                  it(count_floats.begin()),
+         for (unordered_map<float_val, size_t>::iterator it(
+                  count_floats.begin()),
               end(count_floats.end());
               it != end; ++it) {
             double items((double)it->second);
@@ -633,7 +649,8 @@ void state::run_node(db::node *node) {
    {
       process_action_tuples(node);
       process_incoming_tuples(node);
-      node_persistent_tuples.splice_back(node->store.incoming_persistent_tuples);
+      node_persistent_tuples.splice_back(
+          node->store.incoming_persistent_tuples);
 #ifdef DYNAMIC_INDEXING
       if (node->indexing_epoch != indexing_epoch) {
          node->linear.rebuild_index();
@@ -644,7 +661,6 @@ void state::run_node(db::node *node) {
       MUTEX_UNLOCK(node->main_lock, node_lock);
       // incoming facts have been processed, we release the main lock
       // but the database locks remains locked.
-      node->rounds++;
       do_persistent_tuples(node, &node_persistent_tuples);
    }
 
@@ -652,8 +668,11 @@ void state::run_node(db::node *node) {
    if (theProgram->has_thread_predicates() && sched->thread_node != node) {
       LOCK_STACK(thread_node_lock);
       MUTEX_LOCK(sched->thread_node->main_lock, thread_node_lock, node_lock);
+      process_action_tuples(sched->thread_node);
+      process_incoming_tuples(sched->thread_node);
       thread_persistent_tuples.splice_back(
           sched->thread_node->store.incoming_persistent_tuples);
+      sched->thread_node->unprocessed_facts = false;
       MUTEX_UNLOCK(sched->thread_node->main_lock, node_lock);
       do_persistent_tuples(sched->thread_node, &thread_persistent_tuples);
       matcher->add_thread(sched->thread_node->matcher);
@@ -707,14 +726,15 @@ void state::run_node(db::node *node) {
    }
 
    // unmark all thread facts and save state in 'thread_node'.
-   if (theProgram->has_thread_predicates())
+   if (theProgram->has_thread_predicates() && sched->thread_node != node)
       matcher->remove_thread(sched->thread_node->matcher);
 
    assert(node_persistent_tuples.empty());
    assert(thread_persistent_tuples.empty());
-   node->linear.improve_index();
-   if (node->rounds > 0 && node->rounds % 1 == 0) node->linear.cleanup_index();
+   node->manage_index();
    MUTEX_UNLOCK(node->database_lock, internal_lock_data);
+   if (theProgram->has_thread_predicates() && sched->thread_node != node)
+      sched->thread_node->manage_index();
 
    sync(node);
 
@@ -790,6 +810,7 @@ state::state(sched::thread *_sched)
       }
    }
 #endif
+   cleanup();
 }
 
 state::state() : state(nullptr) {}

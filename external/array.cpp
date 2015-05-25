@@ -57,5 +57,17 @@ array_size(EXTERNAL_ARG(a))
    RETURN_INT(a->get_size());
 }
 
+argument
+array_exists(EXTERNAL_ARG(a), EXTERNAL_ARG(item), EXTERNAL_ARG(ty))
+{
+   DECLARE_ARRAY(a);
+   DECLARE_ANY(item);
+   DECLARE_TYPE(ty);
+
+   const bool exists(a->exists(item, ty));
+
+   RETURN_BOOL(exists);
+}
+
 }
 }

@@ -1,0 +1,97 @@
+0
+!coord(0, 0)
+distance(0, [@0])
+!edge(@1, 1)
+!edge(@2, 1)
+new-distance(2, [@0,@1,@0])
+1
+!coord(0, 1)
+distance(1, [@1,@0])
+!edge(@0, 1)
+!edge(@3, 1)
+!edge(@4, 1)
+new-distance(3, [@1,@3,@1,@0])
+2
+_init()
+new-distance(1, [@2,@0])
+3
+!coord(0, 2)
+distance(2, [@3,@1,@0])
+!edge(@1, 1)
+!edge(@6, 1)
+!edge(@7, 1)
+new-distance(4, [@3,@6,@3,@1,@0])
+4
+_init()
+new-distance(2, [@4,@1,@0])
+5
+_init()
+6
+!coord(0, 3)
+distance(3, [@6,@3,@1,@0])
+!edge(@10, 1)
+!edge(@11, 1)
+!edge(@3, 1)
+new-distance(5, [@6,@10,@6,@3,@1,@0])
+7
+_init()
+new-distance(3, [@7,@3,@1,@0])
+8
+_init()
+9
+_init()
+10
+!coord(0, 4)
+distance(4, [@10,@6,@3,@1,@0])
+!edge(@15, 1)
+!edge(@6, 1)
+new-distance(6, [@10,@15,@10,@6,@3,@1,@0])
+11
+_init()
+new-distance(4, [@11,@6,@3,@1,@0])
+new-distance(6, [@11,@15,@10,@6,@3,@1,@0])
+12
+_init()
+13
+_init()
+14
+_init()
+15
+!coord(1, 4)
+distance(5, [@15,@10,@6,@3,@1,@0])
+!edge(@10, 1)
+!edge(@11, 1)
+!edge(@19, 1)
+new-distance(7, [@15,@19,@15,@10,@6,@3,@1,@0])
+16
+_init()
+new-distance(7, [@16,@19,@15,@10,@6,@3,@1,@0])
+17
+_init()
+18
+_init()
+19
+!coord(2, 4)
+distance(6, [@19,@15,@10,@6,@3,@1,@0])
+!edge(@15, 1)
+!edge(@16, 1)
+!edge(@22, 1)
+new-distance(8, [@19,@22,@19,@15,@10,@6,@3,@1,@0])
+20
+_init()
+new-distance(8, [@20,@22,@19,@15,@10,@6,@3,@1,@0])
+21
+_init()
+22
+!coord(3, 4)
+distance(7, [@22,@19,@15,@10,@6,@3,@1,@0])
+!edge(@19, 1)
+!edge(@20, 1)
+!edge(@24, 1)
+23
+_init()
+24
+!coord(4, 4)
+distance(8, [@24,@22,@19,@15,@10,@6,@3,@1,@0])
+!edge(@22, 1)
+!edge(@23, 1)

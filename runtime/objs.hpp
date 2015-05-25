@@ -6,12 +6,14 @@
 #include <string>
 #include <stack>
 #include <list>
+#include <set>
 
 #include "utils/types.hpp"
 #include "utils/serialization.hpp"
 #include "mem/base.hpp"
 #include "vm/types.hpp"
 #include "runtime/ref_base.hpp"
+#include "utils/hash.hpp"
 
 #include "vm/defs.hpp"
 
@@ -51,6 +53,7 @@ inline void decrement_runtime_data(const vm::tuple_field& f, const vm::type *t,
 #include "runtime/array.hpp"
 #include "runtime/struct.hpp"
 #include "runtime/string.hpp"
+#include "runtime/set.hpp"
 
 }
 

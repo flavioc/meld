@@ -1,0 +1,63 @@
+
+type left(node, node).
+type right(node, node).
+type linear value(node, int Key, int Value).
+type linear lookup(node, int Key, int Iteration).
+type linear replace(node, int Key, int NewValue, int Iteration).
+type linear do-replace(node, int Key, int NewValue, int Iteration).
+type linear do-lookup(node, int Key, int Iteration).
+type linear found-next(node, int Value, int NextIteration).
+type linear found(node, int Value).
+
+compact left.
+compact right.
+
+replace(A, Key, NewValue, It),
+value(A, Key, Value)
+   -o found-next(A, NewValue, It),
+      value(A, Key, NewValue).
+
+replace(A, MyKey, NewValue, It),
+value(A, Key, Value),
+!left(A, L),
+MyKey < Key
+   -o replace(L, MyKey, NewValue, It),
+      value(A, Key, Value).
+
+replace(A, MyKey, NewValue, It),
+value(A, Key, Value),
+!right(A, R),
+MyKey > Key
+   -o replace(R, MyKey, NewValue, It),
+      value(A, Key, Value).
+
+lookup(A, Key, It),
+value(A, Key, Value)
+   -o found-next(A, Value, It),
+      value(A, Key, Value).
+
+lookup(A, MyKey, It),
+value(A, Key, Value),
+!left(A, L),
+MyKey < Key
+   -o lookup(L, MyKey, It),
+      value(A, Key, Value).
+
+lookup(A, MyKey, It),
+value(A, Key, Value),
+!right(A, R),
+MyKey > Key
+   -o lookup(R, MyKey, It),
+      value(A, Key, Value).
+
+found-next(A, B, It),
+do-lookup(A, X, It + 1)
+   -o found(A, B),
+      lookup(@0, X, It + 1).
+
+found-next(A, B, It),
+do-replace(A, X, New, It + 1)
+   -o found(A, B),
+      replace(@0, X, New, It + 1). 
+
+found-next(A, B, It) -o found(A, B).

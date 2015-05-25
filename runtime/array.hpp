@@ -56,6 +56,16 @@ struct array
          remove(this);
       }
 
+      inline bool exists(const vm::tuple_field f, const vm::type *typ) const
+      {
+         const size_t size(lookup_type_size(typ->get_type()));
+         for(size_t i(0); i < size; ++i) {
+            if(memcmp(&f, &elems[i], size) == 0)
+               return true;
+         }
+         return false;
+      }
+
       inline void add(const vm::tuple_field f, vm::type *type)
       {
          if(size == cap) {
@@ -138,7 +148,7 @@ struct array
          else
             a->cap = old->cap;
          a->size = old->size;
-         a->elems = mem::allocator<vm::tuple_field>().allocate(old->cap);
+         a->elems = mem::allocator<vm::tuple_field>().allocate(a->cap);
          memcpy(a->elems, old->elems, sizeof(vm::tuple_field) * old->size);
          a->elems[a->size] = f;
          a->size++;

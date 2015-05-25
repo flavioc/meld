@@ -9,7 +9,7 @@ using namespace std;
 persistent_store::delete_info
 persistent_store::delete_tuple(vm::tuple *tuple, vm::predicate *pred, const depth_t depth)
 {
-   tuple_trie *tr(get_storage(pred));
+   tuple_trie *tr(get_trie(pred));
    
    return tr->delete_tuple(tuple, pred, depth);
 }
@@ -17,7 +17,8 @@ persistent_store::delete_tuple(vm::tuple *tuple, vm::predicate *pred, const dept
 #ifndef COMPILED_NO_AGGREGATES
 agg_configuration*
 persistent_store::add_agg_tuple(vm::tuple *tuple, predicate *pred,
-      const depth_t depth, candidate_gc_nodes& gc_nodes, const derivation_direction dir)
+      const depth_t depth, const derivation_direction dir,
+      mem::node_allocator *alloc, candidate_gc_nodes& gc_nodes)
 {
    predicate_id pred_id(pred->get_persistent_id());
 #ifdef COMPILED
@@ -35,29 +36,30 @@ persistent_store::add_agg_tuple(vm::tuple *tuple, predicate *pred,
       agg = it->second;
 #endif
 
-   return agg->add_to_set(tuple, pred, dir, depth, gc_nodes);
+   return agg->add_to_set(tuple, pred, dir, depth, alloc, gc_nodes);
 }
 
 agg_configuration*
 persistent_store::remove_agg_tuple(vm::tuple *tuple, vm::predicate *pred,
-      const depth_t depth, candidate_gc_nodes& gc_nodes)
+      const depth_t depth, mem::node_allocator *alloc, candidate_gc_nodes& gc_nodes)
 {
-   return add_agg_tuple(tuple, pred, depth, gc_nodes, NEGATIVE_DERIVATION);
+   return add_agg_tuple(tuple, pred, depth, NEGATIVE_DERIVATION, alloc, gc_nodes);
 }
 #endif
 
 full_tuple_list
-persistent_store::end_iteration()
+persistent_store::end_iteration(mem::node_allocator *alloc)
 {
    full_tuple_list ret;
+   (void)alloc;
 #ifndef COMPILED_NO_AGGREGATES
    // generate possible aggregates
    
 #ifdef COMPILED
    for(size_t i(0); i < COMPILED_NUM_TRIES; ++i) {
       tuple_aggregate *agg(aggs[i]);
-      if(aggs) {
-         full_tuple_list ls(agg->generate());
+      if(agg) {
+         full_tuple_list ls(agg->generate(alloc));
          for(auto && l : ls) {
             (l)->set_as_aggregate();
             ret.push_back(l);
@@ -69,7 +71,7 @@ persistent_store::end_iteration()
    {
       tuple_aggregate *agg(elem.second);
       
-      full_tuple_list ls(agg->generate());
+      full_tuple_list ls(agg->generate(alloc));
 
       for(auto && l : ls) {
          (l)->set_as_aggregate();
@@ -83,25 +85,27 @@ persistent_store::end_iteration()
 }
 
 void
-persistent_store::delete_by_leaf(predicate *pred, tuple_trie_leaf *leaf, const depth_t depth, candidate_gc_nodes& gc_nodes)
+persistent_store::delete_by_leaf(predicate *pred, tuple_trie_leaf *leaf, const depth_t depth,
+      mem::node_allocator *alloc, candidate_gc_nodes& gc_nodes)
 {
-   tuple_trie *tr(get_storage(pred));
+   tuple_trie *tr(get_trie(pred));
 
-   tr->delete_by_leaf(leaf, pred, depth, gc_nodes);
+   tr->delete_by_leaf(leaf, pred, depth, alloc, gc_nodes);
 }
 
 void
-persistent_store::delete_by_index(predicate *pred, const match& m, candidate_gc_nodes& gc_nodes)
+persistent_store::delete_by_index(predicate *pred, const match& m,
+      mem::node_allocator *alloc, candidate_gc_nodes& gc_nodes)
 {
-   tuple_trie *tr(get_storage(pred));
+   tuple_trie *tr(get_trie(pred));
    
-   tr->delete_by_index(pred, m, gc_nodes);
+   tr->delete_by_index(pred, m, alloc, gc_nodes);
 
 #ifdef COMPILED
 #ifndef COMPILED_NO_AGGREGATES
-   auto *agg(aggs[pred->get_id()]);
+   auto *agg(aggs[pred->get_persistent_id()]);
    if(agg) {
-      agg->delete_by_index(m, gc_nodes);
+      agg->delete_by_index(m, alloc, gc_nodes);
    }
 #endif
 #else
@@ -109,7 +113,7 @@ persistent_store::delete_by_index(predicate *pred, const match& m, candidate_gc_
    
    if(it != aggs.end()) {
       tuple_aggregate *agg(it->second);
-      agg->delete_by_index(m, gc_nodes);
+      agg->delete_by_index(m, alloc, gc_nodes);
    }
 #endif
 }
@@ -117,27 +121,32 @@ persistent_store::delete_by_index(predicate *pred, const match& m, candidate_gc_
 size_t
 persistent_store::count_total(const predicate* pred) const
 {
-   tuple_trie *tr(get_storage(pred));
-
-   return tr->size();
+   if(pred->is_compact_pred())
+      return get_array(pred)->size();
+   else
+      return get_trie(pred)->size();
 }
 
 void
-persistent_store::wipeout(candidate_gc_nodes& gc_nodes)
+persistent_store::wipeout(mem::node_allocator *alloc, candidate_gc_nodes& gc_nodes)
 {
    for(auto *pred : vm::theProgram->persistent_predicates) {
-      tuple_trie *tr(get_storage(pred));
-      tr->wipeout(pred, gc_nodes);
+      if(pred->is_compact_pred())
+         get_array(pred)->wipeout(pred, alloc, gc_nodes);
+      else {
+         tuple_trie *tr(get_trie(pred));
+         tr->wipeout(pred, alloc, gc_nodes);
 #ifndef COMPILED
-      mem::allocator<tuple_trie>().destroy(tr);
+         mem::allocator<tuple_trie>().destroy(tr);
 #endif
+      }
    }
 #ifdef COMPILED
 #ifndef COMPILED_NO_AGGREGATES
    for(size_t i(0); i < COMPILED_NUM_TRIES; ++i) {
       tuple_aggregate *agg(aggs[i]);
       if(agg) {
-         agg->wipeout(gc_nodes);
+         agg->wipeout(alloc, gc_nodes);
          delete agg;
       }
    }
@@ -146,7 +155,7 @@ persistent_store::wipeout(candidate_gc_nodes& gc_nodes)
    if(theProgram->has_aggregates()) {
       for(auto & elem : aggs) {
          tuple_aggregate *agg(elem.second);
-         agg->wipeout(gc_nodes);
+         agg->wipeout(alloc, gc_nodes);
          delete agg;
       }
    }
@@ -159,17 +168,26 @@ persistent_store::wipeout(candidate_gc_nodes& gc_nodes)
 vector<string>
 persistent_store::dump(const predicate *pred) const
 {
-   tuple_trie *tr(get_storage(pred));
-   if(!tr->empty())
-      return tr->get_print_strings(pred);
+   if(pred->is_compact_pred()) {
+      array *a(get_array(pred));
+      return a->get_print_strings(pred);
+   } else {
+      tuple_trie *tr(get_trie(pred));
+      if(!tr->empty())
+         return tr->get_print_strings(pred);
+   }
    return vector<string>();
 }
 
 vector<string>
 persistent_store::print(const predicate *pred) const
 {
-   tuple_trie *tr(get_storage(pred));
-   if(!tr->empty())
-         return tr->get_print_strings(pred);
+   if(pred->is_compact_pred())
+      return get_array(pred)->get_print_strings(pred);
+   else {
+      tuple_trie *tr(get_trie(pred));
+      if(!tr->empty())
+            return tr->get_print_strings(pred);
+   }
    return vector<string>();
 }

@@ -22,10 +22,12 @@ type *TYPE_ANY(nullptr);
 type *TYPE_STRUCT(nullptr);
 type *TYPE_LIST(nullptr);
 type *TYPE_ARRAY(nullptr);
+type *TYPE_SET(nullptr);
 type *TYPE_TYPE(nullptr);
 list_type *TYPE_LIST_INT(nullptr);
 list_type *TYPE_LIST_FLOAT(nullptr);
 list_type *TYPE_LIST_NODE(nullptr);
+list_type *TYPE_LIST_THREAD(nullptr);
 array_type *TYPE_ARRAY_INT(nullptr);
 static bool types_initiated(false);
 
@@ -47,10 +49,12 @@ init_types(void)
    TYPE_STRUCT = new type(FIELD_STRUCT);
    TYPE_LIST = new type(FIELD_LIST);
    TYPE_ARRAY = new type(FIELD_ARRAY);
+   TYPE_SET = new type(FIELD_SET);
    TYPE_TYPE = new type(FIELD_ANY);
    TYPE_LIST_INT = new list_type(TYPE_INT);
    TYPE_LIST_FLOAT = new list_type(TYPE_FLOAT);
    TYPE_LIST_NODE = new list_type(TYPE_NODE);
+   TYPE_LIST_THREAD = new list_type(TYPE_THREAD);
    TYPE_ARRAY_INT = new array_type(TYPE_INT);
 }
    
@@ -71,6 +75,7 @@ field_type_size(field_type type)
       case FIELD_STRUCT:
       case FIELD_ARRAY:
       case FIELD_THREAD:
+      case FIELD_SET:
 			return sizeof(ptr_val);
       
       default:
@@ -88,10 +93,12 @@ field_type_string(field_type type)
       case FIELD_INT: return string("int");
       case FIELD_FLOAT: return string("float");
       case FIELD_NODE: return string("node");
+      case FIELD_THREAD: return string("thread");
 		case FIELD_STRING: return string("string");
       case FIELD_LIST: return string("list");
       case FIELD_STRUCT: return string("struct");
       case FIELD_ARRAY: return string("array");
+      case FIELD_SET: return string("set");
       default:
          throw type_error("Unrecognized field type " + to_string(type) + " (field_type_string)");
 	}

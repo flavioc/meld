@@ -18,6 +18,7 @@ namespace vm {
 #define PRED_REUSED 0x20
 #define PRED_CYCLE 0x40
 #define PRED_THREAD 0x80
+#define PRED_COMPACT 0x01
 #define PRED_AGG_LOCAL 0x01
 #define PRED_AGG_REMOTE 0x02
 #define PRED_AGG_REMOTE_AND_SELF 0x04
@@ -57,6 +58,11 @@ type* read_type_from_reader(code_reader& read, vm::program* prog) {
          byte id;
          read.read_type<byte>(&id);
          return new array_type(prog->get_type(id));
+      }
+      case FIELD_SET: {
+         byte id;
+         read.read_type<byte>(&id);
+         return new set_type(prog->get_type(id));
       }
       default:
          assert(false);
@@ -119,6 +125,12 @@ predicate* predicate::make_predicate_from_reader(
    pred->is_cycle = prop & PRED_CYCLE;
    pred->is_thread = prop & PRED_THREAD;
 
+   if(VERSION_AT_LEAST(0, 13)) {
+      read.read_type<byte>(&prop);
+      if(prop & PRED_COMPACT)
+         pred->is_compact = true;
+   }
+
    // get aggregate information, if any
    byte agg;
    read.read_type<byte>(&agg);
@@ -136,9 +148,8 @@ predicate* predicate::make_predicate_from_reader(
    if (VERSION_AT_LEAST(0, 12)) {
       byte field_index;
       read.read_type<byte>(&field_index);
-      if (field_index != 0) {
+      if (field_index != 0)
          pred->store_as_hash_table(field_index - 1);
-      }
    }
 
    // read number of fields
@@ -286,6 +297,7 @@ void predicate::print(ostream& cout) const {
    if (is_reused) cout << ",reused";
    if (is_cycle) cout << ",cycle";
    if (is_thread) cout << ",thread";
+   if (is_compact) cout << ",compact";
 
    cout << "]";
 

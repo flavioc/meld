@@ -5,6 +5,8 @@ type linear uncolored(node).
 type linear colored(node, int).
 type linear fail(node).
 
+compact edge.
+
 fun next(int X) : int = if X <> 1 then 1 else 2 end.
 
 !edge(@1, @2).

@@ -1,0 +1,64 @@
+
+type route edge(node, node).
+type linear value(node, int).
+type linear search(node, int, list int).
+type linear do-search(node, int).
+type linear do-search2(node, int).
+type linear found(thread, int).
+type linear not-found(node, int).
+type linear thread-search(thread, int, list int, list int, thread).
+type linear remove-thread-search(thread, int, int).
+type linear visited(node, int).
+type linear signal-thread(thread, int).
+type linear empty(thread, int).
+
+compact edge.
+index do-search/2.
+index thread-search/2.
+index visited/2.
+
+remove-thread-search(A, Id, Val),
+thread-search(A, Id, ToFind, Done, Owner),
+Removed = lremove(ToFind, Val)
+   -o thread-search(A, Id, Removed, [Val | Done], Owner),
+      (if Removed = [] then empty(A, Id) otherwise 1 end).
+      
+empty(T, Id)
+   -o {B, Tid | !other-thread(T, B, Tid) | signal-thread(B, Id)},
+      found(T, Id).
+
+ signal-thread(T, Id),
+ thread-search(T, Id, ToFind, Done, Owner)
+   -o thread-search(T, Id, [], Done, Owner).
+
+search(A, Id, ToFind),
+!thread-list(T, L),
+Owner = lnth(L, Id % @cpus)
+   -o {T2, Tid | !other-thread(T, T2, Tid) | thread-search(T2, Id, ToFind, [], Owner)},
+      thread-search(T, Id, ToFind, [], Owner),
+      do-search(A, Id).
+
+do-search(A, Id), do-search(A, Id) -o do-search(A, Id).
+
+do-search(A, Id),
+visited(A, Id)
+   -o visited(A, Id).
+
+thread-search(T, Id, [], Done, Owner), do-search(A, Id) -o thread-search(T, Id, [], Done, Owner).
+
+do-search(A, Id),
+thread-search(T, Id, ToFind, Done, Owner),
+ToFind <> [],
+value(A, Val),
+Val in ToFind,
+Rest = lremove(ToFind, Val)
+   -o value(A, Val),
+      thread-search(T, Id, Rest, [Val | Done], Owner),
+      (if Owner <> T then remove-thread-search(Owner, Id, Val) otherwise 1 end),
+      (if Owner = T && Rest = [] then empty(T, Id) otherwise 1 end),
+      {B | Rest <> [], !edge(A, B) | do-search(B, Id)},
+      visited(A, Id).
+
+do-search(A, Id)
+   -o visited(A, Id),
+      {B | !edge(A, B) | do-search(B, Id)}.

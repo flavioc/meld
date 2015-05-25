@@ -3,6 +3,7 @@ type linear path(node, node, float, int).
 priority @order @asc.
 index path/2.
 
+compact edge.
 const used = 1.
 const notused = 0.
 

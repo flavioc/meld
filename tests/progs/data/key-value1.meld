@@ -1,0 +1,12 @@
+value(@0, 1, 16).
+!left(@0, @1).
+value(@1, 0, 53).
+!right(@0, @2).
+value(@2, 2, 25).
+lookup(@0, 2, 0).
+do-replace(@2, 2, 9562, 1).
+do-lookup(@2, 2, 2).
+lookup(@0, 0, 0).
+do-lookup(@1, 0, 1).
+do-lookup(@1, 0, 2).
+do-lookup(@1, 0, 3).

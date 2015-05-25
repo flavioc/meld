@@ -1,0 +1,47 @@
+
+type route edge(node, node).
+type linear value(node, int).
+type linear search(node, int, list int).
+type linear do-search(node, int, node, list int).
+type linear lookup(node, int, list int, list int).
+type linear new-lookup(node, int, int).
+type linear visited(node, int).
+type linear found(node, int, list int).
+
+compact edge.
+index visited/2.
+index do-search/2.
+index lookup/2.
+
+search(A, Id, ToFind)
+   -o do-search(A, Id, A, ToFind),
+      lookup(A, Id, ToFind, []).
+
+lookup(A, Id, ToFind, Found),
+new-lookup(A, Id, Val)
+   -o lookup(A, Id, lremove(ToFind, Val), [Val | Found]).
+
+lookup(A, Id, [], Found)
+   -o found(A, Id, Found).
+
+do-search(A, Id, Node, ToFind),
+do-search(A, Id, _, _)
+   -o do-search(A, Id, Node, ToFind).
+
+do-search(A, Id, Node, ToFind),
+visited(A, Id)
+   -o visited(A, Id).
+
+do-search(A, Id, Node, ToFind),
+value(A, Val),
+Val in ToFind,
+NToFind = lremove(ToFind, Val)
+   -o value(A, Val),
+      visited(A, Id),
+      new-lookup(Node, Id, Val),
+      {B | !edge(A, B) | do-search(B, Id, Node, NToFind)}.
+
+do-search(A, Id, Node, ToFind)
+   -o {B | !edge(A, B) | do-search(B, Id, Node, ToFind)},
+      visited(A, Id).
+

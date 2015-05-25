@@ -4,6 +4,7 @@
 #include "utils/utils.hpp"
 #include "db/trie.hpp"
 #include "db/node.hpp"
+#include "thread/thread.hpp"
 #include "db/agg_configuration.hpp"
 
 using namespace vm;
@@ -145,6 +146,9 @@ trie_node *trie_node::match(const tuple_field &field, type *typ,
          case FIELD_NODE:
             next = hash->get_node(FIELD_NODE(field));
             break;
+         case FIELD_THREAD:
+            next = hash->get_thread(FIELD_THREAD(field));
+            break;
          case FIELD_STRING:
             next = hash->get_uint(FIELD_PTR(field));
             break;
@@ -154,7 +158,9 @@ trie_node *trie_node::match(const tuple_field &field, type *typ,
             break;
          }
          default:
+            abort();
             assert(false);
+            break;
       }
    }
 
@@ -174,6 +180,9 @@ trie_node *trie_node::match(const tuple_field &field, type *typ,
             break;
          case FIELD_NODE:
             if (FIELD_NODE(f) == FIELD_NODE(field)) return next;
+            break;
+         case FIELD_THREAD:
+            if (FIELD_THREAD(f) == FIELD_THREAD(field)) return next;
             break;
          case FIELD_STRING:
             if (FIELD_STRING(f) == FIELD_STRING(field)) return next;
@@ -211,7 +220,9 @@ trie_node *trie_node::match(const tuple_field &field, type *typ,
          } break;
 
          default:
+            abort();
             assert(false);
+            break;
       }
 
       next = next->get_next();
@@ -267,9 +278,11 @@ trie_node *trie_node::insert(const tuple_field &field, type *t,
       case FIELD_INT:
       case FIELD_FLOAT:
       case FIELD_NODE:
+      case FIELD_THREAD:
          f = field;
          break;
       default:
+         abort();
          assert(false);
          break;
    }
@@ -308,8 +321,13 @@ trie_node *trie_node::insert(const tuple_field &field, type *t,
          case FIELD_NODE:
             hash->insert_node(FIELD_NODE(f), new_child);
             break;
+         case FIELD_THREAD:
+            hash->insert_thread(FIELD_THREAD(f), new_child);
+            break;
          default:
+            abort();
             assert(false);
+            break;
       }
    } else {
       new_child->next = child;
@@ -357,8 +375,13 @@ void trie_node::convert_hash(type *type) {
          case FIELD_NODE:
             hash->insert_node(FIELD_NODE(next->data), next);
             break;
+         case FIELD_THREAD:
+            hash->insert_thread(FIELD_THREAD(next->data), next);
+            break;
          default:
+            abort();
             assert(false);
+            break;
       }
 
       ++total;
@@ -383,6 +406,7 @@ trie_node::~trie_node(void) {}
 #else
 #define HASH_NODE(VAL) (std::hash<node_val>()(VAL))
 #endif
+#define HASH_THREAD(VAL) (thread_hash()((sched::thread*)VAL))
 
 trie_node *trie_hash::get_int(const int_val &val) const {
    return buckets[hash_item(HASH_INT(val))];
@@ -394,6 +418,10 @@ trie_node *trie_hash::get_float(const float_val &val) const {
 
 trie_node *trie_hash::get_node(const node_val &val) const {
    return buckets[hash_item(HASH_NODE(val))];
+}
+
+trie_node *trie_hash::get_thread(const node_val &val) const {
+   return buckets[hash_item(HASH_THREAD(val))];
 }
 
 trie_node *trie_hash::get_uint(const uint_val &val) const {
@@ -462,6 +490,21 @@ void trie_hash::insert_node(const node_val &val, trie_node *node) {
    buckets[bucket] = node;
 }
 
+void trie_hash::insert_thread(const thread_val& val, trie_node *node) {
+   const size_t bucket(hash_item(HASH_THREAD(val)));
+
+   assert(bucket < num_buckets);
+
+   trie_node *old(buckets[bucket]);
+
+   node->prev = nullptr;
+   node->next = old;
+   if (old) old->prev = node;
+   node->bucket = buckets + bucket;
+
+   buckets[bucket] = node;
+}
+
 void trie_hash::expand(void) {
    const size_t old_num_buckets(num_buckets);
    trie_node **old_buckets(buckets);
@@ -494,6 +537,7 @@ void trie_hash::expand(void) {
                insert_node(FIELD_NODE(next->data), next);
                break;
             default:
+               abort();
                assert(false);
                break;
          }
@@ -568,6 +612,7 @@ void trie::delete_path(trie_node *node) {
 
 // deletes everything below the 'node'
 size_t trie::delete_branch(trie_node *node, predicate *pred,
+                           mem::node_allocator *alloc,
                            candidate_gc_nodes &gc_nodes) {
    size_t count;
 
@@ -582,7 +627,7 @@ size_t trie::delete_branch(trie_node *node, predicate *pred,
 
       count = leaf->get_count();
 
-      leaf->destroy(pred, gc_nodes);
+      leaf->destroy(pred, alloc, gc_nodes);
       delete leaf;
       node->child = nullptr;
 
@@ -603,7 +648,7 @@ size_t trie::delete_branch(trie_node *node, predicate *pred,
             while (next != nullptr) {
                trie_node *tmp(next->next);
 
-               count += delete_branch(next, pred, gc_nodes);
+               count += delete_branch(next, pred, alloc, gc_nodes);
                delete next;
 
                next = tmp;
@@ -614,7 +659,7 @@ size_t trie::delete_branch(trie_node *node, predicate *pred,
       while (next != nullptr) {
          trie_node *tmp(next->get_next());
 
-         count += delete_branch(next, pred, gc_nodes);
+         count += delete_branch(next, pred, alloc, gc_nodes);
          delete next;
 
          next = tmp;
@@ -637,6 +682,7 @@ trie_node *trie::check_insert(void *data, predicate *pred,
                               bool &found) {
    if (mstk.empty()) {
       // 0-arity tuple
+      assert(pred->num_fields() == 0);
       if (!root.is_leaf()) {
          // branch not found
          found = false;
@@ -774,26 +820,28 @@ trie_node *trie::check_insert(void *data, predicate *pred,
 
 void trie::commit_delete(trie_node *node, predicate *pred,
                          const vm::ref_count dec,
+                         mem::node_allocator *alloc,
                          candidate_gc_nodes &gc_nodes) {
    assert(dec > 0);
    assert(node->is_leaf());
    assert(dec <= number_of_references);
    number_of_references -= dec;
-   inner_delete_by_leaf(node->get_leaf(), pred, 0, 0, gc_nodes);
+   inner_delete_by_leaf(node->get_leaf(), pred, 0, 0, alloc, gc_nodes);
    basic_invariants();
 }
 
 void trie::delete_by_leaf(trie_leaf *leaf, predicate *pred, const depth_t depth,
-                          candidate_gc_nodes &gc_nodes) {
+                          mem::node_allocator *alloc, candidate_gc_nodes &gc_nodes) {
    sanity_check();
    --number_of_references;
-   inner_delete_by_leaf(leaf, pred, 1, depth, gc_nodes);
+   inner_delete_by_leaf(leaf, pred, 1, depth, alloc, gc_nodes);
    sanity_check();
 }
 
 // we assume that number_of_references was decrement previous to this
 void trie::inner_delete_by_leaf(trie_leaf *leaf, predicate *pred,
                                 const ref_count count, const depth_t depth,
+                                mem::node_allocator *alloc,
                                 candidate_gc_nodes &gc_nodes) {
    if (count != 0)
       leaf->sub(depth, count);
@@ -829,7 +877,7 @@ void trie::inner_delete_by_leaf(trie_leaf *leaf, predicate *pred,
    // cout << this << " Total " << total << " root " << root << " node " << node
    // << endl;
 
-   leaf->destroy(pred, gc_nodes);
+   leaf->destroy(pred, alloc, gc_nodes);
    delete leaf;
    node->child = nullptr;
    delete_path(node);
@@ -839,6 +887,7 @@ void trie::inner_delete_by_leaf(trie_leaf *leaf, predicate *pred,
 }
 
 void trie::delete_by_index(predicate *pred, const match &m,
+                           mem::node_allocator *alloc,
                            candidate_gc_nodes &gc_nodes) {
    basic_invariants();
 
@@ -869,7 +918,9 @@ void trie::delete_by_index(predicate *pred, const match &m,
             node = node->get_by_node(FIELD_NODE(mfield));
             break;
          default:
+            abort();
             assert(false);
+            break;
       }
       if (node == nullptr) return;  // not found
    }
@@ -877,14 +928,14 @@ void trie::delete_by_index(predicate *pred, const match &m,
    assert(node != nullptr);
 
    // update number of tuples in this trie
-   number_of_references -= delete_branch(node, pred, gc_nodes);
+   number_of_references -= delete_branch(node, pred, alloc, gc_nodes);
    delete_path(node);
 
    basic_invariants();
 }
 
-void trie::wipeout(predicate *pred, candidate_gc_nodes &gc_nodes) {
-   delete_branch(&root, pred, gc_nodes);
+void trie::wipeout(predicate *pred, mem::node_allocator *alloc, candidate_gc_nodes &gc_nodes) {
+   delete_branch(&root, pred, alloc, gc_nodes);
    number_of_references = 0;
 }
 
@@ -1016,7 +1067,9 @@ void tuple_trie::do_visit(trie_node *n, const int tab, stack<type *> &s) const {
       } break;
       default:
          cout << "bad type " << endl;
+         abort();
          assert(false);
+         break;
    }
 
    if (!n->is_leaf()) {
@@ -1189,7 +1242,9 @@ match_begin:
             }
             goto try_again;
          default:
+            abort();
             assert(false);
+            break;
       }
    } else {
       if (parent->is_hashed()) {
@@ -1338,13 +1393,14 @@ agg_trie_leaf *agg_trie::find_configuration(vm::tuple *tpl,
 }
 
 agg_trie_iterator agg_trie::erase(agg_trie_iterator &it, predicate *pred,
+                                  mem::node_allocator *alloc,
                                   candidate_gc_nodes &gc_nodes) {
    agg_trie_leaf *leaf(it.current_leaf);
    agg_trie_leaf *next_leaf((agg_trie_leaf *)leaf->next);
    trie_node *node(leaf->node);
 
    leaf->set_zero_refs();
-   commit_delete(node, pred, 1, gc_nodes);
+   commit_delete(node, pred, 1, alloc, gc_nodes);
 
    return agg_trie_iterator(next_leaf);
 }

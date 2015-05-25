@@ -1,0 +1,19 @@
+0
+!left(@2)
+!right(@1)
+value(1, 16)
+1
+found(25)
+found(9562)
+found(9562)
+value(2, 9562)
+2
+found(53)
+found(53)
+found(53)
+found(53)
+value(0, 53)
+3
+cache(0, @2, 3)
+cache(2, @1, 2)
+total(2, 4)
