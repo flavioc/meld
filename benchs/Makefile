@@ -29,12 +29,12 @@ SEARCH_TWITTER = search-parallel-twitter search-threads-twitter
 SEARCH_POKEC = search-parallel-pokec search-threads-pokec
 SHORTEST_USAIRPORTS = shortest-usairports500 shortest-usairports500-coord
 SHORTEST_OCLINKS = shortest-oclinks shortest-oclinks-coord
-SHORTEST = shortest-email \
-			  shortest-email-coord \
+SHORTEST_USPOWERGRID = shortest-uspowergrid shortest-uspowergrid-coord
+SHORTEST_EMAIL = shortest-email shortest-email-coord
+SHORTEST = $(SHORTEST_EMAIL) \
 			  shortest-twitter \
 			  shortest-twitter-coord \
-			  shortest-uspowergrid \
-			  shortest-uspowergrid-coord 
+			  $(SHORTEST_USPOWERGRID)
 
 THREAD_PROGRAMS = $(QUEENS) $(GGC) $(PAGERANK) $(HT) $(MINMAX) $(SHORTEST)
 
@@ -77,6 +77,10 @@ shortest-usairports:
 	@bash $(SCRIPT) $(SHORTEST_USAIRPORTS)
 shortest-oclinks:
 	@bash $(SCRIPT) $(SHORTEST_OCLINKS)
+shortest-uspowergrid:
+	@bash $(SCRIPT) $(SHORTEST_USPOWERGRID)
+shortest-email:
+	@bash $(SCRIPT) $(SHORTEST_EMAIL)
 
 run:
 	@bash $(SCRIPT) $(TARGET)
