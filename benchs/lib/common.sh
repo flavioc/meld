@@ -1,5 +1,6 @@
 
 INSTRUMENT_DIR=$PWD/instrumentation_files
+CPUS=$(getconf _NPROCESSORS_ONLN)
 
 time_run ()
 {
@@ -59,8 +60,9 @@ compile_test () {
    CURRENT_DIR="$PWD"
    cd ..
    make clean 2>&1 > /dev/null || exit 1
-   make PROGRAM="$CURRENT_DIR/$CPP" target 2>&1 > /dev/null || exit 1
+   make PROGRAM="$CURRENT_DIR/$CPP" -j$CPUS target 2>&1 > /dev/null || exit 1
    mv target $CURRENT_DIR/$TARGET
+   echo $CURRENT_DIR/$TARGET
    cd $CURRENT_DIR
 }
 
@@ -72,6 +74,6 @@ ensure_vm () {
    echo "=> Compiling the virtual machine..."
    cd ..
    make clean 2>&1 > /dev/null || exit 1
-   make 2>&1 > /dev/null || exit 1
+   make -j$CPUS 2>&1 > /dev/null || exit 1
    cd $CURRENT_DIR
 }
