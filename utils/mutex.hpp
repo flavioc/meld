@@ -64,6 +64,7 @@ struct lock_stat {
    uint64_t set_affinity_lock_ok{0}, set_affinity_lock_fail{0};
    uint64_t heap_operations{0}, normal_operations{0};
    uint64_t facts_derived{0};
+   uint64_t allocator_lock_ok{0}, allocator_lock_fail{0};
 };
 
 extern __thread lock_stat *_stat;
