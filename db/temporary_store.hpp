@@ -66,7 +66,7 @@ struct temporary_store
 
       ~temporary_store(void)
       {
-#ifdef COMPILED
+#ifndef COMPILED
          for(size_t i(0); i < vm::theProgram->num_linear_predicates(); ++i)
             mem::allocator<tuple_list>().destroy(incoming + i);
          mem::allocator<tuple_list>().deallocate(incoming, vm::theProgram->num_linear_predicates());

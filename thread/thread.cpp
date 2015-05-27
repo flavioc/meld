@@ -640,6 +640,6 @@ thread::~thread(void) {
    bitmap::destroy(comm_threads, All->NUM_THREADS_NEXT_UINT);
    assert(tstate == THREAD_INACTIVE);
    if (theProgram->has_thread_predicates())
-      node_handler.delete_node(thread_node);
+      delete_node(thread_node);
 }
 }
