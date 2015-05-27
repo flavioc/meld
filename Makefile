@@ -84,15 +84,9 @@ WARNINGS = -Wall -Wextra
 CFLAGS = -std=c++1y $(ARCH) $(PROFILING) \
 			$(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) \
 			$(INCLUDE_DIRS) $(FLAGS) #-fno-gcse -fno-crossjumping
-LIBRARIES = -lm -lreadline -ldl $(LIBS) -pthread
-
-GCC_MINOR    := $(shell $(CXX) -v 2>&1 | \
-													grep " version " | cut -d' ' -f3  | cut -d'.' -f2)
+LIBRARIES = -lm -lreadline -ldl $(LIBS)
 
 CLANG = $(shell $(CXX) -v 2>&1 | grep LLVM)
-ifneq ($(CLANG), )
-	CFLAGS += -Qunused-arguments
-endif
 ifeq ($(CLANG), )
 	LIBRARIES += -lpthread
 endif

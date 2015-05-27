@@ -2,7 +2,7 @@ language: cpp
 script:
    - make -j8
    - make test
-   - cd tests && make serial
+   - cd tests && make serial && cd ..
 compiler: g++
 before_install:
   # g++4.8.1
