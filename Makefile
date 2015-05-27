@@ -90,6 +90,7 @@ LIBRARIES = -lm -ldl $(LIBS)
 CLANG = $(shell $(CXX) -v 2>&1 | grep LLVM)
 ifeq ($(CLANG), )
 	LIBRARIES += -lpthread -pthread
+	CFLAGS += -Wno-deprecated
 endif
 
 CXXFLAGS = $(CFLAGS)
