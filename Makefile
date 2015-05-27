@@ -85,12 +85,11 @@ WARNINGS = -Wall -Wextra
 CFLAGS = -std=c++1y $(ARCH) $(PROFILING) \
 			$(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) \
 			$(INCLUDE_DIRS) $(FLAGS) #-fno-gcse -fno-crossjumping
-LIBRARIES = -lm -ldl $(LIBS) -pthread
-
+LIBRARIES = -lm -ldl $(LIBS)
 
 CLANG = $(shell $(CXX) -v 2>&1 | grep LLVM)
 ifeq ($(CLANG), )
-	LIBRARIES += -lpthread
+	LIBRARIES += -lpthread -pthread
 endif
 
 CXXFLAGS = $(CFLAGS)
