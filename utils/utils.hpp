@@ -14,7 +14,13 @@ namespace utils {
 #define true_likely(x) __builtin_expect(!!(x), 1)
 #define false_likely(x) __builtin_expect(!!(x), 0)
 #define cmpxchg(P, O, N) __sync_val_compare_and_swap((P), (O), (N))
+#if defined(__x86_64__) || defined(_M_X64)
 #define BITMAP_TYPE uint64_t
+#elif defined(__i386) || defined(_M_IX86)
+#define BITMAP_TYPE uint32_t
+#else
+#error "could not deduce architecture"
+#endif
 #define BITMAP_BITS (sizeof(BITMAP_TYPE) * 8)
 
 void set_random_generator(randgen *);

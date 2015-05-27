@@ -15,7 +15,7 @@ namespace vm {
 
 typedef enum { POSITIVE_DERIVATION, NEGATIVE_DERIVATION } derivation_direction;
 
-typedef unsigned short field_num;
+typedef uint16_t field_num;
 typedef uint32_t uint_val;
 typedef int32_t int_val;
 typedef double float_val;
@@ -24,7 +24,7 @@ typedef uint64_t node_val;
 typedef uint64_t thread_val;
 typedef bool bool_val;
 typedef unsigned char predicate_id;
-typedef unsigned short process_id;
+typedef uint16_t process_id;
 typedef uint64_t ref_count;
 typedef unsigned char byte_code_el;
 typedef byte_code_el* byte_code;
@@ -43,8 +43,8 @@ static const ptr_val null_ptr_val = 0;
 
 static_assert(sizeof(ptr_val) == sizeof(vm::node_val),
               "ptr_val and node_val must have the same size.");
-static_assert(sizeof(ptr_val) == sizeof(void*),
-              "ptr_val and void* must have the same size.");
+static_assert(sizeof(ptr_val) >= sizeof(void*),
+              "void* must be equal or smaller than ptr_val.");
 
 union tuple_field {
    bool_val bool_field;

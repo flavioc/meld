@@ -4,6 +4,7 @@ TARGETS = meld print
 include ./conf.mk
 
 OS = $(shell uname -s)
+SHELL := /bin/bash
 
 INCLUDE_DIRS = -I $(PWD)
 LIBRARY_DIRS =

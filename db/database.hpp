@@ -41,8 +41,6 @@ public:
 
    static_assert(sizeof(node::node_id) == sizeof(vm::node_val),
          "node_id must have the same size as node_val.");
-   static_assert(sizeof(vm::node_val) == sizeof(void*),
-         "node_val must have the size of a pointer.");
 
    static const size_t node_size = sizeof(node::node_id) * 2;
    size_t nodes_total{0};
