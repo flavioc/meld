@@ -87,13 +87,8 @@ CFLAGS = -std=c++1y $(ARCH) $(PROFILING) \
 			$(INCLUDE_DIRS) $(FLAGS) #-fno-gcse -fno-crossjumping
 LIBRARIES = -lm -ldl $(LIBS) -pthread
 
-GCC_MINOR    := $(shell $(CXX) -v 2>&1 | \
-													grep " version " | cut -d' ' -f3  | cut -d'.' -f2)
 
 CLANG = $(shell $(CXX) -v 2>&1 | grep LLVM)
-ifneq ($(CLANG), )
-	CFLAGS += -Qunused-arguments
-endif
 ifeq ($(CLANG), )
 	LIBRARIES += -lpthread
 endif
@@ -189,9 +184,6 @@ unit_tests/run: $(OBJS) unit_tests/run.cpp $(TEST_FILES)
 test: unit_tests/run
 	@./unit_tests/run
 
-depend:
-	makedepend -- $(CXXFLAGS) -- $(shell find . -name '*.cpp')
-
 modernize:
 	clang-modernize-3.5 -style=google -include . \
 		$(SRCS) \
@@ -206,6 +198,3 @@ modernize:
 		$(shell find utils -name '*.hpp') \
 		-exclude=vm/jump_table.hpp \
 		-- $(CXXFLAGS) $(LDFLAGS)
-
-# DO NOT DELETE
-
