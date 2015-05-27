@@ -1485,7 +1485,7 @@ static inline void execute_cpu_id(pcounter& pc, state& state) {
 #endif
 
    sched::thread* owner(node->get_owner());
-   state.set_int(dest_reg, owner->get_id());
+   state.set_thread(dest_reg, (vm::thread_val)owner);
 }
 
 static inline void execute_cpu_static(pcounter& pc, state& state) {
@@ -1559,9 +1559,8 @@ static inline void execute_facts_consumed(pcounter& pc, state& state) {
 static inline void execute_set_cpu_here(db::node* node, pcounter& pc,
                                         state& state) {
    const reg_num cpu_reg(pcounter_reg(pc + instr_size));
-   const int_val cpu(state.get_int(cpu_reg));
 
-   state.sched->set_node_cpu(node, cpu);
+   state.sched->set_node_cpu(node, (sched::thread*)state.get_thread(cpu_reg));
 }
 
 static inline void execute_node_priority(pcounter& pc, state& state) {

@@ -682,7 +682,6 @@ trie_node *trie::check_insert(void *data, predicate *pred,
                               bool &found) {
    if (mstk.empty()) {
       // 0-arity tuple
-      assert(pred->num_fields() == 0);
       if (!root.is_leaf()) {
          // branch not found
          found = false;

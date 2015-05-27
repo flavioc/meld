@@ -472,7 +472,7 @@ void thread::end(void) {
 }
 
 #ifndef COMPILED
-void thread::execute_const_code(void) {
+void thread::run_const_code(void) {
    theProgram->fix_const_references();
 
    // no node or tuple whatsoever
@@ -534,7 +534,7 @@ void thread::init(const size_t) {
    if(theProgram->has_const_code()) {
       sync = true;
       if(leader_thread())
-         execute_const_code();
+         run_const_code();
    }
 #endif
    if(sync)

@@ -435,7 +435,7 @@ public:
 
    void loop();
 #ifndef COMPILED
-	void execute_const_code();
+	void run_const_code();
 #endif
    void init(const size_t);
    
@@ -505,7 +505,7 @@ public:
    db::node* get_work(void);
    void end(void);
 
-   void set_node_cpu(db::node *, const vm::int_val);
+   void set_node_cpu(db::node *, sched::thread*);
    void set_node_static(db::node *);
    void set_node_moving(db::node *);
    void set_node_affinity(db::node *, db::node *);

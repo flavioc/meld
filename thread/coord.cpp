@@ -411,17 +411,10 @@ thread::move_node_to_new_owner(db::node *tn, thread *new_owner)
 }
 
 void
-thread::set_node_cpu(db::node *node, const int_val val)
+thread::set_node_cpu(db::node *node, sched::thread *new_owner)
 {
    if(!scheduling_mechanism)
       return;
-
-   if(val >= (int_val)All->NUM_THREADS) {
-      abort();
-      return;
-   }
-
-   thread *new_owner(static_cast<thread*>(All->SCHEDS[val]));
 
    set_node_owner(node, new_owner);
 }
