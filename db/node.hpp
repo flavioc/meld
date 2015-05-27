@@ -308,6 +308,8 @@ struct node {
       mem::allocator<node>().construct(p, id, translate);
       return p;
    }
+
+   ~node() {}
 };
 
 std::ostream &operator<<(std::ostream &, const node &);
