@@ -74,6 +74,7 @@ typedef external_function_ptr0 external_function_ptr;
 #define RETURN_STRUCT(X) RETURN_PTR(X)
 #define RETURN_ARRAY(X) RETURN_PTR(X)
 #define RETURN_SET(X) RETURN_PTR(X)
+#define RETURN_THREAD(X) RETURN_PTR(X)
 
 class external_function {
    private:

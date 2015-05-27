@@ -130,7 +130,7 @@ partition_vertical(EXTERNAL_ARG(x), EXTERNAL_ARG(y), EXTERNAL_ARG(lx), EXTERNAL_
    // if it's not divisible by NUM_THREADS, last thread will get the rest.
    const int_val ret(std::min(pos / part, (int_val)All->NUM_THREADS-1));
 
-   RETURN_INT(ret);
+   RETURN_THREAD(All->SCHEDS[ret]);
 }
 
 argument
@@ -149,7 +149,7 @@ partition_horizontal(EXTERNAL_ARG(x), EXTERNAL_ARG(y), EXTERNAL_ARG(lx), EXTERNA
    // if it's not divisible by NUM_THREADS, last thread will get the rest.
    const int_val ret(std::min(pos / part, (int_val)All->NUM_THREADS-1));
 
-   RETURN_INT(ret);
+   RETURN_THREAD(All->SCHEDS[ret]);
 }
 
 argument
@@ -194,7 +194,7 @@ partition_grid(EXTERNAL_ARG(x), EXTERNAL_ARG(y), EXTERNAL_ARG(lx), EXTERNAL_ARG(
    const int_val length_per_thread(max(1, total_length / (int_val)All->NUM_THREADS));
    const int_val ret(min((int_val)(All->NUM_THREADS-1), length_node / length_per_thread));
 
-   RETURN_INT(ret);
+   RETURN_THREAD(All->SCHEDS[ret]);
 }
 
 argument

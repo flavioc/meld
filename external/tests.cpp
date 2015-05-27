@@ -7,6 +7,8 @@ class ExternalTests : public TestFixture {
       void setUp(void)
       {
          vm::All = new vm::all();
+         for(size_t i(0); i < 16; ++i)
+            vm::All->SCHEDS.push_back((sched::thread*)i);
       }
 
       int partition_vertical(int x, int y, int lx, int ly)
@@ -20,7 +22,7 @@ class ExternalTests : public TestFixture {
          vm::argument _ly;
          _ly.int_field = ly;
          vm::argument r = vm::external::partition_vertical(_x, _y, _lx, _ly);
-         return r.int_field;
+         return (int)(r.ptr_field);
       }
 
       int partition_horizontal(int x, int y, int lx, int ly)
@@ -34,7 +36,7 @@ class ExternalTests : public TestFixture {
          vm::argument _ly;
          _ly.int_field = ly;
          vm::argument r = vm::external::partition_horizontal(_x, _y, _lx, _ly);
-         return r.int_field;
+         return (int)(r.ptr_field);
       }
 
       int partition_grid(int x, int y, int lx, int ly)
@@ -48,7 +50,7 @@ class ExternalTests : public TestFixture {
          vm::argument _ly;
          _ly.int_field = ly;
          vm::argument r = vm::external::partition_grid(_x, _y, _lx, _ly);
-         return r.int_field;
+         return (int)(r.ptr_field);
       }
 
       void testPartitionVertical(void)
