@@ -184,8 +184,10 @@ static inline void execute_send0(db::node *from, const vm::node_val dest_val,
              state.direction != POSITIVE_DERIVATION) {
             state.sched->new_work(state.node, dest, tuple, pred,
                                   state.direction, state.depth);
-         } else
+         } else {
+	    assert(dest);
             state.facts_to_send.add(dest, tuple, pred);
+	 }
 #else
          state.sched->new_work(state.node, dest, tuple, pred, state.direction,
                                state.depth);
