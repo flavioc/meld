@@ -756,6 +756,7 @@ bool state::sync(db::node *node) {
    for (size_t i(0); i < facts_to_send.size_initial; ++i) {
       buffer_node &ls(facts_to_send.initial[i].b);
       db::node *target(facts_to_send.initial[i].node);
+      assert(target);
       sched->new_work_list(node, target, ls);
       ret = true;
    }

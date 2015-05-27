@@ -32,7 +32,7 @@ struct buffer
 #define MAX_VM_BUFFER 8
 
    buffer_pair initial[MAX_VM_BUFFER];
-   size_t size_initial;
+   size_t size_initial{0};
    map_sends facts;
 
    inline bool lots_of_nodes() const { return size_initial == MAX_VM_BUFFER; }
@@ -53,7 +53,9 @@ struct buffer
 
    inline void add(db::node *n, vm::tuple *tpl, vm::predicate *pred) __attribute__((always_inline))
    {
+      assert(n);
       for(size_t i(0); i < size_initial; ++i) {
+         assert(initial[i].node);
          if(initial[i].node == n) {
             buffer_node &bn(initial[i].b);
             add_into_buffer_node(bn, tpl, pred);

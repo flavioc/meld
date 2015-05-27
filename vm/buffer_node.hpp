@@ -28,6 +28,8 @@ struct buffer_node {
       return count;
    }
 
+   inline bool empty() const { return size() == 0; }
+
    inline void clear() {
       ls.clear();
    }
