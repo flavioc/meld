@@ -9,7 +9,7 @@ SHELL := /bin/bash
 INCLUDE_DIRS = -I $(PWD)
 LIBRARY_DIRS =
 
-ARCH = -march=x86-64
+ARCH = -march=$(shell uname -m) -m$(shell getconf LONG_BIT)
 FLAGS =
 LIBS =
 PROFILING =
