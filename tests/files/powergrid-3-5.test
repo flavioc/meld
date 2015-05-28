@@ -1,0 +1,45 @@
+0
+capacity(85, 85)
+connected-to(@3, 85)
+connected-to-list([@3])
+fails(1)
+!generator-id(0)
+1
+capacity(76, 76)
+connected-to(@4, 76)
+connected-to-list([@4])
+fails(2)
+!generator-id(1)
+2
+capacity(121, 121)
+connected-to(@5, 43)
+connected-to(@6, 26)
+connected-to(@7, 52)
+connected-to-list([@6,@5,@7])
+fails(1)
+!generator-id(2)
+3
+connected(@0)
+!consumer-id(0)
+!generators([@0,@1,@2])
+!power(85)
+4
+connected(@1)
+!consumer-id(1)
+!generators([@0,@1,@2])
+!power(76)
+5
+connected(@2)
+!consumer-id(2)
+!generators([@0,@1,@2])
+!power(43)
+6
+connected(@2)
+!consumer-id(3)
+!generators([@0,@1,@2])
+!power(26)
+7
+connected(@2)
+!consumer-id(4)
+!generators([@0,@1,@2])
+!power(52)

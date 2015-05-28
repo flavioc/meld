@@ -1,0 +1,19 @@
+const maxfails = 2.
+const all-generators = [@0 , @1 , @2 ].
+const num-generators = 3.
+!power(@3, 85).
+!consumer-id(@3, 0).
+!power(@4, 76).
+!consumer-id(@4, 1).
+!power(@5, 43).
+!consumer-id(@5, 2).
+!power(@6, 26).
+!consumer-id(@6, 3).
+!power(@7, 52).
+!consumer-id(@7, 4).
+!generator-id(@0, 0).
+capacity(@0, 85, 0).
+!generator-id(@1, 1).
+capacity(@1, 76, 0).
+!generator-id(@2, 2).
+capacity(@2, 121, 0).
