@@ -148,6 +148,7 @@ persistent_store::wipeout(mem::node_allocator *alloc, candidate_gc_nodes& gc_nod
       if(agg) {
          agg->wipeout(alloc, gc_nodes);
          delete agg;
+         aggs[i] = nullptr;
       }
    }
 #endif

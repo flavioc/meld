@@ -68,7 +68,7 @@ struct persistent_store {
    }
    inline void *get_storage(const vm::predicate *pred) {
 #ifdef COMPILED
-      return (void*)(&tuples[pred->get_persistent_id()]);
+      return (void*)(tuples + sizeof(tuple_trie) * pred->get_persistent_id());
 #else
       return tuples + pred->get_persistent_id();
 #endif
@@ -122,6 +122,7 @@ struct persistent_store {
 #ifndef COMPILED
       tuples = mem::allocator<tuple_trie>().allocate(
           vm::theProgram->num_persistent_predicates());
+#endif
       for (size_t i(0); i < vm::theProgram->num_persistent_predicates(); ++i) {
          vm::predicate *pred(vm::theProgram->get_persistent_predicate(i));
          if(pred->is_compact_pred())
@@ -129,12 +130,12 @@ struct persistent_store {
          else
             mem::allocator<tuple_trie>().construct(get_trie(pred));
       }
-#endif
 #if defined(COMPILED) && (COMPILED_NUM_TRIES != 0)
       for(size_t i(0); i < COMPILED_NUM_TRIES; ++i) {
          vm::predicate *pred(vm::theProgram->get_persistent_predicate(i));
 #ifndef COMPILED_NO_AGGREGATES
          aggs[i] = NULL;
+         assert(!pred->is_compact_pred());
 #endif
          if(pred->is_compact_pred())
             mem::allocator<array>().construct(get_array(pred));
