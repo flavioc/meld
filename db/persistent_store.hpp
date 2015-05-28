@@ -42,6 +42,29 @@ struct persistent_store {
    aggregate_map aggs;
 #endif
 
+   inline void *get_storage_id(const vm::predicate_id id) const {
+#ifdef COMPILED
+      assert(id < COMPILED_NUM_TRIES);
+      return (void*)(tuples + sizeof(tuple_trie) * id);
+#else
+      return tuples + pred->get_persistent_id();
+#endif
+   }
+   inline void *get_storage_id(const vm::predicate_id id) {
+#ifdef COMPILED
+      assert(id < COMPILED_NUM_TRIES);
+      return (void*)(tuples + sizeof(tuple_trie) * id);
+#else
+      return tuples + pred->get_persistent_id();
+#endif
+   }
+   inline void *get_storage(const vm::predicate *pred) const {
+      return get_storage_id(pred->get_persistent_id());
+   }
+   inline void *get_storage(const vm::predicate *pred) {
+      return get_storage_id(pred->get_persistent_id());
+   }
+
    inline array *get_array(const vm::predicate *pred) {
       assert(pred->is_compact_pred());
       return (db::array*)(get_storage(pred));
@@ -58,20 +81,8 @@ struct persistent_store {
       assert(!pred->is_compact_pred());
       return (db::tuple_trie*)(get_storage(pred));
    }
-
-   inline void *get_storage(const vm::predicate *pred) const {
-#ifdef COMPILED
-      return (void*)(tuples + sizeof(tuple_trie) * pred->get_persistent_id());
-#else
-      return tuples + pred->get_persistent_id();
-#endif
-   }
-   inline void *get_storage(const vm::predicate *pred) {
-#ifdef COMPILED
-      return (void*)(tuples + sizeof(tuple_trie) * pred->get_persistent_id());
-#else
-      return tuples + pred->get_persistent_id();
-#endif
+   inline tuple_trie *get_trie_id(const vm::predicate_id id) const {
+      return (db::tuple_trie*)(get_storage_id(id));
    }
 
    inline bool add_tuple(vm::tuple *tpl, vm::predicate *pred,
@@ -102,7 +113,7 @@ struct persistent_store {
    db::tuple_trie::tuple_iterator match_predicate(
        const vm::predicate_id id) const {
       assert(!vm::theProgram->get_persistent_predicate(id)->is_compact_pred());
-      tuple_trie *tr((tuple_trie *)(tuples + id));
+      tuple_trie *tr(get_trie_id(id));
 
       return tr->match_predicate();
    }
@@ -110,8 +121,7 @@ struct persistent_store {
    inline db::tuple_trie::tuple_search_iterator match_predicate(
        const vm::predicate_id id, const vm::match *m) const {
       assert(!vm::theProgram->get_persistent_predicate(id)->is_compact_pred());
-      tuple_trie *tr = (tuple_trie *)(tuples + id);
-      return tr->match_predicate(m);
+      return get_trie_id(id)->match_predicate(m);
    }
 
    vm::full_tuple_list end_iteration(mem::node_allocator *);
