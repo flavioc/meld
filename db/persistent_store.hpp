@@ -47,7 +47,7 @@ struct persistent_store {
       assert(id < COMPILED_NUM_TRIES);
       return (void*)(tuples + sizeof(tuple_trie) * id);
 #else
-      return tuples + pred->get_persistent_id();
+      return tuples + id;
 #endif
    }
    inline void *get_storage_id(const vm::predicate_id id) {
@@ -55,7 +55,7 @@ struct persistent_store {
       assert(id < COMPILED_NUM_TRIES);
       return (void*)(tuples + sizeof(tuple_trie) * id);
 #else
-      return tuples + pred->get_persistent_id();
+      return tuples + id;
 #endif
    }
    inline void *get_storage(const vm::predicate *pred) const {
