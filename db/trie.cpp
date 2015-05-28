@@ -396,8 +396,6 @@ void trie_node::convert_hash(type *type) {
    assert(is_hashed());
 }
 
-trie_node::~trie_node(void) {}
-
 #define HASH_INT(VAL) (std::hash<int_val>()(VAL))
 #define HASH_UINT(VAL) (std::hash<uint_val>()(VAL))
 #define HASH_FLOAT(VAL) (std::hash<float_val>()(VAL) / 1000)

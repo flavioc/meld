@@ -75,7 +75,7 @@ class trie_node : public mem::base {
              child == nullptr && hashed == false);
    }
 
-   ~trie_node(void);
+   ~trie_node(void) { }
 };
 
 class trie_hash : public mem::base {
@@ -488,6 +488,7 @@ class trie {
                         vm::candidate_gc_nodes &);
 
    explicit trie(void);
+   ~trie(void) { }
 };
 
 struct trie_continuation_frame {

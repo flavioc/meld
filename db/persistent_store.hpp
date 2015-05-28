@@ -27,10 +27,11 @@ struct persistent_store {
 
 // tuple database
 #ifdef COMPILED
-   tuple_trie tuples[COMPILED_NUM_TRIES];
+   utils::byte tuples[COMPILED_NUM_TRIES * sizeof(tuple_trie)];
 #else
    tuple_trie *tuples{nullptr};
 #endif
+   static_assert(sizeof(tuple_trie) >= sizeof(array), "tuple_trie and array must have equal size");
 
    // sets of tuple aggregates
 #ifdef COMPILED
@@ -60,7 +61,7 @@ struct persistent_store {
 
    inline void *get_storage(const vm::predicate *pred) const {
 #ifdef COMPILED
-      return (void*)(&tuples[pred->get_persistent_id()]);
+      return (void*)(tuples + sizeof(tuple_trie) * pred->get_persistent_id());
 #else
       return tuples + pred->get_persistent_id();
 #endif
@@ -142,6 +143,9 @@ struct persistent_store {
    }
 
    void wipeout(mem::node_allocator *, vm::candidate_gc_nodes &);
+
+   ~persistent_store() {
+   }
 
    std::vector<std::string> dump(const vm::predicate *) const;
    std::vector<std::string> print(const vm::predicate *) const;

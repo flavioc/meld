@@ -208,6 +208,15 @@ struct node_allocator
       first_page = current_page;
 #endif
    }
+
+   ~node_allocator() {
+      page *next;
+      for(page *p(first_page); p; p = next) {
+         next = p->next;
+         deallocate_page(p);
+      }
+      first_page = current_page = nullptr;
+   }
 };
 #undef MIN_SIZE_OBJ
 #undef START_PAGE_SIZE

@@ -79,6 +79,7 @@ ids::delete_node(node *n)
       ids *creator((ids*)n->creator.load());
       n->creator = nullptr;
       creator->deleted_by_others++;
+      // will be deleted later...
    }
 #endif
 }

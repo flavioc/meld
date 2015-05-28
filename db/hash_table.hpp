@@ -207,7 +207,11 @@ struct hash_table {
       memset(table, 0, sizeof(tuple_list) * size_table);
    }
 
-   inline void destroy(void) { allocator().deallocate(table, size_table); }
+   inline void destroy(void) {
+      if(table)
+         allocator().deallocate(table, size_table);
+      table = nullptr;
+   }
 };
 }
 
