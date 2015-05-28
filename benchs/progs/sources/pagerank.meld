@@ -1,15 +1,13 @@
 
-node page.
+type route input(node, node, float).
+type route output(node, node, float).
 
-type route input(page, page, float).
-type route output(page, page, float).
-
-type linear pagerank(page, float).
-type linear neighbor-rank(page, page, float).
-type linear start(page).
-type linear update(page).
-type linear new-neighbor-rank(page, page, float).
-type linear sum-ranks(page, float).
+type linear pagerank(node, float).
+type linear neighbor-rank(node, node, float).
+type linear start(node).
+type linear update(node).
+type linear new-neighbor-rank(node, node, float).
+type linear sum-ranks(node, float).
 
 index neighbor-rank/2.
 

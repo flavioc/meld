@@ -1,3 +1,4 @@
 
 include #../../benchs/progs/sources/pagerank.meld
-include #data/pagerank-linear-async-data.meld
+priority @cluster @static.
+data stanford-snap-pagerank "data/pagerank.txt".
