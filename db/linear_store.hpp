@@ -380,9 +380,8 @@ struct linear_store {
                        vm::candidate_gc_nodes &gc_nodes, const bool fast = false) {
       for (size_t i(0); i < vm::theProgram->num_linear_predicates(); ++i) {
          vm::predicate *pred(vm::theProgram->get_linear_predicate(i));
-         utils::byte *p(data + ITEM_SIZE * i);
          if (types.get_bit(i)) {
-            hash_table *table((hash_table *)p);
+            hash_table *table(get_table(i));
             if (!fast) {
                for (hash_table::iterator it(table->begin()); !it.end(); ++it) {
                   tuple_list *ls(*it);
@@ -401,7 +400,7 @@ struct linear_store {
                types.unset_bit(i);
             }
          } else if (!fast) {
-            tuple_list *ls((tuple_list *)p);
+            tuple_list *ls(get_list(i));
             for (tuple_list::iterator it(ls->begin()), end(ls->end());
                  it != end;) {
                vm::tuple *tpl(*it);
@@ -416,9 +415,8 @@ struct linear_store {
    inline ~linear_store(void) {
       if (!types.empty(vm::theProgram->num_linear_predicates_next_uint())) {
          for (size_t i(0); i < vm::theProgram->num_linear_predicates(); ++i) {
-            utils::byte *p(data + ITEM_SIZE * i);
             if (types.get_bit(i)) {
-               hash_table *table((hash_table *)p);
+               hash_table *table(get_table(i));
                table->destroy();
             }
             // nothing to destroy at the list level
