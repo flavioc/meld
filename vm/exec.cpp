@@ -1138,6 +1138,7 @@ static inline void execute_update(pcounter pc, state& state) {
 
    state.updated_map.set_bit(reg);
 #ifdef DEBUG_SENDS
+   vm::tuple *tpl(state.get_tuple(reg));
    cout << "\tupdate ";
    tpl->print(cout, pred);
    cout << endl;

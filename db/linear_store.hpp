@@ -372,8 +372,7 @@ struct linear_store {
                          vm::theProgram->num_linear_predicates_next_uint());
 #endif
       for (size_t i(0); i < vm::theProgram->num_linear_predicates(); ++i) {
-         utils::byte *p(data + ITEM_SIZE * i);
-         mem::allocator<tuple_list>().construct((tuple_list *)p);
+         mem::allocator<tuple_list>().construct(get_list(i));
       }
    }
 
