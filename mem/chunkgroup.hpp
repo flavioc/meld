@@ -25,7 +25,10 @@ private:
 
    chunk *first_chunk;
    chunk *new_chunk; // chunk with readily usable objects
-   mem_node *free_objs; // list of freed objects
+   struct {
+      mem_node *head{nullptr};
+      mem_node *tail{nullptr};
+   } free_objs;
    
    size_t num_elems_per_chunk;
 
@@ -35,10 +38,13 @@ public:
    {
       void *ret;
       
-      if(free_objs != nullptr) {
+      if(free_objs.head != nullptr) {
          // use a free chunk node
-         ret = free_objs;
-         free_objs = free_objs->next;
+         ret = free_objs.head;
+         if(free_objs.head == free_objs.tail)
+            free_objs.tail = free_objs.head = NULL;
+         else
+            free_objs.head = free_objs.head->next;
          return ret;
       }
       
@@ -67,8 +73,11 @@ public:
    {
       mem_node *new_node((mem_node*)ptr);
       
-      new_node->next = free_objs;
-      free_objs = new_node;
+      if(free_objs.tail)
+         free_objs.tail->next = new_node;
+      new_node->next = nullptr;
+      if(!free_objs.head)
+         free_objs.head = new_node;
    }
 
    static inline size_t num_elems_chunk(const size_t size) { return size < 128 ? 64 : 16; }
@@ -78,7 +87,7 @@ public:
       size = _size;
       first_chunk = nullptr;
       new_chunk = nullptr;
-      free_objs = nullptr;
+      free_objs.head = free_objs.tail = nullptr;
       num_elems_per_chunk = num_elems_chunk(_size);
    }
 
@@ -88,7 +97,7 @@ public:
    
    explicit chunkgroup(const size_t _size):
       size(_size), first_chunk(nullptr),
-      new_chunk(nullptr), free_objs(nullptr),
+      new_chunk(nullptr),
       num_elems_per_chunk(num_elems_chunk(_size))
    {
       assert(_size >= sizeof(mem_node));
