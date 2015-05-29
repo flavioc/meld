@@ -496,14 +496,12 @@ void thread::init(const size_t) {
    auto end(All->DATABASE->get_node_iterator(All->MACHINE->find_last_node(id)));
    priority_t initial(theProgram->get_initial_priority());
 
-#if 0
-   if (!scheduling_mechanism) {
+   if(initial == vm::no_priority_value()) {
       for (; it != end; ++it) {
          db::node *cur_node(init_node(it));
          queues.moving.push_tail(cur_node);
       }
    } else {
-#endif
       prios.moving.start_initial_insert(All->MACHINE->find_owned_nodes(id));
 
       for (size_t i(0); it != end; ++it, ++i) {
@@ -511,9 +509,7 @@ void thread::init(const size_t) {
 
          prios.moving.initial_fast_insert(cur_node, initial, i);
       }
-#if 0
    }
-#endif
 
    threads_synchronize();
    bool sync{false};
