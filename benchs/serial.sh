@@ -18,5 +18,5 @@ if [ -z "$NAME" ]; then
 fi
 
 source $PWD/lib/common.sh
-TO_RUN="${EXEC} -c th1 -t -- ${MELD_ARGS}"
+TO_RUN="${EXEC} -c th1 -t"
 time_run_n "${TO_RUN}" "$NAME" th 1
