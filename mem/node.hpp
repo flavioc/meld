@@ -10,7 +10,7 @@
 #include COMPILED_HEADER
 #endif
 
-#define NODE_ALLOCATOR
+//#define NODE_ALLOCATOR
 #define USE_REFCOUNT
 
 namespace mem
