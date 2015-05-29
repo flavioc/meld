@@ -14,7 +14,7 @@ struct chunk
 {
 private:
    
-   friend class chunkgroup;
+   friend struct chunkgroup;
 
    chunk *next_chunk;
    chunk *prev_chunk;
