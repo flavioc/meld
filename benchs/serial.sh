@@ -1,17 +1,22 @@
 #!/bin/sh
 
-FILE="${1}"
-RUNS="${2}"
+EXEC="${1}"
+NAME="${2}"
+RUNS="${3}"
 
 if [ -z "${RUNS}" ]; then
 	RUNS=1
 fi
 
-if [ -z "$FILE" ]; then
-   echo "usage: serial.sh <file> [n-runs=3]"
+if [ -z "$EXEC" ]; then
+   echo "usage: serial.sh <command> <name> [n-runs=3]"
+   exit 1
+fi
+if [ -z "$NAME" ]; then
+   echo "usage: serial.sh <command> <name> [n-runs=3]"
    exit 1
 fi
 
 source $PWD/lib/common.sh
-TO_RUN="${EXEC} ${FILE} -c sl -- ${MELD_ARGS}"
-time_run_n "${TO_RUN}" "$(basename ${FILE} .m) sl"
+TO_RUN="${EXEC} -c th1 -t -- ${MELD_ARGS}"
+time_run_n "${TO_RUN}" "$NAME" th 1
