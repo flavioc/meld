@@ -56,13 +56,13 @@ compile_test () {
          return
       fi
    fi
-   echo "=> Compiling $BT.cpp into $TARGET..."
+   echo -n "=> Compiling $BT.cpp into $TARGET..."
    CURRENT_DIR="$PWD"
    cd ..
    make clean 2>&1 > /dev/null || exit 1
    make PROGRAM="$CURRENT_DIR/$CPP" -j$CPUS target 2>&1 > /dev/null || exit 1
+   echo -en "\r\033[K"
    mv target $CURRENT_DIR/$TARGET
-   echo $CURRENT_DIR/$TARGET
    cd $CURRENT_DIR
 }
 
@@ -71,9 +71,10 @@ ensure_vm () {
       return
    fi
    CURRENT_DIR="$PWD"
-   echo "=> Compiling the virtual machine..."
+   echo -n "=> Compiling the virtual machine..."
    cd ..
    make clean 2>&1 > /dev/null || exit 1
    make -j$CPUS 2>&1 > /dev/null || exit 1
+   echo -en "\r\033[K"
    cd $CURRENT_DIR
 }
