@@ -10,6 +10,7 @@
 #include <cstring>
 
 #include "mem/chunkgroup.hpp"
+#include "mem/mem_node.hpp"
 
 namespace mem {
 
@@ -144,7 +145,7 @@ class pool {
    inline size_t hash_size(const size_t size) { return (size >> 2) - 1; }
 
    inline size_t make_size(const size_t size) {
-      return std::max(sizeof(intptr_t), size);
+      return std::max(MEM_MIN_OBJS, size);
    }
 
    public:

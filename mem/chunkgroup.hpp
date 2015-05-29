@@ -5,12 +5,13 @@
 #include <limits>
 #include <assert.h>
 
+#include "mem/mem_node.hpp"
 #include "mem/chunk.hpp"
 
 namespace mem
 {
 
-class chunkgroup
+struct chunkgroup
 {
 public:
    // next pointer used by mem/pool.
@@ -24,13 +25,7 @@ private:
    
    size_t num_elems_per_chunk;
 
-   struct mem_node {
-      struct mem_node *next;
-   };
-   struct {
-      mem_node *head{nullptr};
-      mem_node *tail{nullptr};
-   } free_objs;
+   free_queue free;
 
 public:
 
@@ -38,15 +33,17 @@ public:
    {
       void *ret;
 
-      if(free_objs.head) {
-         // use a free chunk node
-         ret = free_objs.head;
-         if(free_objs.head == free_objs.tail)
-            free_objs.tail = free_objs.head = NULL;
-         else
-            free_objs.head = free_objs.head->next;
-         return ret;
+#ifndef USE_REFCOUNT
+      if(!free_queue_empty(free))
+         return free_queue_pop(free);
+#else
+      chunk *c(first_chunk);
+      while(c) {
+         if(c->has_free())
+            return c->allocate_free();
+         c = c->next_chunk;
       }
+#endif
       
       if(new_chunk == nullptr) {
          // this is the first chunk
@@ -56,27 +53,20 @@ public:
 
       ret = new_chunk->allocate_new(size);
 
-      if(ret == nullptr) { // chunk full!
-         chunk *old_chunk(new_chunk);
-         if(num_elems_per_chunk < std::numeric_limits<std::size_t>::max()/2)
-            num_elems_per_chunk *= 2; // increase number of elements
-         new_chunk = chunk::create(size, num_elems_per_chunk, old_chunk);
-         return new_chunk->allocate_new(size);
-      } else {
-         // use returned chunk
+      if(ret)
          return ret;
-      }
+
+      chunk *old_chunk(new_chunk);
+      if(num_elems_per_chunk < std::numeric_limits<std::size_t>::max()/2)
+         num_elems_per_chunk *= 2; // increase number of elements
+      new_chunk = chunk::create(size, num_elems_per_chunk, old_chunk);
+      old_chunk->set_prev(new_chunk);
+      return new_chunk->allocate_new(size);
    }
    
    inline void deallocate(void* ptr)
    {
-      mem_node *new_node((mem_node*)ptr);
-      
-      if(free_objs.tail)
-         free_objs.tail->next = new_node;
-      new_node->next = nullptr;
-      if(!free_objs.head)
-         free_objs.head = new_node;
+      add_free_queue(free, ptr);
    }
 
    static inline size_t num_elems_chunk(const size_t size) { return size < 128 ? 64 : 16; }
@@ -86,7 +76,7 @@ public:
       size = _size;
       first_chunk = nullptr;
       new_chunk = nullptr;
-      free_objs.head = free_objs.tail = nullptr;
+      init_free_queue(free);
       num_elems_per_chunk = num_elems_chunk(_size);
    }
 

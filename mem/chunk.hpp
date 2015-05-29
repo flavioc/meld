@@ -8,35 +8,41 @@
 namespace mem
 {
    
-class chunkgroup;
+struct chunkgroup;
 
-class chunk
+struct chunk
 {
 private:
    
    friend class chunkgroup;
 
    chunk *next_chunk;
+   chunk *prev_chunk;
    
    utils::byte *cur;
    utils::byte *top;
 
 public:
+
+   inline void set_prev(chunk *c)
+   {
+      prev_chunk = c;
+   }
    
    inline void* allocate_new(const size_t size)
    {
-      unsigned char *old_cur(cur);
+      utils::byte *old_cur(cur);
 
-      cur += size;
+      cur += size + MEM_ADD_OBJS;
       
       if(cur > top)
          return nullptr; // full
       
-      return old_cur;
+      return (old_cur + MEM_ADD_OBJS);
    }
 
    static inline chunk* create(const size_t size, const size_t num_elems, chunk *next) {
-      const size_t total(sizeof(chunk) + size * num_elems);
+      const size_t total(sizeof(chunk) + (size + MEM_ADD_OBJS) * num_elems);
       utils::byte *p(new utils::byte[total]);
       register_malloc(total);
       chunk *c((chunk*)p);
