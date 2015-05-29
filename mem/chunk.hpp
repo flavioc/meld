@@ -3,6 +3,7 @@
 #define MEM_CHUNK_HPP
 
 #include "mem/stat.hpp"
+#include "utils/types.hpp"
 
 namespace mem
 {
@@ -14,21 +15,15 @@ class chunk
 private:
    
    friend class chunkgroup;
-   
+
    chunk *next_chunk;
    
-   unsigned char *cur;
-   unsigned char *bottom;
-   unsigned char *top;
-   
+   utils::byte *cur;
+   utils::byte *top;
+
 public:
    
-   inline void set_next(chunk *ptr)
-   {
-      next_chunk = ptr;
-   }
-   
-   inline void* allocate(const size_t size)
+   inline void* allocate_new(const size_t size)
    {
       unsigned char *old_cur(cur);
 
@@ -39,22 +34,24 @@ public:
       
       return old_cur;
    }
-   
-   explicit chunk(const size_t size, const size_t num_elems):
-      next_chunk(nullptr)
-   {
-      const size_t total(size * num_elems);
-      
-      bottom = new unsigned char[total];
-      cur = bottom;
-      top = bottom + total;
-      
+
+   static inline chunk* create(const size_t size, const size_t num_elems, chunk *next) {
+      const size_t total(sizeof(chunk) + size * num_elems);
+      utils::byte *p(new utils::byte[total]);
       register_malloc(total);
+      chunk *c((chunk*)p);
+      c->cur = p + sizeof(chunk);
+      c->top = p + total;
+      c->next_chunk = next;
+      return c;
    }
-   
-   ~chunk(void)
-   {
-      delete []bottom;
+
+   static inline void destroy(chunk *c) {
+      utils::byte *p((utils::byte*)c);
+      const size_t total(c->top - p);
+      (void)total;
+
+      delete []p;
    }
 };
 
