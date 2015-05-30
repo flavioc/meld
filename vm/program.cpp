@@ -98,7 +98,7 @@ program::program(string _filename)
    if (!VERSION_AT_LEAST(0, 11))
       throw load_file_error(filename, string("unsupported byte code version"));
 
-   if (VERSION_AT_LEAST(0, 14))
+   if (VERSION_AT_LEAST(0, 15))
       throw load_file_error(filename, string("unsupported byte code version"));
 
    // read number of predicates
@@ -374,10 +374,10 @@ program::program(string _filename)
    is_data_file = false;
 
    switch (global_info) {
-      case 0x01: {  // priority by predicate
+      case 0x01:
          cerr << "Not supported anymore" << endl;
          abort();
-      } break;
+         break;
       case 0x02: {  // normal priority
          byte type(0x0);
          byte asc_desc;
@@ -393,6 +393,12 @@ program::program(string _filename)
          priority_static = (asc_desc & 0x02) ? true : false;
 
          read.read_type<float_val>(&initial_priority);
+         if(VERSION_AT_LEAST(0, 14)) {
+            read.read_type<float_val>(&default_priority);
+
+            read.read_type<float_val>(&no_priority);
+         } else
+            no_priority = default_priority = vm::no_priority_value0(priority_order == PRIORITY_DESC);
       } break;
       case 0x03: {  // data file
          is_data_file = true;
@@ -400,9 +406,6 @@ program::program(string _filename)
       default:
          break;
    }
-
-   if (!scheduling_mechanism)
-      initial_priority = no_priority_value0(priority_order == PRIORITY_DESC);
 
    // read predicate code
    for (size_t i(0); i < num_predicates; ++i) {
@@ -607,15 +610,26 @@ void program::print_rules(ostream& out) const {
 
 void program::print_predicates(ostream& cout) const {
    cout << ">> Predicates:" << endl;
-   for (size_t i(0); i < num_predicates(); ++i) cout << *get_predicate(i) << endl;
-   cout << ">> Imported Predicates:" << endl;
-   for (auto& elem : imported_predicates) cout << *elem << endl;
-   cout << ">> Exported Predicates:" << endl;
-   for (auto& elem : exported_predicates) cout << elem << endl;
+   for (size_t i(0); i < num_predicates(); ++i)
+      cout << "\t" << *get_predicate(i) << endl;
+   if(!imported_predicates.empty()) {
+      cout << ">> Imported Predicates:" << endl;
+      for (auto& elem : imported_predicates) cout << *elem << endl;
+   }
+   if(!exported_predicates.empty()) {
+      cout << ">> Exported Predicates:" << endl;
+      for (auto& elem : exported_predicates) cout << elem << endl;
+   }
    cout << ">> Priorities: "
         << (priority_order == PRIORITY_ASC ? "ascending" : "descending")
         << "\n";
-   if (priority_static) cout << ">> No work stealing" << endl;
+   if (priority_static) cout << "\t>> No work stealing" << endl;
+   cout << "\tinitial priority: "
+        << initial_priority << endl;
+   cout << "\tdefault priority: "
+        << default_priority << endl;
+   cout << "\tbase priority: "
+        << no_priority << endl;
    if (is_data()) cout << ">> Data file" << endl;
 }
 

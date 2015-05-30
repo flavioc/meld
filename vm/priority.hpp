@@ -28,7 +28,7 @@ static inline priority_t no_priority_value0(const bool desc) {
 }
 
 static inline priority_t no_priority_value() {
-   return no_priority_value0(theProgram->is_priority_desc());
+   return theProgram->get_no_priority_value();
 }
 
 static inline priority_t max_priority_value() {

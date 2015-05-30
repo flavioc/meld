@@ -19,6 +19,8 @@ compact inbound.
 priority @order @desc.
 priority @cluster @static.
 index neighbor-heat/2.
+priority @default 0.0.
+priority @no_priority 0.0.
 
 const epsilon = str2float(@arg1).
 const delta = str2float(@arg2).

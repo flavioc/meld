@@ -81,6 +81,10 @@ struct node {
       return --refs == 0 && garbage_collect();
    }
 
+   inline vm::priority_t get_default_priority() const {
+      return default_priority_level;
+   }
+
    inline vm::priority_t get_priority(void) const {
       if (priority_level == vm::no_priority_value())
          return default_priority_level;
@@ -98,7 +102,7 @@ struct node {
       return false;
    }
    inline void remove_temporary_priority(void) {
-      priority_level = vm::no_priority_value();
+      priority_level = default_priority_level;
    }
    inline void set_default_priority(const vm::priority_t level) {
       default_priority_level = level;
@@ -155,10 +159,10 @@ struct node {
       linear.add_fact(tpl, pred);
    }
 
-   inline void add_persistent_fact(vm::tuple *tpl, vm::predicate *pred,
-         const vm::derivation_direction dir = vm::POSITIVE_DERIVATION,
-         const vm::depth_t depth = 0)
-   {
+   inline void add_persistent_fact(
+       vm::tuple *tpl, vm::predicate *pred,
+       const vm::derivation_direction dir = vm::POSITIVE_DERIVATION,
+       const vm::depth_t depth = 0) {
       auto stpl(new vm::full_tuple(tpl, pred, dir, depth));
       store.incoming_persistent_tuples.push_back(stpl);
    }
@@ -285,7 +289,7 @@ struct node {
    inline explicit node(const node_id _id, const node_id _trans)
        : id(_id),
          translation(_trans),
-         default_priority_level(vm::no_priority_value()),
+         default_priority_level(vm::theProgram->get_default_priority()),
          priority_level(vm::theProgram->get_initial_priority()) {}
 
    inline void wipeout(vm::candidate_gc_nodes &gc_nodes,

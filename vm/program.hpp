@@ -106,6 +106,8 @@ class program {
    vm::priority_type priority_order;
    bool priority_static{false};
    vm::priority_t initial_priority;
+   vm::priority_t default_priority;
+   vm::priority_t no_priority;
 
 #ifndef COMPILED
 #ifdef USE_REAL_NODES
@@ -184,8 +186,10 @@ class program {
       return priority_order == PRIORITY_DESC;
    }
 
-   inline double get_initial_priority(void) const { return initial_priority; }
+   inline vm::priority_t get_initial_priority(void) const { return initial_priority; }
    inline bool is_static_priority(void) const { return priority_static; }
+   inline vm::priority_t get_default_priority() const { return default_priority; }
+   inline vm::priority_t get_no_priority_value() const { return no_priority; }
 
    inline bool has_aggregates() const { return has_aggregates_flag; }
 
