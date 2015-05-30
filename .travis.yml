@@ -7,8 +7,9 @@ script:
    - cd cl-meld
    - cd scripts
    - bash standalone.sh
+   - mkdir compile/local-projects/cl-meld
    - cd ..
-   - ln -sf cl-meld.asd scripts/compile/local-projects/
+   - ln -sf $PWD scripts/compile/local-projects/cl-meld/
    - mv scripts/compile ~/quicklisp
    - cd ../
    - export PATH=$PWD:$PATH
