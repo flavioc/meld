@@ -2,11 +2,21 @@ language: cpp
 script:
    - make -j8
    - make test
-   - cd tests && make serial && cd ..
    - cd tests
    - git clone http://github.com/flavioc/cl-meld
    - cd cl-meld
    - cd scripts
+   - bash standalone.sh
+   - cd ..
+   - ln -sf cl-meld.asd scripts/compile/local-projects/
+   - mv scripts/compile ~/quicklisp
+   - cd ../
+   - export PATH=$PWD:$PATH
+   - cp cl-meld/scripts/meld-compile* .
+   - touch progs/*.meld
+   - make compiled
+   - make serial
+   - cd ..
 compiler: g++
 before_install:
   # g++4.8.1
