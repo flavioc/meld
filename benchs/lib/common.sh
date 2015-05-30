@@ -1,6 +1,8 @@
 
 INSTRUMENT_DIR=$PWD/instrumentation_files
-CPUS=$(getconf _NPROCESSORS_ONLN)
+if [ -z "$CPUS" ]; then
+   CPUS=$(getconf _NPROCESSORS_ONLN)
+fi
 
 time_run ()
 {
