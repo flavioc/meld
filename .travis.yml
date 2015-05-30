@@ -17,6 +17,7 @@ script:
    - touch progs/*.meld
    - make compiled
    - make serial
+   - COMPILED=true make serial
    - cd ..
 compiler: g++
 before_install:
