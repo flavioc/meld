@@ -37,4 +37,4 @@ install:
   - if [ "$CXX" == "clang++" ]; then sudo apt-get install --allow-unauthenticated -qq clang-3.4; fi
   - if [ "$CXX" == "clang++" ]; then export CXX="clang++-3.4"; fi
 
-  - sudo apt-get install libcppunit-dev sbcl
+  - sudo apt-get install libcppunit-dev sbcl realpath
