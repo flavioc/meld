@@ -3,6 +3,10 @@ script:
    - make -j8
    - make test
    - cd tests && make serial && cd ..
+   - cd tests
+   - git clone http://github.com/flavioc/cl-meld
+   - cd cl-meld
+   - cd scripts
 compiler: g++
 before_install:
   # g++4.8.1
@@ -22,4 +26,4 @@ install:
   - if [ "$CXX" == "clang++" ]; then sudo apt-get install --allow-unauthenticated -qq clang-3.4; fi
   - if [ "$CXX" == "clang++" ]; then export CXX="clang++-3.4"; fi
 
-  - sudo apt-get install libcppunit-dev
+  - sudo apt-get install libcppunit-dev sbcl
