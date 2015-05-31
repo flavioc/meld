@@ -55,10 +55,7 @@ run_diff ()
    fi
    failed_tests=""
    done=0
-   for file in "${FILE}" "${FILE}2"; do
-      if [ ! -f $file ]; then
-         continue
-      fi
+   for file in "${FILE}"*; do
       DIFF=`diff -u ${file} test.out`
       if [ ! -z "${DIFF}" ]; then
          failed_tests="$failed_tests $file"
