@@ -38,9 +38,9 @@ reconnect(C).
 !generators(C, all-generators).
 start(G).
 
-start(G),
+start(G), !thread-list(T, L),
 !generator-id(G, Id)
-   -o set-cpu(G, Id % @cpus).
+   -o set-cpu(G, lnth(L, Id % @cpus)).
 
 just-moved(G),
 capacity(G, Total, Used),
