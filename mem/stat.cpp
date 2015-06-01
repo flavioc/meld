@@ -93,13 +93,12 @@ merge_memory_statistics()
 void
 print_memory_statistics()
 {
-   cout << "Average memory in use: " << total_memory_average/(vm::All->NUM_THREADS*1024) << "KB"
+   cout << "AvgMemoryInUse\tTotalMemoryAllocated\tTotalMemoryUse\tMallocsCalled" << endl;
+   cout << total_memory_average/(vm::All->NUM_THREADS*1024) << "KB\t"
+        << total_memory / 1024 << "KB\t"
+        << memory_in_use / 1024 << "KB\t"
+        << num_mallocs << "\t"
         << endl;
-   cout << "Total memory allocated: " << total_memory / 1024 << "KB"
-        << endl;
-   cout << "Total memory in use: " << memory_in_use / 1024 << "KB"
-        << endl;
-   cout << "Malloc()'s called: " << num_mallocs << endl;
 }
 
 #endif
