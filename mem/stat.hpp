@@ -11,13 +11,8 @@ namespace mem
 
 void register_allocation(void *, const size_t, const size_t);
 void register_deallocation(void *, const size_t, const size_t);
-
-size_t get_memory_in_use();
-
+void print_memory_statistics();
 void register_malloc(const size_t);
-
-size_t get_num_mallocs();
-size_t get_total_memory();
 void merge_memory_statistics();
 
 #else

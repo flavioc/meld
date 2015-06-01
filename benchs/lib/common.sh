@@ -9,6 +9,26 @@ time_run ()
 	$1 2> "output/${2}" | awk {'print $2'}
 }
 
+mem_run ()
+{
+	CMD="${1} ${EXTRA_ARGS}"
+   FILENAME="${2}"
+   SCHEDULER="${3}"
+   NUM_THREADS="${4}"
+	DESC="${FILENAME} ${SCHEDULER}${NUM_THREADS}"
+
+   if [ -f "args/${FILENAME}" ]; then
+      source "args/${FILENAME}"
+      CMD="${CMD} ${MELD_ARGS} -- ${PROG_ARGS}"
+   fi
+
+   mkdir -p output
+	echo -n "${DESC} ..."
+   contents=$($CMD | tail -n 1)
+   tput cub 3
+   echo "$contents"
+}
+
 time_run_n ()
 {
 	CMD="${1} ${EXTRA_ARGS}"

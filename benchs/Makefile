@@ -44,14 +44,18 @@ SERIAL = run_serial.sh $(RUNS)
 thread:
 	@bash $(SCRIPT) $(THREAD_PROGRAMS)
 
-serial:
-	@bash $(SERIAL) belief-propagation-50 belief-propagation-200 \
-		belief-propagation-300 belief-propagation-400
-	@bash $(SERIAL) new-heat-transfer-80 new-heat-transfer-120
-	@bash $(SERIAL) min-max-tictactoe
-	@bash $(SERIAL) 8queens-11 8queens-12 8queens-13 8queens-14
-	@bash $(SERIAL) shortest-usairports500 shortest-oclinks \
+SERIAL_PROGS = belief-propagation-50 belief-propagation-200 \
+		belief-propagation-300 belief-propagation-400 \
+		new-heat-transfer-80 new-heat-transfer-120 \
+		min-max-tictactoe \
+		8queens-11 8queens-12 8queens-13 8queens-14 \
+		shortest-usairports500 shortest-oclinks \
 		shortest-uspowergrid shortest-email
+
+serial:
+	@bash $(SERIAL) $(SERIAL_PROGS)
+serial-mem:
+	@bash run_mem.sh $(SERIAL_PROGS)
 ggc:
 	@bash $(SCRIPT) $(GGC)
 search-random:

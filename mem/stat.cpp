@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "mem/stat.hpp"
+#include "vm/all.hpp"
 
 namespace mem
 {
@@ -15,17 +16,36 @@ using namespace std;
 static atomic<int64_t> memory_in_use{0};
 static atomic<int64_t> total_memory{0};
 static atomic<int64_t> num_mallocs{0};
+static atomic<int64_t> total_memory_average{0};
+static thread_local int64_t alloc_steps_thread{0};
 static thread_local int64_t memory_in_use_thread{0};
 static thread_local int64_t total_memory_thread{0};
+static thread_local int64_t average_memory_thread{0};
 static thread_local int64_t num_mallocs_thread{0};
 #ifdef MEMORY_ASSERT
 static unordered_set<void*> allocated_set;
 #endif
 
 void
+update_memory_average()
+{
+   const double frac((double)((double)alloc_steps_thread-1.0)/(double)alloc_steps_thread);
+   const double other_frac(1.0-frac);
+   average_memory_thread = (int64_t)(frac * (double)average_memory_thread + other_frac * (double)memory_in_use_thread);
+}
+
+void
 register_allocation(void *p, const size_t cnt, const size_t size)
 {
    memory_in_use_thread += cnt * size;
+   alloc_steps_thread++;
+   if(alloc_steps_thread == 1)
+      average_memory_thread = memory_in_use_thread;
+   else
+      update_memory_average();
+
+   (void)p;
+
 #ifdef MEMORY_ASSERT
    auto it(allocated_set.find(p));
    if(it != allocated_set.end()) {
@@ -40,6 +60,10 @@ void
 register_deallocation(void *p, const size_t cnt, const size_t size)
 {
    memory_in_use_thread -= cnt * size;
+   alloc_steps_thread++;
+   update_memory_average();
+   (void)p;
+
 #ifdef MEMORY_ASSERT
    auto it(allocated_set.find(p));
    if(it == allocated_set.end()) {
@@ -57,30 +81,24 @@ register_malloc(const size_t size)
    total_memory_thread += size;
 }
 
-size_t
-get_num_mallocs(void)
-{
-   return num_mallocs;
-}
-
-size_t
-get_total_memory(void)
-{
-   return total_memory;
-}
-
-size_t
-get_memory_in_use(void)
-{
-   return memory_in_use;
-}
-
 void
 merge_memory_statistics()
 {
+   total_memory_average += average_memory_thread;
    memory_in_use += memory_in_use_thread;
    total_memory += total_memory_thread;
    num_mallocs += num_mallocs_thread;
+}
+
+void
+print_memory_statistics()
+{
+   cout << "AvgMemoryInUse\tTotalMemoryAllocated\tTotalMemoryUse\tMallocsCalled" << endl;
+   cout << total_memory_average/(vm::All->NUM_THREADS*1024) << "KB\t"
+        << total_memory / 1024 << "KB\t"
+        << memory_in_use / 1024 << "KB\t"
+        << num_mallocs << "\t"
+        << endl;
 }
 
 #endif
