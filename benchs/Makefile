@@ -56,6 +56,8 @@ serial:
 	@bash $(SERIAL) $(SERIAL_PROGS)
 serial-mem:
 	@bash run_mem.sh $(SERIAL_PROGS)
+serial-recompile:
+	touch $(addprefix progs/,$(addsuffix .meld,$(SERIAL_PROGS)))
 ggc:
 	@bash $(SCRIPT) $(GGC)
 search-random:
