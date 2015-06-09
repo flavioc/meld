@@ -105,13 +105,10 @@ private:
 #define THREAD_INACTIVE (utils::byte)0x2
 #define THREAD_NEW_WORK (utils::byte)0x4
 
-   utils::byte tstate{THREAD_ACTIVE};
+   volatile utils::byte tstate{THREAD_ACTIVE};
 
    static termination_barrier *term_barrier;
    static utils::tree_barrier *thread_barrier;
-#ifdef TASK_STEALING
-   static std::atomic<int> *steal_states;
-#endif
    
 #define threads_synchronize() thread_barrier->wait(get_id())
 public:
@@ -144,7 +141,7 @@ public:
          if(old_val == THREAD_INACTIVE) {
             if(cmpxchg(&tstate, old_val, active) == old_val) {
                term_barrier->is_active();
-               return true;
+               return false;
             }
          } else if(old_val == THREAD_ACTIVE) {
             return false;
@@ -201,8 +198,8 @@ public:
 
    static inline size_t num_active(void) { return term_barrier->num_active(); }
    
-   inline bool is_inactive(void) const { return tstate == THREAD_INACTIVE; }
-   inline bool is_active(void) const { return tstate & THREAD_ACTIVE; }
+   inline bool is_inactive() const { return tstate == THREAD_INACTIVE; }
+   inline bool is_active() const { return tstate & THREAD_ACTIVE; }
    
    static inline void reset_barrier(void) { term_barrier->reset(); }
    

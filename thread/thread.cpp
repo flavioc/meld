@@ -35,9 +35,6 @@ namespace sched {
 
 tree_barrier *thread::thread_barrier(nullptr);
 termination_barrier *thread::term_barrier(nullptr);
-#ifdef TASK_STEALING
-std::atomic<int> *thread::steal_states(nullptr);
-#endif
 
 std::atomic<bool> thread::stop_flag(false);
 
@@ -72,10 +69,6 @@ void thread::loop(void) {
 void thread::init_barriers(const size_t num_threads) {
    thread_barrier = new tree_barrier(num_threads);
    term_barrier = new termination_barrier(num_threads);
-#ifdef TASK_STEALING
-   steal_states = new std::atomic<int>[num_threads];
-   for (size_t i(0); i < num_threads; ++i) steal_states[i] = 1;
-#endif
 }
 
 void thread::assert_end(void) const {
@@ -163,29 +156,32 @@ bool thread::go_steal_nodes(void) {
    if (All->NUM_THREADS == 1) return false;
 
    ins_sched;
-   assert(is_active());
 #ifdef STEAL_ONE
 #define NODE_BUFFER_SIZE 1
 #elif defined(STEAL_HALF)
-#define NODE_BUFFER_SIZE 10
+#define NODE_BUFFER_SIZE 32
 #endif
    db::node *node_buffer[NODE_BUFFER_SIZE];
-   int state_buffer[All->NUM_THREADS];
+   bool activated{false};
+   bool has_work{false};
 
-   memcpy(state_buffer, steal_states, sizeof(int) * All->NUM_THREADS);
-
-   for (size_t i(0); i < All->NUM_THREADS; ++i) {
-      size_t tid((next_thread + i) % All->NUM_THREADS);
+   for (size_t i(0); i < All->NUM_THREADS && !has_work; ++i) {
+      const size_t tid((next_thread + i) % All->NUM_THREADS);
       if (tid == get_id()) continue;
-
-      if (state_buffer[tid] == 0) continue;
 
       thread *target((thread *)All->SCHEDS[tid]);
 
       if (!target->is_active() || !target->has_work()) continue;
-      size_t stolen(target->steal_nodes(node_buffer, NODE_BUFFER_SIZE));
+
+      if(!activated) {
+            has_work |= set_active_if_inactive();
+            activated = true;
+      }
+      const size_t stolen(target->steal_nodes(node_buffer, NODE_BUFFER_SIZE));
 
       if (stolen == 0) continue;
+
+      has_work = true;
 #ifdef FACT_STATISTICS
       count_stolen_nodes += stolen;
 #endif
@@ -223,10 +219,19 @@ bool thread::go_steal_nodes(void) {
       }
       // set the next thread to the current one
       next_thread = tid;
+      if(!activated)
+         set_active_if_inactive();
       return true;
    }
 
-   return false;
+   if(activated) {
+      if(has_work)
+      if(has_work)
+         return true;
+      set_inactive_if_no_work();
+      return false;
+   } else
+      return false;
 }
 
 size_t thread::steal_nodes(db::node **buffer, const size_t max) {
@@ -292,23 +297,18 @@ bool thread::busy_wait(void) {
 
    while (!has_work()) {
 #ifdef TASK_STEALING
-#define STEALING_ROUND_MIN 16
-#define STEALING_ROUND_MAX 4096
+#define STEALING_ROUND_MIN 1024
+#define STEALING_ROUND_MAX (128 * 4096)
       if (!theProgram->is_static_priority() && work_stealing) {
          count++;
          if (count == backoff) {
             count = 0;
-            const bool has_new_work(set_active_if_inactive());
             if (go_steal_nodes()) {
                ins_active;
                backoff = max(backoff >> 1, (size_t)STEALING_ROUND_MIN);
                return true;
             } else {
                backoff = min((size_t)STEALING_ROUND_MAX, backoff << 1);
-            }
-            if (has_new_work) {
-               ins_active;
-               return true;
             }
          }
       }
