@@ -617,11 +617,11 @@ size_t trie::delete_branch(trie_node *node, predicate *pred,
    if (node->is_leaf()) {
       trie_leaf *leaf(node->get_leaf());
 
-      if (leaf->prev) leaf->prev->next = leaf->next;
-      if (leaf->next) leaf->next->prev = leaf->prev;
+      if (leaf->get_prev()) leaf->get_prev()->set_next(leaf->get_next());
+      if (leaf->get_next()) leaf->get_next()->set_prev(leaf->get_prev());
 
-      if (leaf == first_leaf) first_leaf = leaf->next;
-      if (leaf == last_leaf) last_leaf = leaf->prev;
+      if (leaf == first_leaf) first_leaf = leaf->get_next();
+      if (leaf == last_leaf) last_leaf = leaf->get_prev();
 
       count = leaf->get_count();
 
@@ -688,7 +688,8 @@ trie_node *trie::check_insert(void *data, predicate *pred,
                trie_leaf *leaf(create_leaf(data, pred, 1, depth));
                root.set_leaf(leaf);
                leaf->node = &root;
-               leaf->prev = leaf->next = nullptr;
+               leaf->set_prev(nullptr);
+               leaf->set_next(nullptr);
                first_leaf = last_leaf = leaf;
             }
             default:
@@ -766,14 +767,14 @@ trie_node *trie::check_insert(void *data, predicate *pred,
          trie_leaf *leaf(create_leaf(data, pred, 1, depth));
          leaf->node = parent;
          parent->set_leaf(leaf);
-         leaf->next = nullptr;
+         leaf->set_next(nullptr);
 
          if (first_leaf == nullptr) {
             first_leaf = last_leaf = leaf;
-            leaf->prev = nullptr;
+            leaf->set_prev(nullptr);
          } else {
-            leaf->prev = last_leaf;
-            last_leaf->next = leaf;
+            leaf->set_prev(last_leaf);
+            last_leaf->set_next(leaf);
             last_leaf = leaf;
          }
 
@@ -851,19 +852,19 @@ void trie::inner_delete_by_leaf(trie_leaf *leaf, predicate *pred,
 
    trie_node *node(leaf->node);
 
-   if (leaf->next) leaf->next->prev = leaf->prev;
-   if (leaf->prev) leaf->prev->next = leaf->next;
+   if (leaf->get_next()) leaf->get_next()->set_prev(leaf->get_prev());
+   if (leaf->get_prev()) leaf->get_prev()->set_next(leaf->get_next());
 
    const bool equal_first(leaf == first_leaf);
    if (equal_first) {
-      assert(leaf->prev == nullptr);
-      first_leaf = first_leaf->next;
+      assert(leaf->get_prev() == nullptr);
+      first_leaf = first_leaf->get_next();
    }
 
    const bool equal_last(leaf == last_leaf);
    if (equal_last) {
-      assert(leaf->next == nullptr);
-      last_leaf = last_leaf->prev;
+      assert(leaf->get_next() == nullptr);
+      last_leaf = last_leaf->get_prev();
    }
 
    if (equal_first && equal_last) {
@@ -1393,7 +1394,7 @@ agg_trie_iterator agg_trie::erase(agg_trie_iterator &it, predicate *pred,
                                   mem::node_allocator *alloc,
                                   candidate_gc_nodes &gc_nodes) {
    agg_trie_leaf *leaf(it.current_leaf);
-   agg_trie_leaf *next_leaf((agg_trie_leaf *)leaf->next);
+   agg_trie_leaf *next_leaf((agg_trie_leaf *)leaf->get_next());
    trie_node *node(leaf->node);
 
    leaf->set_zero_refs();

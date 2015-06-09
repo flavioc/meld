@@ -126,9 +126,12 @@ class trie_leaf : public mem::base {
    friend class agg_trie_iterator;
    friend class agg_trie;
 
-   trie_leaf *prev;
-   trie_leaf *next;
    trie_node *node;
+
+   virtual void set_next(trie_leaf *n) = 0;
+   virtual void set_prev(trie_leaf *p) = 0;
+   virtual trie_leaf *get_next() const = 0;
+   virtual trie_leaf *get_prev() const = 0;
 
    public:
    virtual vm::ref_count get_count(void) const = 0;
@@ -249,6 +252,19 @@ class tuple_trie_leaf : public trie_leaf {
    vm::ref_count used{0};  // this is utilized by the VM core to manage leaves
    depth_counter *depths;  // depth counter -- usually nullptr
 
+   virtual void set_next(trie_leaf *n) {
+      tpl->__intrusive_next = (vm::tuple*)n;
+   }
+   virtual void set_prev(trie_leaf *p) {
+      tpl->__intrusive_prev = (vm::tuple*)p;
+   }
+   virtual trie_leaf *get_next() const {
+      return (trie_leaf*)tpl->__intrusive_next;
+   }
+   virtual trie_leaf *get_prev() const {
+      return (trie_leaf*)tpl->__intrusive_prev;
+   }
+
    public:
    inline vm::tuple *get_underlying_tuple(void) const { return tpl; }
 
@@ -367,12 +383,12 @@ class tuple_trie_iterator : public mem::base {
    }
 
    inline tuple_trie_iterator &operator++(void) {
-      current_leaf = (tuple_trie_leaf *)current_leaf->next;
+      current_leaf = (tuple_trie_leaf *)current_leaf->get_next();
       return *this;
    }
 
    inline tuple_trie_iterator operator++(int) {
-      current_leaf = (tuple_trie_leaf *)current_leaf->next;
+      current_leaf = (tuple_trie_leaf *)current_leaf->get_next();
 
       return *this;
    }
@@ -520,7 +536,7 @@ class tuple_trie : public trie, public mem::base {
 
       while (leaf) {
          assert(leaf->used == 0);
-         leaf = (tuple_trie_leaf *)leaf->next;
+         leaf = (tuple_trie_leaf *)leaf->get_next();
       }
    }
 
@@ -532,7 +548,7 @@ class tuple_trie : public trie, public mem::base {
   private:
       tuple_trie_leaf *next;
 
-      inline void increment() { next = (tuple_trie_leaf *)next->next; }
+      inline void increment() { next = (tuple_trie_leaf *)next->get_next(); }
 
   public:
       inline bool end() const { return next == nullptr; }
@@ -563,7 +579,7 @@ class tuple_trie : public trie, public mem::base {
 
       inline void increment(void) {
          if (use_list) {
-            next = (tuple_trie_leaf *)next->next;
+            next = (tuple_trie_leaf *)next->get_next();
             return;
          }
 
@@ -651,10 +667,25 @@ class agg_trie_leaf : public trie_leaf {
    friend class tuple_trie;
    friend class tuple_trie_iterator;
 
+   trie_leaf *next{nullptr}, *prev{nullptr};
    agg_configuration *conf;
    vm::ref_count count;
 
    public:
+
+   virtual void set_next(trie_leaf *n) {
+      next = n;
+   }
+   virtual void set_prev(trie_leaf *p) {
+      prev = p;
+   }
+   virtual trie_leaf *get_next() const {
+      return next;
+   }
+   virtual trie_leaf *get_prev() const {
+      return prev;
+   }
+
    inline void set_conf(agg_configuration *_conf) { conf = _conf; }
 
    inline agg_configuration *get_conf(void) const { return conf; }
@@ -697,12 +728,12 @@ class agg_trie_iterator : public mem::base {
    }
 
    inline agg_trie_iterator &operator++(void) {
-      current_leaf = (agg_trie_leaf *)current_leaf->next;
+      current_leaf = (agg_trie_leaf *)current_leaf->get_next();
       return *this;
    }
 
    inline agg_trie_iterator operator++(int) {
-      current_leaf = (agg_trie_leaf *)current_leaf->next;
+      current_leaf = (agg_trie_leaf *)current_leaf->get_next();
 
       return *this;
    }
