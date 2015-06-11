@@ -741,9 +741,15 @@ void state::run_node(db::node *node) {
 #ifdef GC_NODES
    for (auto x : gc_nodes) {
       db::node *n((db::node *)x);
-      MUTEX_LOCK_GUARD(n->main_lock, node_lock);
+      LOCK_STACK(nodelock);
+      MUTEX_LOCK(n->main_lock, nodelock, node_lock);
       // need to lock node since it may have pending facts
-      if (n->garbage_collect()) sched->delete_node(n);
+      if (n->garbage_collect()) {
+         sched->delete_node(n);
+         // node cannot be unlocked since it is gone.
+      } else {
+         MUTEX_UNLOCK(n->main_lock, nodelock);
+      }
    }
    gc_nodes.clear();
 #endif
