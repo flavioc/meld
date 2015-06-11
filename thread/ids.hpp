@@ -8,7 +8,7 @@
 #include "db/database.hpp"
 #include "db/node.hpp"
 
-#define ALLOCATED_IDS (1024*8)
+#define ALLOCATED_IDS (1024)
 
 namespace sched
 {

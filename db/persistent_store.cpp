@@ -162,7 +162,8 @@ persistent_store::wipeout(mem::node_allocator *alloc, candidate_gc_nodes& gc_nod
    }
 #endif
 #ifndef COMPILED
-   mem::allocator<tuple_trie>().deallocate(tuples, vm::theProgram->num_persistent_predicates());
+   if(vm::theProgram->num_persistent_predicates() > 0)
+      mem::allocator<tuple_trie>().deallocate(tuples, vm::theProgram->num_persistent_predicates());
 #endif
 }
 

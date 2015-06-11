@@ -153,13 +153,17 @@ void thread::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pred,
 
 #ifdef TASK_STEALING
 bool thread::go_steal_nodes(void) {
+   // Function returns 'true' if there are new nodes in the thread.
+   // New nodes come either from new work or stolen nodes.
+   // When returning true, the thread is in the 'active' state
+   // while when returning false, it must be inactive.
    if (All->NUM_THREADS == 1) return false;
 
    ins_sched;
 #ifdef STEAL_ONE
 #define NODE_BUFFER_SIZE 1
 #elif defined(STEAL_HALF)
-#define NODE_BUFFER_SIZE 32
+#define NODE_BUFFER_SIZE 10
 #endif
    db::node *node_buffer[NODE_BUFFER_SIZE];
    bool activated{false};
@@ -169,6 +173,7 @@ bool thread::go_steal_nodes(void) {
       const size_t tid((next_thread + i) % All->NUM_THREADS);
       if (tid == get_id()) continue;
 
+      assert(tid < All->NUM_THREADS);
       thread *target((thread *)All->SCHEDS[tid]);
 
       if (!target->is_active() || !target->has_work()) continue;
@@ -181,7 +186,7 @@ bool thread::go_steal_nodes(void) {
 
       if (stolen == 0) continue;
 
-      has_work = true;
+      has_work |= true;
 #ifdef FACT_STATISTICS
       count_stolen_nodes += stolen;
 #endif
@@ -225,7 +230,6 @@ bool thread::go_steal_nodes(void) {
    }
 
    if(activated) {
-      if(has_work)
       if(has_work)
          return true;
       set_inactive_if_no_work();
@@ -297,8 +301,8 @@ bool thread::busy_wait(void) {
 
    while (!has_work()) {
 #ifdef TASK_STEALING
-#define STEALING_ROUND_MIN 1024
-#define STEALING_ROUND_MAX (128 * 4096)
+#define STEALING_ROUND_MIN 128
+#define STEALING_ROUND_MAX (4 * 4096)
       if (!theProgram->is_static_priority() && work_stealing) {
          count++;
          if (count == backoff) {

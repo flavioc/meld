@@ -27,7 +27,7 @@ struct persistent_store {
 
 // tuple database
 #ifdef COMPILED
-   utils::byte tuples[COMPILED_NUM_TRIES * sizeof(tuple_trie)];
+   utils::byte tuples[COMPILED_NUM_TRIES * sizeof(tuple_trie)] = {};
 #else
    tuple_trie *tuples{nullptr};
 #endif
@@ -36,7 +36,7 @@ struct persistent_store {
    // sets of tuple aggregates
 #ifdef COMPILED
 #ifndef COMPILED_NO_AGGREGATES
-   tuple_aggregate* aggs[COMPILED_NUM_TRIES];
+   tuple_aggregate* aggs[COMPILED_NUM_TRIES] = {};
 #endif
 #else
    aggregate_map aggs;
@@ -134,8 +134,9 @@ struct persistent_store {
 
    explicit inline persistent_store() {
 #ifndef COMPILED
-      tuples = mem::allocator<tuple_trie>().allocate(
-          vm::theProgram->num_persistent_predicates());
+      if(vm::theProgram->num_persistent_predicates() > 0)
+         tuples = mem::allocator<tuple_trie>().allocate(
+             vm::theProgram->num_persistent_predicates());
 #endif
       for (size_t i(0); i < vm::theProgram->num_persistent_predicates(); ++i) {
          vm::predicate *pred(vm::theProgram->get_persistent_predicate(i));
