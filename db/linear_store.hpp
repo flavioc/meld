@@ -364,16 +364,17 @@ struct linear_store {
 
    explicit linear_store(void) {
 #ifndef COMPILED
-      data = mem::allocator<utils::byte>().allocate(
-          ITEM_SIZE * vm::theProgram->num_linear_predicates());
-      vm::bitmap::create(types,
-                         vm::theProgram->num_linear_predicates_next_uint());
-      vm::bitmap::create(expand,
-                         vm::theProgram->num_linear_predicates_next_uint());
-#endif
-      for (size_t i(0); i < vm::theProgram->num_linear_predicates(); ++i) {
-         mem::allocator<tuple_list>().construct(get_list(i));
+      if(vm::theProgram->num_linear_predicates() > 0) {
+         data = mem::allocator<utils::byte>().allocate(
+               ITEM_SIZE * vm::theProgram->num_linear_predicates());
+         vm::bitmap::create(types,
+               vm::theProgram->num_linear_predicates_next_uint());
+         vm::bitmap::create(expand,
+               vm::theProgram->num_linear_predicates_next_uint());
       }
+#endif
+      for (size_t i(0); i < vm::theProgram->num_linear_predicates(); ++i)
+         mem::allocator<tuple_list>().construct(get_list(i));
    }
 
    inline void destroy(mem::node_allocator *alloc,
@@ -413,7 +414,9 @@ struct linear_store {
    }
 
    inline ~linear_store(void) {
-      if (!types.empty(vm::theProgram->num_linear_predicates_next_uint())) {
+      if (vm::theProgram->num_linear_predicates() > 0 &&
+            !types.empty(vm::theProgram->num_linear_predicates_next_uint()))
+      {
          for (size_t i(0); i < vm::theProgram->num_linear_predicates(); ++i) {
             if (types.get_bit(i)) {
                hash_table *table(get_table(i));
@@ -423,12 +426,14 @@ struct linear_store {
          }
       }
 #ifndef COMPILED
-      mem::allocator<utils::byte>().deallocate(
-          data, ITEM_SIZE * vm::theProgram->num_linear_predicates());
-      vm::bitmap::destroy(types,
-                          vm::theProgram->num_linear_predicates_next_uint());
-      vm::bitmap::destroy(expand,
-                          vm::theProgram->num_linear_predicates_next_uint());
+      if(vm::theProgram->num_linear_predicates() > 0) {
+         mem::allocator<utils::byte>().deallocate(
+               data, ITEM_SIZE * vm::theProgram->num_linear_predicates());
+         vm::bitmap::destroy(types,
+               vm::theProgram->num_linear_predicates_next_uint());
+         vm::bitmap::destroy(expand,
+               vm::theProgram->num_linear_predicates_next_uint());
+      }
 #endif
    }
 };
