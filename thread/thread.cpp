@@ -340,9 +340,6 @@ bool thread::busy_wait(void) {
 void thread::make_current_node_inactive(void) {
    current_node->make_inactive();
    current_node->remove_temporary_priority();
-#ifdef GC_NODES
-   if (current_node->garbage_collect()) delete_node(current_node);
-#endif
 }
 
 inline bool thread::check_if_current_useless(void) {
@@ -363,7 +360,14 @@ inline bool thread::check_if_current_useless(void) {
 
       if (!current_node->unprocessed_facts) {
          make_current_node_inactive();
+#ifdef GC_NODES
+         if (current_node->garbage_collect())
+            delete_node(current_node);
+         else
+            NODE_UNLOCK(current_node, curlock);
+#else
          NODE_UNLOCK(current_node, curlock);
+#endif
          current_node = nullptr;
          return true;
       }
