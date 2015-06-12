@@ -51,6 +51,7 @@ SERIAL_PROGS = belief-propagation-50 belief-propagation-200 \
 		8queens-11 8queens-12 8queens-13 8queens-14 \
 		shortest-usairports500 shortest-oclinks \
 		shortest-uspowergrid shortest-email
+SCALE_PROGS = min-max-tictactoe min-max-tictactoe-big
 
 serial:
 	@bash $(SERIAL) $(SERIAL_PROGS)
@@ -58,6 +59,8 @@ serial-mem:
 	@bash run_mem.sh $(SERIAL_PROGS)
 serial-recompile:
 	touch $(addprefix progs/,$(addsuffix .meld,$(SERIAL_PROGS)))
+scale:
+	@bash $(SCRIPT) $(SCALE_PROGS)
 ggc:
 	@bash $(SCRIPT) $(GGC)
 search-random:
