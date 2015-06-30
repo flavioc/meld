@@ -127,6 +127,7 @@ full_tuple *state::search_for_negative_tuple(vm::full_tuple_list *ls,
 
 inline void
 state::do_persistent_tuples(db::node *node, vm::full_tuple_list *ls) {
+#if !defined(COMPILED) or (COMPILED_NUM_TRIES > 0)
    while (!ls->empty()) {
       full_tuple *stpl(ls->pop_front());
       vm::predicate *pred(stpl->get_predicate());
@@ -161,6 +162,10 @@ state::do_persistent_tuples(db::node *node, vm::full_tuple_list *ls) {
       }
    }
    assert(ls->empty());
+#else
+   (void)ls;
+   (void)node;
+#endif
 }
 
 inline void
@@ -652,9 +657,11 @@ void state::run_node(db::node *node) {
    {
       process_action_tuples(node);
       process_incoming_tuples(node);
+#if !defined(COMPILED) or (COMPILED_NUM_TRIES > 0)
       if(!node->store.incoming_persistent_tuples.empty())
          node_persistent_tuples.splice_back(
              node->store.incoming_persistent_tuples);
+#endif
 
 #ifdef DYNAMIC_INDEXING
       if (node->indexing_epoch != indexing_epoch) {
@@ -667,8 +674,7 @@ void state::run_node(db::node *node) {
       MUTEX_UNLOCK(node->main_lock, node_lock);
       // incoming facts have been processed, we release the main lock
       // but the database locks remains locked.
-      if(!node_persistent_tuples.empty())
-         do_persistent_tuples(node, &node_persistent_tuples);
+      do_persistent_tuples(node, &node_persistent_tuples);
    }
 
    // add linear facts to the node matcher
@@ -681,8 +687,7 @@ void state::run_node(db::node *node) {
           sched->thread_node->store.incoming_persistent_tuples);
       sched->thread_node->unprocessed_facts = false;
       MUTEX_UNLOCK(sched->thread_node->main_lock, node_lock);
-      if(!thread_persistent_tuples.empty())
-         do_persistent_tuples(sched->thread_node, &thread_persistent_tuples);
+      do_persistent_tuples(sched->thread_node, &thread_persistent_tuples);
       matcher->add_thread(sched->thread_node->matcher);
    }
 
@@ -718,8 +723,7 @@ void state::run_node(db::node *node) {
             }
          }
       }
-      if(!node_persistent_tuples.empty())
-         do_persistent_tuples(node, &node_persistent_tuples);
+      do_persistent_tuples(node, &node_persistent_tuples);
       assert(node_persistent_tuples.empty());
       if (theProgram->has_thread_predicates() && node != sched->thread_node)
          do_persistent_tuples(sched->thread_node, &thread_persistent_tuples);
