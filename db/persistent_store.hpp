@@ -9,9 +9,6 @@
 #include "db/tuple_aggregate.hpp"
 #include "db/array.hpp"
 #include "vm/all.hpp"
-#ifdef COMPILED
-#include COMPILED_HEADER
-#endif
 
 namespace db {
 

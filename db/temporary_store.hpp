@@ -11,9 +11,6 @@
 #include "vm/full_tuple.hpp"
 #include "utils/intrusive_list.hpp"
 #include "vm/bitmap.hpp"
-#ifdef COMPILED
-#include COMPILED_HEADER
-#endif
 
 namespace db {
 

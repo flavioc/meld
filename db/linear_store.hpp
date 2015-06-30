@@ -16,9 +16,6 @@
 #include "utils/intrusive_list.hpp"
 #include "db/hash_table.hpp"
 #include "mem/node.hpp"
-#ifdef COMPILED
-#include COMPILED_HEADER
-#endif
 
 #define CREATE_HASHTABLE_THREADSHOLD 8
 #define ITEM_SIZE                                                 \

@@ -22,9 +22,6 @@
 #ifdef USE_REAL_NODES
 #include <unordered_map>
 #endif
-#ifdef COMPILED
-#include COMPILED_HEADER
-#endif
 
 namespace db {
 class database;

@@ -164,7 +164,7 @@ bool thread::go_steal_nodes(void) {
 #ifdef STEAL_ONE
 #define NODE_BUFFER_SIZE 1
 #elif defined(STEAL_HALF)
-#define NODE_BUFFER_SIZE 32
+#define NODE_BUFFER_SIZE 10
 #endif
    db::node *node_buffer[NODE_BUFFER_SIZE];
    bool activated{false};
@@ -172,7 +172,7 @@ bool thread::go_steal_nodes(void) {
 
    for (size_t i(0); i < All->NUM_THREADS; ++i) {
       const size_t tid((next_thread + i) % All->NUM_THREADS);
-      if (tid == get_id()) continue;
+      if (this == All->SCHEDS[tid]) continue;
 
       assert(tid < All->NUM_THREADS);
       thread *target((thread *)All->SCHEDS[tid]);
@@ -302,7 +302,7 @@ bool thread::busy_wait(void) {
 
    while (!has_work()) {
 #ifdef TASK_STEALING
-#define STEALING_ROUND_MIN 128
+#define STEALING_ROUND_MIN 1024
 #define STEALING_ROUND_MAX (4 * 4096)
       if (!theProgram->is_static_priority() && work_stealing) {
          count++;
@@ -571,7 +571,7 @@ void thread::setup_thread_node() {
       vm::predicate *other_pred(
           vm::theProgram->get_special_fact(vm::special_facts::OTHER_THREAD));
       for (size_t i(0); i < vm::All->NUM_THREADS; ++i) {
-         if (get_id() == i) continue;
+         if (this == All->SCHEDS[i]) continue;
          vm::tuple *tpl(vm::tuple::create(other_pred, &(thread_node->alloc)));
          tpl->set_thread(0, (vm::thread_val)All->SCHEDS[i]);
          tpl->set_int(1, i);

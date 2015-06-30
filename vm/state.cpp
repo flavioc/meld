@@ -127,7 +127,7 @@ full_tuple *state::search_for_negative_tuple(vm::full_tuple_list *ls,
 
 inline void
 state::do_persistent_tuples(db::node *node, vm::full_tuple_list *ls) {
-#if !defined(COMPILED) or (COMPILED_NUM_TRIES > 0)
+#if !defined(COMPILED) || defined(COMPILED_DERIVES_PERSISTENT)
    while (!ls->empty()) {
       full_tuple *stpl(ls->pop_front());
       vm::predicate *pred(stpl->get_predicate());
@@ -657,7 +657,7 @@ void state::run_node(db::node *node) {
    {
       process_action_tuples(node);
       process_incoming_tuples(node);
-#if !defined(COMPILED) or (COMPILED_NUM_TRIES > 0)
+#if !defined(COMPILED) || defined(COMPILED_DERIVES_PERSISTENT)
       if(!node->store.incoming_persistent_tuples.empty())
          node_persistent_tuples.splice_back(
              node->store.incoming_persistent_tuples);
@@ -677,6 +677,7 @@ void state::run_node(db::node *node) {
       do_persistent_tuples(node, &node_persistent_tuples);
    }
 
+#if !defined(COMPILED) || defined(COMPILED_THREAD_FACTS)
    // add linear facts to the node matcher
    if (theProgram->has_thread_predicates() && sched->thread_node != node) {
       LOCK_STACK(thread_node_lock);
@@ -690,6 +691,7 @@ void state::run_node(db::node *node) {
       do_persistent_tuples(sched->thread_node, &thread_persistent_tuples);
       matcher->add_thread(sched->thread_node->matcher);
    }
+#endif
 
    while (!matcher->rule_queue.empty(theProgram->num_rules_next_uint())) {
       rule_id rule(
@@ -725,8 +727,10 @@ void state::run_node(db::node *node) {
       }
       do_persistent_tuples(node, &node_persistent_tuples);
       assert(node_persistent_tuples.empty());
+#if !defined(COMPILED) || defined(COMPILED_THREAD_FACTS)
       if (theProgram->has_thread_predicates() && node != sched->thread_node)
          do_persistent_tuples(sched->thread_node, &thread_persistent_tuples);
+#endif
 
 #if defined(COMPILED_CHANGES_OWNER) or !defined(COMPILED)
       if (node->has_new_owner()) {
@@ -740,18 +744,22 @@ void state::run_node(db::node *node) {
 #endif
    }
 
+   sync(node);
+
+#if !defined(COMPILED) || defined(COMPILED_THREAD_FACTS)
    // unmark all thread facts and save state in 'thread_node'.
    if (theProgram->has_thread_predicates() && sched->thread_node != node)
       matcher->remove_thread(sched->thread_node->matcher);
+#endif
 
    assert(node_persistent_tuples.empty());
    assert(thread_persistent_tuples.empty());
    node->manage_index();
    MUTEX_UNLOCK(node->database_lock, internal_lock_data);
+#if !defined(COMPILED) || defined(COMPILED_THREAD_FACTS)
    if (theProgram->has_thread_predicates() && sched->thread_node != node)
       sched->thread_node->manage_index();
-
-   sync(node);
+#endif
 
 #ifdef GC_NODES
    for (auto x : gc_nodes) {

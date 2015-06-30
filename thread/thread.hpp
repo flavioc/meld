@@ -77,6 +77,7 @@ class thread: public mem::base
 private:
    
    const vm::process_id id;
+   char __pad[1024];
 
    vm::state state;
 

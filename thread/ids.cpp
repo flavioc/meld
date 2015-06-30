@@ -68,6 +68,7 @@ ids::remove_node_from_allocated(db::node *n)
 void
 ids::delete_node(node *n)
 {
+   (void)n;
 #ifdef GC_NODES
    candidate_gc_nodes gc_nodes;
    n->wipeout(gc_nodes, true);

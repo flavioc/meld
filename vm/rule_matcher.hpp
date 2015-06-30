@@ -9,9 +9,6 @@
 #include "vm/bitmap_static.hpp"
 #include "vm/all.hpp"
 #include "db/linear_store.hpp"
-#ifdef COMPILED
-#include COMPILED_HEADER
-#endif
 
 namespace vm {
 

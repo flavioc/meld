@@ -23,9 +23,6 @@
 #include "vm/stat.hpp"
 #endif
 #include "vm/buffer.hpp"
-#ifdef COMPILED
-#include COMPILED_HEADER
-#endif
 
 // forward declaration
 namespace sched {

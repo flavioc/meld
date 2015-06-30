@@ -124,13 +124,11 @@ struct pool {
             place = place->next;
          }
 
-#if 0
          if(count > 8) // time to expand table
          {
-            expand_chunk_table();
+//            std::cout << "Should probably expand...\n";
+            //expand_chunk_table();
          }
-         XXX
-#endif
 
          chunkgroup *ncg(new_chunkgroup(size));
          ncg->next = chunk_table[index].next;

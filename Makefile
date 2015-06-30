@@ -78,7 +78,7 @@ endif
 ifeq ($(GC_NODES), true)
 	FLAGS += -DGC_NODES
 endif
-target: FLAGS += -DCOMPILED -DCOMPILED_HEADER=\"$(PROGRAM:.cpp=.hpp)\"
+target: FLAGS += -DCOMPILED -include $(PROGRAM:.cpp=.hpp)
 
 WARNINGS = -Wall -Wextra
 

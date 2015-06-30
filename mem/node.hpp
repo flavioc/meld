@@ -6,9 +6,6 @@
 #include "utils/types.hpp"
 #include "utils/mutex.hpp"
 #include "vm/bitmap_static.hpp"
-#ifdef COMPILED
-#include COMPILED_HEADER
-#endif
 
 //#define NODE_ALLOCATOR
 #define USE_REFCOUNT

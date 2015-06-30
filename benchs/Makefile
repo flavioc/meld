@@ -52,8 +52,8 @@ SERIAL_PROGS = belief-propagation-50 belief-propagation-200 \
 		shortest-usairports500 shortest-oclinks \
 		shortest-uspowergrid shortest-email
 SCALE_PROGS = shortest-usairports500 shortest-oclinks \
-				  shortest-email \
 				  shortest-uspowergrid \
+				  shortest-email \
 				  new-heat-transfer-80 new-heat-transfer-120 \
 				  belief-propagation-300 belief-propagation-400 \
 				  8queens-13 8queens-14 \
