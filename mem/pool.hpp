@@ -14,23 +14,26 @@
 
 namespace mem {
 
-class pool {
+struct pool {
    private:
-   chunkgroup *chunk_table;
-   size_t size_table = 31;  // default table size
+   chunkgroup chunk_table[31];
+   size_t size_table;
+
+   // available page for chunkgroups.
+   chunkgroup *next_group;
+   chunkgroup *end_groups;
+   chunkgroup *free_groups;
 
    // number of chunkgroups to allocate per page.
    static const size_t NUM_CHUNK_PAGES = 64;
 
-   // available page for chunkgroups.
-   chunkgroup *available_groups;
-   chunkgroup *end_groups;
-   chunkgroup *free_groups{nullptr};
+   chunkgroup available_groups[NUM_CHUNK_PAGES];
+   chunkgroup __pad;
 
    inline void create_new_chunkgroup_page(void) {
       const size_t size_groups(sizeof(chunkgroup) * NUM_CHUNK_PAGES);
-      available_groups = (chunkgroup *)new unsigned char[size_groups];
-      end_groups = available_groups + NUM_CHUNK_PAGES;
+      next_group = (chunkgroup *)new unsigned char[size_groups];
+      end_groups = next_group + NUM_CHUNK_PAGES;
    }
 
    inline chunkgroup *new_chunkgroup(const size_t size) {
@@ -40,9 +43,9 @@ class pool {
          ret->init(size);
          return ret;
       }
-      if (available_groups == end_groups) create_new_chunkgroup_page();
-      chunkgroup *next(available_groups);
-      available_groups++;
+      if (next_group == end_groups) create_new_chunkgroup_page();
+      chunkgroup *next(next_group);
+      next_group++;
       ::new ((void *)next) chunkgroup(size);
       return next;
    }
@@ -53,19 +56,20 @@ class pool {
          free_groups = free_groups->next;
          return ret;
       }
-      if (available_groups == end_groups) create_new_chunkgroup_page();
-      chunkgroup *next(available_groups);
-      available_groups++;
+      if (next_group == end_groups) create_new_chunkgroup_page();
+      chunkgroup *next(next_group);
+      next_group++;
       ::new ((void *)next) chunkgroup();
       return next;
    }
 
+#if 0
    inline void expand_chunk_table(void) {
       chunkgroup *old_table(chunk_table);
       const size_t old_size(size_table);
 
       size_table *= 2;
-      chunk_table = new chunkgroup[size_table];
+      chunk_table = new chunkgroup[size_table + 8];
       memset(chunk_table, 0, sizeof(chunkgroup) * size_table);
 
       for (size_t i(0); i < old_size; ++i) {
@@ -101,6 +105,7 @@ class pool {
 
       delete[] old_table;
    }
+#endif
 
    inline chunkgroup *find_insert_chunkgroup(const size_t size) {
       // tries to find the chunkgroup, if not add it.
@@ -171,9 +176,11 @@ class pool {
       return grp->deallocate(ptr);
    }
 
-   explicit pool(void) {
-      create_new_chunkgroup_page();
-      chunk_table = new chunkgroup[size_table];
+   inline void create() {
+      size_table = 31;
+      next_group = available_groups;
+      free_groups = nullptr;
+      end_groups = next_group + NUM_CHUNK_PAGES;
       memset(chunk_table, 0, sizeof(chunkgroup) * size_table);
    }
 
@@ -192,6 +199,7 @@ class pool {
       }
    }
 };
+
 }
 
 #endif

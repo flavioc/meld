@@ -233,13 +233,13 @@ public:
    }
 
    void add_to_aggregate(db::node *, vm::full_tuple_list *, full_tuple *);
-   void do_persistent_tuples(db::node *, vm::full_tuple_list*);
-   void process_persistent_tuple(db::node *, full_tuple *, vm::tuple *);
-   void process_consumed_local_tuples(void);
-   void process_action_tuples(db::node *);
-   void process_incoming_tuples(db::node *);
+   inline void do_persistent_tuples(db::node *, vm::full_tuple_list*);
+   inline void process_persistent_tuple(db::node *, full_tuple *, vm::tuple *);
+   inline void process_consumed_local_tuples(void);
+   inline void process_action_tuples(db::node *);
+   inline void process_incoming_tuples(db::node *);
    void run_node(db::node *);
-   bool sync(db::node *);
+   inline bool sync(db::node *);
    void setup(vm::predicate *, const vm::derivation_direction,
               const vm::depth_t);
    void cleanup(void);

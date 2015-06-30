@@ -1,2 +1,2 @@
-PROG_ARGS="5"
+PROG_ARGS="1"
 MELD_ARGS="-n"

@@ -219,7 +219,8 @@ void machine::setup_threads(const size_t th) {
    this->all->SCHEDS.resize(th, nullptr);
 
    nodes_per_thread = total_nodes() / num_threads;
-   if (nodes_per_thread * num_threads < total_nodes()) nodes_per_thread++;
+   if(nodes_per_thread * num_threads < total_nodes())
+      nodes_per_thread++;
 }
 
 void machine::init(const machine_arguments& margs) {

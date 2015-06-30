@@ -51,7 +51,13 @@ SERIAL_PROGS = belief-propagation-50 belief-propagation-200 \
 		8queens-11 8queens-12 8queens-13 8queens-14 \
 		shortest-usairports500 shortest-oclinks \
 		shortest-uspowergrid shortest-email
-SCALE_PROGS = min-max-tictactoe min-max-tictactoe-big
+SCALE_PROGS = shortest-usairports500 shortest-oclinks \
+				  shortest-email \
+				  shortest-uspowergrid \
+				  new-heat-transfer-80 new-heat-transfer-120 \
+				  belief-propagation-300 belief-propagation-400 \
+				  8queens-13 8queens-14 \
+				  min-max-tictactoe min-max-tictactoe-big \
 
 serial:
 	@bash $(SERIAL) $(SERIAL_PROGS)
@@ -115,18 +121,21 @@ update-queens:
 	python ../scripts/generate_8queens.py 12 h > progs/data/8queens-data12.meld
 	python ../scripts/generate_8queens.py 13 h > progs/data/8queens-data13.meld
 	python ../scripts/generate_8queens.py 14 h > progs/data/8queens-data14.meld
+	python ../scripts/generate_8queens.py 15 h > progs/data/8queens-data15.meld
 	git add progs/data/8queens-data9.meld
 	git add progs/data/8queens-data10.meld
 	git add progs/data/8queens-data11.meld
 	git add progs/data/8queens-data12.meld
 	git add progs/data/8queens-data13.meld
 	git add progs/data/8queens-data14.meld
+	git add progs/data/8queens-data15.meld
 	touch progs/8queens-9.meld
 	touch progs/8queens-10.meld
 	touch progs/8queens-11.meld
 	touch progs/8queens-12.meld
 	touch progs/8queens-13.meld
 	touch progs/8queens-14.meld
+	touch progs/8queens-15.meld
 	python ../scripts/generate_8queens.py 9 h b > progs/data/8queens-data9-bottom.meld
 	python ../scripts/generate_8queens.py 10 h b > progs/data/8queens-data10-bottom.meld
 	python ../scripts/generate_8queens.py 11 h b > progs/data/8queens-data11-bottom.meld

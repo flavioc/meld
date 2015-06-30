@@ -12,8 +12,11 @@ extern __thread pool *mem_pool;
 inline void ensure_pool(void)
 {
 #ifdef POOL_ALLOCATOR
-   if(mem_pool == nullptr)
-      mem_pool = new pool();
+   if(mem_pool == nullptr) {
+      pool *p(new pool);
+      p->create();
+      mem_pool = p;
+   }
 #endif
 }
 

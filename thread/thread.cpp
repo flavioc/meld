@@ -1,6 +1,7 @@
 #include <iostream>
 #include <climits>
 #include <thread>
+#include <unistd.h>
 
 #include "thread/thread.hpp"
 #include "db/database.hpp"
@@ -163,13 +164,13 @@ bool thread::go_steal_nodes(void) {
 #ifdef STEAL_ONE
 #define NODE_BUFFER_SIZE 1
 #elif defined(STEAL_HALF)
-#define NODE_BUFFER_SIZE 10
+#define NODE_BUFFER_SIZE 32
 #endif
    db::node *node_buffer[NODE_BUFFER_SIZE];
    bool activated{false};
    bool has_work{false};
 
-   for (size_t i(0); i < All->NUM_THREADS && !has_work; ++i) {
+   for (size_t i(0); i < All->NUM_THREADS; ++i) {
       const size_t tid((next_thread + i) % All->NUM_THREADS);
       if (tid == get_id()) continue;
 
@@ -509,21 +510,24 @@ void thread::init(const size_t) {
       }
    } else {
       prios.moving.start_initial_insert(All->MACHINE->find_owned_nodes(id));
+      size_t total{0};
 
       for (size_t i(0); it != end; ++it, ++i) {
          db::node *cur_node(init_node(it));
 
          prios.moving.initial_fast_insert(cur_node, initial, i);
+         total++;
       }
+      //cout << total << endl;
+   }
+
+   if (theProgram->has_thread_predicates()) {
+      thread_node = node_handler.create_node();
+      setup_thread_node();
    }
 
    threads_synchronize();
    bool sync{false};
-   if (theProgram->has_thread_predicates()) {
-      thread_node = node_handler.create_node();
-      setup_thread_node();
-      sync = true;
-   }
 #ifdef COMPILED
    if (theProgram->has_const_code()) {
       sync = true;
@@ -617,7 +621,7 @@ void thread::write_slice(statistics::slice &sl) {
 
 thread::thread(const vm::process_id _id)
     : id(_id),
-      state(this)
+    state(this)
 #ifdef TASK_STEALING
       ,
       rand(_id * 1000),
@@ -632,6 +636,10 @@ thread::thread(const vm::process_id _id)
 #endif
 {
    bitmap::create(comm_threads, All->NUM_THREADS_NEXT_UINT);
+#if 0
+   state = mem::allocator<vm::state>().allocate(1);
+   mem::allocator<vm::state>().construct(state, this);
+#endif
 }
 
 thread::~thread(void) {

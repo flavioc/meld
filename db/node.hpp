@@ -55,10 +55,6 @@ struct node {
    private:
    sched::thread *owner{nullptr};
 
-   // marker that indicates if the node should not be stolen.
-   // when not nullptr it indicates which scheduler it needs to be on.
-   sched::thread *static_node = nullptr;
-
    vm::priority_t default_priority_level;
    vm::priority_t priority_level;
 
@@ -133,6 +129,9 @@ struct node {
    temporary_store store;
    vm::rule_matcher matcher;
    bool unprocessed_facts{false};
+   // marker that indicates if the node should not be stolen.
+   // when not nullptr it indicates which scheduler it needs to be on.
+   sched::thread *static_node = nullptr;
    utils::mutex main_lock;
    utils::mutex database_lock;
 
