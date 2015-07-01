@@ -177,8 +177,10 @@ struct pool {
          return small.allocate(new_size);
       else if(new_size <= 1024)
          return medium.allocate(new_size);
-      else
+      else if(new_size <= 65535)
          return large.allocate(new_size);
+      else
+         return new utils::byte[new_size];
 #else
       chunkgroup *grp(get_group(new_size));
 #ifdef INSTRUMENTATION
@@ -195,8 +197,10 @@ struct pool {
          small.deallocate(ptr, new_size);
       else if(new_size <= 1024)
          medium.deallocate(ptr, new_size);
-      else
+      else if(new_size <= 65535)
          large.deallocate(ptr, new_size);
+      else
+         delete [](utils::byte*)ptr;
 #else
       chunkgroup *grp(get_group(new_size));
 #ifdef INSTRUMENTATION

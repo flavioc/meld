@@ -67,6 +67,8 @@ serial-recompile:
 	touch $(addprefix progs/,$(addsuffix .meld,$(SERIAL_PROGS)))
 scale:
 	@bash $(SCRIPT) $(SCALE_PROGS)
+scale-recompile:
+	touch $(addprefix progs/,$(addsuffix .meld,$(SCALE_PROGS)))
 ggc:
 	@bash $(SCRIPT) $(GGC)
 search-random:
