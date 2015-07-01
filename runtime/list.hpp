@@ -245,7 +245,7 @@ struct cons
       static inline cons* create(list_ptr _tail, const vm::tuple_field _head, vm::type *_type,
             const size_t start_refs = 0) __attribute__((always_inline))
       {
-         cons *c(mem::allocator<cons>().allocate(1));
+         cons *c((cons*)mem::center::allocate_cons(sizeof(cons)));
          mem::allocator<cons>().construct(c);
          c->refs = start_refs;
          c->head = _head;
@@ -256,7 +256,7 @@ struct cons
 
       static inline void remove(cons *c)
       {
-         mem::allocator<cons>().deallocate(c, 1);
+         mem::center::deallocate_cons(c, sizeof(cons));
       }
 };
 

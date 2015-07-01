@@ -8,7 +8,7 @@
 #include "vm/bitmap_static.hpp"
 
 //#define NODE_ALLOCATOR
-#define USE_REFCOUNT
+//#define USE_REFCOUNT
 
 namespace mem
 {
