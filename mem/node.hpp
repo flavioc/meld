@@ -8,7 +8,7 @@
 #include "vm/bitmap_static.hpp"
 
 //#define NODE_ALLOCATOR
-#define USE_REFCOUNT
+//#define USE_REFCOUNT
 
 namespace mem
 {
@@ -16,6 +16,7 @@ namespace mem
 struct node_allocator
 {
 #ifdef NODE_ALLOCATOR
+#define MAX_NODE_ALLOCATOR_SIZE 256
    struct free_size {
       uint16_t size;
       void *list;
@@ -85,45 +86,59 @@ struct node_allocator
    {
       int left(0);
       int right(static_cast<int>(num_free) - 1);
+      int middle(0);
+#if 0
+      std::cout << "\n";
+
+      for(size_t i(0); i < num_free; ++i)
+         std::cout << frees[i].size << " ";
+      std::cout << "\n";
+#endif
 
       while(left <= right) {
-         int middle(left + (right - left)/2);
+         middle = left + (right - left)/2;
+#if 0
+         std::cout << "l: " << left << " r: " << right << " m: " << middle << "\n";
+#endif
          assert(middle < num_free);
          assert(middle >= 0);
          assert(left < num_free);
          assert(right >= 0);
-         const std::size_t found(frees[middle].size);
 
-         if(found == size)
+         if(frees[middle].size == size)
             return frees + middle;
-         else if(left == right) {
-            if(!create)
-               return nullptr;
-            // need to add it here.
-            if(size > found)
-               middle++;
-            assert(middle <= num_free);
-            assert(middle >= 0);
-            memmove(frees + middle + 1, frees + middle, (num_free - middle) * sizeof(free_size));
-            frees[middle].size = size;
-            frees[middle].list = nullptr;
-            assert(num_free == middle || frees[middle+1].size > frees[middle].size);
-            assert(middle == 0 || frees[middle-1].size < frees[middle].size);
-            num_free++;
-            assert(num_free <= NODE_ALLOCATOR_SIZES);
-            return frees + middle;
-         } else if(found < size)
+         else if(left == right)
+            break;
+         else if(frees[middle].size < size)
             left = middle + 1;
          else
-            right = middle - 1;
+            right = middle;
       }
       if(!create)
          return nullptr;
-      frees[num_free].size = size;
-      frees[num_free].list = nullptr;
+#if 0
+      std::cout << "l: " << left << " r: " << right << " m: " << middle << "\n";
+#endif
+#ifndef NDEBUG
+      for(size_t i(0); i < num_free; ++i)
+         assert(frees[i].size != size);
+#endif
+      if(size > frees[middle].size)
+         middle++;
+      // need to add it here.
+      assert(middle <= num_free + 1);
+      assert(middle >= 0);
+      if(middle < num_free)
+         memmove(frees + middle + 1, frees + middle, (num_free - middle) * sizeof(free_size));
+      frees[middle].size = size;
+      frees[middle].list = nullptr;
       num_free++;
+#ifndef NDEBUG
+      for(size_t i(1); i < num_free; ++i)
+         assert(frees[i-1].size < frees[i].size);
+#endif
       assert(num_free <= NODE_ALLOCATOR_SIZES);
-      return frees + (num_free-1);
+      return frees + middle;
    }
 
    inline utils::byte *cast_object_to_ptr(object *o)
@@ -142,9 +157,11 @@ struct node_allocator
    inline utils::byte *allocate_obj(std::size_t size)
    {
 #ifdef NODE_ALLOCATOR
+      size = std::max(MIN_SIZE_OBJ, size) + ADD_SIZE_OBJ;
+      if(size > MAX_NODE_ALLOCATOR_SIZE)
+         return mem::allocator<utils::byte>().allocate(size);
       MUTEX_LOCK_GUARD(mtx, allocator_lock);
       assert(current_page);
-      size = std::max(MIN_SIZE_OBJ, size) + ADD_SIZE_OBJ;
 #ifdef USE_REFCOUNT
       page *pg(current_page);
       while(pg) {
@@ -184,8 +201,10 @@ struct node_allocator
    inline void deallocate_obj(utils::byte *p, std::size_t size)
    {
 #ifdef NODE_ALLOCATOR
-      MUTEX_LOCK_GUARD(mtx, allocator_lock);
       size = std::max(MIN_SIZE_OBJ, size) + ADD_SIZE_OBJ;
+      if(size > MAX_NODE_ALLOCATOR_SIZE)
+         return mem::allocator<utils::byte>().deallocate(p, size);
+      MUTEX_LOCK_GUARD(mtx, allocator_lock);
       object *x(cast_ptr_to_object(p));
 #ifdef USE_REFCOUNT
       page *pg(x->page_ptr);

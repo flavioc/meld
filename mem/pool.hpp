@@ -170,6 +170,10 @@ struct pool {
    std::atomic<int64_t> bytes_in_use{0};
 #endif
 
+   inline void *allocate_cons(const size_t size) {
+      return allocate(size);
+   }
+
    inline void *allocate(const size_t size) {
       const size_t new_size(make_size(size));
 #ifdef MIXED_MEM
@@ -177,8 +181,10 @@ struct pool {
          return small.allocate(new_size);
       else if(new_size <= 1024)
          return medium.allocate(new_size);
-      else
+      else if(new_size <= 65535)
          return large.allocate(new_size);
+      else
+         return new utils::byte[new_size];
 #else
       chunkgroup *grp(get_group(new_size));
 #ifdef INSTRUMENTATION
@@ -188,6 +194,10 @@ struct pool {
 #endif
    }
 
+   inline void deallocate_cons(void *ptr, const size_t size) {
+      deallocate(ptr, size);
+   }
+
    inline void deallocate(void *ptr, const size_t size) {
       const size_t new_size(make_size(size));
 #ifdef MIXED_MEM
@@ -195,8 +205,10 @@ struct pool {
          small.deallocate(ptr, new_size);
       else if(new_size <= 1024)
          medium.deallocate(ptr, new_size);
-      else
+      else if(new_size <= 65535)
          large.deallocate(ptr, new_size);
+      else
+         delete [](utils::byte*)ptr;
 #else
       chunkgroup *grp(get_group(new_size));
 #ifdef INSTRUMENTATION
