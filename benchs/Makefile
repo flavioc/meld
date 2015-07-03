@@ -51,13 +51,20 @@ SERIAL_PROGS = belief-propagation-50 belief-propagation-200 \
 		8queens-11 8queens-12 8queens-13 8queens-14 \
 		shortest-usairports500 shortest-oclinks \
 		shortest-uspowergrid shortest-email
-SCALE_PROGS = shortest-usairports500 shortest-oclinks \
-				  shortest-uspowergrid \
+SCALE_PROGS = pagerank-pokec \
+				  pagerank-gplus \
+				  greedy-graph-coloring-gplus \
+				  greedy-graph-coloring-twitter \
+				  shortest-twitter \
 				  shortest-email \
-				  new-heat-transfer-80 new-heat-transfer-120 \
-				  belief-propagation-300 belief-propagation-400 \
 				  8queens-13 8queens-14 \
-				  min-max-tictactoe min-max-tictactoe-big \
+				  shortest-usairports500 shortest-oclinks \
+				  shortest-uspowergrid \
+				  belief-propagation-300 belief-propagation-400 \
+				  min-max-tictactoe \
+				  new-heat-transfer-120 \
+				  new-heat-transfer-80 \
+				  min-max-tictactoe-big
 
 serial:
 	@bash $(SERIAL) $(SERIAL_PROGS)

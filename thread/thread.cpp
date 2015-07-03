@@ -164,7 +164,7 @@ bool thread::go_steal_nodes(void) {
 #ifdef STEAL_ONE
 #define NODE_BUFFER_SIZE 1
 #elif defined(STEAL_HALF)
-#define NODE_BUFFER_SIZE 10
+#define NODE_BUFFER_SIZE 16
 #endif
    db::node *node_buffer[NODE_BUFFER_SIZE];
    bool activated{false};
