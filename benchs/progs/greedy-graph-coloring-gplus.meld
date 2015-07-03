@@ -1,0 +1,6 @@
+
+include #sources/greedy-graph-coloring.meld
+
+priority @cluster @static.
+priority @no_initial_priorities.
+data stanford-snap-undirected "data/gplus.txt".
