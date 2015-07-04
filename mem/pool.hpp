@@ -12,6 +12,7 @@
 #include "mem/chunkgroup.hpp"
 #include "mem/mixedgroup.hpp"
 #include "mem/mem_node.hpp"
+#include "mem/bigchunk.hpp"
 
 //#define MIXED_MEM
 
@@ -25,6 +26,7 @@ struct pool {
    mixedgroup medium;
    mixedgroup large;
 #else
+   bigchunk bc;
    chunkgroup chunk_table[31];
    size_t size_table;
 
@@ -51,13 +53,13 @@ struct pool {
       if (free_groups) {
          chunkgroup *ret(free_groups);
          free_groups = free_groups->next;
-         ret->init(size);
+         ret->init(size, &bc);
          return ret;
       }
       if (next_group == end_groups) create_new_chunkgroup_page();
       chunkgroup *next(next_group);
+      next->init(size, &bc);
       next_group++;
-      ::new ((void *)next) chunkgroup(size);
       return next;
    }
 
@@ -70,52 +72,7 @@ struct pool {
       if (next_group == end_groups) create_new_chunkgroup_page();
       chunkgroup *next(next_group);
       next_group++;
-      ::new ((void *)next) chunkgroup();
       return next;
-   }
-#endif
-
-#if 0
-   inline void expand_chunk_table(void) {
-      chunkgroup *old_table(chunk_table);
-      const size_t old_size(size_table);
-
-      size_table *= 2;
-      chunk_table = new chunkgroup[size_table + 8];
-      memset(chunk_table, 0, sizeof(chunkgroup) * size_table);
-
-      for (size_t i(0); i < old_size; ++i) {
-         chunkgroup *bucket(old_table + i);
-         bool first{true};
-         while (bucket) {
-            chunkgroup *next(bucket->next);
-            const size_t new_index(hash_size(bucket->size) % size_table);
-            chunkgroup *new_bucket(chunk_table + new_index);
-            if (new_bucket->size == 0) {
-               memcpy(new_bucket, bucket, sizeof(chunkgroup));
-               new_bucket->next = NULL;
-               if (!first) {
-                  bucket->next = free_groups;
-                  free_groups = bucket;
-               }
-            } else {
-               if (first) {
-                  chunkgroup *copy(new_chunkgroup());
-                  memcpy(copy, bucket, sizeof(chunkgroup));
-                  copy->next = new_bucket->next;
-                  new_bucket->next = copy;
-               } else {
-                  bucket->next = new_bucket->next;
-                  new_bucket->next = bucket;
-               }
-            }
-            first = false;
-
-            bucket = next;
-         }
-      }
-
-      delete[] old_table;
    }
 #endif
 
@@ -126,7 +83,7 @@ struct pool {
       chunkgroup *place(chunk_table + index);
 
       if (place->size == 0) {
-         place->init(size);
+         place->init(size, &bc);
          return place;
       } else {
          size_t count(0);
@@ -190,7 +147,7 @@ struct pool {
 #ifdef INSTRUMENTATION
       bytes_in_use += new_size;
 #endif
-      return grp->allocate();
+      return grp->allocate(&bc);
 #endif
    }
 
@@ -229,6 +186,7 @@ struct pool {
       free_groups = nullptr;
       end_groups = next_group + NUM_CHUNK_PAGES;
       memset(chunk_table, 0, sizeof(chunkgroup) * size_table);
+      bc.create();
 #endif
    }
 
