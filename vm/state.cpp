@@ -186,7 +186,7 @@ state::process_incoming_tuples(db::node *node) {
       if (!ls->empty()) {
          vm::predicate *pred(theProgram->get_linear_predicate(i));
          matcher->new_linear_fact(pred->get_id());
-         node->linear.increment_database(pred, ls);
+         node->linear.increment_database(pred, ls, &(node->alloc));
       }
    }
 }
@@ -717,10 +717,10 @@ void state::run_node(db::node *node) {
                vm::predicate *pred(theProgram->get_linear_predicate(i));
                if (pred->is_thread_pred()) {
                   matcher->new_linear_fact(pred->get_id());
-                  sched->thread_node->linear.increment_database(pred, gen);
+                  sched->thread_node->linear.increment_database(pred, gen, &(node->alloc));
                } else {
                   matcher->new_linear_fact(pred->get_id());
-                  node->linear.increment_database(pred, gen);
+                  node->linear.increment_database(pred, gen, &(node->alloc));
                }
             }
          }

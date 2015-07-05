@@ -48,11 +48,11 @@ struct linear_store {
       return (hash_table *)(data + ITEM_SIZE * p);
    }
 
-   inline hash_table *create_table(const vm::predicate *pred) {
+   inline hash_table *create_table(const vm::predicate *pred, mem::node_allocator *alloc) {
       hash_table *table(get_table(pred->get_linear_id()));
       mem::allocator<hash_table>().construct(table);
       const vm::field_num field(pred->get_hashed_field());
-      table->setup(pred->get_field_type(field)->get_type());
+      table->setup(pred->get_field_type(field)->get_type(), alloc);
       return table;
    }
 
@@ -67,11 +67,11 @@ struct linear_store {
    }
 
    inline hash_table *transform_hash_table_new_field(
-       hash_table *tbl, const vm::predicate *pred) {
+       hash_table *tbl, const vm::predicate *pred, mem::node_allocator *alloc) {
       const size_t size_table(tbl->get_num_buckets());
       hash_table new_hash;
       const vm::field_num field(pred->get_hashed_field());
-      new_hash.setup(pred->get_field_type(field)->get_type(), size_table);
+      new_hash.setup(pred->get_field_type(field)->get_type(), alloc, size_table);
 
       hash_table::iterator it(tbl->begin());
 
@@ -79,10 +79,10 @@ struct linear_store {
          tuple_list *bucket_ls(db::hash_table::underlying_list(*it));
          ++it;
 
-         for (auto tpl : *bucket_ls) new_hash.insert(tpl, pred);
+         for (auto tpl : *bucket_ls) new_hash.insert(tpl, pred, alloc);
       }
 
-      tbl->destroy();
+      tbl->destroy(alloc);
       // copy new
       memcpy(tbl, &new_hash, sizeof(hash_table));
 
@@ -90,15 +90,16 @@ struct linear_store {
    }
 
    inline hash_table *transform_list_to_hash_table(tuple_list *ls,
-                                                   const vm::predicate *pred) {
+                                                   const vm::predicate *pred,
+                                                   mem::node_allocator *alloc) {
       tuple_list::iterator it(ls->begin());
       tuple_list::iterator end(ls->end());
-      hash_table *tbl(create_table(pred));
+      hash_table *tbl(create_table(pred, alloc));
 
       while (it != end) {
          vm::tuple *tpl(*it);
          ++it;
-         tbl->insert(tpl, pred);
+         tbl->insert(tpl, pred, alloc);
       }
 
       types.set_bit(pred->get_linear_id());
@@ -107,7 +108,8 @@ struct linear_store {
    }
 
    inline tuple_list *transform_hash_table_to_list(hash_table *tbl,
-                                                   const vm::predicate *pred) {
+                                                   const vm::predicate *pred,
+                                                   mem::node_allocator *alloc) {
 //      std::cout << "to list\n";
       hash_table::iterator it(tbl->begin());
       tuple_list ls;
@@ -121,7 +123,7 @@ struct linear_store {
          ls.splice_back(*bucket_ls);
       }
 
-      tbl->destroy();
+      tbl->destroy(alloc);
       memcpy(tbl, &ls, sizeof(tuple_list));
 
       types.unset_bit(pred->get_linear_id());
@@ -161,7 +163,7 @@ struct linear_store {
       ls->push_back(tpl);
    }
 
-   inline void add_fact_list(vm::tuple_list &ls, const vm::predicate *pred)
+   inline void add_fact_list(vm::tuple_list &ls, const vm::predicate *pred, mem::node_allocator *alloc)
        __attribute__((always_inline)) {
       if (pred->is_hash_table()) {
          if (stored_as_hash_table(pred)) {
@@ -169,7 +171,7 @@ struct linear_store {
             for (auto it(ls.begin()), end(ls.end()); it != end;) {
                vm::tuple *tpl(*it);
                ++it;
-               table->insert(tpl, pred);
+               table->insert(tpl, pred, alloc);
             }
          } else {
             // still using a list
@@ -177,11 +179,11 @@ struct linear_store {
 
             if (mine->get_size() + ls.get_size() >=
                 CREATE_HASHTABLE_THREADSHOLD) {
-               hash_table *table(transform_list_to_hash_table(mine, pred));
+               hash_table *table(transform_list_to_hash_table(mine, pred, alloc));
                for (auto it(ls.begin()), end(ls.end()); it != end;) {
                   vm::tuple *tpl(*it);
                   ++it;
-                  table->insert(tpl, pred);
+                  table->insert(tpl, pred, alloc);
                }
             } else
                mine->splice_back(ls);
@@ -192,7 +194,7 @@ struct linear_store {
             for (auto it(ls.begin()), end(ls.end()); it != end;) {
                vm::tuple *tpl(*it);
                ++it;
-               table->insert(tpl, pred);
+               table->insert(tpl, pred, alloc);
             }
          } else {
             tuple_list *mine(get_list(pred->get_linear_id()));
@@ -201,32 +203,32 @@ struct linear_store {
       }
    }
 
-   inline void add_fact(vm::tuple *tpl, vm::predicate *pred)
+   inline void add_fact(vm::tuple *tpl, vm::predicate *pred, mem::node_allocator *alloc)
        __attribute__((always_inline)) {
       if (pred->is_hash_table()) {
          if (stored_as_hash_table(pred)) {
             hash_table *table(get_table(pred->get_linear_id()));
-            table->insert(tpl, pred);
+            table->insert(tpl, pred, alloc);
          } else {
             // still using a list
             tuple_list *ls(get_list(pred->get_linear_id()));
 
             if (ls->get_size() + 1 >= CREATE_HASHTABLE_THREADSHOLD) {
-               hash_table *table(transform_list_to_hash_table(ls, pred));
-               table->insert(tpl, pred);
+               hash_table *table(transform_list_to_hash_table(ls, pred, alloc));
+               table->insert(tpl, pred, alloc);
             } else
                ls->push_back(tpl);
          }
       } else {
          if (stored_as_hash_table(pred)) {
             hash_table *table(get_table(pred->get_linear_id()));
-            table->insert(tpl, pred);
+            table->insert(tpl, pred, alloc);
          } else
             add_fact_to_list(tpl, pred->get_linear_id());
       }
    }
 
-   inline void increment_database(vm::predicate *pred, tuple_list *ls) {
+   inline void increment_database(vm::predicate *pred, tuple_list *ls, mem::node_allocator *alloc) {
       if (pred->is_hash_table()) {
          if (stored_as_hash_table(pred)) {
             hash_table *table(get_table(pred->get_linear_id()));
@@ -234,7 +236,7 @@ struct linear_store {
                  it != end;) {
                vm::tuple *tpl(*it);
                it++;
-               table->insert(tpl, pred);
+               table->insert(tpl, pred, alloc);
             }
             ls->clear();
          } else {
@@ -242,12 +244,12 @@ struct linear_store {
 
             if (add->get_size() + ls->get_size() >=
                 CREATE_HASHTABLE_THREADSHOLD) {
-               hash_table *table(transform_list_to_hash_table(add, pred));
+               hash_table *table(transform_list_to_hash_table(add, pred, alloc));
                for (tuple_list::iterator it(ls->begin()), end(ls->end());
                     it != end;) {
                   vm::tuple *tpl(*it);
                   it++;
-                  table->insert(tpl, pred);
+                  table->insert(tpl, pred, alloc);
                }
                ls->clear();
             } else
@@ -260,7 +262,7 @@ struct linear_store {
                  it != end;) {
                vm::tuple *tpl(*it);
                it++;
-               table->insert(tpl, pred);
+               table->insert(tpl, pred, alloc);
             }
             ls->clear();
          } else {
@@ -283,7 +285,7 @@ struct linear_store {
 #endif
    }
 
-   inline void cleanup_index() {
+   inline void cleanup_index(mem::node_allocator *alloc) {
       for (auto it(types.begin(vm::theProgram->num_linear_predicates()));
            !it.end(); ++it) {
          const vm::predicate_id id(*it);
@@ -295,9 +297,9 @@ struct linear_store {
 
          if (tbl->too_sparse()) {
             if (tbl->smallest_possible()) {
-               transform_hash_table_to_list(tbl, pred);
+               transform_hash_table_to_list(tbl, pred, alloc);
             } else {
-               tbl->shrink(pred);
+               tbl->shrink(pred, alloc);
             }
          }
       }
@@ -368,7 +370,7 @@ struct linear_store {
                }
             }
             // turn into list
-            table->destroy();
+            table->destroy(alloc);
             if (!fast) {
                mem::allocator<tuple_list>().construct((tuple_list *)table);
                types.unset_bit(i);
@@ -387,17 +389,6 @@ struct linear_store {
    }
 
    inline ~linear_store(void) {
-      if (vm::theProgram->num_linear_predicates() > 0 &&
-            !types.empty(vm::theProgram->num_linear_predicates_next_uint()))
-      {
-         for (size_t i(0); i < vm::theProgram->num_linear_predicates(); ++i) {
-            if (types.get_bit(i)) {
-               hash_table *table(get_table(i));
-               table->destroy();
-            }
-            // nothing to destroy at the list level
-         }
-      }
 #ifndef COMPILED
       if(vm::theProgram->num_linear_predicates() > 0) {
          mem::allocator<utils::byte>().deallocate(

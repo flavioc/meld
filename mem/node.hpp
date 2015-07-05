@@ -16,13 +16,13 @@ namespace mem
 struct node_allocator
 {
 #ifdef NODE_ALLOCATOR
-#define MAX_NODE_ALLOCATOR_SIZE 256
+#define MAX_NODE_ALLOCATOR_SIZE 1024
    struct free_size {
       uint32_t size;
       void *list;
    };
 #ifdef COMPILED
-#define NODE_ALLOCATOR_SIZES COMPILED_NUM_PREDICATES
+#define NODE_ALLOCATOR_SIZES (COMPILED_NUM_PREDICATES)
 #else
 #define NODE_ALLOCATOR_SIZES 32
 #endif
@@ -32,12 +32,14 @@ struct node_allocator
       page *next;
       page *prev;
 #ifdef NODE_REFCOUNT
+      bool dynamic;
       int refcount{0};
       free_size frees[NODE_ALLOCATOR_SIZES];
       uint16_t num_free{0};
 #endif
    };
 #ifndef NODE_REFCOUNT
+   bool dynamic;
    uint16_t num_free{0};
    free_size frees[NODE_ALLOCATOR_SIZES];
 #endif
@@ -78,17 +80,21 @@ struct node_allocator
       current_page->next = old_page;
       current_page->size = new_size;
 #ifdef NODE_REFCOUNT
+      current_page->dynamic = false;
       current_page->refcount = 0;
       current_page->num_free = 0;
 #endif
       current_page->ptr = sizeof(page);
    }
 
-   inline free_size *get_free_size(free_size *frees, uint16_t& num_free, const size_t size, const bool create)
+   inline free_size *get_free_size(free_size *frees, uint16_t& num_free, const size_t size, const bool create, bool& dynamic)
    {
       int left(0);
       int right(static_cast<int>(num_free) - 1);
       int middle(0);
+      free_size *initial_frees(frees);
+      if(dynamic)
+         frees = (free_size*)frees[0].list;
 #if 0
       std::cout << "\n";
 
@@ -125,11 +131,28 @@ struct node_allocator
       for(size_t i(0); i < num_free; ++i)
          assert(frees[i].size != size);
 #endif
-      if(size > frees[middle].size)
+      if(middle < num_free && size > frees[middle].size)
          middle++;
       // need to add it here.
       assert(middle <= num_free + 1);
       assert(middle >= 0);
+      if(num_free == NODE_ALLOCATOR_SIZES && !dynamic) {
+         dynamic = true;
+         const size_t newsize(NODE_ALLOCATOR_SIZES * 2);
+         free_size *n((free_size*)mem::allocator<free_size>().allocate(newsize));
+         memcpy(n, frees, num_free*sizeof(free_size));
+         frees[0].list = n;
+         frees[0].size = newsize;
+         frees = n;
+      } else if(dynamic && initial_frees[0].size == num_free) {
+         free_size *n((free_size*)mem::allocator<free_size>().allocate(initial_frees[0].size * 2));
+         memcpy(n, frees, num_free*sizeof(free_size));
+         mem::allocator<free_size>().deallocate(frees, initial_frees[0].size);
+         initial_frees[0].list = n;
+         initial_frees[0].size *= 2;
+         frees = n;
+      }
+      assert((!dynamic && num_free < NODE_ALLOCATOR_SIZES) || (dynamic && num_free < initial_frees[0].size));
       if(middle < num_free)
          memmove(frees + middle + 1, frees + middle, (num_free - middle) * sizeof(free_size));
       frees[middle].size = size;
@@ -139,7 +162,6 @@ struct node_allocator
       for(size_t i(1); i < num_free; ++i)
          assert(frees[i-1].size < frees[i].size);
 #endif
-      assert(num_free <= NODE_ALLOCATOR_SIZES);
       return frees + middle;
    }
 
@@ -168,7 +190,7 @@ struct node_allocator
       page *pg(current_page);
       while(pg) {
          // start from the top page so that smaller pages are reclaimed faster.
-         free_size *f(get_free_size(pg->frees, pg->num_free, size, false));
+         free_size *f(get_free_size(pg->frees, pg->num_free, size, false, pg->dynamic));
          if(f && f->list) {
             object *p((object*)f->list);
             f->list = p->next;
@@ -179,7 +201,7 @@ struct node_allocator
          pg = pg->next;
       }
 #else
-      free_size *f(get_free_size(frees, num_free, size, false));
+      free_size *f(get_free_size(frees, num_free, size, false, dynamic));
       if(f && f->list) {
          object *p((object*)f->list);
          f->list = p->next;
@@ -235,9 +257,9 @@ struct node_allocator
       }
 #endif
 #ifdef NODE_REFCOUNT
-      free_size *f(get_free_size(pg->frees, pg->num_free, size, true));
+      free_size *f(get_free_size(pg->frees, pg->num_free, size, true, pg->dynamic));
 #else
-      free_size *f(get_free_size(frees, num_free, size, true));
+      free_size *f(get_free_size(frees, num_free, size, true, dynamic));
 #endif
       assert(f->size == size);
       x->next = (object*)f->list;
@@ -257,6 +279,8 @@ struct node_allocator
 #ifdef NODE_REFCOUNT
       current_page->num_free = 0;
       current_page->refcount = 0;
+#else
+      dynamic = false;
 #endif
       first_page = current_page;
 #endif

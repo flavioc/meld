@@ -22,13 +22,14 @@ hash_table::insert_front(vm::tuple *item, const vm::predicate *pred)
 }
 
 void
-hash_table::change_table(const std::uint16_t new_size_table)
+hash_table::change_table(const std::uint16_t new_size_table, mem::node_allocator* alloc)
 {
 //   cout << "Changing table size " << size_table << " to " << new_size_table << " " << " unique: " << unique_elems << " elems:" << elems << endl;
    assert(new_size_table >= HASH_TABLE_INITIAL_TABLE_SIZE);
 
-   tuple_list **new_table(allocator().allocate(new_size_table));
-   memset(new_table, 0, sizeof(tuple_list*)*new_size_table);
+   const size_t to_alloc(new_size_table * sizeof(tuple_list*));
+   tuple_list **new_table((tuple_list**)alloc->allocate_obj(to_alloc));
+   memset(new_table, 0, to_alloc);
    prime = utils::previous_prime(new_size_table);
 
    for(size_t i(0); i < size_table; ++i) {
@@ -47,7 +48,7 @@ hash_table::change_table(const std::uint16_t new_size_table)
    }
 
    // change pointers
-   allocator().deallocate(table, size_table);
+   alloc->deallocate_obj((utils::byte*)table, size_table * sizeof(tuple_list*));
    table = new_table;
    size_table = new_size_table;
 }

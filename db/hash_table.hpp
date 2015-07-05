@@ -44,7 +44,6 @@ struct hash_table_list {
 
 struct hash_table {
    using tuple_list = hash_table_list;
-   using allocator = mem::allocator<tuple_list*>;
 
    private:
 
@@ -113,7 +112,7 @@ struct hash_table {
       return same_field0(tpl->get_field(pred->get_hashed_field()), field);
    }
 
-   void change_table(const std::uint16_t);
+   void change_table(const std::uint16_t, mem::node_allocator*);
 
    public:
 
@@ -179,7 +178,7 @@ struct hash_table {
 
    inline bool empty(void) const { return elems == 0; }
 
-   size_t insert(vm::tuple *item, const vm::predicate *pred) {
+   size_t insert(vm::tuple *item, const vm::predicate *pred, mem::node_allocator *alloc) {
       elems++;
       const vm::uint_val id(hash_tuple(item, pred));
       const size_t idx(mod_hash(id));
@@ -196,7 +195,7 @@ struct hash_table {
          count++;
       }
 
-      tuple_list *newls(mem::allocator<tuple_list>().allocate(1));
+      tuple_list *newls((tuple_list*)alloc->allocate_obj(sizeof(tuple_list)));
       mem::allocator<tuple_list>().construct(newls);
       if(last) {
          newls->prev = last;
@@ -210,14 +209,14 @@ struct hash_table {
       newls->push_back(item);
       unique_elems++;
       if(count + 1 >= CREATE_HASHTABLE_THREADSHOLD)
-         expand(pred);
+         expand(pred, alloc);
       return newls->get_size();
    }
 
    size_t insert_front(vm::tuple *, const vm::predicate*);
 
    inline tuple_list::iterator erase_from_list(tuple_list *ls,
-         tuple_list::iterator& it)
+         tuple_list::iterator& it, mem::node_allocator *alloc)
    {
       elems--;
       tuple_list::iterator newit(ls->erase(it));
@@ -234,7 +233,7 @@ struct hash_table {
          }
          if(next)
             next->prev = prev;
-         mem::allocator<tuple_list>().deallocate(ls, 1);
+         alloc->deallocate_obj((utils::byte*)ls, sizeof(tuple_list));
          unique_elems--;
       }
 
@@ -270,20 +269,20 @@ struct hash_table {
       }
    }
 
-   inline void expand(const vm::predicate *pred) {
+   inline void expand(const vm::predicate *pred, mem::node_allocator *alloc) {
       (void)pred;
       const size_t new_size(size_table * 2);
       flag_expanded += 10;
   //   expanded++;
 //      std::cout << "expand " << new_size << " " << elems << " " << shrinked << "/" << expanded << "\n";
-      change_table(new_size);
+      change_table(new_size, alloc);
    }
-   inline void shrink(const vm::predicate *pred) {
+   inline void shrink(const vm::predicate *pred, mem::node_allocator *alloc) {
       (void)pred;
       const size_t new_size(size_table / 2);
  //     shrinked++;
 //     std::cout << "shrink " << new_size << " " << shrinked << "/" << expanded << "\n";
-      change_table(new_size);
+      change_table(new_size, alloc);
    }
 
    inline bool smallest_possible(void) const {
@@ -320,18 +319,18 @@ struct hash_table {
       return (tuple_list*)ls;
    }
 
-   inline void setup(const vm::field_type type,
+   inline void setup(const vm::field_type type, mem::node_allocator *alloc,
        const size_t default_table_size = HASH_TABLE_INITIAL_TABLE_SIZE) {
       hash_type = type;
       size_table = default_table_size;
       prime = utils::previous_prime(size_table);
-      table = allocator().allocate(size_table);
+      table = (tuple_list**)alloc->allocate_obj(sizeof(tuple_list*) * size_table);
       memset(table, 0, sizeof(tuple_list*) * size_table);
    }
 
-   inline void destroy(void) {
+   inline void destroy(mem::node_allocator *alloc) {
       if(table)
-         allocator().deallocate(table, size_table);
+         alloc->deallocate_obj((utils::byte*)table, sizeof(tuple_list*) * size_table);
       table = nullptr;
    }
 };
