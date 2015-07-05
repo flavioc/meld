@@ -11,18 +11,17 @@ namespace db
 {
 
 size_t
-hash_table::insert_front(vm::tuple *item, const vm::predicate *pred)
+subhash_table::insert_front(vm::tuple *item, const vm::predicate *pred, const vm::field_type hash_type)
 {
    abort();
-   const uint_val id(hash_tuple(item, pred));
+   const uint_val id(hash_tuple(item, pred, hash_type));
    tuple_list *bucket(table[mod_hash(id)]);
    bucket->push_front(item);
-   elems++;
    return bucket->get_size();
 }
 
 void
-hash_table::change_table(const std::uint16_t new_size_table, mem::node_allocator* alloc)
+subhash_table::change_table(const std::uint16_t new_size_table, mem::node_allocator* alloc, const vm::field_type hash_type)
 {
 //   cout << "Changing table size " << size_table << " to " << new_size_table << " " << " unique: " << unique_elems << " elems:" << elems << endl;
    assert(new_size_table >= HASH_TABLE_INITIAL_TABLE_SIZE);
@@ -30,14 +29,15 @@ hash_table::change_table(const std::uint16_t new_size_table, mem::node_allocator
    const size_t to_alloc(new_size_table * sizeof(tuple_list*));
    tuple_list **new_table((tuple_list**)alloc->allocate_obj(to_alloc));
    memset(new_table, 0, to_alloc);
+   auto oldprime(prime);
    prime = utils::previous_prime(new_size_table);
 
-   for(size_t i(0); i < size_table; ++i) {
+   for(size_t i(0); i < oldprime; ++i) {
       tuple_list *ls(table[i]);
 
       while(ls) {
          tuple_list *saved_next(ls->next);
-         const uint_val id(hash_field(ls->value));
+         const uint_val id(hash_field(ls->value, hash_type));
          const uint_val idx(mod_hash(id));
          tuple_list *next(new_table[idx]);
          new_table[idx] = ls;
