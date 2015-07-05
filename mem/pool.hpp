@@ -16,6 +16,8 @@
 
 //#define MIXED_MEM
 
+#define ALLOCATOR_MAX_SIZE (std::numeric_limits<uint16_t>::max())
+
 namespace mem {
 
 struct pool {
@@ -36,7 +38,7 @@ struct pool {
    chunkgroup *free_groups;
 
    // number of chunkgroups to allocate per page.
-   static const size_t NUM_CHUNK_PAGES = 64;
+   static const size_t NUM_CHUNK_PAGES = 32;
 
    chunkgroup available_groups[NUM_CHUNK_PAGES];
 #endif
@@ -53,12 +55,12 @@ struct pool {
       if (free_groups) {
          chunkgroup *ret(free_groups);
          free_groups = free_groups->next;
-         ret->init(size, &bc);
+         init_chunkgroup(ret, size);
          return ret;
       }
       if (next_group == end_groups) create_new_chunkgroup_page();
       chunkgroup *next(next_group);
-      next->init(size, &bc);
+      init_chunkgroup(next, size);
       next_group++;
       return next;
    }
@@ -77,15 +79,25 @@ struct pool {
 #endif
 
 #ifndef MIXED_MEM
-   inline chunkgroup *find_insert_chunkgroup(const size_t size) {
-      // tries to find the chunkgroup, if not add it.
+   inline void init_chunkgroup(chunkgroup *cg, const size_t size)
+   {
+      total++;
+      cg->init(size, &bc);
+      chunkgroup *twice(find_chunkgroup(size * 2));
+      chunkgroup *half(find_chunkgroup(size / 2));
+      cg->set_twice(twice);
+      if(half)
+         half->set_twice(cg);
+   }
+
+   inline chunkgroup *find_chunkgroup(const size_t size) {
+      // tries to find the chunkgroup
       const size_t index(hash_size(size) % size_table);
       chunkgroup *place(chunk_table + index);
 
-      if (place->size == 0) {
-         place->init(size, &bc);
-         return place;
-      } else {
+      if (place->size == 0)
+         return nullptr;
+      else {
          size_t count(0);
 
          while (place) {
@@ -94,10 +106,24 @@ struct pool {
             place = place->next;
          }
 
-         if(count > 8) // time to expand table
-         {
-//            std::cout << "Should probably expand...\n";
-            //expand_chunk_table();
+         return nullptr;
+      }
+   }
+   inline chunkgroup *find_insert_chunkgroup(const size_t size) {
+      // tries to find the chunkgroup, if not add it.
+      const size_t index(hash_size(size) % size_table);
+      chunkgroup *place(chunk_table + index);
+
+      if (place->size == 0) {
+         init_chunkgroup(place, size);
+         return place;
+      } else {
+         size_t count(0);
+
+         while (place) {
+            if (place->size == size) return place;
+            count++;
+            place = place->next;
          }
 
          chunkgroup *ncg(new_chunkgroup(size));
@@ -111,7 +137,7 @@ struct pool {
    inline chunkgroup *get_group(const size_t size) {
       assert(size > 0);
       chunkgroup *cg(find_insert_chunkgroup(size));
-      assert(cg != nullptr);
+      assert(cg);
       return cg;
    }
 
@@ -133,19 +159,31 @@ struct pool {
 
    inline void *allocate(const size_t size) {
       const size_t new_size(make_size(size));
+      if(new_size >= ALLOCATOR_MAX_SIZE)
+         return malloc(new_size * sizeof(utils::byte));
+
 #ifdef MIXED_MEM
       if(new_size <= 128)
          return small.allocate(new_size);
       else if(new_size <= 1024)
          return medium.allocate(new_size);
-      else if(new_size <= 65535)
-         return large.allocate(new_size);
       else
-         return new utils::byte[new_size];
+         return large.allocate(new_size);
 #else
       chunkgroup *grp(get_group(new_size));
 #ifdef INSTRUMENTATION
       bytes_in_use += new_size;
+#endif
+      if(grp->has_free())
+         return grp->allocate_free();
+#if 0
+      chunkgroup *twice(grp->get_twice());
+      if(twice && twice->has_free()) {
+         utils::byte *ptr((utils::byte*)twice->allocate_free());
+         utils::byte *other_half(ptr + new_size);
+         grp->deallocate(other_half);
+         return ptr;
+      }
 #endif
       return grp->allocate(&bc);
 #endif
@@ -157,15 +195,17 @@ struct pool {
 
    inline void deallocate(void *ptr, const size_t size) {
       const size_t new_size(make_size(size));
+      if(new_size >= ALLOCATOR_MAX_SIZE) {
+         free(ptr);
+         return;
+      }
 #ifdef MIXED_MEM
       if(new_size <= 128)
          small.deallocate(ptr, new_size);
       else if(new_size <= 1024)
          medium.deallocate(ptr, new_size);
-      else if(new_size <= 65535)
-         large.deallocate(ptr, new_size);
       else
-         delete [](utils::byte*)ptr;
+         large.deallocate(ptr, new_size);
 #else
       chunkgroup *grp(get_group(new_size));
 #ifdef INSTRUMENTATION
