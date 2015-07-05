@@ -23,6 +23,7 @@ namespace mem {
 struct pool {
    private:
 
+   mixedgroup conses;
 #ifdef MIXED_MEM
    mixedgroup small;
    mixedgroup medium;
@@ -81,7 +82,6 @@ struct pool {
 #ifndef MIXED_MEM
    inline void init_chunkgroup(chunkgroup *cg, const size_t size)
    {
-      total++;
       cg->init(size, &bc);
       chunkgroup *twice(find_chunkgroup(size * 2));
       chunkgroup *half(find_chunkgroup(size / 2));
@@ -154,7 +154,7 @@ struct pool {
 #endif
 
    inline void *allocate_cons(const size_t size) {
-      return allocate(size);
+      return conses.allocate(size);
    }
 
    inline void *allocate(const size_t size) {
@@ -190,7 +190,7 @@ struct pool {
    }
 
    inline void deallocate_cons(void *ptr, const size_t size) {
-      deallocate(ptr, size);
+      conses.deallocate(ptr, size);
    }
 
    inline void deallocate(void *ptr, const size_t size) {
@@ -216,6 +216,7 @@ struct pool {
    }
 
    inline void create() {
+      conses.create(8);
 #ifdef MIXED_MEM
       small.create(4);
       medium.create(8);

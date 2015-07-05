@@ -7,8 +7,8 @@
 #include "utils/mutex.hpp"
 #include "vm/bitmap_static.hpp"
 
-#define NODE_ALLOCATOR
-#define USE_REFCOUNT
+//#define NODE_ALLOCATOR
+//#define NODE_REFCOUNT
 
 namespace mem
 {
@@ -31,20 +31,20 @@ struct node_allocator
       std::size_t size{0};
       page *next;
       page *prev;
-#ifdef USE_REFCOUNT
+#ifdef NODE_REFCOUNT
       int refcount{0};
       free_size frees[NODE_ALLOCATOR_SIZES];
       uint16_t num_free{0};
 #endif
    };
-#ifndef USE_REFCOUNT
+#ifndef NODE_REFCOUNT
    uint16_t num_free{0};
    free_size frees[NODE_ALLOCATOR_SIZES];
 #endif
    page *first_page{nullptr};
    page *current_page{nullptr};
    utils::mutex mtx;
-#ifdef USE_REFCOUNT
+#ifdef NODE_REFCOUNT
    struct object {
       page *page_ptr;
       object *next;
@@ -77,7 +77,7 @@ struct node_allocator
       current_page->prev = nullptr;
       current_page->next = old_page;
       current_page->size = new_size;
-#ifdef USE_REFCOUNT
+#ifdef NODE_REFCOUNT
       current_page->refcount = 0;
       current_page->num_free = 0;
 #endif
@@ -164,7 +164,7 @@ struct node_allocator
          return mem::allocator<utils::byte>().allocate(size);
       MUTEX_LOCK_GUARD(mtx, allocator_lock);
       assert(current_page);
-#ifdef USE_REFCOUNT
+#ifdef NODE_REFCOUNT
       page *pg(current_page);
       while(pg) {
          // start from the top page so that smaller pages are reclaimed faster.
@@ -190,7 +190,7 @@ struct node_allocator
          allocate_new_page(size);
       object *obj = (object*)(((utils::byte*)current_page) + current_page->ptr);
       current_page->ptr += size;
-#ifdef USE_REFCOUNT
+#ifdef NODE_REFCOUNT
       obj->page_ptr = current_page;
       (current_page->refcount)++;
 #endif
@@ -208,7 +208,7 @@ struct node_allocator
          return mem::allocator<utils::byte>().deallocate(p, size);
       MUTEX_LOCK_GUARD(mtx, allocator_lock);
       object *x(cast_ptr_to_object(p));
-#ifdef USE_REFCOUNT
+#ifdef NODE_REFCOUNT
       page *pg(x->page_ptr);
 
       assert(pg);
@@ -234,7 +234,7 @@ struct node_allocator
          return;
       }
 #endif
-#ifdef USE_REFCOUNT
+#ifdef NODE_REFCOUNT
       free_size *f(get_free_size(pg->frees, pg->num_free, size, true));
 #else
       free_size *f(get_free_size(frees, num_free, size, true));
@@ -254,7 +254,7 @@ struct node_allocator
       current_page->prev = current_page->next = nullptr;
       current_page->ptr = sizeof(page);
       current_page->size = NODE_START_PAGE_SIZE;
-#ifdef USE_REFCOUNT
+#ifdef NODE_REFCOUNT
       current_page->num_free = 0;
       current_page->refcount = 0;
 #endif
