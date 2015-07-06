@@ -49,6 +49,7 @@ struct linear_store {
    }
 
    inline hash_table *create_table(const vm::predicate *pred, mem::node_allocator *alloc) {
+      (void)alloc;
       hash_table *table(get_table(pred->get_linear_id()));
       mem::allocator<hash_table>().construct(table);
       const vm::field_num field(pred->get_hashed_field());
@@ -68,10 +69,9 @@ struct linear_store {
 
    inline hash_table *transform_hash_table_new_field(
        hash_table *tbl, const vm::predicate *pred, mem::node_allocator *alloc) {
-      const size_t size_table(tbl->get_num_buckets());
       hash_table new_hash;
       const vm::field_num field(pred->get_hashed_field());
-      new_hash.setup(pred->get_field_type(field)->get_type(), alloc, size_table);
+      new_hash.setup(pred->get_field_type(field)->get_type(), alloc);
 
       hash_table::iterator it(tbl->begin());
 
@@ -296,11 +296,7 @@ struct linear_store {
          hash_table *tbl(get_table(pred->get_linear_id()));
 
          if (tbl->too_sparse()) {
-            if (tbl->smallest_possible()) {
-               transform_hash_table_to_list(tbl, pred, alloc);
-            } else {
-               tbl->shrink(pred, alloc);
-            }
+            transform_hash_table_to_list(tbl, pred, alloc);
          }
       }
    }

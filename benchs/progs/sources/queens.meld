@@ -9,7 +9,7 @@ type linear test-and-send-down(node, list int).
 type linear send-down(node, list int).
 type linear final-state(node, list int).
 
-allocator "basic".
+//allocator "basic".
 
 priority @cluster @static.
 compact left.

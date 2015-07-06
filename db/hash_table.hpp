@@ -14,12 +14,20 @@
 
 namespace db {
 
-#define HASH_TABLE_INITIAL_TABLE_SIZE 8
-#define CREATE_HASHTABLE_THREADSHOLD 4
+#define HASH_TABLE_SUBHASH_SHIFT 4
+#define HASH_TABLE_INITIAL_TABLE_SIZE (1 << HASH_TABLE_SUBHASH_SHIFT)
+#define HASH_TABLE_PRIME (HASH_TABLE_INITIAL_TABLE_SIZE - 1)
+#define CREATE_HASHTABLE_THREADSHOLD 8
+#define HASH_TABLE_MAX_LEVELS 4
+#define HASH_TABLE_SUBHASH_MASK ((1 << HASH_TABLE_SUBHASH_SHIFT) - 1)
+
+struct subhash_table;
 
 struct hash_table_list {
    vm::tuple_list list;
    vm::tuple_field value;
+   subhash_table *parent;
+
    hash_table_list *prev{nullptr}, *next{nullptr};
 
    using iterator = vm::tuple_list::iterator;
@@ -42,49 +50,48 @@ struct hash_table_list {
    }
 };
 
+static inline vm::uint_val hash_field(const vm::tuple_field field, const vm::field_type hash_type) {
+   switch (hash_type) {
+      case vm::FIELD_INT:
+         return utils::fnv1_hash((utils::byte*)&FIELD_INT(field), sizeof(vm::int_val));
+      case vm::FIELD_FLOAT:
+         return utils::fnv1_hash((utils::byte*)&FIELD_FLOAT(field), sizeof(vm::float_val));
+      case vm::FIELD_NODE:
+#ifdef USE_REAL_NODES
+         {
+            // UGLY HACK to make this function inline
+            utils::byte *data((utils::byte*)FIELD_PTR(field));
+            data = data + sizeof(std::atomic<vm::ref_count>);
+ //         return (vm::uint_val)*(vm::node_val*)data;
+            return utils::fnv1_hash((utils::byte*)&data, sizeof(vm::uint_val));
+         }
+#else
+         return utils::fnv1_hash((utils::byte*)&FIELD_NODE(field), sizeof(vm::node_val));
+#endif
+      case vm::FIELD_LIST:
+         if (FIELD_PTR(field) == 0)
+            return 0;
+         else
+            return 1;
+      default:
+         abort();
+         return 0;
+   }
+}
+
+static inline vm::uint_val hash_tuple(vm::tuple *tpl, const vm::predicate* pred, const vm::field_type hash_type) {
+   return hash_field(tpl->get_field(pred->get_hashed_field()), hash_type);
+}
+
 struct subhash_table {
    using tuple_list = hash_table_list;
-   tuple_list **table;
+   tuple_list *table[HASH_TABLE_INITIAL_TABLE_SIZE];
    size_t unique_elems{0};
-   std::uint16_t prime;
-   std::uint16_t size_table;
+   subhash_table *parent;
    mutable utils::byte flag_expanded{10};
 
    inline uint64_t mod_hash(const uint64_t hsh) {
-      return hsh % prime;
-   }
-
-   inline vm::uint_val hash_field(const vm::tuple_field field, const vm::field_type hash_type) const {
-      switch (hash_type) {
-         case vm::FIELD_INT:
-            return utils::fnv1_hash((utils::byte*)&FIELD_INT(field), sizeof(vm::int_val));
-         case vm::FIELD_FLOAT:
-            return utils::fnv1_hash((utils::byte*)&FIELD_FLOAT(field), sizeof(vm::float_val));
-         case vm::FIELD_NODE:
-#ifdef USE_REAL_NODES
-            {
-               // UGLY HACK to make this function inline
-               utils::byte *data((utils::byte*)FIELD_PTR(field));
-               data = data + sizeof(std::atomic<vm::ref_count>);
-               return (vm::uint_val)*(vm::node_val*)data;
-//               return utils::fnv1_hash((utils::byte*)&ret, sizeof(vm::uint_val));
-            }
-#else
-            return utils::fnv1_hash((utils::byte*)&FIELD_NODE(field), sizeof(vm::node_val));
-#endif
-         case vm::FIELD_LIST:
-            if (FIELD_PTR(field) == 0)
-               return 0;
-            else
-               return 1;
-         default:
-            abort();
-            return 0;
-      }
-   }
-
-   inline vm::uint_val hash_tuple(vm::tuple *tpl, const vm::predicate* pred, const vm::field_type hash_type) const {
-      return hash_field(tpl->get_field(pred->get_hashed_field()), hash_type);
+      return hsh % HASH_TABLE_PRIME;
    }
 
    inline bool same_field0(const vm::tuple_field field1, const vm::tuple_field field2, const vm::field_type hash_type) const {
@@ -107,16 +114,40 @@ struct subhash_table {
       return same_field0(tpl->get_field(pred->get_hashed_field()), field, hash_type);
    }
 
+   inline tuple_list *get_bucket(const size_t idx) const
+   {
+      return table[idx];
+   }
+
+   inline subhash_table *get_subhash(const size_t idx)
+   {
+      return (subhash_table*)(((uintptr_t)table[idx]) - 1);
+   }
+
+   inline bool is_subhash(const size_t idx)
+   {
+      tuple_list *p(table[idx]);
+      return (uintptr_t)p & 0x1;
+   }
+
+   inline void set_subhash(const size_t idx, subhash_table *p)
+   {
+      table[idx] = (tuple_list*)((uintptr_t)p | 0x1);
+   }
+
 public:
-   void change_table(const std::uint16_t, mem::node_allocator*, const vm::field_type);
-   inline size_t get_table_size() const { return size_table; }
 
-   size_t insert_front(vm::tuple *, const vm::predicate*, const vm::field_type);
+   inline size_t get_table_size() const { return HASH_TABLE_INITIAL_TABLE_SIZE; }
 
-   size_t insert(vm::tuple *item, const vm::predicate *pred, mem::node_allocator *alloc, const vm::field_type hash_type) {
-      const vm::uint_val id(hash_tuple(item, pred, hash_type));
-      const size_t idx(mod_hash(id));
-      tuple_list *bucket(table[idx]);
+   size_t insert(const vm::uint_val id, vm::tuple *item, const vm::predicate *pred,
+         mem::node_allocator *alloc, const vm::field_type hash_type, const size_t level)
+   {
+      const vm::uint_val subid(id & HASH_TABLE_SUBHASH_MASK);
+      const size_t idx(mod_hash(subid));
+      if(is_subhash(idx))
+         return get_subhash(idx)->insert(id >> HASH_TABLE_SUBHASH_SHIFT, item, pred, alloc, hash_type, level + 1);
+
+      tuple_list *bucket(get_bucket(idx));
       tuple_list *last{nullptr};
       size_t count{0};
       while(bucket) {
@@ -135,47 +166,100 @@ public:
          newls->prev = last;
          last->next = newls;
       } else {
-         newls->prev = nullptr;
+         newls->prev = get_null_prev(table + idx);
          table[idx] = newls;
       }
       newls->value = item->get_field(pred->get_hashed_field());
       newls->next = nullptr;
       newls->push_back(item);
+      newls->parent = this;
       unique_elems++;
-      if(count + 1 >= CREATE_HASHTABLE_THREADSHOLD)
-         expand(pred, alloc, hash_type);
+      if(count + 1 >= CREATE_HASHTABLE_THREADSHOLD && level + 1 < HASH_TABLE_MAX_LEVELS) {
+         //std::cout << "Expand at level " << level << "\n";
+         // create sub hash table
+         subhash_table *sub((subhash_table*)alloc->allocate_obj(sizeof(subhash_table)));
+         sub->setup(this);
+         tuple_list *bucket(get_bucket(idx));
+
+         while(bucket) {
+            tuple_list *next(bucket->next);
+            vm::uint_val hsh(hash_field(bucket->value, hash_type));
+            hsh >>= (level + 1) * HASH_TABLE_SUBHASH_SHIFT;
+            hsh &= HASH_TABLE_SUBHASH_MASK;
+            const vm::uint_val index(sub->mod_hash(hsh));
+            bucket->next = sub->table[index];
+            bucket->parent = sub;
+            if(sub->table[index])
+               sub->table[index]->prev = bucket;
+            sub->table[index] = bucket;
+            bucket->prev = get_null_prev(sub->table + index);
+
+            bucket = next;
+         }
+         set_subhash(idx, sub);
+      }
       return newls->get_size();
+   }
+
+   inline tuple_list* get_null_prev(tuple_list **p) const
+   {
+      return (tuple_list*)((uintptr_t)p | 0x1);
+   }
+
+   inline bool is_null_prev(tuple_list *p) const
+   {
+      return (uintptr_t)p & 0x1;
+   }
+
+   inline tuple_list** fetch_null_prev(tuple_list *p)
+   {
+      return (tuple_list**)((uintptr_t)p - 1);
+   }
+
+   inline size_t find_level() const
+   {
+      if(parent == nullptr)
+         return 0;
+      else
+         return 1 + parent->find_level();
    }
 
    inline tuple_list::iterator erase_from_list(tuple_list *ls,
          tuple_list::iterator& it, mem::node_allocator *alloc,
          const vm::field_type hash_type)
    {
+      (void)hash_type;
+      (void)alloc;
       tuple_list::iterator newit(ls->erase(it));
 
       if(ls->empty()) {
          tuple_list *prev(ls->prev);
          tuple_list *next(ls->next);
-         if(prev)
+         if(is_null_prev(prev)) {
+            tuple_list **nprev(fetch_null_prev(prev));
+            *nprev = next;
+         } else
             prev->next = next;
-         else {
-            const vm::uint_val id(hash_field(ls->value, hash_type));
-            const size_t idx(mod_hash(id));
-            table[idx] = next;
-         }
          if(next)
             next->prev = prev;
          alloc->deallocate_obj((utils::byte*)ls, sizeof(tuple_list));
          unique_elems--;
+         assert(unique_elems >= 0);
+         if(unique_elems < CREATE_HASHTABLE_THREADSHOLD/2) {
+            abort();
+         }
       }
 
       return newit;
    }
 
-   inline tuple_list *lookup_list(const vm::tuple_field field, const vm::field_type hash_type)
+   inline tuple_list *lookup_list(const vm::uint_val id, const vm::tuple_field field, const vm::field_type hash_type)
    {
-      const vm::uint_val id(hash_field(field, hash_type));
-      tuple_list *ls(table[mod_hash(id)]);
+      const size_t idx(mod_hash(id & HASH_TABLE_SUBHASH_MASK));
+      if(is_subhash(idx))
+         return get_subhash(idx)->lookup_list(id >> HASH_TABLE_SUBHASH_SHIFT, field, hash_type);
+
+      tuple_list *ls(get_bucket(idx));
       while(ls) {
          if(same_field0(field, ls->value, hash_type))
             return ls;
@@ -186,58 +270,31 @@ public:
 
    inline void destroy(mem::node_allocator *alloc)
    {
-      if(table)
-         alloc->deallocate_obj((utils::byte*)table, sizeof(tuple_list*) * size_table);
-      table = nullptr;
-   }
-
-   inline void setup(mem::node_allocator *alloc, const size_t default_table_size)
-   {
-      size_table = default_table_size;
-      prime = utils::previous_prime(size_table);
-      table = (tuple_list**)alloc->allocate_obj(sizeof(tuple_list*) * size_table);
-      memset(table, 0, sizeof(tuple_list*) * size_table);
-   }
-
-   inline bool too_sparse() const
-   {
-      if(flag_expanded) {
-         flag_expanded--;
-         return false;
+      for(size_t i(0); i < HASH_TABLE_PRIME; ++i) {
+         if(is_subhash(i)) {
+            get_subhash(i)->destroy(alloc);
+            alloc->deallocate_obj((utils::byte*)get_subhash(i), sizeof(subhash_table));
+         } else {
+            tuple_list *ls(table[i]);
+            while(ls) {
+               tuple_list *next(ls->next);
+               alloc->deallocate_obj((utils::byte*)ls, sizeof(tuple_list));
+               ls = next;
+            }
+         }
       }
-      if (unique_elems > (prime*2)/3)
-         return false;
-      size_t empty_buckets{0};
-      for (size_t i(0); i < prime; ++i) {
-         tuple_list *ls(table[i]);
-         if(!ls || ls->empty())
-            empty_buckets++;
-         if(empty_buckets >= prime/2)
-            return true;
-      }
-      return false;
    }
 
-   inline void expand(const vm::predicate *pred, mem::node_allocator *alloc, const vm::field_type hash_type) {
-      (void)pred;
-      const size_t new_size(size_table * 2);
-      flag_expanded += 10;
-  //   expanded++;
-//      std::cout << "expand " << new_size << " " << elems << " " << shrinked << "/" << expanded << "\n";
-      change_table(new_size, alloc, hash_type);
-   }
-   inline void shrink(const vm::predicate *pred, mem::node_allocator *alloc, const vm::field_type hash_type) {
-      (void)pred;
-      const size_t new_size(size_table / 2);
- //     shrinked++;
-//     std::cout << "shrink " << new_size << " " << shrinked << "/" << expanded << "\n";
-      change_table(new_size, alloc, hash_type);
+   inline void setup(subhash_table *par)
+   {
+      memset(table, 0, sizeof(tuple_list*) * HASH_TABLE_INITIAL_TABLE_SIZE);
+      parent = par;
    }
 
    inline void dump(std::ostream& out, const vm::predicate *pred) const
    {
-      for (size_t i(0); i < prime; ++i) {
-         tuple_list *ls(table[i]);
+      for (size_t i(0); i < HASH_TABLE_PRIME; ++i) {
+         tuple_list *ls(get_bucket(i));
          out << "Bucket for " << i << ": ";
          while(ls) {
             if (ls->empty())
@@ -257,41 +314,65 @@ struct hash_table {
 
    private:
 
-   subhash_table sh;
+   subhash_table *sh;
+   size_t unique_elems{0};
    size_t elems{0};
    vm::field_type hash_type;
 
    public:
 
-   inline size_t get_num_buckets(void) const { return sh.size_table; }
-
    class iterator {
   private:
-      tuple_list **bucket;
-      tuple_list **finish;
-      tuple_list *current;
+     struct frame {
+        subhash_table *sub;
+        size_t pos;
+     };
+     tuple_list *current;
+
+     frame frames[HASH_TABLE_MAX_LEVELS];
+     int cur_frame;
 
       inline void find_good_bucket(const bool force_next) {
          if(current) {
             current = current->next;
             if(current)
                return;
-            bucket++;
+            frame& f(frames[cur_frame]);
+            f.pos++;
          } else {
-            if(force_next)
-               bucket++;
+            if(force_next) {
+               frame& f(frames[cur_frame]);
+               f.pos++;
+            }
          }
-         for (; bucket != finish; bucket++) {
-            if (*bucket && !(*bucket)->empty()) {
-               current = *bucket;
-               return;
+         for(; cur_frame >= 0; cur_frame--) {
+            frame *f(&(frames[cur_frame]));
+            subhash_table *s(f->sub);
+            for (; f->pos < HASH_TABLE_PRIME; (f->pos)++) {
+reset:
+               size_t pos(f->pos);
+               if(s->is_subhash(pos)) {
+//                  std::cout << "Go to frame " << cur_frame + 1 << "\n";
+                  f->pos++;
+                  cur_frame++;
+                  assert(cur_frame >= 0 && cur_frame <= HASH_TABLE_MAX_LEVELS);
+                  f++;
+                  f->sub = s->get_subhash(pos);
+                  f->pos = 0;
+                  s = f->sub;
+                  goto reset;
+               }
+
+               current = s->get_bucket(pos);
+               if(current)
+                  return;
             }
          }
       }
 
   public:
 
-      inline bool end(void) const { return bucket == finish && current == nullptr; }
+      inline bool end(void) const { return cur_frame == -1; }
 
       inline tuple_list *operator*(void) const {
          assert(current);
@@ -308,62 +389,55 @@ struct hash_table {
          return *this;
       }
 
-      explicit iterator(tuple_list **start_bucket, tuple_list **end_bucket)
-          : bucket(start_bucket), finish(end_bucket), current(nullptr) {
+      explicit iterator(subhash_table *sub): current(nullptr) {
+         cur_frame = 0;
+         frames[0].sub = sub;
+         frames[0].pos = 0;
          find_good_bucket(false);
       }
    };
 
-   inline iterator begin(void) { return iterator(sh.table, sh.table + sh.prime); }
-   inline iterator begin(void) const {
-      return iterator(sh.table, sh.table + sh.prime);
-   }
+   inline iterator begin(void) { return iterator((subhash_table*)sh); }
+   inline iterator begin(void) const { return iterator((subhash_table*)sh); }
 
    inline size_t get_total_size(void) const { return elems; }
 
    inline bool empty(void) const { return elems == 0; }
 
    size_t insert(vm::tuple *item, const vm::predicate *pred, mem::node_allocator *alloc) {
+      const vm::uint_val id(hash_tuple(item, pred, hash_type));
       elems++;
-      return sh.insert(item, pred, alloc, hash_type);
-   }
-
-   size_t insert_front(vm::tuple *tpl, const vm::predicate* pred) {
-      elems++;
-      return sh.insert_front(tpl, pred, hash_type);
+//    std::cout << "Insert ==> " << id << "\n";
+      const size_t ls(sh->insert(id, item, pred, alloc, hash_type, 0) == 1);
+      if(ls == 1)
+         unique_elems++;
+      return ls;
    }
 
    inline tuple_list::iterator erase_from_list(tuple_list *ls,
          tuple_list::iterator& it, mem::node_allocator *alloc)
    {
       elems--;
-      return sh.erase_from_list(ls, it, alloc, hash_type);
+      subhash_table *sub(ls->parent);
+      assert(sub);
+      return sub->erase_from_list(ls, it, alloc, hash_type);
    }
 
    inline tuple_list *lookup_list(
        const vm::tuple_field field)
    {
-      return sh.lookup_list(field, hash_type);
+      const vm::uint_val id(hash_field(field, hash_type));
+      //std::cout << "Found ==> " << id << "\n";
+      return sh->lookup_list(id, field, hash_type);
    }
 
    inline void dump(std::ostream &out, const vm::predicate *pred) const {
-      sh.dump(out, pred);
+      sh->dump(out, pred);
    }
 
-   inline void expand(const vm::predicate *pred, mem::node_allocator *alloc) {
-      return sh.expand(pred, alloc, hash_type);
-   }
-
-   inline void shrink(const vm::predicate *pred, mem::node_allocator *alloc) {
-      return sh.shrink(pred, alloc, hash_type);
-   }
-
-   inline bool smallest_possible(void) const {
-      return sh.size_table == HASH_TABLE_INITIAL_TABLE_SIZE;
-   }
-
-   inline bool too_sparse(void) const {
-      return sh.too_sparse();
+   inline bool too_sparse() const
+   {
+      return unique_elems < CREATE_HASHTABLE_THREADSHOLD/2;
    }
 
    static inline vm::tuple_list *underlying_list(tuple_list *ls)
@@ -378,14 +452,19 @@ struct hash_table {
       return (tuple_list*)ls;
    }
 
-   inline void setup(const vm::field_type type, mem::node_allocator *alloc,
-       const size_t default_table_size = HASH_TABLE_INITIAL_TABLE_SIZE) {
+   inline void setup(const vm::field_type type, mem::node_allocator *alloc)
+   {
       hash_type = type;
-      sh.setup(alloc, default_table_size);
+      elems = 0;
+      unique_elems = 0;
+      sh = (subhash_table*)alloc->allocate_obj(sizeof(subhash_table));
+      sh->setup(nullptr);
    }
 
    inline void destroy(mem::node_allocator *alloc) {
-      sh.destroy(alloc);
+      assert(sh);
+      sh->destroy(alloc);
+      alloc->deallocate_obj((utils::byte*)sh, sizeof(subhash_table));
    }
 };
 }

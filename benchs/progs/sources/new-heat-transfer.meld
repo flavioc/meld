@@ -12,6 +12,7 @@ type linear wait(node, int).
 type linear update(node).
 type linear update-neighbors(node, float Diff, float Heat).
 
+allocator "basic".
 compact inner.
 compact coord.
 compact edge.
