@@ -914,7 +914,7 @@ static inline return_type execute_linear_iter_list(
                // if this is the first iterate, we do not need to send this to
                // the generate list
                if (tbl)
-                  it = tbl->erase_from_list(db::hash_table::cast_list(local_tuples), it);
+                  it = tbl->erase_from_list(db::hash_table::cast_list(local_tuples), it, &(node->alloc));
                else
                   it = local_tuples->erase(it);
                state.add_generated(match_tuple, pred);
