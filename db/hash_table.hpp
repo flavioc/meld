@@ -452,6 +452,11 @@ reset:
       return (tuple_list*)ls;
    }
 
+   static inline tuple_list *cast_list(tuple_list *ls)
+   {
+      return ls;
+   }
+
    inline void setup(const vm::field_type type, mem::node_allocator *alloc)
    {
       hash_type = type;
