@@ -5,6 +5,7 @@
 #include <map>
 
 #include "utils/types.hpp"
+#include "mem/stat.hpp"
 
 namespace mem
 {
@@ -38,6 +39,7 @@ struct bigchunk {
       assert(hint_size + sizeof(bigpage) <= size);
       //std::cout << "Size " << size << "\n";
       utils::byte *chunk(new utils::byte[size]);
+      register_malloc(size);
       assert(chunk);
       bigpage *page((bigpage*)chunk);
       page->prev = current;
@@ -57,6 +59,7 @@ struct bigchunk {
    {
       size = INITIAL_BIGCHUNK_SIZE;
       utils::byte *p(new utils::byte[size]);
+      register_malloc(size);
       first = current = (bigpage*)p;
       first->next = first->prev = nullptr;
       ptr = p + sizeof(bigchunk);
