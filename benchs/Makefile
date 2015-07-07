@@ -44,27 +44,25 @@ SERIAL = run_serial.sh $(RUNS)
 thread:
 	@bash $(SCRIPT) $(THREAD_PROGRAMS)
 
-SERIAL_PROGS = belief-propagation-50 belief-propagation-200 \
-		belief-propagation-300 belief-propagation-400 \
-		new-heat-transfer-80 new-heat-transfer-120 \
-		min-max-tictactoe \
-		8queens-11 8queens-12 8queens-13 8queens-14 \
+SERIAL_PROGS = 8queens-11 8queens-12 8queens-13 8queens-14 \
 		shortest-usairports500 shortest-oclinks \
-		shortest-uspowergrid shortest-email
-SCALE_PROGS = pagerank-pokec \
-				  pagerank-gplus \
+		shortest-uspowergrid shortest-email \
+		new-heat-transfer-80 new-heat-transfer-120 \
+		belief-propagation-50 belief-propagation-200 \
+		belief-propagation-300 belief-propagation-400 \
+		min-max-tictactoe min-max-tictactoe-big
+
+SCALE_PROGS = shortest-twitter \
+				  shortest-email \
+				  shortest-usairports500 \
+				  shortest-uspowergrid shortest-oclinks \
 				  greedy-graph-coloring-gplus \
 				  greedy-graph-coloring-twitter \
-				  shortest-twitter \
-				  shortest-email \
 				  8queens-13 8queens-14 \
-				  shortest-usairports500 shortest-oclinks \
-				  shortest-uspowergrid \
 				  belief-propagation-300 belief-propagation-400 \
-				  min-max-tictactoe \
-				  new-heat-transfer-120 \
-				  new-heat-transfer-80 \
-				  min-max-tictactoe-big
+				  min-max-tictactoe min-max-tictactoe-big \
+				  pagerank-pokec pagerank-gplus \
+				  new-heat-transfer-80 new-heat-transfer-120
 
 serial:
 	@bash $(SERIAL) $(SERIAL_PROGS)

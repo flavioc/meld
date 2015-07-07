@@ -2,4 +2,4 @@
 include #sources/pagerank.meld
 
 priority @cluster @static.
-data stanford-snap-pagerank "data/shortest-twitter.txt".
+data stanford-snap-pagerank "data/twitter.txt".

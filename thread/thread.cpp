@@ -39,14 +39,32 @@ termination_barrier *thread::term_barrier(nullptr);
 
 std::atomic<bool> thread::stop_flag(false);
 
+static std::mutex m;
+
 void thread::do_loop(void) {
    db::node *node(nullptr);
+#if 0
+   int count{0};
+   execution_time t;
+#endif
 
    while (true) {
       node = get_work();
       if (node == nullptr) break;
+#if 0
+      count++;
+      m.lock();
+      cout << get_id() << " run " << node->get_id() << "(" << count << "/2)\n";
+      m.unlock();
+#endif
       assert(node != nullptr);
+#if 0
+      t.start();
+#endif
       state.run_node(node);
+#if 0
+      t.stop();
+#endif
       if (stop_flag) {
          killed_while_active();
          return;
@@ -56,6 +74,11 @@ void thread::do_loop(void) {
       killed_while_active();
       return;
    }
+#if 0
+   m.lock();
+   cout << get_id() << " run " << t << "\n";
+   m.unlock();
+#endif
 }
 
 void thread::loop(void) {
