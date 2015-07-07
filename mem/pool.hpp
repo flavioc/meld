@@ -49,6 +49,7 @@ struct pool {
    inline void create_new_chunkgroup_page(void) {
       const size_t size_groups(sizeof(chunkgroup) * NUM_CHUNK_PAGES);
       next_group = (chunkgroup *)new unsigned char[size_groups];
+      register_malloc(size_groups);
       end_groups = next_group + NUM_CHUNK_PAGES;
    }
 
@@ -159,8 +160,10 @@ struct pool {
 
    inline void *allocate(const size_t size) {
       const size_t new_size(make_size(size));
-      if(new_size >= ALLOCATOR_MAX_SIZE)
+      if(new_size >= ALLOCATOR_MAX_SIZE) {
+         register_malloc(new_size * sizeof(utils::byte));
          return malloc(new_size * sizeof(utils::byte));
+      }
 
 #ifdef MIXED_MEM
       if(new_size <= 128)
