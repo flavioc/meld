@@ -45,7 +45,6 @@ public:
    static inline chunk* create(const size_t size, const size_t num_elems, chunk *next, bigchunk *bc) {
       const size_t total(sizeof(chunk) + (size + MEM_ADD_OBJS) * num_elems);
       auto p(bc->fetch(total, sizeof(chunk) + (size + MEM_ADD_OBJS)));
-      register_malloc(total);
       chunk *c((chunk*)p.first);
       c->cur = p.first + sizeof(chunk);
       c->top = p.second;
