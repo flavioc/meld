@@ -10,6 +10,15 @@
 //#define NODE_ALLOCATOR
 //#define NODE_REFCOUNT
 
+#ifndef POOL_ALLOCATOR
+#ifdef NODE_ALLOCATOR
+#undef NODE_ALLOCATOR
+#endif
+#ifdef NODE_REFCOUNT
+#undef NODE_REFCOUNT
+#endif
+#endif
+
 namespace mem
 {
 

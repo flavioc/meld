@@ -21,10 +21,12 @@ namespace mem
    {
       mem_node *new_node((mem_node*)ptr);
 
-      new_node->next = q.head;
-      q.head = new_node;
-      if(!q.tail)
+      new_node->next = nullptr;
+      if(q.tail) {
+         q.tail->next = new_node;
          q.tail = new_node;
+      } else
+         q.tail = q.head = new_node;
    }
 
    static inline void init_free_queue(free_queue& q)

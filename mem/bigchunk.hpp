@@ -34,7 +34,7 @@ struct bigchunk {
       }
       // allocate new
       size *= 2;
-      while(size - sizeof(bigpage) < hint_size)
+      while(size - sizeof(bigpage) < 8 * hint_size) // must fit 8 objects of this size.
          size *= 2;
       assert(hint_size + sizeof(bigpage) <= size);
       //std::cout << "Size " << size << "\n";
