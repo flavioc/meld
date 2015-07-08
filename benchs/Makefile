@@ -44,7 +44,7 @@ SERIAL = run_serial.sh $(RUNS)
 thread:
 	@bash $(SCRIPT) $(THREAD_PROGRAMS)
 
-SERIAL_PROGS = 8queens-11 8queens-12 8queens-13 8queens-14 \
+SERIAL_PROGS = shortest-twitter 8queens-11 8queens-12 8queens-13 8queens-14 \
 		shortest-usairports500 shortest-oclinks \
 		shortest-uspowergrid shortest-email \
 		new-heat-transfer-80 new-heat-transfer-120 \
