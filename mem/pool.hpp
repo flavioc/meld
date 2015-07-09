@@ -14,7 +14,7 @@
 #include "mem/mem_node.hpp"
 #include "mem/bigchunk.hpp"
 
-//#define MIXED_MEM
+#define MIXED_MEM
 
 #define ALLOCATOR_MAX_SIZE (std::numeric_limits<uint16_t>::max())
 

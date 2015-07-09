@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <cstdlib>
 #include "utils/types.hpp"
+#include "mem/stat.hpp"
 
 namespace mem
 {
@@ -84,6 +85,8 @@ struct mixedgroup
       frees[middle].size = size;
       frees[middle].list = nullptr;
       num_free++;
+      if(num_free > ALLOCATOR_FREE_SIZE)
+         abort();
 #ifndef NDEBUG
       for(size_t i(1); i < num_free; ++i)
          assert(frees[i-1].size < frees[i].size);
@@ -94,9 +97,10 @@ struct mixedgroup
 
    inline page* allocate_new_page(size_t size, const size_t atleast)
    {
-      while(size + sizeof(page) < atleast)
+      while(size + sizeof(page) < 8 * atleast)
          size *= 2;
       utils::byte *data = new utils::byte[size];
+      register_malloc(size);
       assert(size > sizeof(page));
       page *prev(current_page);
       current_page = (page*)data;
