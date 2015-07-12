@@ -14,7 +14,7 @@
 #include "mem/mem_node.hpp"
 #include "mem/bigchunk.hpp"
 
-//#define MIXED_MEM
+#define MIXED_MEM
 
 #define ALLOCATOR_MAX_SIZE (std::numeric_limits<uint16_t>::max())
 
@@ -160,10 +160,12 @@ struct pool {
 
    inline void *allocate(const size_t size) {
       const size_t new_size(make_size(size));
+#if 0
       if(new_size >= ALLOCATOR_MAX_SIZE) {
          register_malloc(new_size * sizeof(utils::byte));
          return malloc(new_size * sizeof(utils::byte));
       }
+#endif
 
 #ifdef MIXED_MEM
       if(new_size <= 128)
@@ -198,10 +200,12 @@ struct pool {
 
    inline void deallocate(void *ptr, const size_t size) {
       const size_t new_size(make_size(size));
+#if 0
       if(new_size >= ALLOCATOR_MAX_SIZE) {
          free(ptr);
          return;
       }
+#endif
 #ifdef MIXED_MEM
       if(new_size <= 128)
          small.deallocate(ptr, new_size);
