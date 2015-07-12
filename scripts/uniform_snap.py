@@ -11,6 +11,8 @@ ids = {}
 count = 0
 for line in open(sys.argv[1], "r"):
 	line = line.rstrip().lstrip()
+	if line.startswith('#'):
+		continue
 	vec = line.split('\t')
 	if len(vec) == 1:
 		vec = line.split(' ')
