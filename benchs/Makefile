@@ -44,16 +44,17 @@ SERIAL = run_serial.sh $(RUNS)
 thread:
 	@bash $(SCRIPT) $(THREAD_PROGRAMS)
 
-INDEXING_PROGS = shortest-oclinks shortest-email \
+INDEXING_PROGS = shortest-orkut shortest-oclinks shortest-email \
 		new-heat-transfer-80 new-heat-transfer-120 \
 		belief-propagation-50 belief-propagation-200 \
 		belief-propagation-300 belief-propagation-400 \
 		min-max-tictactoe min-max-tictactoe-big \
 		8queens-11 8queens-12 8queens-13 8queens-14 \
 		shortest-twitter shortest-usairports500 
-SERIAL_PROGS = shortest-uspowergrid $(INDEXING_PROGS)
+SERIAL_PROGS = $(INDEXING_PROGS) shortest-uspowergrid
 
-SCALE_PROGS = shortest-uspowergrid \
+SCALE_PROGS = shortest-orkut \
+				  shortest-uspowergrid \
 				  shortest-oclinks \
 				  greedy-graph-coloring-gplus \
 				  greedy-graph-coloring-twitter \
@@ -70,6 +71,10 @@ serial:
 	@bash $(SERIAL) $(SERIAL_PROGS)
 serial-mem:
 	@bash run_mem.sh $(SERIAL_PROGS)
+no-indexing-serial:
+	@bash $(SERIAL) $(INDEXING_PROGS)
+no-indexing-serial-mem:
+	@bash run_mem.sh $(INDEXING_PROGS)
 serial-recompile:
 	touch $(addprefix progs/,$(addsuffix .meld,$(SERIAL_PROGS)))
 scale:
