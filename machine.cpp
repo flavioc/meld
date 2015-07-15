@@ -160,6 +160,9 @@ void machine::start(void) {
 #if defined(LOCK_STATISTICS) || defined(FACT_STATISTICS)
    utils::lock_stat* mstat(utils::mutex::merge_stats());
    utils::mutex::print_statistics(mstat);
+#ifdef FACT_STATISTICS
+   cerr << "facts_end: " << vm::All->DATABASE->total_facts() << endl;
+#endif
 #endif
 
    for (size_t i(1); i < all->NUM_THREADS; ++i) delete threads[i];

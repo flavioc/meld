@@ -43,10 +43,8 @@ stat_run ()
    fi
 
    mkdir -p output
-	echo "=> ${DESC}"
-   contents=$($CMD)
-   tput cub 3
-   echo -n "$contents"
+	echo "${DESC}"
+   $CMD
 }
 
 time_run_n ()

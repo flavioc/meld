@@ -27,45 +27,35 @@ SEARCH_RANDOM = search-parallel-random search-threads-random
 SEARCH_FACEBOOK = search-parallel-facebook search-threads-facebook
 SEARCH_TWITTER = search-parallel-twitter search-threads-twitter
 SEARCH_POKEC = search-parallel-pokec search-threads-pokec
-SHORTEST_USAIRPORTS = shortest-usairports500 shortest-usairports500-coord
-SHORTEST_OCLINKS = shortest-oclinks shortest-oclinks-coord
-SHORTEST_USPOWERGRID = shortest-uspowergrid shortest-uspowergrid-coord
-SHORTEST_EMAIL = shortest-email shortest-email-coord
-SHORTEST = $(SHORTEST_EMAIL) \
+SHORTEST = shortest-usairports500 \
 			  shortest-twitter \
-			  shortest-twitter-coord \
-			  $(SHORTEST_USPOWERGRID)
-
-THREAD_PROGRAMS = $(QUEENS) $(GGC) $(PAGERANK) $(HT) $(MINMAX) $(SHORTEST)
+			  shortest-email \
+			  shortest-oclinks \
+			  shortest-uspowergrid \
+			  shortest-orkut \
+			  shortest-livejournal
+SHORTEST_COORD = $(addsuffix -coord,$(SHORTEST))
 
 SCRIPT = run_series.sh th $(TYPE) 1 $(NPROCS) $(RUNS)
 SERIAL = run_serial.sh $(RUNS)
 
-thread:
-	@bash $(SCRIPT) $(THREAD_PROGRAMS)
+INDEXING_PROGS = $(SHORTEST) \
+					  new-heat-transfer-80 new-heat-transfer-120 \
+					  belief-propagation-50 belief-propagation-200 \
+					  belief-propagation-300 belief-propagation-400 \
+					  min-max-tictactoe min-max-tictactoe-big \
+					  8queens-11 8queens-12 8queens-13 8queens-14
+SERIAL_PROGS = $(INDEXING_PROGS)
 
-INDEXING_PROGS = shortest-orkut shortest-oclinks shortest-email \
-		new-heat-transfer-80 new-heat-transfer-120 \
-		belief-propagation-50 belief-propagation-200 \
-		belief-propagation-300 belief-propagation-400 \
-		min-max-tictactoe min-max-tictactoe-big \
-		8queens-11 8queens-12 8queens-13 8queens-14 \
-		shortest-twitter shortest-usairports500 
-SERIAL_PROGS = $(INDEXING_PROGS) shortest-uspowergrid
-
-SCALE_PROGS = shortest-orkut \
-				  shortest-uspowergrid \
-				  shortest-oclinks \
+SCALE_PROGS = $(SHORTEST) \
 				  greedy-graph-coloring-gplus \
 				  greedy-graph-coloring-twitter \
 				  8queens-13 8queens-14 \
 				  belief-propagation-300 belief-propagation-400 \
 				  min-max-tictactoe min-max-tictactoe-big \
 				  pagerank-pokec pagerank-gplus \
-				  new-heat-transfer-80 new-heat-transfer-120 \
-				  shortest-twitter \
-				  shortest-email \
-				  shortest-usairports500
+				  new-heat-transfer-80 new-heat-transfer-120
+COORD_PROGS = $(SHORTEST_COORD)
 
 serial:
 	@bash $(SERIAL) $(SERIAL_PROGS)
@@ -79,6 +69,12 @@ serial-recompile:
 	touch $(addprefix progs/,$(addsuffix .meld,$(SERIAL_PROGS)))
 scale:
 	@bash $(SCRIPT) $(SCALE_PROGS)
+coord:
+	@bash $(SCRIPT) $(COORD_PROGS)
+coord-stat:
+	@bash run_stats.sh $(COORD_PROGS)
+coord-recompile:
+	touch $(addprefix progs/,$(addsuffix .meld,$(COORD_PROGS)))
 scale-recompile:
 	touch $(addprefix progs/,$(addsuffix .meld,$(SCALE_PROGS)))
 ggc:
@@ -109,16 +105,6 @@ queens:
 	@bash $(SCRIPT) $(QUEENS)
 minmax:
 	@bash $(SCRIPT) $(MINMAX)
-shortest:
-	@bash $(SCRIPT) $(SHORTEST)
-shortest-usairports:
-	@bash $(SCRIPT) $(SHORTEST_USAIRPORTS)
-shortest-oclinks:
-	@bash $(SCRIPT) $(SHORTEST_OCLINKS)
-shortest-uspowergrid:
-	@bash $(SCRIPT) $(SHORTEST_USPOWERGRID)
-shortest-email:
-	@bash $(SCRIPT) $(SHORTEST_EMAIL)
 
 run:
 	@bash $(SCRIPT) $(TARGET)
