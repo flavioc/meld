@@ -115,10 +115,6 @@ thread::add_node_priority(node *tn, const priority_t priority)
    if(current_node == tn)
       return;
 
-#ifdef FACT_STATISTICS
-   count_add_priority++;
-#endif
-
 #ifdef TASK_STEALING
    LOCK_STACK(nodelock);
    NODE_LOCK(tn, nodelock, add_priority_lock);

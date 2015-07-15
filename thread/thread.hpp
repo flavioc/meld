@@ -375,9 +375,6 @@ public:
    {
       vm::predicate *init_pred(vm::theProgram->get_init_predicate());
       vm::tuple *init_tuple(vm::tuple::create(init_pred, &(node->alloc)));
-#ifdef FACT_STATISTICS
-      state.facts_derived++;
-#endif
       node->set_owner(this);
       node->add_linear_fact(init_tuple, init_pred);
       node->unprocessed_facts = true;
@@ -448,9 +445,6 @@ public:
       thread *owner(to->get_owner());
 
       if (owner == this) {
-#ifdef FACT_STATISTICS
-         count_add_work_self++;
-#endif
          {
             MUTEX_LOCK_GUARD(to->database_lock, database_lock);
             to->add_work_myself(b);
@@ -461,9 +455,6 @@ public:
 #endif
          if (!to->active_node()) add_to_queue(to);
       } else {
-#ifdef FACT_STATISTICS
-         count_add_work_other += b.size();
-#endif
          LOCK_STACK(databaselock);
          if (to->database_lock.try_lock1(LOCK_STACK_USE(databaselock))) {
             LOCKING_STAT(database_lock_ok);
@@ -516,15 +507,6 @@ public:
    void print_average_priority_size(void) const;
 #endif
 
-#ifdef FACT_STATISTICS
-   vm::state& get_state(void) { return state; }
-
-   uint64_t count_add_work_self = 0;
-   uint64_t count_add_work_other = 0;
-   uint64_t count_stolen_nodes = 0;
-   uint64_t count_set_priority = 0;
-   uint64_t count_add_priority = 0;
-#endif
 #ifdef INSTRUMENTATION
    void write_slice(statistics::slice&);
 #endif

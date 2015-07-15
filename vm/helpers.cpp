@@ -147,9 +147,7 @@ static inline void execute_send0(db::node *from, const vm::node_val dest_val,
 #ifdef CORE_STATISTICS
    state.stat.stat_predicate_proven[pred->get_id()]++;
 #endif
-#ifdef FACT_STATISTICS
-   state.facts_sent++;
-#endif
+   LOG_FACT_SENT();
 
 #ifdef DEBUG_SENDS
    vm::node_val print_val(dest_val);
@@ -296,9 +294,6 @@ static inline void add_new_axioms(state &state, db::node *node, pcounter pc,
       } else {
          for (size_t j(0); j < num; ++j) {
             tuple *tpl(vm::tuple::create(pred, &(node->alloc)));
-#ifdef FACT_STATISTICS
-            state.facts_derived++;
-#endif
             for (size_t i(0), num_fields(pred->num_fields()); i != num_fields;
                  ++i) {
                tuple_field field(axiom_read_data(pc, pred->get_field_type(i)));

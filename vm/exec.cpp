@@ -89,9 +89,6 @@ static inline void execute_alloc(const pcounter& pc, state& state) {
 
    state.set_tuple(reg, tpl);
 
-#ifdef FACT_STATISTICS
-   state.facts_derived++;
-#endif
 #ifdef INSTRUMENTATION
    state.instr_facts_derived++;
 #endif
@@ -1128,9 +1125,7 @@ static inline void execute_remove(pcounter pc, state& state) {
 #ifdef INSTRUMENTATION
       state.instr_facts_consumed++;
 #endif
-#ifdef FACT_STATISTICS
-      state.facts_consumed++;
-#endif
+      LOG_DELETED_FACT();
    }
 }
 

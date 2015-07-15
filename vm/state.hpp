@@ -202,11 +202,6 @@ public:
 #ifdef CORE_STATISTICS
    core_statistics stat;
 #endif
-#ifdef FACT_STATISTICS
-   uint64_t facts_derived{0};
-   uint64_t facts_consumed{0};
-   uint64_t facts_sent{0};
-#endif
 
    inline void add_cons(runtime::cons *ls, vm::list_type *t) {
       ls->inc_refs();

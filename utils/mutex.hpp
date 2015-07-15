@@ -36,19 +36,28 @@
 #ifdef LOCK_STATISTICS
 #define LOG_HEAP_OPERATION() utils::_stat->heap_operations++
 #define LOG_NORMAL_OPERATION() utils::_stat->normal_operations++
-#define LOG_NEW_FACT() utils::_stat->facts_derived++
 #else
 #define LOG_HEAP_OPERATION()
 #define LOG_NORMAL_OPERATION()
+#endif
+
+#ifdef FACT_STATISTICS
+#define LOG_NEW_FACT() utils::_stat->facts_derived++
+#define LOG_FACT_SENT() utils::_stat->facts_sent++
+#define LOG_DELETED_FACT() utils::_stat->facts_deleted++
+#else
 #define LOG_NEW_FACT()
+#define LOG_FACT_SENT()
+#define LOG_DELETED_FACT()
 #endif
 
 namespace utils
 {
 
-#ifdef LOCK_STATISTICS
+#if defined(LOCK_STATISTICS) || defined(FACT_STATISTICS)
 struct lock_stat {
    public:
+#ifdef LOCK_STATISTICS
    uint64_t main_db_lock_ok{0}, main_db_lock_fail{0};
    uint64_t node_lock_ok{0}, node_lock_fail{0};
    uint64_t database_lock_ok{0}, database_lock_fail{0};
@@ -63,8 +72,13 @@ struct lock_stat {
    uint64_t set_static_lock_ok{0}, set_static_lock_fail{0};
    uint64_t set_affinity_lock_ok{0}, set_affinity_lock_fail{0};
    uint64_t heap_operations{0}, normal_operations{0};
-   uint64_t facts_derived{0};
    uint64_t allocator_lock_ok{0}, allocator_lock_fail{0};
+#endif
+#ifdef FACT_STATISTICS
+   uint64_t facts_derived{0};
+   uint64_t facts_sent{0};
+   uint64_t facts_deleted{0};
+#endif
 };
 
 extern __thread lock_stat *_stat;
@@ -90,7 +104,7 @@ class mutex
 
    public:
 
-#ifdef LOCK_STATISTICS
+#if defined(LOCK_STATISTICS) || defined(FACT_STATISTICS)
       static lock_stat* merge_stats(void);
       static void print_statistics(lock_stat*);
 #endif

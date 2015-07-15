@@ -107,9 +107,6 @@ void thread::new_thread_work(thread *to, vm::tuple *tpl,
    LOCK_STACK(nodelock);
    NODE_LOCK(n, nodelock, node_lock);
 
-#ifdef FACT_STATISTICS
-   count_add_work_other++;
-#endif
    n->add_work_others(tpl, pred, vm::POSITIVE_DERIVATION, 0);
 #ifdef INSTRUMENTATION
    sent_facts_other_thread++;
@@ -130,9 +127,6 @@ void thread::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pred,
 
    thread *owner(to->get_owner());
    if (owner == this) {
-#ifdef FACT_STATISTICS
-      count_add_work_self++;
-#endif
       {
          MUTEX_LOCK_GUARD(to->database_lock, database_lock);
          to->add_work_myself(tpl, pred, dir, depth);
@@ -143,9 +137,6 @@ void thread::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pred,
 #endif
       if (!to->active_node()) add_to_queue(to);
    } else {
-#ifdef FACT_STATISTICS
-      count_add_work_other++;
-#endif
       LOCK_STACK(databaselock);
 
       if (to->database_lock.try_lock1(LOCK_STACK_USE(databaselock))) {
@@ -211,9 +202,6 @@ bool thread::go_steal_nodes(void) {
       if (stolen == 0) continue;
 
       has_work |= true;
-#ifdef FACT_STATISTICS
-      count_stolen_nodes += stolen;
-#endif
 #ifdef INSTRUMENTATION
       stolen_total += stolen;
 #endif

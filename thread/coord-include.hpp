@@ -61,10 +61,6 @@ set_node_priority(db::node *tn, const vm::priority_t priority)
    if(current_node == tn)
       return;
 
-#ifdef FACT_STATISTICS
-   count_set_priority++;
-#endif
-
 #ifdef TASK_STEALING
    LOCK_STACK(nodelock);
    NODE_LOCK(tn, nodelock, set_priority_lock);
