@@ -10,6 +10,6 @@ if [ -z "$COMPILED" ]; then
 else
    for x in ${*:1}; do
       compile_test "$x"
-      bash mem.sh "./build/$x" "$x" $RUNS
+      bash mem.sh "./build/$x" "$x"
    done
 fi

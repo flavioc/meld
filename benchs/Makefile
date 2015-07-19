@@ -15,18 +15,20 @@ all: compiled
 TYPE = even
 export RESULTS_FILE=$(PWD)/results.csv
 
-GGC = greedy-graph-coloring-2000 greedy-graph-coloring-search_engines
-PAGERANK = pagerank-search_engines pagerank-5000
 HT = new-heat-transfer-120 new-heat-transfer-120-coord0 new-heat-transfer-120-coord
+
 BP = belief-propagation-400
-SPLASH_BP = splash-bp-400
-QUEENS = 8queens-14 8queens-14-top 8queens-14-top-static 8queens-14-bottom 8queens-14-bottom-static
-SIMPLE = simple16 simple32 simple64
-MINMAX = min-max-tictactoe
+SPLASH_BP = splash-bp-400 splash-bp-300
+QUEENS_COORD = 8queens-13-top 8queens-13-top-static 8queens-13-bottom 8queens-13-bottom-static 8queens-14-top 8queens-14-top-static 8queens-14-bottom 8queens-14-bottom-static
+
 SEARCH_RANDOM = search-parallel-random search-threads-random
 SEARCH_FACEBOOK = search-parallel-facebook search-threads-facebook
 SEARCH_TWITTER = search-parallel-twitter search-threads-twitter
 SEARCH_POKEC = search-parallel-pokec search-threads-pokec
+
+HT = new-heat-transfer-80 new-heat-transfer-120
+HT_COORD = $(addsuffix -coord,$(HT)) $(addsuffix -coord0,$(HT))
+
 SHORTEST = shortest-usairports500 \
 			  shortest-twitter \
 			  shortest-email \
@@ -36,15 +38,19 @@ SHORTEST = shortest-usairports500 \
 			  shortest-livejournal
 SHORTEST_COORD = $(addsuffix -coord,$(SHORTEST))
 
+MINMAX = min-max-tictactoe min-max-tictactoe-big
+MINMAX_COORD = $(addsuffix -coord,$(MINMAX))
+
+BP = belief-propagation-300 belief-propagation-400
+BP_COORD = $(addsuffix -coord,$(BP))
+
 SCRIPT = run_series.sh th $(TYPE) 1 $(NPROCS) $(RUNS)
 SERIAL = run_serial.sh $(RUNS)
 
-INDEXING_PROGS = $(SHORTEST) \
-					  new-heat-transfer-80 new-heat-transfer-120 \
+INDEXING_PROGS = $(SHORTEST) $(HT) \
 					  belief-propagation-50 belief-propagation-200 \
 					  belief-propagation-300 belief-propagation-400 \
-					  min-max-tictactoe min-max-tictactoe-big \
-					  8queens-11 8queens-12 8queens-13 8queens-14
+					  $(MINMAX) 8queens-11 8queens-12 8queens-13 8queens-14
 SERIAL_PROGS = $(INDEXING_PROGS)
 
 SCALE_PROGS = $(SHORTEST) \
@@ -52,9 +58,8 @@ SCALE_PROGS = $(SHORTEST) \
 				  greedy-graph-coloring-twitter \
 				  8queens-13 8queens-14 \
 				  belief-propagation-300 belief-propagation-400 \
-				  min-max-tictactoe min-max-tictactoe-big \
-				  pagerank-pokec pagerank-gplus \
-				  new-heat-transfer-80 new-heat-transfer-120
+				  $(MINMAX) min-max-tictactoe min-max-tictactoe-big \
+				  pagerank-pokec pagerank-gplus $(HT)
 COORD_PROGS = $(SHORTEST_COORD)
 
 serial:
@@ -67,18 +72,40 @@ no-indexing-serial-mem:
 	@bash run_mem.sh $(INDEXING_PROGS)
 serial-recompile:
 	touch $(addprefix progs/,$(addsuffix .meld,$(SERIAL_PROGS)))
+
 scale:
 	@bash $(SCRIPT) $(SCALE_PROGS)
-coord:
-	@bash $(SCRIPT) $(COORD_PROGS)
-coord-stat:
-	@bash run_stats.sh $(COORD_PROGS)
-coord-recompile:
-	touch $(addprefix progs/,$(addsuffix .meld,$(COORD_PROGS)))
 scale-recompile:
 	touch $(addprefix progs/,$(addsuffix .meld,$(SCALE_PROGS)))
-ggc:
-	@bash $(SCRIPT) $(GGC)
+
+sssp-stat:
+	@bash run_stats.sh $(SHORTEST)
+sssp-recompile:
+	touch $(addprefix progs/,$(addsuffix .meld,$(SHORTEST)))
+sssp-coord:
+	@bash $(SCRIPT) $(SHORTEST_COORD)
+sssp-coord-recompile:
+	touch $(addprefix progs/,$(addsuffix .meld,$(SHORTEST_COORD)))
+
+minmax-coord:
+	@bash $(SCRIPT) $(MINMAX_COORD)
+minmax-mem:
+	@bash run_mems.sh $(MINMAX)
+minmax-coord-mem:
+	@bash run_mems.sh $(MINMAX_COORD)
+
+ht-coord:
+	@bash $(SCRIPT) $(HT_COORD)
+
+bp-coord:
+	@bash $(SCRIPT) $(BP_COORD)
+
+splash:
+	@bash $(SCRIPT) $(SPLASH_BP)
+
+queens-coord:
+	@bash $(SCRIPT) $(QUEENS_COORD)
+
 search-random:
 	@bash $(SCRIPT) $(SEARCH_RANDOM)
 search-facebook:
@@ -91,8 +118,6 @@ powergrid-50000:
 	@bash $(SCRIPT) powergrid-50000 powergrid-50000-coord
 powergrid-100000:
 	@bash $(SCRIPT) powergrid-100000 powergrid-100000-coord
-pagerank:
-	@bash $(SCRIPT) $(PAGERANK)
 ht:
 	@bash $(SCRIPT) $(HT)
 simple:
@@ -101,8 +126,6 @@ bp:
 	@bash $(SCRIPT) $(BP)
 splash-bp:
 	@bash $(SCRIPT) $(SPLASH_BP)
-queens:
-	@bash $(SCRIPT) $(QUEENS)
 minmax:
 	@bash $(SCRIPT) $(MINMAX)
 
