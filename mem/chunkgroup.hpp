@@ -47,7 +47,7 @@ struct chunkgroup {
          ptr = p.first;
          end = p.second;
          assert(end > ptr);
-         assert(end - ptr >= size);
+         assert((size_t)(end - ptr) >= size);
       }
 
       auto oldp(ptr);

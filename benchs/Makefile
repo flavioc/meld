@@ -1,5 +1,5 @@
 
-RUNS = 3
+RUNS = 1
 NPROCS = 1
 OS = $(shell uname -s)
 
