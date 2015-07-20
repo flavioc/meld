@@ -7,18 +7,10 @@ namespace mem
    struct chunk;
 
    struct mem_node {
-#ifdef USE_REFCOUNT
-      struct chunk *chunk;
-#endif
       struct mem_node *next;
    };
-#ifdef REF_COUNT
-   const size_t MEM_MIN_OBJS(sizeof(mem_node)-sizeof(chunk*));
-   const size_t MEM_ADD_OBJS(sizeof(struct chunk*));
-#else
    const size_t MEM_MIN_OBJS(sizeof(mem_node));
    const size_t MEM_ADD_OBJS(0);
-#endif
 
    struct free_queue {
       mem_node *head{nullptr};
@@ -28,12 +20,13 @@ namespace mem
    static inline void add_free_queue(free_queue& q, void *ptr)
    {
       mem_node *new_node((mem_node*)ptr);
-      
-      if(q.tail)
-         q.tail->next = new_node;
+
       new_node->next = nullptr;
-      if(!q.head)
-         q.head = new_node;
+      if(q.tail) {
+         q.tail->next = new_node;
+         q.tail = new_node;
+      } else
+         q.tail = q.head = new_node;
    }
 
    static inline void init_free_queue(free_queue& q)

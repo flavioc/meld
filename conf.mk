@@ -6,7 +6,7 @@ ALLOCATOR = pool
 # semaphore: use system semaphores.
 # ticket: use ticket spinlock.
 # queued: use MCS queued spin lock.
-LOCK_ALGORITHM = ticket
+LOCK_ALGORITHM = queued
 # Use 'true' for dynamic indexing of facts.
 INDEXING = false
 # Make the virtual machine use the node pointers in predicate arguments

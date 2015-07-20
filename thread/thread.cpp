@@ -39,14 +39,32 @@ termination_barrier *thread::term_barrier(nullptr);
 
 std::atomic<bool> thread::stop_flag(false);
 
+static std::mutex m;
+
 void thread::do_loop(void) {
    db::node *node(nullptr);
+#if 0
+   int count{0};
+   execution_time t;
+#endif
 
    while (true) {
       node = get_work();
       if (node == nullptr) break;
+#if 0
+      count++;
+      m.lock();
+      cout << get_id() << " run " << node->get_id() << "(" << count << "/2)\n";
+      m.unlock();
+#endif
       assert(node != nullptr);
+#if 0
+      t.start();
+#endif
       state.run_node(node);
+#if 0
+      t.stop();
+#endif
       if (stop_flag) {
          killed_while_active();
          return;
@@ -56,6 +74,11 @@ void thread::do_loop(void) {
       killed_while_active();
       return;
    }
+#if 0
+   m.lock();
+   cout << get_id() << " run " << t << "\n";
+   m.unlock();
+#endif
 }
 
 void thread::loop(void) {
@@ -84,9 +107,6 @@ void thread::new_thread_work(thread *to, vm::tuple *tpl,
    LOCK_STACK(nodelock);
    NODE_LOCK(n, nodelock, node_lock);
 
-#ifdef FACT_STATISTICS
-   count_add_work_other++;
-#endif
    n->add_work_others(tpl, pred, vm::POSITIVE_DERIVATION, 0);
 #ifdef INSTRUMENTATION
    sent_facts_other_thread++;
@@ -107,9 +127,6 @@ void thread::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pred,
 
    thread *owner(to->get_owner());
    if (owner == this) {
-#ifdef FACT_STATISTICS
-      count_add_work_self++;
-#endif
       {
          MUTEX_LOCK_GUARD(to->database_lock, database_lock);
          to->add_work_myself(tpl, pred, dir, depth);
@@ -120,9 +137,6 @@ void thread::new_work(node *from, node *to, vm::tuple *tpl, vm::predicate *pred,
 #endif
       if (!to->active_node()) add_to_queue(to);
    } else {
-#ifdef FACT_STATISTICS
-      count_add_work_other++;
-#endif
       LOCK_STACK(databaselock);
 
       if (to->database_lock.try_lock1(LOCK_STACK_USE(databaselock))) {
@@ -164,7 +178,7 @@ bool thread::go_steal_nodes(void) {
 #ifdef STEAL_ONE
 #define NODE_BUFFER_SIZE 1
 #elif defined(STEAL_HALF)
-#define NODE_BUFFER_SIZE 10
+#define NODE_BUFFER_SIZE 16
 #endif
    db::node *node_buffer[NODE_BUFFER_SIZE];
    bool activated{false};
@@ -188,9 +202,6 @@ bool thread::go_steal_nodes(void) {
       if (stolen == 0) continue;
 
       has_work |= true;
-#ifdef FACT_STATISTICS
-      count_stolen_nodes += stolen;
-#endif
 #ifdef INSTRUMENTATION
       stolen_total += stolen;
 #endif
@@ -521,11 +532,6 @@ void thread::init(const size_t) {
       //cout << total << endl;
    }
 
-   if (theProgram->has_thread_predicates()) {
-      thread_node = node_handler.create_node();
-      setup_thread_node();
-   }
-
    threads_synchronize();
    bool sync{false};
 #ifdef COMPILED
@@ -540,6 +546,12 @@ void thread::init(const size_t) {
       if (leader_thread()) run_const_code();
    }
 #endif
+   if (theProgram->has_thread_predicates()) {
+      thread_node = node_handler.create_node();
+      setup_thread_node();
+      sync = true;
+   }
+
    if (sync) threads_synchronize();
 }
 

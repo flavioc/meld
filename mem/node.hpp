@@ -8,7 +8,16 @@
 #include "vm/bitmap_static.hpp"
 
 //#define NODE_ALLOCATOR
-//#define USE_REFCOUNT
+//#define NODE_REFCOUNT
+
+#ifndef POOL_ALLOCATOR
+#ifdef NODE_ALLOCATOR
+#undef NODE_ALLOCATOR
+#endif
+#ifdef NODE_REFCOUNT
+#undef NODE_REFCOUNT
+#endif
+#endif
 
 namespace mem
 {
@@ -16,13 +25,13 @@ namespace mem
 struct node_allocator
 {
 #ifdef NODE_ALLOCATOR
-#define MAX_NODE_ALLOCATOR_SIZE 256
+#define MAX_NODE_ALLOCATOR_SIZE 1024
    struct free_size {
-      uint16_t size;
+      uint32_t size;
       void *list;
    };
 #ifdef COMPILED
-#define NODE_ALLOCATOR_SIZES COMPILED_NUM_PREDICATES
+#define NODE_ALLOCATOR_SIZES (COMPILED_NUM_PREDICATES)
 #else
 #define NODE_ALLOCATOR_SIZES 32
 #endif
@@ -31,62 +40,70 @@ struct node_allocator
       std::size_t size{0};
       page *next;
       page *prev;
-#ifdef USE_REFCOUNT
+#ifdef NODE_REFCOUNT
+      bool dynamic;
       int refcount{0};
       free_size frees[NODE_ALLOCATOR_SIZES];
       uint16_t num_free{0};
 #endif
    };
-#ifndef USE_REFCOUNT
+#ifndef NODE_REFCOUNT
+   bool dynamic;
    uint16_t num_free{0};
    free_size frees[NODE_ALLOCATOR_SIZES];
 #endif
    page *first_page{nullptr};
    page *current_page{nullptr};
    utils::mutex mtx;
-#ifdef USE_REFCOUNT
+#ifdef NODE_REFCOUNT
    struct object {
       page *page_ptr;
       object *next;
    };
-#define ADD_SIZE_OBJ (sizeof(object)-sizeof(object*))
+#define NODE_ADD_SIZE_OBJ (sizeof(object)-sizeof(object*))
 #else
    struct object {
       object *next;
    };
-#define ADD_SIZE_OBJ 0
+#define NODE_ADD_SIZE_OBJ 0
 #endif
-#define MIN_SIZE_OBJ (sizeof(object*))
-#define START_PAGE_SIZE (sizeof(page) * 8)
-   static_assert(START_PAGE_SIZE >= sizeof(page), "START_PAGE_SIZE must larger than page size.");
+#define NODE_MIN_SIZE_OBJ (sizeof(object*))
+#define NODE_START_PAGE_SIZE (2048)
+   static_assert(NODE_START_PAGE_SIZE >= sizeof(page), "NODE_START_PAGE_SIZE must larger than page size.");
 
    inline void deallocate_page(page *pg)
    {
       allocator<utils::byte>().deallocate((utils::byte*)pg, pg->size);
    }
 
-   inline void allocate_new_page()
+   inline void allocate_new_page(const size_t required)
    {
       page *old_page(current_page);
-      const size_t new_size(old_page->size * 4);
+      size_t new_size(old_page->size * 2);
+      while(new_size - sizeof(page) < required)
+         new_size *= 2;
       current_page = (page*)allocator<utils::byte>().allocate(new_size);
       assert(current_page);
       old_page->prev = current_page;
       current_page->prev = nullptr;
       current_page->next = old_page;
       current_page->size = new_size;
-#ifdef USE_REFCOUNT
+#ifdef NODE_REFCOUNT
+      current_page->dynamic = false;
       current_page->refcount = 0;
       current_page->num_free = 0;
 #endif
       current_page->ptr = sizeof(page);
    }
 
-   inline free_size *get_free_size(free_size *frees, uint16_t& num_free, const size_t size, const bool create)
+   inline free_size *get_free_size(free_size *frees, uint16_t& num_free, const size_t size, const bool create, bool& dynamic)
    {
       int left(0);
       int right(static_cast<int>(num_free) - 1);
       int middle(0);
+      free_size *initial_frees(frees);
+      if(dynamic)
+         frees = (free_size*)frees[0].list;
 #if 0
       std::cout << "\n";
 
@@ -123,11 +140,28 @@ struct node_allocator
       for(size_t i(0); i < num_free; ++i)
          assert(frees[i].size != size);
 #endif
-      if(size > frees[middle].size)
+      if(middle < num_free && size > frees[middle].size)
          middle++;
       // need to add it here.
       assert(middle <= num_free + 1);
       assert(middle >= 0);
+      if(num_free == NODE_ALLOCATOR_SIZES && !dynamic) {
+         dynamic = true;
+         const size_t newsize(NODE_ALLOCATOR_SIZES * 2);
+         free_size *n((free_size*)mem::allocator<free_size>().allocate(newsize));
+         memcpy(n, frees, num_free*sizeof(free_size));
+         frees[0].list = n;
+         frees[0].size = newsize;
+         frees = n;
+      } else if(dynamic && initial_frees[0].size == num_free) {
+         free_size *n((free_size*)mem::allocator<free_size>().allocate(initial_frees[0].size * 2));
+         memcpy(n, frees, num_free*sizeof(free_size));
+         mem::allocator<free_size>().deallocate(frees, initial_frees[0].size);
+         initial_frees[0].list = n;
+         initial_frees[0].size *= 2;
+         frees = n;
+      }
+      assert((!dynamic && num_free < NODE_ALLOCATOR_SIZES) || (dynamic && num_free < initial_frees[0].size));
       if(middle < num_free)
          memmove(frees + middle + 1, frees + middle, (num_free - middle) * sizeof(free_size));
       frees[middle].size = size;
@@ -137,7 +171,6 @@ struct node_allocator
       for(size_t i(1); i < num_free; ++i)
          assert(frees[i-1].size < frees[i].size);
 #endif
-      assert(num_free <= NODE_ALLOCATOR_SIZES);
       return frees + middle;
    }
 
@@ -145,28 +178,28 @@ struct node_allocator
    {
       utils::byte *p((utils::byte*)o);
 
-      return p + ADD_SIZE_OBJ;
+      return p + NODE_ADD_SIZE_OBJ;
    }
 
    inline object* cast_ptr_to_object(utils::byte *p)
    {
-      return (object*)(p - ADD_SIZE_OBJ);
+      return (object*)(p - NODE_ADD_SIZE_OBJ);
    }
 #endif
 
    inline utils::byte *allocate_obj(std::size_t size)
    {
 #ifdef NODE_ALLOCATOR
-      size = std::max(MIN_SIZE_OBJ, size) + ADD_SIZE_OBJ;
+      size = std::max(NODE_MIN_SIZE_OBJ, size) + NODE_ADD_SIZE_OBJ;
       if(size > MAX_NODE_ALLOCATOR_SIZE)
          return mem::allocator<utils::byte>().allocate(size);
       MUTEX_LOCK_GUARD(mtx, allocator_lock);
       assert(current_page);
-#ifdef USE_REFCOUNT
+#ifdef NODE_REFCOUNT
       page *pg(current_page);
       while(pg) {
          // start from the top page so that smaller pages are reclaimed faster.
-         free_size *f(get_free_size(pg->frees, pg->num_free, size, false));
+         free_size *f(get_free_size(pg->frees, pg->num_free, size, false, pg->dynamic));
          if(f && f->list) {
             object *p((object*)f->list);
             f->list = p->next;
@@ -177,7 +210,7 @@ struct node_allocator
          pg = pg->next;
       }
 #else
-      free_size *f(get_free_size(frees, num_free, size, false));
+      free_size *f(get_free_size(frees, num_free, size, false, dynamic));
       if(f && f->list) {
          object *p((object*)f->list);
          f->list = p->next;
@@ -185,10 +218,10 @@ struct node_allocator
       }
 #endif
       if(current_page->ptr + size > current_page->size)
-         allocate_new_page();
+         allocate_new_page(size);
       object *obj = (object*)(((utils::byte*)current_page) + current_page->ptr);
       current_page->ptr += size;
-#ifdef USE_REFCOUNT
+#ifdef NODE_REFCOUNT
       obj->page_ptr = current_page;
       (current_page->refcount)++;
 #endif
@@ -201,12 +234,12 @@ struct node_allocator
    inline void deallocate_obj(utils::byte *p, std::size_t size)
    {
 #ifdef NODE_ALLOCATOR
-      size = std::max(MIN_SIZE_OBJ, size) + ADD_SIZE_OBJ;
+      size = std::max(NODE_MIN_SIZE_OBJ, size) + NODE_ADD_SIZE_OBJ;
       if(size > MAX_NODE_ALLOCATOR_SIZE)
          return mem::allocator<utils::byte>().deallocate(p, size);
       MUTEX_LOCK_GUARD(mtx, allocator_lock);
       object *x(cast_ptr_to_object(p));
-#ifdef USE_REFCOUNT
+#ifdef NODE_REFCOUNT
       page *pg(x->page_ptr);
 
       assert(pg);
@@ -232,10 +265,10 @@ struct node_allocator
          return;
       }
 #endif
-#ifdef USE_REFCOUNT
-      free_size *f(get_free_size(pg->frees, pg->num_free, size, true));
+#ifdef NODE_REFCOUNT
+      free_size *f(get_free_size(pg->frees, pg->num_free, size, true, pg->dynamic));
 #else
-      free_size *f(get_free_size(frees, num_free, size, true));
+      free_size *f(get_free_size(frees, num_free, size, true, dynamic));
 #endif
       assert(f->size == size);
       x->next = (object*)f->list;
@@ -247,14 +280,16 @@ struct node_allocator
 
    inline node_allocator() {
 #ifdef NODE_ALLOCATOR
-      current_page = (page*)allocator<utils::byte>().allocate(START_PAGE_SIZE);
+      current_page = (page*)allocator<utils::byte>().allocate(NODE_START_PAGE_SIZE);
       assert(current_page);
       current_page->prev = current_page->next = nullptr;
       current_page->ptr = sizeof(page);
-      current_page->size = START_PAGE_SIZE;
-#ifdef USE_REFCOUNT
+      current_page->size = NODE_START_PAGE_SIZE;
+#ifdef NODE_REFCOUNT
       current_page->num_free = 0;
       current_page->refcount = 0;
+#else
+      dynamic = false;
 #endif
       first_page = current_page;
 #endif
@@ -271,10 +306,10 @@ struct node_allocator
 #endif
    }
 };
-#undef MIN_SIZE_OBJ
-#undef START_PAGE_SIZE
+#undef NODE_MIN_SIZE_OBJ
+#undef NODE_START_PAGE_SIZE
 #undef NODE_ALLOCATOR_SIZES
-#undef ADD_SIZE_OBJ
+#undef NODE_ADD_SIZE_OBJ
 
 };
 

@@ -1,4 +1,7 @@
 
 include #sources/shortest-path-custom.meld
-include #data/shortest-usairports500.meld
+type route edge(node, node, float).
 
+priority @cluster @static.
+//priority @no_initial_priorities.
+data stanford-sssp-snap "data/shortest-usairports500.txt".

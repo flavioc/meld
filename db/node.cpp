@@ -49,7 +49,7 @@ void node::dump(ostream &cout) const {
             const hash_table *table(
                 linear.get_hash_table(pred->get_linear_id()));
             for (hash_table::iterator it(table->begin()); !it.end(); ++it) {
-               const intrusive_list<vm::tuple> *ls(*it);
+               const intrusive_list<vm::tuple> *ls(db::hash_table::underlying_list(*it));
                if (!ls->empty()) {
                   for (intrusive_list<vm::tuple>::const_iterator
                            it(ls->begin()),
@@ -93,7 +93,7 @@ void node::print(ostream &cout) const {
             const hash_table *table(
                 linear.get_hash_table(pred->get_linear_id()));
             for (hash_table::iterator it(table->begin()); !it.end(); ++it) {
-               const intrusive_list<vm::tuple> *ls(*it);
+               const intrusive_list<vm::tuple> *ls(db::hash_table::underlying_list(*it));
                if (!ls->empty()) {
                   for (intrusive_list<vm::tuple>::const_iterator
                            it(ls->begin()),

@@ -155,7 +155,7 @@ struct node {
    inline void add_linear_fact(vm::tuple *tpl, vm::predicate *pred)
        __attribute__((always_inline)) {
       matcher.new_linear_fact(pred->get_id());
-      linear.add_fact(tpl, pred);
+      linear.add_fact(tpl, pred, &alloc);
    }
 
    inline void add_persistent_fact(
@@ -205,7 +205,7 @@ struct node {
             }
          } else {
             matcher.new_linear_fact(pred->get_id());
-            linear.add_fact_list(i.ls, pred);
+            linear.add_fact_list(i.ls, pred, &alloc);
          }
       }
    }
@@ -282,7 +282,7 @@ struct node {
    inline void manage_index() {
       linear.improve_index();
       rounds++;
-      if (rounds > 0 && rounds % 1 == 0) linear.cleanup_index();
+      if (rounds > 0 && rounds % 1 == 0) linear.cleanup_index(&alloc);
    }
 
    inline explicit node(const node_id _id, const node_id _trans)

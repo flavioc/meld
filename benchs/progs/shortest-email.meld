@@ -2,4 +2,4 @@ include #sources/shortest-path-custom.meld
 type route edge(node, node, float).
 
 priority @cluster @static.
-data stanford-snap "data/shortest-email.txt".
+data stanford-sssp-snap "data/shortest-email.txt".

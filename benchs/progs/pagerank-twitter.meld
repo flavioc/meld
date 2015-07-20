@@ -1,0 +1,5 @@
+
+include #sources/pagerank.meld
+
+priority @cluster @static.
+data stanford-snap-pagerank "data/twitter.txt".

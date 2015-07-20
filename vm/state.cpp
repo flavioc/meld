@@ -186,7 +186,7 @@ state::process_incoming_tuples(db::node *node) {
       if (!ls->empty()) {
          vm::predicate *pred(theProgram->get_linear_predicate(i));
          matcher->new_linear_fact(pred->get_id());
-         node->linear.increment_database(pred, ls);
+         node->linear.increment_database(pred, ls, &(node->alloc));
       }
    }
 }
@@ -687,7 +687,7 @@ void state::run_node(db::node *node) {
       thread_persistent_tuples.splice_back(
           sched->thread_node->store.incoming_persistent_tuples);
       sched->thread_node->unprocessed_facts = false;
-      MUTEX_UNLOCK(sched->thread_node->main_lock, node_lock);
+      MUTEX_UNLOCK(sched->thread_node->main_lock, thread_node_lock);
       do_persistent_tuples(sched->thread_node, &thread_persistent_tuples);
       matcher->add_thread(sched->thread_node->matcher);
    }
@@ -717,10 +717,10 @@ void state::run_node(db::node *node) {
                vm::predicate *pred(theProgram->get_linear_predicate(i));
                if (pred->is_thread_pred()) {
                   matcher->new_linear_fact(pred->get_id());
-                  sched->thread_node->linear.increment_database(pred, gen);
+                  sched->thread_node->linear.increment_database(pred, gen, &(node->alloc));
                } else {
                   matcher->new_linear_fact(pred->get_id());
-                  node->linear.increment_database(pred, gen);
+                  node->linear.increment_database(pred, gen, &(node->alloc));
                }
             }
          }
@@ -744,8 +744,6 @@ void state::run_node(db::node *node) {
 #endif
    }
 
-   sync(node);
-
 #if !defined(COMPILED) || defined(COMPILED_THREAD_FACTS)
    // unmark all thread facts and save state in 'thread_node'.
    if (theProgram->has_thread_predicates() && sched->thread_node != node)
@@ -760,6 +758,8 @@ void state::run_node(db::node *node) {
    if (theProgram->has_thread_predicates() && sched->thread_node != node)
       sched->thread_node->manage_index();
 #endif
+
+   sync(node);
 
 #ifdef GC_NODES
    for (auto x : gc_nodes) {

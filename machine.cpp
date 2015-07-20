@@ -116,7 +116,7 @@ void machine::init_sched(const process_id id) {
 #ifdef INSTRUMENTATION
    All->THREAD_POOLS[id] = mem::mem_pool;
 #endif
-#ifdef LOCK_STATISTICS
+#if defined(LOCK_STATISTICS) || defined(FACT_STATISTICS)
    utils::all_stats[id] = new utils::lock_stat();
    utils::_stat = utils::all_stats[id];
 #endif
@@ -140,7 +140,7 @@ void machine::start(void) {
 #endif
 
    sched::thread::init_barriers(all->NUM_THREADS);
-#ifdef LOCK_STATISTICS
+#if defined(LOCK_STATISTICS) || defined(FACT_STATISTICS)
    utils::all_stats.resize(all->NUM_THREADS, NULL);
 #endif
 
@@ -157,35 +157,12 @@ void machine::start(void) {
    cout << "Total Nodes: " << this->all->DATABASE->num_nodes() << endl;
    cout << "Bytes used: " << bytes_used << endl;
 #endif
-#ifdef LOCK_STATISTICS
+#if defined(LOCK_STATISTICS) || defined(FACT_STATISTICS)
    utils::lock_stat* mstat(utils::mutex::merge_stats());
    utils::mutex::print_statistics(mstat);
-#endif
 #ifdef FACT_STATISTICS
-   uint64_t facts_derived(0);
-   uint64_t facts_consumed(0);
-   uint64_t facts_sent(0);
-   uint64_t count_add_work_self(0);
-   uint64_t count_add_work_other(0);
-   uint64_t count_stolen_nodes(0);
-   uint64_t count_set_priority(0);
-   uint64_t count_add_priority(0);
-   for (size_t i(0); i < all->NUM_THREADS; ++i) {
-      facts_derived += all->SCHEDS[i]->get_state().facts_derived;
-      facts_consumed += all->SCHEDS[i]->get_state().facts_consumed;
-      facts_sent += all->SCHEDS[i]->get_state().facts_sent;
-      count_add_work_self += all->SCHEDS[i]->count_add_work_self;
-      count_add_work_other += all->SCHEDS[i]->count_add_work_other;
-      count_stolen_nodes += all->SCHEDS[i]->count_stolen_nodes;
-      count_set_priority += all->SCHEDS[i]->count_set_priority;
-      count_add_priority += all->SCHEDS[i]->count_add_priority;
-   }
-   cerr << "derived, consumed, sent,addself, addother, stolen, setprio, addprio"
-        << endl;
-   cerr << facts_derived << ", " << facts_consumed << ", " << facts_sent << ", "
-        << count_add_work_self << ", " << count_add_work_other << ", "
-        << count_stolen_nodes << ", " << count_set_priority << ", "
-        << count_add_priority << endl;
+   cerr << "facts_end: " << vm::All->DATABASE->total_facts() << endl;
+#endif
 #endif
 
    for (size_t i(1); i < all->NUM_THREADS; ++i) delete threads[i];

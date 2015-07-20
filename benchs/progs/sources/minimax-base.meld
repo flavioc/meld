@@ -8,6 +8,7 @@ type linear new-score(node, int, int).
 type linear maximize(node, int, int, int).
 type linear minimize(node, int, int, int).
 
+allocator "basic".
 const maxinf = 9999.
 const mininf = -9999.
 const root-player = 1.

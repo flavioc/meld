@@ -89,9 +89,6 @@ static inline void execute_alloc(const pcounter& pc, state& state) {
 
    state.set_tuple(reg, tpl);
 
-#ifdef FACT_STATISTICS
-   state.facts_derived++;
-#endif
 #ifdef INSTRUMENTATION
    state.instr_facts_derived++;
 #endif
@@ -865,7 +862,7 @@ static inline return_type execute_opers_iter(const reg_num reg, match* m,
 
 static inline return_type execute_linear_iter_list(
     db::node *node, const reg_num reg, match* m, const pcounter first, state& state,
-    predicate* pred, utils::intrusive_list<vm::tuple>* local_tuples,
+    predicate* pred, vm::tuple_list* local_tuples,
     hash_table* tbl = nullptr) {
    if (local_tuples == nullptr) return RETURN_NO_RETURN;
 
@@ -873,7 +870,7 @@ static inline return_type execute_linear_iter_list(
    const bool this_is_linear(true);
    const depth_t old_depth(state.depth);
 
-   for (utils::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()),
+   for (auto it(local_tuples->begin()),
         end(local_tuples->end());
         it != end;) {
       tuple* match_tuple(*it);
@@ -914,7 +911,7 @@ static inline return_type execute_linear_iter_list(
                // if this is the first iterate, we do not need to send this to
                // the generate list
                if (tbl)
-                  it = tbl->erase_from_list(local_tuples, it);
+                  it = tbl->erase_from_list(db::hash_table::cast_list(local_tuples), it, &(node->alloc));
                else
                   it = local_tuples->erase(it);
                state.add_generated(match_tuple, pred);
@@ -934,13 +931,15 @@ static inline return_type execute_linear_iter_list(
             }
          } else {
             if (tbl)
-               it = tbl->erase_from_list(local_tuples, it);
+               it = tbl->erase_from_list(db::hash_table::cast_list(local_tuples), it, &(node->alloc));
             else
                it = local_tuples->erase(it);
             vm::tuple::destroy(match_tuple, pred, &(node->alloc), state.gc_nodes);
             if (tbl) {
-               if (local_tuples->empty() && tbl->empty())
+               if (tbl->empty()) {
+                  // local_tuples is now invalid!
                   state.matcher->empty_predicate(pred->get_id());
+               }
             } else {
                if (local_tuples->empty())
                   state.matcher->empty_predicate(pred->get_id());
@@ -969,15 +968,14 @@ static inline return_type execute_linear_iter(const reg_num reg, match* m,
 
       if (m && m->has_match(hashed)) {
          const match_field mf(m->get_match(hashed));
-         utils::intrusive_list<vm::tuple>* local_tuples(
-             table->lookup_list(mf.field));
+         vm::tuple_list *local_tuples(db::hash_table::underlying_list(table->lookup_list(mf.field)));
          return_type ret(execute_linear_iter_list(node, reg, m, first, state, pred,
                                                   local_tuples, table));
          return ret;
       } else {
          // go through hash table
          for (hash_table::iterator it(table->begin()); !it.end(); ++it) {
-            utils::intrusive_list<vm::tuple>* local_tuples(*it);
+            vm::tuple_list* local_tuples(db::hash_table::underlying_list(*it));
             return_type ret(execute_linear_iter_list(node, reg, m, first, state, pred,
                                                      local_tuples, table));
             if (ret != RETURN_NO_RETURN) return ret;
@@ -997,6 +995,9 @@ static inline return_type execute_rlinear_iter_list(
    const bool old_is_linear(state.is_linear);
    const bool this_is_linear(false);
    const depth_t old_depth(state.depth);
+
+   if(!local_tuples)
+      return RETURN_NO_RETURN;
 
    for(auto it(local_tuples->begin()), e(local_tuples->end()); it != e; ++it) {
       vm::tuple *match_tuple(*it);
@@ -1039,14 +1040,14 @@ static inline return_type execute_rlinear_iter(const reg_num reg, match* m,
 
       if (m && m->has_match(hashed)) {
          const match_field mf(m->get_match(hashed));
-         utils::intrusive_list<vm::tuple>* local_tuples(
-             table->lookup_list(mf.field));
+         auto ls(table->lookup_list(mf.field));
+         vm::tuple_list* local_tuples(db::hash_table::underlying_list(ls));
          return execute_rlinear_iter_list(reg, m, first, state, pred,
                                           local_tuples);
       } else {
          // go through hash table
          for (hash_table::iterator it(table->begin()); !it.end(); ++it) {
-            utils::intrusive_list<vm::tuple>* local_tuples(*it);
+            vm::tuple_list* local_tuples(db::hash_table::underlying_list(*it));
             return_type ret(execute_rlinear_iter_list(reg, m, first, state,
                                                       pred, local_tuples));
             if (ret != RETURN_NO_RETURN) return ret;
@@ -1126,9 +1127,7 @@ static inline void execute_remove(pcounter pc, state& state) {
 #ifdef INSTRUMENTATION
       state.instr_facts_consumed++;
 #endif
-#ifdef FACT_STATISTICS
-      state.facts_consumed++;
-#endif
+      LOG_DELETED_FACT();
    }
 }
 
@@ -1698,12 +1697,12 @@ static inline void execute_remote_update(pcounter& pc, state& state) {
          if (table) {
             if (h < common)
                updated =
-                   perform_remote_update(table->lookup_list(regs[h]),
+                   perform_remote_update(db::hash_table::underlying_list(table->lookup_list(regs[h])),
                                          pred_target, common, regs, state);
             else {
                for (auto it(table->begin()); !it.end(); ++it) {
-                  if ((updated = perform_remote_update(*it, pred_target, common,
-                                                       regs, state)))
+                  if ((updated = perform_remote_update(db::hash_table::underlying_list(*it),
+                              pred_target, common, regs, state)))
                      break;
                }
             }

@@ -29,6 +29,24 @@ mem_run ()
    echo "$contents"
 }
 
+stat_run ()
+{
+	CMD="${1} ${EXTRA_ARGS}"
+   FILENAME="${2}"
+   SCHEDULER="${3}"
+   NUM_THREADS="${4}"
+	DESC="${FILENAME} ${SCHEDULER}${NUM_THREADS}"
+
+   if [ -f "args/${FILENAME}" ]; then
+      source "args/${FILENAME}"
+      CMD="${CMD} ${MELD_ARGS} -- ${PROG_ARGS}"
+   fi
+
+   mkdir -p output
+	echo "${DESC}"
+   $CMD
+}
+
 time_run_n ()
 {
 	CMD="${1} ${EXTRA_ARGS}"
