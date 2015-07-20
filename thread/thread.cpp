@@ -532,11 +532,6 @@ void thread::init(const size_t) {
       //cout << total << endl;
    }
 
-   if (theProgram->has_thread_predicates()) {
-      thread_node = node_handler.create_node();
-      setup_thread_node();
-   }
-
    threads_synchronize();
    bool sync{false};
 #ifdef COMPILED
@@ -551,6 +546,12 @@ void thread::init(const size_t) {
       if (leader_thread()) run_const_code();
    }
 #endif
+   if (theProgram->has_thread_predicates()) {
+      thread_node = node_handler.create_node();
+      setup_thread_node();
+      sync = true;
+   }
+
    if (sync) threads_synchronize();
 }
 
