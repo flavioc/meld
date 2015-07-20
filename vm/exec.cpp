@@ -870,7 +870,7 @@ static inline return_type execute_linear_iter_list(
    const bool this_is_linear(true);
    const depth_t old_depth(state.depth);
 
-   for (utils::intrusive_list<vm::tuple>::iterator it(local_tuples->begin()),
+   for (auto it(local_tuples->begin()),
         end(local_tuples->end());
         it != end;) {
       tuple* match_tuple(*it);
@@ -936,8 +936,10 @@ static inline return_type execute_linear_iter_list(
                it = local_tuples->erase(it);
             vm::tuple::destroy(match_tuple, pred, &(node->alloc), state.gc_nodes);
             if (tbl) {
-               if (local_tuples->empty() && tbl->empty())
+               if (tbl->empty()) {
+                  // local_tuples is now invalid!
                   state.matcher->empty_predicate(pred->get_id());
+               }
             } else {
                if (local_tuples->empty())
                   state.matcher->empty_predicate(pred->get_id());

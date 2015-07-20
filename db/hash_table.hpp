@@ -15,10 +15,13 @@
 namespace db {
 
 #define HASH_TABLE_SUBHASH_SHIFT 4
+#define HASH_TABLE_PRIME 13
 #define HASH_TABLE_INITIAL_TABLE_SIZE (1 << HASH_TABLE_SUBHASH_SHIFT)
-#define HASH_TABLE_PRIME (HASH_TABLE_INITIAL_TABLE_SIZE - 1)
-#define CREATE_HASHTABLE_THREADSHOLD 8
-#define HASH_TABLE_MAX_LEVELS 4
+
+static_assert(HASH_TABLE_PRIME < HASH_TABLE_INITIAL_TABLE_SIZE, "prime < size");
+
+#define CREATE_HASHTABLE_THREADSHOLD 4
+#define HASH_TABLE_MAX_LEVELS 5
 #define HASH_TABLE_SUBHASH_MASK ((1 << HASH_TABLE_SUBHASH_SHIFT) - 1)
 
 struct subhash_table;
@@ -86,9 +89,9 @@ static inline vm::uint_val hash_tuple(vm::tuple *tpl, const vm::predicate* pred,
 struct subhash_table {
    using tuple_list = hash_table_list;
    tuple_list *table[HASH_TABLE_INITIAL_TABLE_SIZE];
-   size_t unique_elems{0};
+   std::uint16_t unique_lists{0};
+   std::uint16_t unique_subs{0};
    subhash_table *parent;
-   mutable utils::byte flag_expanded{10};
 
    inline uint64_t mod_hash(const uint64_t hsh) {
       return hsh % HASH_TABLE_PRIME;
@@ -132,6 +135,7 @@ struct subhash_table {
 
    inline void set_subhash(const size_t idx, subhash_table *p)
    {
+      p->table[HASH_TABLE_INITIAL_TABLE_SIZE - 1] = (tuple_list*)(table + idx);
       table[idx] = (tuple_list*)((uintptr_t)p | 0x1);
    }
 
@@ -173,13 +177,13 @@ public:
       newls->next = nullptr;
       newls->push_back(item);
       newls->parent = this;
-      unique_elems++;
+      unique_lists++;
       if(count + 1 >= CREATE_HASHTABLE_THREADSHOLD && level + 1 < HASH_TABLE_MAX_LEVELS) {
-         //std::cout << "Expand at level " << level << "\n";
          // create sub hash table
          subhash_table *sub((subhash_table*)alloc->allocate_obj(sizeof(subhash_table)));
          sub->setup(this);
          tuple_list *bucket(get_bucket(idx));
+         size_t total{0};
 
          while(bucket) {
             tuple_list *next(bucket->next);
@@ -195,7 +199,11 @@ public:
             bucket->prev = get_null_prev(sub->table + index);
 
             bucket = next;
+            total++;
          }
+         sub->unique_lists = total;
+         unique_lists -= total;
+         unique_subs++;
          set_subhash(idx, sub);
       }
       return newls->get_size();
@@ -243,14 +251,25 @@ public:
          if(next)
             next->prev = prev;
          alloc->deallocate_obj((utils::byte*)ls, sizeof(tuple_list));
-         unique_elems--;
-         assert(unique_elems >= 0);
-         if(unique_elems < CREATE_HASHTABLE_THREADSHOLD/2) {
-            abort();
-         }
+         assert(unique_lists >= 1);
+         unique_lists--;
+         check_empty_table(alloc);
       }
 
       return newit;
+   }
+
+   inline void check_empty_table(mem::node_allocator *alloc) {
+      if(unique_lists == 0 && unique_subs == 0 && parent != nullptr) {
+         subhash_table *p(parent);
+         // sub hash table is empty, delete it!
+         tuple_list **ptr_parent((tuple_list**)table[HASH_TABLE_INITIAL_TABLE_SIZE-1]);
+         *ptr_parent = nullptr;
+         p->unique_subs--;
+         alloc->deallocate_obj((utils::byte*)this, sizeof(subhash_table));
+
+         p->check_empty_table(alloc);
+      }
    }
 
    inline tuple_list *lookup_list(const vm::uint_val id, const vm::tuple_field field, const vm::field_type hash_type)
@@ -289,6 +308,8 @@ public:
    {
       memset(table, 0, sizeof(tuple_list*) * HASH_TABLE_INITIAL_TABLE_SIZE);
       parent = par;
+      unique_lists = 0;
+      unique_subs = 0;
    }
 
    inline void dump(std::ostream& out, const vm::predicate *pred) const
@@ -315,7 +336,6 @@ struct hash_table {
    private:
 
    subhash_table *sh;
-   size_t unique_elems{0};
    size_t elems{0};
    vm::field_type hash_type;
 
@@ -409,8 +429,6 @@ reset:
       elems++;
 //    std::cout << "Insert ==> " << id << "\n";
       const size_t ls(sh->insert(id, item, pred, alloc, hash_type, 0) == 1);
-      if(ls == 1)
-         unique_elems++;
       return ls;
    }
 
@@ -437,7 +455,7 @@ reset:
 
    inline bool too_sparse() const
    {
-      return unique_elems < CREATE_HASHTABLE_THREADSHOLD/2;
+      return sh->unique_lists < CREATE_HASHTABLE_THREADSHOLD/2 && sh->unique_subs == 0;
    }
 
    static inline vm::tuple_list *underlying_list(tuple_list *ls)
@@ -461,7 +479,6 @@ reset:
    {
       hash_type = type;
       elems = 0;
-      unique_elems = 0;
       sh = (subhash_table*)alloc->allocate_obj(sizeof(subhash_table));
       sh->setup(nullptr);
    }
