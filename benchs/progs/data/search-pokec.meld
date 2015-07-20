@@ -1,0 +1,2 @@
+priority @cluster @static.
+data stanford-snap-search "soc-pokec-relationships.txt" ["5" "1"].
