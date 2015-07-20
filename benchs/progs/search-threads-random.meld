@@ -1,0 +1,4 @@
+include #sources/search-threads.meld
+include #data/search-random.meld
+
+priority @cluster @static.
