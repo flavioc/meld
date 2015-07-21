@@ -212,14 +212,21 @@ static inline void print_tuple_type(ostream &cout, const tuple_field &field,
             break;
          }
 
-         tuple_field head(ls->get_head());
-         runtime::cons *tail(ls->get_tail());
+         runtime::cons *tail(ls);
          list_type *lt((list_type *)t);
-         tuple_field arg;
-         SET_FIELD_CONS(arg, tail);
-         print_tuple_type(cout, head, lt->get_subtype(), false);
-         if (!runtime::cons::is_null(tail)) cout << ",";
-         print_tuple_type(cout, arg, t, true);
+         size_t count{0};
+         while(!runtime::cons::is_null(tail)) {
+            tuple_field head(tail->get_head());
+            print_tuple_type(cout, head, lt->get_subtype(), false);
+            tail = tail->get_tail();
+            if (!runtime::cons::is_null(tail)) cout << ",";
+            count++;
+            if(count > 20) {
+               cout << "...";
+               break;
+            }
+         }
+         cout << "]";
          break;
       }
       default:

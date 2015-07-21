@@ -21,11 +21,6 @@ BP = belief-propagation-400
 SPLASH_BP = splash-bp-400 splash-bp-300
 QUEENS_COORD = 8queens-13-top 8queens-13-top-static 8queens-13-bottom 8queens-13-bottom-static 8queens-14-top 8queens-14-top-static 8queens-14-bottom 8queens-14-bottom-static
 
-SEARCH_RANDOM = search-parallel-random search-threads-random
-SEARCH_FACEBOOK = search-parallel-facebook search-threads-facebook
-SEARCH_TWITTER = search-parallel-twitter search-threads-twitter
-SEARCH_POKEC = search-parallel-pokec search-threads-pokec
-
 HT = new-heat-transfer-80 new-heat-transfer-120
 HT_COORD = $(addsuffix -coord,$(HT)) $(addsuffix -coord0,$(HT))
 
@@ -106,14 +101,14 @@ splash:
 queens-coord:
 	@bash $(SCRIPT) $(QUEENS_COORD)
 
-search-random:
-	@bash $(SCRIPT) $(SEARCH_RANDOM)
-search-facebook:
-	@bash $(SCRIPT) $(SEARCH_FACEBOOK)
-search-twitter:
-	@bash $(SCRIPT) $(SEARCH_TWITTER)
-search-pokec:
-	@bash $(SCRIPT) $(SEARCH_POKEC)
+SEARCH = search-pokec search-pokec-threads \
+search-facebook search-facebook-threads \
+			search-twitter search-twitter-threads \
+			search-random search-random-threads
+
+search-scale:
+	@bash $(SCRIPT) $(SEARCH)
+
 powergrid-50000:
 	@bash $(SCRIPT) powergrid-50000 powergrid-50000-coord
 powergrid-100000:

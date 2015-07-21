@@ -83,8 +83,9 @@ public:
          const size_t x(*it);
          if(x >= (size_t)r)
             return false;
-         if(get_tuple(x) == tpl)
+         if(get_tuple(x) == tpl) {
             return true;
+         }
       }
       return false;
    }

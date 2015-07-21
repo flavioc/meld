@@ -2438,7 +2438,8 @@ static inline return_type execute(pcounter pc, state& state, const reg_num reg,
                                   tuple* tpl, predicate* pred) {
    if (tpl != nullptr) {
       state.set_tuple(reg, tpl);
-      state.tuple_regs.set_bit((size_t)reg);
+      if(pred->is_linear_pred())
+         state.tuple_regs.set_bit((size_t)reg);
       state.preds[reg] = pred;
 #ifdef CORE_STATISTICS
       state.stat.stat_tuples_used++;
