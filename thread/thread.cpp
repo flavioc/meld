@@ -566,7 +566,9 @@ void thread::setup_thread_node() {
    if (vm::theProgram->has_special_fact(vm::special_facts::THREAD_LIST)) {
       vm::predicate *tlist_pred(
           vm::theProgram->get_special_fact(vm::special_facts::THREAD_LIST));
-      vm::tuple *tpl(vm::tuple::create(tlist_pred, &(thread_node->alloc)));
+      db::array *s(thread_node->pers_store.get_array(tlist_pred));
+      s->init(1, tlist_pred, &(thread_node->alloc));
+      vm::tuple *tpl(s->add_next(tlist_pred));
       runtime::cons *ls(runtime::cons::null_list());
       for (size_t i(vm::All->NUM_THREADS); i > 0; --i) {
          thread *x(vm::All->SCHEDS[i - 1]);
@@ -576,27 +578,31 @@ void thread::setup_thread_node() {
          ls = runtime::cons::create(ls, f, vm::TYPE_THREAD);
       }
       tpl->set_cons(0, ls);
-      thread_node->add_persistent_fact(tpl, tlist_pred);
+      thread_node->matcher.new_persistent_fact(tlist_pred->get_id());
    }
 
    if (vm::theProgram->has_special_fact(vm::special_facts::OTHER_THREAD)) {
       vm::predicate *other_pred(
           vm::theProgram->get_special_fact(vm::special_facts::OTHER_THREAD));
+      db::array *s(thread_node->pers_store.get_array(other_pred));
+      s->init(vm::All->NUM_THREADS-1, other_pred, &(thread_node->alloc));
       for (size_t i(0); i < vm::All->NUM_THREADS; ++i) {
          if (this == All->SCHEDS[i]) continue;
-         vm::tuple *tpl(vm::tuple::create(other_pred, &(thread_node->alloc)));
+         vm::tuple *tpl(s->add_next(other_pred));
          tpl->set_thread(0, (vm::thread_val)All->SCHEDS[i]);
          tpl->set_int(1, i);
-         thread_node->add_persistent_fact(tpl, other_pred);
+         thread_node->matcher.new_persistent_fact(other_pred->get_id());
       }
    }
 
    if (vm::theProgram->has_special_fact(vm::special_facts::LEADER_THREAD)) {
       vm::predicate *leader_thread(
           vm::theProgram->get_special_fact(vm::special_facts::LEADER_THREAD));
-      vm::tuple *tpl(vm::tuple::create(leader_thread, &(thread_node->alloc)));
+      db::array *s(thread_node->pers_store.get_array(leader_thread));
+      s->init(1, leader_thread, &(thread_node->alloc));
+      vm::tuple *tpl(s->add_next(leader_thread));
       tpl->set_thread(0, (vm::thread_val)All->SCHEDS[0]);
-      thread_node->add_persistent_fact(tpl, leader_thread);
+      thread_node->matcher.new_persistent_fact(leader_thread->get_id());
    }
 
    thread_node->unprocessed_facts = true;
