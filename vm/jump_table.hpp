@@ -36,7 +36,7 @@ static void *jump_table[256] = {
     &&rem_priority, &&rem_priorityh, &&facts_consumed, &&tlinear_iter,
     &&addtpers, &&schedule_next, &&tpers_iter, &&lfabs, &&mvtypereg,
     &&mvthreadidreg, &&mvthreadidfield, &&thread_send, &&trlinear_iter,
-    &&literal_cons, &&not_found, &&not_found, &&not_found, &&not_found,
+    &&literal_cons, &&node_type, &&not_found, &&not_found, &&not_found,
     &&not_found, &&not_found, &&not_found, &&not_found, &&not_found,
     &&not_found, &&not_found, &&not_found, &&not_found, &&not_found,
     &&not_found, &&not_found, &&not_found, &&return_linear, &&mark_rule,

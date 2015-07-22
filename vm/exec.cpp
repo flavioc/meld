@@ -1591,6 +1591,12 @@ static inline void execute_literal_cons(pcounter pc, state& state) {
    state.set_cons(dest, FIELD_CONS(data));
 }
 
+static inline void execute_node_type(pcounter pc, state& state) {
+   const reg_num dest(node_type_reg(pc));
+   pc += NODE_TYPE_BASE;
+   state.set_int(dest, (int_val)pc[state.node->get_id()]);
+}
+
 static inline void execute_rule(const pcounter& pc, state& state) {
    const size_t rule_id(rule_get_id(pc));
 
@@ -3661,6 +3667,13 @@ static inline return_type execute(pcounter pc, state& state, const reg_num reg,
    COMPLEX_JUMP(literal_cons)
    execute_literal_cons(pc, state);
    pc += literal_cons_jump(pc);
+   JUMP_NEXT();
+   ENDOP();
+
+   CASE(NODE_TYPE_INSTR)
+   COMPLEX_JUMP(node_type)
+   execute_node_type(pc, state);
+   pc += NODE_TYPE_BASE + node_type_nodes(pc) * val_size;
    JUMP_NEXT();
    ENDOP();
 

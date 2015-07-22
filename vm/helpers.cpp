@@ -334,6 +334,16 @@ static inline void read_axioms(state &state, db::node *node,
    add_new_axioms(state, node, data, data + len);
 }
 
+static inline int_val read_node_type(db::node *node, const uint32_t offset, const size_t num_nodes)
+{
+   if(node->get_id() >= num_nodes)
+      return 0;
+
+   unsigned char *table((pcounter)(((utils::byte *)gAxiomsData) + offset));
+
+   return (int_val)table[node->get_id()];
+}
+
 static inline void do_fix_nodes(db::node *node, const size_t table) {
    uint32_t *tbl = (uint32_t *)(((utils::byte *)gAxiomsData) + table);
 
@@ -351,9 +361,8 @@ static inline void do_fix_nodes(db::node *node, const size_t table) {
    }
 }
 
-static inline vm::tuple_field instantiate_data(const uint32_t s,
-                                               vm::type *typ) {
-   pcounter p((pcounter)(((utils::byte *)gAxiomsData) + s));
+static inline vm::tuple_field instantiate_data(const uint32_t offset, vm::type *typ) {
+   pcounter p((pcounter)(((utils::byte *)gAxiomsData) + offset));
    return axiom_read_data(p, typ);
 }
 

@@ -206,6 +206,7 @@ const size_t REMOTE_UPDATE_BASE =
     instr_size + reg_val_size + 2 * predicate_size + 2 * count_size;
 const size_t MARK_RULE_BASE = instr_size + uint_size;
 const size_t LITERAL_CONS_BASE = instr_size + reg_val_size + type_size + jump_size;
+const size_t NODE_TYPE_BASE = instr_size + reg_val_size + uint_size;
 
 enum instr_type {
    RETURN_INSTR = 0x00,
@@ -371,6 +372,7 @@ enum instr_type {
    THREAD_SEND_INSTR = 0xBC,
    TRLINEAR_ITER_INSTR = 0xBD,
    LITERAL_CONS_INSTR = 0xBE,
+   NODE_TYPE_INSTR = 0xBF,
    RETURN_LINEAR_INSTR = 0xD0,
    MARK_RULE_INSTR = 0xD1,
    RETURN_DERIVED_INSTR = 0xF0
@@ -771,6 +773,16 @@ inline reg_num literal_cons_dest(const pcounter& pc) {
    return reg_get(pc, instr_size);
 }
 
+/* NODE TYPE */
+
+inline int_val node_type_nodes(pcounter pc) {
+   return pcounter_uint(pc + instr_size + reg_val_size);
+}
+
+inline reg_num node_type_reg(pcounter pc) {
+   return reg_get(pc, instr_size);
+}
+
 /* advance function */
 
 enum instr_argument_type { ARGUMENT_ANYTHING };
@@ -1165,6 +1177,10 @@ inline pcounter advance(const pcounter pc) {
       case REMOTE_UPDATE_INSTR:
          return pc + REMOTE_UPDATE_BASE +
                 remote_update_nregs(pc) * reg_val_size;
+
+      case NODE_TYPE_INSTR:
+         return pc + NODE_TYPE_BASE +
+                node_type_nodes(pc) * val_size;
 
       case MVTYPEREG_INSTR:
          return pc + MVTYPEREG_BASE;

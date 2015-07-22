@@ -576,6 +576,8 @@ string instr_name(const instr::instr_type code) {
          return string("FABS");
       case REMOTE_UPDATE_INSTR:
          return string("REMOTE UPDATE");
+      case NODE_TYPE_INSTR:
+         return string("NODE TYPE");
    }
    return string("");
 }
@@ -1326,6 +1328,9 @@ pcounter instr_print(pcounter pc, const bool recurse, const int tabcount,
                                             i * reg_val_size)) << " ";
          cout << "(common: " << remote_update_common(pc) << ")" << endl;
       } break;
+      case NODE_TYPE_INSTR:
+         cout << " TO " << reg_string(node_type_reg(pc)) << " FROM " << node_type_nodes(pc) << " NODES" << endl;
+         break;
       default:
          throw malformed_instr_error("unknown instruction code");
    }

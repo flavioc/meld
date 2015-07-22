@@ -66,10 +66,15 @@ struct array {
    inline iterator end(const vm::predicate *pred) const {
       return iterator(num_tuples, pred->num_fields(), data);
    }
+   
+   static inline size_t compute_size(const vm::predicate *pred, size_t _cap)
+   {
+      return pred->num_fields() * _cap * sizeof(vm::tuple_field);
+   }
 
    inline void init(const size_t _cap, const vm::predicate *pred,
                     mem::node_allocator *alloc) {
-      const size_t size(pred->num_fields() * _cap * sizeof(vm::tuple_field));
+      const size_t size(compute_size(pred, _cap));
       num_tuples = 0;
       cap = _cap;
       if (num_tuples < 16)
@@ -87,8 +92,7 @@ struct array {
             const size_t old_cap(cap);
             utils::byte *old((utils::byte *)data);
             init(cap * 2, pred, alloc);
-            memcpy(data, old,
-                   sizeof(vm::tuple_field) * old_cap * pred->num_fields());
+            memcpy(data, old, compute_size(pred, old_cap));
             delete_buffer(pred, old, old_cap, alloc);
          }
       }
@@ -130,7 +134,7 @@ struct array {
    static inline void delete_buffer(const vm::predicate *pred, utils::byte *d,
                                     const size_t cap,
                                     mem::node_allocator *alloc) {
-      const size_t size(cap * pred->num_fields() * sizeof(vm::tuple_field));
+      const size_t size(compute_size(pred, cap));
       if (cap < 16)
          alloc->deallocate_obj(d, size);
       else
