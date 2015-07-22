@@ -48,11 +48,7 @@ for gen in generators:
       num = len(rempower)
    else:
       num = random.randint(mingen, maxgen)
-   totalcap = 0
-   for x in range(num):
-      if rempower == []:
-         break
-      totalcap = totalcap + rempower[0]
-      rempower = rempower[1:]
-   totalcap = int(factor * float(totalcap))
+   items = rempower[0:num]
+   totalcap = int(factor * float(sum(items)))
+   rempower = rempower[num:]
    print "capacity(@" + str(gen) + ", " + str(totalcap) + ", 0)."
