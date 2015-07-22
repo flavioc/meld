@@ -265,8 +265,15 @@ generate-search-random:
 	touch progs/search-*-random.meld
 
 generate-powergrid:
-	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 2000 50000 1.008 > progs/data/powergrid-50000.meld
-	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 2000 100000 1.004 > progs/data/powergrid-100000.meld
+	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 5000 1000000 1.002 > progs/data/powergrid-1000000.meld
+	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 64 500000 1.002 > progs/data/powergrid-500000-64.meld
+	touch progs/powergrid-500000*
+	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 5000 500000 1.002 > progs/data/powergrid-500000.meld
+	touch progs/powergrid-100000*
+	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 2000 100000 1.002 > progs/data/powergrid-100000.meld
+	touch progs/powergrid-100000*
+	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 2000 50000 1.01 > progs/data/powergrid-50000.meld
+	touch progs/powergrid-50000*
 
 clean:
 	rm -f $(RESULTS_FILE)
