@@ -98,21 +98,30 @@ bp-coord:
 splash:
 	@bash $(SCRIPT) $(SPLASH_BP)
 
+queens:
+	@bash $(SCRIPT) 8queens-13 8queens-14
 queens-coord:
 	@bash $(SCRIPT) $(QUEENS_COORD)
 
 SEARCH = search-pokec search-pokec-threads \
-search-facebook search-facebook-threads \
+			search-facebook search-facebook-threads \
 			search-twitter search-twitter-threads \
 			search-random search-random-threads
 
 search-scale:
 	@bash $(SCRIPT) $(SEARCH)
 
-powergrid-50000:
-	@bash $(SCRIPT) powergrid-50000 powergrid-50000-coord
-powergrid-100000:
-	@bash $(SCRIPT) powergrid-100000 powergrid-100000-coord
+POWERGRID = powergrid-500000-64 powergrid-500000-64-coord \
+powergrid-1000000 powergrid-1000000-coord \
+				powergrid-1000000-2 powergrid-1000000-2-coord \
+				powergrid-50000 powergrid-50000-coord \
+				powergrid-500000 powergrid-500000-coord
+
+powergrid-recompile:
+	touch $(addprefix progs/,$(addsuffix .meld, $(POWERGRID)))
+powergrid:
+	@bash $(SCRIPT) $(POWERGRID)
+	
 ht:
 	@bash $(SCRIPT) $(HT)
 simple:
@@ -265,15 +274,11 @@ generate-search-random:
 	touch progs/search-*-random.meld
 
 generate-powergrid:
-	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 5000 1000000 1.002 > progs/data/powergrid-1000000.meld
-	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 64 500000 1.002 > progs/data/powergrid-500000-64.meld
-	touch progs/powergrid-500000*
-	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 5000 500000 1.002 > progs/data/powergrid-500000.meld
-	touch progs/powergrid-100000*
-	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 2000 100000 1.002 > progs/data/powergrid-100000.meld
-	touch progs/powergrid-100000*
-	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 2000 50000 1.01 > progs/data/powergrid-50000.meld
-	touch progs/powergrid-50000*
+	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 64 500000 1.002 20000 1.0 > progs/data/powergrid-500000-64.meld
+	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 2000 50000 1.02 500 1.0 > progs/data/powergrid-50000.meld
+	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 2000 500000 1.002 500 1.0 > progs/data/powergrid-500000.meld
+	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 4000 1000000 1.002 500 0.5 > progs/data/powergrid-1000000.meld
+	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 4000 1000000 1.002 500 2.0 > progs/data/powergrid-1000000-2.meld
 
 clean:
 	rm -f $(RESULTS_FILE)

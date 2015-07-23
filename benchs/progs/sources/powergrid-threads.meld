@@ -27,6 +27,7 @@ index thread-connected-to-list/2.
 compact generator-id.
 compact consumer-id.
 compact power.
+compact generators.
 
 fun imax(int A, int B) : int = if A > B then A else B end.
 

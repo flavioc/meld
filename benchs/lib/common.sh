@@ -100,7 +100,7 @@ compile_test () {
    CURRENT_DIR="$PWD"
    cd ..
    make clean 2>&1 > /dev/null || exit 1
-   make PROGRAM="$CURRENT_DIR/$CPP" -j$CPUS target 2>&1 > /dev/null || exit 1
+   make PROGRAM="benchs/$CPP" -j$CPUS target 2>&1 > /dev/null || exit 1
    echo -en "\r\033[K"
    mv target $CURRENT_DIR/$TARGET
    cd $CURRENT_DIR

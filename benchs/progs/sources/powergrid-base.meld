@@ -20,6 +20,7 @@ type linear disconnect(consumer, generator).
 compact generator-id.
 compact consumer-id.
 compact power.
+compact generators.
 priority @cluster @static.
 
 fun imax(int A, int B) : int = if A > B then A else B end.
