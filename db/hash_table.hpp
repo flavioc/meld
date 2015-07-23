@@ -11,6 +11,7 @@
 #include "mem/allocator.hpp"
 #include "utils/utils.hpp"
 #include "utils/hash.hpp"
+#include "vm/bitmap_static.hpp"
 
 namespace db {
 
@@ -19,6 +20,7 @@ namespace db {
 #define HASH_TABLE_INITIAL_TABLE_SIZE (1 << HASH_TABLE_SUBHASH_SHIFT)
 
 static_assert(HASH_TABLE_PRIME < HASH_TABLE_INITIAL_TABLE_SIZE, "prime < size");
+static_assert(sizeof(BITMAP_TYPE) * 8 >= HASH_TABLE_INITIAL_TABLE_SIZE, "wrong table size");
 
 #define CREATE_HASHTABLE_THREADSHOLD 8
 #define HASH_TABLE_MAX_LEVELS 4
@@ -30,6 +32,7 @@ struct hash_table_list {
    vm::tuple_list list;
    vm::tuple_field value;
    subhash_table *parent;
+   std::uint16_t idx;
 
    hash_table_list *prev{nullptr}, *next{nullptr};
 
@@ -89,6 +92,7 @@ static inline vm::uint_val hash_tuple(vm::tuple *tpl, const vm::predicate* pred,
 struct subhash_table {
    using tuple_list = hash_table_list;
    tuple_list *table[HASH_TABLE_INITIAL_TABLE_SIZE];
+   vm::bitmap_static<1> bitmap;
    std::uint16_t unique_lists{0};
    std::uint16_t unique_subs{0};
    subhash_table *parent;
@@ -124,19 +128,20 @@ struct subhash_table {
 
    inline subhash_table *get_subhash(const size_t idx)
    {
-      return (subhash_table*)(((uintptr_t)table[idx]) - 1);
+      return (subhash_table*)table[idx];
    }
 
    inline bool is_subhash(const size_t idx)
    {
-      tuple_list *p(table[idx]);
-      return (uintptr_t)p & 0x1;
+      return bitmap.get_bit(idx);
    }
 
    inline void set_subhash(const size_t idx, subhash_table *p)
    {
-      p->table[HASH_TABLE_INITIAL_TABLE_SIZE - 1] = (tuple_list*)(table + idx);
-      table[idx] = (tuple_list*)((uintptr_t)p | 0x1);
+      bitmap.set_bit(idx);
+      p->table[HASH_TABLE_INITIAL_TABLE_SIZE - 1] = (tuple_list*)(std::uintptr_t)idx;
+      table[idx] = (tuple_list*)p;
+      assert(is_subhash(idx));
    }
 
 public:
@@ -148,10 +153,13 @@ public:
    {
       const vm::uint_val subid(id & HASH_TABLE_SUBHASH_MASK);
       const size_t idx(mod_hash(subid));
-      if(is_subhash(idx))
+      if(is_subhash(idx)) {
+         assert(unique_subs > 0);
          return get_subhash(idx)->insert(id >> HASH_TABLE_SUBHASH_SHIFT, item, pred, alloc, hash_type, level + 1);
+      }
 
       tuple_list *bucket(get_bucket(idx));
+      assert(!is_subhash(idx));
       tuple_list *last{nullptr};
       size_t count{0};
       while(bucket) {
@@ -166,13 +174,12 @@ public:
 
       tuple_list *newls((tuple_list*)alloc->allocate_obj(sizeof(tuple_list)));
       mem::allocator<tuple_list>().construct(newls);
-      if(last) {
-         newls->prev = last;
+      newls->prev = last;
+      if(last)
          last->next = newls;
-      } else {
-         newls->prev = get_null_prev(table + idx);
+      else
          table[idx] = newls;
-      }
+      newls->idx = idx;
       newls->value = item->get_field(pred->get_hashed_field());
       newls->next = nullptr;
       newls->push_back(item);
@@ -191,37 +198,25 @@ public:
             hsh >>= (level + 1) * HASH_TABLE_SUBHASH_SHIFT;
             hsh &= HASH_TABLE_SUBHASH_MASK;
             const vm::uint_val index(sub->mod_hash(hsh));
-            bucket->next = sub->table[index];
             bucket->parent = sub;
             if(sub->table[index])
                sub->table[index]->prev = bucket;
+            bucket->next = sub->table[index];
             sub->table[index] = bucket;
-            bucket->prev = get_null_prev(sub->table + index);
+            bucket->prev = nullptr;
+            bucket->idx = (std::uint16_t)index;
 
             bucket = next;
             total++;
          }
          sub->unique_lists = total;
+         assert(unique_lists >= total);
          unique_lists -= total;
          unique_subs++;
          set_subhash(idx, sub);
+         assert(is_subhash(idx));
       }
       return newls->get_size();
-   }
-
-   inline tuple_list* get_null_prev(tuple_list **p) const
-   {
-      return (tuple_list*)((uintptr_t)p | 0x1);
-   }
-
-   inline bool is_null_prev(tuple_list *p) const
-   {
-      return (uintptr_t)p & 0x1;
-   }
-
-   inline tuple_list** fetch_null_prev(tuple_list *p)
-   {
-      return (tuple_list**)((uintptr_t)p - 1);
    }
 
    inline size_t find_level() const
@@ -243,11 +238,10 @@ public:
       if(ls->empty()) {
          tuple_list *prev(ls->prev);
          tuple_list *next(ls->next);
-         if(is_null_prev(prev)) {
-            tuple_list **nprev(fetch_null_prev(prev));
-            *nprev = next;
-         } else
+         if(prev)
             prev->next = next;
+         else
+            table[ls->idx] = next;
          if(next)
             next->prev = prev;
          alloc->deallocate_obj((utils::byte*)ls, sizeof(tuple_list));
@@ -263,8 +257,9 @@ public:
       if(unique_lists == 0 && unique_subs == 0 && parent != nullptr) {
          subhash_table *p(parent);
          // sub hash table is empty, delete it!
-         tuple_list **ptr_parent((tuple_list**)table[HASH_TABLE_INITIAL_TABLE_SIZE-1]);
-         *ptr_parent = nullptr;
+         std::uint16_t idx_parent((std::uintptr_t)table[HASH_TABLE_INITIAL_TABLE_SIZE-1]);
+         p->table[idx_parent] = nullptr;
+         p->bitmap.unset_bit(idx_parent);
          p->unique_subs--;
          alloc->deallocate_obj((utils::byte*)this, sizeof(subhash_table));
 
@@ -275,8 +270,10 @@ public:
    inline tuple_list *lookup_list(const vm::uint_val id, const vm::tuple_field field, const vm::field_type hash_type)
    {
       const size_t idx(mod_hash(id & HASH_TABLE_SUBHASH_MASK));
-      if(is_subhash(idx))
+      if(is_subhash(idx)) {
+         assert(unique_subs > 0);
          return get_subhash(idx)->lookup_list(id >> HASH_TABLE_SUBHASH_SHIFT, field, hash_type);
+      }
 
       tuple_list *ls(get_bucket(idx));
       while(ls) {
@@ -291,6 +288,7 @@ public:
    {
       for(size_t i(0); i < HASH_TABLE_PRIME; ++i) {
          if(is_subhash(i)) {
+            assert(unique_subs > 0);
             get_subhash(i)->destroy(alloc);
             alloc->deallocate_obj((utils::byte*)get_subhash(i), sizeof(subhash_table));
          } else {
