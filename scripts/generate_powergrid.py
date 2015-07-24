@@ -6,8 +6,8 @@ import sys
 import random
 import os
 
-if len(sys.argv) < 3:
-	print "usage: python generate_powergrid.py <#Generators> <#Consumers>"
+if len(sys.argv) != 6:
+	print "usage: python generate_powergrid.py <#Generators> <#Consumers> <factor> <max fails> <expand factor>"
 	sys.exit(1)
 
 random.seed(0)
@@ -19,7 +19,7 @@ consumers = [n + numgen for n in range(numcons)]
 power = [random.randint(1, 100) for _ in consumers]
 total_power = sum(p for p in power)
 
-print "const maxfails = " + str(numcons / 2) + "."
+print "const maxfails = " + sys.argv[4] + "."
 print "const all-generators = [@" + str(generators[0]),
 for gen in generators[1:]:
    print ", @" + str(gen),
@@ -34,8 +34,9 @@ for consumer, p in zip(consumers, power):
 
 rempower = power
 conspergen = max(int(float(numcons)/float(numgen)), 1)
-mingen = max(1, int(float(conspergen) * 0.5))
-maxgen = int(float(conspergen) * 1.5)
+expandfactor = float(sys.argv[5])
+mingen = max(1, int(float(conspergen) * (max(0.0, 1.0 - expandfactor))))
+maxgen = int(float(conspergen) * (1.0 + expandfactor))
 count = 0
 if len(sys.argv) > 3:
    factor = float(sys.argv[3])
