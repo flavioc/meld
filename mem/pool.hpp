@@ -144,8 +144,11 @@ struct pool {
 
    inline size_t hash_size(const size_t size) { return (size >> 2) - 1; }
 #endif
-   inline size_t make_size(const size_t size) {
-      return std::max(MEM_MIN_OBJS, size);
+   inline size_t make_size(size_t size) {
+      size = std::max(MEM_MIN_OBJS, size);
+      while(size % 4 != 0)
+         size++;
+      return size;
    }
 
    public:
