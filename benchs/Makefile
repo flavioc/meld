@@ -42,7 +42,9 @@ BP_COORD = $(addsuffix -coord,$(BP))
 SCRIPT = run_series.sh th $(TYPE) 1 $(NPROCS) $(RUNS)
 SERIAL = run_serial.sh $(RUNS)
 
-INDEXING_PROGS = $(SHORTEST) $(HT) \
+SHORTEST_INDEXING_PROGS = shortest-twitter shortest-usairports500 shortest-oclinks shortest-email
+
+INDEXING_PROGS = $(HT) \
 					  belief-propagation-50 belief-propagation-200 \
 					  belief-propagation-300 belief-propagation-400 \
 					  $(MINMAX) 8queens-11 8queens-12 8queens-13 8queens-14
@@ -63,6 +65,8 @@ serial-mem:
 	@bash run_mem.sh $(SERIAL_PROGS)
 no-indexing-serial:
 	@bash $(SERIAL) $(INDEXING_PROGS)
+sssp-no-indexing-mem:
+	@bash run_mem.sh $(SHORTEST_INDEXING_PROGS)
 no-indexing-serial-mem:
 	@bash run_mem.sh $(INDEXING_PROGS)
 serial-recompile:
@@ -279,6 +283,22 @@ generate-powergrid:
 	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 2000 500000 1.002 500 1.0 > progs/data/powergrid-500000.meld
 	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 4000 1000000 1.002 500 0.5 > progs/data/powergrid-1000000.meld
 	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 4000 1000000 1.002 500 2.0 > progs/data/powergrid-1000000-2.meld
+
+progs/data/gplus.txt:
+	wget -c http://snap.stanford.edu/data/gplus_combined.txt.gz
+	gzip -d gplus_combined.txt.gz
+	python ../scripts/uniform_snap.py gplus_combined.txt > progs/data/gplus.txt
+progs/data/shortest-livejournal1.txt:
+	wget -c http://snap.stanford.edu/data/soc-LiveJournal1.txt.gz
+	gzip -d soc-LiveJournal1.txt.gz
+	python ../scripts/uniform_snap.py soc-LiveJournal1.txt > progs/data/shortest-livejournal1.txt
+progs/data/pokec.txt:
+	wget -c http://snap.stanford.edu/data/soc-pokec-relationships.txt.gz
+	gzip -d soc-pokec-relationships.txt.gz
+	python ../scripts/uniform_snap.py soc-pokec-relationships.txt > progs/data/pokec.txt
+progs/data/orkut.txt:
+	wget -c http://snap.stanford.edu/data/bigdata/communities/com-orkut.ungraph.txt.gz
+	gzip -d com-orkut.ungraph.txt.gz
 
 clean:
 	rm -f $(RESULTS_FILE)
