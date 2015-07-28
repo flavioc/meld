@@ -1,7 +1,11 @@
 
+number_cpus () {
+   getconf _NPROCESSORS_ONLN
+}
+
 INSTRUMENT_DIR=$PWD/instrumentation_files
 if [ -z "$CPUS" ]; then
-   CPUS=$(getconf _NPROCESSORS_ONLN)
+   CPUS=$(number_cpus)
 fi
 
 time_run ()

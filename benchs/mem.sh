@@ -18,5 +18,9 @@ if [ -z "$THREADS" ]; then
 fi
 
 source $PWD/lib/common.sh
+if [ $THREADS -gt $CPUS ]; then
+   exit 0
+fi
+
 TO_RUN="${EXEC} -c th$THREADS"
 mem_run "${TO_RUN}" "$NAME" th $THREADS

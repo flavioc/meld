@@ -2,6 +2,7 @@
 #include <atomic>
 #include <unordered_set>
 #include <iostream>
+#include <list>
 
 #include "mem/stat.hpp"
 #include "vm/all.hpp"
@@ -17,30 +18,31 @@ static atomic<int64_t> memory_in_use{0};
 static atomic<int64_t> total_memory{0};
 static atomic<int64_t> num_mallocs{0};
 static atomic<int64_t> total_memory_average{0};
-static thread_local int64_t alloc_steps_thread{0};
 static thread_local int64_t memory_in_use_thread{0};
 static thread_local int64_t total_memory_thread{0};
+static thread_local std::list<std::pair<int64_t, int64_t>> memory_averages;
 static thread_local int64_t average_memory_thread{0};
+static thread_local int64_t number_steps_average{0};
 static thread_local int64_t num_mallocs_thread{0};
 #ifdef MEMORY_ASSERT
 static unordered_set<void *> allocated_set;
 #endif
 
 void update_memory_average() {
-   const double frac((double)((double)alloc_steps_thread - 1.0) /
-                     (double)alloc_steps_thread);
-   const double other_frac(1.0 - frac);
-   average_memory_thread = (int64_t)(frac * (double)average_memory_thread +
-                                     other_frac * (double)memory_in_use_thread);
+   if(average_memory_thread > std::numeric_limits<int64_t>::max() - memory_in_use_thread) {
+      // result will overflow
+      memory_averages.push_back(make_pair(number_steps_average, average_memory_thread));
+      number_steps_average = 1;
+      average_memory_thread = memory_in_use_thread;
+   } else {
+      number_steps_average++;
+      average_memory_thread += memory_in_use_thread;
+   }
 }
 
 void register_allocation(void *p, const size_t cnt, const size_t size) {
    memory_in_use_thread += cnt * size;
-   alloc_steps_thread++;
-   if (alloc_steps_thread == 1)
-      average_memory_thread = memory_in_use_thread;
-   else
-      update_memory_average();
+   update_memory_average();
 
    (void)p;
 
@@ -56,7 +58,6 @@ void register_allocation(void *p, const size_t cnt, const size_t size) {
 
 void register_deallocation(void *p, const size_t cnt, const size_t size) {
    memory_in_use_thread -= cnt * size;
-   alloc_steps_thread++;
    update_memory_average();
    (void)p;
 
@@ -76,7 +77,17 @@ void register_malloc(const size_t size) {
 }
 
 void merge_memory_statistics() {
-   total_memory_average += average_memory_thread;
+   // compute average
+   double total_steps{(double)number_steps_average};
+   for(auto p : memory_averages) {
+      total_steps += (double)p.first;
+   }
+   double average{0};
+   average += ((double)number_steps_average / total_steps) * ((double)average_memory_thread / (double)number_steps_average);
+   for(auto p : memory_averages) {
+      average += ((double)p.first / total_steps) * ((double)p.second / (double)p.first);
+   }
+   total_memory_average += (int64_t)average;
    memory_in_use += memory_in_use_thread;
    total_memory += total_memory_thread;
    num_mallocs += num_mallocs_thread;
