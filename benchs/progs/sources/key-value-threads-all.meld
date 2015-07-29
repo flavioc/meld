@@ -29,7 +29,7 @@ value(A, Key, Value)
    -o found-next(A, NewValue, It),
       value(A, Key, NewValue).
 
-//replace(A, Key, Value, It), cache(T, Key, Node, Hits), A <> Node -o cache(T, Key, Node, Hits + 1), replace(Node, Key, Value, It).
+replace(A, Key, Value, It), cache(T, Key, Node, Hits), A <> Node -o cache(T, Key, Node, Hits + 1), replace(Node, Key, Value, It).
 
 replace(A, MyKey, NewValue, It),
 value(A, Key, Value),
@@ -50,7 +50,7 @@ value(A, Key, Value)
    -o found-next(A, Value, It),
       value(A, Key, Value).
 
-//lookup(A, Key, It), cache(T, Key, Node, Hits), total(T, Total, HitsTotal), A <> Node -o lookup(Node, Key, It), total(T, Total, HitsTotal + 1), cache(T, Key, Node, Hits + 1).
+lookup(A, Key, It), cache(T, Key, Node, Hits), total(T, Total, HitsTotal), A <> Node -o lookup(Node, Key, It), total(T, Total, HitsTotal + 1), cache(T, Key, Node, Hits + 1).
 
 lookup(A, MyKey, It),
 value(A, Key, Value),
