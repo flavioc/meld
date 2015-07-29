@@ -35,8 +35,8 @@ def generate_tree(minimum, maximum, parent, left, hasparent=False):
 
 generate_tree(0, nodes-1, None, False)
 
-node_fraction = int(sys.argv[3])
-nodes_problem_total = int(float(node_fraction)/100.0 * float(nodes))
+node_fraction = float(sys.argv[3])
+nodes_problem_total = int(float(node_fraction) * float(nodes))
 remaining_nodes = [key for key, value in node_map.iteritems()]
 random.shuffle(remaining_nodes)
 nodes_select = []

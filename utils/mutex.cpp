@@ -11,7 +11,7 @@ std::vector<lock_stat*> all_stats;
 }
 #endif
 
-using std::cerr;
+using std::cout;
 using std::endl;
 
 #if defined(LOCK_STATISTICS) || defined(FACT_STATISTICS)
@@ -35,7 +35,7 @@ utils::mutex::merge_stats(void)
 void
 utils::mutex::print_statistics(lock_stat* _stat)
 {
-#define SHOW(NAME) cerr << #NAME ": " << _stat->NAME ## _fail << "\t/\t" << (_stat->NAME ## _ok + _stat->NAME ## _fail) << endl
+#define SHOW(NAME) cout << #NAME ": " << _stat->NAME ## _fail << "\t/\t" << (_stat->NAME ## _ok + _stat->NAME ## _fail) << endl
 #ifdef LOCK_STATISTICS
    SHOW(main_db_lock);
    SHOW(node_lock);
@@ -51,13 +51,13 @@ utils::mutex::print_statistics(lock_stat* _stat)
    SHOW(set_static_lock);
    SHOW(set_affinity_lock);
    SHOW(allocator_lock);
-   cerr << "heap_operations: " << _stat->heap_operations << endl;
-   cerr << "normal_operations: " << _stat->normal_operations << endl;
+   cout << "heap_operations: " << _stat->heap_operations << endl;
+   cout << "normal_operations: " << _stat->normal_operations << endl;
 #endif
 #ifdef FACT_STATISTICS
-   cerr << "facts_derived: " << _stat->facts_derived << endl;
-   cerr << "facts_sent: " << _stat->facts_sent << endl;
-   cerr << "facts_deleted: " << _stat->facts_deleted << endl;
+   cout << "facts_derived: " << _stat->facts_derived << endl;
+   cout << "facts_sent: " << _stat->facts_sent << endl;
+   cout << "facts_deleted: " << _stat->facts_deleted << endl;
 #endif
 }
 #endif

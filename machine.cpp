@@ -161,7 +161,7 @@ void machine::start(void) {
    utils::lock_stat* mstat(utils::mutex::merge_stats());
    utils::mutex::print_statistics(mstat);
 #ifdef FACT_STATISTICS
-   cerr << "facts_end: " << vm::All->DATABASE->total_facts() << endl;
+   cout << "facts_end: " << vm::All->DATABASE->total_facts() << endl;
 #endif
 #endif
 

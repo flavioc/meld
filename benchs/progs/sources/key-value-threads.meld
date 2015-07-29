@@ -14,7 +14,7 @@ type linear delete-from-cache(thread).
 
 index cache/2.
 
-const maxtotalthread = 3000.
+const maxtotalthread = str2int(@arg1).
 
 total(T, 0, 0).
 

@@ -126,8 +126,10 @@ static inline void execute_thread_send0(sched::thread *th, vm::tuple *tpl,
          execute_enqueue_linear0(tpl, pred, state);
       else
          execute_add_thread_persistent0(th->thread_node, tpl, pred, state);
-   } else
+   } else {
+      LOG_FACT_SENT();
       state.sched->new_thread_work(th, tpl, pred);
+   }
 }
 
 static inline void execute_send0(db::node *from, const vm::node_val dest_val,

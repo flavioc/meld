@@ -78,7 +78,7 @@ scale-recompile:
 	touch $(addprefix progs/,$(addsuffix .meld,$(SCALE_PROGS)))
 
 sssp-stat:
-	@bash run_stats.sh $(SHORTEST)
+	@bash run_stats.sh 1 $(SHORTEST)
 sssp-recompile:
 	touch $(addprefix progs/,$(addsuffix .meld,$(SHORTEST)))
 sssp-coord:
@@ -114,6 +114,8 @@ SEARCH = search-pokec search-pokec-threads \
 
 search-scale:
 	@bash $(SCRIPT) $(SEARCH)
+search-stat:
+	@bash run_stats.sh 1 $(SEARCH)
 
 POWERGRID = powergrid-500000-64 powergrid-500000-64-coord \
 powergrid-1000000 powergrid-1000000-coord \
@@ -125,6 +127,8 @@ powergrid-recompile:
 	touch $(addprefix progs/,$(addsuffix .meld, $(POWERGRID)))
 powergrid:
 	@bash $(SCRIPT) $(POWERGRID)
+powergrid-stats:
+	@bash run_stats.sh 32 $(POWERGRID)
 	
 ht:
 	@bash $(SCRIPT) $(HT)
