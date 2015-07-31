@@ -11,6 +11,8 @@ if len(sys.argv) != 4:
 
 levels = int(sys.argv[1])
 nodes = int(math.pow(2, levels)) - 1
+OUTPUT = True
+AVERAGE = False
 
 # maps keys to node ids
 node_map = {}
@@ -22,13 +24,14 @@ def generate_tree(index, level, minimum, maximum, parent, left, hasparent=False)
    id = int((maximum-minimum)/2 + minimum)
    myid = int(math.pow(2, level)) + index - 1
    node_map[id] = myid
-   if hasparent:
+   if hasparent and OUTPUT:
       if left:
          print "!left(@" + str(parent) + ", @" + str(myid) + ")."
       else:
          print "!right(@" + str(parent) + ", @" + str(myid) + ")."
    value = random.randint(1, 100)
-   print "value(@" + str(myid) + ", " + str(id) + ", " + str(value) + ")."
+   if OUTPUT:
+      print "value(@" + str(myid) + ", " + str(id) + ", " + str(value) + ")."
    generate_tree(index * 2, level + 1, minimum, id-1, myid, True, True)
    generate_tree(index * 2 + 1, level + 1, id+1, maximum, myid, False, True)
 
@@ -47,7 +50,8 @@ while remaining > 0:
    remaining = remaining - 1
    key = remaining_nodes.pop()
    nodes_select.append((key, mirror_counter))
-   print "!mirror(@" + str(node_map[key]) + ", @" + str(mirror_counter) + ")."
+   if OUTPUT:
+      print "!mirror(@" + str(node_map[key]) + ", @" + str(mirror_counter) + ")."
    mirror_counter = mirror_counter + 1
 
 # generate problem instances.
@@ -59,17 +63,27 @@ for i in xrange(0, queries):
    look = random.randint(0, 2)
    try:
       query = queries_map[target_id]
-      if look <= 1:
-         print "do-lookup(@" + str(target_id) + ", " + str(target_node) + ", " + str(query + 1) + ")."
-      else:
-         num = random.randint(0, 10000)
-         print "do-replace(@" + str(target_id) + ", " + str(target_node) + ", " + str(num) + ", " + str(query + 1) + ")."
+      if OUTPUT:
+         if look <= 1:
+            print "do-lookup(@" + str(target_id) + ", " + str(target_node) + ", " + str(query + 1) + ")."
+         else:
+            num = random.randint(0, 10000)
+            print "do-replace(@" + str(target_id) + ", " + str(target_node) + ", " + str(num) + ", " + str(query + 1) + ")."
       queries_map[target_id] = query + 1
    except KeyError:
-      if look <= 1:
-         print "lookup(@0, " + str(target_node) + ", 0)."
-      else:
-         num = random.randint(0, 10000)
-         print "replace(@0, " + str(target_node) + ", " + str(num) + ", 0)."
+      if OUTPUT:
+         if look <= 1:
+            print "lookup(@0, " + str(target_node) + ", 0)."
+         else:
+            num = random.randint(0, 10000)
+            print "replace(@0, " + str(target_node) + ", " + str(num) + ", 0)."
       queries_map[target_id] = 0
+
+if AVERAGE:
+   total = 0
+   nodes_total = 0
+   for node, val in queries_map.iteritems():
+      total = total + val + 1
+      nodes_total = nodes_total + 1
+   print float(total)/float(nodes_total)
 
