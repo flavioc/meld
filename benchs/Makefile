@@ -129,6 +129,14 @@ powergrid:
 	@bash $(SCRIPT) $(POWERGRID)
 powergrid-stats:
 	@bash run_stats.sh 32 $(POWERGRID)
+
+KEYVALUE = key-value-all-19-ten key-value-19-ten \
+			  key-value-all-21-ten key-value-21-ten
+
+keyvalue:
+	@bash $(SCRIPT) $(KEYVALUE)
+keyvalue-stats:
+	@bash run_stats.sh 32 $(KEYVALUE)
 	
 ht:
 	@bash $(SCRIPT) $(HT)
@@ -140,9 +148,6 @@ splash-bp:
 	@bash $(SCRIPT) $(SPLASH_BP)
 minmax:
 	@bash $(SCRIPT) $(MINMAX)
-
-run:
-	@bash $(SCRIPT) $(TARGET)
 
 compiled:
 	@mkdir -p code
@@ -287,6 +292,12 @@ generate-powergrid:
 	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 2000 500000 1.002 500 1.0 > progs/data/powergrid-500000.meld
 	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 4000 1000000 1.002 500 0.5 > progs/data/powergrid-1000000.meld
 	PYTHONPATH=../scripts python ../scripts/generate_powergrid.py 4000 1000000 1.002 500 2.0 > progs/data/powergrid-1000000-2.meld
+
+generate-key-value:
+	PYTHONPATH=../scripts python ../scripts/threads/generate_tree.py 19 2000000 0.1 > progs/data/key-value-19-ten.meld
+	PYTHONPATH=../scripts python ../scripts/threads/generate_tree.py 19 2000000 0.2 > progs/data/key-value-19-twenty.meld
+	PYTHONPATH=../scripts python ../scripts/threads/generate_tree.py 21 5000000 0.1 > progs/data/key-value-21-ten.meld
+	PYTHONPATH=../scripts python ../scripts/threads/generate_tree.py 21 5000000 0.2 > progs/data/key-value-21-twenty.meld
 
 progs/data/gplus.txt:
 	wget -c http://snap.stanford.edu/data/gplus_combined.txt.gz

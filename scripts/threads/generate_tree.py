@@ -10,17 +10,17 @@ if len(sys.argv) != 4:
    sys.exit(0)
 
 levels = int(sys.argv[1])
-nodes = math.pow(2, levels) - 1
-idcount = 0
+nodes = int(math.pow(2, levels)) - 1
 
+# maps keys to node ids
 node_map = {}
 
-def generate_tree(minimum, maximum, parent, left, hasparent=False):
-   global idcount, node_map
+def generate_tree(index, level, minimum, maximum, parent, left, hasparent=False):
+   global node_map
    if minimum > maximum:
       return
    id = int((maximum-minimum)/2 + minimum)
-   myid = idcount
+   myid = int(math.pow(2, level)) + index - 1
    node_map[id] = myid
    if hasparent:
       if left:
@@ -29,27 +29,33 @@ def generate_tree(minimum, maximum, parent, left, hasparent=False):
          print "!right(@" + str(parent) + ", @" + str(myid) + ")."
    value = random.randint(1, 100)
    print "value(@" + str(myid) + ", " + str(id) + ", " + str(value) + ")."
-   idcount = idcount + 1
-   generate_tree(minimum, id-1, myid, True, True)
-   generate_tree(id+1, maximum, myid, False, True)
+   generate_tree(index * 2, level + 1, minimum, id-1, myid, True, True)
+   generate_tree(index * 2 + 1, level + 1, id+1, maximum, myid, False, True)
 
-generate_tree(0, nodes-1, None, False)
+generate_tree(0, 0, 0, nodes-1, None, False)
+random.seed(0)
 
 node_fraction = float(sys.argv[3])
 nodes_problem_total = int(float(node_fraction) * float(nodes))
-remaining_nodes = [key for key, value in node_map.iteritems()]
+range_nodes = max(nodes/2, nodes_problem_total)
+remaining_nodes = [nodes - 1 - key for key in range(range_nodes)]
 random.shuffle(remaining_nodes)
 nodes_select = []
-while len(nodes_select) != nodes_problem_total:
-   nodes_select.append(remaining_nodes.pop())
+mirror_counter = int(nodes)
+remaining = nodes_problem_total
+while remaining > 0:
+   remaining = remaining - 1
+   key = remaining_nodes.pop()
+   nodes_select.append((key, mirror_counter))
+   print "!mirror(@" + str(node_map[key]) + ", @" + str(mirror_counter) + ")."
+   mirror_counter = mirror_counter + 1
 
 # generate problem instances.
 queries = int(sys.argv[2])
 queries_map = {}
 for i in xrange(0, queries):
    idx = random.randint(0, nodes_problem_total - 1)
-   target_node = nodes_select[idx]
-   target_id = node_map[target_node]
+   (target_node, target_id) = nodes_select[idx]
    look = random.randint(0, 2)
    try:
       query = queries_map[target_id]

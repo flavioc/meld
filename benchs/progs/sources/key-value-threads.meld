@@ -4,29 +4,37 @@ type right(node, node).
 type linear value(node, int Key, int Value).
 type linear lookup(node, int Key, int Iteration).
 type linear replace(node, int Key, int NewValue, int Iteration).
+type linear my-lookup(node, int Key, int Iteration).
+type linear my-replace(node, int Key, int NewValue, int Iteration).
 type linear do-replace(node, int Key, int NewValue, int Iteration).
 type linear do-lookup(node, int Key, int Iteration).
-type linear found-next(node, int Value, int NextIteration).
+type linear found-next(node, int Key, int Value, int NextIteration).
+type linear found-iterate(node, int NextIteration).
 type linear found(node, int Value).
 type linear cache(thread, int, node, int).
 type linear total(thread, int, int).
-type linear delete-from-cache(thread).
+type linear delete-from-cache(thread, int).
+type mirror(node, node).
 
 index cache/2.
+compact mirror.
 
 const maxtotalthread = str2int(@arg1).
+const to-remove = str2int(@arg2).
 
 total(T, 0, 0).
 
+delete-from-cache(T, Rem), Rem > 0,
 total(T, N, HitsTotal),
-delete-from-cache(T),
-Below = HitsTotal/3
-   -o [sum => RemovedHits, count => Total | Key, Node | cache(T, Key, Node, RemovedHits), RemovedHits <= Below
-         | | total(T, N - Total, HitsTotal - RemovedHits)].
+cache(T, Key, Node, RemovedHits)
+   -o total(T, N - 1, HitsTotal - RemovedHits),
+      delete-from-cache(T, Rem - 1).
+
+delete-from-cache(T, X) -o 1.
 
 replace(A, Key, NewValue, It),
 value(A, Key, Value)
-   -o found-next(A, NewValue, It),
+   -o found-next(A, Key, NewValue, It),
       value(A, Key, NewValue).
 
 //replace(A, Key, Value, It), cache(T, Key, Node, Hits), A <> Node -o cache(T, Key, Node, Hits + 1), replace(Node, Key, Value, It).
@@ -47,7 +55,7 @@ MyKey > Key
 
 lookup(A, Key, It),
 value(A, Key, Value)
-   -o found-next(A, Value, It),
+   -o found-next(A, Key, Value, It),
       value(A, Key, Value).
 
 //lookup(A, Key, It), cache(T, Key, Node, Hits), total(T, Total, HitsTotal), A <> Node -o lookup(Node, Key, It), total(T, Total, HitsTotal + 1), cache(T, Key, Node, Hits + 1).
@@ -66,40 +74,62 @@ MyKey > Key
    -o lookup(R, MyKey, It),
       value(A, Key, Value).
 
-found-next(A, B, It),
+my-lookup(A, Key, It),
+value(A, Key, Value)
+   -o found-next(A, Key, Value, It),
+      value(A, Key, Value).
+my-replace(A, Key, New, It),
+value(A, Key, Value)
+   -o found-next(A, Key, New, It),
+      value(A, Key, New).
+
+/// ---------------------------------
+// found-next
+/// ---------------------------------
+
+found-next(A, Key, Value, It),
 cache(T, Key, A, Hits),
 total(T, Total, HitsTotal),
-do-lookup(A, Key, It + 1)
-   -o found(A, B),
+!mirror(A, M)
+   -o found(A, Value),
       cache(T, Key, A, Hits + 1),
       total(T, Total, HitsTotal + 1),
-      (if Total >= maxtotalthread then delete-from-cache(T) otherwise 1 end),
-      lookup(A, Key, It + 1).
+      found-iterate(M, It).
 
-found-next(A, B, It),
-do-lookup(A, X, It + 1),
-total(T, Total, HitsTotal)
-   -o found(A, B),
-      lookup(@0, X, It + 1),
-      cache(T, X, A, 0),
-      total(T, Total + 1, HitsTotal).
+// not found, add to cache.
+found-next(A, Key, Value, It),
+total(T, Total, HitsTotal),
+!mirror(A, M)
+   -o found(A, Value),
+      cache(T, Key, A, 0),
+      (if Total >= maxtotalthread then delete-from-cache(T, to-remove) otherwise 1 end),
+      total(T, Total + 1, HitsTotal),
+      found-iterate(M, It).
 
-found-next(A, B, It),
+/// ---------------------------------
+// found-iterate
+/// ---------------------------------
+
+found-iterate(A, It),
 do-replace(A, Key, New, It + 1),
 total(T, Total, HitsTotal),
-cache(T, Key, A, Hits)
-   -o found(A, B),
-      cache(T, Key, A, Hits + 1),
+cache(T, Key, Node, Hits)
+   -o cache(T, Key, Node, Hits + 1),
       total(T, Total, HitsTotal + 1),
-      replace(A, Key, New, It + 1).
+      my-replace(Node, Key, New, It + 1).
 
-found-next(A, B, It),
-do-replace(A, X, New, It + 1),
-total(T, Total, HitsTotal)
-   -o found(A, B),
-      cache(T, X, A, 0),
-      replace(@0, X, New, It + 1),
-      (if Total >= maxtotalthread then delete-from-cache(T) otherwise 1 end),
-      total(T, Total + 1, HitsTotal).
+found-iterate(A, It),
+do-replace(A, Key, New, It + 1)
+   -o replace(@0, Key, New, It + 1).
 
-found-next(A, B, It) -o found(A, B).
+found-iterate(A, It),
+total(T, Total, HitsTotal),
+do-lookup(A, Key, It + 1),
+cache(T, Key, Node, Hits)
+   -o cache(T, Key, Node, Hits + 1),
+      total(T, Total, HitsTotal + 1),
+      my-lookup(Node, Key, It + 1).
+
+found-iterate(A, It),
+do-lookup(A, Key, It + 1)
+   -o lookup(@0, Key, It + 1).

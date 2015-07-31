@@ -1,0 +1,4 @@
+
+include #data/key-value-21-ten.meld
+include #sources/key-value-threads-all.meld
+priority @cluster @static.

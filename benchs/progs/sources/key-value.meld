@@ -7,10 +7,9 @@ type linear replace(node, int Key, int NewValue, int Iteration).
 type linear do-replace(node, int Key, int NewValue, int Iteration).
 type linear do-lookup(node, int Key, int Iteration).
 type linear found-next(node, int Value, int NextIteration).
+type linear found-iterate(node, int NextIteration).
 type linear found(node, int Value).
-
-compact left.
-compact right.
+type mirror(node, node).
 
 replace(A, Key, NewValue, It),
 value(A, Key, Value)
@@ -50,14 +49,15 @@ MyKey > Key
    -o lookup(R, MyKey, It),
       value(A, Key, Value).
 
-found-next(A, B, It),
+found-next(A, Value, It),
+!mirror(A, M)
+   -o found(A, Value),
+      found-iterate(M, It).
+
+found-iterate(A, It),
 do-lookup(A, X, It + 1)
-   -o found(A, B),
-      lookup(@0, X, It + 1).
+   -o lookup(@0, X, It + 1).
 
-found-next(A, B, It),
+found-iterate(A, It),
 do-replace(A, X, New, It + 1)
-   -o found(A, B),
-      replace(@0, X, New, It + 1). 
-
-found-next(A, B, It) -o found(A, B).
+   -o replace(@0, X, New, It + 1). 
