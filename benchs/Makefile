@@ -18,8 +18,7 @@ export RESULTS_FILE=$(PWD)/results.csv
 HT = new-heat-transfer-120 new-heat-transfer-120-coord0 new-heat-transfer-120-coord
 
 BP = belief-propagation-400
-SPLASH_BP = splash-bp-400 splash-bp-300
-QUEENS_COORD = 8queens-13-top 8queens-13-top-static 8queens-13-bottom 8queens-13-bottom-static 8queens-14-top 8queens-14-top-static 8queens-14-bottom 8queens-14-bottom-static
+SPLASH_BP = splash-bp-400
 
 HT = new-heat-transfer-80 new-heat-transfer-120
 HT_COORD = $(addsuffix -coord,$(HT)) $(addsuffix -coord0,$(HT))
@@ -101,6 +100,8 @@ bp-coord:
 
 splash:
 	@bash $(SCRIPT) $(SPLASH_BP)
+
+QUEENS_COORD = 8queens-13-top 8queens-13-top-static 8queens-13-bottom 8queens-13-bottom-static 8queens-14-top 8queens-14-top-static 8queens-14-bottom 8queens-14-bottom-static
 
 queens:
 	@bash $(SCRIPT) 8queens-13 8queens-14
