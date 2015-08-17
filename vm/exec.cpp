@@ -3696,7 +3696,6 @@ static inline return_type do_execute(byte_code code, state& state,
 
    const return_type ret(execute((pcounter)code, state, reg, tpl, pred));
 
-   state.cleanup();
    assert(state.stack.empty());
    return ret;
 }

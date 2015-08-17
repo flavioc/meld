@@ -776,6 +776,7 @@ void state::run_node(db::node *node) {
    }
    gc_nodes.clear();
 #endif
+   cleanup();
 }
 
 inline bool
