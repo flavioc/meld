@@ -23,13 +23,13 @@ SPLASH_BP = splash-bp-400
 HT = new-heat-transfer-80 new-heat-transfer-120
 HT_COORD = $(addsuffix -coord,$(HT)) $(addsuffix -coord0,$(HT))
 
-SHORTEST = shortest-usairports500 \
+SHORTEST = shortest-livejournal \
+			  shortest-usairports500 \
 			  shortest-twitter \
 			  shortest-email \
 			  shortest-oclinks \
 			  shortest-uspowergrid \
-			  shortest-orkut \
-			  shortest-livejournal
+			  shortest-orkut
 SHORTEST_COORD = $(addsuffix -coord,$(SHORTEST))
 
 MINMAX = min-max-tictactoe min-max-tictactoe-big
@@ -43,17 +43,17 @@ SERIAL = run_serial.sh $(RUNS)
 
 SHORTEST_INDEXING_PROGS = shortest-twitter shortest-usairports500 shortest-oclinks shortest-email
 
-INDEXING_PROGS = $(HT) \
-					  belief-propagation-50 belief-propagation-200 \
+INDEXING_PROGS = belief-propagation-50 belief-propagation-200 \
 					  belief-propagation-300 belief-propagation-400 \
+					  $(HT) \
 					  $(MINMAX) 8queens-11 8queens-12 8queens-13 8queens-14
 SERIAL_PROGS = $(INDEXING_PROGS)
 
-SCALE_PROGS = $(SHORTEST) \
+SCALE_PROGS = belief-propagation-300 belief-propagation-400 \
+				  $(SHORTEST) \
 				  greedy-graph-coloring-gplus \
 				  greedy-graph-coloring-twitter \
 				  8queens-13 8queens-14 \
-				  belief-propagation-300 belief-propagation-400 \
 				  $(MINMAX) min-max-tictactoe min-max-tictactoe-big \
 				  pagerank-pokec pagerank-gplus $(HT)
 COORD_PROGS = $(SHORTEST_COORD)
@@ -80,6 +80,8 @@ sssp-stat:
 	@bash run_stats.sh 1 $(SHORTEST)
 sssp-recompile:
 	touch $(addprefix progs/,$(addsuffix .meld,$(SHORTEST)))
+sssp:
+	@bash $(SCRIPT) $(SHORTEST)
 sssp-coord:
 	@bash $(SCRIPT) $(SHORTEST_COORD)
 sssp-coord-recompile:
