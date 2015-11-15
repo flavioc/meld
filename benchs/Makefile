@@ -306,17 +306,24 @@ progs/data/gplus.txt:
 	wget -c http://snap.stanford.edu/data/gplus_combined.txt.gz
 	gzip -d gplus_combined.txt.gz
 	python ../scripts/uniform_snap.py gplus_combined.txt > progs/data/gplus.txt
-progs/data/shortest-livejournal1.txt:
-	wget -c http://snap.stanford.edu/data/soc-LiveJournal1.txt.gz
+progs/data/weighted-livejournal.txt:
+	curl -o soc-LiveJournal1.txt.gz http://snap.stanford.edu/data/soc-LiveJournal1.txt.gz
 	gzip -d soc-LiveJournal1.txt.gz
 	python ../scripts/uniform_snap.py soc-LiveJournal1.txt > progs/data/shortest-livejournal1.txt
+	rm -f soc-LiveJournal1.txt
+	python ../scripts/weighted_snap.py progs/data/shortest-livejournal1.txt > progs/data/weighted-livejournal.txt
+	rm -f shortest-livejournal1.txt
+
 progs/data/pokec.txt:
 	wget -c http://snap.stanford.edu/data/soc-pokec-relationships.txt.gz
 	gzip -d soc-pokec-relationships.txt.gz
 	python ../scripts/uniform_snap.py soc-pokec-relationships.txt > progs/data/pokec.txt
 progs/data/orkut.txt:
-	wget -c http://snap.stanford.edu/data/bigdata/communities/com-orkut.ungraph.txt.gz
-	gzip -d com-orkut.ungraph.txt.gz
+	curl -o orkut.txt.gz http://snap.stanford.edu/data/bigdata/communities/com-orkut.ungraph.txt.gz
+	gzip -d orkut.txt.gz
+	python ../scripts/uniform_snap.py orkut.txt > uniform-orkut.txt
+	rm -f orkut.txt
+	python ../scripts/weighted_snap.py uniform-orkut.txt > progs/data/orkut.txt
 
 clean:
 	rm -f $(RESULTS_FILE)
