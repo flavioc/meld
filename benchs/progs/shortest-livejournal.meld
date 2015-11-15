@@ -1,0 +1,7 @@
+
+include #sources/shortest-path-custom.meld
+type route edge(node, node, float).
+
+priority @cluster @static.
+priority @no_initial_priorities.
+data stanford-sssp-snap "data/weighted-livejournal.txt".
