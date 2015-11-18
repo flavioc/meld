@@ -1,0 +1,76 @@
+
+===================================================
+Source code organization
+
+Compiler is written in CL and is placed in cl-meld
+Virtual machine is written in C++ and is placed in meld
+In order to compile programs we first use the CL compiler and then the C++ compiler.
+
+===================================================
+How to compile CLM programs
+
+Go to meld/benchs
+Run script ./compile.sh programs/<program>.meld
+Compiler will generate a code/<program>.cpp file
+Go back to the meld directory: cd ..
+Compile final program with ./compile.sh benchs/code<program>.cpp
+
+===================================================
+How to run CLM programs
+
+After step 4, programs will be placed in ~/meld/benchs/code/<program>
+Run with './benchs/code/<program> -c thX' where X is the number of executing threads
+Many other flags are supported by CLM programs:
+	-t: Shows execution time.
+	-s: Shows results of the program.
+Some programs also accepted input arguments: add -- and then a list of arguments after the virtual machine arguments presented before.
+	Files in meld/benchs/args/<program> indicate which arguments are used for benchmarks.
+
+===================================================
+Running SSSP programs
+
+Compile shortest-DATASET.meld, where DATASET is the graph data set.
+Example: shortest-uspowergrid.meld
+	Execute as ./benchs/code/shortest-uspowergrid -c thX -t -- N
+	where N is a positive number and represents how many source nodes are going to be used (a node is used if NodeId % N == 0). Use N=1 for uspowergrid.
+By default, SSSP runs with coordination. Add flag -n to run it without coordination.
+
+In order to compile programs with datasets such as LiveJournal and Orkut, please do the following:
+$ cd meld/benchs/
+$ make progs/data/orkut.txt
+$ make progs/data/weighted-livejournal.txt
+
+Afterwards, compile programs are usual. Use the following arguments:
+- orkut: 3000000
+- livejournal: 3000001
+
+(All arguments can be inspected by reading meld/benchs/args/shortest-livejournal, for example).
+
+Note that it will take a while to pre-process these programs. The CLM compiler has not been optimized enough to process huge graphs. Remember to run the virtual machine with enough memory.
+
+===================================================
+Running N Queens programs
+
+Program available as 8queens-N-CONF.meld, where N is the size of the board and CONF is the configuration.
+Example: 8queens-13.meld to run the 13 queens program without any coordination. The coordinated programs are available with CONF=bottom-static, for example.
+
+===================================================
+Running MiniMax programs
+
+Use program min-max-tictactoe-big.meld and min-max-tictactoe-big-coord.meld (to use the regular and the coordinated program, respectively).
+
+===================================================
+Running HT programs
+
+Programs available as:
+	- new-heat-transfer-120-coord0.meld (Works as the regular and coordinated version, use -n to run without coordination).
+	- new-heat-transfer-120-coord.meld (Works as the Local version).
+For both of these programs use the following arguments: 0.0001 0.005
+
+===================================================
+Running LBP/SBP
+
+Programs available as:
+	- belief-propagation-400.meld (LBP)
+	- splash-bp-400 (SBP): use 100 as program argument
+They are also available in other sizes.
