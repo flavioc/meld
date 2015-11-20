@@ -86,6 +86,43 @@ sssp-coord:
 	@bash $(SCRIPT) $(SHORTEST_COORD)
 sssp-coord-recompile:
 	touch $(addprefix progs/,$(addsuffix .meld,$(SHORTEST_COORD)))
+sssp-ppopp:
+	@bash $(SCRIPT) shortest-uspowergrid shortest-orkut shortest-livejournal
+sssp-ppopp-coord:
+	@bash $(SCRIPT) shortest-uspowergrid-coord shortest-orkut-coord shortest-livejournal-coord
+sssp-ppopp-compile: progs/data/weighted-livejournal.txt progs/data/orkut.txt
+	./compile.sh progs/shortest-uspowergrid.meld
+	./compile.sh progs/shortest-uspowergrid-coord.meld
+	./compile.sh progs/shortest-orkut.meld
+	./compile.sh progs/shortest-orkut-coord.meld
+	./compile.sh progs/shortest-livejournal.meld
+	./compile.sh progs/shortest-livejournal-coord.meld
+
+ht-ppopp-compile:
+	./compile.sh progs/new-heat-transfer-120.meld
+	./compile.sh progs/new-heat-transfer-120-coord.meld
+	./compile.sh progs/new-heat-transfer-120-coord0.meld
+ht-ppopp:
+	@bash $(SCRIPT) new-heat-transfer-120
+ht-ppopp-coord:
+	@bash $(SCRIPT) new-heat-transfer-120-coord0 \
+		new-heat-transfer-120-coord
+
+queens-ppopp-compile:
+	./compile.sh progs/8queens-14.meld
+	./compile.sh progs/8queens-14-bottom-static.meld
+	./compile.sh progs/8queens-13.meld
+	./compile.sh progs/8queens-13-bottom-static.meld
+queens-ppopp:
+	@bash $(SCRIPT) 8queens-14 8queens-14-bottom-static \
+		8queens-13 8queens-13-bottom-static
+
+bp-ppopp-compile:
+	./compile.sh progs/belief-propagation-400.meld
+	./compile.sh progs/splash-bp-400.meld
+
+bp-ppopp:
+	@bash $(SCRIPT) belief-propagation-400 splash-bp-400
 
 minmax-coord:
 	@bash $(SCRIPT) $(MINMAX_COORD)
@@ -93,6 +130,13 @@ minmax-mem:
 	@bash run_mems.sh $(MINMAX)
 minmax-coord-mem:
 	@bash run_mems.sh $(MINMAX_COORD)
+minmax-ppopp-compile:
+	./compile.sh progs/min-max-tictactoe-big.meld
+	./compile.sh progs/min-max-tictactoe-big-coord.meld
+minmax-ppopp:
+	@bash $(SCRIPT) min-max-tictactoe-big
+minmax-ppopp-coord:
+	@bash $(SCRIPT) min-max-tictactoe-big-coord
 
 ht-coord:
 	@bash $(SCRIPT) $(HT_COORD)
