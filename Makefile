@@ -82,7 +82,7 @@ target: FLAGS += -DCOMPILED -include $(PROGRAM:.cpp=.hpp)
 
 WARNINGS = -Wall -Wextra
 
-CFLAGS = -std=c++1y $(ARCH) $(PROFILING) \
+CFLAGS = -std=c++11 $(ARCH) $(PROFILING) \
 			$(OPTIMIZATIONS) $(WARNINGS) $(DEBUG) \
 			$(INCLUDE_DIRS) $(FLAGS) #-fno-gcse -fno-crossjumping
 LIBRARIES = -lm -ldl $(LIBS)

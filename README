@@ -10,7 +10,7 @@ In order to compile programs we first use the CL compiler and then the C++ compi
 How to compile CLM programs
 
 Go to meld/benchs
-Run script ./compile.sh programs/<program>.meld
+Run script ./compile.sh progs/<program>.meld
 Compiler will generate a code/<program>.cpp file
 Go back to the meld directory: cd ..
 Compile final program with ./compile.sh benchs/code<program>.cpp
